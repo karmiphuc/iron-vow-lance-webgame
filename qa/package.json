@@ -1,1 +1,11 @@
-{"name":"iron-vow-optional-qa","private":true,"scripts":{"test":"node check-ui.cjs"},"devDependencies":{"@napi-rs/canvas":"^0.1.80","linkedom":"^0.18.12"}}
+{
+  "name": "iron-vow-optional-qa",
+  "private": true,
+  "scripts": {
+    "test": "node check-ui.cjs && node check-missions.cjs && node check-resume.cjs"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "linkedom": "^0.18.12"
+  }
+}

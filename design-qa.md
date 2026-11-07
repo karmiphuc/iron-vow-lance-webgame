@@ -35,6 +35,15 @@
 - Native renderer inspection found the art correctly loaded and depth-sorted; route animation now follows the same cover-aware path as the movement calculation.
 - These checks do not establish a browser design-QA pass.
 
+## Continued playability work
+
+- User replied `Cont` after the pending browser-QA limitation and publication question. This iteration continues with that limitation disclosed; it is not a claimed visual-QA pass.
+- Complete mission tests: 12/12 starter-contract victories across fixed random seeds; an earned-money career completed all three contracts after repair, weapon purchase and reinforcement.
+- Recovery test: 35% emergency condition lost 12/12 attempts; the revised 50% patch won 11/12 with the same tactical driver and random seeds.
+- Active-sortie checkpoints preserve AP, damaged subsystems, skills and position. Interrupted enemy phases replay once from their saved start. Completed rewards are not paid again after reload. Invalid combat checkpoints do not reset the career. Level-100 career persistence is tested.
+- Mobile target details now use an explicit drawer with larger subsystem controls instead of the former tiny permanent panel. Actual DOM opening, selection and closing were checked; CSS and touch layout still require browser review.
+- All these functional and native-renderer checks pass. Browser-rendered comparison and browser-console review remain unavailable.
+
 ## Remaining checklist
 
 1. Open the rebuilt game in the supported cloud browser at 1440 × 1024 and 390 × 844.

@@ -1,0 +1,10 @@
+const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+module.exports=function createSimulation(options={}){
+ const noop=()=>{},nodes=new Map(),storage=options.storage||new Map(),events=new Map();
+ function node(s){if(!nodes.has(s))nodes.set(s,{innerHTML:'',textContent:'',hidden:s==='#modal',classList:{add:noop,remove:noop},style:{},dataset:{},setAttribute:noop,focus:noop,addEventListener:(name,fn)=>events.set(s+':'+name,fn),querySelectorAll:()=>[],getContext:()=>ctx});return nodes.get(s)}
+ const gradient={addColorStop:noop};const ctx=new Proxy({createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get:(t,k)=>k in t?t[k]:noop,set:(t,k,v)=>(t[k]=v,true)});
+ class ImageStub{constructor(){this.complete=true;this.naturalWidth=1024;this.naturalHeight=1024;this.width=1024;this.height=1024}}
+ let seed=options.seed||1;const math=Object.create(Math);math.random=options.random||(()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296});
+ const sandbox={Image:ImageStub,console,document:{body:{dataset:{}},querySelector:node,querySelectorAll:()=>[],addEventListener:(name,fn)=>events.set('document:'+name,fn),activeElement:null},window:{addEventListener:noop},innerWidth:1440,innerHeight:900,devicePixelRatio:1,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},requestAnimationFrame:noop,setTimeout:r=>{r();return 1},clearTimeout:noop,URL,Blob,Math:math};
+ vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../dist/game.js'),'utf8'),sandbox);return{sandbox,node,storage,events,run:c=>vm.runInContext(c,sandbox),flush:()=>new Promise(r=>setImmediate(r))};
+};
