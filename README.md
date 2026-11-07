@@ -41,3 +41,9 @@ On mobile, tap a hostile to acquire it, open its subsystem details, choose a par
 Free emergency field patches now restore 50% condition. Seeded recovery tests found the original 35% patch insufficient for a zero-reserve company. Repairs to 100% remain useful for harder contracts.
 
 `npm test --prefix qa` now also plays complete seeded missions, an earned-money career through all three contracts, zero-reserve recovery, exact sortie reloads, interrupted enemy phases, corrupt checkpoint recovery, single victory payouts and level-100 save compatibility. It does not provide browser layout or visual certification.
+
+## Mech animation update
+
+Movement now uses frame-independent timed steps, alternating foot lift and torso motion, weight-specific stride durations, landing splashes and synchronized footfalls. The existing raster chassis are articulated through a small skinned 2.5D mesh; they are not real-time 3D models. Weapon-specific recoil moves the upper body while the feet remain planted. Muzzles and subsystem impact points follow the same deformation. Hit reactions, bracing, pilot-skill pulses, collapse and wreck smoke are animated. Facing is retained in new sortie checkpoints; older checkpoints remain compatible.
+
+The motion tests cover 30/60/144 Hz stepping, landing/AP timing, recoil recovery, foot planting, collapse and reduced-motion preferences. `node qa/render-animation.cjs <output-folder>` produces native canvas animation frames, and `design/animation-preview.mp4` records that renderer output. This is animation evidence, not a browser capture or UI/layout certification.

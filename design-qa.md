@@ -44,6 +44,15 @@
 - Mobile target details now use an explicit drawer with larger subsystem controls instead of the former tiny permanent panel. Actual DOM opening, selection and closing were checked; CSS and touch layout still require browser review.
 - All these functional and native-renderer checks pass. Browser-rendered comparison and browser-console review remain unavailable.
 
+## Animation iteration
+
+- Added timed, frame-independent movement; alternating foot lift; torso articulation; chassis-specific pace and footfall effects.
+- Added weapon-specific upper-body recoil with planted feet, attachments for muzzle/subsystem impact points, hit reactions, smooth collapse and wreck smoke. Facing persists in compatible sortie checkpoints.
+- Animation checks pass at 30/60/144 Hz, including AP/landing timing and reduced-motion behavior. Existing mission, career, reload and DOM checks remain passing.
+- Native renderer evidence: `design/animation-contact-sheet.png`, `design/animation-preview.mp4`. The preview contains 144 frames at 960 × 640, 24 fps. It uses the game renderer and a staged scene, without the browser-rendered HTML interface.
+- One native benchmark of three animated units measured approximately 1.7 ms median / 6.1 ms p95 per rendered frame on this executor. This is not a browser/device FPS claim.
+- Supported browser-control tools remain unavailable; the visual-QA result remains blocked.
+
 ## Remaining checklist
 
 1. Open the rebuilt game in the supported cloud browser at 1440 × 1024 and 390 × 844.
