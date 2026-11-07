@@ -72,3 +72,5 @@
 5. Fix observed P0/P1/P2 findings and repeat browser captures before certifying visual fidelity.
 
 final result: blocked
+
+Merged the concurrent Warden production-rig changes without replacing the GLBs or gait system. Added baked jointed aim and kneel poses, restrained recoil, and kept muzzle hardpoints tied to the chosen atlas frame. The native preview now loads the production Warden metadata and motion sheets. Browser visual QA remains pending.

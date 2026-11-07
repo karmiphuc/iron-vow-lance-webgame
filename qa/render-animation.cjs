@@ -6,10 +6,11 @@ const {document}=parseHTML(fs.readFileSync(root+'/dist/index.html','utf8')),nati
 class LocalImage extends Image{set src(v){super.src=fs.readFileSync(path.join(root,'dist',v))}get src(){return super.src}}
 class NativeSurface{constructor(w,h){return createCanvas(w,h)}}
 const store=new Map(),context={document,Image:LocalImage,OffscreenCanvas:NativeSurface,console,window:{addEventListener:()=>{},matchMedia:()=>({matches:false})},innerWidth:960,innerHeight:640,devicePixelRatio:1,localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},requestAnimationFrame:()=>{},setTimeout:r=>{queueMicrotask(r);return 1},clearTimeout:()=>{},URL,Blob,Math:Object.create(Math)};
-vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context);
+vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/warden-visuals.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context);
 (async()=>{
  for(let attempt=0;attempt<100;attempt++){if(run('decodedArt.size===Object.keys(artImages).length&&Object.keys(rigidParts).length===3'))break;await new Promise(r=>setTimeout(r,50))}if(!run('decodedArt.size===Object.keys(artImages).length&&Object.keys(rigidParts).length===3'))throw Error('Animation assets did not finish decoding');console.log('Rigid part pixels:',run('Object.values(rigidParts).map(c=>c.counts)'));run("deploy(0);closeModal();Math.random=()=>0");
- const stages=[{actor:0,target:1,weapon:'rifle',label:'RIFLE / ARM AIM + BURST'},{actor:1,target:0,weapon:'rail',label:'RAIL / SHOULDER LOAD + RELEASE'},{actor:2,target:0,weapon:'missile',label:'MISSILE / POD LAUNCH'},{actor:0,target:2,weapon:'rail',death:true,label:'KNEEL / REACTOR BLAST'},{actor:0,target:1,weapon:'rifle',death:true,label:'FALL / REACTOR BLAST'}];
+ run("for(const views of Object.values(wardenVisuals))for(const visual of Object.values(views)){const im=motionImages[visual.motion.key]=new Image();im.src=art(visual.motion.key)}");await new Promise(r=>setTimeout(r,300));
+ const stages=[{actor:0,target:1,weapon:'rifle',label:'RIFLE / ARM AIM + BURST'},{actor:1,target:0,weapon:'rail',label:'RAIL / SHOULDER LOAD + RELEASE'},{actor:2,target:0,weapon:'missile',label:'MISSILE / POD LAUNCH'},{actor:2,target:0,weapon:'missile',death:true,label:'KNEEL / REACTOR BLAST'},{actor:0,target:1,weapon:'rifle',death:true,label:'FALL / REACTOR BLAST'}];
  const times=[],stageTimes=[[],[],[],[],[]],contact=createCanvas(960*3,640*2),cg=contact.getContext('2d'),frames=372;
  const picks=new Map([[8,0],[83,1],[162,2],[249,3],[327,4],[263,5]]);let currentStage=-1,fired=false,hit=false;
  for(let frame=0;frame<frames;frame++){

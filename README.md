@@ -57,3 +57,17 @@ Attacks prepare before firing: rifle bursts, shotgun discharge, rail charging/re
 Destroyed chassis buckle into a supported kneel or fall. The knee impact precedes secondary reactor bursts, the main detonation, flying armor and a scorched debris pile. The final kill waits for the destruction sequence before showing the contract result. Reduced-motion behavior and existing career/sortie saves remain supported.
 
 `qa/check-upper-animation.cjs` checks preserved feet, rigid weapon geometry, independent arm aim, knee contact, supported stance, fall rotation and one-shot explosion cues. The refreshed native preview demonstrates the three weapon styles and both death variants. Browser visual QA is still pending.
+
+## Warden production rig
+
+The Workshop links to `dist/rig-bench/index.html`, the interactive WebGL bench with the original Warden and six weapon modules. Both GLBs and the exact three.js r128 scripts are served beside the bench. When WebGL is unavailable, the bench plays a short baked Warden loop. Reduced-motion mode shows a still.
+
+Combat remains on the existing canvas renderer. `tools/render_warden.py` reads those same GLBs and bakes two independently rendered facings for each of the game's matching weapon IDs, `rifle` (Kestrel) and `rail` (Longbow). The script projects the muzzle, body, arms, legs and floor registration into sprite coordinates. It also bakes twelve gait poses and three recoil levels per facing. Both the bake and the live bench use `dist/rig-bench/rig-motion.js` for leg IK, gait and weapon recoil. The battlefield selects poses from the same atlas it uses to resolve muzzle and subsystem effects. Workshop displays the matching weapon on Warden when its render is ready.
+
+The legacy art remains the fallback for load failures, Warden's Breacher and Vesper loadouts, and the other two chassis. The hangar illustration remains separate. Combat AP, damage, mission pacing, controls and career/checkpoint data use the existing game code. The main game loads stills up front and requests the motion sheets on demand in combat. WebGL scripts and GLBs are loaded only by the bench.
+
+To refresh the renders after updating the bench GLBs, run `blender -b -t 6 -P tools/render_warden.py` with Node.js on the path and Pillow installed for Blender. Run the same command with `-- --loop-only` for the higher-resolution bench preview. Commit the resulting stills, motion sheets, fallback loop and `dist/warden-visuals.js` together. The bench's original asset and runtime credits are in `dist/rig-bench/CREDITS.md`.
+
+The Mark II armor and upgraded rifle/rail meshes have editable Blender generators under `tools/authoring/`. Run `blender -b -P tools/authoring/warden/build_warden.py` and `blender -b -P tools/authoring/weapons/source/build_weapons.py` to rebuild the source GLBs. Keep `clearance_profile.json` beside the Warden script. Copy the rebuilt GLBs to `dist/rig-bench/` before baking. A rebuild also writes the editable Blender files.
+
+The merged Warden rig now adds three ready/aim poses and five authored kneeling poses per weapon/facing. Recoil uses shorter socket travel and smaller counter-rotating shoulder/elbow angles. The twelve approved gait samples retain their original leg kinematics. Death poses and effects share the projected hardpoints. Legacy Kestrel/Basilisk and other Warden loadouts use the layered 2.5D upper rig described above.
