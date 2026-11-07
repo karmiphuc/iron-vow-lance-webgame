@@ -5,10 +5,20 @@ GlobalFonts.registerFromPath(path.join(root,'dist/assets/fonts/inter-100-900.wof
 const {document}=parseHTML(fs.readFileSync(root+'/dist/index.html','utf8'));const native=createCanvas(1440,1024),domCanvas=document.querySelector('#scene');domCanvas.getContext=()=>native.getContext('2d');Object.defineProperties(domCanvas,{width:{get:()=>native.width,set:v=>native.width=v},height:{get:()=>native.height,set:v=>native.height=v}});
 class LocalImage extends Image{set src(v){super.src=fs.readFileSync(path.join(root,'dist',v))}get src(){return super.src}}
 const storage=new Map(),warnings=[];const context={document,Image:LocalImage,console:{log:console.log,warn:(...a)=>warnings.push(a.join(' ')),error:console.error},window:{addEventListener:()=>{},matchMedia:()=>({matches:false})},innerWidth:1440,innerHeight:1024,devicePixelRatio:1,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},requestAnimationFrame:()=>{},setTimeout:r=>{queueMicrotask(r);return 1},clearTimeout:()=>{},URL,Blob,Math:Object.create(Math)};
-vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
+vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/warden-visuals.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
 (async()=>{await new Promise(r=>setTimeout(r,350));assert.equal(run("Object.values(artImages).every(imageReady)"),true);assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'hangar');assert.equal(document.querySelectorAll('#nav button').length,5);assert.equal(document.querySelectorAll('.hangar-hotspots button').length,3);
 click('#inspect');assert.ok(get('.unit-inspect'));click('[data-select="1"]');assert.match(get('.selected-chassis').textContent,/KESTREL/);assert.match(get('.unit-inspect').textContent,/Jin Takeda/);click('#close-inspect');assert.equal(get('.unit-inspect'),null);
+click('[data-page="workshop"]');click('[data-select="0"]');
+assert.equal(get('.rig-bench-link').getAttribute('href'),'rig-bench/index.html');
+assert.equal(get('.unit-render').getAttribute('src'),'assets/warden-rifle-left.webp');
 click('[data-page="contracts"]');assert.equal(document.querySelectorAll('[data-deploy]').length,3);click('[data-deploy="0"]');assert.equal(run('battle.units.length'),6);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
+assert.equal(run("activeWardenVisual(current()).key"),'warden-rifle-left');
+run("current().face=1;current().weapon='rail'");
+assert.equal(run("activeWardenVisual(current()).key"),'warden-rail-right');
+assert.equal(run("spriteFlip(current())"),false);
+assert.ok(run("mechAttachmentPoint(current(),'muzzle').x>project(current().vx,0,current().vz).x"));
+assert.equal(run("(()=>{const u=current(),key=activeWardenVisual(u).key,image=artImages[key];artImages[key]=null;try{return activeWardenVisual(u)===undefined&&spriteFlip(u)}finally{artImages[key]=image}})()"),true);
+run("current().weapon='rifle';current().face=-1");
 for(let i=0;i<8;i++)run('draw('+(i*16.67)+')');fs.writeFileSync(out+'/battlefield-native-desktop.png',native.toBuffer('image/png'));assert.equal(document.querySelectorAll('[data-part]').length,4);assert.equal(document.querySelectorAll('[data-unit]').length,3);
 click('[data-unit="0"]');click('#skill');assert.equal(run('current().ap'),10);assert.equal(get('#skill').disabled,true);click('#brace');assert.equal(run('current().ap'),8);assert.equal(run('current().brace'),true);click('#fire');assert.equal(run('action'),'fire');click('[data-part="right"]');assert.equal(run('targetPart'),'right');
 // Native canvas snapshots exercise real image decoding and rendering, not a browser.

@@ -47,3 +47,13 @@ Free emergency field patches now restore 50% condition. Seeded recovery tests fo
 Movement now uses frame-independent timed steps, alternating foot lift and torso motion, weight-specific stride durations, landing splashes and synchronized footfalls. The existing raster chassis are articulated through a small skinned 2.5D mesh; they are not real-time 3D models. Weapon-specific recoil moves the upper body while the feet remain planted. Muzzles and subsystem impact points follow the same deformation. Hit reactions, bracing, pilot-skill pulses, collapse and wreck smoke are animated. Facing is retained in new sortie checkpoints; older checkpoints remain compatible.
 
 The motion tests cover 30/60/144 Hz stepping, landing/AP timing, recoil recovery, foot planting, collapse and reduced-motion preferences. `node qa/render-animation.cjs <output-folder>` produces native canvas animation frames, and `design/animation-preview.mp4` records that renderer output. This is animation evidence, not a browser capture or UI/layout certification.
+
+## Warden production rig
+
+The Workshop links to `dist/rig-bench/index.html`, the interactive WebGL bench with the original Warden and six weapon modules. Both GLBs and the exact three.js r128 scripts are served beside the bench. When WebGL is unavailable, the bench shows the Kestrel-equipped Warden render.
+
+Combat remains on the existing canvas renderer. `tools/render_warden.py` reads those same GLBs and bakes two independently rendered facings for each of the game's matching weapon IDs, `rifle` (Kestrel) and `rail` (Longbow). The script projects the actual muzzle, body, arms, legs and floor registration into sprite coordinates. The combat renderer uses those coordinates for effects and the existing articulation. Workshop displays the matching weapon on Warden when its render is ready.
+
+The legacy art remains the fallback for load failures, Warden's Breacher and Vesper loadouts, and the other two chassis. The hangar illustration remains separate. Combat AP, damage, mission pacing, controls and career/checkpoint data use the existing game code. The main game requests the four sprite images, not the WebGL scripts or GLBs.
+
+To refresh the renders after updating the bench GLBs, run `blender -b -t 6 -P tools/render_warden.py` with Pillow installed for Blender. Commit the resulting four WebPs and `dist/warden-visuals.js` together. The bench's original asset and runtime credits are in `dist/rig-bench/CREDITS.md`.

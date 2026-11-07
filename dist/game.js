@@ -9,7 +9,7 @@ const COVER_LAYOUTS=[['2,3','3,3','7,3','7,4','5,6','6,6','2,7','8,7','4,1'],['1
 function fresh(){return{version:1,day:1,credits:4500,rep:0,wins:0,kills:0,owned:['rifle','missile'],units:FRAMES.map((f,i)=>({weapon:i===2?'missile':'rifle',level:1,xp:0,condition:100,upgrade:0})),history:[]}}
 let save;try{save=JSON.parse(localStorage.getItem('iron-vow-career'));if(!validSave(save))save=fresh()}catch{save=fresh()}
 save.owned=[...new Set([...save.owned,...save.units.map(u=>u.weapon)])];
-let page='hangar',selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=true,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
+let page=window.location?.search==='?view=workshop'?'workshop':'hangar',selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=true,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
 function persist(enemyPending=false){
  try{
   if(battle&&battle.phase==='player'&&!battle.busy)save.sortie=captureSortie(enemyPending);
@@ -62,7 +62,14 @@ $('#sound').onclick=()=>{muted=!muted;$('#sound').innerHTML=icon(muted?'speaker-
 function icon(name){return `<img class="ui-icon" src="assets/icons/${name}.svg" alt="">`}
 function art(name){return 'assets/'+name+'.webp'}
 function pilotArt(i){return art('pilot-'+['rook','ghost','anchor'][i])}
-function chassisArt(i){return art(FRAMES[i].name.toLowerCase())}
+const wardenVisuals=window.IRON_VOW_WARDEN_ART||{};
+function wardenVisual(frame,loadout,direction){
+ return frame===0?wardenVisuals[loadout]?.[direction===1?'right':'left']:undefined;
+}
+function chassisArt(i,loadout,direction=-1){
+ const visual=wardenVisual(i,loadout,direction);
+ return art(visual&&imageReady(artImages[visual.key])?visual.key:FRAMES[i].name.toLowerCase());
+}
 function nav(){document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['hangar','contracts','workshop','pilots','career'].map(p=>`<button data-page="${p}" class="${p===page?'active':''}" ${battle?'disabled':''}>${p.toUpperCase()}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
@@ -78,7 +85,7 @@ function render(){
     <div class="hangar-footer"><span>INDEPENDENT COMPANY / DAY ${String(save.day).padStart(3,'0')}</span><span>${save.wins} CONTRACTS / ${save.rep} REPUTATION</span><span>CAREER SAVED LOCALLY</span></div>`;
   }
   if(page==='contracts')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / AVAILABLE CONTRACTS</div><h1>CHOOSE YOUR BATTLE.</h1></div><p>Three pilots. Three machines.<br>One company to bring home.</p></div><div class="grid">${CONTRACTS.map((c,i)=>`<article class="card"><div class="contract-map"><img src="${art('contract-'+['relay','corridor','frontier'][i])}" alt="${['Rain-soaked mountain relay station','Industrial refinery corridor at dusk','Storm-lit frontier military outpost'][i]}"><span class="contract-number">0${i+1}</span><span class="tag">THREAT ${i+1} / 3</span></div><div class="eyebrow">${c.place}</div><h2>${c.name}</h2><p>${c.desc}</p><div class="rule"></div>${stat('OPERATION',c.tag)}${stat('HOSTILE LANCE',c.enemies+' UNITS')}${stat('CONTRACT PAYMENT',money(c.pay))}<button class="primary full" data-deploy="${i}">ACCEPT & DEPLOY ${icon('arrow-right')}</button><p class="note">${i===0?'Recommended for a new company.':'Reinforced hostiles. Inspect your lance before deployment.'}</p></article>`).join('')}</div><p class="note">MOVE to highlighted ground. FIRE at an enemy subsystem. Spend AP, coordinate your lance, then end your turn.</p></div>`;
-  if(page==='workshop')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">ENGINEERING / CHASSIS & LOADOUT</div><h1>BUILT TO ENDURE.</h1></div><p>Refit the machine.<br>Protect the pilot inside.</p></div><div class="lance-tabs">${FRAMES.map((m,i)=>`<button data-select="${i}" class="${i===selected?'active':''}">${m.name}</button>`).join('')}</div><div class="split"><section class="workshop-chassis"><div class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</div><img class="unit-render" src="${chassisArt(selected)}" alt="${f.name} armored mech"><div class="workshop-meta"><h2>${f.name}</h2>${stat('BODY / ARMOR',(f.hp+u.upgrade*25)+' HP / '+(f.armor+u.upgrade*2))}${stat('CONDITION',u.condition+'%',u.condition)}<div class="repairs"><button data-patch="${selected}" ${u.condition>=FIELD_PATCH?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><p class="note">Reinforcement adds 25 body HP and 2 armor. A free field patch restores a damaged chassis to ${FIELD_PATCH}% integrity.</p></div></section><section><div class="eyebrow">PRIMARY HARDPOINT / ${p.call}</div><h2 style="margin-top:12px">THE RIGHT TOOL.</h2><p class="note">Purchase once to unlock a weapon for your company. Equip any unlocked weapon on any chassis.</p><div class="equipment">${WEAPONS.map((a,i)=>{const own=save.owned.includes(a.id)||u.weapon===a.id;return `<button data-equip="${a.id}" class="${u.weapon===a.id?'active':''}"><span class="weapon-index">0${i+1}</span><small>${a.type}</small><h3>${a.name}</h3><small>${a.damage} DMG / ${a.range} RANGE / ${a.ap} AP</small><p style="margin-top:12px;font-size:11px">${a.desc}</p><div class="note">${u.weapon===a.id?'EQUIPPED':own?'EQUIP WEAPON':money(a.price)+' / BUY & EQUIP'}</div></button>`}).join('')}</div><p class="note">Chassis art represents its factory loadout. The equipped weapon and its combat statistics are shown here.</p></section></div></div>`;
+  if(page==='workshop')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">ENGINEERING / CHASSIS & LOADOUT</div><h1>BUILT TO ENDURE.</h1></div><p>Refit the machine.<br>Protect the pilot inside.</p></div><div class="lance-tabs">${FRAMES.map((m,i)=>`<button data-select="${i}" class="${i===selected?'active':''}">${m.name}</button>`).join('')}</div><div class="split"><section class="workshop-chassis"><div class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</div><img class="unit-render" src="${chassisArt(selected,u.weapon)}" alt="${f.name} armored mech"><div class="workshop-meta"><h2>${f.name}</h2>${selected===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH <span aria-hidden="true">↗</span></a>':''}${stat('BODY / ARMOR',(f.hp+u.upgrade*25)+' HP / '+(f.armor+u.upgrade*2))}${stat('CONDITION',u.condition+'%',u.condition)}<div class="repairs"><button data-patch="${selected}" ${u.condition>=FIELD_PATCH?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><p class="note">Reinforcement adds 25 body HP and 2 armor. A free field patch restores a damaged chassis to ${FIELD_PATCH}% integrity.</p></div></section><section><div class="eyebrow">PRIMARY HARDPOINT / ${p.call}</div><h2 style="margin-top:12px">THE RIGHT TOOL.</h2><p class="note">Purchase once to unlock a weapon for your company. Equip any unlocked weapon on any chassis.</p><div class="equipment">${WEAPONS.map((a,i)=>{const own=save.owned.includes(a.id)||u.weapon===a.id;return `<button data-equip="${a.id}" class="${u.weapon===a.id?'active':''}"><span class="weapon-index">0${i+1}</span><small>${a.type}</small><h3>${a.name}</h3><small>${a.damage} DMG / ${a.range} RANGE / ${a.ap} AP</small><p style="margin-top:12px;font-size:11px">${a.desc}</p><div class="note">${u.weapon===a.id?'EQUIPPED':own?'EQUIP WEAPON':money(a.price)+' / BUY & EQUIP'}</div></button>`}).join('')}</div><p class="note">${wardenVisual(selected,u.weapon,-1)?'Preview shows the equipped weapon.':'Chassis art shows factory equipment. Equipped weapon stats are listed above.'}</p></section></div></div>`;
   if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">PERSONNEL / ACTIVE DUTY</div><h1>HUMAN AT THE CORE.</h1></div><p>Every pilot matters.<br>Each level adds 5% weapon damage.</p></div><div class="grid">${PILOTS.map((p,i)=>{const u=save.units[i];return `<article class="card pilot-card"><div class="pilot-image"><img src="${pilotArt(i)}" alt="Portrait of ${p.name}"></div><div class="pilot-details"><div class="eyebrow">${p.call} / ${FRAMES[i].name}</div><h2>${p.name}</h2>${stat('PILOT LEVEL',String(u.level).padStart(2,'0'))}${stat('EXPERIENCE',u.xp+' / '+(u.level*100),Math.min(100,100*u.xp/(u.level*100)))}<div class="pilot-skill">${icon(['lightning','crosshair','first-aid-kit'][i])}<h3>${p.skill}</h3></div><p>${p.desc}</p><div class="rule"></div><p>${['Former border guard. Holds the line when contracts turn ugly. The first to drop and the last to leave.','A reconnaissance specialist with a quiet reputation. Makes every shot count, especially the impossible ones.','Field engineer turned combat pilot. Keeps the company moving, one repaired reactor at a time.'][i]}</p></div></article>`}).join('')}</div></div>`;
   if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="reset">NEW CAREER</button><button id="guide">FIELD MANUAL</button></div></section></div>`;
   bind();
@@ -112,7 +119,7 @@ function renderBattle(){
   const ready=battle.phase==='player'&&!battle.busy,canFire=u&&u.ap>=weapon(u.weapon).ap&&u.hp.right>0;
   $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p>Eliminate the hostile lance.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>MANUAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
   <div class="turn">ROUND ${String(battle.turn).padStart(2,'0')}<small>${battle.phase==='player'?'YOUR LANCE / TAKE COMMAND':'HOSTILE LANCE / STAND BY'}</small></div>
-  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>SUBSYSTEM DETAILS</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${target?`<div class="combat-target"><img class="enemy" src="${chassisArt(target.frame)}" alt="Target ${target.name}"></div>`:''}<div class="parts">${['body','right','left','legs'].map(p=>`<button data-part="${p}" class="${p===targetPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===targetPart}"><span>${({body:'BODY',right:'WEAPON ARM',left:'SHIELD ARM',legs:'LEGS'})[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,targetPart)*100)}% HIT / ${damage(u,target)} DMG<br>${distance(u,target)<=weapon(u.weapon).range?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>DESTROY BODY TO NEUTRALIZE</div>${u?`<div class="combat-selected"><span class="eyebrow">${PILOTS[u.index].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${weapon(u.weapon).name}</b><br>${PILOTS[u.index].skill}: ${u.skill?'USED':PILOTS[u.index].desc}</p></div>`:''}</aside>
+  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>SUBSYSTEM DETAILS</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${target?`<div class="combat-target"><img class="enemy" src="${chassisArt(target.frame,target.weapon,target.face??1)}" alt="Target ${target.name}"></div>`:''}<div class="parts">${['body','right','left','legs'].map(p=>`<button data-part="${p}" class="${p===targetPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===targetPart}"><span>${({body:'BODY',right:'WEAPON ARM',left:'SHIELD ARM',legs:'LEGS'})[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,targetPart)*100)}% HIT / ${damage(u,target)} DMG<br>${distance(u,target)<=weapon(u.weapon).range?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>DESTROY BODY TO NEUTRALIZE</div>${u?`<div class="combat-selected"><span class="eyebrow">${PILOTS[u.index].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${weapon(u.weapon).name}</b><br>${PILOTS[u.index].skill}: ${u.skill?'USED':PILOTS[u.index].desc}</p></div>`:''}</aside>
   <div class="log">${battle.log.map(l=>'<div class="log-line">'+l+'</div>').join('')}</div><div class="hint">${battle.busy?'RESOLVING COMBAT':action==='move'?'MOVE / SELECT HIGHLIGHTED GROUND / 1 AP PER TILE':'FIRE / SELECT HOSTILE / '+(u?weapon(u.weapon).ap:3)+' AP PER ATTACK'}</div>
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''}" ${!t.alive||battle.busy?'disabled':''}><img src="${pilotArt(t.index)}" alt="${PILOTS[t.index].call}"><span><b>${t.name}</b><small>${t.alive?t.ap+' AP / '+t.hp.body+' HP':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="skill" title="${u?PILOTS[u.index].desc:''}" ${!u||u.skill||!ready||(u.index===2&&u.hp.body===u.max.body)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR'][u.index]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: 2 AP, halves incoming damage" ${!u||u.ap<2||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ 2 AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy){selected=+b.dataset.unit;renderBattle();persist()}});
@@ -153,10 +160,25 @@ function finish(win){let b=battle,c=b.contract;let salvage=win?450+c.difficulty*
 // Pre-rendered 2.5D battlefield: original raster art, depth ordering and live game effects.
 let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),scale=50,origin={x:0,y:0},shake=0,combatCamera=null,cameraBlend=0,viewZoom=1,frameDt=1/60;
 const artImages={},artMasks={},enemyArt={},reducedMotion=typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-for(const key of ['warden','kestrel','basilisk','concrete','barricade','contract-relay','contract-corridor','contract-frontier']){
+const legacyChassis=FRAMES.map(frame=>frame.name.toLowerCase());
+const bakedChassis=Object.values(wardenVisuals).flatMap(views=>Object.values(views).map(view=>view.key));
+const mechArtKeys=new Set([...legacyChassis,...bakedChassis]);
+for(const key of [...mechArtKeys,'concrete','barricade','contract-relay','contract-corridor','contract-frontier']){
  const im=new Image();im.decoding='async';artImages[key]=im;
- im.onload=()=>{const fi=['warden','kestrel','basilisk'].indexOf(key);if(fi>=0&&typeof OffscreenCanvas==='function'){try{const c=new OffscreenCanvas(128,128),g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,0,128,128);artMasks[fi]=g.getImageData(0,0,128,128);const tint=new OffscreenCanvas(384,384),tg=tint.getContext('2d');tg.filter='sepia(.33) saturate(.7) brightness(.83)';tg.drawImage(im,0,0,384,384);enemyArt[fi]=tint}catch{}}};
- im.onerror=()=>{console.warn('Unable to load game artwork:',key);toast('Artwork could not load. Refresh to retry.')};im.src=art(key);
+ im.onload=()=>{
+  if(mechArtKeys.has(key)&&typeof OffscreenCanvas==='function'){
+   try{
+    const mask=new OffscreenCanvas(128,128),g=mask.getContext('2d',{willReadFrequently:true});
+    g.drawImage(im,0,0,128,128);artMasks[key]=g.getImageData(0,0,128,128);
+    const tint=new OffscreenCanvas(384,384),tg=tint.getContext('2d');
+    tg.filter='sepia(.33) saturate(.7) brightness(.83)';tg.drawImage(im,0,0,384,384);enemyArt[key]=tint;
+   }catch{}
+  }
+  if(page==='workshop'&&!battle&&wardenVisual(selected,save.units[selected].weapon,-1)?.key===key){
+   const preview=$('.unit-render');if(preview)preview.src=art(key);
+  }
+ };
+ im.onerror=()=>{console.warn('Unable to load game artwork:',key);if(!bakedChassis.includes(key))toast('Artwork could not load. Refresh to retry.')};im.src=art(key);
 }
 function imageReady(im){return im&&im.complete&&im.naturalWidth>0}
 function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high'}
@@ -169,8 +191,13 @@ function background(){ctx.clearRect(0,0,W,H);if(battle){ctx.fillStyle='#141f29';
 function rain(t,combat=false){if(reducedMotion)return;ctx.save();ctx.strokeStyle=combat?'#b9d3e316':'#d1e0e323';ctx.lineWidth=.7;ctx.beginPath();const count=W<760?35:90;for(let i=0;i<count;i++){const x=(i*191.33+t*22)%(W+40)-20,y=(i*103.7+t*(145+i%5*15))%H;if(!combat&&x<W*.46)continue;ctx.moveTo(x,y);ctx.lineTo(x-2,y+13)}ctx.stroke();ctx.restore()}
 function hangar(t){rain(t);}
 function textureTile(x,z,inside){const im=artImages.concrete,p=project(x-.5,0,z-.5);if(imageReady(im)){const size=256,sx=((x*7+z*3+99)%3)*256,sy=((x*3+z*11+99)%3)*256;ctx.save();ctx.translate(p.x,p.y);ctx.transform(scale*.866/size,scale*.42/size,-scale*.866/size,scale*.42/size,0,0);ctx.drawImage(im,sx,sy,256,256,0,0,size,size);ctx.restore();tile(x,z,inside?'#20344516':'#0c192cb3',inside?'#acb9bd1f':null)}else tile(x,z,'#293943','#c3d1db15')}
-function spriteFlip(unit){const desired=unit.face??(unit.team==='enemy'?1:-1),nativeDirection=unit.frame===1?1:-1;return desired!==nativeDirection}
-function unitBounds(u){const p=project(u.vx,0,u.vz),size=scale*([2.18,2.1,2.35][u.frame]);return{x:p.x-size*.5,y:p.y-size*.94,w:size,h:size}}
+function unitFacing(u){return u.face??(u.team==='enemy'?1:-1)}
+function activeWardenVisual(u){
+ const visual=wardenVisual(u.frame,u.weapon,unitFacing(u));
+ return visual&&imageReady(artImages[visual.key])?visual:undefined;
+}
+function spriteFlip(u,visual=activeWardenVisual(u)){return !visual&&unitFacing(u)!==(u.frame===1?1:-1)}
+function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*([2.18,2.1,2.35][u.frame]);return{x:p.x-size*.5,y:p.y-size*(visual?.ground??.94),w:size,h:size}}
 // A small skinned mesh articulates the existing armor art without new image requests.
 const MECH_MOTION=[
  {step:.31,hip:.59,split:.52,foot:[.96,.98],mass:1,muzzle:[.075,.565]},
@@ -186,11 +213,11 @@ function advanceUnitAnimation(u,t,dt){
  else{u.vx=u.x;u.vz=u.z}
  u.braceBlend=(u.braceBlend??0)+((u.brace?1:0)-(u.braceBlend??0))*(1-Math.exp(-dt*13));
 }
-function animationPose(u,t){
- const rig=MECH_MOTION[u.frame],m=u.motion,phase=m?clamp01((t-m.start)/m.duration):0;
+function animationPose(u,t,visual=activeWardenVisual(u)){
+ const rig=visual||MECH_MOTION[u.frame],m=u.motion,phase=m?clamp01((t-m.start)/m.duration):0;
  const cycle=m?m.gaitBase+phase:0,routePhase=m?(m.stepIndex+phase)/m.totalSteps:0;
  const walk=m&&!reducedMotion?smoothRange(0,.12,routePhase)*(1-smoothRange(.87,1,routePhase)):0;
- const facing=spriteFlip(u)?-1:1,frameSize=[2.18,2.1,2.35][u.frame];
+ const flip=spriteFlip(u,visual),facing=flip?-1:1,frameSize=[2.18,2.1,2.35][u.frame];
  const dx=m?((m.toX-m.fromX)-(m.toZ-m.fromZ))*.866/frameSize*facing:0;
  const dy=m?((m.toX-m.fromX)+(m.toZ-m.fromZ))*.42/frameSize:0;
  let recoil=0;const age=t-(u.fireTime??-100);
@@ -198,20 +225,20 @@ function animationPose(u,t){
  const impactAge=t-(u.hitTime??-100),impact=!reducedMotion?dampedImpulse(impactAge,28,11):0;
  const death=u.alive?0:reducedMotion?1:clamp01((t-(u.deathTime??t-1))/.72);
  const landAge=t-(u.landTime??-100),land=!reducedMotion&&landAge>=0&&landAge<.4?Math.sin(landAge*30)*Math.exp(-landAge*15):0;
- return{rig,phase,cycle,walk,dx,dy,recoil,impact,death,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
+ return{rig,flip,nativeDirection:visual?unitFacing(u):u.frame===1?1:-1,phase,cycle,walk,dx,dy,recoil,impact,death,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
 }
 function deformMechVertex(u,x,y,pose){
  const{rig}=pose,leg=smoothRange(rig.hip-.035,rig.hip+.065,y),torso=1-leg;
  const right=smoothRange(rig.split-.045,rig.split+.045,x),left=1-right;
  let px=x,py=y;
- const nativeDirection=u.frame===1?1:-1,recoilScale=({rifle:.025,shotgun:.047,missile:.021,rail:.062})[u.weapon]||.025;
+ const nativeDirection=pose.nativeDirection,recoilScale=({rifle:.025,shotgun:.047,missile:.021,rail:.062})[u.weapon]||.025;
  const kick=pose.recoil*recoilScale*(1-pose.brace*.4),hipX=rig.split,hipY=rig.hip;
  const tilt=(-nativeDirection*kick*.9)+pose.impact*pose.impactX*.033+pose.walk*pose.dx*Math.sin(Math.PI*pose.phase)*.045;
  const rx=x-hipX,ry=y-hipY;
  px+=((rx*Math.cos(tilt)-ry*Math.sin(tilt))-rx)*torso;
  py+=((rx*Math.sin(tilt)+ry*Math.cos(tilt))-ry)*torso;
  px+=(-nativeDirection*kick+pose.impact*pose.impactX*.025)*torso;
- py+=(pose.idle+pose.brace*.027+pose.land*.013*rig.mass+pose.impact*pose.impactY*.018)*torso;
+ py+=(pose.idle+pose.brace*.027+pose.land*.013*MECH_MOTION[u.frame].mass+pose.impact*pose.impactY*.018)*torso;
  if(pose.walk){
   for(let side=0;side<2;side++){
    const weight=side?right:left,phase=((pose.cycle+side)%2+2)%2,swing=phase<1;
@@ -250,11 +277,11 @@ function drawArticulatedMech(im,u,w,h,pose){
  }
 }
 function mechAttachmentPoint(u,part='muzzle',t=clock){
- const b=unitBounds(u),rig=MECH_MOTION[u.frame];
+ const visual=activeWardenVisual(u),b=unitBounds(u,visual),pose=animationPose(u,t,visual),rig=pose.rig;
  const locations={body:[rig.split,.34],right:[u.frame===1?.38:.30,.46],left:[.81,.39],legs:[rig.split,.79]};
- const source=part==='muzzle'?(u.weapon==='missile'?[u.frame===2?.36:.69,.16]:rig.muzzle):(locations[part]||locations.body);
- const p=deformMechVertex(u,source[0],source[1],animationPose(u,t));
- return{x:b.x+(spriteFlip(u)?1-p.x:p.x)*b.w,y:b.y+p.y*b.h};
+ const source=visual?.[part]||(part==='muzzle'?(u.weapon==='missile'?[u.frame===2?.36:.69,.16]:rig.muzzle):(locations[part]||locations.body));
+ const p=deformMechVertex(u,source[0],source[1],pose);
+ return{x:b.x+(pose.flip?1-p.x:p.x)*b.w,y:b.y+p.y*b.h};
 }
 function drawMechSmoke(u,t,destroyed=false){
  const age=t-(u.deathTime??t-20);if(destroyed&&age>9)return;
@@ -264,11 +291,12 @@ function drawMechSmoke(u,t,destroyed=false){
  ctx.restore();
 }
 function drawUnit(u,t){
- const p=project(u.vx,0,u.vz),b=unitBounds(u),original=artImages[FRAMES[u.frame].name.toLowerCase()],pose=animationPose(u,t);
- const im=u.team==='enemy'&&enemyArt[u.frame]?enemyArt[u.frame]:original;
+ const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),b=unitBounds(u,visual),pose=animationPose(u,t,visual);
+ const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
+ const im=u.team==='enemy'&&enemyArt[key]?enemyArt[key]:original;
  ctx.save();ctx.fillStyle=u.alive?'#050c12aa':'#090e13c9';ctx.beginPath();ctx.ellipse(p.x,p.y+scale*.025,scale*(.67+pose.brace*.05),scale*.22,0,0,Math.PI*2);ctx.fill();ctx.restore();if(!imageReady(original))return;
- ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(spriteFlip(u))ctx.scale(-1,1);
- if(u.team==='enemy'&&!enemyArt[u.frame])ctx.filter='sepia(.33) saturate(.7) brightness(.83)';
+ ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)ctx.scale(-1,1);
+ if(u.team==='enemy'&&!enemyArt[key])ctx.filter='sepia(.33) saturate(.7) brightness(.83)';
  if(!u.alive){const fall=smoothRange(.16,1,pose.death);ctx.globalAlpha=1-.32*fall;ctx.translate(scale*.18*fall,0);ctx.rotate(-.93*fall);ctx.scale(1-.18*fall,1-.18*fall);if(pose.death>=1)ctx.filter='brightness(.35) saturate(.35)'}
  const articulated=!reducedMotion&&(pose.walk>.001||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||(pose.death>0&&pose.death<1));
  if(articulated)drawArticulatedMech(im,u,b.w,b.h,pose);
@@ -323,8 +351,8 @@ canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefa
 function screenTile(clientX,clientY){let sx=(clientX-origin.x)/(scale*.866),sy=(clientY-origin.y)/(scale*.42);return{x:Math.round((sx+sy)/2),z:Math.round((sy-sx)/2)}}
 function pick(clientX,clientY){
  const units=battle.units.filter(u=>u.alive).sort((a,b)=>(b.vx+b.vz)-(a.vx+a.vz));
- for(const u of units){const b=unitBounds(u),px=(clientX-b.x)/b.w,py=(clientY-b.y)/b.h;if(px<0||py<0||px>1||py>1)continue;
- const mask=artMasks[u.frame];if(mask){const ix=Math.min(mask.width-1,Math.floor((spriteFlip(u)?1-px:px)*mask.width)),iy=Math.min(mask.height-1,Math.floor(py*mask.height));if(mask.data[(iy*mask.width+ix)*4+3]<35)continue}
+ for(const u of units){const visual=activeWardenVisual(u),b=unitBounds(u,visual),px=(clientX-b.x)/b.w,py=(clientY-b.y)/b.h;if(px<0||py<0||px>1||py>1)continue;
+ const mask=artMasks[visual?.key||legacyChassis[u.frame]];if(mask){const ix=Math.min(mask.width-1,Math.floor((spriteFlip(u,visual)?1-px:px)*mask.width)),iy=Math.min(mask.height-1,Math.floor(py*mask.height));if(mask.data[(iy*mask.width+ix)*4+3]<35)continue}
  else if(Math.abs(px-.5)>.36)continue;return u}return null;
 }
 canvas.addEventListener('pointermove',e=>{if(!battle)return;let picked=pick(e.clientX,e.clientY),p=picked?{x:picked.x,z:picked.z}:screenTile(e.clientX,e.clientY);let changed=!hover||hover.x!==p.x||hover.z!==p.z;hover=p;if(changed&&picked?.team==='enemy')renderBattle()});
