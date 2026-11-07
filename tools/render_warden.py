@@ -5,12 +5,15 @@ Run from the repository with Blender 4.3+ and Pillow available to its Python:
 """
 import json
 import math
+import subprocess
+import sys
 import tempfile
+from hashlib import sha256
 from pathlib import Path
 
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
-from mathutils import Vector
+from mathutils import Quaternion, Vector
 from PIL import Image
 
 DIST = Path(__file__).resolve().parents[1] / "dist"
@@ -32,38 +35,54 @@ for name in ("hailstorm", "breaker", "cleaver", "piledriver"):
     for child in objects[name].children_recursive:
         child.hide_render = True
 
-for side, shoulder, elbow, wrist in [
-    ("R", -.96, -math.pi / 2 + .96, 0),
-    ("L", -.15, -.56, .06),
-]:
-    objects[f"shoulder.{side}"].rotation_euler.x = shoulder
-    objects[f"elbow.{side}"].rotation_euler.x = elbow
-    objects[f"wrist.{side}"].rotation_euler.x = wrist
-    objects[f"pauldron.{side}"].rotation_euler.x = shoulder * .28
-
-# Slight ready stance. Equal and opposite ankle rotation keeps the soles flat.
-crouch = .24
-objects["pelvis"].location.z -= (1.45 + 1.55) * (1 - math.cos(crouch))
-for side in "LR":
-    objects[f"hip.{side}"].rotation_euler.x = -crouch
-    objects[f"knee.{side}"].rotation_euler.x = 2 * crouch
-    objects[f"ankle.{side}"].rotation_euler.x = -crouch
+motion = json.loads(subprocess.check_output(
+    ["node", str(Path(__file__).with_name("sample_warden_motion.cjs"))]
+))
 
 for root in weapon_roots.values():
     root.parent = objects["socket.R"]
     root.location = (0, 0, 0)
-    root.rotation_euler.x = math.pi / 2
+    root.rotation_mode = "QUATERNION"
+    root.rotation_quaternion = Quaternion((1, 0, 0), math.pi / 2)
 
-for anchor in objects:
-    if not anchor.name.startswith("piston.") or not anchor.name.endswith(".a"):
-        continue
-    partner = objects[anchor.name[:-1] + "b"]
+def rotate(name, x=0, y=0, z=0):
+    # The bench uses intrinsic XYZ. Map the ordered rotations to Blender's axes.
+    obj = objects[name]
+    obj.rotation_mode = "QUATERNION"
+    obj.rotation_quaternion = (
+        Quaternion((1, 0, 0), x) @ Quaternion((0, 0, 1), y) @ Quaternion((0, -1, 0), z)
+    )
+
+def apply_pose(pose, weapon):
+    pelvis, gun = pose["pelvis"], pose["gun"]
+    objects["pelvis"].location = point(*pelvis["position"])
+    rotate("pelvis", z=pelvis["roll"])
+    rotate("spine", x=pose["spinePitch"])
+    for side, leg in zip("LR", pose["legs"]):
+        rotate(f"hip.{side}", *leg["hip"])
+        rotate(f"knee.{side}", x=leg["knee"])
+        rotate(f"ankle.{side}", *leg["ankle"])
+    rotate("shoulder.R", *gun["shoulder"])
+    rotate("elbow.R", x=gun["elbow"])
+    rotate("wrist.R", x=gun["wrist"])
+    rotate("pauldron.R", x=gun["shoulder"][0] * .28, z=gun["shoulder"][2] * .4)
+    rotate("shoulder.L", x=pose["leftShoulder"])
+    rotate("elbow.L", x=-.56)
+    rotate("wrist.L", x=.06)
+    rotate("pauldron.L", x=pose["leftShoulder"] * .28)
+    weapon.location.z = -gun["offset"]
     bpy.context.view_layer.update()
-    for source, target in ((anchor, partner), (partner, anchor)):
-        direction = source.parent.matrix_world.to_quaternion().inverted() @ (target.matrix_world.translation - source.matrix_world.translation)
-        # glTF local +Z maps to Blender local -Y for these exported empties.
-        source.rotation_mode = "QUATERNION"
-        source.rotation_quaternion = direction.to_track_quat("-Y", "Z")
+    for anchor in objects:
+        if not anchor.name.startswith("piston.") or not anchor.name.endswith(".a"):
+            continue
+        partner = objects[anchor.name[:-1] + "b"]
+        for source, target in ((anchor, partner), (partner, anchor)):
+            direction = source.parent.matrix_world.to_quaternion().inverted() @ (
+                target.matrix_world.translation - source.matrix_world.translation
+            )
+            source.rotation_mode = "QUATERNION"
+            source.rotation_quaternion = direction.to_track_quat("-Y", "Z")
+    bpy.context.view_layer.update()
 
 def point(x, y, z):
     return Vector((x, -z, y))
@@ -92,7 +111,7 @@ camera_data = bpy.data.cameras.new("Tactical camera")
 camera = objects.new("Tactical camera", camera_data)
 scene.collection.objects.link(camera)
 scene.camera = camera
-camera_data.type, camera_data.ortho_scale = "ORTHO", 7.65
+camera_data.type, camera_data.ortho_scale = "ORTHO", 9.65
 scene.render.engine = "CYCLES"
 scene.cycles.samples = 40
 scene.cycles.use_denoising = False
@@ -110,44 +129,107 @@ def anchor(location):
 def position(name):
     return objects[name].matrix_world.translation.copy()
 
-ground = .923
+def hardpoints(muzzle):
+    return {
+        "muzzle": anchor(muzzle.matrix_world.translation),
+        "body": anchor(objects["spine"].matrix_world @ point(0, 1.1, .63)),
+        "right": anchor(position("shoulder.R").lerp(position("elbow.R"), .55)),
+        "left": anchor(position("shoulder.L").lerp(position("elbow.L"), .55)),
+        "legs": anchor(position("knee.L").lerp(position("knee.R"), .50)),
+    }
+
+def render_sprite(tmp, key, size):
+    scene.render.resolution_x = scene.render.resolution_y = size
+    scene.cycles.samples = 40 if size >= 512 else 16
+    scene.render.filepath = str(Path(tmp) / f"{key}.png")
+    bpy.ops.render.render(write_still=True)
+    with Image.open(scene.render.filepath) as source:
+        sprite = source.convert("RGBA")
+    bounds = sprite.getchannel("A").getbbox()
+    if not bounds or min(bounds[0], bounds[1], size-bounds[2], size-bounds[3]) <= 0:
+        sprite.save(Path(tempfile.gettempdir()) / "warden-clipped.png")
+        raise ValueError((key, bounds))
+    return sprite
+
+loop_only = "--loop-only" in sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else False
+ground = .89
+cell, columns = 320, 5
+pose_count = len(motion["gait"]) + len(motion["kicks"])
 out = {}
 with tempfile.TemporaryDirectory() as tmp:
     for face, sign in [("left", 1), ("right", -1)]:
+        if loop_only and face != "left":
+            continue
         camera.location = point(10.2, 8.2, 13.5) if sign == 1 else point(-14, 8.2, 10)
         aim(camera, point(0, 3.45, .35))
         camera_data.shift_x = camera_data.shift_y = 0
         bpy.context.view_layer.update()
+        ground_x = .54 if sign == 1 else .47
         base = world_to_camera_view(scene, camera, point(0, .10, .2))
-        camera_data.shift_x, camera_data.shift_y = base.x - .5, base.y - (1 - ground)
+        camera_data.shift_x, camera_data.shift_y = base.x - ground_x, base.y - (1 - ground)
         bpy.context.view_layer.update()
         for loadout, root in weapon_roots.items():
+            make_loop = loadout == "rifle" and face == "left"
+            if loop_only and not make_loop:
+                continue
             for other in weapon_roots.values():
                 for obj in other.children_recursive:
                     obj.hide_render = other != root
             key = f"warden-{loadout}-{face}"
-            scene.render.filepath = str(Path(tmp) / f"{key}.png")
-            bpy.ops.render.render(write_still=True)
-            with Image.open(scene.render.filepath) as sprite:
-                bounds = sprite.getchannel("A").getbbox()
-                assert bounds and bounds[0] > 0 and bounds[2] < sprite.width and bounds[3] < sprite.height, (key, bounds)
-                sprite.save(ASSETS / f"{key}.webp", quality=88, method=6)
+            apply_pose(motion["idle"], root)
+            if not loop_only:
+                render_sprite(tmp, key, 640).save(ASSETS / f"{key}.webp", quality=88, method=6)
             root_muzzle = descendant(root, "muzzle")
             hip = anchor(position("pelvis"))
             feet = sorted(anchor(position(f"ankle.{s}") - Vector((0, 0, .30))) for s in "LR")
-            out.setdefault(loadout, {})[face] = {
+            visual = {
                 "key": key,
                 "ground": ground,
+                "scale": 1.24,
+                "groundX": ground_x,
                 "hip": hip[1],
                 "split": hip[0],
                 "foot": [max(.90, p[1]) for p in feet],
-                "muzzle": anchor(root_muzzle.matrix_world.translation),
-                "body": anchor(position("spine") + point(0, 1.1, .63)),
-                "right": anchor(position("shoulder.R").lerp(position("elbow.R"), .55)),
-                "left": anchor(position("shoulder.L").lerp(position("elbow.L"), .55)),
-                "legs": anchor(position("knee.L").lerp(position("knee.R"), .50)),
+                **hardpoints(root_muzzle),
+                "motion": {
+                    "key": f"{key}-motion",
+                    "cell": cell,
+                    "columns": columns,
+                    "gait": [],
+                    "kick": [],
+                },
             }
+            atlas = Image.new("RGBA", (cell * columns, cell * math.ceil(pose_count / columns)))
+            poses = [(None, pose) for pose in motion["gait"]] + [(entry["level"], entry["pose"]) for entry in motion["kicks"]]
+            loop_frames = []
+            for index, (kick, pose) in enumerate(poses):
+                apply_pose(pose, root)
+                sprite = render_sprite(tmp, f"{key}-{index}", 512 if make_loop and loop_only else cell)
+                if make_loop:
+                    loop_frames.append(sprite)
+                if not loop_only:
+                    atlas.paste(sprite.resize((cell, cell), Image.Resampling.LANCZOS),
+                                (index % columns * cell, index // columns * cell))
+                frame = {"index": index, **hardpoints(root_muzzle)}
+                if kick is None:
+                    visual["motion"]["gait"].append(frame)
+                else:
+                    visual["motion"]["kick"].append({"level": kick, **frame})
+            if not loop_only:
+                atlas.save(ASSETS / f"{key}-motion.webp", quality=83, method=6)
+            if make_loop:
+                walk = list(range(len(motion["gait"])))
+                kick = list(range(len(walk), pose_count))
+                sequence = walk * 2 + kick + kick[-2::-1]
+                frames = [loop_frames[i] for i in sequence]
+                frames[0].save(ASSETS / "warden-rig-loop.webp", save_all=True,
+                               append_images=frames[1:], duration=85, loop=0, quality=82, method=4)
+            out.setdefault(loadout, {})[face] = visual
+if loop_only:
+    sys.exit(0)
 (DIST / "warden-visuals.js").write_text(
     "// Generated by tools/render_warden.py from the rig bench GLBs.\n"
-    "window.IRON_VOW_WARDEN_ART = " + json.dumps(out, indent=2) + ";\n"
+    + "".join(f"// {name} {sha256((BENCH / name).read_bytes()).hexdigest()}\n"
+              for name in ("warden.glb", "weapons.glb"))
+    + "window.IRON_VOW_WARDEN_ART = " + json.dumps(out, separators=(",", ":")) + ";\n"
 )

@@ -70,8 +70,8 @@ button:focus-visible{outline:2px solid var(--socket);outline-offset:2px}
 .spec pre{margin:0;background:var(--ink);border:1px solid var(--line);padding:12px;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--fg);overflow-x:auto}
 .spec pre .s{color:var(--socket)} .spec pre .a{color:var(--accent)} .spec pre .m{color:var(--muted)}
 .fallback{position:fixed;inset:78px 16px 28px;display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;gap:8px;font-family:var(--mono);color:var(--muted);text-align:center;pointer-events:none}
-.fallback img{width:100%;height:100%;object-fit:contain}
-.static-preview .dock,.static-preview .tools button{display:none}
+.fallback img{width:100%;height:100%;max-width:680px;max-height:680px;object-fit:contain;align-self:center}
+.baked-preview .dock,.baked-preview .tools button{display:none}
 
 </style>
 
@@ -159,16 +159,19 @@ button:focus-visible{outline:2px solid var(--socket);outline-offset:2px}
 
 <script src="./vendor/three.min.js"></script>
 <script src="./vendor/GLTFLoader.js"></script>
+<script src="./rig-motion.js"></script>
 <script>
 (function(){
 'use strict';
-function showStaticPreview(message){
-  document.body.classList.add('static-preview');
-  document.getElementById('status').textContent='STATIC PREVIEW';
-  document.body.insertAdjacentHTML('beforeend','<div class="fallback"><img src="../assets/warden-rifle-left.webp" alt="Warden with Kestrel AR-8"><p>'+message+'</p></div>');
+function showBakedPreview(message){
+  document.body.classList.add('baked-preview');
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('status').textContent=still?'STATIC PREVIEW':'RIG MOTION PREVIEW';
+  const art=still?'warden-rifle-left.webp':'warden-rig-loop.webp';
+  document.body.insertAdjacentHTML('beforeend','<div class="fallback"><img src="../assets/'+art+'" alt="Warden with Kestrel AR-8"><p>'+message+'</p></div>');
 }
-if(!window.THREE){showStaticPreview('The 3D engine could not load.');return;}
-const T=THREE, V3=(x,y,z)=>new T.Vector3(x,y,z);
+if(!window.THREE||!window.IronVowRigMotion){showBakedPreview('The 3D engine could not load.');return;}
+const T=THREE, V3=(x,y,z)=>new T.Vector3(x,y,z), motion=IronVowRigMotion;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const damp=(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt));
@@ -179,28 +182,28 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const canvas=document.getElementById('c');
 let renderer;
 try{renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});}
-catch(e){showStaticPreview('This browser has WebGL disabled or unavailable.');return;}
+catch(e){showBakedPreview('WebGL is unavailable. Showing the Warden rig preview.');return;}
 const mobile=matchMedia('(pointer:coarse)').matches;
 renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.75:2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
-renderer.toneMapping=T.ACESFilmicToneMapping; renderer.toneMappingExposure=1.0;
+renderer.toneMapping=T.ACESFilmicToneMapping; renderer.toneMappingExposure=1.03; renderer.outputEncoding=T.sRGBEncoding;
 const scene=new T.Scene();
-scene.background=new T.Color(0x17140f); scene.fog=new T.Fog(0x17140f,34,90);
+scene.background=new T.Color(0x151e27).convertSRGBToLinear(); scene.fog=new T.Fog(scene.background,22,65);
 const camera=new T.PerspectiveCamera(45,1,.1,220);
 
-// environment reflections: a tiny warm hangar light box baked to PMREM
-(function(){const env=new T.Scene();env.background=new T.Color(0x1c1914);
+// Long overhead fixtures and cool bay doors provide separate reflections on steel.
+(function(){const env=new T.Scene();env.background=new T.Color(0x18232f).convertSRGBToLinear();
   const add=(w,h,c,x,y,z,ry)=>{const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:c,side:T.DoubleSide}));m.position.set(x,y,z);m.rotation.y=ry||0;env.add(m);};
-  add(14,5,0xffd9a0,0,9,-12); add(14,5,0xffcf8a,12,9,0,-PI/2); add(10,3,0x6f8fb0,-12,6,4,PI/2);
-  const fl=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshBasicMaterial({color:0x3a342b}));fl.rotation.x=-PI/2;fl.position.y=-2;env.add(fl);
+  add(14,3,0xa2c6ed,0,9,-12); add(14,3,0xffe1ba,12,9,0,-PI/2); add(10,3,0x809cb8,-12,6,4,PI/2);
+  const fl=new T.Mesh(new T.PlaneGeometry(40,40),new T.MeshBasicMaterial({color:0x1c2832}));fl.rotation.x=-PI/2;fl.position.y=-2;env.add(fl);
   const pm=new T.PMREMGenerator(renderer);scene.environment=pm.fromScene(env,.04).texture;pm.dispose();})();
 
-scene.add(new T.HemisphereLight(0xe2d2b0,0x16161a,.38));
-const sun=new T.DirectionalLight(0xffd59a,2.4); sun.position.set(-9,20,10);
+scene.add(new T.HemisphereLight(0xaac6de,0x27323c,.53));
+const sun=new T.DirectionalLight(0xffe4c5,1.85); sun.position.set(8,13,9);
 sun.castShadow=true; const sm=mobile?1024:2048; sun.shadow.mapSize.set(sm,sm);
 Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:60}); sun.shadow.bias=-.0006; sun.shadow.normalBias=.02;
 scene.add(sun);
-const rim=new T.DirectionalLight(0x86aed0,1.0); rim.position.set(12,8,-12); scene.add(rim);
+const rim=new T.DirectionalLight(0x93bdf2,1.4); rim.position.set(-10,8,-10); scene.add(rim);
 const muzzleLight=new T.PointLight(0xffa040,0,14,2); scene.add(muzzleLight);
 const impactLight=new T.PointLight(0xff8a3a,0,12,2); scene.add(impactLight);
 
@@ -251,11 +254,12 @@ const boltGeo=new T.CylinderGeometry(.035,.035,.035,6);
 function bolts(p,m,pts,axis){for(const [x,y,z] of pts){const b=new T.Mesh(boltGeo,m);b.position.set(x,y,z);if(axis==='x')b.rotation.z=PI/2;else if(axis==='z')b.rotation.x=PI/2;p.add(b);}}
 
 /* ---------- hangar ---------- */
-const floor=new T.Mesh(new T.PlaneGeometry(140,140),new T.MeshStandardMaterial({map:floorTex,roughness:.92,metalness:.05,envMapIntensity:.3}));
+for(const map of [floorTex,padTex,hazardTex,windowTex,bannerTex])map.encoding=T.sRGBEncoding;
+const floor=new T.Mesh(new T.PlaneGeometry(140,140),new T.MeshStandardMaterial({map:floorTex,roughness:.76,metalness:.1,envMapIntensity:.48}));
 floor.rotation.x=-PI/2; floor.receiveShadow=true; scene.add(floor);
 const padMats=[new T.MeshStandardMaterial({map:hazardTex,roughness:.7}),new T.MeshStandardMaterial({map:padTex,roughness:.8,metalness:.2,envMapIntensity:.4}),new T.MeshStandardMaterial({color:0x222222})];
 const pad=new T.Mesh(new T.CylinderGeometry(6.2,6.6,PAD,6,1,false),padMats); pad.position.y=PAD/2; pad.rotation.y=PI/6; pad.receiveShadow=true; scene.add(pad);
-const wallMat=new T.MeshStandardMaterial({color:0x2c2a26,roughness:.9,metalness:.3,envMapIntensity:.3});
+const wallMat=new T.MeshStandardMaterial({color:0x171e25,roughness:.9,metalness:.3,envMapIntensity:.3});
 const steelY=new T.MeshStandardMaterial({color:0xb88a22,roughness:.6,metalness:.4});
 const darkSteel=new T.MeshStandardMaterial({color:0x26282a,roughness:.6,metalness:.6});
 box(scene,80,30,1,wallMat,10,15,-28); box(scene,1,30,80,wallMat,30,15,4);
@@ -554,8 +558,6 @@ async function loadRigidGLB(url){
   });
   for(const m of meshMaterials(asset)){
     m.envMapIntensity=/steel/i.test(m.name)?1.2:.6;
-    // Match the painted finishes to the bench's existing linear output.
-    if(m.name==='warden_atlas')m.color.multiplyScalar(1.5);
     // A single Warden atlas contains both paint and bare steel.
     // Use the ORM metalness to boost steel reflections without another draw.
     if(m.metalnessMap){
@@ -763,22 +765,7 @@ function samplePose(keys,t){
 }
 
 /* ---------- locomotion + IK ---------- */
-const A=1.45,B=1.55, STRIDE=1.0, LIFT=.85, STANCE=.6, GAIT_HZ=.42;
-function solveLeg(leg,target){
-  const p=rig.pelvis;
-  const hx=p.position.x+leg.hip.position.x, hy=p.position.y+leg.hip.position.y, hz=p.position.z;
-  const vx=target.x-hx, vy=target.y-hy, vz=target.z-hz;
-  const roll=Math.atan2(vx,-vy);
-  const L=Math.min(Math.hypot(vx,vy,vz),A+B-.001);
-  const phi=Math.atan2(vz,Math.hypot(vx,vy));
-  const alpha=Math.acos(clamp((A*A+L*L-B*B)/(2*A*L),-1,1));
-  const bend=PI-Math.acos(clamp((A*A+B*B-L*L)/(2*A*B),-1,1));
-  leg.hip.rotation.set(-(phi+alpha),0,roll-p.rotation.z);
-  leg.kn.rotation.x=bend;
-  leg.an.rotation.set((phi+alpha)-bend,0,-roll+p.rotation.z);
-}
-const footTarget=V3(0,0,0);
-const smoother=q=>q*q*q*(q*(q*6-15)+10);
+const GAIT_HZ=.42;
 function updateLocomotion(dt,t){
   loco.blend=damp(loco.blend,walking?1:0,1.6,dt);
   const w=loco.blend; loco.phase+=dt*GAIT_HZ*w; const g=loco.phase;
@@ -786,21 +773,19 @@ function updateLocomotion(dt,t){
   spr(S.comp,80,11,dt); S.comp.x=clamp(S.comp.x,-.38,.1);
   spr(S.knock,40,9,dt);
   const breathe=Math.sin(t*1.3)*.035*(1-w);
-  p.position.y=3.46+w*(.05*Math.cos(4*PI*(g-.3))-.09)+breathe+S.comp.x-Math.max(0,mp.lunge)*.3;
-  p.position.x=w*.22*Math.sin(2*PI*(g-.05));
-  p.position.z=mp.lunge*.55+S.knock.x;
-  p.rotation.z=w*.05*Math.sin(2*PI*(g-.05));
+  const pelvis=motion.walkPelvis(w,g,breathe,S.comp.x,S.knock.x,mp.lunge);
+  p.position.set(...pelvis.position);
+  p.rotation.z=pelvis.roll;
   rig.legs.forEach((leg,i)=>{
-    const ph=((g+i*.5)%1+1)%1; let z,y=0,pitch=0;
-    if(ph<STANCE){z=STRIDE-2*STRIDE*(ph/STANCE);}
-    else{const q=(ph-STANCE)/(1-STANCE);z=-STRIDE+2*STRIDE*smoother(q);
-      y=q<.42?LIFT*(1-Math.pow(1-q/.42,3)):LIFT*(1-Math.pow((q-.42)/.58,3));
-      pitch=q<.3?.5*Math.sin(PI*q/.3):q>.62?-.38*Math.sin(PI*(q-.62)/.38):0;}
-    if(w>.45){if(ph<leg.prevP)footfall(leg,w);else if(leg.prevP<STANCE&&ph>=STANCE)liftoff(leg);}
-    leg.prevP=ph;
-    footTarget.set(leg.restX,PAD+.3+y*w,leg.restZ*(1-w)+z*w);
-    solveLeg(leg,footTarget);
-    leg.an.rotation.x+=pitch*w;
+    const foot=motion.gaitFoot(g+i*.5);
+    if(w>.45){if(foot.phase<leg.prevP)footfall(leg,w);else if(leg.prevP<motion.stance&&foot.phase>=motion.stance)liftoff(leg);}
+    leg.prevP=foot.phase;
+    const target=[leg.restX,PAD+.3+foot.y*w,leg.restZ*(1-w)+foot.z*w];
+    const pose=motion.solveLeg(pelvis.position,leg.hip.position.toArray(),pelvis.roll,target);
+    leg.hip.rotation.set(...pose.hip);
+    leg.kn.rotation.x=pose.knee;
+    leg.an.rotation.set(...pose.ankle);
+    leg.an.rotation.x+=foot.pitch*w;
   });
 }
 function footfall(leg,w){
@@ -828,9 +813,8 @@ function updateUpperBody(dt,t){
   const R=gun.recoil;
   rig.spine.rotation.set(mp.tp+S.pitch.x*.18+w*.05-R*.05,aim.yaw+mp.ty,S.roll.x);
   rig.neck.rotation.set(-aim.elev*.4-S.pitch.x*.1,clamp(Math.atan2(dx,dz)-aim.yaw,-.5,.5)*.6+Math.sin(t*.5)*.05,0);
-  const arR=rig.arms.R, total=-PI/2-aim.elev;
-  const sh0=-.5-.55*aim.elev+S.arm.x*.05, el0=total-sh0;
-  arR.sh.rotation.set(sh0+R*.38,0,-.06); arR.el.rotation.x=Math.min(0,el0-R*.6); arR.wr.rotation.x=-R*.12;
+  const arR=rig.arms.R, right=motion.gunPose(aim.elev,R,S.arm.x);
+  arR.sh.rotation.set(...right.shoulder); arR.el.rotation.x=right.elbow; arR.wr.rotation.x=right.wrist;
   const arL=rig.arms.L;
   arL.sh.rotation.set(mp.lsx+w*.14*Math.sin(2*PI*g-.6)+S.arm.x*.16+Math.sin(t*1.3)*.02,0,mp.lsz);
   arL.el.rotation.x=Math.min(0,mp.lel-S.arm.x*.08); arL.wr.rotation.x=mp.lwr;
@@ -870,7 +854,7 @@ function updateGun(dt){
   if(I.barrels){gun.spin=damp(gun.spin,(gun.state==='spin'||gun.state==='burst')?30:0,gun.state==='idle'?1.2:4,dt);I.barrels.rotation.z+=gun.spin*dt;}
   if(I.glowMat){I.glowMat.emissiveIntensity=.5+gun.charge*5+(gun.state==='cool'?Math.max(0,1-gun.t*3)*4:0);
     if(gun.state==='charge'&&Math.random()<.5){I.muzzle.getWorldPosition(tmp);spawnSparks(tmp,1,2,0x9fefff);}}
-  I.recoil.position.z=-gun.recoil*.35;
+  I.recoil.position.z=motion.recoilOffset(gun.recoil);
   grow(I,dt);
 }
 function updateMeleePose(dt){
@@ -997,13 +981,13 @@ function loadProductionAssets(){
 }
 
 /* ---------- camera ---------- */
-const cam={az:-.9,el:.13,dist:17,tgt:V3(-.5,3.8,4.2),userDist:null,baseFov:45};
+const cam={az:.61,el:.14,dist:16,tgt:V3(0,3.45,2.5),userDist:null,baseFov:45};
 function layoutCamera(){
   const w=innerWidth,h=innerHeight,a=w/h;
   renderer.setSize(w,h,false); camera.aspect=a;
-  if(a<.8){cam.baseFov=60;cam.baseDist=21;cam.tgt.set(-.4,3.0,3.2);}
-  else if(a<1.3){cam.baseFov=52;cam.baseDist=20;cam.tgt.set(-.5,3.4,4.4);}
-  else{cam.baseFov=45;cam.baseDist=15.5;cam.tgt.set(-.8,3.5,4.4);}
+  if(a<.8){cam.baseFov=55;cam.baseDist=18.5;cam.tgt.set(0,3.3,2.1);}
+  else if(a<1.3){cam.baseFov=49;cam.baseDist=17;cam.tgt.set(0,3.45,2.5);}
+  else{cam.baseFov=45;cam.baseDist=14.8;cam.tgt.set(0,3.5,2.55);}
   camera.fov=cam.baseFov; camera.updateProjectionMatrix();
 }
 function updateCamera(dt){

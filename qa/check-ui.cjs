@@ -17,6 +17,25 @@ run("current().face=1;current().weapon='rail'");
 assert.equal(run("activeWardenVisual(current()).key"),'warden-rail-right');
 assert.equal(run("spriteFlip(current())"),false);
 assert.ok(run("mechAttachmentPoint(current(),'muzzle').x>project(current().vx,0,current().vz).x"));
+run("wardenMotionFrame(current(),activeWardenVisual(current()),animationPose(current(),0))");
+await new Promise(r=>setTimeout(r,100));
+assert.equal(run(`(()=>{
+ const u=current(),visual=activeWardenVisual(u);
+ const at=.10;
+ u.motion={fromX:u.x,fromZ:u.z,toX:u.x+1,toZ:u.z,start:0,duration:.31,gaitBase:1,stepIndex:0,totalSteps:1};
+ const baked=wardenMotionFrame(u,visual,animationPose(u,at));
+ const b=unitBounds(u,visual),muzzle=mechAttachmentPoint(u,'muzzle',at);
+ u.motion=null;
+ if(!baked?.frame||!visual.motion.gait.includes(baked.frame))return false;
+ return Math.hypot(muzzle.x-(b.x+b.w*baked.frame.muzzle[0]),muzzle.y-(b.y+b.h*baked.frame.muzzle[1]))<1e-6;
+})()`),true);
+assert.equal(run(`(()=>{
+ const u=current(),visual=activeWardenVisual(u);
+ u.fireTime=0;
+ const baked=wardenMotionFrame(u,visual,animationPose(u,.035));
+ delete u.fireTime;
+ return visual.motion.kick.includes(baked?.frame);
+})()`),true);
 assert.equal(run("(()=>{const u=current(),key=activeWardenVisual(u).key,image=artImages[key];artImages[key]=null;try{return activeWardenVisual(u)===undefined&&spriteFlip(u)}finally{artImages[key]=image}})()"),true);
 run("current().weapon='rifle';current().face=-1");
 for(let i=0;i<8;i++)run('draw('+(i*16.67)+')');fs.writeFileSync(out+'/battlefield-native-desktop.png',native.toBuffer('image/png'));assert.equal(document.querySelectorAll('[data-part]').length,4);assert.equal(document.querySelectorAll('[data-unit]').length,3);
