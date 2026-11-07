@@ -53,6 +53,16 @@
 - One native benchmark of three animated units measured approximately 1.7 ms median / 6.1 ms p95 per rendered frame on this executor. This is not a browser/device FPS claim.
 - Supported browser-control tools remain unavailable; the visual-QA result remains blocked.
 
+## Arms and destruction iteration
+
+- Replaced the first soft upper-body deformation pass with rigid shoulder/upper-arm/forearm/weapon layers and clean torso plates. Native close-range renders were inspected to catch and remove bent weapon/armor edges.
+- Preserved the previous living foot motion: all 90 recorded foot samples match. Actual lower-leg rendering continues using original artwork and the prior walking mesh resolution.
+- Added aim preparation, joint-driven recoil, per-weapon release timing, rail charge, alternating missile-pod origins and camera-relative projectile anchors.
+- Destruction now folds a knee to the ground while the other foot supports the chassis, or transitions into a fall; reactor bursts and the main explosion follow the collapse. Armor fragments become persistent charred wreckage.
+- Functional, mission/career, checkpoint, existing animation and upper-rig regression checks pass. Native image loading also checks that the rigid layers contain real image data before rendering.
+- Updated staged native evidence: `design/animation-contact-sheet.png` and `design/animation-preview.mp4`, 372 frames at 960 × 640 / 24 fps. These are game-renderer frames, not browser captures. No browser/device FPS claim is made.
+- Supported browser-control tools remain unavailable. This report does not certify browser visual QA.
+
 ## Remaining checklist
 
 1. Open the rebuilt game in the supported cloud browser at 1440 × 1024 and 390 × 844.

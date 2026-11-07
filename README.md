@@ -47,3 +47,13 @@ Free emergency field patches now restore 50% condition. Seeded recovery tests fo
 Movement now uses frame-independent timed steps, alternating foot lift and torso motion, weight-specific stride durations, landing splashes and synchronized footfalls. The existing raster chassis are articulated through a small skinned 2.5D mesh; they are not real-time 3D models. Weapon-specific recoil moves the upper body while the feet remain planted. Muzzles and subsystem impact points follow the same deformation. Hit reactions, bracing, pilot-skill pulses, collapse and wreck smoke are animated. Facing is retained in new sortie checkpoints; older checkpoints remain compatible.
 
 The motion tests cover 30/60/144 Hz stepping, landing/AP timing, recoil recovery, foot planting, collapse and reduced-motion preferences. `node qa/render-animation.cjs <output-folder>` produces native canvas animation frames, and `design/animation-preview.mp4` records that renderer output. This is animation evidence, not a browser capture or UI/layout certification.
+
+## Arms, attacks and destruction
+
+Upper-body animation now uses rigid arm, shoulder-pad and weapon layers over clean torso plates. Shoulder/elbow joints aim and absorb recoil while the weapon remains rigid. Existing leg/foot motion is retained, with 90 approved foot samples checked against the previous release. The clean torso plates are original generated edits; visible source torso pixels and original lower-leg artwork are retained when building the rig cache.
+
+Attacks prepare before firing: rifle bursts, shotgun discharge, rail charging/release, and alternating missile pods have separate timing. Muzzle origins and impact points use camera-relative attachment coordinates so they remain aligned during combat zooms.
+
+Destroyed chassis buckle into a supported kneel or fall. The knee impact precedes secondary reactor bursts, the main detonation, flying armor and a scorched debris pile. The final kill waits for the destruction sequence before showing the contract result. Reduced-motion behavior and existing career/sortie saves remain supported.
+
+`qa/check-upper-animation.cjs` checks preserved feet, rigid weapon geometry, independent arm aim, knee contact, supported stance, fall rotation and one-shot explosion cues. The refreshed native preview demonstrates the three weapon styles and both death variants. Browser visual QA is still pending.
