@@ -31,9 +31,9 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
 
 (async()=>{
  await ready('decodedArt.size===Object.keys(artImages).length');
- assert.equal(document.querySelectorAll('[data-equip]').length,9);
+ assert.equal(document.querySelectorAll('[data-equip]').length,10);
  const weaponPreviews=[...document.querySelectorAll('[data-equip] .weapon-card-art')];
- assert.equal(weaponPreviews.length,9);
+ assert.equal(weaponPreviews.length,10);
  for(const preview of weaponPreviews)assert.ok(fs.existsSync(path.join(dist,preview.getAttribute('src'))));
  click('[data-paint="#577eac"]');await ready("decoded.has('assets/warden-chassis-left-paint.webp')");
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).units[0].paint"),'#577eac');
@@ -65,7 +65,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
   const hit=weaponMount(v,v,bounds,'piledriver',unitFacing(current()),.7);
   return !idle.asset.key.includes('extended')&&hit.asset.key.includes('extended');
  })()`),true);
- assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id].some(p=>p.level===.7))))"));
+ assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id==='blade'?'cleaver':w.id].some(p=>p.level===.7))))"));
  for(const [frame,views] of JSON.parse(run('JSON.stringify(arsenal.chassis)')).entries()){
   for(const [view,visual] of Object.entries(views)){
    const {attackMotion:atlas}=visual;
@@ -98,5 +98,5 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
   })`));
   run('battlefield(clock)');
  }
- console.log('PASS: all six planted attack atlases, nine weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, new attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
+ console.log('PASS: all six planted attack atlases, ten weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, new attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

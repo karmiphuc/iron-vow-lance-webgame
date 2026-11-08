@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="theme-color" content="#12191f">
+ <title>Iron Vow · Foundry Studio</title>
+ <link rel="stylesheet" href="../fonts.css">
+ <link rel="stylesheet" href="../style.css">
+ <style>
+  body{min-height:100vh;overflow:auto}
+  main.studio{height:auto;max-width:1380px;margin:auto;padding:36px clamp(16px,4vw,64px) 60px}
+  .studio h1{margin:12px 0 8px}.studio p{max-width:650px}
+  .studio-nav{position:static;background:none;border:0;display:flex;height:auto;min-height:0;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap;margin:22px 0}
+  .studio-nav a,.studio-back{display:inline-block;padding:10px 12px;border:1px solid var(--line);color:var(--ink);text-decoration:none}
+  .studio-nav [aria-current=page]{border-color:var(--accent);color:var(--accent)}
+  .studio-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .studio figure{margin:0;background:#202a31;border:1px solid var(--line);overflow:hidden}
+  .studio figure img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;background:radial-gradient(ellipse at 50% 67%,#42515a,#202a31 64%)}
+  .studio figcaption{display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:10px 12px}
+  .studio figcaption small{color:var(--muted)}
+  @media(max-width:700px){.studio-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.studio figcaption{display:block}.studio figcaption small{display:block;margin-top:3px}}
+ </style>
+</head>
+<body>
+<main class="studio">
+ <a class="studio-back" href="../?view=workshop">← WORKSHOP</a>
+ <p class="eyebrow">IRON VOW / MODEL INSPECTION</p>
+ <h1>FOUNDRY STUDIO.</h1>
+ <p>Six modular chassis. Inspect the silhouette, armor construction, and how each frame reads from the battlefield.</p>
+ <nav class="studio-nav" aria-label="Inspection angle">
+  <a href="?v=front" data-view="front">FRONT</a>
+  <a href="?v=side" data-view="side">SIDE</a>
+  <a href="?v=field" data-view="field">GAME CAMERA</a>
+  <a href="?v=hip" data-view="hip">HIP ARMOR</a>
+  <a href="?v=mix" data-view="mix">MIXED MODULES</a>
+ </nav>
+ <div class="studio-grid" id="lineup"></div>
+</main>
+<script>
+ const views={front:'-front',side:'-side',field:'',hip:'-hip',mix:''};
+ const requested=new URLSearchParams(location.search).get('v');
+ const view=Object.hasOwn(views,requested)?requested:'front';
+ document.querySelector('[data-view="'+view+'"]').setAttribute('aria-current','page');
+ const frames=[
+  ['Aegis','Assault · five-lame fauld',0],['Shrike','Recon · reverse joints',1],
+  ['Bastion','Heavy support · reactive plate',2],['Valkyrie','Striker · wing binders',3],
+  ['Oni','Duelist · lamellar armor',4],['Behemoth','Artillery · tetrapod',5]
+ ];
+ const lineup=view==='mix'?[['Valkyrie / Behemoth','Valkyrie core and arms · Behemoth legs','modular']]:frames;
+ document.getElementById('lineup').innerHTML=lineup.map(([name,role,id])=>
+  `<figure><img src="../assets/foundry-${id}${views[view]}.webp" alt="${name} chassis, ${view} view"><figcaption><strong>${name}</strong><small>${role}</small></figcaption></figure>`).join('');
+</script>
+</body>
+</html>

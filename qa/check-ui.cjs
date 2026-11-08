@@ -42,7 +42,7 @@ assert.equal(run(`(()=>{
 })()`),true);
 assert.equal(run("(()=>{const u=current(),key=activeWardenVisual(u).key,image=artImages[key];artImages[key]=null;try{return activeWardenVisual(u)===undefined&&spriteFlip(u)}finally{artImages[key]=image}})()"),true);
 run("current().weapon='rifle';current().face=-1");
-for(let i=0;i<8;i++)run('draw('+(i*16.67)+')');fs.writeFileSync(out+'/battlefield-native-desktop.png',native.toBuffer('image/png'));assert.equal(document.querySelectorAll('[data-part]').length,4);assert.equal(document.querySelectorAll('[data-unit]').length,3);
+for(let i=0;i<8;i++)run('draw('+(i*16.67)+')');fs.writeFileSync(out+'/battlefield-native-desktop.png',native.toBuffer('image/png'));assert.equal(document.querySelectorAll('[data-part]').length,5);assert.equal(document.querySelectorAll('[data-unit]').length,3);
 click('[data-unit="0"]');click('#skill');assert.equal(run('current().ap'),10);assert.equal(get('#skill').disabled,true);click('#brace');assert.equal(run('current().ap'),8);assert.equal(run('current().brace'),true);click('#fire');assert.equal(run('action'),'fire');click('[data-part="right"]');assert.equal(run('targetPart'),'right');
 // Native canvas snapshots exercise real image decoding and rendering, not a browser.
 run("selected=0;battle.units[0].x=3;battle.units[0].z=5;battle.units[0].vx=3;battle.units[0].vz=5;battle.units[3].x=5;battle.units[3].z=4;battle.units[3].vx=5;battle.units[3].vz=4;lockedTarget=battle.units[3].id;Math.random=()=>0");await run("shoot(current(),battle.units[3],'right')");assert.ok(run('battle.units[3].hp.right')<run('battle.units[3].max.right'));run('renderBattle();draw(280)');fs.writeFileSync(out+'/battlefield-native-engaged.png',native.toBuffer('image/png'));

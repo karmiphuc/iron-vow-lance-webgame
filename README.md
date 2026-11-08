@@ -107,3 +107,21 @@ Build with `blender -b --factory-startup --python-exit-code 1 -P tools/authoring
 The Workshop also assigns any reserve frame to one of the three pilots. Pilot level and XP follow the pilot. Loadout, paint, condition, and reinforcement follow the chassis. Gatecrasher is a slow breach frame with the Morrow AC-2 and Breach Gauntlet. Cicada is a lightly armored fire support frame with the guided Locust MRL-24 and Pulse Bash. Both use factory armaments.
 
 The battlefield and attack camera play Blender-baked Walk, Fire, and Strike poses, with two facing directions and projected weapon and subsystem locations. Run `blender -b --factory-startup --python-use-system-env --python-exit-code 1 -P tools/render_prototype_combat.py -- <rig-directory> <output-directory>` with Pillow available to Blender. The rig directory should contain the two Blender files from the authoring build, named `iron-vow-gatecrasher.blend` and `iron-vow-cicada.blend`. Copy the resulting `prototype-combat.js` and its `assets/*-combat-*.webp` files into `dist/`. `node qa/check-prototype-combat.cjs` checks the campaign assignments, per-frame motion and firing sockets, damage, and sortie reload.
+
+## Foundry chassis merge
+
+The company has eleven chassis. Existing frame IDs and career assignments are stable. The Foundry Bay adds Valkyrie, Oni, Behemoth, Aegis, Shrike and Bastion. The last three are the plate-harness, reverse-joint and reactive-armored variants from the supplied procedural kit. Their frame IDs are independent of Warden, Kestrel and Basilisk.
+
+Buy a Foundry chassis in the Workshop, then swap it between pilots without a fee. Primary, secondary and accent colors belong to the machine, as do its weapon slots, condition and reinforcement. Pilot XP and level follow the pilot. Oni comes with the Raijin HB-9, which strikes through cover at one tile. Mech pilots are targetable independently of the chassis body. An incapacitated pilot leaves a powered-down mech in the field. Older checkpoints restore their original enemy roster and receive default pilot HP.
+
+The Sites renderer remains responsible for the theater, vehicles, combat camera, UI and audio. Foundry chassis use a Three.js r128 rig rendered into that compositor. Devices without WebGL use painted sprite atlases baked from the same rig, with separate walk, attack, pilot-down and wreck poses. Foundry Studio shows the front, side, tactical angle, hip armor and a Valkyrie/Behemoth module mix.
+
+To rebuild the fallback art:
+
+```sh
+npm ci --prefix qa
+c++ -O3 -std=c++17 tools/foundry-raster.cpp -o /tmp/foundry-raster
+node tools/render_foundry.cjs /tmp/foundry-raster
+```
+
+Run `npm test --prefix qa` for the simulation and renderer suite. `python3 tools/package_offline.py /path/to/Iron-Vow-Foundry.html` creates a single-file campaign with local assets embedded. The Rig Bench and Foundry Studio links open the hosted reference tools.

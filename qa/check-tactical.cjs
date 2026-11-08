@@ -16,7 +16,7 @@ const create=require('./sim-harness.cjs');
  const stored=sim.run('JSON.stringify(captureSortie())');
  const restored=create({storage:new Map(sim.storage)});
  assert.equal(restored.run('JSON.stringify(captureSortie())'),stored);
- assert.equal(restored.run('captureSortie().version'),3);
+ assert.equal(restored.run('captureSortie().version'),4);
 
  assert.equal(restored.run('battle.contract.id'),'picket');
  assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,tank,tank,helicopter');
@@ -28,11 +28,12 @@ const create=require('./sim-harness.cjs');
  for(const [oldIndex,id] of ['relay','corridor','frontier'].entries()){
   for(const oldVersion of [1,2]){
    const original=create();
-   original.run(`createBattle(${oldIndex+1},${oldVersion===1});persist()`);
+   original.run(`createBattle(${oldIndex+1},${oldVersion===1},true);persist()`);
    const career=JSON.parse(original.storage.get('iron-vow-career'));
    career.sortie.version=oldVersion;
    career.sortie.contract=oldIndex;
    delete career.sortie.legacy;
+   career.sortie.units.forEach(u=>delete u.hp.pilot);
    const migrated=create({storage:new Map([['iron-vow-career',JSON.stringify(career)]])});
    assert.equal(migrated.run('battle.contract.id'),id);
    assert.equal(migrated.run('battle.size.width'),oldVersion===1?10:18);

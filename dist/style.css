@@ -130,3 +130,14 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  button{touch-action:manipulation}
  .account #sound{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 }
+
+.chassis-choices button img{display:block;width:100%;height:76px;object-fit:contain;margin-bottom:4px}
+.foundry-trim{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.foundry-trim button,.rotate-foundry{font-size:10px;padding:7px 9px;letter-spacing:.08em}
+.combatpanel .parts button{min-height:30px}
+.foundry-bay-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:17px 0 8px}
+.foundry-bay-heading a{font-size:10px;letter-spacing:.08em;color:var(--accent)}
+.foundry-choices{grid-template-columns:repeat(6,minmax(0,1fr))}
+.foundry-choices button img{height:90px}
+@media(max-width:850px){.foundry-choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.combat-target img.foundry-target{height:100%;top:0;object-fit:contain;object-position:center;transform:scale(1.34)}

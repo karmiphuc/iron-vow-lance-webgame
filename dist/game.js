@@ -6,6 +6,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',damage:36,ra
  {id:'breaker',name:'Breaker Maul',type:'IMPACT MAUL',damage:66,range:1,ap:4,weight:20,price:1600,melee:true,desc:'An overhead strike for heavy damage against adjacent targets.'},
  {id:'cleaver',name:'Arc Cleaver',type:'HEATED BLADE',damage:40,range:1,ap:2,weight:12,price:1200,melee:true,desc:'A quick sweep for repeated strikes against an adjacent target.'},
  {id:'piledriver',name:'Piledriver',type:'HYDRAULIC RAM',damage:59,range:1,ap:3,weight:18,price:2100,melee:true,desc:'A powered point-blank thrust that punches through armor.'},
+ {id:'blade',name:'Raijin HB-9',type:'HEAT BLADE',damage:64,range:1,ap:3,weight:16,price:2200,melee:true,desc:'A planted step and a committed lunge. Ignores cover against adjacent targets.'},
  {id:'morrow',name:'Morrow AC-2',type:'TWIN AUTOCANNON',damage:59,range:6,ap:4,builtIn:true,desc:'Two staggered shells from a sliding carriage. Designed to break a line at medium range.'},
  {id:'locust',name:'Locust MRL-24',type:'GUIDED MISSILE RACKS',damage:47,range:8,ap:4,builtIn:true,guided:true,desc:'Alternating launches from the two shoulder racks. Guided missiles ignore cover penalties.'},
  {id:'breach-gauntlet',name:'Breach Gauntlet',type:'ACTUATED GRIPPER',damage:53,range:1,ap:3,builtIn:true,melee:true,desc:'A braced punch from the left gripper. Strongest when the enemy closes in.'},
@@ -23,6 +24,20 @@ FRAMES.push(
  {name:'CICADA',model:'ML–14',role:'FIRE SUPPORT',color:'#81885e',hp:148,arm:84,leg:95,move:3,armor:4,
   native:'cicada',weapon:'locust',melee:'pulse-bash',brief:'The company’s longest reach. Keep the launch racks behind the line and fire across cover.'}
 );
+// Foundry IDs are appended so older career assignments and backups retain their meaning.
+FRAMES.push(
+ {name:'VALKYRIE',model:'VLK–01',role:'STRIKER',color:'#c9ccd0',hp:135,arm:85,leg:95,move:5,armor:3,foundry:3,cost:3600,weapon:'rifle'},
+ {name:'ONI',model:'ONI–09',role:'DUELIST',color:'#8a3a40',hp:150,arm:105,leg:100,move:5,armor:4,foundry:4,cost:3200,weapon:'rifle',melee:'blade'},
+ {name:'BEHEMOTH',model:'BHM–22',role:'ARTILLERY',color:'#8f8a68',hp:210,arm:90,leg:150,move:3,armor:8,foundry:5,cost:4400,weapon:'missile'},
+ {name:'AEGIS',model:'AGS–07',role:'ASSAULT',color:'#899681',hp:165,arm:94,leg:108,move:4,armor:5,foundry:0,cost:2600,weapon:'rifle'},
+ {name:'SHRIKE',model:'SHK–12',role:'RECON',color:'#b6a37c',hp:118,arm:76,leg:103,move:5,armor:2,foundry:1,cost:2400,weapon:'shotgun'},
+ {name:'BASTION',model:'BST–04',role:'HEAVY SUPPORT',color:'#708c92',hp:188,arm:100,leg:105,move:3,armor:7,foundry:2,cost:3000,weapon:'missile'}
+);
+const PART_LABEL={body:'BODY',pilot:'PILOT',right:'WEAPON ARM',left:'LEFT ARM',legs:'LEGS'};
+const PILOT_HP=[70,55,80];
+const ENEMY_NAMES=['JACKAL','RAVEN','MARAUDER','GATEBREAKER','LOCUST','SERAPH','RONIN','TITAN','SENTINEL','RAZOR','CITADEL'];
+const FOUNDRY_HOSTILES={corridor:[1,6,8,9],frontier:[7,6,5,10,2]};
+const foundryModel=frame=>FRAMES[frame]?.foundry;
 const pilotFrame=(i,career=save)=>career.units[i].frame??i;
 const CONTRACTS=[
  {id:'picket',field:0,name:'Picket sweep',place:'KARST BASIN · OUTER PERIMETER',tag:'PATROL INTERCEPT',pay:2000,fixedPay:true,difficulty:1,desc:'Break a light security patrol. One mech leads two tanks and a gunship.',
@@ -45,7 +60,8 @@ const theaterLayouts=window.IRON_VOW_THEATERS;
 const dimensions=()=>battle?.size||NEW_BOARD;
 function onBoard(x,z){const {width,depth}=dimensions();return x>=0&&x<width&&z>=0&&z<depth}
 function canReachTarget(w,target){return !(w.melee&&target.kind==='helicopter')}
-const targetParts=u=>u?.kind?['body']:['body','right','left','legs'];
+const asset=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
+const targetParts=u=>u?.kind?['body']:['body','pilot','right','left','legs'];
 const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:weapon(u.weapon);
 const isArmed=u=>u.kind||u.hp.right>0;
 const movementLimit=u=>u.kind?VEHICLES[u.kind].move:u.hp.legs>0?FRAMES[u.frame].move+(battle.legacy?0:1):0;
@@ -73,14 +89,14 @@ function persist(enemyPending=false){
  }catch{toast('Storage unavailable. Keep this tab open to retain your career.')}
 }
 function captureSortie(enemyPending=false){
- return{version:3,contract:battle.contract.id,legacy:battle.legacy,turn:battle.turn,selected,action,part:targetPart,enemyPending,
-  units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),hp:{body:u.hp.body,left:u.hp.left,right:u.hp.right,legs:u.hp.legs},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost}))};
+ return{version:4,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,turn:battle.turn,selected,action,part:targetPart,enemyPending,
+  units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost}))};
 }
-function createBattle(i,legacy=false){
+function createBattle(i,legacy=false,stockHostiles=legacy){
  const contract=CONTRACTS[i],field=FIELDS[contract.field];
  const layout=theaterLayouts?.[contract.field]?.cover||field.cover;
  const cover=legacy?field.cover:layout;
- battle={contract,field:{...field,cover},size:legacy?{width:10,depth:10}:NEW_BOARD,legacy,turn:1,phase:'player',units:[],cover:new Set(Object.keys(cover)),log:['Lance deployed. Reactor signatures detected.'],busy:false};
+ battle={contract,field:{...field,cover},size:legacy?{width:10,depth:10}:NEW_BOARD,legacy,stockHostiles,turn:1,phase:'player',units:[],cover:new Set(Object.keys(cover)),log:['Lance deployed. Reactor signatures detected.'],busy:false};
  const allies=legacy?[[1,8],[2,9],[0,9]]:[[1,16],[2,18],[0,18]];
  const enemies=legacy?Array.from({length:contract.legacyMechs},(_,j)=>[j%3*3+2,Math.floor(j/3)]):contract.deployment;
  battle.units=allies.map(([x,z],index)=>makeUnit(index,'ally',x,z));
@@ -88,6 +104,7 @@ function createBattle(i,legacy=false){
  for(const [index,spawn] of enemies.entries()){
   const [kind,x,z]=spawn.length===3?spawn:[null,...spawn];
   const unit=kind?makeVehicle(kind,index,x,z):makeUnit(index,'enemy',x,z);
+  if(!unit.kind&&foundryModel(unit.frame)!=null)preloadNativeMotion(unit.frame);
   if(!legacy)unit.face=Math.sign((allies[0][0]-allies[0][1])-(x-z))||-1;
   battle.units.push(unit);
  }
@@ -100,17 +117,17 @@ function makeVehicle(kind,index,x,z){
 function restoreSortie(){
  const saved=save.sortie;if(!saved)return null;
  const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;
- const currentVersion=saved.version===3;
+ const currentVersion=saved.version>=3;
  const legacy=currentVersion?saved.legacy:saved.version===1;
  const contractId=currentVersion?saved.contract:integer(saved.contract,0,OLD_SORTIE_CONTRACTS.length-1)?OLD_SORTIE_CONTRACTS[saved.contract]:null;
  const contractIndex=CONTRACTS.findIndex(c=>c.id===contractId);
- let valid=[1,2,3].includes(saved.version)&&typeof legacy==='boolean'&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&integer(saved.selected,0,2)&&['move','fire','strike'].includes(saved.action)&&['body','left','right','legs'].includes(saved.part)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
+ let valid=[1,2,3,4].includes(saved.version)&&typeof legacy==='boolean'&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&integer(saved.selected,0,2)&&['move','fire','strike'].includes(saved.action)&&['body','pilot','left','right','legs'].includes(saved.part)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
  if(valid){
-  createBattle(contractIndex,legacy);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
+  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
   for(let i=0;valid&&i<saved.units.length;i++){
-   const state=saved.units[i],u=battle.units[i];valid=!!state&&integer(state.x,0,battle.size.width-1)&&integer(state.z,0,battle.size.depth-1)&&(state.face===undefined||state.face===1||state.face===-1)&&!battle.cover.has(state.x+','+state.z)&&integer(state.ap,0,u.team==='ally'&&u.index===0?10:8)&&typeof state.brace==='boolean'&&typeof state.skill==='boolean'&&typeof state.boost==='boolean'&&state.hp&&targetParts(u).every(p=>integer(state.hp[p],0,u.max[p]));
-   if(!valid)break;const key=state.x+','+state.z,alive=state.hp.body>0;if(alive&&occupiedTiles.has(key)){valid=false;break}if(alive)occupiedTiles.add(key);
-   u.face=state.face??(u.team==='enemy'?1:-1);u.x=u.vx=state.x;u.z=u.vz=state.z;u.hp=Object.fromEntries(targetParts(u).map(part=>[part,state.hp[part]]));u.ap=state.ap;u.brace=state.brace;u.skill=state.skill;u.boost=state.boost;u.alive=alive;
+   const state=saved.units[i],u=battle.units[i];valid=!!state&&integer(state.x,0,battle.size.width-1)&&integer(state.z,0,battle.size.depth-1)&&(state.face===undefined||state.face===1||state.face===-1)&&!battle.cover.has(state.x+','+state.z)&&integer(state.ap,0,u.team==='ally'&&u.index===0?10:8)&&typeof state.brace==='boolean'&&typeof state.skill==='boolean'&&typeof state.boost==='boolean'&&state.hp&&targetParts(u).every(p=>p==='pilot'&&saved.version<4&&state.hp.pilot===undefined||integer(state.hp[p],0,u.max[p]));
+   if(!valid)break;const key=state.x+','+state.z,alive=state.hp.body>0&&(state.hp.pilot??1)>0;if(alive&&occupiedTiles.has(key)){valid=false;break}if(alive)occupiedTiles.add(key);
+   u.face=state.face??(u.team==='enemy'?1:-1);u.x=u.vx=state.x;u.z=u.vz=state.z;u.hp=Object.fromEntries(targetParts(u).map(part=>[part,state.hp[part]??u.max[part]]));u.ap=state.ap;u.brace=state.brace;u.skill=state.skill;u.boost=state.boost;u.alive=alive;u.downReason=alive?null:u.hp.body>0?'pilot':'body';
   }
   valid=valid&&battle.units.some(u=>u.team==='ally'&&u.alive)&&battle.units.some(u=>u.team==='enemy'&&u.alive);
  }
@@ -128,29 +145,48 @@ function equipmentChoices(u,options){
  return options.map(w=>{
   const equipped=(w.melee?u.melee:u.weapon)===w.id;
   const owned=save.owned.includes(w.id)||equipped;
-  const preview=arsenal.weapons?.[w.id]?.left?.key;
+  const preview=w.id==='blade'?'foundry-raijin':arsenal.weapons?.[w.id]?.left?.key;
   return `<button data-equip="${w.id}" class="${equipped?'active':''}" aria-pressed="${equipped}"><small>${w.type}</small><h3>${w.name}</h3>${preview?`<img class="weapon-card-art" alt="" src="${art(preview)}" loading="lazy" decoding="async">`:''}<small>${w.damage} DMG / ${w.range} RANGE / ${w.ap} AP</small><p>${w.desc}</p><div class="note">${equipped?'EQUIPPED':owned?'EQUIP WEAPON':money(w.price)+' / BUY & EQUIP'}</div></button>`;
  }).join('');
 }
 function chassisAssignments(i){
  const assigned=pilotFrame(i);
- return `<section class="chassis-assignment" aria-label="Assign a chassis"><div class="eyebrow">LANCE ASSIGNMENT / ${PILOTS[i].call}</div>
- <p class="note">Two Foundry trial frames cleared for field duty. Assign any reserve chassis to this pilot.</p>
- <div class="chassis-choices">${FRAMES.map((frame,index)=>{
+ const choices=FRAMES.map((frame,index)=>{
   const pilot=PILOTS.findIndex((_,slot)=>pilotFrame(slot)===index);
-  const caption=index===assigned?'ASSIGNED':pilot>=0?'WITH '+PILOTS[pilot].call:`${save.reserve?.[index]?.condition??100}% INTEGRITY`;
-  return `<button data-chassis="${index}" aria-pressed="${index===assigned}" ${pilot>=0?'disabled':''}><small>${frame.model} / ${frame.role}</small><strong>${frame.name}</strong><span>${caption}</span></button>`;
- }).join('')}</div></section>`;
+  const locked=frame.cost&&pilot<0&&!save.reserve?.[index];
+  const caption=index===assigned?'ASSIGNED':pilot>=0?'SWAP WITH '+PILOTS[pilot].call:locked?money(frame.cost)+' · ACQUIRE':`${save.reserve?.[index]?.condition??100}% INTEGRITY · ASSIGN`;
+  return `<button data-chassis="${index}" aria-pressed="${index===assigned}" ${index===assigned?'disabled':''}>${frame.foundry!=null?`<img src="${art('foundry-'+frame.foundry+'-front')}" alt="" loading="lazy">`:''}<small>${frame.model} / ${frame.role}</small><strong>${frame.name}</strong><span>${caption}</span></button>`;
+ });
+ const firstFoundry=FRAMES.findIndex(frame=>frame.foundry!=null);
+ return `<section class="chassis-assignment" aria-label="Assign a chassis">
+  <div class="eyebrow">LANCE ASSIGNMENT / ${PILOTS[i].call}</div>
+  <p class="note">Assign a reserve or swap with another pilot. Condition, weapons and paint stay with the machine.</p>
+  <div class="chassis-choices">${choices.slice(0,firstFoundry).join('')}</div>
+  <div class="foundry-bay-heading"><span class="eyebrow">FOUNDRY CHASSIS BAY</span><a href="foundry/studio.html">INSPECT MODELS →</a></div>
+  <div class="chassis-choices foundry-choices">${choices.slice(firstFoundry).join('')}</div>
+ </section>`;
 }
-function assignChassis(i,frame){
- if(battle||!PILOTS[i]||!Number.isInteger(frame)||!FRAMES[frame]||PILOTS.some((_,slot)=>pilotFrame(slot)===frame))return false;
+function assignChassis(i,frame,allowSwap=false){
+ if(battle||!PILOTS[i]||!Number.isInteger(frame)||!FRAMES[frame])return false;
  const u=save.units[i],previous=pilotFrame(i);
- const {weapon,melee,paint,condition,upgrade,level,xp}=u;
+ if(previous===frame)return false;
+ const other=PILOTS.findIndex((_,slot)=>pilotFrame(slot)===frame);
+ if(other>=0&&!allowSwap)return false;
  const reserve=save.reserve??={};
- const next=reserve[frame]||stockHull(frame);
- reserve[previous]={weapon,melee,paint,condition,upgrade};
- delete reserve[frame];
- save.units[i]={...next,frame,level,xp};
+ const cost=other<0&&!reserve[frame]?(FRAMES[frame].cost||0):0;
+ if(save.credits<cost)return false;
+ const hull=({weapon,melee,paint,trim,condition,upgrade})=>({weapon,melee,paint,trim,condition,upgrade});
+ const next=other>=0?hull(save.units[other]):reserve[frame]||stockHull(frame);
+ if(other>=0){
+  const {level,xp}=save.units[other];
+  save.units[other]={...hull(u),frame:previous,level,xp};
+ }else{
+  reserve[previous]=hull(u);delete reserve[frame];save.credits-=cost;
+  if(cost)for(const id of [next.weapon,next.melee]){
+   if(id&&!weapon(id).builtIn&&!save.owned.includes(id))save.owned.push(id);
+  }
+ }
+ save.units[i]={...next,frame,level:u.level,xp:u.xp};
  preloadNativeMotion(frame,next.paint);
  persist();
  return true;
@@ -159,7 +195,8 @@ function builtInLoadout(u){
  return [weapon(u.weapon),weapon(u.melee)].map(w=>`<article class="fixed-loadout"><div class="eyebrow">${w.melee?'SECONDARY / STRIKE':'PRIMARY / FIRE'}</div><h3>${w.name}</h3><small>${w.damage} DMG / ${w.range} RANGE / ${w.ap} AP</small><p>${w.desc}</p></article>`).join('');
 }
 function workshopPaint(u){
- return `<div class="paint-panel"><div class="eyebrow">CERAMIC PLATE PAINT</div><div class="paint-swatches">${PAINT_PRESETS.map(([name,color])=>`<button class="paint-swatch" data-paint="${color||''}" aria-pressed="${(u.paint||null)===color}" style="--swatch:${color||'#b0a88d'}"><span></span>${name}</button>`).join('')}<label class="paint-custom">Custom <input id="custom-paint" type="color" aria-label="Custom plate paint" value="${u.paint||'#c6bd9f'}"></label></div><p class="note">Paint is free and saved per chassis. Hostile units use red identification paint.</p></div>`;
+ const trim=foundryModel(pilotFrame(selected))!=null?'<div class="foundry-trim">'+[['s','Secondary','#343b42'],['a','Accent','#e08e3b']].map(([k,label,color])=>`<label class="paint-custom">${label} <input data-trim="${k}" type="color" aria-label="${label} paint" value="${u.trim?.[k]||color}"></label>`).join('')+'<button id="reset-trim" type="button">FACTORY TRIM</button></div>':'';
+ return `<div class="paint-panel"><div class="eyebrow">CERAMIC PLATE PAINT</div><div class="paint-swatches">${PAINT_PRESETS.map(([name,color])=>`<button class="paint-swatch" data-paint="${color||''}" aria-pressed="${(u.paint||null)===color}" style="--swatch:${color||'#b0a88d'}"><span></span>${name}</button>`).join('')}<label class="paint-custom">Custom <input id="custom-paint" type="color" aria-label="Custom plate paint" value="${u.paint||'#c6bd9f'}"></label></div><p class="note">Paint is free and saved per chassis. Hostile units use red identification paint.</p>${trim}</div>`;
 }
 let noiseBuffer=null,attackCameraEnabled=true;
 try{attackCameraEnabled=localStorage.getItem('iron-vow-attack-camera')!=='off'}catch{}
@@ -203,7 +240,7 @@ const COMBAT_CUES={
 };
 function loadCombatSamples(){
  for(const file of new Set(Object.values(COMBAT_CUES))){
-  fetch('assets/audio/'+file+'.wav')
+  fetch(asset('assets/audio/'+file+'.wav'))
    .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Audio unavailable')})
    .then(bytes=>audio.decodeAudioData(bytes))
    .then(buffer=>combatSamples.set(file,buffer))
@@ -316,7 +353,7 @@ function sound(type,cueVolume=1){
    }
    return;
   }
-  if(type==='cleaver'){noise(now,.22,550,3500,.11,'bandpass');tone(now+.08,.2,1250,460,.05,'triangle');return}
+  if(type==='cleaver'||type==='blade'){noise(now,.22,550,3500,.11,'bandpass');tone(now+.08,.2,1250,460,.05,'triangle');return}
   if(type==='breaker'){noise(now,.18,420,2100,.10,'bandpass');thump(now+.13,1.15);return}
   if(type==='breach-gauntlet'||type==='pulse-bash'){noise(now,.19,490,2100,.085,'bandpass');thump(now+.18,type==='pulse-bash'?.65:1.1);return}
   if(type==='piledriver'){noise(now,.12,700,2500,.07,'bandpass');thump(now+.12,1.2);tone(now+.13,.2,610,120,.08,'square')}
@@ -326,7 +363,7 @@ const musicBuffers=new Map();
 let musicRequest=null,musicVoice=null,musicBus=null;
 function musicBuffer(track){
  if(!musicBuffers.has(track)){
-  const decoded=fetch('assets/audio/'+track+'-score.mp3')
+  const decoded=fetch(asset('assets/audio/'+track+'-score.mp3'))
    .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Score unavailable')})
    .then(bytes=>audio.decodeAudioData(bytes)).catch(()=>null);
   musicBuffers.set(track,decoded);
@@ -372,8 +409,8 @@ $('#sound').onclick=()=>{
  sound('click');
  syncMusic();
 };
-function icon(name){return `<img class="ui-icon" src="assets/icons/${name}.svg" alt="">`}
-function art(name){return 'assets/'+name+'.webp'}
+function icon(name){return `<img class="ui-icon" src="${asset('assets/icons/'+name+'.svg')}" alt="">`}
+function art(name){return asset('assets/'+name+'.webp')}
 function pilotArt(i){return art('pilot-'+['rook','ghost','anchor'][i])}
 const wardenVisuals=window.IRON_VOW_WARDEN_ART||{},arsenal=window.IRON_VOW_ARSENAL||{},prototypes=window.IRON_VOW_PROTOTYPES||{};
 function wardenVisual(frame,loadout,direction){
@@ -384,6 +421,7 @@ function wardenVisual(frame,loadout,direction){
  return failedArt.has(modular?.key)?legacy:modular||legacy;
 }
 function chassisArt(i,loadout,direction=-1){
+ const model=foundryModel(i);if(model!=null)return art('foundry-'+model);
  const visual=wardenVisual(i,loadout,direction);
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
 }
@@ -395,7 +433,7 @@ function render(){
   if(page==='hangar'){
     const lineup=PILOTS.map((_,i)=>({m:FRAMES[pilotFrame(i)],i}));
     const others=lineup.filter(v=>v.i!==selected);
-    $('#ui').innerHTML=`${f.native?`<div class="prototype-hangar" aria-hidden="true"><img src="${chassisArt(frame,u.weapon,1)}" alt=""></div>`:''}<div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
+    $('#ui').innerHTML=`${(f.native||f.foundry!=null)?`<div class="prototype-hangar" aria-hidden="true"><img src="${f.foundry!=null?(window.IronVowFoundry?.thumb(f.foundry,'ally',u.paint,u.weapon,u.melee,u.trim)||chassisArt(frame,u.weapon,1)):chassisArt(frame,u.weapon,1)}" alt=""></div>`:''}<div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
     <div class="hangar-top-right"><button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button><button class="icon" id="hangar-manual">${icon('binoculars')} FIELD MANUAL</button></div>
     <div class="hangar-hotspots" aria-label="Select a mech in the hangar">${lineup.map(({m,i})=>`<button data-select="${i}" aria-label="Select ${m.name}" aria-pressed="${i===selected}"><span>${m.name} / ${m.role}</span></button>`).join('')}</div>
     ${inspectOpen?`<aside class="unit-inspect"><div class="inspect-head"><span class="eyebrow">CHASSIS 0${selected+1} / ${f.model}</span><button id="close-inspect" class="icon" aria-label="Close unit details">${icon('x')}</button></div><h2>${f.name}</h2><p class="note">${f.role} · PILOT LEVEL ${u.level}</p><div class="rule"></div>${stat('BODY INTEGRITY',f.hp+u.upgrade*25+' HP')}${stat('ARMOR',f.armor+u.upgrade*2)}${stat('MOBILITY',(f.move+1)+' TILES')}${stat('WEAPON',w.name)}${stat('CONDITION',u.condition+'%',u.condition)}<div class="pilot"><img class="pilot-thumb" src="${pilotArt(selected)}" alt="${p.name}"><div>${p.name}<small>${p.call} / ${p.skill}</small></div></div><button class="full" data-page="workshop">${icon('wrench')} OPEN WORKSHOP</button><p class="note">${p.desc}</p></aside>`:''}
@@ -408,8 +446,8 @@ function render(){
   <div class="lance-tabs" aria-label="Select pilot">${PILOTS.map((pilot,i)=>`<button data-select="${i}" class="${i===selected?'active':''}" aria-pressed="${i===selected}"><small>${pilot.call}</small>${FRAMES[pilotFrame(i)].name}</button>`).join('')}</div>
   ${chassisAssignments(selected)}
   <div class="split"><section class="workshop-chassis"><div class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</div>
-  ${arsenal.chassis?.[frame]||f.native?`<canvas class="unit-render" id="paint-preview" width="640" height="640" role="img" aria-label="${f.name} paint and loadout preview"></canvas>`:`<img class="unit-render" src="${chassisArt(frame,u.weapon)}" alt="${f.name} armored mech">`}
-  <div class="workshop-meta"><h2>${f.name}</h2>${workshopPaint(u)}
+  ${arsenal.chassis?.[frame]||f.native||f.foundry!=null?`<canvas class="unit-render" id="paint-preview" width="640" height="640" role="img" aria-label="${f.name} paint and loadout preview"></canvas>`:`<img class="unit-render" src="${chassisArt(frame,u.weapon)}" alt="${f.name} armored mech">`}
+  <div class="workshop-meta"><h2>${f.name}</h2>${f.foundry!=null?'<button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>':''}${workshopPaint(u)}
   ${frame===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH</a>':''}<a class="rig-bench-link" href="rig-bench/prototypes/">OPEN PROTOTYPE BAY</a>${stat('BODY / ARMOR',(f.hp+u.upgrade*25)+' HP / '+(f.armor+u.upgrade*2))}${f.native?stat('MOBILITY',(f.move+1)+' TILES'):''}${stat('CONDITION',u.condition+'%',u.condition)}
   <div class="repairs"><button data-patch="${selected}" ${u.condition>=FIELD_PATCH?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><p class="note">Reinforcement adds 25 body HP and 2 armor. A free field patch restores a damaged chassis to ${FIELD_PATCH}% integrity.</p></div></section>
   <section><div class="eyebrow">LOADOUT / ${p.call}</div>${f.native?`<h2 class="loadout-title">FACTORY ARMAMENT.</h2><p class="note">${f.brief} Both weapons are integrated into the frame.</p>${builtInLoadout(u)}`:`<h2 class="loadout-title">THE RIGHT TOOL.</h2><p class="note">Unlock weapons once for the company, then equip them on a modular chassis.</p>
@@ -430,7 +468,7 @@ function validHull(u,frame){
  const f=FRAMES[frame];
  return !!u&&!!f&&(f.native?u.weapon===f.weapon&&u.melee===f.melee:
   RANGED.some(w=>w.id===u.weapon)&&(u.melee==null||MELEE.some(w=>w.id===u.melee)))&&
-  (u.paint==null||validPaint(u.paint))&&Number.isFinite(u.condition)&&u.condition>=0&&u.condition<=100&&
+  (u.paint==null||validPaint(u.paint))&&(u.trim==null||!!u.trim&&typeof u.trim==='object'&&['s','a'].every(k=>u.trim[k]==null||validPaint(u.trim[k])))&&Number.isFinite(u.condition)&&u.condition>=0&&u.condition<=100&&
   Number.isInteger(u.upgrade)&&u.upgrade>=0&&u.upgrade<=3;
 }
 function validSave(s){
@@ -451,9 +489,20 @@ function validSave(s){
 }
 function modal(title,body,buttons){if($('#modal').hidden)modalReturnFocus=document.activeElement;$('#modal').hidden=false;$('#modal').innerHTML=`<div class="modalbox" role="dialog" aria-modal="true" aria-label="${title}"><div class="eyebrow">IRON VOW / COMMAND UPLINK</div><h1>${title}</h1><div>${body}</div><div class="buttons">${buttons.map((b,i)=>`<button class="${i===buttons.length-1?'primary':''}" id="modal-${i}">${b.text}</button>`).join('')}</div></div>`;buttons.forEach((b,i)=>$('#modal-'+i).onclick=b.fn);$('#modal button').focus()}
 function closeModal(){$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
-function guide(){modal('FIELD MANUAL',`<p>Your objective is to neutralize every enemy. All three pilots act during your turn. Select a unit from the bottom bar or click its mech.</p><p><b>MOVE:</b> Tap a blue tile. Drag to pan or use the tactical map to jump to a contact. Movement costs one AP per tile, following a path around cover. Each pilot starts with 8 AP.</p><p><b>STRIKE (X):</b> Equip a melee weapon in the Workshop, then strike an adjacent hostile. Melee uses the left arm and has its own AP cost.</p><p><b>FIRE:</b> Select a target part on the right, then click an enemy in the red range overlay. A firing preview shows damage and accuracy. Body destruction disables a mech. Destroying its right arm disables ranged fire. Destroying its legs stops movement. Losing the shield arm halves armor.</p><p><b>SKILL:</b> Each pilot can activate their unique skill once per battle. <b>BRACE:</b> Spend 2 AP to halve incoming damage until your next turn.</p><p>Raised terrain blocks movement. The small shield on a blue tile means moving there gives cover from most ranged attacks. Tanks and gunships have hull HP and award pilot XP. Gunships can cross cover and require ranged fire. Missiles ignore cover. The attack camera can be skipped with Escape or disabled in Career. End your turn when you have used your AP. Enemies then move and attack. Withdraw if you need to preserve your machines.</p><p>Complete contracts to earn credits, experience, reputation and salvage. Repair damaged chassis in the workshop before your next sortie. Career progress and completed combat actions save in this browser. Reloading resumes the sortie. If an enemy turn was interrupted, it replays from its start.</p>`,[{text:'UNDERSTOOD',fn:closeModal}])}
+function guide(){modal('FIELD MANUAL',`<p>Your objective is to neutralize every enemy. All three pilots act during your turn. Select a unit from the bottom bar or click its mech.</p><p><b>MOVE:</b> Tap a blue tile. Drag to pan or use the tactical map to jump to a contact. Movement costs one AP per tile, following a path around cover. Each pilot starts with 8 AP.</p><p><b>STRIKE (X):</b> Equip a melee weapon in the Workshop, then strike an adjacent hostile. Melee uses the left arm and has its own AP cost.</p><p><b>FIRE:</b> Select a target part on the right, then click an enemy in the red range overlay. A firing preview shows damage and accuracy. A destroyed body or an incapacitated pilot disables a mech. Cockpit shots are harder to land and deal half damage. Destroying its right arm disables ranged fire. Destroying its legs stops movement. Losing the left arm halves armor.</p><p><b>SKILL:</b> Each pilot can activate their unique skill once per battle. <b>BRACE:</b> Spend 2 AP to halve incoming damage until your next turn.</p><p>Raised terrain blocks movement. The small shield on a blue tile means moving there gives cover from most ranged attacks. Tanks and gunships have hull HP and award pilot XP. Gunships can cross cover and require ranged fire. Missiles ignore cover. The attack camera can be skipped with Escape or disabled in Career. End your turn when you have used your AP. Enemies then move and attack. Withdraw if you need to preserve your machines.</p><p>Complete contracts to earn credits, experience, reputation and salvage. Repair damaged chassis in the workshop before your next sortie. Career progress and completed combat actions save in this browser. Reloading resumes the sortie. If an enemy turn was interrupted, it replays from its start.</p>`,[{text:'UNDERSTOOD',fn:closeModal}])}
 // Tactical simulation: part HP, reachable tiles, AP, cover, level scaling and persistent rewards.
-function makeUnit(i,team,x,z){const frame=team==='ally'?pilotFrame(i):i%3;let f=FRAMES[frame],u=team==='ally'?save.units[i]:{upgrade:Math.max(0,battle.contract.difficulty-1),condition:100,level:battle.contract.difficulty,weapon:i%3===2?'missile':i%3===1?'shotgun':'rifle'};let k=team==='ally'?Math.max(.3,u.condition/100):1;let max={body:f.hp+u.upgrade*25,left:f.arm,right:f.arm,legs:f.leg};return{id:team+i,index:i,team,x,z,vx:x,vz:z,frame,name:team==='ally'?f.name:['JACKAL','RAVEN','MARAUDER'][i%3]+' '+(i+1),weapon:u.weapon,melee:u.melee??null,paint:team==='enemy'?HOSTILE_PAINT:u.paint??null,level:u.level,armor:f.armor+u.upgrade*2,max,hp:Object.fromEntries(Object.entries(max).map(([a,b])=>[a,Math.round(b*k)])),ap:8,brace:false,skill:false,boost:false,alive:true}}
+function makeUnit(i,team,x,z){
+ const ally=team==='ally';
+ const mixed=battle.stockHostiles?null:FOUNDRY_HOSTILES[battle.contract.id];
+ const frame=ally?pilotFrame(i):mixed?.[i]??i%3,f=FRAMES[frame];
+ const u=ally?save.units[i]:{...stockHull(frame),upgrade:Math.max(0,battle.contract.difficulty-1),level:battle.contract.difficulty,
+  weapon:f.weapon||['rifle','shotgun','missile'][i%3]};
+ const k=ally?Math.max(.3,u.condition/100):1;
+ const max={body:f.hp+u.upgrade*25,pilot:PILOT_HP[i%PILOT_HP.length],right:f.arm,left:f.arm,legs:f.leg};
+ const hp=Object.fromEntries(Object.entries(max).map(([part,n])=>[part,part==='pilot'?n:Math.round(n*k)]));
+ return{id:team+i,index:i,team,x,z,vx:x,vz:z,frame,name:ally?f.name:ENEMY_NAMES[frame]+' '+(i+1),weapon:u.weapon,melee:u.melee??null,
+  paint:ally?u.paint??null:HOSTILE_PAINT,trim:ally?u.trim:null,upgrade:u.upgrade,level:u.level,armor:f.armor+u.upgrade*2,max,hp,ap:8,brace:false,skill:false,boost:false,alive:true};
+}
 function deploy(i,legacy=false){
  if(save.units.some(u=>u.condition<30)){
   modal('REPAIR REQUIRED','<p>One or more chassis have less than 30% integrity. Repair them in the workshop before deploying.</p>',[{text:'OPEN WORKSHOP',fn:()=>{closeModal();page='workshop';selected=save.units.findIndex(u=>u.condition<30);render()}}]);return;
@@ -480,8 +529,21 @@ function paths(u,flight=false){
 }
 function distance(a,b){return Math.abs(a.x-b.x)+Math.abs(a.z-b.z)}
 function inCover(t){return t.kind!=='helicopter'&&neighborTiles(t.x,t.z).some(([x,z])=>battle.cover.has(x+','+z))}
-function hitChance(a,t,part,w=weapon(a.weapon)){return Math.min(.98,Math.max(.5,.96-(part==='body'?0:.13)-(inCover(t)&&w.id!=='missile'&&!w.guided&&!w.melee?.19:0)+.015*(a.level-1)))}
+function hitChance(a,t,part,w=weapon(a.weapon)){return Math.min(.98,Math.max(part==='pilot'?.32:.5,.96-(part==='body'?0:part==='pilot'?.27:.13)-(a.max.pilot&&a.hp.pilot<a.max.pilot*.5?.10:0)-(inCover(t)&&w.id!=='missile'&&!w.guided&&!w.melee?.19:0)+.015*(a.level-1)))}
 function damage(a,t,w=weapon(a.weapon)){const armor=t.hp.left===0?Math.floor(t.armor/2):t.armor;return Math.max(5,Math.round((w.damage*(1+.05*(a.level-1))*(a.boost?1.5:1)-armor*(w.id==='piledriver'?.25:1))*(t.brace?.5:1)))}
+function partDamage(a,t,part,w){
+ const amount=damage(a,t,w);
+ return part==='pilot'?Math.max(3,Math.round(amount*.5)):amount;
+}
+function aiPart(a,t,w){
+ let choice='body',best=0;
+ for(const p of t.kind?['body']:['body','pilot','right','legs']){
+  if(t.hp[p]<=0)continue;
+  const value=hitChance(a,t,p,w)/Math.ceil(t.hp[p]/partDamage(a,t,p,w))*({body:1,pilot:1.02,right:.43,legs:.24})[p];
+  if(value>best){choice=p;best=value}
+ }
+ return choice;
+}
 function addLog(s){battle.log.push(s);battle.log=battle.log.slice(-4)}
 function renderBattle(){
   nav();const u=current(),under=hover&&battle.units.find(t=>t.alive&&t.team==='enemy'&&t.x===hover.x&&t.z===hover.z),target=under||battle.units.find(t=>t.alive&&t.id===lockedTarget)||battle.units.find(t=>t.alive&&t.team==='enemy');
@@ -496,9 +558,9 @@ function renderBattle(){
   $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p class="field-terrain">${battle.field.label}</p><p>Eliminate all hostile contacts.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>MANUAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${String(battle.turn).padStart(2,'0')}<small>${battle.phase==='player'?'YOUR LANCE / TAKE COMMAND':'HOSTILE LANCE / STAND BY'}</small></div>
-  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>SUBSYSTEM DETAILS</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':'enemy'}" data-visual-key="${wardenVisual(target.frame,target.weapon,unitFacing(target))?.key??''}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target))}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':({body:'BODY',right:'WEAPON ARM',left:'SHIELD ARM',legs:'LEGS'})[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${damage(u,target,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=chosen.range?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>DESTROY BODY TO NEUTRALIZE</div>${u?`<div class="combat-selected"><span class="eyebrow">${PILOTS[u.index].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${PILOTS[u.index].skill}: ${u.skill?'USED':PILOTS[u.index].desc}</p></div>`:''}</aside>
+  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>SUBSYSTEM DETAILS</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':foundryModel(target.frame)!=null?'enemy foundry-target':'enemy'}" data-visual-key="${wardenVisual(target.frame,target.weapon,unitFacing(target))?.key??''}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target))}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':PART_LABEL[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${partDamage(u,target,aimPart,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=chosen.range?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>${target?.kind?'DESTROY HULL TO NEUTRALIZE':'DISABLE BODY OR PILOT'}</div>${u?`<div class="combat-selected"><span class="eyebrow">${PILOTS[u.index].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${PILOTS[u.index].skill}: ${u.skill?'USED':PILOTS[u.index].desc}</p></div>`:''}</aside>
   <div class="log">${battle.log.map(l=>'<div class="log-line">'+l+'</div>').join('')}</div><div class="hint">${battle.busy?'RESOLVING COMBAT':action==='move'?'MOVE / SELECT HIGHLIGHTED GROUND / 1 AP PER TILE':(action==='strike'?'STRIKE / ADJACENT HOSTILE / ':'FIRE / SELECT HOSTILE / ')+(chosen?.ap??3)+' AP PER ATTACK'}</div>
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''}" ${!t.alive||battle.busy?'disabled':''}><img src="${pilotArt(t.index)}" alt="${PILOTS[t.index].call}"><span><b>${t.name}</b><small>${t.alive?t.ap+' AP / '+t.hp.body+' HP':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button><button id="skill" title="${u?PILOTS[u.index].desc:''}" ${!u||u.skill||!ready||(u.index===2&&u.hp.body===u.max.body)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR'][u.index]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: 2 AP, halves incoming damage" ${!u||u.ap<2||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ 2 AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''}" ${!t.alive||battle.busy?'disabled':''}><img src="${pilotArt(t.index)}" alt="${PILOTS[t.index].call}"><span><b>${t.name}</b><small>${t.alive?t.ap+' AP / '+t.hp.body+' HP':t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button><button id="skill" title="${u?PILOTS[u.index].desc:''}" ${!u||u.skill||!ready||(u.index===2&&u.hp.body===u.max.body)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR'][u.index]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: 2 AP, halves incoming damage" ${!u||u.ap<2||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ 2 AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
   bindTacticalMap();
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy){selected=+b.dataset.unit;focusBattleCamera(current());if(action==='strike'&&!current()?.melee)action='move';renderBattle();persist()}});
   document.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{targetPart=b.dataset.part;if(W<760)targetPanelOpen=false;renderBattle();persist()});
@@ -534,7 +596,7 @@ async function moveUnit(u,x,z,cost){
   }else await delay(duration*1000);
   u.vx=p.x;u.vz=p.z;u.motion=null;u.landTime=clock;
   if(!u.kind){effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});sound('step')}
-  if(!reducedMotion&&(u.frame===2||u.frame===3))shake=Math.max(shake,.85);
+  if(!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
  }
  u.walkCount=gaitBase+steps.length;
 }
@@ -588,13 +650,14 @@ async function shoot(a,t,part,w=unitWeapon(a)){
   if(rockets)sound('missileImpact',.83);
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:'MISS'});addLog(a.name+' missed '+t.name+'.');
  }else{
-  const d=damage(a,t,w),label=t.kind?'HULL':part.toUpperCase();t.hitTime=clock;t.hitPart=part;t.hitDamage=d;const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
+  const d=partDamage(a,t,part,w),label=t.kind?'HULL':PART_LABEL[part];t.hitTime=clock;t.hitPart=part;t.hitDamage=d;const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
   t.hitVector={x:hitX/hitLength,y:hitY/hitLength};shake=Math.max(shake,w.id==='rail'||w.id==='breaker'?7:4);t.hp[part]=Math.max(0,t.hp[part]-d);
-  if(sequence)sequence.result=t.hp.body<=0?'TARGET DOWN':t.hp[part]===0?'SYSTEM DISABLED':'−'+d+' '+label;
+  if(sequence)sequence.result=t.hp.pilot===0?'PILOT DOWN':t.hp.body<=0?'TARGET DOWN':t.hp[part]===0?'SYSTEM DISABLED':'−'+d+' '+label;
   effects.push({type:'boom',target:t.id,part,x:t.x,z:t.z,t:1,big:false});effects.push({type:'text',x:t.x,z:t.z,t:1,text:'−'+d+' '+label});addLog(a.name+' → '+t.name+' / '+label+' −'+d);sound(rockets?'missileImpact':profile.melee||['rail','rampart','shotgun'].includes(effectKind)?'heavyImpact':'armorImpact');
-  if(t.hp.body<=0){beginDestruction(t);addLog(t.name+' neutralized.');if(a.team==='ally'){save.kills++;save.units[a.index].xp+=t.kind?VEHICLES[t.kind].xp:35}}
+  if(t.hp.body<=0||t.hp.pilot===0){beginDestruction(t,t.hp.body>0?'pilot':'body');addLog(t.name+(t.downReason==='pilot'?': pilot down.': ' neutralized.'));if(a.team==='ally'){save.kills++;save.units[a.index].xp+=t.kind?VEHICLES[t.kind].xp:35}}
   else if(t.hp[part]===0)addLog(t.name+': '+part+' destroyed.');
  }
+ if(hit&&w.id==='blade'&&!reducedMotion){t.hitstopUntil=clock+.085;await waitAttack(85,sequence)}
  if(sequence&&!sequence.skipped)$('#shot-status').textContent='Impact. '+sequence.result;
  a.boost=false;
  const settle=native&&!reducedMotion?Math.max(.12,native.duration-raise-flight):profile.recover+(primeDuration?ATTACK_STEP.returnDuration:0);
@@ -617,19 +680,22 @@ async function endTurn(){
  for(const enemy of enemies){
   const allies=battle.units.filter(u=>u.team==='ally'&&u.alive);
   if(!allies.length)break;
-  const target=allies.sort((a,b)=>distance(enemy,a)-distance(enemy,b))[0],w=unitWeapon(enemy);
+  const target=allies.sort((a,b)=>distance(enemy,a)-distance(enemy,b))[0],primary=unitWeapon(enemy);
   const alert=battle.legacy||distance(enemy,target)<=(enemy.kind==='helicopter'?11:12)||targetParts(enemy).some(p=>enemy.hp[p]<enemy.max[p]);
   if(!alert)continue;
-  if(distance(enemy,target)>w.range&&movementLimit(enemy)>0){
-   const options=[...paths(enemy)].filter(([,cost])=>cost<=8-w.ap).map(([key,cost])=>{
+  if(distance(enemy,target)>primary.range&&movementLimit(enemy)>0){
+   const options=[...paths(enemy)].filter(([,cost])=>cost<=8-primary.ap).map(([key,cost])=>{
     const [x,z]=key.split(',').map(Number);
     return{x,z,cost,d:distance(target,{x,z})};
    }).sort((a,b)=>a.d-b.d||a.cost-b.cost);
    const next=options[0];
    if(next&&next.d<distance(enemy,target))await moveUnit(enemy,next.x,next.z,next.cost);
   }
-  while(enemy.ap>=w.ap&&isArmed(enemy)&&distance(enemy,target)<=w.range&&target.alive){
-   await shoot(enemy,target,'body',w);renderBattle();
+  while(target.alive){
+   const strike=enemy.melee&&distance(enemy,target)===1?weapon(enemy.melee):null;
+   const w=strike&&canUseWeapon(enemy,strike)?strike:primary;
+   if(enemy.ap<w.ap||(!enemy.kind&&!canUseWeapon(enemy,w))||distance(enemy,target)>w.range)break;
+   await shoot(enemy,target,aiPart(enemy,target,w),w);renderBattle();
    if(checkEnd())return;
    if(enemy.kind)break;
   }
@@ -649,7 +715,8 @@ const decodedArt=new Set(),failedArt=new Set(),artImages={},artMasks={},enemyArt
 const motionPreference=typeof window.matchMedia==='function'?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
 let reducedMotion=!!motionPreference?.matches;
 motionPreference?.addEventListener?.('change',e=>{reducedMotion=e.matches;if(reducedMotion)skipAttackCamera()});
-const legacyChassis=FRAMES.map(frame=>frame.native?prototypes[frame.native]?.left.key:frame.name.toLowerCase());
+const foundryViewKeys=['front','side','back','other-side'];
+const legacyChassis=FRAMES.map(frame=>frame.foundry!=null?'foundry-'+frame.foundry:frame.native?prototypes[frame.native]?.left.key:frame.name.toLowerCase());
 const bakedChassis=[...Object.values(wardenVisuals),...(arsenal.chassis||[]),...Object.values(prototypes)].flatMap(views=>Object.values(views).map(view=>view.key));
 const mechArtKeys=new Set([...legacyChassis.filter(Boolean),...bakedChassis]);
 for(const key of [...mechArtKeys,'concrete','barricade','contract-relay','contract-corridor','contract-frontier','warden-base','kestrel-base','basilisk-base']){
@@ -751,6 +818,8 @@ function motionImage(atlas){
  return image;
 }
 function preloadNativeMotion(frame,paint){
+ const atlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(frame)];
+ if(atlas){if(paint)moduleImage(atlas.key+'-paint');return [motionImage(atlas)]}
  const views=prototypes[FRAMES[frame]?.native];
  return views?Object.values(views).map(visual=>{
   if(paint)moduleImage(visual.motion.key+'-paint');
@@ -771,6 +840,7 @@ function nearestFrame(frames,level){
 function wardenMotionFrame(u,visual,pose){
  if(reducedMotion||!visual)return;
  const {motion:atlas,attackMotion}=visual;
+ const strike=pose.strikeKind==='blade'?'cleaver':pose.strikeKind;
  if(visual.native){
   if(!u.alive||(!u.attack?.native&&!u.motion))return;
   const image=motionImage(atlas);
@@ -789,7 +859,7 @@ function wardenMotionFrame(u,visual,pose){
   if(imageReady(image)){
    let frame=nearestFrame(attackMotion.prime,pose.primeProgress);
    if(pose.primePhase==='planted'){
-    if(pose.strikeKind)frame=nearestFrame(attackMotion[pose.strikeKind],pose.strikeProgress)||frame;
+    if(pose.strikeKind)frame=nearestFrame(attackMotion[strike],pose.strikeProgress)||frame;
     else if(kick>.11)frame=nearestFrame(attackMotion.kick,kick)||frame;
     else frame=nearestFrame(attackMotion.aim,pose.aim)||frame;
    }
@@ -804,8 +874,8 @@ function wardenMotionFrame(u,visual,pose){
   frame=nearestFrame(atlas.death,pose.kneel);
  }else if(pose.primePhase&&pose.primePhase!=='planted'&&pose.primeProgress>0&&atlas.gait?.length){
   frame=atlas.gait[Math.min(atlas.gait.length-1,Math.floor(pose.primeProgress*atlas.gait.length/2))];
- }else if(pose.strikeKind&&atlas[pose.strikeKind]?.length){
-  frame=nearestFrame(atlas[pose.strikeKind],pose.strikeProgress);
+ }else if(pose.strikeKind&&atlas[strike]?.length){
+  frame=nearestFrame(atlas[strike],pose.strikeProgress);
  }else if(pose.walk>.12){
   const cycle=((pose.cycle%2)+2)%2;
   frame=atlas.gait[Math.min(atlas.gait.length-1,Math.floor(cycle*atlas.gait.length/2))];
@@ -818,15 +888,17 @@ function wardenMotionFrame(u,visual,pose){
 function remainingPose(pose,baked){
  return baked?.frame?{...pose,walk:0,recoil:0}:pose;
 }
-const MECH_SIZE=[2.18,2.1,2.35,2.46,2.46];
-function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1);return{x:p.x-size*(visual?.groundX??.5),y:p.y-size*(visual?.ground??.94),w:size,h:size}}
+const MECH_SIZE=[2.18,2.1,2.35,2.46,2.46,3.18,3.23,3.18,3.21,3.12,3.23];
+function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1);return{x:p.x-size*(visual?.groundX??.5),y:p.y-size*(visual?.ground??(foundryModel(u.frame)!=null?.84:.94)),w:size,h:size}}
 // A small skinned mesh articulates the existing armor art without new image requests.
 const MECH_MOTION=[
  {step:.31,hip:.59,split:.52,foot:[.96,.98],mass:1,muzzle:[.075,.565]},
  {step:.25,hip:.51,split:.51,foot:[.94,.98],mass:.65,muzzle:[.625,.43]},
  {step:.38,hip:.57,split:.60,foot:[.98,.87],mass:1.45,muzzle:[.25,.49]},
  {step:.63,hip:.58,split:.5,foot:[.89,.89],mass:1.56,muzzle:[.25,.49]},
- {step:.52,hip:.58,split:.5,foot:[.89,.89],mass:1.11,muzzle:[.38,.26]}
+ {step:.52,hip:.58,split:.5,foot:[.89,.89],mass:1.11,muzzle:[.38,.26]},
+ ...[[.53,.90],[.64,1.24],[.68,1.52],[.56,1.08],[.49,.73],[.66,1.44]].map(([step,mass])=>(
+  {step,mass,hip:.51,split:.5,foot:[.83,.84],muzzle:[.26,.46]}))
 ];
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
@@ -840,6 +912,7 @@ const ATTACK_PROFILES={
  rampart:{raise:.31,beats:[0],travel:.13,recover:.48},
  breaker:{raise:.47,beats:[0],travel:.19,recover:.51,melee:true},
  cleaver:{raise:.21,beats:[0],travel:.16,recover:.30,melee:true},
+ blade:{raise:.38,beats:[0],travel:.08,recover:.55,melee:true,effect:'cleaver'},
  piledriver:{raise:.32,beats:[0],travel:.18,recover:.39,melee:true},
  morrow:{raise:.784,beats:[0,.298667],travel:.14,recover:.48,effect:'rampart',alternate:true},
  locust:{raise:.784,beats:[0,.298667],travel:.46,recover:.39,effect:'missile',alternate:true},
@@ -938,12 +1011,13 @@ function mechSourcePoint(u,x,y,pose){
  const dx=(lx*c-ly*s)*root.scale+root.x*b.w,dy=(lx*s+ly*c)*root.scale+root.y*b.h;
  return{x:b.x+b.w/2+(spriteFlip(u)?-dx:dx),y:b.y+b.h+dy};
 }
-function beginDestruction(u){
+function beginDestruction(u,reason='body'){
+ u.downReason=reason;
  u.alive=false;u.deathTime=clock;u.deathStyle=u.kind?'vehicle':destructionStyle(u);u.deathEvents=0;u.attack=null;
  if(u.kind)moduleImage(vehicleKey(u,true));
 }
 function updateDestruction(u,t){
- if(u.alive||!Number.isFinite(u.deathTime))return;const age=t-u.deathTime;if(age>DESTRUCTION.end+.5)return;
+ if(u.alive||u.downReason==='pilot'||!Number.isFinite(u.deathTime))return;const age=t-u.deathTime;if(age>DESTRUCTION.end+.5)return;
  if(u.kind){
   const elapsed=age-VEHICLES[u.kind].wreckAt;
   if(elapsed>=0&&!u.deathEvents){
@@ -1033,11 +1107,42 @@ function paintedSprite(image,key,paint,hostile=false){
   paintedImages.set(id,surface);return surface;
  }catch{return image}
 }
+function foundryPaint(image,key,paint,trim,onReady){
+ if(!paint&&!trim)return image;
+ const id=[key,paint,trim?.s,trim?.a].join('/');
+ if(paintedImages.has(id))return paintedImages.get(id);
+ const mask=moduleImage(key+'-paint');
+ if(!imageReady(mask)){
+  if(onReady&&mask&&!mask.foundryPaintListener){mask.foundryPaintListener=true;mask.addEventListener?.('load',onReady,{once:true})}
+  return image;
+ }
+ const {naturalWidth:width,naturalHeight:height}=image;
+ try{
+  const surface=renderSurface(width,height),g=surface.getContext('2d',{willReadFrequently:true});
+  g.drawImage(mask,0,0);
+  const masks=g.getImageData(0,0,width,height).data;
+  g.clearRect(0,0,width,height);g.drawImage(image,0,0);
+  const color=g.getImageData(0,0,width,height),pixels=color.data;
+  const shades=[paint,trim?.s,trim?.a].map(hex=>hex&&[1,3,5].map(offset=>parseInt(hex.slice(offset,offset+2),16)));
+  for(let i=0;i<pixels.length;i+=4){
+   if(!pixels[i+3])continue;
+   const layer=masks[i]>.85*255?0:masks[i+1]>.85*255?1:masks[i+2]>.85*255?2:-1;
+   const rgb=shades[layer];if(!rgb)continue;
+   const light=pixels[i]*.2126+pixels[i+1]*.7152+pixels[i+2]*.0722;
+   const exposure=(light/(layer===1?98:layer===2?125:181))**.70;
+   for(let c=0;c<3;c++)pixels[i+c]=Math.min(255,rgb[c]*exposure);
+  }
+  g.putImageData(color,0,0);
+  if(paintedImages.size>=12)paintedImages.delete(paintedImages.keys().next().value);
+  paintedImages.set(id,surface);return surface;
+ }catch{return image}
+}
 function spritePoint(bounds,point=[.5,.36]){
  return {x:bounds.x+point[0]*bounds.w,y:bounds.y+point[1]*bounds.h};
 }
 function weaponMount(visual,frame,bounds,id,direction,strike=0){
- const slot=arsenal.weapons?.[id]?.[direction===1?'right':'left'];
+ const side=direction===1?'right':'left';
+ const slot=id==='blade'?window.IRON_VOW_RAIJIN_ART?.[side]||arsenal.weapons?.cleaver?.[side]:arsenal.weapons?.[id]?.[side];
  if(!slot)return;
  const asset=id==='piledriver'&&strike>=.61&&strike<=.81&&slot.extended?slot.extended:slot;
  const isMelee=weapon(id).melee;
@@ -1058,10 +1163,23 @@ function drawWeaponModule(g,mount){
  g.save();g.translate(grip.x,grip.y);g.rotate(angle);g.scale(ratio,ratio);
  g.drawImage(image,-asset.grip[0],-asset.grip[1]);g.restore();
 }
+let foundryPreviewAngle=-.54;
 function drawWorkshopPreview(){
  const canvas=$('#paint-preview');if(!canvas)return;
  const g=canvas.getContext('2d'),u=save.units[selected],frame=pilotFrame(selected),visual=wardenVisual(frame,u.weapon,-1);
- const image=artImages[visual?.key],loaded=imageReady(image),size=canvas.width;
+ const image=artImages[visual?.key],loaded=imageReady(image),size=canvas.width,model=foundryModel(frame);
+ if(model!=null){
+  const src=window.IronVowFoundry?.thumb(model,'ally',u.paint,u.weapon,u.melee,u.trim,foundryPreviewAngle);
+  const turn=Math.max(0,Math.round((foundryPreviewAngle+.54)/(Math.PI/2)))%4;
+  const key=turn?'foundry-'+model+'-'+foundryViewKeys[turn]:legacyChassis[frame];
+  const fallback=moduleImage(key);
+  const next=src?new Image():fallback;
+  if(src)next.src=src;
+  const paint=()=>{if($('#paint-preview')===canvas&&canvas.dataset.foundrySrc===(src||'')){g.clearRect(0,0,size,size);g.drawImage(src?next:foundryPaint(next,key,u.paint,u.trim,drawWorkshopPreview),0,0,size,size)}};
+  canvas.dataset.foundrySrc=src||'';
+  if(imageReady(next))paint();else if(next)next.addEventListener?.('load',paint,{once:true});
+  return;
+ }
  g.clearRect(0,0,size,size);
  if(!loaded){
   const fallback=artImages[legacyChassis[frame]];
@@ -1079,10 +1197,12 @@ function bindWorkshop(){
  const buttons=[...document.querySelectorAll('[data-paint]')],custom=$('#custom-paint'),u=save.units[selected];
  for(const button of document.querySelectorAll('[data-chassis]'))button.onclick=()=>{
   const frame=Number(button.dataset.chassis);
-  if(assignChassis(selected,frame)){
+  const pageScroll=$('#ui .page')?.scrollTop||0;
+  if(assignChassis(selected,frame,true)){
    render();sound('click');toast(PILOTS[selected].call+' assigned to '+FRAMES[frame].name);
-   $(`.lance-tabs [data-select="${selected}"]`)?.focus();
-  }
+   const workshop=$('#ui .page');if(workshop)workshop.scrollTop=pageScroll;
+   $(`[data-chassis="${frame}"]`)?.focus({preventScroll:true});
+  }else if(FRAMES[frame].cost>save.credits)toast('Insufficient credits');
  };
  const mark=()=>buttons.forEach(button=>button.setAttribute('aria-pressed',String((u.paint||'')===button.dataset.paint)));
  for(const button of buttons)button.onclick=()=>{
@@ -1092,6 +1212,14 @@ function bindWorkshop(){
  };
  custom.oninput=()=>{if(validPaint(custom.value)){u.paint=custom.value;mark();drawWorkshopPreview()}};
  custom.onchange=()=>{if(validPaint(custom.value)){u.paint=custom.value;mark();persist();drawWorkshopPreview()}};
+ for(const input of document.querySelectorAll('[data-trim]')){
+  const update=()=>{if(validPaint(input.value)){(u.trim??={})[input.dataset.trim]=input.value;drawWorkshopPreview()}};
+  input.oninput=update;input.onchange=()=>{update();persist()};
+ }
+ const resetTrim=$('#reset-trim');
+ if(resetTrim)resetTrim.onclick=()=>{delete u.trim;persist();render()};
+ const rotate=$('#rotate-foundry');
+ if(rotate)rotate.onclick=()=>{foundryPreviewAngle=foundryPreviewAngle>3.5?-.54:foundryPreviewAngle+Math.PI/2;drawWorkshopPreview()};
  const remove=$('#remove-melee');
  if(remove)remove.onclick=()=>{delete u.melee;persist();render();toast('Melee weapon unequipped')};
  drawWorkshopPreview();
@@ -1196,9 +1324,9 @@ function animationPose(u,t,visual=activeWardenVisual(u)){
  let recoil=0;const age=t-(u.fireTime??-100);
  if(!strikeKind&&!reducedMotion)for(const beat of profile.beats)recoil+=dampedImpulse(age-beat,u.weapon==='missile'?32:42,u.weapon==='rail'?12:18);
  const impactAge=t-(u.hitTime??-100),impact=!reducedMotion?dampedImpulse(impactAge,28,11):0;
- const deathAge=u.alive?-1:t-(u.deathTime??t-DESTRUCTION.end),death=u.alive?0:reducedMotion?1:clamp01(deathAge/DESTRUCTION.end);
+ const deathAge=u.alive?-1:t-(u.deathTime??t-DESTRUCTION.end),death=u.alive||u.downReason==='pilot'?0:reducedMotion?1:clamp01(deathAge/DESTRUCTION.end);
  const kneel=u.alive?0:reducedMotion?1:smoothRange(.04,DESTRUCTION.kneelEnd,deathAge);
- const explosion=u.alive?0:reducedMotion?1:smoothRange(DESTRUCTION.blast-.02,DESTRUCTION.blast+.15,deathAge);
+ const explosion=u.alive||u.downReason==='pilot'?0:reducedMotion?1:smoothRange(DESTRUCTION.blast-.02,DESTRUCTION.blast+.15,deathAge);
  const landAge=t-(u.landTime??-100),land=!reducedMotion&&landAge>=0&&landAge<.4?Math.sin(landAge*30)*Math.exp(-landAge*15):0;
  const pose={rig,flip,strikeKind,strikeProgress,primePhase,primeProgress,nativeDirection:visual?unitFacing(u):u.frame===1?1:-1,phase,cycle,walk,dx,dy,recoil,impact,death,deathAge,kneel,explosion,aim:reducedMotion?0:aim,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
  pose.time=t;pose.podRecoil=profile.beats.map(beat=>reducedMotion||strikeKind?0:dampedImpulse(age-beat,32,18));pose.upper=upperPose(u,pose);return pose;
@@ -1309,11 +1437,13 @@ function drawUnitReadout(u,height=2.35){
 }
 function mechAttachmentPoint(u,part='muzzle',t=clock){
  if(u.kind)return vehicleAttachment(u,part,t);
+ const foundry=foundryRender(u,t);
+ if(foundry)return spritePoint(unitBounds(u),foundry.anchors[part]||foundry.anchors.body);
  const visual=activeWardenVisual(u),raw=unitBounds(u,visual),b=visual?.modular||visual?.native?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual),rig=pose.rig;
- const locations={body:[rig.split,.34],right:[u.frame===1?.38:.30,.46],left:[.81,.39],legs:[rig.split,.79]};
+ const locations={body:[rig.split,.34],pilot:[rig.split,.21],right:[u.frame===1?.38:.30,.46],left:[.81,.39],legs:[rig.split,.79]};
  const baked=wardenMotionFrame(u,visual,pose),frame=baked?.frame||visual;
  if(visual?.native){
-  const p=frame[part]||visual[part]||frame.body;
+  const p=frame[part]||visual[part]||(part==='pilot'?[frame.body[0],frame.body[1]-.14]:frame.body);
   if(u.alive)return spritePoint(b,p);
   const root=destructionRoot(u,pose),q=rotatePoint({x:(p[0]-.5)*root.scale,y:(p[1]-1)*root.scale},[0,0],root.angle);
   return spritePoint(b,[q.x+.5+root.x,q.y+1+root.y]);
@@ -1327,7 +1457,7 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
    const mount=weaponMount(visual,frame,b,id,unitFacing(u),pose.strikeProgress);
    if(mount)return weaponPoint(mount,melee?'tip':part);
   }
-  return spritePoint(b,frame[part]||visual[part]||frame.body);
+  return spritePoint(b,frame[part]||visual[part]||(part==='pilot'?[frame.body[0],frame.body[1]-.14]:frame.body));
  }
  const source=frame[part]||visual[part]||locations[part]||visual.body;
  if(baked?.frame&&u.alive)return{x:b.x+(pose.flip?1-source[0]:source[0])*b.w,y:b.y+source[1]*b.h};
@@ -1342,10 +1472,49 @@ function drawMechSmoke(u,t,destroyed=false){
  for(let i=0;i<count;i++){const v=(t*.38+i/count)%1,fade=destroyed?Math.exp(-Math.max(0,age)*.22):1;ctx.globalAlpha=(1-v)*fade*(destroyed?.3:.18);ctx.fillStyle=destroyed?'#a9a8a0':'#aebbc4';ctx.beginPath();ctx.arc(p.x+Math.sin(i*3+t*.7)*scale*(.07+v*.14),p.y-v*scale*(destroyed?1.2:.8),scale*(.045+v*.16),0,Math.PI*2);ctx.fill()}
  ctx.restore();
 }
+function foundryRender(u,t){
+ const model=foundryModel(u.frame);
+ if(model==null)return null;
+ const poseTime=u.hitstopUntil>t?u.hitTime:t;
+ const pose=animationPose(u,poseTime);
+ const live=window.IronVowFoundry?.draw(u,poseTime,pose,battle,model);
+ if(live)return live;
+ const atlas=window.IRON_VOW_FOUNDRY_ART?.[model];
+ if(!atlas)return null;
+ const image=motionImage(atlas);
+ const index=!u.alive?u.downReason==='pilot'?14:15:
+  pose.strikeKind&&pose.strikeProgress>=.52?13:
+  Math.abs(pose.recoil)>.05?12:pose.aim>.35?11:
+  pose.primeProgress>0?8+Math.min(2,Math.floor(pose.primeProgress*3)):
+  u.motion&&!reducedMotion?Math.floor(pose.cycle*8)%8:0;
+ const flip=unitFacing(u)>0,frame=atlas.frames[index];
+ const anchors=flip?Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([k,[x,y]])=>[k,[1-x,y]])):frame;
+ const loaded=imageReady(image),key=loaded?atlas.key:legacyChassis[u.frame],base=loaded?image:artImages[key];
+ const surface=imageReady(base)&&u.team==='ally'?foundryPaint(base,key,u.paint,u.trim):base;
+ return {surface,cell:loaded?atlas.cell:0,index,anchors,flip,baked:true};
+}
 function drawUnit(u,t,close=false){
  if(u.kind){drawVehicle(u,t,close);return}
  const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=unitBounds(u,visual),b=visual?.modular||visual?.native?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual);
  const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
+ const foundry=foundryRender(u,t);
+ if(foundry){
+  ctx.save();ctx.fillStyle='#050c12ac';ctx.beginPath();
+  ctx.ellipse(p.x,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64),scale*.22,0,0,Math.PI*2);ctx.fill();
+  if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
+   ctx.translate(b.x+b.w/2,b.y);if(foundry.flip)ctx.scale(-1,1);
+   if(foundry.baked&&u.team==='enemy')ctx.filter=HOSTILE_FILTER;
+   if(foundry.cell){
+    const {cell,index}=foundry;
+    ctx.drawImage(foundry.surface,index%4*cell,Math.floor(index/4)*cell,cell,cell,-b.w/2,0,b.w,b.h);
+   }else ctx.drawImage(foundry.surface,-b.w/2,0,b.w,b.h);
+  }
+  ctx.restore();
+  if(!u.alive&&u.downReason!=='pilot')drawMechSmoke(u,t,true);
+  if(u.alive&&u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
+  if(u.alive&&!close)drawUnitReadout(u,foundryModel(u.frame)===5?2.12:2.35);
+  return;
+ }
  const baked=wardenMotionFrame(u,visual,pose),remaining=remainingPose(pose,baked);
  const body=baked?.frame?baked.image:original,bodyKey=baked?.frame?baked.atlas.key:key;
  const im=visual?.modular||visual?.native?paintedSprite(body,bodyKey,u.paint,u.team==='enemy'):u.team==='enemy'&&!baked?.frame&&enemyArt[key]?enemyArt[key]:body;
@@ -1354,14 +1523,14 @@ function drawUnit(u,t,close=false){
  if(!u.alive&&pose.explosion>=1){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true);return}
  ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)ctx.scale(-1,1);
  if(tintFallback)ctx.filter=HOSTILE_FILTER;
- if(!u.alive){const root=destructionRoot(u,pose);ctx.globalAlpha=1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
+ if(!u.alive){const root=u.downReason==='pilot'?{x:0,y:pose.kneel*.075,angle:pose.kneel*.12,scale:1-pose.kneel*.1}:destructionRoot(u,pose);ctx.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
  const articulated=!reducedMotion&&(pose.walk>.001||pose.primeProgress>0||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||pose.aim>.001||(!u.alive&&pose.explosion<1));
  if(baked?.frame){const {cell,columns}=baked.atlas,index=baked.frame.index;ctx.drawImage(im,index%columns*cell,Math.floor(index/columns)*cell,cell,cell,-b.w/2,-b.h,b.w,b.h)}
  else if(articulated&&!visual&&rigidParts[u.frame]){const cache=rigidParts[u.frame],bodyPose={...pose,baseOnly:true};drawArticulatedMech(im,u,b.w,b.h,bodyPose,u.team==='enemy'?cache.enemyBase:cache.base);drawRigidUpper(u,b.w,b.h,pose)}
- else if(articulated&&!visual?.modular&&!visual?.native)drawArticulatedMech(im,u,b.w,b.h,{...remaining,baseOnly:true});
+ else if(articulated&&!visual?.modular&&!visual?.native&&foundryModel(u.frame)==null)drawArticulatedMech(im,u,b.w,b.h,{...remaining,baseOnly:true});
  else{if(u.alive&&!reducedMotion)ctx.rotate(Math.sin(t*.85+u.index)*.001);ctx.drawImage(im,-b.w/2,-b.h,b.w,b.h)}
  ctx.restore();
- if(!u.alive){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true);return}
+ if(!u.alive){if(u.downReason!=='pilot'){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true)}return}
  if(visual?.modular){
   const frame=baked?.frame||visual,face=unitFacing(u);
   if(u.hp.right>0&&!(u.frame===2&&u.weapon==='missile'))drawWeaponModule(ctx,weaponMount(visual,frame,b,u.weapon,face));
@@ -1559,7 +1728,7 @@ function drawCinematicFire(sequence,actor,pane,t){
  }
  for(const [i,beat] of profile.beats.entries()){
   const time=age-beat;
-  const missile=sequence.w.id==='locust';
+  const missile=sequence.w.id==='locust'||sequence.w.id==='missile';
   if(time<0||time>(missile?.32:.17))continue;
   const p=mechAttachmentPoint(actor,(sequence.w.id==='missile'||profile.alternate)&&i%2?'muzzle2':'muzzle',missile?sequence.fireAt+beat:t);
   if(missile){
@@ -1586,7 +1755,7 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  const previousOrigin=origin,previousScale=scale;
  const zoom=.94+.08*smoothRange(0,.29,t-sequence.start);
  const airborne=subject.kind==='helicopter';
- const heightLimit=airborne?(pane.h*.88-49)/2.48:pane.h/(subject.kind?2.25:2.92);
+ const heightLimit=airborne?(pane.h*.88-49)/2.48:pane.h/(subject.kind?2.25:foundryModel(subject.frame)!=null?3.45:2.92);
  scale=Math.max(10,Math.min(pane.w/(subject.kind?3.25:4.08),heightLimit)*zoom);
  const settle=airborne&&!subject.alive?smoothRange(0,VEHICLES.helicopter.wreckAt,vehicleDeathAge(subject,t)):0;
  const feetX=pane.x+pane.w*(attacker?.44:.55),feetY=pane.y+pane.h*(airborne?.88-.14*settle:subject.kind?.74:.82);
@@ -1649,7 +1818,8 @@ function screenTile(clientX,clientY){let sx=(clientX-origin.x)/(scale*.866),sy=(
 function pick(clientX,clientY){
  const units=battle.units.filter(u=>u.alive).sort((a,b)=>(b.vx+b.vz)-(a.vx+a.vz));
  for(const u of units){const visual=activeWardenVisual(u),b=u.kind?vehicleBounds(u,clock):unitBounds(u,visual),px=(clientX-b.x)/b.w,py=(clientY-b.y)/b.h;if(px<0||py<0||px>1||py>1)continue;
- const mask=artMasks[u.kind?vehicleKey(u):visual?.key||legacyChassis[u.frame]];
+ const mask=foundryModel(u.frame)!=null?null:artMasks[u.kind?vehicleKey(u):visual?.key||legacyChassis[u.frame]];
+ if(foundryModel(u.frame)!=null&&py<.18)continue;
  if(u.kind){
   if(mask){
    const ix=Math.min(mask.width-1,Math.floor(px*mask.width)),iy=Math.min(mask.height-1,Math.floor(py*mask.height));
