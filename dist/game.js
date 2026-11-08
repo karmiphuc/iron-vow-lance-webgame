@@ -196,7 +196,34 @@ function waitAttack(ms,sequence){
  });
 }
 let soundBus=null;
-function sound(type){
+const combatSamples=new Map();
+const COMBAT_CUES={
+ missileArm:'pod-arm',rocketLaunch:'rocket-launch',armorImpact:'armor-hit',
+ heavyImpact:'heavy-hit',missileImpact:'missile-hit',boom:'missile-hit'
+};
+function loadCombatSamples(){
+ for(const file of new Set(Object.values(COMBAT_CUES))){
+  fetch('assets/audio/'+file+'.wav')
+   .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Audio unavailable')})
+   .then(bytes=>audio.decodeAudioData(bytes))
+   .then(buffer=>combatSamples.set(file,buffer))
+   .catch(()=>{});
+ }
+}
+function playCombatSample(cue,at,volume,rate=1,pan=0){
+ const buffer=combatSamples.get(COMBAT_CUES[cue]);
+ if(!buffer)return false;
+ const source=audio.createBufferSource(),gain=audio.createGain();
+ source.buffer=buffer;source.playbackRate.value=rate;gain.gain.value=volume;
+ source.connect(gain);
+ if(pan&&audio.createStereoPanner){
+  const position=audio.createStereoPanner();position.pan.value=pan;
+  gain.connect(position);position.connect(soundBus);
+ }else gain.connect(soundBus);
+ source.start(at);
+ return true;
+}
+function sound(type,cueVolume=1){
  if(muted)return;
  try{
   audio??=new(window.AudioContext||window.webkitAudioContext)();
@@ -206,18 +233,29 @@ function sound(type){
    const compressor=audio.createDynamicsCompressor();
    compressor.threshold.value=-15;compressor.knee.value=12;compressor.ratio.value=6;
    soundBus.connect(compressor);compressor.connect(audio.destination);
+   if(typeof fetch==='function')loadCombatSamples();
+  }
+  const now=audio.currentTime+.005;
+  const rate=type==='boom'?.78:1;
+  if(playCombatSample(type,now,cueVolume*rate,rate))return;
+  if(type==='missile'||type==='locust'){
+   const beats=ATTACK_PROFILES[type].beats;
+   const pitch=type==='locust'?1.12:1;
+   if(playCombatSample('rocketLaunch',now,1,pitch,-.22)){
+    playCombatSample('rocketLaunch',now+beats[1],.93,pitch*.90,.22);
+    return;
+   }
   }
   if(!noiseBuffer){
    noiseBuffer=audio.createBuffer(1,Math.ceil(audio.sampleRate*1.2),audio.sampleRate);
    const samples=noiseBuffer.getChannelData(0);
    for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
   }
-  const now=audio.currentTime+.005;
   const tone=(at,duration,from,to,volume,wave='sine')=>{
    const oscillator=audio.createOscillator(),gain=audio.createGain();
    oscillator.type=wave;oscillator.frequency.setValueAtTime(from,at);
    oscillator.frequency.exponentialRampToValueAtTime(to,at+duration);
-   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume,at+.008);
+   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume*cueVolume,at+.008);
    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
    oscillator.connect(gain);gain.connect(soundBus);oscillator.start(at);oscillator.stop(at+duration+.01);
   };
@@ -225,7 +263,7 @@ function sound(type){
    const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
    source.buffer=noiseBuffer;filter.type=filterType;filter.frequency.setValueAtTime(frequency,at);
    filter.frequency.exponentialRampToValueAtTime(end,at+duration);
-   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume,at+.005);
+   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume*cueVolume,at+.005);
    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
    source.connect(filter);filter.connect(gain);gain.connect(soundBus);source.start(at);source.stop(at+duration+.01);
   };
@@ -247,6 +285,13 @@ function sound(type){
    }
   };
   if(type==='boom'){explosion(now,.78);return}
+  if(type==='missileArm'){
+   tone(now,.22,112,220,.055,'triangle');
+   noise(now+.025,.18,380,1150,.08,'bandpass');
+   tone(now+.175,.06,710,250,.10,'triangle');
+   return;
+  }
+  if(type==='armorImpact'){thump(now,.8);noise(now,.065,5300,750,.16);return}
   if(type==='missileImpact'){explosion(now,1.15);return}
   if(type==='heavyImpact'){
    noise(now,.09,5700,1100,.24);
@@ -261,7 +306,16 @@ function sound(type){
   if(type==='rampart'){gun(now,1.5);tone(now+.035,.42,85,30,.13);return}
   if(type==='morrow'){[0,.299].forEach(t=>{gun(now+t,1.35);tone(now+t+.02,.31,94,32,.11)});return}
   if(type==='rail'){tone(now,.32,1450,240,.07,'sawtooth');noise(now,.3,5000,350,.12,'bandpass');tone(now+.015,.4,150,35,.16);return}
-  if(type==='missile'||type==='locust'){[0,type==='locust'?.299:.17].forEach(t=>{thump(now+t,.55);noise(now+t,.42,850,2800,.12,'bandpass')});return}
+  if(type==='missile'||type==='locust'){
+   for(const beat of ATTACK_PROFILES[type].beats){
+    const ignition=now+beat;
+    noise(ignition,.065,6100,1250,.29);
+    tone(ignition+.008,.22,180,65,.25);
+    noise(ignition+.036,.44,1600,230,.27);
+    noise(ignition+.066,.46,630,210,.16,'bandpass');
+   }
+   return;
+  }
   if(type==='cleaver'){noise(now,.22,550,3500,.11,'bandpass');tone(now+.08,.2,1250,460,.05,'triangle');return}
   if(type==='breaker'){noise(now,.18,420,2100,.10,'bandpass');thump(now+.13,1.15);return}
   if(type==='breach-gauntlet'||type==='pulse-bash'){noise(now,.19,490,2100,.085,'bandpass');thump(now+.18,type==='pulse-bash'?.65:1.1);return}
@@ -444,7 +498,7 @@ async function moveUnit(u,x,z,cost){
 async function shoot(a,t,part,w=unitWeapon(a)){
  if(t.kind)part='body';
  if(!canReachTarget(w,t))return;
- const profile=ATTACK_PROFILES[w.id];
+ const profile=ATTACK_PROFILES[w.id],effectKind=profile.effect||w.id,rockets=effectKind==='missile';
  if(!a.kind&&FRAMES[a.frame].native&&!reducedMotion)await readyNativeMotion(a);
  a.ap-=w.ap;a.face=Math.sign((t.x-t.z)-(a.x-a.z))||a.face||-1;
  const clip=w.melee?'strike':'fire',native=!a.kind&&wardenVisual(a.frame,a.weapon,a.face)?.timing?.[clip];
@@ -465,7 +519,12 @@ async function shoot(a,t,part,w=unitWeapon(a)){
    sound('step');
   }
  }
- await waitAttack(windup*1000,sequence);
+ const armTime=rockets?Math.min(windup,.28):0;
+ if(armTime){
+  if(windup>armTime)await waitAttack((windup-armTime)*1000,sequence);
+  if(!sequence?.skipped)sound('missileArm',windup<.28?.55:1);
+ }
+ await waitAttack((armTime||windup)*1000,sequence);
  a.fireTime=clock;a.attack.fireAt=clock;
  if(sequence){sequence.phase='fire';sequence.fireAt=clock}
  const flight=profile.beats.at(-1)+profile.travel;
@@ -473,18 +532,23 @@ async function shoot(a,t,part,w=unitWeapon(a)){
  const impact=freezeAttachment(t,part);
  if(!hit){impact.ox+=.55*(a.face||1);impact.oy-=.38}
  effects.push({type:'shot',actor:a.id,target:t.id,part,kind:w.id,x:a.x,z:a.z,tx:t.x,tz:t.z,t:1,born:clock,life:flight+.12,origins:[],impact});sound(w.id);
- await waitAttack(flight*1000,sequence);
+ const lastBeat=profile.beats.at(-1);
+ if(rockets){
+  await waitAttack(profile.travel*1000,sequence);
+  if(!sequence?.skipped)sound('missileImpact',.62);
+ }
+ await waitAttack((rockets?lastBeat:flight)*1000,sequence);
  a.attack.releaseAt=clock;
  if(sequence){sequence.phase='result';sequence.impactAt=clock}
  if(!hit){
   if(sequence)sequence.result='MISS';
-  if(w.id==='missile')sound('missileImpact');
+  if(rockets)sound('missileImpact',.83);
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:'MISS'});addLog(a.name+' missed '+t.name+'.');
  }else{
   const d=damage(a,t,w),label=t.kind?'HULL':part.toUpperCase();t.hitTime=clock;t.hitPart=part;t.hitDamage=d;const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
   t.hitVector={x:hitX/hitLength,y:hitY/hitLength};shake=Math.max(shake,w.id==='rail'||w.id==='breaker'?7:4);t.hp[part]=Math.max(0,t.hp[part]-d);
   if(sequence)sequence.result=t.hp.body<=0?'TARGET DOWN':t.hp[part]===0?'SYSTEM DISABLED':'−'+d+' '+label;
-  effects.push({type:'boom',target:t.id,part,x:t.x,z:t.z,t:1,big:false});effects.push({type:'text',x:t.x,z:t.z,t:1,text:'−'+d+' '+label});addLog(a.name+' → '+t.name+' / '+label+' −'+d);sound(w.id==='missile'?'missileImpact':['rail','rampart','breaker','piledriver','shotgun'].includes(w.id)?'heavyImpact':'boom');
+  effects.push({type:'boom',target:t.id,part,x:t.x,z:t.z,t:1,big:false});effects.push({type:'text',x:t.x,z:t.z,t:1,text:'−'+d+' '+label});addLog(a.name+' → '+t.name+' / '+label+' −'+d);sound(rockets?'missileImpact':profile.melee||['rail','rampart','shotgun'].includes(effectKind)?'heavyImpact':'armorImpact');
   if(t.hp.body<=0){beginDestruction(t);addLog(t.name+' neutralized.');if(a.team==='ally'){save.kills++;save.units[a.index].xp+=t.kind?VEHICLES[t.kind].xp:35}}
   else if(t.hp[part]===0)addLog(t.name+': '+part+' destroyed.');
  }
