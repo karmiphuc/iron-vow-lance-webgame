@@ -305,3 +305,52 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  .unitbuttons .pilot-emblem{width:25px;height:33px}
 }
 @media(max-width:370px){#nav button,.bay-tabs button{font-size:8px}.bay-tabs button{gap:3px}}
+
+.ship-content{max-width:1180px;margin-inline:auto}
+.ship-banner{min-height:168px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px;border:1px solid var(--line);background:linear-gradient(90deg,#11191df5,#11191db8 54%,#11191d6e),url('assets/hangar.webp') center 43%/cover}
+.ship-banner h1{font-size:clamp(36px,5vw,62px);margin:8px 0}
+.ship-banner p{font-size:12px;color:#d1dbdc}
+.ship-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ship-actions button{min-height:44px;padding:8px 14px;font-size:11px}
+.ship-actions .primary{gap:7px}
+.ship-queue{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 18px;margin:12px 0 16px;background:#222a2d;border:1px solid var(--line);border-left:2px solid var(--accent)}
+.ship-queue h2{font-size:21px;margin-top:5px}
+.ship-progress{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+.ship-progress progress{width:85px;height:8px;accent-color:var(--accent)}
+.ship-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ship-facility{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);background:#182228}
+.ship-facility-head,.ship-next-title{display:flex;align-items:center;gap:8px}
+.ship-facility-head{padding:12px 15px}
+.ship-facility-head .ui-icon{width:20px;height:20px;flex:none}
+.ship-facility-head h2{font-size:23px;flex:1}
+.ship-facility-head .tag{white-space:nowrap}
+.ship-current{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:center;padding:9px 15px;background:#111b20;border-block:1px solid var(--line);font-size:11px}
+.ship-current small{color:var(--accent);text-transform:uppercase;font-weight:700}
+.ship-next{display:flex;flex-direction:column;flex:1;justify-content:center;gap:3px;padding:10px 15px}
+.ship-next h3{font-size:21px}
+.ship-next p{font-size:12px}
+.ship-build{margin-top:7px;display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.ship-build span{margin-right:auto;color:var(--muted);font-size:10px;white-space:nowrap}
+.ship-build button{min-height:44px;padding:8px 10px;font-size:10px}
+.ship-build small{color:var(--muted);font-size:10px}
+.ship-plan{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 15px;border-top:1px solid var(--line);background:#151e23;font-size:11px}
+.ship-plan div{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px}
+.ship-plan small{color:var(--accent);font-size:9px}
+.ship-plan span{color:var(--muted)}
+.auxiliary-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0;margin:12px 0;padding:8px 12px 12px;border:1px solid var(--line)}
+.auxiliary-choices legend{padding-inline:6px;color:var(--accent);font-size:12px}
+.auxiliary-choices label{display:grid;gap:5px;color:var(--muted);font-size:11px}
+.auxiliary-choices .aux-enable{grid-column:1/-1;display:flex;align-items:center;min-height:36px;gap:8px;color:var(--ink)}
+.aux-enable input{width:18px;height:18px;accent-color:var(--accent)}
+.auxiliary-choices select{width:100%;min-width:0;min-height:40px;padding:5px;background:#111b20;border:1px solid var(--line);color:var(--ink);font:inherit}
+.wound-status{color:var(--accent)}
+@media(max-width:760px){
+ .ship-page{padding:14px 12px}
+ .ship-banner{min-height:150px;display:grid;gap:8px;padding:16px}
+ .ship-queue{padding:10px 12px}
+ .ship-grid{grid-template-columns:1fr}
+ .unitbuttons:has([data-unit="3"]) button{min-height:48px;gap:4px;padding:6px 4px}
+ .unitbuttons:has([data-unit="3"]) .pilot-thumb{display:none}
+ .unitbuttons:has([data-unit="3"]) b{font-size:13px;overflow-wrap:anywhere}
+ .unitbuttons:has([data-unit="3"]) small{white-space:normal}
+}

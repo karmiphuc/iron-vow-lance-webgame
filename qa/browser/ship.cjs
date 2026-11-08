@@ -1,0 +1,70 @@
+const assert=require('node:assert/strict');
+
+module.exports=async function checkShip({context,page,mobile,origin,tap}){
+ const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const fit=async(selector)=>assert.ok(await page.locator(selector).evaluate(el=>el.scrollWidth<=el.clientWidth+1),selector+' fits');
+ const launch=async()=>{
+  await nav('contracts');
+  await tap('[data-deploy="0"]');
+  await fit('.modalbox');
+  await tap('#modal-1');
+ };
+ const win=()=>page.evaluate(()=>{
+  for(const u of battle.units)if(u.team==='enemy'){u.alive=false;u.hp.body=0}
+  finish(true);closeModal();
+ });
+ await page.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
+ await page.locator('.ship-banner h1').waitFor();
+ assert.equal(await page.locator('.ship-facility').count(),4);
+ assert.match(await page.locator('[data-facility="drop"] .ship-plan').innerText(),/\+1 optional reserve mech/i);
+ await fit('.ship-page');
+ const tip=page.locator('[data-facility="drop"] .ship-next-title [data-help]');
+ await tip.scrollIntoViewIfNeeded();
+ if(mobile){
+  const box=await tip.boundingBox(),cdp=await context.newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2}]});
+  await page.locator('#game-help').waitFor({state:'visible'});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await cdp.detach();
+ }else await tip.hover();
+ assert.match(await page.locator('#game-help').innerText(),/precharge allied reactors/i);
+ await tap('[data-hangar-deck="mechs"]');
+ await tap('#inspect');
+ await page.locator('.unit-inspect').waitFor();
+ await tap('[data-hangar-deck="ship"]');
+ await page.evaluate(()=>{save.credits=24000;save.rep=30;save.history=[{name:'Picket sweep',day:1,win:true,pay:1300}];hirePilot(3);acquireHull(6);persist();render()});
+ const before=await page.evaluate(()=>save.credits);
+ await tap('[data-build-facility="drop"]');
+ assert.equal(await page.evaluate(()=>save.credits),before-2200);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('.ship-queue h2').waitFor();
+ assert.equal(await page.locator('.ship-queue h2').innerText(),'HOT DROP BEACONS');
+ assert.ok(await page.locator('[data-build-facility="crew"]').isDisabled());
+ await launch();await win();await nav('hangar');
+ assert.match(await page.locator('[data-facility="drop"] .ship-current').innerText(),/HOT DROP BEACONS ONLINE/i);
+ await tap('[data-build-facility="drop"]');
+ await launch();await win();
+ await nav('hangar');
+ assert.match(await page.locator('.ship-queue .tag').innerText(),/1 WIN LEFT/i);
+ await launch();await win();
+ await page.evaluate(()=>{save.dispatch={day:save.day,sizes:[3,2,1,3]};persist()});
+ await nav('contracts');
+ assert.match(await page.locator('.contract-grid article').first().innerText(),/3 MECHS \+ AUX OPTION/);
+ await tap('[data-deploy="0"]');
+ await tap('#use-aux');
+ assert.equal(await page.locator('#aux-pilot').inputValue(),'scout');
+ assert.equal(await page.locator('#aux-frame').inputValue(),'6');
+ await fit('.modalbox');
+ await tap('#modal-1');
+ await fit('.unitbuttons');
+ assert.equal(await page.locator('.unitbuttons button').count(),4);
+ if(mobile)await tap('[data-unit="3"]');
+ else await page.keyboard.press('4');
+ assert.equal(await page.evaluate(()=>selected),3);
+ const snapshot=await page.evaluate(()=>JSON.parse(localStorage.getItem('iron-vow-career')).sortie);
+ assert.equal(snapshot.version,8);
+ assert.equal(snapshot.units[3].ap,9);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('[data-unit="3"].active').waitFor();
+ assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(captureSortie()))),snapshot);
+};
