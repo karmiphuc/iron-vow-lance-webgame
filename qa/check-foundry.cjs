@@ -5,8 +5,50 @@ const simulate=require('./sim-harness.cjs');
 const savedKey='iron-vow-career';
 const dist=path.join(__dirname,'../dist');
 
+function exerciseRigAdapter(){
+ const vm=require('node:vm');
+ const {createCanvas}=require('@napi-rs/canvas');
+ const three=require('../dist/rig-bench/vendor/three.min.js');
+ let frames=0,fail=false;
+ class TestRenderer{
+  constructor(){this.domElement=createCanvas(320,320);this.domElement.addEventListener=()=>{}}
+  setSize(){}
+  setClearColor(){}
+  dispose(){}
+  render(){if(fail)throw Error('simulated driver failure');frames++}
+ }
+ class TestEnvironment{
+  fromScene(){return {texture:null}}
+  dispose(){}
+ }
+ const THREE={...three,WebGLRenderer:TestRenderer,PMREMGenerator:TestEnvironment};
+ const world={THREE,window:{THREE},document:{createElement:()=>createCanvas(320,320)},console:{warn(){}}};
+ vm.createContext(world);
+ for(const file of ['chassis.js','rig-motion.js','renderer.js']){
+  vm.runInContext(fs.readFileSync(path.join(dist,'foundry',file),'utf8'),world);
+ }
+ const adapter=world.window.IronVowFoundry,scope={};
+ const hp={pilot:70,body:150,left:70,right:70,legs:90};
+ const pose={death:0,kneel:0,impact:0,cycle:0,aim:0,brace:0,recoil:0,primePhase:'step',primeProgress:.55,strikeProgress:0};
+ for(let model=0;model<6;model++){
+  const unit={id:'unit'+model,index:model,team:'ally',face:1,weapon:'missile',melee:'blade',alive:true,hp,max:hp};
+  const result=adapter.draw(unit,1,pose,scope,model);
+  assert.ok(result,'rig adapter produced a surface for model '+model);
+  assert.ok(result.anchors.gripR.every(Number.isFinite));
+  assert.ok(result.anchors.leadFoot.every(Number.isFinite));
+  assert.notDeepEqual(result.anchors.gripL,result.anchors.axisL);
+  adapter.draw(unit,1,pose,scope,model);
+ }
+ assert.equal(frames,6,'idle rerenders reuse their surface');
+ fail=true;
+ const unit={id:'failure',index:0,team:'ally',weapon:'rail',alive:true,hp,max:hp};
+ assert.equal(adapter.draw(unit,1,pose,scope,0),null);
+ assert.equal(adapter.draw(unit,2,pose,scope,0),null);
+ assert.equal(adapter.thumb(0),null);
+}
+
 (async()=>{
- const sim=simulate({random:()=>0}),{run}=sim;
+ const sim=simulate({random:()=>0,foundry:true}),{run}=sim;
  assert.equal(run('FRAMES.length'),11);
  assert.equal(run('assignChassis(0,6,true)'),true);
  assert.equal(run('save.credits'),1300);
@@ -20,7 +62,9 @@ const dist=path.join(__dirname,'../dist');
  assert.equal(run('save.credits'),1300);
  assert.equal(run('validSave(save)'),true);
  for(let i=0;i<4;i++){
-  run(`createBattle(${i});draw(1000);battle=null`);
+  run(`createBattle(${i});draw(1000)`);
+  assert.ok(run("battle.units.filter(u=>foundryModel(u.frame)!=null).every(u=>foundryRender(u,clock).anchors.gripR.length===2)"));
+  run('battle=null');
  }
  run("createBattle(3);selected=1;const target=battle.units[3];target.hp.pilot=1;target.x=current().x+1;target.z=current().z;");
  const body=run('target.hp.body');
@@ -48,9 +92,50 @@ const dist=path.join(__dirname,'../dist');
  const generated={};
  new Function('window',fs.readFileSync(path.join(dist,'foundry/baked.js'),'utf8'))(generated);
  for(const visual of generated.IRON_VOW_FOUNDRY_ART){
-  assert.equal(visual.frames.length,16);
-  assert.ok(visual.frames.every(f=>f.pilot.every(Number.isFinite)&&f.meleeTip.every(Number.isFinite)));
-  for(const suffix of ['', '-paint'])assert.ok(fs.existsSync(path.join(dist,'assets',visual.key+suffix+'.webp')));
+  assert.equal(visual.frames.length,19);
+  assert.ok(visual.frames.every(f=>f.pilot.every(Number.isFinite)&&f.gripL.every(Number.isFinite)&&f.axisR.every(Number.isFinite)));
+  for(const asset of [visual,...visual.views])for(const suffix of ['', '-paint']){
+   assert.ok(fs.existsSync(path.join(dist,'assets',asset.key+suffix+'.webp')));
+  }
  }
- console.log('PASS: procurement, swap, paint, Raijin pilot disable, four contract render paths, checkpoint migration and all Foundry motion atlases.');
+ const importedSortie=simulate({foundry:true});
+ assert.equal(importedSortie.run(`importCareer(${sim.storage.get(savedKey)})`),true);
+ assert.equal(importedSortie.run('battle.units[3].downReason'),'pilot');
+ assert.equal(importedSortie.run('save.sortie.version'),4);
+ const donor={
+  version:2,day:7,credits:9800,rep:20,wins:2,kills:6,owned:['rifle','missile','blade'],
+  units:[{mech:3,level:2,xp:55},{mech:0,level:1,xp:7},{mech:2,level:3,xp:23}],
+  mechs:[
+   {frame:0,weapon:'rifle',condition:64,upgrade:2,paint:null},
+   {frame:1,weapon:'rail',condition:100,upgrade:0,paint:null},
+   {frame:2,weapon:'missile',condition:92,upgrade:0,paint:null},
+   {frame:4,weapon:'blade',condition:86,upgrade:1,paint:{p:'#424850',s:'#17191e',a:'#ab452e'}}
+  ],
+  history:[{name:'Ashes of the relay',day:5,win:true,pay:3200}],sortie:{version:1,contract:2}
+ };
+ const imported=simulate({storage:new Map([[savedKey,JSON.stringify(donor)]])});
+ assert.equal(imported.run('save.units.map(u=>u.frame).join()'),'6,8,10');
+ assert.equal(imported.run('save.units[0].melee'),'blade');
+ assert.equal(imported.run('save.units[0].trim.s'),'#17191e');
+ assert.equal(imported.run('save.units[1].condition'),64);
+ assert.equal(imported.run('save.reserve[9].weapon'),'rail');
+ assert.equal(imported.run("save.owned.includes('rail')"),true);
+ assert.equal(imported.run('save.credits'),9800);
+ assert.equal(imported.run('battle'),null);
+ assert.equal(imported.run('save.sortie'),undefined);
+ donor.units[1].mech=3;
+ assert.equal(run(`loadCareer(${JSON.stringify(donor)})`),null);
+
+ run("battle=null;save.credits=12000;assignChassis(1,7,true);createBattle(3);selected=1");
+ assert.ok(run(`(()=>{
+  const u=current(),a=mechAttachmentPoint(u,'muzzle'),b=mechAttachmentPoint(u,'muzzle2');
+  return Math.hypot(a.x-b.x,a.y-b.y)>1;
+ })()`),'Vesper emitters use the two actual asset sockets');
+ assert.ok(run(`(()=>{
+  const u=current(),f=foundryRender(u,clock);
+  const mount=foundryMount(f.anchors,unitBounds(u),'piledriver',unitFacing(u),.72);
+  return mount.asset.key.includes('extended')&&Number.isFinite(mount.angle);
+ })()`),'Piledriver uses the extended ram asset, not the Raijin blade');
+ exerciseRigAdapter();
+ console.log('PASS: procurement, swap, paint, pilot disable, donor career migration, four fallback battle paths, weapon sockets, Foundry atlases and simulated WebGL failure recovery.');
 })().catch(error=>{console.error(error);process.exitCode=1});

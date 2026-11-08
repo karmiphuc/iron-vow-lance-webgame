@@ -9,7 +9,7 @@ global.window={THREE:T};
 global.document={createElement:()=>createCanvas(1,1)};
 require('../dist/foundry/chassis.js');
 require('../dist/foundry/rig-motion.js');
-const {V3,worldSpan,ground,buildRig,animateMech,setPartState,wreckMech}=window.IronVowFoundryRig;
+const {V3,worldSpan,ground,buildRig,animateMech,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
 const size=320, assetDir=require('node:path').resolve(__dirname,'../dist/assets');
 const defaults=[['rifle'],['shotgun'],['missile'],['rifle'],['rifle','blade'],['missile']];
 const names=['Aegis','Shrike','Bastion','Valkyrie','Oni','Behemoth'];
@@ -78,35 +78,49 @@ function pose(m,face,overrides={}){
  animateMech(m,{pos:V3(),face,heading:face,noPlant:true,alive:true,brace:0,...overrides},1/60,0);
  m.cont.rotation.y=face;
 }
+function points(m,cam,fitGround=true){
+ const {rig}=m,mounts=mountPoints(m);
+ m.cont.updateMatrixWorld(true);
+ const objects={...mounts,body:rig.spine,pilot:rig.neck,legs:rig.legs[0].kn,left:rig.arms.L.el,right:rig.arms.R.el,leadFoot:rig.legs[1].an};
+ const origin=V3().project(cam);
+ return Object.fromEntries(Object.entries(objects).map(([k,o])=>{
+  const p=o.getWorldPosition(V3()).project(cam);
+  const y=fitGround?ground-(p.y-origin.y)*.5:.5-p.y*.5;
+  return [k,[+(.5+(p.x-origin.x)*.5).toFixed(4),+y.toFixed(4)]];
+ }));
+}
 const cam=camera(.46),visuals=[];
 for(const [model,[weapon,melee]] of defaults.entries()){
  const m=buildRig(model,'ally',null,weapon,melee);
  if(m.blade)m.wpn.mount.visible=false;
  pose(m,-.76);save(raster(m,cam),'foundry-'+model);
- save(raster(m,cam,ground,true,true),'foundry-'+model+'-paint');
- for(const [view,angle,elevation,target,span] of [['front',0,.12,3.55,9.4],['side',Math.PI/2,.10,3.55,9.4],['hip',-.45,.14,2.75,4.2],['back',Math.PI,.10,3.55,9.4],['other-side',-Math.PI/2,.10,3.55,9.4]]){
-  const viewCamera=camera(elevation,target,span);
-  pose(m,angle);save(raster(m,viewCamera,ground,false),'foundry-'+model+'-'+view);
-  if(['side','back','other-side'].includes(view))save(raster(m,viewCamera,ground,false,true),'foundry-'+model+'-'+view+'-paint');
+ const views=[];
+ for(const [view,angle,elevation,target,span] of [['field',-.76,.46,3.55,worldSpan],['front',0,.12,3.55,9.4],['side',Math.PI/2,.10,3.55,9.4],['hip',-.45,.14,2.75,4.2],['back',Math.PI,.10,3.55,9.4],['other-side',-Math.PI/2,.10,3.55,9.4]]){
+  const viewCamera=camera(elevation,target,span),key='foundry-'+model+(view==='field'?'':'-'+view);
+  pose(m,angle);
+  if(view!=='field')save(raster(m,viewCamera,ground,false),key);
+  if(['field','side','back','other-side'].includes(view)){
+   m.wpn.mount.visible=false;
+   if(m.blade)m.blade.mount.visible=false;
+   const fit=view==='field',fittedKey=key+'-fit';
+   save(raster(m,viewCamera,ground,fit),fittedKey);
+   save(raster(m,viewCamera,ground,fit,true),fittedKey+'-paint');
+   views.push({key:fittedKey,ortho:span/1.4,direction:angle>0?1:-1,...points(m,viewCamera,fit)});
+   m.wpn.mount.visible=!m.blade;
+   if(m.blade)m.blade.mount.visible=true;
+  }
  }
- const atlas=createCanvas(size*4,size*4),g=atlas.getContext('2d'),maskAtlas=createCanvas(size*4,size*4),masks=maskAtlas.getContext('2d'),face=-.76;
+ const atlas=createCanvas(size*4,size*5),g=atlas.getContext('2d'),maskAtlas=createCanvas(size*4,size*5),masks=maskAtlas.getContext('2d'),face=-.76;
  const motion=buildRig(model,'ally',null,weapon,melee);
- if(motion.blade)motion.wpn.mount.visible=false;
+ motion.wpn.mount.visible=false;
+ if(motion.blade)motion.blade.mount.visible=false;
  const frames=[];
  const push=name=>{
   const index=frames.length;
   const x=index%4*size,y=Math.floor(index/4)*size;
   g.drawImage(raster(motion,cam),x,y);
   masks.drawImage(raster(motion,cam,ground,true,true),x,y);
-  motion.cont.updateMatrixWorld(true);
-  const {rig,wpn,blade}=motion;
-  const points={body:rig.spine,pilot:rig.neck,legs:rig.legs[0].kn,left:rig.arms.L.el,right:rig.arms.R.el,
-   muzzle:wpn.muzzle,muzzle2:wpn.muzzle,leadFoot:rig.legs[1].an,meleeTip:blade?.muzzle||rig.arms.L.so};
-  const locations=Object.fromEntries(Object.entries(points).map(([k,o])=>{
-   const p=o.getWorldPosition(V3()).project(cam),q=V3().project(cam);
-   return [k,[+(.5+(p.x-q.x)*.5).toFixed(4),+(ground-(p.y-q.y)*.5).toFixed(4)]];
-  }));
-  frames.push({name,...locations});
+  frames.push({name,...points(motion,cam)});
  };
  for(let i=0;i<8;i++){
   pose(motion,face);
@@ -127,19 +141,21 @@ for(const [model,[weapon,melee]] of defaults.entries()){
   push('prime');
  }
  motion.aim.until=1;motion.aim.blend=1;motion.aim.point.set(Math.sin(face)*20,3.7,Math.cos(face)*20);
- if(motion.blade)motion.wpn.mount.visible=true;
  pose(motion,face);push('aim');
  motion.recoil=.42;pose(motion,face);push('recoil');
  motion.aim.until=-1;motion.aim.blend=0;motion.recoil=0;
- if(motion.blade){motion.blade.mount.visible=true;motion.wpn.mount.visible=false;motion.melee={age:.46};}
- pose(motion,face,{pos:V3(Math.sin(face)*.75,0,Math.cos(face)*.75)});push('strike');
- motion.melee=null;motion.wpn.mount.visible=false;if(motion.blade)motion.blade.mount.visible=false;
+ for(const [age,reach] of [[.30,-.14],[.46,.90],[.84,.51]]){
+  motion.melee={age};
+  pose(motion,face,{pos:V3(Math.sin(face)*reach,0,Math.cos(face)*reach)});push('strike');
+ }
+ motion.melee=null;
+ pose(motion,face);push('idle');
  pose(motion,face,{alive:false,down:'pilot',deathAge:2});push('pilot');
  for(const part of ['body','right','left'])setPartState(motion,part,2);
  wreckMech(motion);pose(motion,face,{alive:false,down:'body',deathAge:2});push('wreck');
  save(atlas,'foundry-'+model+'-motion');
  save(maskAtlas,'foundry-'+model+'-motion-paint');
- visuals.push({key:'foundry-'+model+'-motion',cell:size,frames});
+ visuals.push({key:'foundry-'+model+'-motion',cell:size,frames,views});
  console.log(names[model],frames.length+' poses');
 }
 const mix=window.VowChassis.build(3,'ally',null,null,{legs:5,core:3,arms:3});

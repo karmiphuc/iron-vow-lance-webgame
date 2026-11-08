@@ -125,3 +125,7 @@ node tools/render_foundry.cjs /tmp/foundry-raster
 ```
 
 Run `npm test --prefix qa` for the simulation and renderer suite. `python3 tools/package_offline.py /path/to/Iron-Vow-Foundry.html` creates a single-file campaign with local assets embedded. The Rig Bench and Foundry Studio links open the hosted reference tools.
+
+Foundry backups exported by the donor's v2 game can be imported from Career. The importer maps the donor's frame IDs to the six Foundry frames and carries over assignments, reserves, armaments, paint, condition, experience and the campaign record. The donor's in-progress sortie uses a different map and enemy roster. An imported career starts its next sortie on the Sites ruleset.
+
+Foundry previews and combat mount the equipped arsenal assets at projected hand sockets. Baked armor remains available if WebGL is unavailable or fails during a render. Gatecrasher and Cicada now take a visible lead step before their authored firing and strike clips. The Foundry Studio module mix is a model preview.

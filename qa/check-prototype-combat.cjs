@@ -12,11 +12,12 @@ const setTimeout = (callback, ms) => {
     clock=${t};
     const u=current(), visual=activeWardenVisual(u);
     advanceUnitAnimation(u,clock,.031);
-    const frame=wardenMotionFrame(u,visual,animationPose(u,clock,visual))?.frame;
+    const pose=animationPose(u,clock,visual),frame=wardenMotionFrame(u,visual,pose)?.frame;
     drawUnit(u,clock);
     for(const e of effects.filter(e=>e.type==='shot'))drawAttackEffect(e,clock);
     if(activeCinematic)drawAttackCamera(clock);
-    return {index:frame?.index,level:frame?.level,clip:u.attack?.native?.clip,walking:!!u.motion};
+    return {index:frame?.index,level:frame?.level,clip:u.attack?.native?.clip,walking:!!u.motion,priming:pose.primePhase==='step'&&visual.motion.gait.includes(frame),
+     advanced:recoilingBounds(u,unitBounds(u,visual),clock).x!==unitBounds(u,visual).x};
    })())`));
    if(sample.index!==undefined)poses.push(sample);
   }
@@ -68,6 +69,7 @@ const setTimeout = (callback, ms) => {
   run('battle.busy=false');
   assert.equal(run('current().ap'),3);
   assert.ok(run('battle.units[4].hp.body')<before);
+  assert.ok(poses.some(p=>p.priming&&p.advanced),id+' takes a forward step before releasing');
   assert.ok(poses.some(p=>p.clip==='fire'&&p.level===.42),id+' reaches the first release pose');
   assert.ok(poses.some(p=>p.clip==='fire'&&p.level===.58),id+' reaches the second release pose');
   assert.ok(run(`(()=>{

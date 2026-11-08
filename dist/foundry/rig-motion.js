@@ -129,5 +129,15 @@ function buildRig(model,team,paint,primary,melee,tag,upgrade,trim){
  }
  return m;
 }
-window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,setPartState,wreckMech};
+function mountPoints(m){
+ const r=m.rig;
+ if(!m.mountPoints){
+  const axis=socket=>{
+   const point=new T.Object3D();point.position.set(0,-1,0);socket.add(point);return point;
+  };
+  m.mountPoints={gripR:r.arms.R.so,axisR:axis(r.arms.R.so),gripL:r.arms.L.so,axisL:axis(r.arms.L.so)};
+ }
+ return m.mountPoints;
+}
+window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,setPartState,wreckMech,mountPoints};
 })();

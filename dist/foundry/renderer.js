@@ -3,11 +3,12 @@
 'use strict';
 if(!window.IronVowFoundryRig)return;
 const T=THREE, VC=window.VowChassis, PI=Math.PI;
-const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,setPartState,wreckMech}=window.IronVowFoundryRig;
+const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer, scene, camera, failed=false;
 const combat=new Map(), thumbs=new Map();
+const clearCombat=()=>{for(const entry of combat.values())disposeRig(entry.m);combat.clear()};
 let combatScope;
 function init(){
  if(renderer||failed)return Boolean(renderer);
@@ -17,7 +18,7 @@ function init(){
   renderer.outputEncoding=T.sRGBEncoding;
   renderer.toneMapping=T.ACESFilmicToneMapping;
   renderer.setClearColor(0,0);
-  renderer.domElement.addEventListener('webglcontextlost',()=>{failed=true;renderer=null},{once:true});
+  renderer.domElement.addEventListener('webglcontextlost',()=>disable(),{once:true});
   scene=new T.Scene();
   const env=new T.Scene();
   env.background=new T.Color(0x34383b);
@@ -33,7 +34,14 @@ function init(){
   env.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}});
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
   return true;
- }catch(error){renderer?.dispose();renderer=null;failed=true;console.warn('Foundry WebGL unavailable',error);return false}
+ }catch(error){disable(error);return false}
+}
+function disable(error){
+ if(failed)return;
+ failed=true;
+ clearCombat();
+ renderer?.dispose();renderer=null;
+ if(error)console.warn('Foundry switched to baked rendering',error);
 }
 function setCamera(elevation,azimuth=0){
  const targetY=3.55;
@@ -83,8 +91,7 @@ function thumb(model,team='ally',paint=null,primary='rifle',melee=null,trim=null
 function draw(u,t,pose,scope,model){
  if(!init())return null;
  if(combatScope!==scope){
-  for(const entry of combat.values())disposeRig(entry.m);
-  combat.clear();combatScope=scope;
+  clearCombat();combatScope=scope;
  }
  const facing=u.face??(u.team==='enemy'?1:-1), key=u.id+'|'+facing;
  let entry=combat.get(key);
@@ -94,7 +101,7 @@ function draw(u,t,pose,scope,model){
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
- const stamp=[u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,...parts.map(p=>u.hp[p])].join('/');
+ const stamp=[u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),...parts.map(p=>u.hp[p])].join('/');
  if(entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){
@@ -132,18 +139,23 @@ function draw(u,t,pose,scope,model){
  }
  // The battle tile is already moving on the 2D board. Use the rig's travel only to solve its planted gait.
  if(step)m.cont.position.set(0,0,0);
- m.wpn.mount.visible=u.hp.right>0;
- if(m.blade)m.blade.mount.visible=(melee||model===4&&!aim)&&u.hp.left>0;
- if(m.blade?.mount.visible&&model===4)m.wpn.mount.visible=false;
+ m.wpn.mount.visible=false;
+ if(m.blade)m.blade.mount.visible=false;
  m.cont.updateMatrixWorld(true);
  setCamera(.46);
  paintRig(m,entry.surface);
- const r=m.rig;
- for(const [name,object] of Object.entries({muzzle:m.wpn.muzzle,muzzle2:m.wpn.muzzle,body:r.spine,pilot:r.neck,
+ const r=m.rig, mounts=mountPoints(m);
+ for(const [name,object] of Object.entries({...mounts, muzzle:m.wpn.muzzle,muzzle2:m.wpn.muzzle,body:r.spine,pilot:r.neck,
   right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,meleeTip:m.blade?.muzzle||r.arms.L.so})){
   entry.anchors[name]=anchor(object);
  }
  return entry;
 }
-window.IronVowFoundry={draw,thumb};
+// A driver error or context loss must leave the tactical UI and its animation loop usable.
+function withFallback(render){
+ return (...args)=>{
+  try{return render(...args)}catch(error){disable(error);return null}
+ };
+}
+window.IronVowFoundry={draw:withFallback(draw),thumb:withFallback(thumb),clearCombat};
 })();
