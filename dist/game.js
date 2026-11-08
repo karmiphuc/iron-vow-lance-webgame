@@ -234,7 +234,27 @@ function sound(type){
   if(type==='click'){tone(now,.06,820,610,.025,'triangle');return}
   if(type==='step'){thump(now,.8);noise(now+.055,.10,1800,450,.05,'bandpass');return}
   if(type==='prime'){noise(now,.35,350,1400,.035,'bandpass');tone(now,.3,110,175,.025,'triangle');return}
-  if(type==='boom'){thump(now,1.25);noise(now+.025,.65,1500,120,.16);tone(now+.06,.55,65,27,.13);return}
+  const explosion=(at,scale=1)=>{
+   // Initial crack, pressure wave, turbulent fireball and scattered fragments.
+   noise(at,.075,6000,850,.32*scale);
+   tone(at,.45,155,36,.30*scale);
+   noise(at+.015,.85,1900,105,.29*scale);
+   noise(at+.045,.70,850,170,.17*scale,'bandpass');
+   tone(at+.035,.80,69,25,.19*scale);
+   for(const [delay,pitch] of [[.09,2400],[.16,1750],[.25,2800],[.37,1450]]){
+    tone(at+delay,.12,pitch,pitch*.42,.025*scale,'triangle');
+    noise(at+delay,.10,4200,900,.035*scale,'bandpass');
+   }
+  };
+  if(type==='boom'){explosion(now,.78);return}
+  if(type==='missileImpact'){explosion(now,1.15);return}
+  if(type==='heavyImpact'){
+   noise(now,.09,5700,1100,.24);
+   tone(now,.36,170,38,.25);
+   noise(now+.015,.50,1750,150,.19);
+   tone(now+.025,.23,830,190,.075,'triangle');
+   return;
+  }
   if(type==='rifle'){[0,.09,.18].forEach(t=>gun(now+t,.8));return}
   if(type==='hailstorm'){for(let i=0;i<7;i++)gun(now+i*.06,.62);tone(now,.48,90,155,.025,'sawtooth');return}
   if(type==='shotgun'){gun(now,1.35);noise(now+.035,.32,2000,200,.12);return}
@@ -458,12 +478,13 @@ async function shoot(a,t,part,w=unitWeapon(a)){
  if(sequence){sequence.phase='result';sequence.impactAt=clock}
  if(!hit){
   if(sequence)sequence.result='MISS';
+  if(w.id==='missile')sound('missileImpact');
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:'MISS'});addLog(a.name+' missed '+t.name+'.');
  }else{
   const d=damage(a,t,w),label=t.kind?'HULL':part.toUpperCase();t.hitTime=clock;t.hitPart=part;t.hitDamage=d;const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
   t.hitVector={x:hitX/hitLength,y:hitY/hitLength};shake=Math.max(shake,w.id==='rail'||w.id==='breaker'?7:4);t.hp[part]=Math.max(0,t.hp[part]-d);
   if(sequence)sequence.result=t.hp.body<=0?'TARGET DOWN':t.hp[part]===0?'SYSTEM DISABLED':'−'+d+' '+label;
-  effects.push({type:'boom',target:t.id,part,x:t.x,z:t.z,t:1,big:false});effects.push({type:'text',x:t.x,z:t.z,t:1,text:'−'+d+' '+label});addLog(a.name+' → '+t.name+' / '+label+' −'+d);sound('boom');
+  effects.push({type:'boom',target:t.id,part,x:t.x,z:t.z,t:1,big:false});effects.push({type:'text',x:t.x,z:t.z,t:1,text:'−'+d+' '+label});addLog(a.name+' → '+t.name+' / '+label+' −'+d);sound(w.id==='missile'?'missileImpact':['rail','rampart','breaker','piledriver','shotgun'].includes(w.id)?'heavyImpact':'boom');
   if(t.hp.body<=0){beginDestruction(t);addLog(t.name+' neutralized.');if(a.team==='ally'){save.kills++;save.units[a.index].xp+=t.kind?VEHICLES[t.kind].xp:35}}
   else if(t.hp[part]===0)addLog(t.name+': '+part+' destroyed.');
  }
