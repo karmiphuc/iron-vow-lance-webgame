@@ -85,7 +85,7 @@ function draw(u,t,pose,scope,model){
  if(combatScope!==scope){
   clearCombat();combatScope=scope;
  }
- const facing=u.face??(u.team==='enemy'?1:-1), key=u.id+'|'+facing;
+ const facing=u.face??(u.team==='enemy'?1:-1), key=u.id+(pose.cinematic?'|shot|'+facing:'|field');
  let entry=combat.get(key);
  if(!entry){
   const m=buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
@@ -93,7 +93,7 @@ function draw(u,t,pose,scope,model){
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
- const stamp=[Boolean(armory),u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),...parts.map(p=>u.hp[p])].join('/');
+ const stamp=[pose.heading,Boolean(armory),u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),...parts.map(p=>u.hp[p])].join('/');
  if(entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){
@@ -102,7 +102,8 @@ function draw(u,t,pose,scope,model){
   setPartState(m,part,hp<=0?2:hp<u.max[part]/2?1:0);
  }
  if(!u.alive&&u.downReason!=='pilot'&&!m.wrecked){wreckMech(m);m.wrecked=true}
- const face=facing*.76, aim=pose.aim;
+ const face=pose.heading??facing*.76, aim=pose.aim;
+ m.yaw=face;
  const step=pose.phase>0&&u.motion;
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;

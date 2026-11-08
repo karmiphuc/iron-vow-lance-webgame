@@ -49,15 +49,15 @@ const setTimeout = (callback, ms) => {
  run('deploy(0);closeModal()');
  assert.equal(run("battle.units.filter(u=>u.team==='ally').map(u=>u.frame).join(',')"),'3,4,2');
  assert.equal(run('assignChassis(0,0)'),false);
- assert.equal(run('movementLimit(battle.units[0])'),3);
- assert.equal(run('movementLimit(battle.units[1])'),4);
+ assert.equal(run('freeMovement(battle.units[0])'),3);
+ assert.equal(run('freeMovement(battle.units[1])'),4);
 
  for(const [index,x,z,id] of [[0,2,16,'morrow'],[1,3,18,'locust']]){
   run(`selected=${index}`);
   poses=[];capture=true;
   await run(`moveUnit(current(),${x},${z},1)`);
   capture=false;
-  assert.equal(run('current().ap'),7);
+  assert.equal(run('current().ap'),8);
   assert.ok(new Set(poses.filter(p=>p.walking).map(p=>p.index)).size>8,id+' uses animated gait');
   poses=[];
   const before=run('battle.units[4].hp.body');
@@ -67,7 +67,7 @@ const setTimeout = (callback, ms) => {
   await run("shoot(current(),battle.units[4],'body')");
   capture=false;
   run('battle.busy=false');
-  assert.equal(run('current().ap'),3);
+  assert.equal(run('current().ap'),4);
   assert.ok(run('battle.units[4].hp.body')<before);
   assert.ok(poses.some(p=>p.priming&&p.advanced),id+' takes a forward step before releasing');
   assert.ok(poses.some(p=>p.clip==='fire'&&p.level===.42),id+' reaches the first release pose');
@@ -86,13 +86,13 @@ const setTimeout = (callback, ms) => {
  poses=[];capture=true;
  await run("shoot(current(),battle.units[3],'body',weapon('breach-gauntlet'))");
  capture=false;
- assert.equal(run('current().ap'),0);
+ assert.equal(run('current().ap'),1);
  assert.ok(poses.some(p=>p.clip==='strike'&&p.level===.54));
  run('selected=1;battle.units[5].x=4;battle.units[5].z=18');
  poses=[];capture=true;
  await run("shoot(current(),battle.units[5],'body',weapon('pulse-bash'))");
  capture=false;
- assert.equal(run('current().ap'),1);
+ assert.equal(run('current().ap'),2);
  assert.ok(poses.some(p=>p.clip==='strike'&&p.level===.54));
  assert.ok(run('battle.units[5].hp.body<battle.units[5].max.body'));
  run('persist()');

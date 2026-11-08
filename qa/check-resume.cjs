@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),createSimulation=require('./sim-harne
 const projection='JSON.stringify(captureSortie())';
 (async()=>{
  const sim=createSimulation({random:()=>0});sim.run('deploy(1,true);closeModal();skill()');await sim.run('moveUnit(current(),1,4,4)');await sim.run("shoot(current(),battle.units[3],'body')");sim.run("selected=1;skill();action='fire';targetPart='right';persist()");
- assert.equal(sim.run('battle.units[0].ap'),3);assert.equal(sim.run('battle.units[3].hp.body'),129);
+ assert.equal(sim.run('battle.units[0].ap'),7);assert.equal(sim.run('battle.units[3].hp.body'),129);
  const expected=sim.run(projection),credits=sim.run('save.credits');
  for(let i=0;i<3;i++){const restored=createSimulation({storage:new Map(sim.storage),random:()=>0});assert.equal(restored.run('!!battle'),true);assert.equal(restored.run(projection),expected);assert.equal(restored.run('current().boost'),true);assert.equal(restored.run('save.credits'),credits)}
  // A pending enemy phase must replay once and return control with refreshed ally AP.

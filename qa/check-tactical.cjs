@@ -16,7 +16,7 @@ const create=require('./sim-harness.cjs');
  const stored=sim.run('JSON.stringify(captureSortie())');
  const restored=create({storage:new Map(sim.storage)});
  assert.equal(restored.run('JSON.stringify(captureSortie())'),stored);
- assert.equal(restored.run('captureSortie().version'),4);
+ assert.equal(restored.run('captureSortie().version'),5);
 
  assert.equal(restored.run('battle.contract.id'),'picket');
  assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,tank,tank,helicopter');
@@ -28,7 +28,7 @@ const create=require('./sim-harness.cjs');
  for(const [oldIndex,id] of ['relay','corridor','frontier'].entries()){
   for(const oldVersion of [1,2]){
    const original=create();
-   original.run(`createBattle(${oldIndex+1},${oldVersion===1},true);persist()`);
+   original.run(`createBattle(${oldIndex+1},${oldVersion===1},true);battle.units.forEach(u=>u.heading=defaultHeading(u));persist()`);
    const career=JSON.parse(original.storage.get('iron-vow-career'));
    career.sortie.version=oldVersion;
    career.sortie.contract=oldIndex;
@@ -73,7 +73,7 @@ const create=require('./sim-harness.cjs');
  const timers=new Map();let timerId=0;
  const live=create({random:()=>0,setTimeout:(fn,ms)=>{const id=++timerId;timers.set(id,{fn,ms});return id}});
  live.sandbox.clearTimeout=id=>timers.delete(id);
- live.run("createBattle(0);selected=0;battle.busy=true;current().weapon='rail';globalThis.vehicle=battle.units.find(u=>u.kind==='tank')");
+ live.run("createBattle(0);selected=0;battle.busy=true;current().weapon='rail';globalThis.vehicle=battle.units.find(u=>u.kind==='tank');current().heading=headingTo(vehicle.x-current().x,vehicle.z-current().z)");
  const kill=live.run("shoot(current(),vehicle,'right')");
  assert.equal(live.run("activeCinematic.phase"),'aim');
  assert.equal(live.run('current().ap'),3);
@@ -113,7 +113,7 @@ const create=require('./sim-harness.cjs');
 
  for(const [actor,kind] of [['current()','breaker'],['battle.units[3]','rampart'],['battle.units[4]','rampart'],['current()','cleaver']]){
   const firing=create({random:()=>0});
-  firing.run(`createBattle(0);globalThis.actor=${actor};globalThis.target=actor.team==='ally'?battle.units[3]:current();`);
+  firing.run(`createBattle(0);globalThis.actor=${actor};globalThis.target=actor.team==='ally'?battle.units[3]:current();actor.heading=headingTo(target.x-actor.x,target.z-actor.z);`);
   if(kind==='cleaver')firing.run('actor.hp.legs=0');
   const willPrime=!firing.run('actor.kind')&&kind!=='cleaver';
   const attack=firing.run(`shoot(actor,target,'body',actor.kind?unitWeapon(actor):weapon('${kind}'))`);

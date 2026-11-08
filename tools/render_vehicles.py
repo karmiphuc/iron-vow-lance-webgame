@@ -2,7 +2,7 @@
 448px square RGBA; anchor (.5,.72); draw square at 3.9192 * tile scale.
 Right sprites are exact mirrored counterparts, including projected muzzle anchors.
 """
-import bpy, math, json, tempfile
+import bpy, math, json, tempfile, sys
 from pathlib import Path
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
@@ -175,6 +175,20 @@ def helicopter():
    o.data.materials.clear();o.data.materials.append(dark)
  # Red cheeks and the canopy surround keep the gunship's faction legible against black armor.
  return [(0,-.988,.205),(-.405,-.223,.32),(.405,-.223,.32)]
+
+if "--export-motion" in sys.argv:
+ out=Path(sys.argv[sys.argv.index("--export-motion")+1])
+ out.mkdir(parents=True,exist_ok=True)
+ for name,build in [('tank',tank),('helicopter',helicopter)]:
+  for obj in list(bpy.data.objects):
+   bpy.data.objects.remove(obj,do_unlink=True)
+  muzzles=build()
+  for label,position in [('muzzle',muzzles[0]),('body',(0,0,.38 if name=='tank' else .42))]:
+   marker=bpy.data.objects.new(label,None)
+   marker.location=position
+   scene.collection.objects.link(marker)
+  bpy.ops.export_scene.gltf(filepath=str(out/f'{name}.glb'),export_format='GLB')
+ raise SystemExit(0)
 
 world=bpy.data.worlds.new('Ambient');scene.world=world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.35,.43,.52,1);world.node_tree.nodes['Background'].inputs[1].default_value=.6
 for pos,power,size,col in [((-3,-4,7),800,4,(1,.88,.72)),((4,1,5),650,3,(.6,.77,1))]:

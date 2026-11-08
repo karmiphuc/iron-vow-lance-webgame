@@ -141,3 +141,5 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .foundry-choices button img{height:90px}
 @media(max-width:850px){.foundry-choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .combat-target img.foundry-target{height:100%;top:0;object-fit:contain;object-position:center;transform:scale(1.34)}
+.unitbuttons button.spent{opacity:.37;filter:saturate(.38);background:#0d151c;border-color:#39434b}
+.unitbuttons button.spent img{filter:brightness(.52) grayscale(1)}

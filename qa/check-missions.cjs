@@ -2,22 +2,22 @@ const assert=require('node:assert/strict'),createSimulation=require('./sim-harne
 const playerTurn=`(async()=>{
  for(const ally of battle.units.filter(u=>u.team==='ally'&&u.alive)){
   selected=ally.index;
-  if(!ally.skill&&(ally.index===0||(ally.index===2&&ally.hp.body<=ally.max.body-30)))skill();
+  if(!ally.skill&&ally.index===2&&ally.hp.body<=ally.max.body-30)skill();
   for(let step=0;step<12&&battle&&ally.alive;step++){
    let targets=battle.units.filter(t=>t.team==='enemy'&&t.alive),w=weapon(ally.weapon);
    if(!targets.length)break;
    const armed=targets.filter(t=>isArmed(t));let available=(armed.length?armed:targets).filter(t=>distance(ally,t)<=w.range).sort((a,b)=>Math.min(a.hp.body,a.hp.right||Infinity)-Math.min(b.hp.body,b.hp.right||Infinity));
    if(available.length&&ally.hp.right>0&&ally.ap>=w.ap){
-    if(ally.index===1&&!ally.skill)skill();const target=available[0],part=target.hp.body<=damage(ally,target)?'body':!target.kind&&target.hp.right>0?'right':'body';await shoot(ally,target,part);if(checkEnd())return;continue;
+    if(ally.index<2&&!ally.skill)skill();const target=available[0],part=target.hp.body<=damage(ally,target)?'body':!target.kind&&target.hp.right>0?'right':'body';await engage(ally,target,part,w);if(checkEnd())return;continue;
    }
-   if(ally.hp.legs<=0||ally.ap<=0)break;
+   if(!movementLimit(ally))break;
    const positions=[...paths(ally)].filter(([,cost])=>cost>0).flatMap(([key,cost])=>{const[x,z]=key.split(',').map(Number);return (targets.some(t=>isArmed(t))?targets.filter(t=>isArmed(t)):targets).map(t=>({x,z,cost,d:Math.abs(t.x-x)+Math.abs(t.z-z),t}))});
-   const best=positions.map(p=>({...p,score:Math.max(0,p.d-w.range)*20+p.cost*.5+(p.cost>ally.ap-w.ap?4:0)-(inCover(p)?1:0)})).sort((a,b)=>a.score-b.score)[0];
+   const best=positions.map(p=>({...p,score:Math.max(0,p.d-w.range)*20+p.cost*.5+(Math.max(0,p.cost-freeMovement(ally))>ally.ap-w.ap?4:0)-(inCover(p)?1:0)})).sort((a,b)=>a.score-b.score)[0];
    const old=Math.min(...(targets.some(t=>isArmed(t))?targets.filter(t=>isArmed(t)):targets).map(t=>Math.max(0,distance(ally,t)-w.range)))*20;
    if(!best||best.score>=old)break;
    await moveUnit(ally,best.x,best.z,best.cost);
   }
-  if(battle&&ally.alive&&ally.ap>=2&&!ally.brace){ally.ap-=2;ally.brace=true}
+  if(battle&&ally.alive&&ally.ap>=2&&!ally.brace){startAction(ally);ally.ap-=2;ally.brace=true}
  }
  if(battle)await endTurn();
 })()`;

@@ -131,3 +131,19 @@ Foundry backups exported by the donor's v2 game can be imported from Career. The
 Foundry previews and combat mount the equipped arsenal assets at projected hand sockets. Baked armor remains available if WebGL is unavailable or fails during a render. Gatecrasher and Cicada now take a visible lead step before their authored firing and strike clips. The Foundry Studio module mix is a model preview.
 
 The Foundry uses the same production weapon GLB as the Rig Bench. The baked renderer and preview use the production arsenal renders at the same hand sockets. Raijin uses the production blade geometry with an amber heated edge.
+
+## Mobility and reactions
+
+Each mech can move up to its Mobility before its first action without spending AP. It can take one extra tile for 1 AP. The map marks free destinations in cyan and the paid extension in amber. A mech with no AP or reachable movement is dimmed and its sprite lets taps reach the ground behind it.
+
+Each surviving mech has one reaction per round. It uses an operational melee weapon against an adjacent ground attacker, or returns ranged fire if its weapon arm works and the attacker is in range. Reactions spend no AP and cannot trigger another reaction.
+
+Mechs and vehicles pivot toward their next tile before moving. The field renderer has eight heading views of the original models, with directional gait poses for the mechs. The Foundry WebGL rigs also use the map heading. Each step uses a hydraulic lift cue and a weighted contact cue. The attack preparation uses the same sequence with a separate mechanical lock cue.
+
+To rebuild the directional assets:
+
+```sh
+blender -b --python-exit-code 1 -t 4 -P tools/render_vehicles.py -- --export-motion /tmp/iron-vow-travel
+c++ -O3 -std=c++17 tools/foundry-raster.cpp -o /tmp/foundry-raster
+node tools/render_travel.cjs /tmp/foundry-raster /tmp/iron-vow-travel
+```
