@@ -11,10 +11,12 @@ require('../dist/rig-bench/vendor/GLTFLoader.js');
 require('../dist/foundry/production-arsenal.js');
 require('../dist/foundry/chassis.js');
 require('../dist/foundry/rig-motion.js');
-const {V3,worldSpan,ground,buildRig,animateMech,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
+const {V3,worldSpan,ground,buildRig,animateMech,behemothBrace,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
 const size=320, assetDir=require('node:path').resolve(__dirname,'../dist/assets');
 const defaults=[['rifle'],['shotgun'],['missile'],['rifle'],['rifle','blade'],['missile']];
 const names=['Aegis','Shrike','Bastion','Valkyrie','Oni','Behemoth'];
+const only=process.argv[3]===undefined?null:Number(process.argv[3]);
+if(only!==null&&(!Number.isInteger(only)||!defaults[only]))throw Error('Unknown Foundry model index');
 const lights=[V3(-.5,.85,.65).normalize(),V3(.7,.38,-.8).normalize()];
 const color=new T.Color(),normalMatrix=new T.Matrix3();
 const pos=V3(),normal=V3(),textureCache=new WeakMap();
@@ -85,18 +87,28 @@ function points(m,cam,fitGround=true){
  m.cont.updateMatrixWorld(true);
  const objects={...mounts,body:rig.spine,pilot:rig.neck,legs:rig.legs[0].kn,left:rig.arms.L.el,right:rig.arms.R.el,leadFoot:rig.legs[1].an};
  const origin=V3().project(cam);
- return Object.fromEntries(Object.entries(objects).map(([k,o])=>{
-  const p=o.getWorldPosition(V3()).project(cam);
+ const project=point=>{
+  const p=point.project(cam);
   const y=fitGround?ground-(p.y-origin.y)*.5:.5-p.y*.5;
-  return [k,[+(.5+(p.x-origin.x)*.5).toFixed(4),+y.toFixed(4)]];
- }));
+  return [ +(.5+(p.x-origin.x)*.5).toFixed(4),+y.toFixed(4) ];
+ };
+ const result=Object.fromEntries(Object.entries(objects).map(([k,o])=>[k,project(o.getWorldPosition(V3()))]));
+ if(m.artilleryBrace){
+  const shoes=rig.legs.filter(leg=>leg.kneeShoe).map(leg=>leg.kneeShoe.localToWorld(V3(0,-.3155,.035)));
+  if(shoes.length===2)result.leadFoot=project(shoes[0].lerp(shoes[1],.5));
+ }
+ return result;
 }
 async function render(){
 const glb=fs.readFileSync(require('node:path').join(__dirname,'../dist/rig-bench/weapons.glb'));
 const arsenal=window.IronVowProductionArsenal;
 const production=await arsenal.load(glb.buffer.slice(glb.byteOffset,glb.byteOffset+glb.byteLength));
 const cam=camera(.46),visuals=[];
+const bakedFile=assetDir+'/../foundry/baked.js';
+const existing={};
+if(only!==null)new Function('window',fs.readFileSync(bakedFile,'utf8'))(existing);
 for(const [model,[weapon,melee]] of defaults.entries()){
+ if(only!==null&&model!==only)continue;
  const m=buildRig(model,'ally');
  const primary=arsenal.mount(production,weapon,m.rig.arms.R.so);
  const secondary=melee?arsenal.mount(production,melee,m.rig.arms.L.so):null;
@@ -141,14 +153,19 @@ for(const [model,[weapon,melee]] of defaults.entries()){
   push('walk');
  }
  for(let i=1;i<=3;i++){
-  pose(motion,face);
-  const {rig,dims}=motion,leg=rig.legs[1],p=i/3;
-  window.VowChassis.solveLeg(rig,dims,leg,V3(leg.restX,dims.ankleH+Math.sin(Math.PI*p)*.45,leg.restZ+p*.85));
+  const p=i/3;
+  if(motion.dims.quad)pose(motion,face,{artillery:behemothBrace(motion,{start:0,primeDuration:1},p)});
+  else{
+   pose(motion,face);
+   const {rig,dims}=motion,leg=rig.legs[1];
+   window.VowChassis.solveLeg(rig,dims,leg,V3(leg.restX,dims.ankleH+Math.sin(Math.PI*p)*.45,leg.restZ+p*.85));
+  }
   push('prime');
  }
  motion.aim.until=1;motion.aim.blend=1;motion.aim.point.set(Math.sin(face)*20,3.7,Math.cos(face)*20);
- pose(motion,face);push('aim');
- motion.recoil=.42;pose(motion,face);push('recoil');
+ const fire=motion.dims.quad?{artillery:[1,1,1]}:{};
+ pose(motion,face,fire);push('aim');
+ motion.recoil=.42;pose(motion,face,fire);push('recoil');
  motion.aim.until=-1;motion.aim.blend=0;motion.recoil=0;
  for(const [age,reach] of [[.30,-.14],[.46,.90],[.84,.51]]){
   motion.melee={age};
@@ -164,10 +181,16 @@ for(const [model,[weapon,melee]] of defaults.entries()){
  visuals.push({key:'foundry-'+model+'-motion',cell:size,frames,views});
  console.log(names[model],frames.length+' poses');
 }
+if(only!==null){
+ existing.IRON_VOW_FOUNDRY_ART[only]=visuals[0];
+ fs.writeFileSync(bakedFile,'window.IRON_VOW_FOUNDRY_ART='+JSON.stringify(existing.IRON_VOW_FOUNDRY_ART)+';\nwindow.IRON_VOW_RAIJIN_ART='+JSON.stringify(existing.IRON_VOW_RAIJIN_ART)+';\n');
+ if(only!==5)return;
+}
 const mix=window.VowChassis.build(3,'ally',null,null,{legs:5,core:3,arms:3});
 const group=new T.Group();group.add(mix.root);group.rotation.y=-.6;
 for(const leg of mix.rig.legs)window.VowChassis.solveLeg(mix.rig,mix.dims,leg,V3(leg.restX,mix.dims.ankleH,leg.restZ));
 save(raster({cont:group},cam),'foundry-modular');
+if(only!==null)return;
 const raijin=new T.Group();
 const weapon=arsenal.mount(production,'blade',raijin);
 const weaponCamera=camera(.30,0,5.2);
@@ -184,6 +207,6 @@ for(const [side,direction] of [['left',-1],['right',1]]){
  weaponViews[side]={key,grip:point(grip),axis:point(weapon.base),tip:point(weapon.tip),pixelsPerMetre:size/5.2*3.2};
  weapon.model.remove(grip);
 }
-fs.writeFileSync(assetDir+'/../foundry/baked.js','window.IRON_VOW_FOUNDRY_ART='+JSON.stringify(visuals)+';\nwindow.IRON_VOW_RAIJIN_ART='+JSON.stringify(weaponViews)+';\n');
+fs.writeFileSync(bakedFile,'window.IRON_VOW_FOUNDRY_ART='+JSON.stringify(visuals)+';\nwindow.IRON_VOW_RAIJIN_ART='+JSON.stringify(weaponViews)+';\n');
 }
 render().catch(error=>{console.error(error);process.exitCode=1});

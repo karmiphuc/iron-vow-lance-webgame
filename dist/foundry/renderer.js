@@ -3,7 +3,7 @@
 'use strict';
 if(!window.IronVowFoundryRig)return;
 const T=THREE, VC=window.VowChassis, PI=Math.PI;
-const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
+const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemothBrace,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer, scene, camera, failed=false;
@@ -75,11 +75,12 @@ function paintRig(m,surface){
   g.drawImage(renderer.domElement,0,offsetY);
  }finally{scene.remove(m.cont)}
 }
-function anchor(o){
- const p=o.getWorldPosition(V3()).project(camera);
+function projectedAnchor(point){
+ const p=point.project(camera);
  const center=V3().project(camera);
  return [.5+(p.x-center.x)*.5,ground-(p.y-center.y)*.5];
 }
+function anchor(o){return projectedAnchor(o.getWorldPosition(V3()));}
 function draw(u,t,pose,scope,model){
  if(!init())return null;
  if(combatScope!==scope){
@@ -93,7 +94,10 @@ function draw(u,t,pose,scope,model){
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
- const stamp=[pose.heading,Boolean(armory),u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),...parts.map(p=>u.hp[p])].join('/');
+ const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
+ const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
+ const mortarAge=canBrace?pose.mortarAge:undefined;
+ const stamp=[pose.heading,Boolean(armory),u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
  if(entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){
@@ -124,8 +128,8 @@ function draw(u,t,pose,scope,model){
  m.s.arm.x=pose.impact*.75;
  animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:1.55,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
-  armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step},dt,t);
- if(prime>0&&u.alive){
+  armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step,artillery,mortarAge},dt,t);
+ if(prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)){
   const lead=m.rig.legs[1];
   const target=V3(lead.restX,m.dims.ankleH+primeLift,lead.restZ+prime*.82);
   VC.solveLeg(m.rig,m.dims,lead,target,-primeLift*.32);
@@ -151,8 +155,12 @@ function draw(u,t,pose,scope,model){
  const r=m.rig,mounts=mountPoints(m),primary=entry.primary,secondary=entry.secondary;
  for(const [name,object] of Object.entries({...mounts,body:r.spine,pilot:r.neck,
   right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,
-  muzzle:primary?.muzzle,muzzle2:primary?.muzzle2,meleeTip:secondary?.tip})){
+  muzzle:primary?.muzzle,muzzle2:primary?.muzzle2,meleeTip:secondary?.tip,mortarMuzzle:m.mortar?.muzzle})){
   if(object)entry.anchors[name]=anchor(object);
+ }
+ if(m.artilleryBrace){
+  const shoes=r.legs.filter(leg=>leg.kneeShoe).map(leg=>leg.kneeShoe.localToWorld(V3(0,-.3155,.035)));
+  if(shoes.length===2)entry.anchors.leadFoot=projectedAnchor(shoes[0].lerp(shoes[1],.5));
  }
  return entry;
 }

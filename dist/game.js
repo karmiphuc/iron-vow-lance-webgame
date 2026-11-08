@@ -265,7 +265,9 @@ function beginAttackCamera(actor,target,w,part){
  if(actor.team==='enemy')battle.hostileCameraUsed=true;
  const sequence={actor,target,w,part,start:clock,phase:'aim',result:'',skipped:false,resume:null};
  activeCinematic=sequence;duckMusic();document.body.dataset.shot='active';$('#skip-shot').hidden=false;
- $('#shot-status').textContent=actor.name+(actor.attack?.primeDuration?' steps forward and aims at ':' aiming at ')+target.name;
+ const aimCue=foundryModel(actor.frame)===5&&!w.melee&&actor.hp.legs>0?' braces on its front knees and aims at ':
+  actor.attack?.primeDuration?' steps forward and aims at ':' aiming at ';
+ $('#shot-status').textContent=actor.name+aimCue+target.name;
  for(const [unit,face] of [[actor,1],[target,-1]]){
   const subject={...unit,face};
   if(unit.kind)moduleImage(vehicleKey(subject));

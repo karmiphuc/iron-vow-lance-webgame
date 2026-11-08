@@ -17,6 +17,9 @@ function makeMech(frame,team,upgrade,tag,paint){
     s:{comp:{x:0,v:0},pitch:{x:0,v:0},roll:{x:0,v:0},arm:{x:0,v:0},kx:{x:0,v:0},kz:{x:0,v:0}},
     aim:{blend:0,point:V3(),until:-1},recoil:0,wrecked:false,shield:b.shield,kitLevel:-1,init:false,seed:Math.random()*10,smokeT:0,
     partState:{body:0,pilot:0,right:0,left:0,legs:0},flicker:0};
+  if(b.dims.quad)for(const leg of r.legs)leg.kneeShoe=b.root.getObjectByName('BHM knee shoe '+leg.side);
+  const elevation=b.root.getObjectByName('mortar.elevation');
+  if(elevation)m.mortar={elevation,slide:elevation.getObjectByName('mortar.recoil'),muzzle:elevation.getObjectByName('mortar.muzzle')};
   setKits(m,upgrade||0);return m;
 }
 function setKits(m,level){if(m.kitLevel===level)return;m.build.kits.forEach((k,i)=>k.forEach(o=>o.visible=i<level));m.kitLevel=level;}
@@ -37,9 +40,81 @@ function meleeKeys(a){if(a<0||a>MEL.end)return null;
   const o={w:a>MEL.hold?1-q*.999:1};for(const k in P0)o[k]=lerp(A[k],B[k],q);return o;}
 function lungeK(a){if(a<0||a>MEL.end)return 0;if(a<MEL.wind)return -.15*smooth(a/MEL.wind);if(a<MEL.strike)return lerp(-.15,1,smooth((a-MEL.wind)/(MEL.strike-MEL.wind)));if(a<MEL.hold)return 1;return 1-smooth((a-MEL.hold)/(MEL.end-MEL.hold));}
 function liftArc(q){return q<.42?1-Math.pow(1-q/.42,3):1-Math.pow((q-.42)/.58,3);}
+const kneeContact=V3(.335,.3155,1.82),pelvisShift=.09;
+const easeRange=(t,a,b)=>smooth(clamp((t-a)/(b-a),0,1));
+function behemothBrace(m,attack,t){
+  if(!m.dims.quad||!attack)return null;
+  const q=attack.primeDuration>0?clamp((t-attack.start)/attack.primeDuration,0,1):1;
+  const r=Number.isFinite(attack.returnAt)?clamp((t-attack.returnAt)/.35,0,1):0;
+  return [easeRange(q,.30,1)*(1-easeRange(r,0,.85)),easeRange(q,.20,.97)*(1-easeRange(r,.22,1)),
+    easeRange(q,.34,.97)*(1-easeRange(r,.04,.87))];
+}
+function swingDirection(from,to,weight){
+  const turn=new T.Quaternion().setFromUnitVectors(from,to);
+  return from.clone().applyQuaternion(new T.Quaternion().slerp(turn,weight)).normalize();
+}
+function poseBehemothBrace(m,artillery){
+  const {body,rig:r,dims:D}=m,p=r.pelvis,A=D.legA,B=D.legB;
+  const [hull,left,right]=artillery||[0,0,0];
+  if(artillery){
+    const kneeY=kneeContact.y-D.hipY+Math.sqrt(A*A-(D.hipX-kneeContact.x)**2-(kneeContact.z-D.hipZ-pelvisShift)**2);
+    p.position.set(0,lerp(D.py,kneeY,hull),pelvisShift*hull);
+    p.rotation.set(0,0,0);
+  }
+  body.updateWorldMatrix(true,true);
+  const rootQ=body.getWorldQuaternion(new T.Quaternion());
+  for(const leg of r.legs){
+    const sign=Math.sign(leg.restX),front=Boolean(leg.kneeShoe),fold=front?(sign>0?left:right):0;
+    const hip=body.worldToLocal(leg.hip.getWorldPosition(V3()));
+    const goal=V3(leg.restX,D.ankleH,leg.restZ);
+    const axis=goal.clone().sub(hip),len=clamp(axis.length(),Math.abs(A-B)+.001,A+B-.001);axis.normalize();
+    const pole=V3(sign*.84,.05,front?.91:-.76);pole.addScaledVector(axis,-pole.dot(axis)).normalize();
+    const along=(A*A-B*B+len*len)/(2*len);
+    let up=axis.clone().multiplyScalar(along).addScaledVector(pole,Math.sqrt(Math.max(0,A*A-along*along))).normalize();
+    let down=axis.clone().multiplyScalar(len).addScaledVector(up,-A).normalize();
+    if(fold>0){
+      const contact=V3(sign*kneeContact.x,kneeContact.y,kneeContact.z);
+      up=swingDirection(up,contact.sub(hip).normalize(),fold);
+      down=swingDirection(down,V3(sign*.65,.45,-.62).normalize(),fold);
+      const clearance=D.ankleH+.085*fold+.15*Math.sin(PI*fold);
+      const limit=clamp((clearance-hip.y-A*up.y)/B,-.999,.999);
+      if(down.y<limit){down.y=0;down.normalize().multiplyScalar(Math.sqrt(1-limit*limit));down.y=limit;}
+    }
+    const hinge=up.clone().cross(down).normalize(),y=up.clone().negate();
+    const basis=new T.Matrix4().makeBasis(hinge,y,hinge.clone().cross(y));
+    const q=new T.Quaternion().setFromRotationMatrix(basis).premultiply(rootQ);
+    leg.hip.quaternion.copy(leg.hip.parent.getWorldQuaternion(new T.Quaternion()).invert().multiply(q));
+    leg.kn.rotation.set(up.angleTo(down),0,0);
+    const kneeLocal=leg.kn.getWorldQuaternion(new T.Quaternion()).invert().multiply(rootQ);
+    const foot=new T.Quaternion().setFromEuler(new T.Euler(-fold*.22,Math.atan2(sign,front?1:-1)*(1-fold),0,'YXZ'));
+    leg.an.quaternion.copy(kneeLocal.clone().multiply(foot));
+    if(front)leg.kneeShoe.quaternion.identity().slerp(kneeLocal,fold);
+  }
+  body.updateWorldMatrix(true,true);
+  for(const [a,b] of r.pistons){a.lookAt(b.getWorldPosition(_a));b.lookAt(a.getWorldPosition(_a));}
+}
+// Animation clock and emitter for the future body skill. No attack rule consumes it yet.
+const MORTAR={fire:.95,end:2.1};
+function poseBehemothMortar(m,age){
+  if(!m.mortar)return null;
+  const active=Number.isFinite(age)&&age>=0&&age<MORTAR.end;
+  const elevation=active?easeRange(age,.23,.82)*(1-easeRange(age,1.45,2.02)):0;
+  const shot=active?age-MORTAR.fire:-1;
+  const kick=shot>=0?(1-Math.exp(-120*shot))*Math.exp(-8*shot):0;
+  m.mortar.elevation.rotation.x=lerp(-.18,-1.02,elevation)+kick*.055;
+  m.mortar.slide.position.z=-.43*kick;
+  if(!active||!m.dims.quad)return null;
+  const fold=1-easeRange(age,1.47,MORTAR.end);
+  return [easeRange(age,.10,.73)*fold,easeRange(age,.04,.71)*fold,easeRange(age,.20,.71)*fold];
+}
 /* in: {pos,moving,speed,stepLen,heading,face,brace,alive,deathAge,down,pilotRatio,armDead,legsDead,shieldDead,ground,onStep,noPlant} */
 function animateMech(m,I,dt,t){
   const r=m.rig,cont=m.cont,S=m.s,sc=m.scale,D=m.dims;
+  if(m.artilleryBrace){
+    r.pelvis.position.z=0;
+    for(const leg of r.legs)leg.kneeShoe?.quaternion.identity();
+    m.artilleryBrace=false;
+  }
   if(!m.init){m.yaw=I.face;cont.rotation.y=m.yaw;cont.position.set(I.pos.x,I.ground||0,I.pos.z);cont.updateMatrixWorld(true);
     r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
   cont.position.set(I.pos.x+S.kx.x,I.ground||0,I.pos.z+S.kz.x);
@@ -96,8 +171,14 @@ function animateMech(m,I,dt,t){
   const vm=m.build.visorMat,base=3;
   if(dead)vm.emissiveIntensity=damp(vm.emissiveIntensity,0,6,dt);
   else{let k=1;if(m.flicker>0&&Math.random()<.35)k=.15;else if(I.pilotRatio!==undefined&&I.pilotRatio<.5&&Math.random()<.06)k=.2;vm.emissiveIntensity=base*k;}
-  cont.updateMatrixWorld(true);
-  for(const [a,bb] of r.pistons){bb.getWorldPosition(_a);a.lookAt(_a);a.getWorldPosition(_a);bb.lookAt(_a);}
+  const special=poseBehemothMortar(m,I.mortarAge),artillery=special||I.artillery;
+  if(D.quad&&I.alive&&!I.moving&&!I.legsDead){
+    m.artilleryBrace=Boolean(artillery?.some(Boolean));
+    poseBehemothBrace(m,m.artilleryBrace?artillery:null);
+  }else{
+    cont.updateMatrixWorld(true);
+    for(const [a,bb] of r.pistons){bb.getWorldPosition(_a);a.lookAt(_a);a.getWorldPosition(_a);bb.lookAt(_a);}
+  }
 }
 
 const pixels=320, ground=.84, worldSpan=11.2;
@@ -130,5 +211,5 @@ function mountPoints(m){
  }
  return m.mountPoints;
 }
-window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,setPartState,wreckMech,mountPoints};
+window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,MORTAR,behemothBrace,setPartState,wreckMech,mountPoints};
 })();

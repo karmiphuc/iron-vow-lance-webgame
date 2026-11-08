@@ -156,7 +156,7 @@ const DIMS=[
   {stance:.86,py:2.68,spY:.36,neck:[0,1.86,.62],shX:1.86,shY:1.5,up:1.0,fo:1.0,hipX:1.04,legA:1.25,legB:1.3,ankleH:.42,restX:.96,restZ:.08,lift:.5,reverse:false,scale:1},
   {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1},
   {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1},
-  {quad:true,py:2.7,spY:.6,neck:[0,1.98,.36],shX:1.3,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.32,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[0,.5,.5,0],sway:.05}
+  {quad:true,py:2.7,spY:.6,neck:[0,1.33,2.23],shX:1.86,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.315,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[0,.5,.5,0],sway:.05}
 ];
 function warden(K,M){
   const {pelvis,spine,neck,arms,legs}=K,{p,s,a,frame,joint,steel}=M,s2=M.s;
@@ -852,42 +852,51 @@ function behemoth(K,M){
   S(pelvis,s2,1.5,.6,.5,0,.15,-1.75,0,0,0,{bev:.05});vent(pelvis,frame,1.1,.4,6,0,.18,-2.0,0,PI,0,.06);
   for(const x of [1,-1]){Cy(pelvis,joint,.18,.24,.5,x*.55,.4,-1.95,PI/2+.3,0,0,14);Cy(pelvis,M.stack,.16,.16,.02,x*.55,.32,-2.19,PI/2+.3,0,0,14,{shadow:false});const top=new T.Object3D();top.position.set(x*.55,.3,-2.25);pelvis.add(top);B.stackTops.push(top);
     tube(pelvis,SH.rubber,[[x*.75,.5,-1.5],[x*.95,.62,-1.0],[x*1.05,.5,-.6]],.05,12);}
-  /* ---- humanoid artillery torso ---- */
-  Cy(spine,joint,.62,.68,.26,0,.04,0,0,0,0,24);Cy(spine,frame,.7,.7,.06,0,.18,0,0,0,0,24);
-  P(spine,frame,mir([[0,.2],[.42,.2],[.5,.72],[0,.72]],1).concat(mir([[0,.72],[.5,.72],[.42,.2],[0,.2]],-1)),.62,'z',0,0,0,0,0,0,{bev:.03});
-  for(let k=0;k<3;k++)S(spine,s2,.9-k*.04,.1,.5,0,.3+k*.14,.12,0,0,0,{bev:.02});
-  P(spine,p,[[-.72,.62],[.5,.66],[.84,.98],[.88,1.46],[.62,1.86],[-.56,1.96],[-.86,1.46]],1.86,'x',0,0,0,0,0,0,{bev:.07});
-  for(const x of [1,-1]){
-    P(spine,s2,mir([[.05,1.7],[.9,1.6],[.96,1.18],[.5,.92],[.08,.86]],x),.14,'z',0,0,.86,0,0,0,{bev:.04,detach:true});
-    P(spine,p,mir([[.12,1.6],[.8,1.52],[.84,1.24],[.48,1.04],[.14,1.0]],x),.07,'z',0,0,.94,0,0,0,{bev:.02});
-    S(spine,A,.42,.03,.02,x*.48,1.12,.99,0,0,x*.48,{bev:0});
-    vent(spine,frame,.46,.42,4,x*.93,1.25,0,0,x*PI/2,0,.06);
-    P(spine,s2,[[-.36,1.6],[.42,1.64],[.48,2.06],[.1,2.14],[-.26,1.9]],.1,'x',x*.42,0,0,0,0,x*-.18,{bev:.03});
-    S(spine,joint,.42,.46,.46,x*1.16,1.55,0,0,0,0,{bev:.05});
+  /* Headless artillery hull and forward command bay. */
+  B.part='body';
+  Cy(spine,joint,.68,.79,.27,0,.07,0,0,0,0,24);
+  Cy(spine,frame,.78,.78,.078,0,.22,0,0,0,0,24);
+  S(spine,frame,2.05,.30,2.62,0,.36,.04,0,0,0,{bev:.10});
+  P(spine,p,[[-1.65,.57],[1.00,.54],[1.52,.82],[1.61,1.32],[1.24,1.75],[-1.18,1.75],[-1.67,1.43],[-1.82,.91]],2.70,'x',0,0,0,0,0,0,{bev:.13});
+  S(spine,s2,2.65,.21,1.75,0,1.64,-.29,0,0,0,{bev:.075});
+  for(const side of [-1,1]){
+    const y=side*1.36;
+    P(spine,s2,[[-1.43,.74],[.98,.71],[1.45,1.02],[1.17,1.55],[-1.19,1.56],[-1.53,1.34]],.17,'x',y,0,0,0,0,0,{bev:.045});
+    P(spine,p,[[-1.12,.92],[.85,.87],[1.12,1.10],[.92,1.46],[-1.0,1.46],[-1.2,1.26]],.10,'x',side*1.49,0,0,0,0,0,{bev:.035});
+    S(spine,A,.053,.044,.83,side*1.551,1.02,-.36,0,0,0,{bev:.008});
+    for(const z of [-.94,.81])for(const h of [1.02,1.37])bolts(spine,[[side*1.553,h,z]],'x',.035);
+    for(let i=0;i<6;i++)S(spine,frame,.055,.082,.052,side*1.549,1.36,-.68+.12*i,0,0,0,{bev:.004});
+    S(spine,s2,.81,.10,1.1,side*.69,1.80,-.30,0,0,0,{bev:.043});
+    S(spine,p,.66,.073,.91,side*.69,1.86,-.30,0,0,0,{bev:.026});
+    for(const z of [-.64,.04])bolts(spine,[[side*.45,1.902,z],[side*.93,1.902,z]],'y',.030);
   }
-  P(spine,A,[[-.1,1.62],[.1,1.62],[0,.98]],.16,'z',0,0,.95,0,0,0,{bev:.02});
-  Dec(spine,scarTex(41),.5,.5,.42,1.35,.99,0,0,.5,{detachWith:'body'});
-  // backpack: right-shoulder howitzer (asymmetric), left VLS box with sensor mast
-  P(spine,s2,[[-.32,-.5],[.3,-.5],[.36,.36],[-.24,.46]],1.3,'x',0,1.25,-.92,0,0,0,{bev:.05});
-  for(const x of [1,-1]){nozzle(spine,M.stack,.18,.36,x*.38,.62,-1.06,.5,0,0);const top=new T.Object3D();top.position.set(x*.38,.4,-1.2);spine.add(top);B.stackTops.push(top);}
-  const gun=new T.Group();gun.position.set(-.62,2.02,-.55);gun.rotation.x=-.08;spine.add(gun);
-  S(gun,s2,.52,.46,1.0,0,0,0,0,0,0,{bev:.04});S(gun,frame,.56,.08,.9,0,-.27,0,0,0,0,{bev:.01});CX(gun,joint,.2,.66,0,-.05,-.1,14);
-  CZ(gun,frame,.13,2.7,0,.06,1.75,16);for(const z of [.75,1.25,1.75])CZ(gun,joint,.155,.08,0,.06,z,16);
-  CZ(gun,steel,.11,.42,0,.06,3.2,14);S(gun,frame,.42,.22,.34,0,.06,3.38,0,0,0,{bev:.03});for(const sx of [1,-1])S(gun,SH.black,.03,.13,.28,sx*.12,.06,3.38,0,0,0,{bev:0});
-  tube(gun,SH.rubber,[[.22,-.1,-.4],[.32,-.2,.3],[.16,-.04,.9]],.04,10);S(gun,hazardMat(3),.53,.08,.3,0,.2,.32,0,0,0,{bev:0});
-  const vls=new T.Group();vls.position.set(.6,1.86,-.66);spine.add(vls);
-  S(vls,s2,.64,.5,.9,0,0,0,0,0,0,{bev:.04});for(let r=0;r<3;r++)for(let c=0;c<2;c++){S(vls,frame,.24,.04,.22,-.14+c*.28,.26,-.28+r*.28,0,0,0,{bev:.01});S(vls,SH.black,.04,.05,.14,-.06+c*.28,.27,-.28+r*.28,0,0,0,{bev:0,shadow:false});}
-  const mast=new T.Group();mast.position.set(.22,.26,-.36);vls.add(mast);Cy(mast,frame,.04,.05,.7,0,.35,0,0,0,0,8);
-  const dish=new T.Group();dish.position.y=.72;mast.add(dish);const dm=new T.Mesh(new T.SphereGeometry(.34,20,8,0,PI*2,0,PI*.3),SH.steel);dm.rotation.x=-PI/2-.35;dm.castShadow=true;dish.add(dm);B.spinners.push(dish);
-  B.beacons.push(lamp(mast,SH.red,.045,0,.72,0));
-  /* ---- head: AC sensor block, three cameras ---- */
-  B.part='pilot';
-  Cy(neck,joint,.18,.22,.24,0,-.04,0,0,0,0,14);
-  P(neck,s2,[[-.32,-.02],[.3,-.04],[.44,.14],[.34,.36],[-.26,.38]],.7,'x',0,0,0,0,0,0,{bev:.04});
-  P(neck,p,[[-.26,.26],[.28,.24],[.36,.36],[-.2,.44]],.76,'x',0,0,0,0,0,0,{bev:.03});
-  S(neck,SH.black,.56,.1,.06,0,.17,.43,0,0,0,{bev:.01});B.visor.push(S(neck,M.visor,.5,.035,.03,0,.17,.46,0,0,0,{bev:0,shadow:false}));
-  for(const [cx,cy,cr] of [[-.16,.02,.06],[0,.0,.075],[.16,.02,.06]]){CZ(neck,frame,cr+.025,.08,cx,cy,.42,12);B.visor.push(CZ(neck,M.visor,cr,.03,cx,cy,.46,12,{shadow:false}));}
-  Cy(neck,frame,.015,.015,.6,.22,.62,-.22,-.3,0,-.2,6);P(neck,A,[[-.2,0],[.14,0],[-.3,.16]],.04,'x',-.3,.32,0,0,0,.3,{bev:.01});
+  S(spine,s2,1.96,.77,.84,0,1.07,1.53,0,0,0,{bev:.10});
+  P(spine,p,[[-.89,.72],[.89,.72],[1.04,.93],[1.04,1.34],[.80,1.57],[-.80,1.57],[-1.04,1.34],[-1.04,.93]],.72,'z',0,0,1.84,0,0,0,{bev:.08});
+  S(spine,frame,1.21,.34,.10,0,1.27,2.216,0,0,0,{bev:.047});
+  S(spine,M.visor,.99,.092,.027,0,1.33,2.278,0,0,0,{bev:.023,shadow:false});
+  for(const side of [-1,1]){
+    S(spine,s2,.35,.48,.20,side*.75,1.21,2.17,0,0,side*.10,{bev:.059});
+    S(spine,A,.25,.047,.028,side*.74,.99,2.282,0,0,0,{bev:.01});
+    CZ(spine,steel,.077,.085,side*.743,1.31,2.271,14);
+    CZ(spine,SH.black,.051,.020,side*.743,1.31,2.325,12,{shadow:false});
+  }
+  for(const x of [-.27,.27])S(spine,s2,.037,.123,.035,x,1.33,2.296,0,0,0,{bev:.004});
+  S(spine,frame,.69,.073,.22,0,.72,1.96,0,0,0,{bev:.018});
+  // The pilot hardpoint stays on the integrated command bay.
+  neck.position.set(0,1.33,2.23);
+  const gun=J('mortar.elevation',spine,-.35,2.07,-.73);
+  S(spine,s2,.79,.22,.80,-.35,1.97,-.73,0,0,0,{bev:.065});
+  CX(gun,steel,.237,.68,0,0,0,18);
+  S(gun,frame,.47,.41,.67,0,0,.18,0,0,0,{bev:.066});
+  const barrel=J('mortar.recoil',gun,0,0,0);
+  CZ(barrel,steel,.217,.56,0,.015,.50,20);
+  Cy(barrel,s2,.103,.229,1.09,0,.015,1.16,PI/2,0,0,20);
+  CZ(barrel,frame,.135,.069,0,.015,1.704,20);
+  CZ(barrel,SH.black,.077,.020,0,.015,1.744,18,{shadow:false});
+  S(barrel,A,.23,.045,.22,0,.205,.55,0,0,0,{bev:.012});
+  J('mortar.muzzle',barrel,0,.015,1.76);
+  gun.rotation.x=-.18;
+  B.motionAnchors.push(gun,barrel);
   /* ---- heavy arms ---- */
   for(const x of [1,-1]){const Ar=arms[x>0?'L':'R'];B.part=x>0?'left':'right';
     pauldron(Ar,x,M,{w:.96,top:.96,bot:-.12,d:1.3,style:'heavy',dec:x>0?M.numTex:stripeTex('#e9e3d0'),decS:.56});
@@ -903,30 +912,40 @@ function behemoth(K,M){
     bolts(Ar.el,[[x*.45,-.3,-.22],[x*.45,-.3,.22],[x*.45,-.82,0]],'x',.035);
     hand(Ar.wr,x,frame,joint,1.15);
   }
-  /* ---- legs: slim armored tetra legs, high knees, claw feet ---- */
+  /* Deep greave shells with a flat, bevel-edged strike face. */
   B.part='legs';
-  legs.forEach((L,li)=>{
-    CX(L.hip,joint,.3,.56,0,0,0,18);S(L.hip,frame,.26,1.5,.3,0,-.8,0,0,0,0,{bev:.03});
-    P(L.hip,p,[[-.22,-.1],[.3,-.08],[.34,-.6],[.24,-1.4],[-.16,-1.44],[-.28,-.7]],.44,'x',0,0,0,0,0,0,{bev:.05});
-    P(L.hip,s2,[[.16,-.2],[.4,-.28],[.38,-1.1],[.22,-1.2]],.3,'x',0,0,0,0,0,0,{bev:.03,detach:true});
-    for(const sx of [1,-1])P(L.hip,s2,[[-.16,-.25],[.22,-.25],[.24,-1.05],[-.1,-1.1]],.05,'x',sx*.24,0,0,0,0,0,{bev:.015});
-    S(L.hip,hazardMat(2),.46,.1,.5,0,-.12,0,0,0,0,{bev:.01});
-    piston(L.hip,[0,-.6,-.26],L.kn,[0,-.5,-.3],.07);piston(L.hip,[.2,-.3,.18],L.kn,[.2,-.2,.24],.045);
-    CX(L.kn,joint,.3,.5,0,0,0,18);CX(L.kn,steel,.12,.56,0,0,0,10);
-    P(L.kn,s2,[[.1,.48],[.52,.2],[.5,-.3],[.2,-.36],[.06,0]],.5,'x',0,0,0,0,0,0,{detach:true,bev:.03});
-    spike(L.kn,A,.08,.55,0,.62,.12,-.35,0,0);
-    P(L.kn,p,[[-.26,-.1],[.28,-.1],[.26,-.8],[.12,-1.6],[0,-1.82],[-.12,-1.6],[-.26,-.8]],.4,'x',0,0,0,0,0,0,{bev:.04});
-    P(L.kn,s2,[[.18,-.3],[.34,-.4],[.24,-1.3],[.12,-1.36]],.28,'x',0,0,0,0,0,0,{detach:true,bev:.02});
-    for(const sx of [1,-1])P(L.kn,frame,[[-.18,-.3],[.18,-.34],[.12,-1.2],[-.1,-1.24]],.04,'x',sx*.21,0,0);
-    vent(L.kn,frame,.26,.4,3,0,-.6,-.28,.1,PI,0,.04);
-    CX(L.an,joint,.18,.4,0,0,0,14);Cy(L.an,s2,.24,.32,.2,0,-.12,0,0,0,0,8);
-    for(let k=0;k<3;k++){const a=(k-1)*.8;const t=new T.Group();t.rotation.y=a;L.an.add(t);P(t,p,[[.0,-.26],[.62,-.32],[.66,-.24],[.2,-.06],[0,-.04]],.16,'x',0,0,0,0,0,0,{bev:.02});S(t,A,.17,.04,.08,0,-.28,.6,0,0,0,{bev:0});}
-    P(L.an,p,[[-.36,-.3],[0,-.32],[0,-.08],[-.26,-.06]],.16,'x');
-    S(L.an,joint,.8,.05,.8,0,-.33,.1,0,0,0,{bev:.01});
+  legs.forEach(L=>{
+    CX(L.hip,joint,.29,.64,0,0,0,18);
+    S(L.hip,frame,.36,1.46,.42,0,-.74,0,0,0,0,{bev:.035});
+    S(L.hip,p,.61,1.17,.55,0,-.70,.055,0,0,0,{bev:.083});
+    S(L.hip,s2,.53,.97,.16,0,-.70,.36,0,0,0,{bev:.042});
+    piston(L.hip,[.29,-.50,-.14],L.kn,[.29,-.38,-.16],.077);
+    piston(L.hip,[-.29,-.50,-.14],L.kn,[-.29,-.38,-.16],.077);
+    CX(L.kn,joint,.25,.67,0,0,0,18);
+    for(const x of [-1,1])CX(L.kn,steel,.132,.092,x*.351,0,0,16);
+    P(L.kn,frame,[[-.33,-.26],[.33,-.26],[.39,-.48],[.32,-1.52],[.17,-1.70],[-.18,-1.70],[-.32,-1.54],[-.39,-.48]],.54,'z',0,0,.028,0,0,0,{bev:.053});
+    P(L.kn,p,[[-.34,-.31],[.34,-.31],[.43,-.48],[.37,-1.48],[.22,-1.67],[-.22,-1.67],[-.37,-1.48],[-.43,-.48]],.23,'z',0,0,.31,0,0,0,{bev:.047});
+    P(L.kn,s2,[[-.26,-.45],[.26,-.45],[.32,-.56],[.27,-1.34],[.17,-1.49],[-.17,-1.49],[-.27,-1.34],[-.32,-.56]],.082,'z',0,0,.46,0,0,0,{bev:.016});
+    S(L.kn,p,.47,.45,.064,0,-.81,.521,0,0,0,{bev:.018});
+    S(L.kn,A,.46,.055,.036,0,-1.358,.519,0,0,0,{bev:.01});
+    for(const x of [-.22,.22])for(const y of [-.52,-1.24])bolts(L.kn,[[x,y,.515]],'z',.028);
+    for(const x of [-1,1])S(L.kn,s2,.119,.85,.22,x*.393,-.86,.215,0,0,0,{bev:.029});
+    CX(L.an,joint,.166,.47,0,0,0,14);
+    S(L.an,frame,.64,.18,.70,0,-.16,.11,0,0,0,{bev:.047});
+    S(L.an,p,.66,.115,.58,0,-.081,.18,0,0,0,{bev:.038});
+    S(L.an,SH.rubber,.66,.09,.75,0,-.270,.11,0,0,0,{bev:.022});
+    for(const x of [-.19,.19])S(L.an,A,.093,.034,.07,x,-.13,.48,0,0,0,{bev:.007});
+    if(L.side.endsWith('F')){
+      const pad=J('BHM knee shoe '+L.side,L.kn,0,0,0);
+      S(pad,frame,.67,.12,.48,0,-.236,.035,0,0,0,{bev:.015});
+      S(pad,SH.rubber,.67,.035,.48,0,-.298,.035,0,0,0,{bev:.005});
+      for(const x of [-.236,.236])S(pad,A,.065,.043,.029,x,-.232,.288,0,0,0,{bev:.006});
+      B.motionAnchors.push(pad);
+    }
   });
   Dec(legs[2].hip,scarTex(37),.5,.5,.0,-.7,.35,0,0,0,{detachWith:'legs'});
   B.kit(1,()=>{for(const x of [1,-1])S(arms[x>0?'L':'R'].paul,s2,.12,.5,1.0,x*1.08,.5,0);});
-  legs.forEach(L=>greave(L,M,{w:.62,fz:.34,bz:-.36,top:-.16,bot:-1.36,flare:.3}));
+
   B.kit(2,()=>legs.forEach(L=>S(L.kn,s2,.36,.6,.08,0,-.95,.26,-.04)));
   B.kit(3,()=>{S(pelvis,s2,1.6,.12,1.6,0,.66,.9,0,0,0);for(const x of [1,-1])S(spine,s2,.6,.4,.12,x*.5,1.4,1.0);});
 }
@@ -965,7 +984,7 @@ function build(frame,team,tag,paintOverride,mods){
     numTex:team==='ally'?numTex(pal.num,'#e6dfca'):numTex(tag||'X','#c4352a')};
   if(team==='enemy')M.numTex=numTex(tag||'??','#d6cfc0');
   const K=skeleton(D);
-  B={part:'body',parts:{body:[],pilot:[],right:[],left:[],legs:[]},skirts:[],pistons:[],stackTops:[],spinners:[],beacons:[],visor:[],kits:[[],[],[]],shield:null,
+  B={part:'body',parts:{body:[],pilot:[],right:[],left:[],legs:[]},skirts:[],pistons:[],motionAnchors:[],stackTops:[],spinners:[],beacons:[],visor:[],kits:[[],[],[]],shield:null,
     kit(level,fn){const before=new Set();K.root.traverse(o=>before.add(o));fn();const added=[];K.root.traverse(o=>{if(o.isMesh&&!before.has(o))added.push(o);});added.forEach(o=>o.visible=false);this.kits[level-1].push(...added);}};
   // run each source chassis once; modules it does not own are built onto a throwaway skeleton and discarded
   for(const f of [...new Set([mo.legs,mo.core,mo.arms])]){const own={legs:mo.legs===f,core:mo.core===f,arms:mo.arms===f},all=own.legs&&own.core&&own.arms,dm=all?null:skeleton(DIMS[f]);
@@ -984,7 +1003,7 @@ function build(frame,team,tag,paintOverride,mods){
     const c2=new T.Mesh(cylGeo(q.r*1.1,q.r*1.1,.08,12),SH.frame);c2.rotation.x=PI/2;c2.position.z=.04;hb.add(c2);return [ha,hb];});
   K.root.traverse(o=>{if(o.isMesh&&o.castShadow===undefined)o.castShadow=true;});
   {const an=new Set([K.root,K.pelvis,K.spine,K.neck]);for(const k in K.arms)for(const n of Object.values(K.arms[k]))an.add(n);for(const L of K.legs){an.add(L.hip);an.add(L.kn);an.add(L.an);}
-   B.skirts.forEach(q=>an.add(q.g));B.spinners.forEach(o=>an.add(o));pistons.forEach(([a,b])=>{an.add(a);an.add(b);});mergeStatic(K.root,B,an);}
+   B.motionAnchors.forEach(o=>an.add(o));B.skirts.forEach(q=>an.add(q.g));B.spinners.forEach(o=>an.add(o));pistons.forEach(([a,b])=>{an.add(a);an.add(b);});mergeStatic(K.root,B,an);}
   const out={root:K.root,rig:{pelvis:K.pelvis,spine:K.spine,neck:K.neck,arms:K.arms,legs:K.legs,pistons,skirts:B.skirts,stackTops:B.stackTops,spinners:B.spinners,beacons:B.beacons},
     dims:D,mods:mo,parts:B.parts,kits:B.kits,shield:null,visor:B.visor,visorMat:visor,stackMat:stack,pal};
   B=null;return out;

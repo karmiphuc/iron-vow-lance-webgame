@@ -58,6 +58,36 @@ async function exerciseRigAdapter(){
   assert.notDeepEqual(fitted.anchors.muzzle,fitted.anchors.muzzle2);
  }
  assert.equal(frames,7,'idle rerenders reuse their surface after the arsenal arrives');
+ const artillery={id:'tripod',index:0,team:'ally',face:-1,weapon:'missile',melee:'blade',alive:true,hp,max:hp,
+  attack:{start:1,primeDuration:.6,fireAt:1.95,returnAt:2.8}};
+ function checkContact(entry){
+  const root=entry.m.body;
+  root.updateWorldMatrix(true,true);
+  for(const leg of entry.m.rig.legs){
+   const sign=Math.sign(leg.restX);
+   const point=leg.kneeShoe?leg.kneeShoe.localToWorld(new three.Vector3(0,-.3155,.035)):leg.an.getWorldPosition(new three.Vector3());
+   const expected=leg.kneeShoe?new three.Vector3(sign*.335,0,1.855):new three.Vector3(leg.restX,.315,leg.restZ);
+   assert.ok(root.worldToLocal(point).distanceTo(expected)<.0001,leg.side+' stays on its support');
+  }
+ }
+ for(const [t,kick] of [[1.66,0],[1.99,.8],[2.24,.5],[2.78,0]]){
+  const entry=adapter.draw(artillery,t,{...pose,heading:-Math.PI/4,primePhase:'planted',primeProgress:1,aim:1,recoil:kick},scope,5);
+  checkContact(entry);
+  assert.equal(entry.primary.model.name,'vesper');
+  assert.equal(entry.primary.mount.parent,entry.m.rig.arms.R.so);
+  assert.equal(entry.primary.recoil.position.z,-kick*.22);
+  assert.equal(entry.m.mortar.slide.position.z,-0);
+ }
+ artillery.attack=null;
+ const launch=adapter.draw(artillery,3.3,{...pose,primeProgress:0,mortarAge:.99},scope,5);
+ checkContact(launch);
+ assert.ok(launch.m.mortar.elevation.rotation.x<-.9);
+ assert.ok(launch.m.mortar.slide.position.z<-.2);
+ assert.notDeepEqual(launch.anchors.mortarMuzzle,launch.anchors.muzzle);
+ const recovered=adapter.draw(artillery,4,{...pose,primeProgress:0,mortarAge:2.2},scope,5);
+ assert.equal(recovered.m.artilleryBrace,false);
+ assert.equal(recovered.m.mortar.elevation.rotation.x,-.18);
+ assert.equal(recovered.m.mortar.slide.position.z,-0);
  fail=true;
  const unit={id:'failure',index:0,team:'ally',weapon:'rail',alive:true,hp,max:hp};
  assert.equal(adapter.draw(unit,1,pose,scope,0),null);
