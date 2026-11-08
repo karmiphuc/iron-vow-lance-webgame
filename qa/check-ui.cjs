@@ -12,7 +12,7 @@ click('#inspect');assert.ok(get('.unit-inspect'));click('[data-select="1"]');ass
 click('[data-page="workshop"]');click('[data-select="0"]');
 assert.equal(get('.rig-bench-link').getAttribute('href'),'rig-bench/index.html');
 assert.equal(get('.unit-render').getAttribute('src'),'assets/warden-rifle-left.webp');
-click('[data-page="contracts"]');assert.equal(document.querySelectorAll('[data-deploy]').length,3);click('[data-deploy="0"]');assert.equal(run('battle.units.length'),6);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
+click('[data-page="contracts"]');assert.equal(document.querySelectorAll('[data-deploy]').length,3);click('[data-deploy="0"]');assert.equal(run('battle.units.length'),8);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
 assert.equal(run("activeWardenVisual(current()).key"),'warden-rifle-left');
 run("current().face=1;current().weapon='rail'");
 assert.equal(run("activeWardenVisual(current()).key"),'warden-rail-right');

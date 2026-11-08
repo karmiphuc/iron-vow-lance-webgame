@@ -27,7 +27,7 @@ vm.createContext(context);
 const run=source=>vm.runInContext(source,context);
 const click=selector=>{const node=document.querySelector(selector);assert.ok(node&&!node.disabled,selector);node.click()};
 const ready=async condition=>{for(let i=0;i<100;i++){if(run(condition))return;await new Promise(resolve=>setTimeout(resolve,25))}assert.fail(condition)};
-for(const file of ['warden-visuals.js','arsenal-visuals.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
+for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
 
 (async()=>{
  await ready('decodedArt.size===Object.keys(artImages).length');
@@ -48,7 +48,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','game.js'])run(fs.re
  for(const id of ['breaker','piledriver','rampart'])click('[data-equip="'+id+'"]');
  click('#remove-melee');assert.equal(run('save.units[2].melee'),undefined);
  run("createBattle(0);selected=0;action='move';renderBattle();Math.random=()=>0");
- assert.ok(run("battle.units.filter(u=>u.team==='enemy').every(u=>u.paint===HOSTILE_PAINT&&activeWardenVisual(u).modular)"));
+ assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>u.paint===HOSTILE_PAINT&&activeWardenVisual(u).modular)"));
  click('#strike');assert.equal(run('action'),'strike');
  run('persist()');
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).sortie.action"),'strike');
@@ -67,7 +67,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','game.js'])run(fs.re
  })()`),true);
  assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id].some(p=>p.level===.7))))"));
  for(const [index,name] of ['relay','corridor','frontier'].entries()){
-  run(`createBattle(${index});action='move';battlefield(clock)`);
+  run(`createBattle(${index});fieldCamera.overview=true;action='move';battlefield(clock)`);
   await ready(`decoded.has('assets/ground-${name}.webp') && Object.values(battle.field.cover).every(prop=>decoded.has('assets/cover-'+prop+'.webp'))`);
   assert.equal(run('battle.field.ground'),name);
   assert.equal(run('new Set(Object.values(battle.field.cover)).size'),2);
