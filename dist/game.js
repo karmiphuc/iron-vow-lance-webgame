@@ -13,7 +13,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',damage:36,ra
  {id:'pulse-bash',name:'Pulse Bash',type:'EMITTER STRIKE',damage:33,range:1,ap:2,builtIn:true,melee:true,desc:'A quick close-range strike with the left emitter housing.'}
 ];
 const FREE_HAND_COUNTER={id:'free-hand',damage:10,range:1,ap:0,melee:true};
-const HOSTILE_PAINT='#cf3f4b',HOSTILE_FILTER='grayscale(1) sepia(1) saturate(4.6) hue-rotate(312deg) brightness(.82)';
+const HOSTILE_PAINT='#cf3f4b';
 const PAINT_PRESETS=[['Factory',null],['Bone','#c6bd9f'],['Olive','#708657'],['Slate','#577eac'],['Sand','#c19960'],['Graphite','#555e69'],['Ivory','#d9ddd5']];
 const RANGED=WEAPONS.filter(w=>!w.melee&&!w.builtIn),MELEE=WEAPONS.filter(w=>w.melee&&!w.builtIn);
 const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
@@ -388,7 +388,7 @@ function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS){
  for(const [index,spawn] of enemies.entries()){
   const [kind,x,z]=spawn.length===3?spawn:[null,...spawn];
   const unit=kind?makeVehicle(kind,index,x,z):makeUnit(index,'enemy',x,z);
-  if(!unit.kind&&foundryModel(unit.frame)!=null)preloadNativeMotion(unit.frame);
+  if(!unit.kind)preloadNativeMotion(unit.frame,unit.paint);
   if(!legacy)unit.face=Math.sign((allies[0][0]-allies[0][1])-(x-z))||-1;
   resetMovement(unit);
   battle.units.push(unit);
@@ -919,6 +919,11 @@ function chassisArt(i,loadout,direction=-1){
  const visual=wardenVisual(i,loadout,direction);
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
 }
+function targetPortraitKey(target){
+ const model=foundryModel(target.frame);
+ if(model!=null)return window.IRON_VOW_FOUNDRY_ART?.[model]?.views?.[0]?.key??'';
+ return wardenVisual(target.frame,target.weapon,unitFacing(target))?.key??'';
+}
 function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['hangar','contracts','inn','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p==='inn'?'INN':p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
@@ -1229,9 +1234,10 @@ function renderBattle(){
   $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p class="field-terrain">${battle.field.label}</p><p>Eliminate all hostile contacts.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${String(battle.turn).padStart(2,'0')}<small>${battle.phase==='player'?'YOUR LANCE / TAKE COMMAND':'HOSTILE LANCE / STAND BY'}</small></div>
-  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>${targetStatus||'SUBSYSTEM DETAILS'}</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${targetStatus?`<span class="combat-status">${targetStatus}</span>`:''}${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':foundryModel(target.frame)!=null?'enemy foundry-target':'enemy'}" data-visual-key="${wardenVisual(target.frame,target.weapon,unitFacing(target))?.key??''}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target))}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':PART_LABEL[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${partDamage(u,target,aimPart,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=weaponRange(chosen,u.training)?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>${target?.kind?'DESTROY HULL TO NEUTRALIZE':'DISABLE BODY OR PILOT'}</div>${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${targetReaction}${counter?' / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):targetReaction==='READY'&&u?' / OUT OF REACH':''}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}${u?`<div class="combat-selected"><span class="eyebrow">${CREW[u.pilot].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${CREW[u.pilot].skill}: ${u.skill?'USED':skillDescription(u.pilot,u.training)}</p></div>`:''}</aside>
+  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>${targetStatus||'SUBSYSTEM DETAILS'}</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${targetStatus?`<span class="combat-status">${targetStatus}</span>`:''}${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':foundryModel(target.frame)!=null?'enemy foundry-target':'enemy'}" data-target-id="${target.id}" data-visual-key="${target.kind?'':targetPortraitKey(target)}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target))}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':PART_LABEL[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${partDamage(u,target,aimPart,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=weaponRange(chosen,u.training)?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>${target?.kind?'DESTROY HULL TO NEUTRALIZE':'DISABLE BODY OR PILOT'}</div>${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${targetReaction}${counter?' / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):targetReaction==='READY'&&u?' / OUT OF REACH':''}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}${u?`<div class="combat-selected"><span class="eyebrow">${CREW[u.pilot].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${CREW[u.pilot].skill}: ${u.skill?'USED':skillDescription(u.pilot,u.training)}</p></div>`:''}</aside>
   <div class="log">${battle.log.map(l=>'<div class="log-line">'+l+'</div>').join('')}</div><div class="hint">${battle.busy?'RESOLVING COMBAT':action==='move'?(u?('MOVE / '+freeMovement(u)+' FREE'+(extraMovement(u)?' / +1 TILE FOR '+EXTRA_MOVE_AP+' AP':'')+(u.actionPhase?' / ACTION PHASE':'')):'MOVE / SELECT A READY MECH'):(action==='strike'?'STRIKE / ADJACENT HOSTILE / ':'FIRE / SELECT HOSTILE / ')+(chosen?paidAttackAP(u,chosen):3)+' AP PER ATTACK'+(u&&chargedLimbShot(u,chosen,aimPart,false)?' / CHARGED':'')}</div>
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button><button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
+  refreshTargetPortrait();
   bindTacticalMap();
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy)selectUnit(+b.dataset.unit)});
   document.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{targetPart=b.dataset.part;if(W<=760)targetPanelOpen=false;renderBattle();if(W<=760)$('#target-toggle').focus();persist()});
@@ -1552,7 +1558,7 @@ function finish(win){
 // Pre-rendered 2.5D battlefield: original raster art, depth ordering and live game effects.
 let W=innerWidth,H=innerHeight,DPR=Math.min(devicePixelRatio||1,2),scale=50,origin={x:0,y:0},shake=0,viewZoom=1,frameDt=1/60;
 const fieldCamera={x:1,z:16,overview:false};
-const decodedArt=new Set(),failedArt=new Set(),artImages={},artMasks={},enemyArt={};
+const decodedArt=new Set(),failedArt=new Set(),artImages={},artMasks={};
 const motionPreference=typeof window.matchMedia==='function'?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
 let reducedMotion=!!motionPreference?.matches;
 motionPreference?.addEventListener?.('change',e=>{reducedMotion=e.matches;if(reducedMotion)skipAttackCamera()});
@@ -1567,14 +1573,12 @@ for(const key of [...mechArtKeys,'concrete','barricade','contract-relay','contra
    try{
     const mask=new OffscreenCanvas(128,128),g=mask.getContext('2d',{willReadFrequently:true});
     g.drawImage(im,0,0,128,128);artMasks[key]=g.getImageData(0,0,128,128);
-    const tint=new OffscreenCanvas(384,384),tg=tint.getContext('2d');
-    tg.filter=HOSTILE_FILTER;tg.drawImage(im,0,0,384,384);enemyArt[key]=tint;
    }catch{}
   }
   for(let frame=0;frame<3;frame++)buildRigidParts(frame);
   if(battle){
    const target=$('.combat-target img');
-   if(target?.dataset.visualKey===key)target.src=art(key);
+    if(target?.dataset.visualKey===key)refreshTargetPortrait();
   }else if(page==='workshop'&&wardenVisual(selected,save.units[selected].weapon,-1)?.key===key){
    const preview=$('.unit-render');if(preview?.tagName==='IMG')preview.src=art(key);else drawWorkshopPreview();
   }else if(page==='workshop'&&key===legacyChassis[selected])drawWorkshopPreview();
@@ -1917,7 +1921,7 @@ function drawDestructionDebris(u,t,pose){
  const age=pose.deathAge-DESTRUCTION.blast;if(age<0&&!reducedMotion)return;
  const q=reducedMotion?1:clamp01(age/.72),fade=reducedMotion?1:smoothRange(0,.13,age),b=unitBounds(u),visual=activeWardenVisual(u);
  const source=visual?artImages[visual.key]:rigidParts[u.frame]?.wreck||artImages[legacyChassis[u.frame]];if(!source)return;
-   const hostile=u.team==='enemy',im=visual?.modular||visual?.native?paintedSprite(source,visual.key,u.paint,hostile):hostile?(enemyArt[visual?.key||u.frame]||source):source;
+ const im=visual?.modular||visual?.native?paintedSprite(source,visual.key,u.paint):source;
  const iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height,ground=project(u.vx,0,u.vz);
  ctx.save();ctx.globalAlpha=fade*.7;ctx.fillStyle='#080e13';ctx.beginPath();ctx.ellipse(ground.x,ground.y,scale*.92,scale*.32,0,0,Math.PI*2);ctx.fill();ctx.restore();
  const pieces=[[.33,.24,.39,.33],[.16,.08,.28,.23],[.65,.10,.25,.25],[.2,.67,.25,.28],[.6,.68,.25,.25]];
@@ -1926,7 +1930,7 @@ function drawDestructionDebris(u,t,pose){
   const r=pieces[i],seed=(u.index+1)*1.73+i*2.399,range=scale*(i===0?.16:.5+(i%3)*.2),end={x:ground.x+Math.cos(seed)*range,y:ground.y+Math.sin(seed)*range*.32};
   const start=mechSourcePoint(u,r[0]+r[2]/2,r[1]+r[3]/2,blastPose),ease=1-(1-q)**2;
   const x=start.x+(end.x-start.x)*ease,y=start.y+(end.y-start.y)*ease-Math.sin(Math.PI*q)*scale*(i===0?.25:.7);
-  ctx.save();ctx.globalAlpha=fade*(1-q*.2);ctx.filter=hostile&&im===source?HOSTILE_FILTER+' brightness(.55)':!visual&&rigidParts[u.frame]?'none':'brightness(.4) saturate(.65)';ctx.translate(x,y);ctx.rotate(Math.sin(seed)*1.3*q);const size=.9-q*.16;
+  ctx.save();ctx.globalAlpha=fade*(1-q*.2);ctx.filter=!visual&&rigidParts[u.frame]?'none':'brightness(.4) saturate(.65)';ctx.translate(x,y);ctx.rotate(Math.sin(seed)*1.3*q);const size=.9-q*.16;
   ctx.drawImage(im,r[0]*iw,r[1]*ih,r[2]*iw,r[3]*ih,-r[2]*b.w*size/2,-r[3]*b.h*size/2,r[2]*b.w*size,r[3]*b.h*size);ctx.restore();
  }
 }
@@ -1936,7 +1940,7 @@ function renderSurface(w,h){
  if(typeof OffscreenCanvas==='function')return new OffscreenCanvas(w,h);
  if(typeof document.createElement==='function'){const c=document.createElement('canvas');if(c.getContext){c.width=w;c.height=h;return c}}return null;
 }
-const moduleImages={},paintedImages=new Map();
+const moduleImages={},paintedImages=new Map(),paintedPortraits=new WeakMap();
 function moduleImage(key){
  if(!moduleImages[key]){
   const image=new Image();moduleImages[key]=image;image.decoding='async';
@@ -1949,14 +1953,18 @@ function moduleImage(key){
    }
    if(page==='workshop'&&!battle)drawWorkshopPreview();
    if(page==='hangar'&&!battle)drawFoundryHangar();
+    if(battle){
+     const portraitKey=$('.combat-target img')?.dataset.visualKey;
+     if(key===portraitKey||key===portraitKey+'-paint')refreshTargetPortrait();
+    }
   };
   image.src=art(key);
  }
  return moduleImages[key];
 }
-function paintedSprite(image,key,paint,hostile=false){
+function paintedSprite(image,key,paint){
  if(!paint||!imageReady(image))return image;
- const id=key+paint+(hostile?"hostile":"");
+ const id=key+paint;
  if(paintedImages.has(id))return paintedImages.get(id);
  const mask=moduleImage(key+'-paint');
  if(!imageReady(mask))return image;
@@ -1968,10 +1976,9 @@ function paintedSprite(image,key,paint,hostile=false){
   const color=g.getImageData(0,0,width,height),pixels=color.data;
   const rgb=[1,3,5].map(offset=>parseInt(paint.slice(offset,offset+2),16));
   for(let i=0;i<pixels.length;i+=4){
-   if((!maskData[i]&&!hostile)||!pixels[i+3])continue;
+   if(maskData[i]<16||!pixels[i+3])continue;
    const light=pixels[i]*.2126+pixels[i+1]*.7152+pixels[i+2]*.0722;
-   const ceramic=maskData[i]/255*smoothRange(18,56,light);
-   const weight=Math.max(ceramic,hostile?.42*smoothRange(38,131,light):0);
+   const weight=maskData[i]/255*smoothRange(18,56,light);
    for(let c=0;c<3;c++){
     const tone=Math.min(255,rgb[c]*(light/171)**.86);
     pixels[i+c]+=(tone-pixels[i+c])*weight;
@@ -1983,7 +1990,7 @@ function paintedSprite(image,key,paint,hostile=false){
  }catch{return image}
 }
 function foundryPaint(image,key,paint,trim){
- if(!paint&&!trim)return image;
+ if((!paint&&!trim)||!imageReady(image))return image;
  const id=[key,paint,trim?.s,trim?.a].join('/');
  if(paintedImages.has(id))return paintedImages.get(id);
  const mask=moduleImage(key+'-paint');
@@ -2008,6 +2015,25 @@ function foundryPaint(image,key,paint,trim){
   if(paintedImages.size>=12)paintedImages.delete(paintedImages.keys().next().value);
   paintedImages.set(id,surface);return surface;
  }catch{return image}
+}
+function refreshTargetPortrait(){
+ const portrait=$('.combat-target img[data-target-id]'),key=portrait?.dataset.visualKey;
+ if(!key)return;
+ const target=battle?.units.find(u=>u.id===portrait.dataset.targetId);
+ if(!target||target.kind)return;
+ const foundry=foundryModel(target.frame)!=null,base=foundry?moduleImage(key):artImages[key];
+ if(!imageReady(base))return;
+ const visual=wardenVisual(target.frame,target.weapon,unitFacing(target));
+ const image=foundry?foundryPaint(base,key,target.paint,target.trim):
+  visual?.modular||visual?.native?paintedSprite(base,key,target.paint):base;
+ if(image===base){portrait.src=art(key);return}
+ if(!paintedPortraits.has(image)){
+  const preview=document.createElement('canvas');preview.width=preview.height=192;
+  const g=preview.getContext?.('2d');
+  if(!g||typeof preview.toDataURL!=='function')return;
+  g.drawImage(image,0,0,192,192);paintedPortraits.set(image,preview.toDataURL());
+ }
+ portrait.src=paintedPortraits.get(image);
 }
 function spritePoint(bounds,point=[.5,.36]){
  return {x:bounds.x+point[0]*bounds.w,y:bounds.y+point[1]*bounds.h};
@@ -2148,10 +2174,9 @@ function buildRigidParts(frame){
   g.putImageData(pixels,0,0);parts.push(c);counts.push(count);
  }
  const body=renderSurface(size,size),bodyContext=body.getContext('2d'),bodyPixels=bodyContext.createImageData(size,size);for(let i=0;i<size*size;i++){const data=removed[i]?dst.data:src.data;for(let c=0;c<4;c++)bodyPixels.data[i*4+c]=data[i*4+c]}bodyContext.putImageData(bodyPixels,0,0);
- const tinted=renderSurface(size,size),tg=tinted.getContext('2d');tg.filter=HOSTILE_FILTER;tg.drawImage(body,0,0,size,size);
  const wreck=renderSurface(size,size),wg=wreck.getContext('2d');wg.filter='brightness(.4) saturate(.55)';wg.drawImage(original,0,0,size,size);
- if(!enemyArt[frame]){const full=renderSurface(size,size),fg=full.getContext('2d');fg.filter=HOSTILE_FILTER;fg.drawImage(original,0,0,size,size);enemyArt[frame]=full}if(!artMasks[frame])artMasks[frame]=src;
- const enemyParts=parts.map(part=>{const c=renderSurface(size,size),g=c.getContext('2d');g.filter=HOSTILE_FILTER;g.drawImage(part,0,0);return c});rigidParts[frame]={parts,enemyParts,wreck,base:body,enemyBase:tinted,counts};
+ if(!artMasks[frame])artMasks[frame]=src;
+ rigidParts[frame]={parts,wreck,base:body,counts};
 }
 function mapTorsoPoint(u,p,pose){
  const native=u.frame===1?1:-1,recoilScale=({rifle:.025,shotgun:.047,missile:.021,rail:.062})[u.weapon]||.025;
@@ -2173,7 +2198,7 @@ function drawRigidUpper(u,w,h,pose){
  const cache=rigidParts[u.frame];if(!cache)return;
  for(const index of[3,5,4,6,1,2,0]){
   if(!cache.counts[index])continue;
-  const a=rigidPartPoint(u,index,{x:0,y:0},pose),b=rigidPartPoint(u,index,{x:1,y:0},pose),c=rigidPartPoint(u,index,{x:0,y:1},pose),im=(u.team==='enemy'?cache.enemyParts:cache.parts)[index],size=im.width;
+  const a=rigidPartPoint(u,index,{x:0,y:0},pose),b=rigidPartPoint(u,index,{x:1,y:0},pose),c=rigidPartPoint(u,index,{x:0,y:1},pose),im=cache.parts[index],size=im.width;
   ctx.save();ctx.filter='none';
   ctx.transform((b.x-a.x)*w/size,(b.y-a.y)*h/size,(c.x-a.x)*w/size,(c.y-a.y)*h/size,(a.x-.5)*w,(a.y-1)*h);ctx.drawImage(im,0,0);ctx.restore();
  }
@@ -2316,7 +2341,7 @@ function travelAtlas(u){
 function preloadTravel(u){
  const atlas=travelAtlas(u);
  if(!atlas)return null;
- if(u.team==='ally'&&(u.paint||u.trim))moduleImage(atlas.key+'-paint');
+ if(u.paint||u.trim)moduleImage(atlas.key+'-paint');
  return motionImage(atlas);
 }
 function travelVisual(u,t){
@@ -2371,11 +2396,10 @@ function drawPartTints(u,t,paint,anchor,scorch=true){
 }
 function drawTravel(u,t,view){
  const {atlas,image,bounds,row,heading}=view,p=project(u.vx,0,u.vz),cell=atlas.cell;
- const foundry=foundryModel(u.frame)!=null,hostile=u.team==='enemy'&&!u.kind;
- const body=hostile?image:foundry?foundryPaint(image,atlas.key,u.paint,u.trim):paintedSprite(image,atlas.key,u.paint);
+ const foundry=foundryModel(u.frame)!=null;
+ const body=foundry?foundryPaint(image,atlas.key,u.paint,u.trim):paintedSprite(image,atlas.key,u.paint);
  ctx.save();ctx.fillStyle='#060d148c';ctx.beginPath();
  ctx.ellipse(p.x,p.y,scale*(u.kind||foundryModel(u.frame)===5?.76:.62),scale*.22,0,0,Math.PI*2);ctx.fill();
- if(hostile)ctx.filter=HOSTILE_FILTER;
  const paint=()=>ctx.drawImage(body,heading*cell,row*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
  paint();
  drawPartTints(u,t,paint,part=>view.points[part]&&spritePoint(bounds,view.points[part]));
@@ -2500,7 +2524,7 @@ function foundryRender(u,t,liveOnly=false){
  const flip=unitFacing(u)>0,frame=atlas.frames[index];
  const anchors=flip?Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([k,[x,y]])=>[k,[1-x,y]])):frame;
  const loaded=imageReady(image),key=loaded?atlas.key:legacyChassis[u.frame],base=loaded?image:artImages[key];
- const surface=imageReady(base)&&u.team==='ally'?foundryPaint(base,key,u.paint,u.trim):base;
+ const surface=loaded?foundryPaint(base,key,u.paint,u.trim):base;
  return {surface,cell:loaded?atlas.cell:0,index,anchors,flip,baked:true,strikeProgress:pose.strikeProgress};
 }
 function drawUnit(u,t,close=false){
@@ -2522,7 +2546,6 @@ function drawUnitBody(u,t,close){
   ctx.save();ctx.fillStyle='#050c12ac';ctx.beginPath();
   ctx.ellipse(p.x,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64),scale*.22,0,0,Math.PI*2);ctx.fill();
   if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
-   if(foundry.baked&&u.team==='enemy')ctx.filter=HOSTILE_FILTER;
    const paint=()=>{
     ctx.save();ctx.translate(b.x+b.w/2,b.y);if(foundry.flip)ctx.scale(-1,1);
     if(foundry.cell){
@@ -2549,18 +2572,16 @@ function drawUnitBody(u,t,close){
  }
  const baked=wardenMotionFrame(u,visual,pose),remaining=remainingPose(pose,baked);
  const body=baked?.frame?baked.image:original,bodyKey=baked?.frame?baked.atlas.key:key;
- const im=visual?.modular||visual?.native?paintedSprite(body,bodyKey,u.paint,u.team==='enemy'):u.team==='enemy'&&!baked?.frame&&enemyArt[key]?enemyArt[key]:body;
- const tintFallback=u.team==='enemy'&&im===body;
+ const im=visual?.modular||visual?.native?paintedSprite(body,bodyKey,u.paint):body;
  ctx.save();ctx.fillStyle=u.alive?'#050c12aa':'#090e13c9';ctx.beginPath();ctx.ellipse(p.x,p.y+scale*.025,scale*(.67+pose.brace*.05),scale*.22,0,0,Math.PI*2);ctx.fill();ctx.restore();if(!imageReady(original))return;
  if(!u.alive&&pose.explosion>=1){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true);return}
  ctx.save();
- if(tintFallback)ctx.filter=HOSTILE_FILTER;
  const articulated=!reducedMotion&&(pose.walk>.001||pose.primeProgress>0||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||pose.aim>.001||(!u.alive&&pose.explosion<1));
  const paint=()=>{
   ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)ctx.scale(-1,1);
   if(!u.alive){const root=u.downReason==='pilot'?{x:0,y:pose.kneel*.075,angle:pose.kneel*.12,scale:1-pose.kneel*.1}:destructionRoot(u,pose);ctx.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
   if(baked?.frame){const {cell,columns}=baked.atlas,index=baked.frame.index;ctx.drawImage(im,index%columns*cell,Math.floor(index/columns)*cell,cell,cell,-b.w/2,-b.h,b.w,b.h)}
-  else if(articulated&&!visual&&rigidParts[u.frame]){const cache=rigidParts[u.frame],bodyPose={...pose,baseOnly:true};drawArticulatedMech(im,u,b.w,b.h,bodyPose,u.team==='enemy'?cache.enemyBase:cache.base);drawRigidUpper(u,b.w,b.h,pose)}
+  else if(articulated&&!visual&&rigidParts[u.frame]){const cache=rigidParts[u.frame],bodyPose={...pose,baseOnly:true};drawArticulatedMech(im,u,b.w,b.h,bodyPose,cache.base);drawRigidUpper(u,b.w,b.h,pose)}
   else if(articulated&&!visual?.modular&&!visual?.native&&foundryModel(u.frame)==null)drawArticulatedMech(im,u,b.w,b.h,{...remaining,baseOnly:true});
   else{if(u.alive&&!reducedMotion&&!spent(u))ctx.rotate(Math.sin(t*.85+u.index)*.001);ctx.drawImage(im,-b.w/2,-b.h,b.w,b.h)}
   ctx.restore();

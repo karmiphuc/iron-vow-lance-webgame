@@ -12,6 +12,7 @@ The browser runner uses Playwright Chromium when installed, or a supported local
 | Area | Regression checks |
 | --- | --- |
 | Hit visuals | Localized flash, expiry and damage shading on travel sprites, native cinematics, baked fallback and live Foundry. Four battlefield facings, a real desktop attack-camera shot and a real mobile touch shot. |
+| Enemy paint | Crimson plate masks for all 11 travel sprites, close views, baked Foundry fallback and target portraits. Pixel checks on bare materials catch full-body tints. |
 | Combat | AP, free and paid movement, range, limb damage, missile counter lockout, free-hand counter damage and limits, facing, gait and weapons, reduced motion, audio cues and destruction. |
 | Company | Hiring and reserves, shared level-1 training prerequisites and the Pilot Wiki, Workshop stats and storage, salvage, contract rewards, and saved random 1–3 mech offers. |
 | Saves | Published v31 and v32 fixtures, current checkpoints, interrupted enemy phases, corrupt checkpoints and duplicate payout checks. |
@@ -35,4 +36,4 @@ After deploying, verify the public copy from the same checkout.
 node qa/release-check.cjs --live https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site/
 ```
 
-This compares served HTML, JavaScript and CSS to the checkout and repeats both browser scenarios. Hosted HTML is compared after removing the platform's injected challenge bootstrap. Test careers use isolated browser storage. Keep the published save fixtures and the reproduction for each future fix in this folder.
+This compares served HTML, JavaScript and CSS to the checkout and repeats the browser scenarios. Hosted HTML is compared after removing the platform's injected challenge bootstrap. Test careers use isolated browser storage. Keep the published save fixtures and the reproduction for each future fix in this folder.

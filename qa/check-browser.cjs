@@ -5,6 +5,7 @@ const {createServer}=require('node:http');
 const {tmpdir}=require('node:os');
 const {extname,join,resolve,sep}=require('node:path');
 const {chromium,devices}=require('playwright');
+const checkPaint=require('./browser/paint.cjs');
 const checkImpact=require('./browser/impact.cjs');
 const checkCampaign=require('./browser/campaign.cjs');
 const dist=resolve(__dirname,'../dist');
@@ -53,7 +54,7 @@ async function checkBrowser(origin){
   const executablePath=browserPath();
   if(!executablePath&&!existsSync(chromium.executablePath()))throw Error('Install Chromium with npx playwright install chromium in qa, or set IRON_VOW_CHROME.');
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
-  for(const mobile of [false,true])for(const scenario of [checkImpact,checkCampaign]){
+  for(const mobile of [false,true])for(const scenario of [checkPaint,checkImpact,checkCampaign]){
    const label=(mobile?'mobile touch':'desktop')+' '+scenario.name;
    const context=await browser.newContext({
     ...(mobile?{...devices['iPhone 13'],deviceScaleFactor:1}:{viewport:{width:1440,height:1000}}),
