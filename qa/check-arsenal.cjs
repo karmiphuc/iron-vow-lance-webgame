@@ -67,7 +67,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
  })()`),true);
  assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id].some(p=>p.level===.7))))"));
  for(const [index,name] of ['relay','corridor','frontier'].entries()){
-  run(`createBattle(${index});fieldCamera.overview=true;action='move';battlefield(clock)`);
+  run(`createBattle(${index+1});fieldCamera.overview=true;action='move';battlefield(clock)`);
   await ready(`decoded.has('assets/ground-${name}.webp') && Object.values(battle.field.cover).every(prop=>decoded.has('assets/cover-'+prop+'.webp'))`);
   assert.equal(run('battle.field.ground'),name);
   assert.equal(run('new Set(Object.values(battle.field.cover)).size'),2);
