@@ -193,16 +193,20 @@ FRAMES.push(
  {name:'BEHEMOTH',model:'BHM–22',role:'ARTILLERY',color:'#8f8a68',hp:210,arm:90,leg:150,move:3,armor:8,foundry:5,cost:4400,weapon:'missile'},
  {name:'AEGIS',model:'AGS–07',role:'ASSAULT',color:'#899681',hp:165,arm:94,leg:108,move:4,armor:5,foundry:0,cost:2600,weapon:'rifle'},
  {name:'SHRIKE',model:'SHK–12',role:'RECON',color:'#b6a37c',hp:118,arm:76,leg:103,move:5,armor:2,foundry:1,cost:2400,weapon:'shotgun'},
- {name:'BASTION',model:'BST–04',role:'HEAVY SUPPORT',color:'#708c92',hp:188,arm:100,leg:105,move:3,armor:7,foundry:2,cost:3000,weapon:'missile'}
+ {name:'BASTION',model:'BST–04',role:'HEAVY SUPPORT',color:'#708c92',hp:188,arm:100,leg:105,move:3,armor:7,foundry:2,cost:3000,weapon:'rifle',rig:'bastion'}
 );
+const BASTION_FRAME=FRAMES.length-1;
+const playerHull=frame=>Boolean(FRAMES[frame]&&!FRAMES[frame].enemyOnly);
+const bastionRig=unit=>FRAMES[unit.frame]?.rig==='bastion';
 const PART_LABEL={body:'BODY',pilot:'PILOT',right:'WEAPON ARM',left:'LEFT ARM',legs:'LEGS'};
 const HELLBREAKER=FRAMES.length;
 FRAMES.push({...FRAMES[3],name:'HELLBREAKER',model:'HV–09X',role:'HOSTILE BREACH',
  native:'hellbreaker',salvageOnly:true,brief:'Enemy breach chassis. Recover a wreck on No quiet frontier and rebuild it in the Workshop.'});
 const PILOT_HP=[70,55,80];
 const CREW_HP=[...PILOT_HP,60,72,67,61,76];
+const CITADEL_FRAME=FRAMES.push({...FRAMES[BASTION_FRAME],name:'CITADEL',model:'CTD–04',weapon:'missile',rig:null,enemyOnly:true})-1;
 const ENEMY_NAMES=['JACKAL','RAVEN','MARAUDER','GATEBREAKER','LOCUST','SERAPH','RONIN','TITAN','SENTINEL','RAZOR','CITADEL'];
-const FOUNDRY_HOSTILES={corridor:[1,6,8,9],frontier:[7,6,5,10,2]};
+const FOUNDRY_HOSTILES={corridor:[1,6,8,9],frontier:[7,6,5,CITADEL_FRAME,2]};
 const foundryModel=frame=>FRAMES[frame]?.foundry;
 const pilotFrame=(i,career=save)=>career.units[i].frame??i;
 const CONTRACTS=[
@@ -668,11 +672,11 @@ function equipmentChoices(u,options,training){
 }
 const hullSlot=frame=>LANCE_SLOTS.findIndex(i=>pilotFrame(i)===frame);
 const hullOwned=frame=>hullSlot(frame)>=0||Boolean(save.reserve?.[frame]);
-const hullOnMarket=frame=>!FRAMES[frame].salvageOnly&&!hullOwned(frame);
+const hullOnMarket=frame=>playerHull(frame)&&!FRAMES[frame].salvageOnly&&!hullOwned(frame);
 const rebuildPrice=frame=>Math.max(400,Math.round((FRAMES[frame].cost??1500)*.35/50)*50);
 const scrapPrice=frame=>Math.round(rebuildPrice(frame)*.45/25)*25;
 function acquireHull(frame,salvaged=false){
- if(battle||!FRAMES[frame]||hullOwned(frame)||(salvaged?!save.salvage?.[frame]:!hullOnMarket(frame)))return false;
+ if(battle||!playerHull(frame)||hullOwned(frame)||(salvaged?!save.salvage?.[frame]:!hullOnMarket(frame)))return false;
  const price=salvaged?rebuildPrice(frame):FRAMES[frame].cost??0;
  if(save.credits<price)return false;
  const hull={...stockHull(frame),condition:salvaged?rebuildIntegrity():100};
@@ -686,7 +690,7 @@ function takeSalvage(frame){
  if(--save.salvage[frame]===0)delete save.salvage[frame];
 }
 function recycleHullBody(frame){
- if(battle||!FRAMES[frame]||!save.salvage?.[frame])return false;
+ if(battle||!playerHull(frame)||!save.salvage?.[frame])return false;
  takeSalvage(frame);save.credits+=scrapPrice(frame);persist();return true;
 }
 function workshopTabs(){
@@ -696,13 +700,14 @@ function workshopTabs(){
 function chassisAssignments(i,training){
  const assigned=pilotFrame(i),view=workshopView;
  const choices=FRAMES.map((frame,index)=>{
+  if(!playerHull(index))return '';
   const slot=hullSlot(index),reserve=save.reserve?.[index],bodies=save.salvage?.[index]??0;
   if(view==='assigned'&&slot<0||view==='storage'&&!reserve||view==='market'&&!hullOnMarket(index)||view==='salvage'&&!bodies)return '';
   const salvaged=view==='salvage',hull=salvaged?stockHull(index):slot>=0?save.units[slot]:reserve??stockHull(index);
   const {body,right,legs}=chassisParts(frame,hull,training);
   const primary=weapon(hull.weapon),melee=hull.melee&&weapon(hull.melee);
   return `<article class="bay-card">
-   <img src="${frame.foundry!=null?art('foundry-'+frame.foundry+'-front'):chassisArt(index,hull.weapon,1)}" alt="" loading="lazy">
+   <img src="${frame.rig==='bastion'?art('bastion-bst04'):frame.foundry!=null?art('foundry-'+frame.foundry+'-front'):chassisArt(index,hull.weapon,1)}" alt="" loading="lazy">
    <span class="eyebrow">${frame.model} / ${frame.role}</span><h3>${frame.name}</h3>
    <p>${salvaged?bodies+' recovered '+(bodies===1?'body':'bodies')+' · '+rebuildIntegrity()+'% rebuilt':hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
    <dl><div><dt>Free move</dt><dd>${chassisMobility(frame,false,training)}</dd></div><div><dt>Armor</dt><dd>${chassisArmor(frame,hull,training)}</dd></div><div><dt>Body</dt><dd>${body}</dd></div><div><dt>Each arm</dt><dd>${right}</dd></div><div><dt>Legs</dt><dd>${legs}</dd></div><div><dt>Fire AP</dt><dd>${weaponAP(primary,training)}</dd></div></dl>
@@ -721,7 +726,7 @@ function chassisAssignments(i,training){
  </section>`;
 }
 function assignChassis(i,frame,allowSwap=false){
- if(battle||!PILOTS[i]||!Number.isInteger(frame)||!FRAMES[frame])return false;
+ if(battle||!PILOTS[i]||!Number.isInteger(frame)||!playerHull(frame))return false;
  const u=save.units[i],previous=pilotFrame(i);
  if(previous===frame)return false;
  const other=PILOTS.findIndex((_,slot)=>pilotFrame(slot)===frame);
@@ -1151,6 +1156,7 @@ function wardenVisual(frame,loadout,direction,stock=false){
  return failedArt.has(modular?.key)?legacy:modular||legacy;
 }
 function chassisArt(i,loadout,direction=-1,stock=false){
+ if(i===BASTION_FRAME)return art('bastion-bst04');
  const model=foundryModel(i);if(model!=null)return art('foundry-'+model);
  const visual=wardenVisual(i,loadout,direction,stock);
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
@@ -1187,7 +1193,7 @@ function render(){
    ${workshopView==='assigned'?`${workshopStats(selected,f,u,training)}
   <div class="split"><section class="workshop-chassis"><div class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</div>
   ${arsenal.chassis?.[frame]||f.native||f.foundry!=null?`<canvas class="unit-render" id="paint-preview" width="640" height="640" role="img" aria-label="${f.name} paint and loadout preview"></canvas>`:`<img class="unit-render" src="${chassisArt(frame,u.weapon)}" alt="${f.name} armored mech">`}
-  <div class="workshop-meta"><h2>${f.name}</h2>${f.foundry!=null?'<button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>':''}${workshopPaint(u)}
+  <div class="workshop-meta"><h2>${f.name}</h2>${f.foundry!=null?'<button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>':''}${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion grip motion tests"><button type="button" id="bastion-test-rifle">TEST RIFLE</button><button type="button" id="bastion-test-melee">TEST MELEE</button></div>':''}${workshopPaint(u)}
   ${frame===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH</a>':''}<a class="rig-bench-link" href="rig-bench/prototypes/">OPEN PROTOTYPE BAY</a>${stat('CONDITION',u.condition+'%',u.condition)}
   <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><div class="inline-help"><small>+25 BODY HP · +2 ARMOR PER MK</small>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div></div></section>
   <section><div class="eyebrow">LOADOUT / ${p.call}</div>${f.native?`<h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief)}</div>${builtInLoadout(u,training)}`:`<h2 class="loadout-title">THE RIGHT TOOL.</h2><div class="inline-help"><small>COMPANY ARMORY</small>${infoTip('company armory','Unlock each weapon once for the whole company.')}</div>
@@ -1226,7 +1232,7 @@ function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=(
  }}
 function validHull(u,frame){
  const f=FRAMES[frame];
- return !!u&&!!f&&(f.native?u.weapon===f.weapon&&u.melee===f.melee:
+ return !!u&&playerHull(frame)&&(f.native?u.weapon===f.weapon&&u.melee===f.melee:
   RANGED.some(w=>w.id===u.weapon)&&(u.melee==null||MELEE.some(w=>w.id===u.melee)))&&
   (u.paint==null||validPaint(u.paint))&&(u.trim==null||!!u.trim&&typeof u.trim==='object'&&['s','a'].every(k=>u.trim[k]==null||validPaint(u.trim[k])))&&Number.isFinite(u.condition)&&u.condition>=0&&u.condition<=100&&
   Number.isInteger(u.upgrade)&&u.upgrade>=0&&u.upgrade<=3;
@@ -1250,7 +1256,7 @@ function validSave(s){
  if(s.ship!==undefined&&!validShip(s))return false;
  if(s.hangar!==undefined&&!validHangar(s))return false;
  if(s.wounds!==undefined&&!validRecord(s.wounds,([id,days])=>(pilots.has(pilotKind(id))||Object.hasOwn(s.reservePilots??{},id))&&[1,2].includes(days)))return false;
- if(s.salvage!==undefined&&!validRecord(s.salvage,([id,count])=>String(Number(id))===id&&FRAMES[Number(id)]&&Number.isSafeInteger(count)&&count>0))return false;
+ if(s.salvage!==undefined&&!validRecord(s.salvage,([id,count])=>String(Number(id))===id&&playerHull(Number(id))&&Number.isSafeInteger(count)&&count>0))return false;
  if(s.dispatch!==undefined&&(!s.dispatch||s.dispatch.day!==s.day||!Array.isArray(s.dispatch.sizes)||s.dispatch.sizes.length!==CONTRACTS.length||!s.dispatch.sizes.every(n=>Number.isInteger(n)&&n>=1&&n<=3)))return false;
  if(s.reserve===undefined)return true;
  return !!s.reserve&&typeof s.reserve==='object'&&!Array.isArray(s.reserve)&&Object.entries(s.reserve).every(([key,u])=>{
@@ -1684,10 +1690,11 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false){
  if(!reaction){if(!a.order?.keepMove&&!(charged&&a.training?.breachMove))startAction(a);a.ap-=paid}
  const turning=turnToward(a,t.x-a.x,t.z-a.z);if(turning)await turning;
  const clip=w.melee?'strike':'fire',native=!a.kind&&wardenVisual(a.frame,a.weapon,a.face,a.team==='enemy')?.timing?.[clip];
+ const plantedBastion=a.brace&&bastionRig(a);
  const plantedWarden=a.brace&&a.hp.legs>0&&upgradedWardenTravel(travelAtlas(a));
  const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
  const primeDuration=!a.kind&&a.hp.legs>0&&!reducedMotion?
-  (plantedWarden?braceTimeLeft:reaction?.40:ATTACK_STEP.duration):0;
+  (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,native:native?{...native,clip}:null};
  if(primeDuration){
   sound('hydraulic',MECH_MOTION[a.frame].mass);
@@ -1885,7 +1892,7 @@ function settleShip(win,allies,promotions){
 function finish(win){
  const b=battle,c=b.contract,promotions=[];
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
- const recovered=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive)
+ const recovered=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive&&playerHull(u.frame))
   .sort((a,z)=>Number(Boolean(FRAMES[z.frame].salvageOnly))-Number(Boolean(FRAMES[a.frame].salvageOnly))||z.hp.body-a.hp.body)
   .slice(0,1+(retriever?.training?.wreckExtra??0)):[];
  for(const wreck of recovered){const bodies=save.salvage??={};bodies[wreck.frame]=(bodies[wreck.frame]??0)+1}
@@ -1925,7 +1932,7 @@ const decodedArt=new Set(),failedArt=new Set(),artImages={},artMasks={};
 const motionPreference=typeof window.matchMedia==='function'?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
 let reducedMotion=!!motionPreference?.matches;
 motionPreference?.addEventListener?.('change',e=>{reducedMotion=e.matches;if(reducedMotion)skipAttackCamera()});
-const legacyChassis=FRAMES.map(frame=>frame.foundry!=null?'foundry-'+frame.foundry:frame.native?prototypes[frame.native]?.left.key:frame.name.toLowerCase());
+const legacyChassis=FRAMES.map(frame=>frame.rig==='bastion'?'bastion-bst04':frame.foundry!=null?'foundry-'+frame.foundry:frame.native?prototypes[frame.native]?.left.key:frame.name.toLowerCase());
 const bakedChassis=[...Object.values(wardenVisuals),...(arsenal.chassis||[]),...(wardenUpgrade?[wardenUpgrade.views]:[]),...Object.values(prototypes)].flatMap(views=>Object.values(views).map(view=>view.key));
 const mechArtKeys=new Set([...legacyChassis.filter(Boolean),...bakedChassis]);
 for(const key of [...mechArtKeys,'concrete','barricade','contract-relay','contract-corridor','contract-frontier','warden-base','kestrel-base','basilisk-base']){
@@ -2140,6 +2147,7 @@ function remainingPose(pose,baked){
 }
 const MECH_SIZE=[2.18,2.1,2.35,2.46,2.46,3.18,3.23,3.18,3.21,3.12,3.23];
 MECH_SIZE[HELLBREAKER]=MECH_SIZE[3];
+MECH_SIZE[CITADEL_FRAME]=MECH_SIZE[BASTION_FRAME];
 function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1);return{x:p.x-size*(visual?.groundX??.5),y:p.y-size*(visual?.ground??(foundryModel(u.frame)!=null?.84:.94)),w:size,h:size}}
 // A small skinned mesh articulates the existing armor art without new image requests.
 const MECH_MOTION=[
@@ -2148,10 +2156,11 @@ const MECH_MOTION=[
  {step:.38,hip:.57,split:.60,foot:[.98,.87],mass:1.45,muzzle:[.25,.49]},
  {step:.63,hip:.58,split:.5,foot:[.89,.89],mass:1.56,muzzle:[.25,.49]},
  {step:.52,hip:.58,split:.5,foot:[.89,.89],mass:1.11,muzzle:[.38,.26]},
- ...[[.53,.90],[.64,1.24],[.68,1.52],[.56,1.08],[.49,.73],[.66,1.44]].map(([step,mass])=>(
+ ...[[.53,.90],[.64,1.24],[.68,1.52],[.56,1.08],[.49,.73],[.94,1.44]].map(([step,mass])=>(
   {step,mass,hip:.51,split:.5,foot:[.83,.84],muzzle:[.26,.46]}))
 ];
 MECH_MOTION[HELLBREAKER]=MECH_MOTION[3];
+MECH_MOTION[CITADEL_FRAME]={...MECH_MOTION[BASTION_FRAME],step:.66};
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
 function dampedImpulse(age,frequency=35,decay=15){return age>=0&&age<.8?Math.sin(age*frequency)*Math.exp(-age*decay):0}
@@ -2442,7 +2451,19 @@ function foundryMount(anchors,bounds,id,direction,progress=0,ortho=8){
  return weaponMount({ortho:id==='blade'?ortho*1.4/3.2:ortho},anchors,bounds,id,direction,progress);
 }
 let foundryPreviewAngle=0;
-function drawFoundryPreview(canvas,u,model,angle){
+let bastionPreviewDemo=0;
+window.addEventListener?.('bastion-art-ready',()=>{if(page==='workshop'&&!battle)drawWorkshopPreview();else if(page==='hangar'&&!battle)drawFoundryHangar()});
+function drawFoundryPreview(canvas,u,model,angle,previewFrame){
+ if(pilotFrame(selected)===BASTION_FRAME){
+  const live=window.IronVowFoundry?.previewBastion?.(u,angle,previewFrame);
+  const image=live?.surface||artImages['bastion-bst04'];
+  if(!live&&!imageReady(image))return;
+  const g=canvas.getContext('2d');
+  g.imageSmoothingQuality='high';
+  if(live)canvas.dataset.rigFrame=String(live.frame);
+  g.clearRect(0,0,canvas.width,canvas.height);g.drawImage(image,0,0,canvas.width,canvas.height);
+  return;
+ }
  const view=window.IRON_VOW_FOUNDRY_ART?.[model]?.views?.[angle];
  const key=view?.key||'foundry-'+model,base=moduleImage(key);
  if(!imageReady(base))return;
@@ -2454,6 +2475,22 @@ function drawFoundryPreview(canvas,u,model,angle){
   drawWeaponModule(g,foundryMount(view,bounds,u.weapon,view.direction,0,view.ortho));
   drawWeaponModule(g,foundryMount(view,bounds,u.melee,view.direction,0,view.ortho));
  }
+}
+function testBastionGrip(melee){
+ const canvas=$('#paint-preview'),serial=++bastionPreviewDemo;
+ if(!canvas)return;
+ const unit={...save.units[selected]};
+ if(melee)unit.melee??='cleaver';else unit.weapon='rifle';
+ const startFrame=melee?273:161;
+ let start;
+ const tick=time=>{
+  if(serial!==bastionPreviewDemo||battle||page!=='workshop'||canvas!==$('#paint-preview'))return;
+  start??=time;
+  const progress=clamp01((time-start)/2200);
+  drawFoundryPreview(canvas,unit,2,foundryPreviewAngle,startFrame+48*progress);
+  if(progress<1)requestAnimationFrame(tick);
+ };
+ requestAnimationFrame(tick);
 }
 function drawFoundryHangar(){
  const canvas=$('#foundry-hangar');
@@ -2519,6 +2556,9 @@ function bindWorkshop(){
  if(resetTrim)resetTrim.onclick=()=>{delete u.trim;persist();render()};
  const rotate=$('#rotate-foundry');
  if(rotate)rotate.onclick=()=>{foundryPreviewAngle=(foundryPreviewAngle+1)%4;drawWorkshopPreview()};
+ const testRifle=$('#bastion-test-rifle'),testMelee=$('#bastion-test-melee');
+ if(testRifle)testRifle.onclick=()=>testBastionGrip(false);
+ if(testMelee)testMelee.onclick=()=>testBastionGrip(true);
  const remove=$('#remove-melee');
  if(remove)remove.onclick=()=>{delete u.melee;persist();render();toast('Melee weapon unequipped')};
  drawWorkshopPreview();
@@ -2757,6 +2797,7 @@ function vehicleAttachment(u,part,t){
 function travelAtlas(u){
  if(!u.kind&&u.frame===0&&u.team==='ally'&&wardenUpgrade)return wardenUpgrade.travel;
  const f=FRAMES[u.frame];
+ if(f?.rig==='bastion')return null;
  return window.IRON_VOW_TRAVEL?.[u.kind||(f?.foundry!=null?'foundry-'+f.foundry:f?.native||f?.name.toLowerCase())];
 }
 function upgradedWardenTravel(atlas){return Boolean(atlas&&atlas===wardenUpgrade?.travel)}
@@ -3002,10 +3043,11 @@ function foundryRender(u,t,liveOnly=false){
  if(model==null)return null;
  const poseTime=hitstopTime(u,t);
  const pose=animationPose(u,poseTime);
- pose.heading=displayedHeading(u);pose.cinematic=u.headingOverride!==undefined;
- const live=window.IronVowFoundry?.draw(u,poseTime,pose,battle,model);
+ pose.heading=displayedHeading(u);pose.cinematic=u.headingOverride!==undefined;pose.reducedMotion=reducedMotion;
+ const live=window.IronVowFoundry?.draw(u,poseTime,pose,battle,model,FRAMES[u.frame]?.rig);
  if(live)return {...live,strikeProgress:pose.strikeProgress};
  if(liveOnly)return null;
+ if(bastionRig(u))return {surface:artImages['bastion-bst04'],cell:0,anchors:{body:[.50,.46],pilot:[.50,.29],right:[.31,.59],left:[.70,.59],legs:[.50,.72],muzzle:[.20,.53],leadFoot:[.43,.84]},flip:false,baked:true,primary:true};
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[model];
  if(!atlas||atlas.frames.length<19)return null;
  const image=motionImage(atlas);

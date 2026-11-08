@@ -21,8 +21,8 @@ module.exports=async function checkPaint({page,origin}){
    }
   };
  });
- const frameCount=await page.evaluate(()=>FRAMES.length);
- const cases=[...Array.from({length:frameCount},(_,frame)=>({mode:'travel',frame})),
+ const rasterFrames=await page.evaluate(()=>FRAMES.flatMap((f,frame)=>f.rig==='bastion'?[]:[frame]));
+ const cases=[...rasterFrames.map(frame=>({mode:'travel',frame})),
   {mode:'close',frame:0},{mode:'close',frame:3},{mode:'close',frame:11},{mode:'baked',frame:8}];
  for(const sample of cases){
   await page.evaluate(({mode,frame})=>{
@@ -81,5 +81,5 @@ module.exports=async function checkPaint({page,origin}){
   assert.equal(await portrait.evaluate(el=>getComputedStyle(el).filter),'none','no portrait color filter');
   await page.waitForFunction(()=>document.querySelector('.combat-target img')?.src.startsWith('data:image/png'));
  }
- console.log('PASS crimson plate masks on all '+frameCount+' travel sprites, native and baked close views, and the target portrait');
+ console.log('PASS crimson plate masks on all '+rasterFrames.length+' travel sprites, native and baked close views, and the target portrait');
 };

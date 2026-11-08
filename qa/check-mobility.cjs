@@ -85,6 +85,7 @@ const simulate=require('./sim-harness.cjs');
  const stats=simulate();
  const count=stats.run('FRAMES.length');
  for(let frame=0;frame<count;frame++){
+  if(!stats.run(`playerHull(${frame})`))continue;
   stats.run(`save=fresh();battle=null;save.credits=10000;if(FRAMES[${frame}].salvageOnly){save.salvage={[${frame}]:1};acquireHull(${frame},true)}assignChassis(0,${frame},true);save.units[0].upgrade=2;save.units[0].condition=57;page='workshop';render()`);
   assert.equal(stats.run('pilotFrame(0)'),frame);
   const workshop=stats.node('#ui').innerHTML;

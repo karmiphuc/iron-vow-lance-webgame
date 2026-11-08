@@ -97,7 +97,13 @@ async function exerciseRigAdapter(){
 
 (async()=>{
  const sim=simulate({random:()=>0,foundry:true}),{run}=sim;
- assert.equal(run('FRAMES.length'),12);
+ assert.equal(run('FRAMES.length'),13);
+ assert.equal(run('HELLBREAKER'),11);
+ assert.equal(run('CITADEL_FRAME'),12);
+ assert.equal(run('BASTION_FRAME'),10);
+ assert.equal(run('stockHull(BASTION_FRAME).weapon'),'rifle');
+ assert.equal(run('FOUNDRY_HOSTILES.frontier.includes(CITADEL_FRAME)'),true);
+ assert.equal(run('acquireHull(CITADEL_FRAME)||assignChassis(0,CITADEL_FRAME,true)||validHull(stockHull(CITADEL_FRAME),CITADEL_FRAME)'),false);
  assert.equal(run('assignChassis(0,6,true)'),true);
  assert.equal(run('save.credits'),1300);
  assert.equal(run("save.owned.includes('blade')"),true);
@@ -111,6 +117,7 @@ async function exerciseRigAdapter(){
  assert.equal(run('validSave(save)'),true);
  for(let i=0;i<4;i++){
   run(`createBattle(${i});draw(1000)`);
+  if(i===3)assert.equal(run("battle.units.some(u=>u.team==='enemy'&&u.frame===CITADEL_FRAME&&foundryModel(u.frame)===2)"),true);
   assert.ok(run("battle.units.filter(u=>foundryModel(u.frame)!=null).every(u=>foundryRender(u,clock).anchors.gripR.length===2)"));
   run('battle=null');
  }

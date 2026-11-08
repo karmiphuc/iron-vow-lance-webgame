@@ -12,6 +12,7 @@ const checkWarden=require('./browser/warden.cjs');
 const checkShip=require('./browser/ship.cjs');
 const checkHangar=require('./browser/hangar.cjs');
 const checkCareerTabs=require('./browser/career-tabs.cjs');
+const checkBastionGrips=require('./browser/bastion.cjs');
 const dist=resolve(__dirname,'../dist');
 
 const types={
@@ -58,7 +59,7 @@ async function checkBrowser(origin){
   const executablePath=browserPath();
   if(!executablePath&&!existsSync(chromium.executablePath()))throw Error('Install Chromium with npx playwright install chromium in qa, or set IRON_VOW_CHROME.');
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
-  for(const mobile of [false,true])for(const scenario of [checkPaint,checkImpact,checkCampaign,checkWarden,checkShip,checkHangar,checkCareerTabs]){
+  for(const mobile of [false,true])for(const scenario of [checkPaint,checkImpact,checkCampaign,checkWarden,checkShip,checkHangar,checkCareerTabs,checkBastionGrips]){
    const label=(mobile?'mobile touch':'desktop')+' '+scenario.name;
    const context=await browser.newContext({
     ...(mobile?{...devices['iPhone 13'],deviceScaleFactor:1}:{viewport:{width:1440,height:1000}}),

@@ -6,38 +6,61 @@ const T=THREE, VC=window.VowChassis, PI=Math.PI;
 const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemothBrace,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-let renderer, scene, camera, failed=false;
+let renderer, scene, camera, failed=false, bastionRenderer, bastionEnvironment, bastionHDFailed=false;
 const combat=new Map();
-const arsenal=window.IronVowProductionArsenal;
+const arsenal=window.IronVowProductionArsenal,bastion=window.IronVowBastion;
+let bastionPreview;
 let armory,armoryRequested=false;
 const clearCombat=()=>{for(const entry of combat.values())disposeRig(entry.m);combat.clear()};
 let combatScope;
+const studioLights=[[0xffe6bf,-5,7,5],[0x9fc9e0,6,5,-5]];
+function configure(target,size){
+ target.setSize(size,size,false);
+ target.outputEncoding=T.sRGBEncoding;
+ target.toneMapping=T.ACESFilmicToneMapping;
+ target.setClearColor(0,0);
+}
+function studioEnvironment(target){
+ const env=new T.Scene();
+ env.background=new T.Color(0x34383b);
+ for(const [color,x,y,z] of studioLights){
+  const panel=new T.Mesh(new T.PlaneGeometry(9,6),new T.MeshBasicMaterial({color,side:T.DoubleSide}));
+  panel.position.set(x,y,z);panel.lookAt(0,2,0);env.add(panel);
+ }
+ const pmrem=new T.PMREMGenerator(target),texture=pmrem.fromScene(env,.045).texture;
+ pmrem.dispose();
+ env.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}});
+ return texture;
+}
+function hdRenderer(){
+ if(!bastionRenderer&&!bastionHDFailed){
+  try{
+   bastionRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:true});
+   configure(bastionRenderer,window.matchMedia?.('(max-width: 760px)').matches?704:896);
+   bastionEnvironment=studioEnvironment(bastionRenderer);
+   bastionRenderer.domElement.addEventListener('webglcontextlost',()=>{
+    bastionHDFailed=true;bastionRenderer=null;
+   },{once:true});
+  }catch(error){bastionHDFailed=true;bastionRenderer?.dispose();bastionRenderer=null;console.warn('Bastion using standard resolution',error)}
+ }
+ return bastionRenderer||renderer;
+}
 function init(){
  if(renderer||failed)return Boolean(renderer);
  try{
   renderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power',preserveDrawingBuffer:true});
-  renderer.setSize(pixels,pixels,false);
-  renderer.outputEncoding=T.sRGBEncoding;
-  renderer.toneMapping=T.ACESFilmicToneMapping;
-  renderer.setClearColor(0,0);
+  configure(renderer,pixels);
   renderer.domElement.addEventListener('webglcontextlost',()=>disable(),{once:true});
   scene=new T.Scene();
-  const env=new T.Scene();
-  env.background=new T.Color(0x34383b);
-  for(const [color,x,y,z] of [[0xffe6bf,-5,7,5],[0x9fc9e0,6,5,-5]]){
-   const panel=new T.Mesh(new T.PlaneGeometry(9,6),new T.MeshBasicMaterial({color,side:T.DoubleSide}));
-   panel.position.set(x,y,z);panel.lookAt(0,2,0);env.add(panel);
-   const light=new T.DirectionalLight(C(color),x<0?2.5:1.7);light.position.copy(panel.position);scene.add(light);
+  for(const [color,x,y,z] of studioLights){
+   const light=new T.DirectionalLight(C(color),x<0?2.5:1.7);light.position.set(x,y,z);scene.add(light);
   }
   scene.add(new T.HemisphereLight(C(0xd6e4eb),C(0x42434a),1.0));
-  const pmrem=new T.PMREMGenerator(renderer);
-  scene.environment=pmrem.fromScene(env,.045).texture;
-  pmrem.dispose();
-  env.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}});
+  scene.environment=studioEnvironment(renderer);
   if(arsenal&&!armoryRequested){
    armoryRequested=true;
    const path='rig-bench/weapons.glb',url=window.IRON_VOW_INLINE_ASSETS?.[path]||path;
-   arsenal.load(url).then(scene=>{armory=scene},()=>{});
+   arsenal.load(url).then(scene=>{armory=scene;if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
   return true;
@@ -48,6 +71,8 @@ function disable(error){
  failed=true;
  clearCombat();
  renderer?.dispose();renderer=null;
+ bastionRenderer?.dispose();bastionRenderer=null;
+ bastionEnvironment?.dispose();bastionEnvironment=null;
  if(error)console.warn('Foundry switched to baked rendering',error);
 }
 function setCamera(elevation,azimuth=0){
@@ -57,6 +82,7 @@ function setCamera(elevation,azimuth=0){
  camera.updateMatrixWorld(true);
 }
 function disposeRig(m){
+ if(m.mixer){bastion.dispose(m);return}
  const unique=new Set([m.build.visorMat,m.build.stackMat]);
  // The kit caches shared geometries. Merged per-rig buffers are uniquely owned.
  m.body.traverse(o=>{if(o.userData.foundryMerged)o.geometry.dispose()});
@@ -65,15 +91,17 @@ function disposeRig(m){
 function makeSurface(){
  const surface=document.createElement('canvas');surface.width=surface.height=pixels;return surface;
 }
-function paintRig(m,surface){
- const center=V3().project(camera),offsetY=pixels*(ground-(.5-center.y*.5));
+function paintRig(m,surface,target=renderer){
+ const size=surface.width,center=V3().project(camera),offsetY=size*(ground-(.5-center.y*.5));
+ const environment=scene.environment;
+ if(target===bastionRenderer)scene.environment=bastionEnvironment;
  scene.add(m.cont);
  try{
-  renderer.render(scene,camera);
+  target.render(scene,camera);
   const g=surface.getContext('2d');
-  g.clearRect(0,0,pixels,pixels);
-  g.drawImage(renderer.domElement,0,offsetY);
- }finally{scene.remove(m.cont)}
+  g.clearRect(0,0,size,size);
+  g.drawImage(target.domElement,0,offsetY,size,size);
+ }finally{scene.remove(m.cont);scene.environment=environment}
 }
 function projectedAnchor(point){
  const p=point.project(camera);
@@ -81,13 +109,42 @@ function projectedAnchor(point){
  return [.5+(p.x-center.x)*.5,ground-(p.y-center.y)*.5];
 }
 function anchor(o){return projectedAnchor(o.getWorldPosition(V3()));}
-function draw(u,t,pose,scope,model){
+function drawBastion(u,t,pose,entry){
+ const target=hdRenderer(),size=target.domElement.width;
+ if(entry.surface.width!==size)entry.surface.width=entry.surface.height=size;
+ const stamp=[bastion.frame(u,t,pose),pose.heading,u.alive,Boolean(armory),u.team,u.weapon,u.melee,u.paint,
+  size,pose.strikeKind,pose.strikeProgress,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
+ if(entry.stamp===stamp)return entry;
+ entry.stamp=stamp;
+ const {frame,anchors,primary,secondary}=bastion.animate(entry.m,u,t,pose,armory);
+ entry.frame=frame;entry.primary=primary;entry.secondary=secondary;
+ setCamera(.46);
+ paintRig(entry.m,entry.surface,target);
+ for(const [key,o] of Object.entries(anchors))if(o)entry.anchors[key]=anchor(o);else delete entry.anchors[key];
+ return entry;
+}
+function previewBastion(u,angle,previewFrame){
+ if(!bastion||!init())return null;
+ if(!bastionPreview){
+  const m=bastion.build();
+  if(!m)return null;
+  bastionPreview={m,surface:makeSurface(),anchors:{}};
+ }
+ const hp={body:100,pilot:100,right:100,left:100,legs:100};
+ const unit={...u,team:'ally',alive:true,max:hp,hp};
+ return drawBastion(unit,0,{previewFrame,heading:[-.68,.68,2.46,-2.46][angle]??-.68},bastionPreview);
+}
+function draw(u,t,pose,scope,model,custom){
  if(!init())return null;
  if(combatScope!==scope){
   clearCombat();combatScope=scope;
  }
  const facing=u.face??(u.team==='enemy'?1:-1), key=u.id+(pose.cinematic?'|shot|'+facing:'|field');
  let entry=combat.get(key);
+ if(custom==='bastion'&&bastion){
+  if(!entry){const m=bastion.build();if(!m)return null;entry={m,surface:makeSurface(),anchors:{}};combat.set(key,entry)}
+  return drawBastion(u,t,pose,entry);
+ }
  if(!entry){
   const m=buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
   entry={m,surface:makeSurface(),stamp:null,anchors:{}};combat.set(key,entry);
@@ -170,5 +227,5 @@ function withFallback(render){
   try{return render(...args)}catch(error){disable(error);return null}
  };
 }
-window.IronVowFoundry={draw:withFallback(draw),clearCombat};
+window.IronVowFoundry={draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat};
 })();
