@@ -95,3 +95,33 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .contract-grid .card > p:not(.note){flex:1}
 @media(min-width:1240px){.contract-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(min-width:761px) and (max-width:1239px){.contract-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.prototype-hangar {
+ position:absolute;inset:0;pointer-events:none;overflow:hidden;
+ background:radial-gradient(ellipse at 54% 43%,#1d2933ca,#0c141bec 75%);
+}
+.prototype-hangar img {
+ position:absolute;left:50%;top:42%;width:min(77vh,90vw);height:min(77vh,90vw);
+ transform:translate(-50%,-50%);object-fit:contain;filter:drop-shadow(0 22px 30px #070d15);
+}
+.lance-tabs button small{display:block;color:var(--muted);font:600 9px Inter,sans-serif;letter-spacing:1.3px;margin-bottom:3px}
+.chassis-assignment{margin:0 0 22px;padding:15px;background:#131d24bb;border:1px solid var(--line)}
+.chassis-assignment .note{margin:7px 0 10px}
+.chassis-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.chassis-choices button{min-width:0;min-height:68px;text-align:left;padding:8px 10px;background:#202b32}
+.chassis-choices strong{display:block;font:700 clamp(14px,2vw,21px) Barlow,sans-serif;letter-spacing:.02em}
+.chassis-choices small,.chassis-choices span{display:block;color:var(--muted);font-size:9px;letter-spacing:.05em}
+.chassis-choices button[aria-pressed=true]{background:#3b3026;border-color:var(--accent);opacity:1}
+.chassis-choices button[aria-pressed=true] span{color:var(--accent)}
+.fixed-loadout{background:#19252cbd;border:1px solid var(--line);padding:16px;margin-top:12px}
+.fixed-loadout h3{font:700 28px Barlow,sans-serif;margin:5px 0 6px}
+.fixed-loadout small{color:var(--accent);font-size:10px;letter-spacing:.09em}
+.fixed-loadout p{margin:10px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+@media(max-width:760px){
+ .chassis-assignment{padding:10px;margin-bottom:14px}
+ .chassis-choices{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .chassis-choices button{padding:7px 6px;min-height:62px}
+ .chassis-choices small,.chassis-choices span{font-size:8px}
+ .lance-tabs button{min-width:0;overflow-wrap:anywhere}
+ .prototype-hangar img{top:41%;width:min(108vw,70vh);height:min(108vw,70vh)}
+}
