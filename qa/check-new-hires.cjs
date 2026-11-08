@@ -1,0 +1,106 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+const key='iron-vow-career';
+const resume=sim=>simulate({storage:new Map(sim.storage),random:()=>0,reducedMotion:true});
+function recruit(kind,path=null,slot=0){
+ const sim=simulate({random:()=>0,reducedMotion:true});
+ assert.equal(sim.run(`hirePilot(${kind})&&assignPilot(${slot},${kind})`),true);
+ if(path!==null){
+  sim.run(`save.units[${slot}].level=10`);
+  assert.equal(sim.run(`PILOT_TREES[${kind}][${path}].nodes.every(n=>learnTraining(${slot},n.id))`),true);
+ }
+ return sim;
+}
+
+(async()=>{
+ const roster=simulate({random:()=>0,reducedMotion:true});
+ const r=roster.run;
+ r("save.credits=20000;save.units[0].level=4;save.units[0].xp=45;learnTraining(0,'pathfinder');save.units[0].paint='#334455'");
+ assert.equal(r('HIRES.every((_,i)=>hirePilot(i+3))'),true);
+ assert.equal(r('hirePilot(SIGNAL)'),false);
+ assert.equal(r('Object.keys(save.reservePilots).length'),5);
+ assert.equal(r('assignPilot(0,SAPPER)&&assignPilot(1,SIGNAL)&&assignPilot(2,RETRIEVER)'),true);
+ assert.equal(r('save.units.map(u=>u.pilotId).join()'),'sapper,signal,retriever');
+ assert.equal(r('assignChassis(0,1,true)&&assignChassis(0,1,true)===false'),true);
+ const restored=resume(roster);
+ assert.equal(restored.run('pilotClass(1)'),6);
+ assert.equal(restored.run('save.units[1].paint'),'#334455');
+ assert.equal(restored.run('assignPilot(2,0)'),true);
+ assert.equal(restored.run('save.units[2].xp'),45);
+ assert.equal(restored.run('learnedTraining(2)[0]'),'pathfinder');
+ assert.equal(restored.run('Object.keys(save.reservePilots).length'),5);
+ assert.match(restored.run('pilotWiki()'),/SIGNAL OFFICER.*Electronic warfare/);
+
+ const sapper=recruit(5,0),b=sapper.run;
+ b('deploy(0,false,[0]);closeModal();let a=current(),t=battle.units[1];t.x=1;t.z=13;t.hp.legs=t.max.legs=250;let plain=partDamage(a,t,"legs",unitWeapon(a));skill()');
+ assert.equal(b('a.ap'),7);
+ assert.equal(b('a.breach'),2);
+ assert.ok(b('partDamage(a,t,"legs",unitWeapon(a))>plain'));
+ assert.equal(b('partDamage(a,t,"legs",unitWeapon(a),true)'),b('plain'));
+ await b('engage(a,t,"legs",unitWeapon(a))');
+ assert.equal(b('Boolean(t.reacted)'),false,'a surviving defender cannot counter a charged hit');
+ assert.equal(b('a.breach'),1);
+ b('t.hp.legs=t.max.legs=110;persist()');
+ const charged=resume(sapper);
+ assert.equal(charged.run('current().breach'),1);
+ assert.equal(charged.run('current().skill'),true);
+ await charged.run('shoot(current(),battle.units[1],"body")');
+ assert.equal(charged.run('current().breach'),1,'body shots do not use the limb charge');
+ const mobile=recruit(5,1),m=mobile.run;
+ m('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1];t.hp.legs=1;let free=freeMovement(a);skill()');
+ assert.equal(m('a.brace&&freeMovement(a)===free'),true);
+ await m('engage(a,t,"legs",unitWeapon(a))');
+ assert.equal(m('a.ap'),7,'a lethal limb shot refunds only the attack cost');
+ assert.equal(m('freeMovement(a)===free&&t.hp.legs===0&&a.breach===undefined'),true);
+
+ const jammer=recruit(6,0),j=jammer.run;
+ j('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1];t.x=1;t.z=12;let before=hitChance(t,a,"body");useSupportSkill(a,t)');
+ assert.equal(j('a.ap'),7);
+ assert.equal(j('reactionStatus(t)'), 'JAMMED');
+ assert.equal(j('reactionWeapon(t,a)'),null);
+ assert.ok(j('hitChance(t,a,"body")<before'));
+ assert.deepEqual(JSON.parse(resume(jammer).run('JSON.stringify(battle.units[1].blackout)')),{aim:.4,ap:4,hold:false});
+ j('persist(true)');
+ const pending=resume(jammer);
+ await j('endTurn()');
+ for(let i=0;i<20&&pending.run('battle?.busy');i++)await pending.flush();
+ assert.equal(pending.run('battle.turn'),2);
+ assert.equal(j('t.ap'),1,'4 AP at turn start leaves room for only one rifle shot');
+ assert.equal(j('t.blackout'),undefined);
+ assert.equal(pending.run('JSON.stringify(captureSortie())'),j('JSON.stringify(captureSortie())'));
+ const screen=recruit(6,1),s=screen.run;
+ s('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1],free=freeMovement(a);t.x=1;t.z=10;useSupportSkill(a,t)');
+ assert.ok(s('a.brace&&a.ap===8&&freeMovement(a)===free&&t.blackout.hold'));
+ const position=s('[t.x,t.z].join()');
+ await s('endTurn()');
+ assert.equal(s('[t.x,t.z].join()'),position,'the target cannot move into range');
+ assert.equal(s('t.blackout'),undefined);
+
+ const rescue=recruit(7,0),p=rescue.run;
+ p('createBattle(1,false,false,[0,1]);let a=current(),t=battle.units[1];t.hp.right=t.hp.left=t.hp.legs=0;t.x=15;t.z=18');
+ assert.equal(p('useSupportSkill(a,t)'),false);
+ p('t.x=2;t.z=18');
+ assert.equal(p('useSupportSkill(a,t)'),true);
+ assert.equal(p('a.ap'),6);
+ assert.ok(p('t.brace&&canUseWeapon(t,unitWeapon(t))&&["right","left","legs"].every(k=>t.hp[k]===Math.max(60,Math.ceil(t.max[k]*.75)))'));
+ assert.equal(p('useSupportSkill(a,t)'),false);
+ const salvage=recruit(7,1),w=salvage.run;
+ w('createBattle(1,false,false,[0,1]);let a=current();a.hp.right=0;a.hp.legs=0;useSupportSkill(a,a)');
+ assert.equal(w('a.skill'),false);
+ assert.equal(w('a.recoveryUsed'),1);
+ assert.equal(w('a.hp.right'),50);
+ const twice=resume(salvage),v=twice.run;
+ assert.equal(v('useSupportSkill(current(),current())'),true);
+ assert.ok(v('current().skill&&current().recoveryUsed===2&&current().hp.legs===50'));
+ assert.equal(v('useSupportSkill(current(),current())'),false);
+ const broken=JSON.parse(twice.storage.get(key));
+ broken.sortie.units[0].recoveryUsed=3;
+ const safe=simulate({storage:new Map([[key,JSON.stringify(broken)]])});
+ assert.equal(safe.run('battle'),null);
+ assert.equal(safe.run('pilotClass(0)'),7,'corrupt checkpoint never wipes the career');
+ v('for(const t of battle.units.filter(u=>u.team==="enemy")){t.hp.body=0;t.alive=false}finish(true)');
+ assert.equal(v('Object.values(save.salvage).reduce((a,b)=>a+b,0)'),2);
+ assert.equal(v('save.history.at(-1).pay'),3850,'scaled contract pay, standard scrap and 300 CR recovery bonus');
+ assert.match(twice.node('#modal').innerHTML,/RECOVERY BONUS/);
+ console.log('PASS: all eight pilot identities, six level-10 paths, Sapper charges/refund, Signal round effects and pending reload, Retriever solo repair/two uses/salvage, corrupt checkpoint recovery.');
+})().catch(e=>{console.error(e);process.exitCode=1});

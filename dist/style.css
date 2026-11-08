@@ -288,6 +288,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .seat-choices button[aria-pressed=true]{border-color:var(--accent);background:#302b24;color:var(--accent)}
 .seat-choices small{color:var(--muted);font-size:11px}
 .combat-status{color:var(--accent);font-size:10px;font-weight:700}
+.unit-status{color:var(--accent);font:inherit;font-weight:700;white-space:normal}
 @media(min-width:761px) and (max-width:1060px){#nav{gap:11px}#nav button{font-size:11px}}
 @media(max-width:760px){
  #nav button{font-size:9px;letter-spacing:0}

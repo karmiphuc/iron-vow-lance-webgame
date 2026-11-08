@@ -10,8 +10,8 @@ vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/warden-vis
 (async()=>{for(let attempt=0;attempt<100;attempt++){if(run('decodedArt.size===Object.keys(artImages).length&&Object.keys(rigidParts).length===3'))break;await new Promise(r=>setTimeout(r,50))}assert.equal(run('Object.keys(rigidParts).length'),3);assert.ok(run('rigidParts[0].counts[0]')>1000);assert.ok(run('rigidParts[1].counts[1]')>1000);assert.equal(run("Object.values(artImages).every(imageReady)"),true);assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'hangar');assert.equal(document.querySelectorAll('#nav button').length,7);assert.equal(document.querySelectorAll('.hangar-hotspots button').length,3);
 click('[data-page="journal"]');assert.equal(document.body.dataset.view,'journal');
 assert.equal(document.querySelectorAll('.manual-topics > div').length,8);
-click('[data-journal="wiki"]');assert.equal(document.querySelectorAll('.wiki-pilot').length,5);
-assert.equal(document.querySelectorAll('.wiki-paths li').length,60);
+click('[data-journal="wiki"]');assert.equal(document.querySelectorAll('.wiki-pilot').length,8);
+assert.equal(document.querySelectorAll('.wiki-paths li').length,96);
 click('[data-page="hangar"]');
 click('#inspect');assert.ok(get('.unit-inspect'));click('[data-select="1"]');assert.match(get('.selected-chassis').textContent,/KESTREL/);assert.match(get('.unit-inspect').textContent,/Jin Takeda/);click('#close-inspect');assert.equal(get('.unit-inspect'),null);
 click('[data-page="workshop"]');click('[data-select="0"]');
