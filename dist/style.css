@@ -344,11 +344,37 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .aux-enable input{width:18px;height:18px;accent-color:var(--accent)}
 .auxiliary-choices select{width:100%;min-width:0;min-height:40px;padding:5px;background:#111b20;border:1px solid var(--line);color:var(--ink);font:inherit}
 .wound-status{color:var(--accent)}
+.base-banner{background-image:linear-gradient(90deg,#101b20f2,#1028319e 58%,#0f24394d),url('assets/hangar.webp');border-left:3px solid var(--blue)}
+.base-queue{border-left-color:var(--blue)}
+.base-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.base-room .ship-facility-head h2{font-size:21px}
+.base-room .ship-current small,.base-room .ship-plan small{color:var(--blue)}
+.base-roster{margin:18px 0 0;padding:15px;border:1px solid var(--line);background:#182228}
+.base-roster-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.base-roster-head h2{font-size:26px;margin-top:4px}
+.base-roster-head button,.base-pilot-actions button{min-height:44px;padding:8px 10px;font-size:10px}
+.base-roster-status{margin-top:7px;font-size:11px}
+.base-roster-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.base-pilot{display:grid;grid-template-columns:35px minmax(0,1fr) auto;gap:9px;align-items:center;min-width:0;padding:8px;border:1px solid var(--line);background:#121b20}
+.base-pilot .pilot-thumb{width:35px;height:43px;object-fit:cover;object-position:center 20%}
+.base-pilot strong,.base-pilot small{display:block;line-height:1.4}
+.base-pilot small{margin-top:3px;color:var(--muted);font-size:10px}
+.base-pilot small.wound-status{color:var(--accent)}
+.base-pilot-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px}
+.contract-intel{margin-top:10px;border:1px solid var(--line);color:var(--blue)}
+.contract-intel summary{display:list-item;cursor:pointer;min-height:40px;padding:12px;font-size:11px;letter-spacing:.03em}
+.contract-intel ul{margin:0;padding:0 16px 10px 28px;color:var(--ink);font-size:11px;line-height:1.6}
+.card .rescan-contract{margin-top:8px;min-height:44px;width:100%;font-size:10px}
+@media(max-width:1000px){
+ .base-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media(max-width:760px){
- .ship-page{padding:14px 12px}
+ .ship-page,.base-page{padding:14px 12px}
  .ship-banner{min-height:150px;display:grid;gap:8px;padding:16px}
  .ship-queue{padding:10px 12px}
- .ship-grid{grid-template-columns:1fr}
+ .ship-grid,.base-grid,.base-roster-list{grid-template-columns:1fr}
+ .base-pilot-actions{max-width:130px}
+ #nav button{padding-inline:3px}
  .unitbuttons:has([data-unit="3"]) button{min-height:48px;gap:4px;padding:6px 4px}
  .unitbuttons:has([data-unit="3"]) .pilot-thumb{display:none}
  .unitbuttons:has([data-unit="3"]) b{font-size:13px;overflow-wrap:anywhere}

@@ -248,6 +248,56 @@ function queueShipUpgrade(facility){
  const ship=save.ship??={levels:{}};
  ship.project={facility,wins:next.wins};save.credits-=next.cost;persist();return true;
 }
+const HANGAR_ROOMS={
+ fabrication:{name:'Fabrication Bay',glyph:'wrench',tiers:[
+  {name:'Salvage Line',cost:2100,wins:1,rep:0,perk:'Rebuild at 70% integrity · patch stored hulls',detail:'Open damaged frames on the bench. Rebuilds enter Storage at 70% instead of 55%. Field patches work on stored hulls.'},
+  {name:'Heavy Foundry',cost:4400,wins:2,rep:25,perk:'Rebuild at 85% · field patches to 65%',detail:'Machined armor seats and refurbished joints improve rebuilt hulls. Free patches raise damaged assigned and stored hulls to 65%.'}
+ ]},
+ personnel:{name:'Personnel Annex',glyph:'first-aid-kit',tiers:[
+  {name:'Reserve Academy',cost:1600,wins:1,rep:0,perk:'Spend training points on reserve pilots',detail:'Train reserve pilots here without changing the lance. Their skills follow them onto the field, including the auxiliary seat.'},
+  {name:'Trauma Ward',cost:3600,wins:2,rep:20,perk:'Clear one pilot wound per day for 350 CR',detail:'Treat an active or reserve pilot immediately. Use it to keep a specialist fit for an urgent contract.'}
+ ]},
+ recon:{name:'Recon Cell',glyph:'binoculars',tiers:[
+  {name:'Signal Mast',cost:1500,wins:1,rep:0,perk:'Reveal enemy rosters on the contract board',detail:'Identify enemy chassis, armor support and aircraft before choosing a lance.'},
+  {name:'Survey Drones',cost:3300,wins:2,rep:20,perk:'Reroll one contract’s capacity per day for 350 CR',detail:'Survey a different approach. The new capacity is one of the other two values from 1 to 3. Pay and enemy presence follow the new roll.'}
+ ]}
+};
+const HANGAR_SERVICE_COST=350;
+const hangarLevel=(room,career=save)=>career.hangar?.levels?.[room]??0;
+const patchLimit=()=>hangarLevel('fabrication')===2?65:FIELD_PATCH;
+const rebuildIntegrity=()=>[55,70,85][hangarLevel('fabrication')];
+function queueHangarUpgrade(room){
+ if(battle||save.hangar?.project||!Object.hasOwn(HANGAR_ROOMS,room))return false;
+ const next=HANGAR_ROOMS[room].tiers[hangarLevel(room)];
+ if(!next||save.rep<next.rep||save.credits<next.cost)return false;
+ (save.hangar??={levels:{}}).project={room,wins:next.wins};
+ save.credits-=next.cost;persist();return true;
+}
+function advanceHangar(){
+ const job=save.hangar?.project;
+ if(!job||--job.wins>0)return;
+ const room=job.room,level=hangarLevel(room);
+ save.hangar.levels[room]=level+1;
+ delete save.hangar.project;
+ return HANGAR_ROOMS[room].tiers[level].name;
+}
+function treatPilot(id){
+ if(battle||hangarLevel('personnel')!==2||save.hangar.treatmentDay===save.day||!Object.hasOwn(save.wounds??{},id)||save.credits<HANGAR_SERVICE_COST)return false;
+ delete save.wounds[id];
+ save.hangar.treatmentDay=save.day;save.credits-=HANGAR_SERVICE_COST;persist();return true;
+}
+function rerollDispatch(i){
+ if(battle||!Number.isInteger(i)||!CONTRACTS[i]||hangarLevel('recon')!==2||save.hangar.scanDay===save.day||save.credits<HANGAR_SERVICE_COST)return false;
+ const sizes=dispatchSizes();
+ sizes[i]=1+(sizes[i]+Math.floor(Math.random()*2))%3;
+ save.hangar.scanDay=save.day;save.credits-=HANGAR_SERVICE_COST;persist();return true;
+}
+function patchStoredHull(frame){
+ if(!Number.isInteger(frame)||!FRAMES[frame])return false;
+ const hull=save.reserve?.[frame];
+ if(battle||!hangarLevel('fabrication')||!hull||hull.condition>=patchLimit())return false;
+ hull.condition=patchLimit();persist();return true;
+}
 const VEHICLES={
  tank:{name:'JAVELIN TANK',hp:64,armor:5,move:4,step:.18,xp:20,altitude:0,wreckAt:.18,muzzle:[.11105,.76273],center:[.52,.674],gun:{id:'rampart',name:'85 mm cannon',damage:27,range:5,ap:4}},
  helicopter:{name:'KITE GUNSHIP',hp:43,armor:1,move:6,step:.15,xp:25,altitude:.82,wreckAt:.48,muzzle:[.28168,.75768],center:[.45,.584],gun:{id:'rifle',name:'Chin autocannon',damage:19,range:5,ap:4}}
@@ -384,8 +434,8 @@ function assignPilot(i,kind){
 }
 let save;try{save=loadCareer(JSON.parse(localStorage.getItem('iron-vow-career')))??fresh()}catch{save=fresh()}
 save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
-const entryPage={'?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'hangar';
-let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'ship';
+const entryPage={'?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'ship';
+let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'base';
 let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
 let page=entryPage,selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=false,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
 try{muted=localStorage.getItem('iron-vow-sound')==='off'}catch{}
@@ -414,6 +464,17 @@ function sortieSpawns(contract,count){
  const mechs=contract.deployment.filter(spawn=>spawn.length===2),vehicles=contract.deployment.filter(spawn=>spawn.length===3);
  if(count===1)return [...mechs.slice(0,1),...vehicles.slice(0,contract.id==='picket'?0:1)];
  return [...mechs.slice(0,2),...vehicles.slice(0,mechs.length===1?2:1)];
+}
+function hostileFrame(i,contract,stock=false,hellbreaker=false){
+ return i===0&&hellbreaker?HELLBREAKER:(stock?null:FOUNDRY_HOSTILES[contract.id])?.[i]??i%3;
+}
+function contractIntel(i,count){
+ const level=hangarLevel('recon');
+ if(!level)return '';
+ const contract=CONTRACTS[i],scanUsed=save.hangar.scanDay===save.day;
+ const hostiles=sortieSpawns(contract,count).map((spawn,index)=>spawn.length===3?VEHICLES[spawn[0]].name:FRAMES[hostileFrame(index,contract,false,contract.id==='frontier')].name);
+ return `<details class="contract-intel"><summary>HOSTILE MANIFEST</summary><ul>${hostiles.map(name=>'<li>'+name+'</li>').join('')}</ul></details>
+  ${level===2?`<button class="rescan-contract" data-rescan="${i}" ${scanUsed||save.credits<HANGAR_SERVICE_COST?'disabled':''}>${scanUsed?'SURVEY USED TODAY':'RESURVEY · '+money(HANGAR_SERVICE_COST)}</button>`:''}`;
 }
 const contractPay=(contract,count,tier=shipLevel('office'))=>Math.round(contract.pay*[0,.65,.85,1][count]*[1,1.15,1.25][tier]);
 const validSlots=slots=>Array.isArray(slots)&&slots.length>=1&&slots.length<=3&&new Set(slots).size===slots.length&&slots.every(i=>LANCE_SLOTS.includes(i));
@@ -511,8 +572,17 @@ const helpHint=()=>`<span class="info-hint">${icon('info')} <span class="mouse-h
 const MOVE_HELP='Move with working legs. Fire, Strike, Brace and most pilot skills end the free allowance.';
 const COUNTER_HELP='One reaction per round for 0 AP. Equipped melee strikes adjacent ground attackers first. Guns return fire in range. Missile launchers cannot counter. A working free hand can punch an adjacent ground attacker for 5–10 damage if no weapon can reply.';
 const FOUNDATION_HELP='Either level 1 skill opens both level 3 skills.';
-function trainingTree(i,advanced=save.units[i].level>=6&&PILOT_TREES[pilotClass(i)].some(path=>learnedTraining(i).includes(path.nodes[DOCTRINE_RANK].id))){
- const kind=pilotClass(i),pilot=CREW[kind],level=save.units[i].level,learned=learnedTraining(i);
+function learnReserveTraining(id,skill){
+ const pilot=save.reservePilots?.[id];
+ if(battle||!hangarLevel('personnel')||!pilot||trainingStatus(pilotKind(id),skill,pilot.training,pilot.level)!=='TRAIN')return false;
+ pilot.training.push(skill);persist();return true;
+}
+function trainingTree(i,advanced){
+ const reserve=typeof i==='string';
+ const kind=reserve?pilotKind(i):pilotClass(i),pilot=CREW[kind];
+ const level=reserve?save.reservePilots[i].level:save.units[i].level;
+ const learned=reserve?save.reservePilots[i].training:learnedTraining(i);
+ advanced??=level>=6&&PILOT_TREES[kind].some(path=>learned.includes(path.nodes[DOCTRINE_RANK].id));
  const start=advanced?DOCTRINE_RANK+1:0,end=advanced?TRAINING_LEVELS.length:DOCTRINE_RANK+1;
  const paths=PILOT_TREES[kind].map(path=>`<section class="training-path" aria-label="${path.name}">
   <h2>${icon(path.glyph)} ${path.name}</h2>
@@ -527,7 +597,7 @@ function trainingTree(i,advanced=save.units[i].level>=6&&PILOT_TREES[pilotClass(
   }).join('')}</ol>
  </section>`).join('');
  modal(pilot.call+' TRAINING',`<div class="stat-heading training-head">
-   <span>LEVEL ${level} · ${trainingPoints(i)} PT AVAILABLE</span><span>ONE DOCTRINE ${infoTip('pilot training','Earn one point at levels 1 through 6, then at 8 and 10. '+FOUNDATION_HELP+' Your level 5 doctrine opens its advanced ranks.')}</span>
+   <span>LEVEL ${level} · ${earnedTraining(level)-learned.length} PT AVAILABLE</span><span>ONE DOCTRINE ${infoTip('pilot training','Earn one point at levels 1 through 6, then at 8 and 10. '+FOUNDATION_HELP+' Your level 5 doctrine opens its advanced ranks.')}</span>
   </div><div class="reference-tabs" aria-label="Training ranks">
    <button type="button" data-training-stage="foundation" aria-pressed="${!advanced}">FOUNDATION · 1–5</button>
    <button type="button" data-training-stage="advanced" aria-pressed="${advanced}">ADVANCED · 6–10</button>
@@ -536,9 +606,9 @@ function trainingTree(i,advanced=save.units[i].level>=6&&PILOT_TREES[pilotClass(
  $('#modal .modalbox').scrollTop=0;
  $('#modal [data-training-stage][aria-pressed="true"]')?.focus({preventScroll:true});
  document.querySelectorAll('[data-learn]').forEach(button=>button.onclick=()=>{
-  if(!learnTraining(i,button.dataset.learn))return;
+  if(!(reserve?learnReserveTraining(i,button.dataset.learn):learnTraining(i,button.dataset.learn)))return;
   sound('click');render();
-  modalReturnFocus=$('#train-pilot-'+i);
+  modalReturnFocus=$(reserve?`[data-reserve-training="${i}"]`:'#train-pilot-'+i);
   trainingTree(i,advanced);
   $('#modal [data-learn]:not([disabled])')?.focus();
  });
@@ -589,7 +659,7 @@ function acquireHull(frame,salvaged=false){
  if(battle||!FRAMES[frame]||hullOwned(frame)||(salvaged?!save.salvage?.[frame]:!hullOnMarket(frame)))return false;
  const price=salvaged?rebuildPrice(frame):FRAMES[frame].cost??0;
  if(save.credits<price)return false;
- const hull={...stockHull(frame),condition:salvaged?55:100};
+ const hull={...stockHull(frame),condition:salvaged?rebuildIntegrity():100};
  (save.reserve??={})[frame]=hull;
  save.credits-=price;
  if(salvaged)takeSalvage(frame);
@@ -618,16 +688,17 @@ function chassisAssignments(i,training){
   return `<article class="bay-card">
    <img src="${frame.foundry!=null?art('foundry-'+frame.foundry+'-front'):chassisArt(index,hull.weapon,1)}" alt="" loading="lazy">
    <span class="eyebrow">${frame.model} / ${frame.role}</span><h3>${frame.name}</h3>
-   <p>${salvaged?bodies+' recovered '+(bodies===1?'body':'bodies'):hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
+   <p>${salvaged?bodies+' recovered '+(bodies===1?'body':'bodies')+' · '+rebuildIntegrity()+'% rebuilt':hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
    <dl><div><dt>Free move</dt><dd>${chassisMobility(frame,false,training)}</dd></div><div><dt>Armor</dt><dd>${chassisArmor(frame,hull,training)}</dd></div><div><dt>Body</dt><dd>${body}</dd></div><div><dt>Each arm</dt><dd>${right}</dd></div><div><dt>Legs</dt><dd>${legs}</dd></div><div><dt>Fire AP</dt><dd>${weaponAP(primary,training)}</dd></div></dl>
    <small>${primary.name} · ${weaponRange(primary,training)} tiles</small>
    <small>${melee?melee.name+' · '+weaponAP(melee,training)+' AP':'No melee'}</small>
    <small>Counter · ${counterSummary(primary,melee,training)} · 0 AP</small>
    <div class="bay-actions">${salvaged?`<button data-rebuild="${index}" ${hullOwned(index)||save.credits<rebuildPrice(index)?'disabled':''}>${hullOwned(index)?'HULL OWNED':'REBUILD · '+money(rebuildPrice(index))}</button><button data-recycle="${index}">RECYCLE · +${money(scrapPrice(index))}</button>`:view==='market'?`<button data-buy-hull="${index}" ${save.credits<(frame.cost??0)?'disabled':''}>${frame.cost?'BUY · '+money(frame.cost):'CLAIM TO STORAGE'}</button>`:`<button data-chassis="${index}" aria-pressed="${index===assigned}" ${index===assigned?'disabled':''}>${index===assigned?'SELECTED':slot>=0?'SWAP WITH '+pilotProfile(slot).call:'ASSIGN TO '+pilotProfile(i).call}</button>`}</div>
+   ${view==='storage'&&hangarLevel('fabrication')&&hull.condition<patchLimit()?`<button data-patch-storage="${index}">FIELD PATCH · ${patchLimit()}%</button>`:''}
   </article>`;
  }).join('');
  const empty={storage:'Storage is empty. Buy or rebuild a hull, or swap in a stored machine.',market:'Every catalogued hull is already owned.',salvage:'Clear a sortie to recover an enemy mech body.'};
- return `<section class="chassis-assignment" aria-label="Chassis comparison"><div class="stat-heading"><span class="eyebrow">COMPARE WITH ${pilotProfile(i).call}</span>${infoTip('chassis comparison','Stats use the selected pilot’s training. Free move is in tiles and part HP is maximum. Weapons, paint and condition stay with a swapped hull.'+(view==='salvage'?' Rebuild puts a stock hull into Storage at 55% integrity.':'')+(view==='market'?' Purchases go to Storage.':''))}</div>
+ return `<section class="chassis-assignment" aria-label="Chassis comparison"><div class="stat-heading"><span class="eyebrow">COMPARE WITH ${pilotProfile(i).call}</span>${infoTip('chassis comparison','Stats use the selected pilot’s training. Free move is in tiles and part HP is maximum. Weapons, paint and condition stay with a swapped hull.'+(view==='salvage'?' Rebuild puts a stock hull into Storage at '+rebuildIntegrity()+'% integrity.':'')+(view==='market'?' Purchases go to Storage.':''))}</div>
   <p class="bay-rules">${roundAP(training)} AP per round · Extra tile ${EXTRA_MOVE_AP} AP · Brace ${braceCost(training)} AP</p>
   ${choices?`<div class="bay-grid">${choices}</div>`:`<p class="bay-empty">${empty[view]}</p>`}
   ${view==='market'?'<a class="rig-bench-link" href="foundry/studio.html">INSPECT FOUNDRY MODELS →</a>':''}
@@ -952,13 +1023,71 @@ function shipPage(){
  </div></div>`;
 }
 function bindShip(){
- for(const button of document.querySelectorAll('[data-hangar-deck]'))button.onclick=()=>{
-  hangarDeck=button.dataset.hangarDeck;render();sound('click');
-  $(hangarDeck==='mechs'?'#inspect':'[data-hangar-deck="mechs"]')?.focus();
- };
  for(const button of document.querySelectorAll('[data-build-facility]'))button.onclick=()=>{
   const id=button.dataset.buildFacility,name=SHIP_DECK[id].tiers[shipLevel(id)].name;
   if(queueShipUpgrade(id)){render();$('.ship-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued.')}
+ };
+}
+function hangarRoster(){
+ const level=hangarLevel('personnel'),used=save.hangar?.treatmentDay===save.day;
+ const roster=[
+  ...LANCE_SLOTS.map(i=>({id:pilotId(pilotClass(i)),pilot:save.units[i],slot:i})),
+  ...Object.entries(save.reservePilots??{}).map(([id,pilot])=>({id,pilot}))
+ ];
+ return `<section class="base-roster" aria-label="Hangar crew">
+  <div class="base-roster-head"><div><span class="eyebrow">PERSONNEL ANNEX</span><h2>Duty roster</h2></div><button data-page="inn">HIRING DESK</button></div>
+  ${level===2?`<p class="base-roster-status">${used?'Trauma Ward · next treatment after a sortie':'Trauma Ward · 1 treatment available'}</p>`:''}
+  <div class="base-roster-list">${roster.map(({id,pilot,slot})=>{
+   const kind=pilotKind(id),wound=woundLabel(id),reserve=slot===undefined;
+   const points=reserve?earnedTraining(pilot.level)-pilot.training.length:0;
+   return `<article class="base-pilot">${pilotMark(kind,'pilot-thumb')}
+    <div><strong>${CREW[kind].call}</strong><small>${reserve?'RESERVE':'ACTIVE · '+FRAMES[pilotFrame(slot)].name} / LV ${pilot.level}</small>${wound?`<small class="wound-status">${wound}</small>`:''}</div>
+    <div class="base-pilot-actions">${reserve&&level?`<button data-reserve-training="${id}">TRAIN · ${points} PT</button>`:''}
+     ${wound&&level===2?`<button data-pilot-treatment="${id}" ${used||save.credits<HANGAR_SERVICE_COST?'disabled':''}>TREAT · ${money(HANGAR_SERVICE_COST)}</button>`:''}
+    </div></article>`;
+  }).join('')}</div></section>`;
+}
+function hangarPage(){
+ const project=save.hangar?.project;
+ const queued=project&&HANGAR_ROOMS[project.room].tiers[hangarLevel(project.room)];
+ return `<div class="page base-page"><div class="ship-content">
+  <div class="ship-banner base-banner"><div><div class="eyebrow">HALCYON / FORWARD BASE 04</div><h1>HANGAR.</h1><p>Company facilities · ${save.rep} reputation</p></div>
+   <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button class="primary" data-page="workshop">WORKSHOP ${icon('arrow-right')}</button></div>
+  </div>
+  <section class="ship-queue base-queue" aria-label="Hangar construction"><div><span class="eyebrow">FACILITY CONSTRUCTION</span><h2>${queued?queued.name:'Crew available'}</h2></div>
+   <div class="ship-progress"><span class="tag">${queued?project.wins+' WIN'+(project.wins===1?'':'S')+' LEFT':'0 / 1 PROJECTS'}</span>
+    ${queued?`<progress aria-label="Hangar construction progress" max="${queued.wins}" value="${queued.wins-project.wins}"></progress>`:infoTip('Hangar construction','The Hangar has its own construction crew. You can build here while the Ship is upgrading. Contract wins advance both projects.')}</div>
+  </section>
+  <div class="base-grid">${Object.entries(HANGAR_ROOMS).map(([id,room])=>{
+   const level=hangarLevel(id),current=room.tiers[level-1],next=room.tiers[level],later=level===0?room.tiers[1]:null;
+   const building=project?.room===id;
+   const blocked=project?'CREW BUSY':next&&save.rep<next.rep?'REPUTATION TOO LOW':next&&save.credits<next.cost?'INSUFFICIENT CREDITS':'';
+   return `<article class="ship-facility base-room" data-base-room="${id}">
+    <div class="ship-facility-head">${icon(room.glyph)}<h2>${room.name}</h2><span class="tag">TIER ${level} / 2</span></div>
+    <div class="ship-current"><small>${current?current.name+' ONLINE':'STANDARD FACILITY'}</small><span>${current?.perk??'Ready for expansion'}</span></div>
+    ${next?`<div class="ship-next"><div class="ship-next-title"><h3>${next.name}</h3>${infoTip(next.name,next.detail)}</div><p>${next.perk}</p>
+     <div class="ship-build"><span>${next.wins} WIN${next.wins===1?'':'S'}${next.rep?' · '+next.rep+' REP':''}</span>
+      <button type="button" data-build-room="${id}" ${blocked?'disabled':''}>${building?'IN CONSTRUCTION':blocked||'BUILD · '+money(next.cost)}</button>
+      ${blocked&&!building?`<small>${money(next.cost)}</small>`:''}</div></div>`:'<div class="ship-next"><span class="eyebrow">FULLY OUTFITTED</span></div>'}
+    ${later?`<div class="ship-plan"><div><small>TIER II</small><b>${later.name}</b><span>${later.perk}</span></div>${infoTip(later.name,money(later.cost)+' · '+later.rep+' REP · '+later.wins+' wins. '+later.detail)}</div>`:''}
+   </article>`;
+  }).join('')}</div>
+  ${hangarRoster()}
+ </div></div>`;
+}
+function bindHangar(){
+ for(const button of document.querySelectorAll('[data-hangar-deck]'))button.onclick=()=>{
+  page='hangar';hangarDeck=button.dataset.hangarDeck;render();sound('click');
+  $(hangarDeck==='mechs'?'#inspect':'[data-hangar-deck="mechs"]')?.focus();
+ };
+ for(const button of document.querySelectorAll('[data-build-room]'))button.onclick=()=>{
+  const room=button.dataset.buildRoom,name=HANGAR_ROOMS[room].tiers[hangarLevel(room)].name;
+  if(queueHangarUpgrade(room)){render();$('.base-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued in the Hangar.')}
+ };
+ for(const button of document.querySelectorAll('[data-reserve-training]'))button.onclick=()=>trainingTree(button.dataset.reserveTraining);
+ for(const button of document.querySelectorAll('[data-pilot-treatment]'))button.onclick=()=>{
+  const id=button.dataset.pilotTreatment;
+  if(treatPilot(id)){render();$('.base-roster-head')?.scrollIntoView({block:'nearest'});toast(CREW[pilotKind(id)].call+' cleared for duty.')}
  };
 }
 function spaceInn(){
@@ -1015,17 +1144,18 @@ function targetPortraitKey(target){
  if(model!=null)return window.IRON_VOW_FOUNDRY_ART?.[model]?.views?.[0]?.key??'';
  return wardenVisual(target.frame,target.weapon,unitFacing(target))?.key??'';
 }
-function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['hangar','contracts','inn','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p==='inn'?'INN':p==='hangar'?'SHIP':p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
+function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['ship','hangar','contracts','inn','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p==='inn'?'INN':p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
   nav(); $('#hangar-art').style.objectPosition=['28% center','62% center','95% center'][selected]; if(battle){renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=weapon(u.weapon),training=trainingEffects(selected);
-  if(page==='hangar'&&hangarDeck==='ship')$('#ui').innerHTML=shipPage();
+  if(page==='ship')$('#ui').innerHTML=shipPage();
+  if(page==='hangar'&&hangarDeck==='base')$('#ui').innerHTML=hangarPage();
   if(page==='hangar'&&hangarDeck==='mechs'){
     const lineup=PILOTS.map((_,i)=>({m:FRAMES[pilotFrame(i)],i}));
     const others=lineup.filter(v=>v.i!==selected);
     $('#ui').innerHTML=`${(f.native||f.foundry!=null)?`<div class="prototype-hangar" aria-hidden="true">${f.foundry!=null?'<canvas id="foundry-hangar" width="640" height="640"></canvas>':`<img src="${chassisArt(frame,u.weapon,1)}" alt="">`}</div>`:''}<div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
-    <div class="hangar-top-right"><button class="icon" data-hangar-deck="ship">SHIP DECK</button><button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button></div>
+    <div class="hangar-top-right"><button class="icon" data-hangar-deck="base">FACILITIES</button><button class="icon" data-page="ship">SHIP</button><button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button></div>
     <div class="hangar-hotspots" aria-label="Select a mech in the hangar">${lineup.map(({m,i})=>`<button data-select="${i}" aria-label="Select ${m.name}" aria-pressed="${i===selected}"><span>${m.name} / ${m.role}</span></button>`).join('')}</div>
     ${inspectOpen?`<aside class="unit-inspect"><div class="inspect-head"><span class="eyebrow">CHASSIS 0${selected+1} / ${f.model}</span><button id="close-inspect" class="icon" aria-label="Close unit details">${icon('x')}</button></div><h2>${f.name}</h2><p class="note">${f.role} · PILOT LEVEL ${u.level}</p><div class="rule"></div>${stat('BODY INTEGRITY',chassisParts(f,u,training).body+' HP')}${stat('ARMOR',chassisArmor(f,u,training))}${stat('MOBILITY',(chassisMobility(f,false,training))+' TILES')}${stat('WEAPON',w.name)}${stat('CONDITION',u.condition+'%',u.condition)}<div class="pilot">${pilotMark(pilotClass(selected),'pilot-thumb')}<div>${p.name}<small>${p.call} / ${p.skill}</small></div></div><button class="full" data-page="workshop">${icon('wrench')} OPEN WORKSHOP</button><p class="note">${skillDescription(selected,training)}</p></aside>`:''}
     ${!inspectOpen&&wardenVisual(0,'rifle',-1)?`<a class="hangar-rig-preview" href="rig-bench/"><img src="${art(wardenVisual(0,'rifle',-1).key)}" alt="" width="66" height="66"><span><strong>WARDEN MARK II</strong><small>VIEW RIG IN MOTION</small></span></a>`:''}
@@ -1033,7 +1163,7 @@ function render(){
     <div class="hangar-footer"><span>INDEPENDENT COMPANY / DAY ${String(save.day).padStart(3,'0')}</span><span>${save.wins} CONTRACTS / ${save.rep} REPUTATION</span><span>CAREER SAVED LOCALLY</span></div>`;
   }
   if(page==='inn')$('#ui').innerHTML=spaceInn();
-  if(page==='contracts'){const sizes=dispatchSizes();$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / AVAILABLE CONTRACTS</div><h1>CHOOSE YOUR BATTLE.</h1></div><p>ACTIVE LANCE<br>${PILOTS.map((_,i)=>FRAMES[pilotFrame(i)].name).join(' / ')}</p></div><div class="grid contract-grid">${CONTRACTS.map((c,i)=>`<article class="card"><div class="contract-map"><img src="${art('contract-'+FIELDS[c.field].ground)}" alt="${['Rain-soaked mountain relay station','Industrial refinery corridor at dusk','Storm-lit frontier military outpost'][c.field]}"><span class="contract-number">0${i+1}</span><span class="tag">THREAT ${i+1} / ${CONTRACTS.length}</span></div><div class="eyebrow">${c.place}</div><h2>${c.name}</h2><p>${c.desc}</p><div class="rule"></div>${stat('OPERATION',c.tag)}${stat('SORTIE SIZE',sizes[i]+' MECH'+(sizes[i]===1?'':'S')+(shipLevel('drop')===2?' + AUX OPTION':''))}${stat('HOSTILE CONTACTS',sortieSpawns(c,sizes[i]).length+' UNITS')}${stat('CONTRACT PAYMENT',money(contractPay(c,sizes[i])))}<button class="primary full" data-deploy="${i}">PREPARE SORTIE ${icon('arrow-right')}</button><p class="note">${c.fixedPay?'Fixed payout. Recommended for a new company.':i===1?'Armored patrol with possible air support.':'Reinforced hostiles. Inspect your lance before deployment.'}</p></article>`).join('')}</div><p class="note">MOVE to highlighted ground. FIRE at an enemy subsystem. Spend AP, coordinate your lance, then end your turn.</p></div>`;}
+  if(page==='contracts'){const sizes=dispatchSizes();$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / AVAILABLE CONTRACTS</div><h1>CHOOSE YOUR BATTLE.</h1></div><p>ACTIVE LANCE<br>${PILOTS.map((_,i)=>FRAMES[pilotFrame(i)].name).join(' / ')}</p></div><div class="grid contract-grid">${CONTRACTS.map((c,i)=>`<article class="card"><div class="contract-map"><img src="${art('contract-'+FIELDS[c.field].ground)}" alt="${['Rain-soaked mountain relay station','Industrial refinery corridor at dusk','Storm-lit frontier military outpost'][c.field]}"><span class="contract-number">0${i+1}</span><span class="tag">THREAT ${i+1} / ${CONTRACTS.length}</span></div><div class="eyebrow">${c.place}</div><h2>${c.name}</h2><p>${c.desc}</p><div class="rule"></div>${stat('OPERATION',c.tag)}${stat('SORTIE SIZE',sizes[i]+' MECH'+(sizes[i]===1?'':'S')+(shipLevel('drop')===2?' + AUX OPTION':''))}${stat('HOSTILE CONTACTS',sortieSpawns(c,sizes[i]).length+' UNITS')}${stat('CONTRACT PAYMENT',money(contractPay(c,sizes[i])))}${contractIntel(i,sizes[i])}<button class="primary full" data-deploy="${i}">PREPARE SORTIE ${icon('arrow-right')}</button><p class="note">${c.fixedPay?'Fixed payout. Recommended for a new company.':i===1?'Armored patrol with possible air support.':'Reinforced hostiles. Inspect your lance before deployment.'}</p></article>`).join('')}</div><p class="note">MOVE to highlighted ground. FIRE at an enemy subsystem. Spend AP, coordinate your lance, then end your turn.</p></div>`;}
   if(page==='workshop')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">ENGINEERING / CHASSIS & LOADOUT</div><h1>BUILT TO ENDURE.</h1></div></div>
    ${workshopTabs()}
   <div class="lance-tabs" aria-label="Select pilot">${LANCE_SLOTS.map(i=>`<button data-select="${i}" class="${i===selected?'active':''}" aria-pressed="${i===selected}"><small>${pilotProfile(i).call}</small>${FRAMES[pilotFrame(i)].name}</button>`).join('')}</div>
@@ -1043,7 +1173,7 @@ function render(){
   ${arsenal.chassis?.[frame]||f.native||f.foundry!=null?`<canvas class="unit-render" id="paint-preview" width="640" height="640" role="img" aria-label="${f.name} paint and loadout preview"></canvas>`:`<img class="unit-render" src="${chassisArt(frame,u.weapon)}" alt="${f.name} armored mech">`}
   <div class="workshop-meta"><h2>${f.name}</h2>${f.foundry!=null?'<button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>':''}${workshopPaint(u)}
   ${frame===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH</a>':''}<a class="rig-bench-link" href="rig-bench/prototypes/">OPEN PROTOTYPE BAY</a>${stat('CONDITION',u.condition+'%',u.condition)}
-  <div class="repairs"><button data-patch="${selected}" ${u.condition>=FIELD_PATCH?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><div class="inline-help"><small>+25 BODY HP · +2 ARMOR PER MK</small>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+FIELD_PATCH+'% integrity. Repair restores it to 100%.')}</div></div></section>
+  <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><div class="inline-help"><small>+25 BODY HP · +2 ARMOR PER MK</small>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div></div></section>
   <section><div class="eyebrow">LOADOUT / ${p.call}</div>${f.native?`<h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief)}</div>${builtInLoadout(u,training)}`:`<h2 class="loadout-title">THE RIGHT TOOL.</h2><div class="inline-help"><small>COMPANY ARMORY</small>${infoTip('company armory','Unlock each weapon once for the whole company.')}</div>
   <h3 class="loadout-slot">PRIMARY / RANGED</h3><div class="equipment">${equipmentChoices(u,RANGED,training)}</div>
   <h3 class="loadout-slot">SECONDARY / MELEE</h3><div class="equipment">${equipmentChoices(u,MELEE,training)}</div>
@@ -1065,12 +1195,17 @@ function render(){
   if(page==='pilots')document.querySelectorAll('[data-train-pilot]').forEach(button=>button.onclick=()=>trainingTree(+button.dataset.trainPilot));
   if(page==='workshop')bindWorkshop();
    if(page==='inn')bindInn();
-  if(page==='hangar')bindShip();
+  if(page==='ship')bindShip();
+  if(page==='ship'||page==='hangar')bindHangar();
+  if(page==='contracts')for(const button of document.querySelectorAll('[data-rescan]'))button.onclick=()=>{
+   const i=Number(button.dataset.rescan);
+   if(rerollDispatch(i)){render();$(`[data-deploy="${i}"]`)?.focus();toast('New approach surveyed. Dispatch updated.')}
+  };
   if(page==='hangar'&&hangarDeck==='mechs'){drawFoundryHangar();$('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
   if(page==='journal')bindJournal($('#ui'));
 }
 function repairCost(i){return Math.ceil((100-save.units[i].condition)*14*[100,80,70][shipLevel('repair')]/100)}
-function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(FIELD_PATCH,save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(!battle){page=b.dataset.page;if(page==='workshop')workshopView='assigned';if(page==='hangar')hangarDeck='ship';render();sound('click')}});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>{let w=weapon(b.dataset.equip),u=save.units[selected];if(w.builtIn||FRAMES[pilotFrame(selected)].native)return;if(!save.owned.includes(w.id)&&(w.melee?u.melee:u.weapon)!==w.id){if(save.credits<w.price)return toast('Insufficient credits');save.credits-=w.price;save.owned.push(w.id)}u[w.melee?'melee':'weapon']=w.id;persist();render();toast(w.name+' equipped')});document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();persist();closeModal();render()}}]);
+function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(!battle){page=b.dataset.page;if(page==='workshop')workshopView='assigned';if(page==='hangar')hangarDeck='base';render();sound('click')}});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>{let w=weapon(b.dataset.equip),u=save.units[selected];if(w.builtIn||FRAMES[pilotFrame(selected)].native)return;if(!save.owned.includes(w.id)&&(w.melee?u.melee:u.weapon)!==w.id){if(save.credits<w.price)return toast('Insufficient credits');save.credits-=w.price;save.owned.push(w.id)}u[w.melee?'melee':'weapon']=w.id;persist();render();toast(w.name+' equipped')});document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();persist();closeModal();render()}}]);
  $('#attack-camera').onclick=()=>{attackCameraEnabled=!attackCameraEnabled;try{localStorage.setItem('iron-vow-attack-camera',attackCameraEnabled?'on':'off')}catch{}render()};
  }}
 function validHull(u,frame){
@@ -1097,6 +1232,7 @@ function validSave(s){
   return kind>=0&&!pilots.has(kind)&&p&&Number.isSafeInteger(p.level)&&p.level>0&&p.level<10000&&Number.isFinite(p.xp)&&p.xp>=0&&Array.isArray(p.training);
  }))return false;
  if(s.ship!==undefined&&!validShip(s))return false;
+ if(s.hangar!==undefined&&!validHangar(s))return false;
  if(s.wounds!==undefined&&!validRecord(s.wounds,([id,days])=>(pilots.has(pilotKind(id))||Object.hasOwn(s.reservePilots??{},id))&&[1,2].includes(days)))return false;
  if(s.salvage!==undefined&&!validRecord(s.salvage,([id,count])=>String(Number(id))===id&&FRAMES[Number(id)]&&Number.isSafeInteger(count)&&count>0))return false;
  if(s.dispatch!==undefined&&(!s.dispatch||s.dispatch.day!==s.day||!Array.isArray(s.dispatch.sizes)||s.dispatch.sizes.length!==CONTRACTS.length||!s.dispatch.sizes.every(n=>Number.isInteger(n)&&n>=1&&n<=3)))return false;
@@ -1114,6 +1250,16 @@ function validShip(career){
  if(job===undefined)return true;
  if(!job||!Object.hasOwn(SHIP_DECK,job.facility))return false;
  const next=SHIP_DECK[job.facility].tiers[shipLevel(job.facility,career)];
+ return !!next&&Number.isInteger(job.wins)&&job.wins>=1&&job.wins<=next.wins;
+}
+function validHangar(career){
+ const base=career.hangar;
+ if(!base||!validRecord(base.levels,([room,level])=>Object.hasOwn(HANGAR_ROOMS,room)&&[1,2].includes(level)))return false;
+ for(const day of [base.treatmentDay,base.scanDay])if(day!==undefined&&(!Number.isInteger(day)||day<1||day>career.day))return false;
+ const job=base.project;
+ if(job===undefined)return true;
+ if(!job||!Object.hasOwn(HANGAR_ROOMS,job.room))return false;
+ const next=HANGAR_ROOMS[job.room].tiers[hangarLevel(job.room,career)];
  return !!next&&Number.isInteger(job.wins)&&job.wins>=1&&job.wins<=next.wins;
 }
 function loadCareer(record){
@@ -1215,8 +1361,7 @@ function guide(section='orders'){
 // Tactical simulation: part HP, reachable tiles, AP, cover, level scaling and persistent rewards.
 function makeUnit(i,team,x,z){
  const ally=team==='ally',aux=ally&&i===AUX_SLOT?battle.aux:null;
- const mixed=battle.stockHostiles?null:FOUNDRY_HOSTILES[battle.contract.id];
- const frame=aux?aux.frame:ally?pilotFrame(i):i===0&&battle.frontierHellbreaker?HELLBREAKER:mixed?.[i]??i%3,f=FRAMES[frame];
+ const frame=aux?aux.frame:ally?pilotFrame(i):hostileFrame(i,battle.contract,battle.stockHostiles,battle.frontierHellbreaker),f=FRAMES[frame];
  const u=aux?save.reserve[frame]:ally?save.units[i]:{...stockHull(frame),upgrade:Math.max(0,battle.contract.difficulty-1),level:battle.contract.difficulty,
   weapon:f.weapon||['rifle','shotgun','missile'][i%3]};
  const pilot=aux?pilotKind(aux.pilotId):ally?pilotClass(i):undefined,crew=aux?save.reservePilots[aux.pilotId]:u;
@@ -1732,6 +1877,7 @@ function finish(win){
   debriefXP(sortiePilot(u),u.pilot,win?70:20,promotions);
  }
  const {serviced,online}=settleShip(win,allies,promotions);
+ const baseOnline=win?advanceHangar():null;
  save.history.push({name:c.name,day:save.day,win,pay});save.history=save.history.slice(-100);save.day++;delete save.dispatch;
  battle=null;if(selected===AUX_SLOT)selected=0;
  window.IronVowFoundry?.clearCombat();persist();page='career';render();
@@ -1739,10 +1885,12 @@ function finish(win){
  if(recovered.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
  const points=totalTrainingPoints();
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
- if(online)buttons.push({text:'SHIP DECK',fn:()=>{closeModal();page='hangar';hangarDeck='ship';render()}});
+ if(online)buttons.push({text:'SHIP DECK',fn:()=>{closeModal();page='ship';render()}});
+ if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();page='hangar';hangarDeck='base';render()}});
  modal(win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'The field is yours. Your pilots return with experience and recovered enemy components.':'Your pilots have been recovered. Combat damage persists.'}</p>
   ${stat('CONTRACT PAYMENT',money(reward))}${c.fixedPay?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
   ${premium?stat('SHIP PREMIUM INCLUDED','+'+money(premium)):''}${serviced?stat('HULLS SERVICED',serviced):''}${online?stat('SHIP UPGRADE ONLINE',online):''}
+  ${baseOnline?stat('HANGAR FACILITY ONLINE',baseOnline):''}
   ${promotions.length?stat('PROMOTED',promotions.join(' · ')):''}`,buttons);
 }
 // Pre-rendered 2.5D battlefield: original raster art, depth ordering and live game effects.
@@ -2315,6 +2463,10 @@ function bindWorkshop(){
    if(!recycle)workshopView='storage';
    render();$(`[data-bay="${workshopView}"]`)?.focus();toast(FRAMES[frame].name+(recycle?' body recycled.':' moved to storage.'));
   }
+ };
+ for(const button of document.querySelectorAll('[data-patch-storage]'))button.onclick=()=>{
+  const frame=Number(button.dataset.patchStorage);
+  if(patchStoredHull(frame)){render();$('[data-bay="storage"]')?.focus();toast(FRAMES[frame].name+' field patched.')}
  };
  for(const button of document.querySelectorAll('[data-chassis]'))button.onclick=()=>{
   const frame=Number(button.dataset.chassis);
@@ -3289,7 +3441,7 @@ document.addEventListener('keydown',e=>{
  renderBattle();persist();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(activeCinematic){skipAttackCamera();return}if(!$('#modal').hidden){closeModal();return}if(targetPanelOpen){targetPanelOpen=false;renderBattle();$('#target-toggle').focus();return}}if(e.key==='Tab'&&!$('#modal').hidden){let btns=[...$('#modal').querySelectorAll('button')],first=btns[0],last=btns.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
-$('.brand').onclick=e=>{e.preventDefault();if(!battle){page='hangar';hangarDeck='ship';render()}};
+$('.brand').onclick=e=>{e.preventDefault();if(!battle){page='ship';render()}};
 $('#skip-shot').onclick=skipAttackCamera;
 let helpAnchor=null,helpPress=null,helpTimer;
 function cancelHelpPress(){clearTimeout(helpTimer);helpPress=null}

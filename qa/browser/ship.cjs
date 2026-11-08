@@ -31,7 +31,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await tap('[data-hangar-deck="mechs"]');
  await tap('#inspect');
  await page.locator('.unit-inspect').waitFor();
- await tap('[data-hangar-deck="ship"]');
+ await tap('.hangar-top-right [data-page="ship"]');
  await page.evaluate(()=>{save.credits=24000;save.rep=30;save.history=[{name:'Picket sweep',day:1,win:true,pay:1300}];hirePilot(3);acquireHull(6);persist();render()});
  const before=await page.evaluate(()=>save.credits);
  await tap('[data-build-facility="drop"]');
@@ -40,11 +40,11 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await page.locator('.ship-queue h2').waitFor();
  assert.equal(await page.locator('.ship-queue h2').innerText(),'HOT DROP BEACONS');
  assert.ok(await page.locator('[data-build-facility="crew"]').isDisabled());
- await launch();await win();await nav('hangar');
+ await launch();await win();await nav('ship');
  assert.match(await page.locator('[data-facility="drop"] .ship-current').innerText(),/HOT DROP BEACONS ONLINE/i);
  await tap('[data-build-facility="drop"]');
  await launch();await win();
- await nav('hangar');
+ await nav('ship');
  assert.match(await page.locator('.ship-queue .tag').innerText(),/1 WIN LEFT/i);
  await launch();await win();
  await page.evaluate(()=>{save.dispatch={day:save.day,sizes:[3,2,1,3]};persist()});
