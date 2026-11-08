@@ -21,10 +21,16 @@ const playerTurn=`(async()=>{
  }
  if(battle)await endTurn();
 })()`;
-async function play(sim,index){sim.run(`deploy(${index});closeModal()`);let rounds=0;while(sim.run('!!battle')&&rounds++<30)await sim.run(playerTurn);assert.ok(rounds<30,'Mission stalled');return{win:sim.run('save.history.at(-1).win'),rounds,condition:sim.run('save.units.map(u=>u.condition)')}}
+async function play(sim,index,slots=[0,1,2]){sim.run(`deploy(${index},false,${JSON.stringify(slots)});closeModal()`);let rounds=0;while(sim.run('!!battle')&&rounds++<30)await sim.run(playerTurn);assert.ok(rounds<30,'Mission stalled');return{win:sim.run('save.history.at(-1).win'),rounds,condition:sim.run('save.units.map(u=>u.condition)')}}
 if(require.main===module)(async()=>{
  const results=[];for(let seed=1;seed<=12;seed++){const sim=createSimulation({seed});results.push(await play(sim,0));assert.equal(sim.run('validSave(save)'),true);assert.equal(sim.run('save.day'),2);assert.ok(sim.storage.has('iron-vow-career'))}
  const wins=results.filter(r=>r.win).length;console.log('Recruit contract, fresh lance:',wins+'/12 victories; rounds',results.map(r=>r.rounds).join(','));
+ for(const slots of [[0],[1],[2],[0,2]]){
+  let wins=0;
+  for(let seed=1;seed<=12;seed++)if((await play(createSimulation({seed}),0,slots)).win)wins++;
+  assert.ok(wins>=9,'Picket must support smaller sorties');
+  console.log('Picket seats '+slots.join(',')+': '+wins+'/12 victories');
+ }
  // A real career loop, using only earned money and documented refits between sorties.
  const career=createSimulation({seed:19});for(let mission=0;mission<5;mission++){if(mission){career.run(`closeModal();for(const u of save.units){const cost=Math.ceil((100-u.condition)*14);if(save.credits>=cost){save.credits-=cost;u.condition=100}else u.condition=Math.max(u.condition,FIELD_PATCH)};if(!save.owned.includes('rail')&&save.credits>=3600){save.credits-=3600;save.owned.push('rail');save.units[0].weapon='rail'};for(const idx of [0,2,1]){const u=save.units[idx];if(save.credits>=1800+u.upgrade*1200&&u.upgrade<3){save.credits-=1800+u.upgrade*1200;u.upgrade++}};persist()`)}const r=await play(career,[0,1,2,0,3][mission]);console.log('Career sortie',mission+1,JSON.stringify(r));assert.equal(r.win,true,'Earned repairs and refits should support the full contract ladder');}
  const recovery=[];for(let seed=1;seed<=12;seed++){const sim=createSimulation({seed});sim.run('save.credits=0;save.units.forEach(u=>u.condition=FIELD_PATCH)');recovery.push(await play(sim,0))};const recovered=recovery.filter(r=>r.win).length;assert.ok(recovered>=9,'Emergency field patches must support a realistic comeback');console.log('Zero-reserve recovery:',recovered+'/12 victories');

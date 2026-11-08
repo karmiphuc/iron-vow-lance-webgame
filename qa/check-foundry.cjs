@@ -149,7 +149,7 @@ async function exerciseRigAdapter(){
  const importedSortie=simulate({foundry:true});
  assert.equal(importedSortie.run(`importCareer(${sim.storage.get(savedKey)})`),true);
  assert.equal(importedSortie.run('battle.units[3].downReason'),'pilot');
- assert.equal(importedSortie.run('save.sortie.version'),5);
+ assert.equal(importedSortie.run('save.sortie.version'),6);
  const donor={
   version:2,day:7,credits:9800,rep:20,wins:2,kills:6,owned:['rifle','missile','blade'],
   units:[{mech:3,level:2,xp:55},{mech:0,level:1,xp:7},{mech:2,level:3,xp:23}],

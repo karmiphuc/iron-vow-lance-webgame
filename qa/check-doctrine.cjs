@@ -22,7 +22,7 @@ function doctrine(i,path){
  assert.equal(v("learnTraining(0,'spearhead')"),true);
  assert.equal(v('trainingPoints(0)'),0);
  assert.equal(v('learnedTraining(0).length'),8);
- assert.equal(v("(pilotWiki().match(/<li>/g)||[]).length"),36);
+ assert.equal(v("(pilotWiki().match(/<li>/g)||[]).length"),60);
  assert.equal(v("pilotWiki().includes('Shield Net')"),true);
  assert.deepEqual(Array.from(v('[4,5,6,7,8,9,10].map(nextLevelXP)')),[400,400,425,450,475,500,1000]);
  v("save.units[1].level=5;save.units[1].xp=330;createBattle(0);finish(true)");

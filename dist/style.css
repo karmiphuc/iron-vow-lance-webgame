@@ -247,3 +247,59 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 @media(max-width:360px){.training-paths{grid-template-columns:1fr}}
 .unitbuttons button.spent{opacity:.37;filter:saturate(.38);background:#0d151c;border-color:#39434b}
 .unitbuttons button.spent img{filter:brightness(.52) grayscale(1)}
+.bay-tabs button{text-transform:uppercase;justify-content:space-between}
+.bay-tabs b{padding:2px 5px;background:#ffffff12;color:var(--ink);font-size:10px}
+.bay-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.bay-card{display:flex;flex-direction:column;min-width:0;padding:12px;background:#202b32;border:1px solid var(--line)}
+.bay-card>img{width:100%;height:92px;object-fit:contain;background:radial-gradient(ellipse at center,#384750 0%,transparent 68%);margin-bottom:7px}
+.bay-card h3{font-size:clamp(19px,2.1vw,29px);overflow-wrap:anywhere}
+.bay-card p,.bay-card>small{font-size:11px;color:var(--muted);line-height:1.4}
+.bay-card dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:9px 0}
+.bay-card dl div{padding:4px;background:#11191d88;min-width:0}
+.bay-card dt{font-size:9px;color:var(--muted)}
+.bay-card dd{font:700 17px Barlow,sans-serif;margin:0}
+.bay-actions{display:grid;gap:4px;margin-top:auto;padding-top:8px}
+.bay-actions button{min-height:44px;padding:6px 8px;font-size:10px;font-weight:700}
+.bay-actions button[aria-pressed=true]{opacity:1;color:var(--accent);border-color:var(--accent)}
+.bay-rules{margin:0 0 9px;color:var(--muted);font-size:11px}
+.bay-empty{padding:18px 10px;font-size:12px}
+.inn-page{background:radial-gradient(ellipse at top right,#4f38256e,transparent 60%),#11191deb}
+.inn-grid{display:grid;grid-template-columns:minmax(300px,1.15fr) minmax(245px,.85fr);gap:16px;max-width:1100px}
+.inn-links{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.inn-links button{min-height:44px;padding:8px 11px;font-size:10px;font-weight:700}
+.inn-links img{margin-right:4px}
+.inn-board{min-width:0;padding:14px;background:#131e25d9;border:1px solid var(--line)}
+.inn-board h2{font-size:29px}
+.inn-slot,.inn-pilot{display:grid;align-items:center;gap:9px;padding:10px 0;border-top:1px solid var(--line)}
+.inn-slot{grid-template-columns:auto 1fr auto}
+.inn-pilot{grid-template-columns:auto 1fr auto auto}
+.inn-pilot .pilot-thumb,.inn-slot .pilot-thumb,.unitbuttons .pilot-emblem{width:36px;height:45px;object-fit:cover;object-position:center 24%}
+.inn-pilot h3{font-size:24px;line-height:1.1}
+.inn-slot small,.inn-pilot small{display:block;color:var(--muted);font-size:10px}
+.inn-slot b{display:block;font:700 21px Barlow,sans-serif}
+.inn-slot>span:last-child{color:var(--accent);font-size:10px}
+.inn-pilot>button:not(.info-tip){min-height:44px;padding:7px 10px;font-size:10px}
+.pilot-emblem{display:grid;place-items:center;flex:none;color:var(--pilot-color);background:repeating-linear-gradient(0deg,#ffffff06 0 1px,transparent 1px 5px),radial-gradient(ellipse,#394d4c,#152128 70%);border:1px solid var(--pilot-color)}
+.pilot-emblem img,.unitbuttons .pilot-emblem img{width:55%;height:55%;object-fit:contain}
+.pilot-image>.pilot-emblem{height:100%}
+.pilot-image>.pilot-emblem img{width:25%;height:46%}
+.seat-choices{display:grid;gap:7px;margin-top:12px}
+.seat-choices button{min-height:48px;display:grid;gap:3px;text-align:left;padding:9px 12px}
+.seat-choices button[aria-pressed=true]{border-color:var(--accent);background:#302b24;color:var(--accent)}
+.seat-choices small{color:var(--muted);font-size:11px}
+.combat-status{color:var(--accent);font-size:10px;font-weight:700}
+@media(min-width:761px) and (max-width:1060px){#nav{gap:11px}#nav button{font-size:11px}}
+@media(max-width:760px){
+ #nav button{font-size:9px;letter-spacing:0}
+ .bay-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+ .bay-tabs button{padding:6px;font-size:9px}
+ .bay-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .bay-card{padding:8px}
+ .bay-card dl{gap:3px}
+ .bay-card>img{height:64px}
+ .bay-card .eyebrow{font-size:8px;letter-spacing:.6px}
+ .inn-grid{grid-template-columns:1fr}
+ .inn-links{display:grid;grid-template-columns:1fr 1fr}
+ .unitbuttons .pilot-emblem{width:25px;height:33px}
+}
+@media(max-width:370px){#nav button,.bay-tabs button{font-size:8px}.bay-tabs button{gap:3px}}

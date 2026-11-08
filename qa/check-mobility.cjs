@@ -87,7 +87,7 @@ const simulate=require('./sim-harness.cjs');
  for(let frame=0;frame<count;frame++){
   stats.run(`save=fresh();battle=null;save.credits=10000;assignChassis(0,${frame});save.units[0].upgrade=2;save.units[0].condition=57;page='workshop';render()`);
   const workshop=stats.node('#ui').innerHTML;
-  assert.equal((workshop.match(/data-chassis=/g)||[]).length,count);
+  assert.equal((workshop.match(/data-chassis=/g)||[]).length,3);
   const actual=JSON.parse(stats.run(`createBattle(0);JSON.stringify({
    name:current().name,free:freeMovement(current()),armor:current().armor,ap:current().ap,
    hp:current().hp,max:current().max,primary:unitWeapon(current()),melee:current().melee&&weapon(current().melee)

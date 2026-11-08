@@ -16,7 +16,7 @@ const create=require('./sim-harness.cjs');
  const stored=sim.run('JSON.stringify(captureSortie())');
  const restored=create({storage:new Map(sim.storage)});
  assert.equal(restored.run('JSON.stringify(captureSortie())'),stored);
- assert.equal(restored.run('captureSortie().version'),5);
+ assert.equal(restored.run('captureSortie().version'),6);
 
  assert.equal(restored.run('battle.contract.id'),'picket');
  assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,tank,tank,helicopter');
