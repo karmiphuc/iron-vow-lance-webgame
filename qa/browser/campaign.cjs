@@ -141,5 +141,31 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
   return [before-actor.hp.body,foe.reacted];
  });
  assert.ok(damage>=5&&damage<=10&&reacted);
+ await page.evaluate(()=>{
+  battle=null;effects=[];page='workshop';workshopView='market';render();
+ });
+ assert.equal(await page.locator('[data-buy-hull="11"]').count(),0);
+ await page.evaluate(()=>{
+  save.credits+=1500;
+  if(!hullOwned(3))acquireHull(3);
+  if(pilotFrame(0)!==3)assignChassis(0,3,true);
+  effects=[];createBattle(3,false,false,[0]);selected=0;renderBattle();
+ });
+ await page.waitForFunction(()=>{
+  const player=battle.units.find(u=>u.team==='ally'),enemy=battle.units.find(u=>u.frame===HELLBREAKER);
+  return player?.frame===3&&enemy?.team==='enemy'&&
+   travelVisual(player,clock)?.atlas.key==='grid-travel-gatecrasher'&&
+   travelVisual(enemy,clock)?.atlas.key==='grid-travel-hellbreaker';
+ });
+ await page.evaluate(()=>{
+  for(const u of battle.units)if(u.team==='enemy'){u.alive=false;u.hp.body=0}
+  finish(true);
+ });
+ const salvage=page.getByRole('button',{name:'VIEW SALVAGE'});
+ await (mobile?salvage.tap():salvage.click());
+ await tap('[data-rebuild="11"]');
+ assert.equal(await page.evaluate(()=>save.reserve[HELLBREAKER]?.condition),55);
+ await page.reload({waitUntil:'domcontentloaded'});
+ assert.equal(await page.evaluate(()=>save.reserve[HELLBREAKER]?.condition),55);
  console.log('PASS campaign UI, touch tooltip, reserve reload, Workshop, Wiki, variable seats and new skills');
 };

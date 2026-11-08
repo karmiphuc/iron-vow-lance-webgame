@@ -97,7 +97,7 @@ async function exerciseRigAdapter(){
 
 (async()=>{
  const sim=simulate({random:()=>0,foundry:true}),{run}=sim;
- assert.equal(run('FRAMES.length'),11);
+ assert.equal(run('FRAMES.length'),12);
  assert.equal(run('assignChassis(0,6,true)'),true);
  assert.equal(run('save.credits'),1300);
  assert.equal(run("save.owned.includes('blade')"),true);
@@ -114,7 +114,8 @@ async function exerciseRigAdapter(){
   assert.ok(run("battle.units.filter(u=>foundryModel(u.frame)!=null).every(u=>foundryRender(u,clock).anchors.gripR.length===2)"));
   run('battle=null');
  }
- run("createBattle(3);selected=1;const target=battle.units[3];target.hp.pilot=1;target.x=current().x+1;target.z=current().z;");
+ run("createBattle(3);selected=1;const target=battle.units.find(u=>u.team==='enemy'&&foundryModel(u.frame)!=null);target.hp.pilot=1;target.x=current().x+1;target.z=current().z;");
+ const targetId=run('target.id'),targetFrame=run('target.frame');
  const body=run('target.hp.body');
  await run("shoot(current(),target,'pilot',weapon('blade'))");
  assert.equal(run('target.alive'),false);
@@ -123,8 +124,8 @@ async function exerciseRigAdapter(){
  assert.equal(run("effects.some(e=>e.type==='detonation')"),false);
  run('persist()');
  const restored=simulate({storage:new Map(sim.storage)});
- assert.equal(restored.run('battle.units[3].downReason'),'pilot');
- assert.equal(restored.run('battle.units[3].frame'),7);
+ assert.equal(restored.run(`battle.units.find(u=>u.id===${JSON.stringify(targetId)}).downReason`),'pilot');
+ assert.equal(restored.run(`battle.units.find(u=>u.id===${JSON.stringify(targetId)}).frame`),targetFrame);
  assert.equal(restored.run('current().name'),'ONI');
 
  const older=simulate({random:()=>0});
@@ -148,7 +149,7 @@ async function exerciseRigAdapter(){
  }
  const importedSortie=simulate({foundry:true});
  assert.equal(importedSortie.run(`importCareer(${sim.storage.get(savedKey)})`),true);
- assert.equal(importedSortie.run('battle.units[3].downReason'),'pilot');
+ assert.equal(importedSortie.run(`battle.units.find(u=>u.id===${JSON.stringify(targetId)}).downReason`),'pilot');
  assert.equal(importedSortie.run('save.sortie.version'),7);
  const donor={
   version:2,day:7,credits:9800,rep:20,wins:2,kills:6,owned:['rifle','missile','blade'],

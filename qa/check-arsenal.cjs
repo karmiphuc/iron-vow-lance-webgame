@@ -27,7 +27,7 @@ vm.createContext(context);
 const run=source=>vm.runInContext(source,context);
 const click=selector=>{const node=document.querySelector(selector);assert.ok(node&&!node.disabled,selector);node.click()};
 const ready=async condition=>{for(let i=0;i<100;i++){if(run(condition))return;await new Promise(resolve=>setTimeout(resolve,25))}assert.fail(condition)};
-for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
+for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js','prototype-combat.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
 
 (async()=>{
  await ready('decodedArt.size===Object.keys(artImages).length');
@@ -88,7 +88,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
   }
  }
  for(const [index,name] of ['relay','corridor','frontier'].entries()){
-  run(`createBattle(${index+1});fieldCamera.overview=true;action='move';battlefield(clock)`);
+  run(`effects=[];createBattle(${index+1});fieldCamera.overview=true;action='move';battlefield(clock)`);
   await ready(`decoded.has('assets/ground-${name}.webp') && Object.values(battle.field.cover).every(prop=>decoded.has('assets/cover-'+prop+'.webp'))`);
   assert.equal(run('battle.field.ground'),name);
   assert.equal(run('new Set(Object.values(battle.field.cover)).size'),2);

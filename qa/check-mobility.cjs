@@ -57,7 +57,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('selected'),0);
 
  const keys=run('Object.keys(window.IRON_VOW_TRAVEL)');
- assert.equal(keys.length,13);
+ assert.equal(keys.length,14);
  for(const key of keys){
   const visual=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL['${key}'])`));
   assert.equal(visual.points[0].length,4);
@@ -85,7 +85,8 @@ const simulate=require('./sim-harness.cjs');
  const stats=simulate();
  const count=stats.run('FRAMES.length');
  for(let frame=0;frame<count;frame++){
-  stats.run(`save=fresh();battle=null;save.credits=10000;assignChassis(0,${frame});save.units[0].upgrade=2;save.units[0].condition=57;page='workshop';render()`);
+  stats.run(`save=fresh();battle=null;save.credits=10000;if(FRAMES[${frame}].salvageOnly){save.salvage={[${frame}]:1};acquireHull(${frame},true)}assignChassis(0,${frame},true);save.units[0].upgrade=2;save.units[0].condition=57;page='workshop';render()`);
+  assert.equal(stats.run('pilotFrame(0)'),frame);
   const workshop=stats.node('#ui').innerHTML;
   assert.equal((workshop.match(/data-chassis=/g)||[]).length,3);
   const actual=JSON.parse(stats.run(`createBattle(0);JSON.stringify({
@@ -107,7 +108,7 @@ const simulate=require('./sim-harness.cjs');
   stats.run('createBattle(1,true)');
   assert.equal(stats.run('freeMovement(current())'),actual.free-1);
  }
- console.log('PASS: all eleven Workshop stat sheets match deployed HP, armor, mobility, AP and weapons with worn reinforced hulls; legacy mobility retained.');
+ console.log('PASS: all '+count+' Workshop stat sheets match deployed HP, armor, mobility, AP and weapons with worn reinforced hulls; legacy mobility retained.');
 
  const audit=simulate({random:()=>0,reducedMotion:true});
  const exec=audit.run;

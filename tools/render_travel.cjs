@@ -15,7 +15,7 @@ require('../dist/rig-bench/vendor/GLTFLoader.js');
 require('../dist/foundry/chassis.js');
 require('../dist/foundry/rig-motion.js');
 const {V3,buildRig,animateMech,mountPoints}=window.IronVowFoundryRig;
-const stock=['warden','kestrel','basilisk'],native=['gatecrasher','cicada'];
+const stock=['warden','kestrel','basilisk'],native=['gatecrasher','cicada','hellbreaker'];
 const knownTiles=[[0,7,8,12,15],[0,7,8,12,15],[0,7,12,15]];
 const poses=JSON.parse(execFileSync(process.execPath,[path.join(__dirname,'sample_warden_motion.cjs'),'--arsenal']));
 const texCache=new WeakMap(),materials=new WeakMap();
@@ -79,6 +79,26 @@ function projectPoint(x,y,z,angle,span,ground){
  const c=Math.cos(angle),s=Math.sin(angle),forward=-x*s+z*c,elevation=.452;
  return [(.5+(x*c+z*s)/span)*size,(ground-(y*Math.cos(elevation)-forward*Math.sin(elevation))/span)*size,-forward*Math.cos(elevation)-y*Math.sin(elevation)];
 }
+function raster(values){
+ const depth=new Float32Array(size*size).fill(Infinity),pixels=new Uint8ClampedArray(size*size*4);
+ for(let i=0;i<values.length;i+=18){
+  const ax=values[i],ay=values[i+1],az=values[i+2],bx=values[i+6],by=values[i+7],bz=values[i+8],cx=values[i+12],cy=values[i+13],cz=values[i+14];
+  const dx=bx-ax,dy=by-ay,ex=cx-ax,ey=cy-ay,area=dx*ey-dy*ex;
+  if(Math.abs(area)<.00001)continue;
+  const left=Math.max(0,Math.floor(Math.min(ax,bx,cx))),right=Math.min(size-1,Math.ceil(Math.max(ax,bx,cx)));
+  const top=Math.max(0,Math.floor(Math.min(ay,by,cy))),bottom=Math.min(size-1,Math.ceil(Math.max(ay,by,cy)));
+  for(let y=top;y<=bottom;y++)for(let x=left;x<=right;x++){
+   const px=x+.5-ax,py=y+.5-ay,u=(px*ey-py*ex)/area,w=(dx*py-dy*px)/area,t=1-u-w;
+   if(Math.min(u,w,t)<0)continue;
+   const z=t*az+u*bz+w*cz,p=y*size+x;
+   if(z>=depth[p])continue;
+   depth[p]=z;
+   for(let c=0;c<3;c++)pixels[p*4+c]=t*values[i+3+c]+u*values[i+9+c]+w*values[i+15+c];
+   pixels[p*4+3]=255;
+  }
+ }
+ return new ImageData(pixels,size,size);
+}
 function draw(data,angle,span,ground,mask=false){
  const values=new Float32Array(data.length/7*6);
  for(let i=0,j=0;i<data.length;i+=7,j+=6){
@@ -86,6 +106,7 @@ function draw(data,angle,span,ground,mask=false){
   values[j]=x;values[j+1]=y;values[j+2]=z;
   for(let c=0;c<3;c++)values[j+3+c]=mask?data[i+6]===c?255:0:data[i+3+c];
  }
+ if(process.argv[2]==='-')return raster(values);
  const head=Buffer.alloc(8);head.writeInt32LE(size);head.writeInt32LE(values.length/18,4);
  const out=spawnSync(process.argv[2],[],{input:Buffer.concat([head,Buffer.from(values.buffer)]),maxBuffer:2*1024*1024});
  if(out.status!==0||out.stdout.length!==size*size*4)throw Error('Directional raster failed');
@@ -143,10 +164,10 @@ function foundryPose(m,row){
 }
 function nativePoints(root,model){
  const get=name=>root.getObjectByName(name)?.getWorldPosition(V3());
- const muzzle=(model==='gatecrasher'?get('Muzzle.R'):get('Muzzle.L'))||get('Muzzle')||V3(0,4,2);
- const muzzle2=get('Muzzle.R')||V3(.7,4,2);
+ const muzzle=get('Muzzle.Upper')||get('Muzzle.L')||get('Muzzle')||V3(0,4,2);
+ const muzzle2=get('Muzzle.Lower')||get('Muzzle.R')||V3(.7,4,2);
  return {body:get('Torso')||V3(0,3.6,0),pilot:get('Optics')||V3(0,5.2,0),right:get('Elbow.R')||V3(-1.2,3,0),
-  left:get('Elbow.L')||V3(1.2,3,0),legs:get('Shin.L')||V3(.6,1.3,0),muzzle,muzzle2,leadFoot:get('Foot.L')||V3(.55,0,0)};
+  left:get('Elbow.L')||V3(1.2,3,0),legs:get('Knee.L')||get('Shin.L')||V3(.6,1.3,0),muzzle,muzzle2,leadFoot:get('Foot.L')||V3(.55,0,0)};
 }
 async function bake(spec){
  let root,sample,span,ground=.84,rows=8;

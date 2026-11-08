@@ -102,10 +102,11 @@ def configure_render(scene, tmp):
     aov = view.aovs.add()
     aov.name, aov.type = "Plates", "VALUE"
     for mat in bpy.data.materials:
-        if mat.use_nodes and mat.name in {"armor", "plate"}:
+        role = mat.name.rsplit(" / ", 1)[-1]
+        if mat.use_nodes and role in {"armor", "plate"}:
             node = mat.node_tree.nodes.new("ShaderNodeOutputAOV")
             node.aov_name = "Plates"
-            node.inputs["Value"].default_value = .9 if mat.name == "armor" else .62
+            node.inputs["Value"].default_value = .9 if role == "armor" else .62
     tree = bpy.data.node_groups.new("Battlefield color and plate mask", "CompositorNodeTree")
     scene.compositing_node_group = tree
     tree.interface.new_socket(name="Image", in_out="OUTPUT", socket_type="NodeSocketColor")
@@ -155,7 +156,10 @@ def hardpoints(scene, camera, rig, heavy):
     legs = point("Knee.L").lerp(point("Knee.R"), .5)
     muzzle = point("Muzzle" if heavy else "Launch.L")
     muzzle2 = muzzle if heavy else point("Launch.R")
-    if heavy:
+    if heavy and "Muzzle.Upper" in rig.pose.bones:
+        muzzle, muzzle2 = point("Muzzle.Upper"), point("Muzzle.Lower")
+        tip = point("Finger 2 tip.L", True)
+    elif heavy:
         # The published cannon has a shared center socket and two parallel barrels.
         across = (rig.matrix_world @ rig.pose.bones["Cannon Slide"].matrix).to_3x3()
         offset = across @ Vector((.19, 0, 0))
@@ -183,7 +187,10 @@ def bake(model, rigs, output, tmp):
     rig, = [obj for obj in scene.objects if obj.type == "ARMATURE"]
     tracks = rig.animation_data.nla_tracks
     assert all(name in tracks for name in ("Idle", "Walk", "Fire"))
-    heavy = model == "gatecrasher"
+    heavy = model in {"gatecrasher", "gatecrasher-r2"}
+    studio = bpy.data.collections.get("Studio | Four reference views")
+    if studio:
+        studio.hide_render = True
     camera = configure_render(scene, tmp)
     dest = output / "assets"
     dest.mkdir(parents=True, exist_ok=True)
@@ -192,10 +199,12 @@ def bake(model, rigs, output, tmp):
     add_strike_track(scene, rig, heavy)
 
     def sample(clip, progress):
-        for track in tracks:
-            track.mute = track.name != clip
         active = tracks[clip].strips[0]
-        time = active.frame_start + progress * (active.frame_end - active.frame_start)
+        animation = rig.animation_data
+        animation.use_nla = False
+        animation.action = active.action
+        animation.action_slot = active.action_slot
+        time = active.action_frame_start + progress * (active.action_frame_end - active.action_frame_start)
         scene.frame_set(math.floor(time), subframe=time % 1)
         bpy.context.view_layer.update()
 

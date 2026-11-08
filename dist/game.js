@@ -194,6 +194,9 @@ FRAMES.push(
  {name:'BASTION',model:'BST–04',role:'HEAVY SUPPORT',color:'#708c92',hp:188,arm:100,leg:105,move:3,armor:7,foundry:2,cost:3000,weapon:'missile'}
 );
 const PART_LABEL={body:'BODY',pilot:'PILOT',right:'WEAPON ARM',left:'LEFT ARM',legs:'LEGS'};
+const HELLBREAKER=FRAMES.length;
+FRAMES.push({...FRAMES[3],name:'HELLBREAKER',model:'HV–09X',role:'HOSTILE BREACH',
+ native:'hellbreaker',salvageOnly:true,brief:'Enemy breach chassis. Recover a wreck on No quiet frontier and rebuild it in the Workshop.'});
 const PILOT_HP=[70,55,80];
 const CREW_HP=[...PILOT_HP,60,72,67,61,76];
 const ENEMY_NAMES=['JACKAL','RAVEN','MARAUDER','GATEBREAKER','LOCUST','SERAPH','RONIN','TITAN','SENTINEL','RAZOR','CITADEL'];
@@ -359,6 +362,7 @@ function persist(enemyPending=false){
 }
 function captureSortie(enemyPending=false){
  return{version:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action,part:targetPart,enemyPending,
+  ...(battle.frontierHellbreaker?{frontierHellbreaker:true}:{}),
   units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed}))};
 }
 function dispatchSizes(){
@@ -376,11 +380,12 @@ function sortieSpawns(contract,count){
 }
 const contractPay=(contract,count)=>Math.round(contract.pay*[0,.65,.85,1][count]);
 const validSlots=slots=>Array.isArray(slots)&&slots.length>=1&&slots.length<=3&&new Set(slots).size===slots.length&&slots.every(i=>LANCE_SLOTS.includes(i));
-function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS){
+function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,frontierHellbreaker=true){
  const contract=CONTRACTS[i],field=FIELDS[contract.field];
  const layout=theaterLayouts?.[contract.field]?.cover||field.cover;
  const cover=legacy?field.cover:layout;
  battle={contract,field:{...field,cover},size:legacy?{width:10,depth:10}:NEW_BOARD,legacy,stockHostiles,slots:[...slots],turn:1,phase:'player',units:[],cover:new Set(Object.keys(cover)),log:['Lance deployed. Reactor signatures detected.'],busy:false};
+ battle.frontierHellbreaker=!legacy&&!stockHostiles&&contract.id==='frontier'&&frontierHellbreaker;
  const allies=legacy?[[1,8],[2,9],[0,9]]:[[1,16],[2,18],[0,18]];
  const enemies=legacy?Array.from({length:contract.legacyMechs},(_,j)=>[j%3*3+2,Math.floor(j/3)]):sortieSpawns(contract,slots.length);
  battle.units=slots.map((slot,index)=>makeUnit(slot,'ally',...allies[index]));
@@ -413,8 +418,9 @@ function restoreSortie(){
  const contractIndex=CONTRACTS.findIndex(c=>c.id===contractId);
  const slots=saved.version>=6?saved.slots:LANCE_SLOTS;
  let valid=[1,2,3,4,5,6,7].includes(saved.version)&&validSlots(slots)&&(!legacy||slots.length===3)&&typeof legacy==='boolean'&&(saved.version<4||typeof saved.stockHostiles==='boolean')&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&slots.includes(saved.selected)&&['move','fire','strike'].includes(saved.action)&&['body','pilot','left','right','legs'].includes(saved.part)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
+ valid=valid&&(saved.frontierHellbreaker===undefined||saved.frontierHellbreaker===true&&saved.version===7&&!legacy&&!saved.stockHostiles&&contractId==='frontier');
  if(valid){
-  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,slots);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
+  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,slots,saved.frontierHellbreaker===true);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
   for(let i=0;valid&&i<saved.units.length;i++){
    const state=saved.units[i],u=battle.units[i];valid=!!state&&integer(state.x,0,battle.size.width-1)&&integer(state.z,0,battle.size.depth-1)&&(state.face===undefined||state.face===1||state.face===-1)&&!battle.cover.has(state.x+','+state.z)&&integer(state.ap,0,roundAP(u.training)+(u.pilot===0?overdriveAP(u.training):0))&&typeof state.brace==='boolean'&&typeof state.skill==='boolean'&&typeof state.boost==='boolean'&&state.hp&&targetParts(u).every(p=>p==='pilot'&&saved.version<4&&state.hp.pilot===undefined||integer(state.hp[p],0,u.max[p]));
    if(valid&&saved.version>=5)valid=integer(state.moveLeft,0,mobility(u))&&typeof state.actionPhase==='boolean'&&typeof state.extraStep==='boolean'&&(!state.actionPhase||state.moveLeft===0)&&(!state.extraStep||state.actionPhase)&&typeof state.reacted==='boolean'&&Number.isFinite(state.heading)&&Math.abs(state.heading)<=Math.PI;
@@ -528,10 +534,11 @@ function equipmentChoices(u,options,training){
 }
 const hullSlot=frame=>LANCE_SLOTS.findIndex(i=>pilotFrame(i)===frame);
 const hullOwned=frame=>hullSlot(frame)>=0||Boolean(save.reserve?.[frame]);
+const hullOnMarket=frame=>!FRAMES[frame].salvageOnly&&!hullOwned(frame);
 const rebuildPrice=frame=>Math.max(400,Math.round((FRAMES[frame].cost??1500)*.35/50)*50);
 const scrapPrice=frame=>Math.round(rebuildPrice(frame)*.45/25)*25;
 function acquireHull(frame,salvaged=false){
- if(battle||!FRAMES[frame]||hullOwned(frame)||(salvaged&&!save.salvage?.[frame]))return false;
+ if(battle||!FRAMES[frame]||hullOwned(frame)||(salvaged?!save.salvage?.[frame]:!hullOnMarket(frame)))return false;
  const price=salvaged?rebuildPrice(frame):FRAMES[frame].cost??0;
  if(save.credits<price)return false;
  const hull={...stockHull(frame),condition:salvaged?55:100};
@@ -549,14 +556,14 @@ function recycleHullBody(frame){
  takeSalvage(frame);save.credits+=scrapPrice(frame);persist();return true;
 }
 function workshopTabs(){
- const counts={assigned:3,storage:Object.keys(save.reserve??{}).length,market:FRAMES.filter((_,i)=>!hullOwned(i)).length,salvage:Object.values(save.salvage??{}).reduce((sum,n)=>sum+n,0)};
+ const counts={assigned:3,storage:Object.keys(save.reserve??{}).length,market:FRAMES.filter((_,i)=>hullOnMarket(i)).length,salvage:Object.values(save.salvage??{}).reduce((sum,n)=>sum+n,0)};
  return `<div class="reference-tabs bay-tabs" aria-label="Workshop bays">${Object.entries(counts).map(([view,count])=>`<button type="button" data-bay="${view}" aria-pressed="${workshopView===view}">${view} <b>${count}</b></button>`).join('')}</div>`;
 }
 function chassisAssignments(i,training){
  const assigned=pilotFrame(i),view=workshopView;
  const choices=FRAMES.map((frame,index)=>{
   const slot=hullSlot(index),reserve=save.reserve?.[index],bodies=save.salvage?.[index]??0;
-  if(view==='assigned'&&slot<0||view==='storage'&&!reserve||view==='market'&&hullOwned(index)||view==='salvage'&&!bodies)return '';
+  if(view==='assigned'&&slot<0||view==='storage'&&!reserve||view==='market'&&!hullOnMarket(index)||view==='salvage'&&!bodies)return '';
   const salvaged=view==='salvage',hull=salvaged?stockHull(index):slot>=0?save.units[slot]:reserve??stockHull(index);
   const {body,right,legs}=chassisParts(frame,hull,training);
   const primary=weapon(hull.weapon),melee=hull.melee&&weapon(hull.melee);
@@ -584,6 +591,7 @@ function assignChassis(i,frame,allowSwap=false){
  if(previous===frame)return false;
  const other=PILOTS.findIndex((_,slot)=>pilotFrame(slot)===frame);
  if(other>=0&&!allowSwap)return false;
+ if(FRAMES[frame].salvageOnly&&other<0&&!save.reserve?.[frame])return false;
  const cost=other<0&&!save.reserve?.[frame]?(FRAMES[frame].cost||0):0;
  if(save.credits<cost)return false;
  const reserve=save.reserve??={};
@@ -1112,7 +1120,7 @@ function guide(section='orders'){
 function makeUnit(i,team,x,z){
  const ally=team==='ally';
  const mixed=battle.stockHostiles?null:FOUNDRY_HOSTILES[battle.contract.id];
- const frame=ally?pilotFrame(i):mixed?.[i]??i%3,f=FRAMES[frame];
+ const frame=ally?pilotFrame(i):i===0&&battle.frontierHellbreaker?HELLBREAKER:mixed?.[i]??i%3,f=FRAMES[frame];
  const u=ally?save.units[i]:{...stockHull(frame),upgrade:Math.max(0,battle.contract.difficulty-1),level:battle.contract.difficulty,
   weapon:f.weapon||['rifle','shotgun','missile'][i%3]};
  const training=ally?trainingEffects(i):undefined;
@@ -1120,7 +1128,7 @@ function makeUnit(i,team,x,z){
  const pilot=ally?pilotClass(i):undefined;
  const max={body,pilot:ally?CREW_HP[pilot]:PILOT_HP[i%PILOT_HP.length],...limbs};
  const hp=Object.fromEntries(Object.entries(max).map(([part,n])=>[part,part==='pilot'?n:deploymentHP(n,u.condition)]));
- return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:ENEMY_NAMES[frame]+' '+(i+1),weapon:u.weapon,melee:u.melee??null,
+ return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee:u.melee??null,
   paint:ally?u.paint??null:HOSTILE_PAINT,trim:ally?u.trim:null,upgrade:u.upgrade,level:u.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
 }
 function prepareSortie(i){
@@ -1365,7 +1373,7 @@ async function moveUnit(u,x,z){
   }else await delay(duration*1000);
   u.vx=p.x;u.vz=p.z;u.motion=null;u.landTime=clock;
   if(!u.kind){effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});sound('step',mass)}
-  if(!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
+  if(!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||u.frame===HELLBREAKER||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
  }
  u.walkCount=gaitBase+steps.length;
 }
@@ -1533,7 +1541,9 @@ async function endTurn(){
 function finish(win){
  const b=battle,c=b.contract,promotions=[];
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
- const recovered=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive).sort((a,z)=>z.hp.body-a.hp.body).slice(0,1+(retriever?.training?.wreckExtra??0)):[];
+ const recovered=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive)
+  .sort((a,z)=>Number(Boolean(FRAMES[z.frame].salvageOnly))-Number(Boolean(FRAMES[a.frame].salvageOnly))||z.hp.body-a.hp.body)
+  .slice(0,1+(retriever?.training?.wreckExtra??0)):[];
  for(const wreck of recovered){const bodies=save.salvage??={};bodies[wreck.frame]=(bodies[wreck.frame]??0)+1}
  const reward=win?contractPay(c,b.slots.length):0;
  const salvage=win&&!c.fixedPay?450+c.difficulty*200+(b.legacy?0:180*b.units.filter(u=>u.kind).length):0;
@@ -1777,6 +1787,7 @@ const MECH_MOTION=[
  ...[[.53,.90],[.64,1.24],[.68,1.52],[.56,1.08],[.49,.73],[.66,1.44]].map(([step,mass])=>(
   {step,mass,hip:.51,split:.5,foot:[.83,.84],muzzle:[.26,.46]}))
 ];
+MECH_MOTION[HELLBREAKER]=MECH_MOTION[3];
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
 function dampedImpulse(age,frequency=35,decay=15){return age>=0&&age<.8?Math.sin(age*frequency)*Math.exp(-age*decay):0}

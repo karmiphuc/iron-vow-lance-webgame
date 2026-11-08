@@ -3,7 +3,14 @@
 const chassis = {
   gatecrasher: {
     name: "Gatecrasher", serial: "HV-09", role: "Heavy assault",
-    summary: "Weathered steel, layered crimson pauldrons, an asymmetrical chest battery, and a twin forearm cannon.",
+    summary: "Layered crimson armor, a low braced stance, a left shoulder cannon, and an integrated twin forearm cannon.",
+    weapon: "Twin recoil cannon",
+    deploy: "The hips settle, the cannon arm rises, and the articulated gripper tightens.",
+    fire: "The cannon carriage slides twice while the hips and shoulders absorb the recoil.",
+  },
+  hellbreaker: {
+    name: "Hellbreaker", serial: "HV-09X", role: "Hostile breach",
+    summary: "The original assault hull now serves the Frontier hostiles. Recover a wreck to rebuild it in the Workshop.",
     weapon: "Twin recoil cannon",
     deploy: "The hips settle, the cannon arm rises, and the articulated gripper tightens.",
     fire: "The cannon carriage slides twice while the hips and shoulders absorb the recoil.",
@@ -92,7 +99,7 @@ function setClip(name, autoplay) {
 }
 
 function updateCamera() {
-  const height = activeChassis === "gatecrasher" ? 6 : 5.3;
+  const height = activeChassis === "cicada" ? 5.3 : 6;
   const aspect = camera.aspect;
   const distance = height * (aspect < 1 ? 2.05 / Math.max(.72, aspect) : 1.83) * distanceScale;
   const target = height * .47;
