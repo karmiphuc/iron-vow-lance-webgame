@@ -62,7 +62,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','ga
  assert.ok(existsSync(join(dist,'assets',atlas.key+'.webp')));
  const gait=atlas.grounded;
  assert.equal(gait.detail.cell,384);
- assert.equal(gait.points.length,2+6*gait.samples);
+ assert.equal(gait.points.length,2+6*gait.samples+(gait.strike?.samples??0));
  for(const [heading,key] of gait.detail.keys.entries()){
   for(const suffix of ['','-paint'])assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
   for(const [kind,start] of Object.entries(gait.walk)){
@@ -83,11 +83,11 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','ga
  }
  const glb=readFileSync(join(dist,'rig-bench/prototypes',model+'.glb'));
  const json=JSON.parse(glb.subarray(20,20+glb.readUInt32LE(12)));
- assert.deepEqual(new Set(json.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire']));
+ assert.deepEqual(new Set(json.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire',...(model==='gatecrasher'?['Strike']:[])]));
  assert.ok(json.nodes.some(node=>node.name===model.toUpperCase()+' / Rig'));
  if(model==='gatecrasher'){
   assert.ok(json.materials.some(material=>material.name==='HV-09 / badge'),'raised torso badge has its paint role');
-  for(const socket of ['Muzzle.Upper','Muzzle.Lower','Hardpoint.L'])
+  for(const socket of ['Muzzle.Upper','Muzzle.Lower','Hardpoint.L','Cleaver Tip.L','Shoulder Hardpoint.R','Shoulder Muzzle.R','Shoulder Muzzle2.R'])
    assert.ok(json.nodes.some(node=>node.name===socket),socket);
   assert.ok(!json.nodes.some(node=>node.name==='Hardpoint.R'));
  }

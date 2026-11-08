@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
-from mathutils import Vector
+from mathutils import Matrix, Vector
 from PIL import Image
 
 
@@ -19,6 +19,8 @@ COLUMNS = 8
 FIRE_CUES = (.42, .58)
 STRIKE_CUE = .34
 STRIKE_DURATION = 1.05
+CLEAVER_CLOSE_LEVELS = (0,.08,.16,.24,.28,.31,.34,.37,.40,.43,.46,.49,.52,.54,.57,.60,.63,.68,.73,.78,.85,.93,1)
+CLEAVER_FIELD_LEVELS = (0,.14,.25,.31,.36,.42,.49,.56,.63,.73,.86,1)
 
 
 def rotate(rig, name, x=0, y=0, z=0):
@@ -46,21 +48,93 @@ def strike(rig, progress, heavy):
             rotate(rig, f"Finger {i} tip.L", x=.18 + .61 * max(windup, hit))
 
 
+def cleaver_orientation(blade, palm):
+    x = -Vector(blade).normalized()
+    y = Vector(palm)
+    y = (y - x*y.dot(x)).normalized()
+    return Matrix((x, y, x.cross(y))).transposed().to_quaternion()
+
+
+def cleaver_pose(rig, phase, reference):
+    shoulder, elbow, wrist = (rig.pose.bones[name] for name in ("Shoulder.L", "Elbow.L", "Wrist.L"))
+    shoulder_rest, elbow_rest, wrist_rest = reference
+    neutral = wrist_rest.to_quaternion()
+    guard = wrist_rest.translation
+    # Wrist targets in armature space. The cut runs out from the left flank,
+    # through the target lane, then across the front of the chassis.
+    keys = (
+        (0, guard, neutral, 0, 0, 0),
+        (.31, Vector((2.40, -.40, 3.68)), cleaver_orientation((.67,.23,.70),(.12,-.98,.18)), .29, -.04, 0),
+        (.49, Vector((1.83,-1.72,3.66)), cleaver_orientation((-.31,-.94,-.13),(.67,-.20,-.74)), -.37, .12, .20),
+        (.63, Vector((1.07,-1.66,3.22)), cleaver_orientation((-.77,-.53,-.35),(.51,-.36,-.78)), -.46, .08, .15),
+        (.78, Vector((1.69,-1.05,3.07)), cleaver_orientation((.16,-.35,-.92),(.16,-.96,.15)), -.18, .04, .07),
+        (1, guard, neutral, 0, 0, 0),
+    )
+    for a,b in zip(keys,keys[1:]):
+        if phase <= b[0]:
+            u = (phase-a[0])/(b[0]-a[0])
+            u = u*u*(3-2*u)
+            break
+    mix = lambda index: a[index]+(b[index]-a[index])*u
+    target = a[1].lerp(b[1],u)
+    hand = a[2].slerp(b[2],u)
+    rotate(rig, "Torso", x=mix(4), z=mix(3))
+    # Advance the hips over the fixed foot controls.
+    pelvis = rig.pose.bones["Pelvis"]
+    pelvis.location = pelvis.bone.matrix_local.to_3x3().inverted() @ Vector((0,-mix(5),-.42*mix(5)))
+    rotate(rig,"Pauldron.L",x=-.22*max(0,-mix(3)),y=-.18*abs(mix(3)))
+    bpy.context.view_layer.update()
+
+    head = shoulder.head.copy()
+    delta = target-head
+    distance = delta.length
+    arm = elbow_rest.translation-shoulder_rest.translation
+    forearm = wrist_rest.translation-elbow_rest.translation
+    upper, lower = arm.length, forearm.length
+    assert abs(upper-lower) < distance < upper+lower-.005, (phase,distance,upper+lower)
+    direction = delta.normalized()
+    pole = (arm-direction*arm.dot(direction)).normalized()
+    along = (distance*distance+upper*upper-lower*lower)/(2*distance)
+    joint = head+direction*along+pole*math.sqrt(upper*upper-along*along)
+    shoulder.matrix = Matrix.LocRotScale(head,arm.rotation_difference(joint-head) @ shoulder_rest.to_quaternion(),None)
+    bpy.context.view_layer.update()
+    elbow.matrix = Matrix.LocRotScale(joint,forearm.rotation_difference(target-joint) @ elbow_rest.to_quaternion(),None)
+    bpy.context.view_layer.update()
+    wrist.matrix = Matrix.LocRotScale(target,hand,None)
+    bpy.context.view_layer.update()
+    assert (wrist.head-target).length < .001, (phase,wrist.head[:],target[:])
+
+
 def add_strike_track(scene, rig, heavy):
     anim = rig.animation_data
+    if anim.nla_tracks.get("Strike"):
+        return
     fire = anim.nla_tracks["Fire"]
     for track in anim.nla_tracks:
         track.mute = track != fire
     scene.frame_set(int(fire.strips[0].frame_start))
     controls = [rig.pose.bones[bone.name] for bone in rig.data.collections["Controls"].bones]
     baseline = {bone.name: (bone.location.copy(), bone.rotation_euler.copy()) for bone in controls}
+    armed = "Cleaver Tip.L" in rig.pose.bones
+    reference = tuple(rig.pose.bones[name].matrix.copy() for name in ("Shoulder.L","Elbow.L","Wrist.L"))
+    previous = {}
     fire.mute = True
     action = bpy.data.actions.new("Field strike")
     anim.action = action
     for step in range(31):
         for bone in controls:
             bone.location, bone.rotation_euler = baseline[bone.name]
-        strike(rig, step / 30, heavy)
+        if armed:
+            cleaver_pose(rig, step / 30, reference)
+            for name in ("Shoulder.L","Elbow.L","Wrist.L"):
+                bone = rig.pose.bones[name]
+                if name in previous:
+                    angles = bone.rotation_euler.copy()
+                    angles.make_compatible(previous[name])
+                    bone.rotation_euler = angles
+                previous[name] = bone.rotation_euler.copy()
+        else:
+            strike(rig, step / 30, heavy)
         for bone in controls:
             bone.keyframe_insert("location", frame=1 + step, group=bone.name)
             bone.keyframe_insert("rotation_euler", frame=1 + step, group=bone.name)
@@ -169,11 +243,16 @@ def hardpoints(scene, camera, rig, heavy):
         wrist = rig.pose.bones["Wrist.L"]
         emitter = wrist.bone.head_local + Vector((0, -.528, -.09))
         tip = rig.matrix_world @ wrist.matrix @ wrist.bone.matrix_local.inverted() @ emitter
-    return {key: project(pos) for key, pos in {
+    anchors = {key: project(pos) for key, pos in {
         "body": body, "left": left, "right": right, "legs": legs, "muzzle": muzzle,
         "muzzle2": muzzle2, "meleeTip": tip,
         "leadFoot": point("Foot.L") - Vector((0, 0, .40)),
     }.items()}
+    if "Cleaver Tip.L" in rig.pose.bones:
+        anchors.update(meleeTip=project(point("Cleaver Tip.L")),
+                       shoulderMuzzle=project(point("Shoulder Muzzle.R")),
+                       shoulderMuzzle2=project(point("Shoulder Muzzle2.R")))
+    return anchors
 
 
 def save_pair(color, paint, destination, key, quality):
@@ -210,7 +289,8 @@ def bake(model, rigs, output, tmp):
 
     gait = [i / 18 for i in range(18)]
     fire = sorted({i / 18 for i in range(19)} | set(FIRE_CUES))
-    melee = sorted({i / 12 for i in range(13)} | {STRIKE_CUE, .54})
+    melee = (CLEAVER_CLOSE_LEVELS if "Cleaver Tip.L" in rig.pose.bones else
+             sorted({i / 12 for i in range(13)} | {STRIKE_CUE, .54}))
     frames = [("gait", "Walk", gait), ("fire", "Fire", fire), ("strike", "Strike", melee)]
     rows = math.ceil(sum(len(levels) for _, _, levels in frames) / COLUMNS)
     result = {}

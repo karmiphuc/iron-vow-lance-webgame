@@ -11,7 +11,7 @@ from mathutils import Vector
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from render_prototype_combat import configure_render, hardpoints, render_sprite, rotate, save_pair
+from render_prototype_combat import CLEAVER_FIELD_LEVELS, add_strike_track, configure_render, hardpoints, render_sprite, rotate, save_pair
 
 
 CELL, COLUMNS, SAMPLES = 384, 8, 11
@@ -78,6 +78,9 @@ def bake(model, source, output):
     bpy.ops.wm.open_mainfile(filepath=str(source), load_ui=False)
     scene = bpy.context.scene
     rig, = (obj for obj in scene.objects if obj.type == "ARMATURE")
+    armed = "Cleaver Tip.L" in rig.pose.bones
+    if armed:
+        add_strike_track(scene, rig, True)
     studio = bpy.data.collections.get("Studio | Four reference views")
     if studio:
         studio.hide_render = True
@@ -93,6 +96,9 @@ def bake(model, source, output):
             for side in "LR":
                 starts[kind+side] = len(plan)
                 plan.extend((kind, side, n/(SAMPLES-1)) for n in range(SAMPLES))
+        strike_start = len(plan)
+        if armed:
+            plan.extend(("Strike", None, level) for level in CLEAVER_FIELD_LEVELS)
         rows = math.ceil(len(plan)/COLUMNS)
         points = [[] for _ in plan]
         keys = []
@@ -106,7 +112,10 @@ def bake(model, source, output):
             bpy.context.view_layer.update()
             assert project(scene, camera, Vector((0, 0, 0))) == [.5, GROUND]
             for index, (kind, side, level) in enumerate(plan):
-                if kind:
+                if kind == "Strike":
+                    sample(scene, rig, kind, level)
+                    plant = None
+                elif kind:
                     plant = walk(scene, rig, kind, side, level)
                 else:
                     sample(scene, rig, "Fire", level)
@@ -129,6 +138,8 @@ def bake(model, source, output):
             keys.append(heading_key)
             print(f"Baked {model} heading {heading}: {len(plan)} poses", flush=True)
         return {"span":SPAN, "ground":GROUND, "samples":SAMPLES, "walk":starts,
+                **({"strike":{"first":strike_start, "samples":len(CLEAVER_FIELD_LEVELS),
+                             "levels":CLEAVER_FIELD_LEVELS}} if armed else {}),
                 "points":points, "detail":{"cell":CELL, "columns":COLUMNS, "keys":keys}}
 
 

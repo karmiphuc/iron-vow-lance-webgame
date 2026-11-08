@@ -589,7 +589,7 @@ function persist(enemyPending=false){
  }catch{warn()}
 }
 function captureSortie(enemyPending=false){
- return{version:battle.aux||battle.launchAP?8:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action,part:targetPart,enemyPending,
+ return{version:battle.aux||battle.launchAP?8:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action:action==='missile'?'fire':action,part:targetPart,enemyPending,
   ...(battle.aux?{aux:battle.aux}:{}),...(battle.launchAP?{launchAP:battle.launchAP}:{}),
   ...(battle.frontierHellbreaker?{frontierHellbreaker:true}:{}),
   units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed}))};
@@ -703,9 +703,12 @@ function restoreSortie(){
 function toast(s){if(careerStale)return;$('#toast').textContent=s;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
 function money(n){return n.toLocaleString()+' CR'}
 function weapon(id){return WEAPONS.find(w=>w.id===id)||WEAPONS[0]}
-function selectedWeapon(u,mode=action){return u&&(mode==='strike'?(u.melee?weapon(u.melee):null):weapon(u.weapon))}
+function meleeWeapon(u,frame=u.frame){return u.melee?weapon(frame===3||frame===FRAMES[3]?'cleaver':u.melee):null}
+function shoulderWeapon(u,frame=u?.frame){return frame===3?weapon('missile'):null}
+function selectedWeapon(u,mode=action){return u&&(mode==='strike'?meleeWeapon(u):mode==='missile'?shoulderWeapon(u):weapon(u.weapon))}
 const paidAttackAP=(u,w)=>Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0));
-function canUseWeapon(u,w){return Boolean(u&&w&&u.ap>=paidAttackAP(u,w)&&u.hp[w.melee?'left':'right']>0)}
+function weaponSubsystem(u,w){return w===shoulderWeapon(u)?'body':w.melee?'left':'right'}
+function canUseWeapon(u,w){return Boolean(u&&w&&u.ap>=paidAttackAP(u,w)&&u.hp[weaponSubsystem(u,w)]>0)}
 function infoTip(label,description){
  const escaped=description.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;');
  return `<button type="button" class="info-tip" aria-label="Help for ${label}" data-help="${escaped}">${icon('info')}</button>`;
@@ -760,7 +763,7 @@ function counterSummary(primary,melee,training){
  return range?range+' tiles or '+close.toLowerCase():close+(melee?'':' · 5–10 DMG');
 }
 function workshopStats(i,frame,hull,training=trainingEffects(i)){
- const kind=pilotClass(i),parts=chassisParts(frame,hull,training),armor=chassisArmor(frame,hull,training),primary=weapon(hull.weapon),melee=hull.melee&&weapon(hull.melee),pilot=CREW[kind];
+ const kind=pilotClass(i),parts=chassisParts(frame,hull,training),armor=chassisArmor(frame,hull,training),primary=weapon(hull.weapon),melee=meleeWeapon(hull,frame),pilot=CREW[kind];
  const reach=weaponRange(primary,training);
  const stats=[
   ['Free movement',chassisMobility(frame,false,training)+' tiles',MOVE_HELP],
@@ -827,7 +830,7 @@ function chassisAssignments(i,training){
   if(view==='assigned'&&slot<0||view==='storage'&&!reserve||view==='market'&&!hullOnMarket(index)||view==='salvage'&&!bodies)return '';
   const salvaged=view==='salvage',hull=salvaged?stockHull(index):slot>=0?save.units[slot]:reserve??stockHull(index);
   const {body,right,legs}=chassisParts(frame,hull,training);
-  const primary=weapon(hull.weapon),melee=hull.melee&&weapon(hull.melee);
+  const primary=weapon(hull.weapon),melee=meleeWeapon(hull,frame);
   return `<article class="bay-card">
    <img src="${frame.rig==='bastion'?art('bastion-bst04'):frame.foundry!=null?art('foundry-'+frame.foundry+'-front'):chassisArt(index,hull.weapon,1)}" alt="" loading="lazy">
    <span class="eyebrow">${frame.model} / ${frame.role}</span><h3>${frame.name}</h3>
@@ -872,8 +875,9 @@ function assignChassis(i,frame,allowSwap=false){
  persist();
  return true;
 }
-function builtInLoadout(u,training){
- return [weapon(u.weapon),weapon(u.melee)].map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w.melee?'SECONDARY / STRIKE':'PRIMARY / FIRE'}</span>${infoTip(w.name,w.desc)}</div><h3>${w.name}</h3><small>${w.damage} BASE DMG / ${weaponRange(w,training)} RANGE / ${weaponAP(w,training)} AP</small></article>`).join('');
+function builtInLoadout(u,training,frame){
+ const shoulder=shoulderWeapon(u,frame);
+ return [weapon(u.weapon),meleeWeapon(u,frame),shoulder].filter(Boolean).map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w===shoulder?'RIGHT SHOULDER / MISSILE':w.melee?'LEFT HAND / STRIKE':'PRIMARY / FIRE'}</span>${infoTip(w.name,w.desc)}</div><h3>${w.name}</h3><small>${w.damage} BASE DMG / ${weaponRange(w,training)} RANGE / ${weaponAP(w,training)} AP</small></article>`).join('');
 }
 function workshopPaint(u){
  const trim=foundryModel(pilotFrame(selected))!=null?'<div class="foundry-trim">'+[['s','Secondary','#343b42'],['a','Accent','#e08e3b']].map(([k,label,color])=>`<label class="paint-custom">${label} <input data-trim="${k}" type="color" aria-label="${label} paint" value="${u.trim?.[k]||color}"></label>`).join('')+'<button id="reset-trim" type="button">FACTORY TRIM</button></div>':'';
@@ -1338,7 +1342,7 @@ function render(){
   <div class="workshop-meta"><h2>${f.name}</h2>${f.foundry!=null?'<button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>':''}${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion grip motion tests"><button type="button" id="bastion-test-rifle">TEST RIFLE</button><button type="button" id="bastion-test-melee">TEST MELEE</button></div>':''}${workshopPaint(u)}
   ${frame===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH</a>':''}<a class="rig-bench-link" href="rig-bench/prototypes/">OPEN PROTOTYPE BAY</a>${stat('CONDITION',u.condition+'%',u.condition)}
   <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><div class="inline-help"><small>+25 BODY HP · +2 ARMOR PER MK</small>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div></div></section>
-  <section><div class="eyebrow">LOADOUT / ${p.call}</div>${f.native?`<h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief)}</div>${builtInLoadout(u,training)}`:`<h2 class="loadout-title">THE RIGHT TOOL.</h2><div class="inline-help"><small>COMPANY ARMORY</small>${infoTip('company armory','Unlock each weapon once for the whole company.')}</div>
+  <section><div class="eyebrow">LOADOUT / ${p.call}</div>${f.native?`<h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief)}</div>${builtInLoadout(u,training,frame)}`:`<h2 class="loadout-title">THE RIGHT TOOL.</h2><div class="inline-help"><small>COMPANY ARMORY</small>${infoTip('company armory','Unlock each weapon once for the whole company.')}</div>
   <h3 class="loadout-slot">PRIMARY / RANGED</h3><div class="equipment">${equipmentChoices(u,RANGED,training)}</div>
   <h3 class="loadout-slot">SECONDARY / MELEE</h3><div class="equipment">${equipmentChoices(u,MELEE,training)}</div>
    ${u.melee?'<button class="remove-melee" id="remove-melee">UNEQUIP MELEE</button>':''}`}</section></div>`:''}</div>`;
@@ -1696,17 +1700,19 @@ function renderBattle(){
   const targetReaction=reactionStatus(target),counter=target&&u?reactionWeapon(target,u):null;
   const targetStatus=[target?.blackout?'JAMMED':'',target?.painted?'PAINTED · '+target.painted.shots:''].filter(Boolean).join(' / ');
   const ready=battle.phase==='player'&&!battle.busy,canMove=Boolean(u&&movementLimit(u)),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u)||selectedWeapon(u,'fire');
+  const missile=shoulderWeapon(u),canMissile=canUseWeapon(u,missile);
   $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p class="field-terrain">${battle.field.label}</p><p>Eliminate all hostile contacts.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${String(battle.turn).padStart(2,'0')}<small>${battle.phase==='player'?'YOUR LANCE / TAKE COMMAND':'HOSTILE LANCE / STAND BY'}</small></div>
   <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>${targetStatus||'SUBSYSTEM DETAILS'}</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${targetStatus?`<span class="combat-status">${targetStatus}</span>`:''}${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':foundryModel(target.frame)!=null?'enemy foundry-target':'enemy'}" data-target-id="${target.id}" data-visual-key="${target.kind?'':targetPortraitKey(target)}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target),true)}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':PART_LABEL[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${partDamage(u,target,aimPart,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=weaponRange(chosen,u.training)?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>${target?.kind?'DESTROY HULL TO NEUTRALIZE':'DISABLE BODY OR PILOT'}</div>${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${targetReaction}${counter?' / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):targetReaction==='READY'&&u?' / OUT OF REACH':''}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}${u?`<div class="combat-selected"><span class="eyebrow">${CREW[u.pilot].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${CREW[u.pilot].skill}: ${u.skill?'USED':skillDescription(u.pilot,u.training)}</p></div>`:''}</aside>
-  <div class="log">${battle.log.map(l=>'<div class="log-line">'+l+'</div>').join('')}</div><div class="hint">${battle.busy?'RESOLVING COMBAT':action==='move'?(u?('MOVE / '+freeMovement(u)+' FREE'+(extraMovement(u)?' / +1 TILE FOR '+EXTRA_MOVE_AP+' AP':'')+(u.actionPhase?' / ACTION PHASE':'')):'MOVE / SELECT A READY MECH'):(action==='strike'?'STRIKE / ADJACENT HOSTILE / ':'FIRE / SELECT HOSTILE / ')+(chosen?paidAttackAP(u,chosen):3)+' AP PER ATTACK'+(u&&chargedLimbShot(u,chosen,aimPart,false)?' / CHARGED':'')}</div>
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button><button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
+  <div class="log">${battle.log.map(l=>'<div class="log-line">'+l+'</div>').join('')}</div><div class="hint">${battle.busy?'RESOLVING COMBAT':action==='move'?(u?('MOVE / '+freeMovement(u)+' FREE'+(extraMovement(u)?' / +1 TILE FOR '+EXTRA_MOVE_AP+' AP':'')+(u.actionPhase?' / ACTION PHASE':'')):'MOVE / SELECT A READY MECH'):(action==='strike'?'STRIKE / ADJACENT HOSTILE / ':action==='missile'?'MISSILE / SELECT HOSTILE / ':'FIRE / SELECT HOSTILE / ')+(chosen?paidAttackAP(u,chosen):3)+' AP PER ATTACK'+(u&&chargedLimbShot(u,chosen,aimPart,false)?' / CHARGED':'')}</div>
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="Right shoulder Vesper MRL">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
   refreshTargetPortrait();
   bindTacticalMap();
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy)selectUnit(+b.dataset.unit)});
   document.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{targetPart=b.dataset.part;if(W<=760)targetPanelOpen=false;renderBattle();if(W<=760)$('#target-toggle').focus();persist()});
   $('#move').onclick=()=>{if(canMove){action='move';renderBattle();persist()}};$('#fire').onclick=()=>{action='fire';renderBattle();persist()};$('#strike').onclick=()=>{if(canStrike){action='strike';renderBattle();persist()}};$('#skill').onclick=skill;
+  if(missile)$('#missile').onclick=()=>{if(canMissile){action='missile';renderBattle();persist()}};
   $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){startAction(u);u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
   $('#end').onclick=endTurn;$('#manual').onclick=()=>guide();$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
   $('#withdraw').onclick=()=>{if(battle.busy)return;modal('BREAK CONTACT?','<p>Withdraw your lance. You retain earned experience, but forfeit payment and salvage. Combat damage persists.</p>',[{text:'STAY & FIGHT',fn:closeModal},{text:'WITHDRAW',fn:()=>{closeModal();finish(false)}}])};
@@ -1870,11 +1876,13 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false){
   const images=[field?.image,close&&attackMotionImage(close,a.paint)].filter(image=>image?.decode&&!imageReady(image));
   if(images.length)await Promise.race([Promise.allSettled(images.map(image=>image.decode())),delay(900)]);
  }
- const clip=w.melee?'strike':'fire',native=!a.kind&&wardenVisual(a.frame,a.weapon,a.face,a.team==='enemy')?.timing?.[clip];
+ const shoulder=w===shoulderWeapon(a),clip=w.melee?'strike':'fire';
+ const plantedCleaver=a.frame===3&&w.id==='cleaver';
+ const native=!shoulder&&!a.kind&&wardenVisual(a.frame,a.weapon,a.face,a.team==='enemy')?.timing?.[clip];
  const plantedBastion=a.brace&&bastionRig(a);
  const plantedWarden=a.brace&&a.hp.legs>0&&upgradedWardenTravel(travelAtlas(a));
  const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
- const primeDuration=!a.kind&&a.hp.legs>0&&!reducedMotion?
+ const primeDuration=!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
   (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,native:native?{...native,clip}:null};
  if(primeDuration){
@@ -1977,7 +1985,7 @@ function reactionStatus(u){
 function reactionWeapon(defender,attacker){
  if(reactionStatus(defender)!=='READY'||!attacker?.alive)return null;
  const range=distance(defender,attacker),close=range===1&&defender.hp.left>0&&canReachTarget(FREE_HAND_COUNTER,attacker);
- if(close&&defender.melee)return weapon(defender.melee);
+ if(close&&defender.melee)return meleeWeapon(defender);
  const ranged=unitWeapon(defender),reach=counterRange(ranged,defender.training,defender.brace);
  if(defender.hp.right>0&&reach&&range<=reach)return ranged;
  return close?FREE_HAND_COUNTER:null;
@@ -2015,7 +2023,7 @@ async function endTurn(){
    if(next&&next.d<distance(enemy,target))await moveUnit(enemy,next.x,next.z,next.cost);
   }
   while(enemy.alive&&target.alive){
-   const strike=enemy.melee&&distance(enemy,target)===1?weapon(enemy.melee):null;
+   const strike=distance(enemy,target)===1?meleeWeapon(enemy):null;
    const w=strike&&canUseWeapon(enemy,strike)?strike:primary;
    if(enemy.ap<w.ap||(!enemy.kind&&!canUseWeapon(enemy,w))||distance(enemy,target)>w.range)break;
    await engage(enemy,target,aiPart(enemy,target,w),w);renderBattle();
@@ -2273,6 +2281,10 @@ function wardenStrikeClip(u,pose){
 function wardenStrikeLevel(u,pose){
  return reducedMotion?(Number.isFinite(u.attack?.fireAt)?.70:0):pose.strikeProgress;
 }
+function nativeAttackProgress(attack,t){
+ const {cue,duration}=attack.native,{start,fireAt,primeDuration}=attack;
+ return clamp01(Number.isFinite(fireAt)?cue+(t-fireAt)/duration:Math.min(cue,(t-start-primeDuration)/duration));
+}
 function wardenMotionFrame(u,visual,pose){
  if(!visual)return;
  const strikeAtlas=visual.strikeMotion,clip=strikeAtlas&&wardenStrikeClip(u,pose);
@@ -2293,9 +2305,7 @@ function wardenMotionFrame(u,visual,pose){
     const index=Math.min(atlas.gait.length-1,Math.floor(pose.primeProgress*atlas.gait.length/2));
     return {atlas,image,frame:atlas.gait[index]};
    }
-   const {cue,duration,clip}=native,{start,fireAt,primeDuration}=u.attack;
-   const progress=Number.isFinite(fireAt)?cue+(pose.time-fireAt)/duration:Math.min(cue,(pose.time-start-primeDuration)/duration);
-   return{atlas,image,frame:nearestFrame(atlas[clip],clamp01(progress))};
+   return{atlas,image,frame:nearestFrame(atlas[native.clip],nativeAttackProgress(u.attack,pose.time))};
   }
   return{atlas,image,frame:atlas.gait[Math.floor((pose.cycle%1)*atlas.gait.length)]};
  }
@@ -3033,7 +3043,7 @@ function travelVisual(u,t){
  if(atlas.grounded&&imageReady(detail?.image)){
   const data=atlas.grounded,{cell,columns}=data.detail;
   const motion=u.motion,segment=motion?.segment;
-  let row=u.attack?1:0,x=u.vx,z=u.vz;
+  let row=u.attack&&u.attack.kind!=='missile'?1:0,x=u.vx,z=u.vz;
   if(segment&&!reducedMotion){
    const distance=segment.index+fieldStepProgress(phase,segment);
    const pace=segment.paces.find(step=>distance<=step.to)??segment.paces.at(-1);
@@ -3043,6 +3053,11 @@ function travelVisual(u,t){
    const q=pace.from+(pace.to-pace.from)*frame/(data.samples-1)-segment.index;
    x=motion.fromX+(motion.toX-motion.fromX)*q;
    z=motion.fromZ+(motion.toZ-motion.fromZ)*q;
+  }else if(data.strike&&u.attack?.native?.clip==='strike'&&!reducedMotion){
+   const progress=nativeAttackProgress(u.attack,t),levels=data.strike.levels;
+   const frame=levels?levels.findIndex((level,index)=>index===levels.length-1||progress<=(level+levels[index+1])*.5):
+    Math.round(progress*(data.strike.samples-1));
+   row=data.strike.first+frame;
   }
   const p=project(x,0,z),size=scale*data.span/3.65;
   const bounds=recoilingBounds(u,{x:p.x-size*.5,y:p.y-size*data.ground,w:size,h:size},t);
@@ -3050,6 +3065,7 @@ function travelVisual(u,t){
   const strike=u.attack&&ATTACK_PROFILES[u.attack.kind].melee?animationPose(u,t):null;
   return {atlas,image:detail.image,source,bounds,row,heading,points:data.points[row][heading],direction,strike,grounded:true};
  }
+ if(atlas.grounded?.strike)return null;
  const gait=u.motion?(FRAMES[u.frame]?.native?phase:((u.motion.gaitBase+phase)/2)%1):0;
  const prime=u.attack?.primeDuration?clamp01((t-u.attack.start)/u.attack.primeDuration):0;
  const stockRow=u.kind?0:u.motion&&!reducedMotion?1+Math.min(5,Math.floor(gait*6)):
@@ -3152,7 +3168,7 @@ function drawTravel(u,t,view){
  }
  const painted=upgradedWardenTravel(atlas);
  const behind=painted&&(heading===1||heading===2);
- const melee=u.hp.left>0&&(view.strike||(foundry&&u.melee&&foundryModel(u.frame)===4&&!u.attack))?
+ const melee=!atlas.grounded?.strike&&u.hp.left>0&&(view.strike||(foundry&&u.melee&&foundryModel(u.frame)===4&&!u.attack))?
   travelMount(view,u,view.strike?u.attack.kind:u.melee,view.strike?.strikeProgress):null;
  if(behind&&u.hp.right>0)drawWeaponModule(ctx,travelMount(view,u,u.weapon));
  if(behind&&melee)drawWeaponModule(ctx,melee);
@@ -3207,6 +3223,7 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
  const live=foundryRender(u,t,true),travel=!live&&travelVisual(u,t);
  if(travel){
   if(part==='meleeTip'){
+   if(travel.atlas.grounded?.strike)return spritePoint(travel.bounds,travel.points.meleeTip);
    const blade=travelMount(travel,u,u.attack?.kind||u.melee,travel.strike?.strikeProgress);
    return blade?weaponPoint(blade,'tip'):spritePoint(travel.bounds,travel.points.left||travel.points.body);
   }
@@ -3250,6 +3267,11 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
  return mechSourcePoint(u,source[0],source[1],{...remainingPose(pose,baked),baseOnly:true,kneel:baked?.frame?0:pose.kneel});
 }
 function freezeAttachment(u,part,t=clock){const p=mechAttachmentPoint(u,part,t),base=project(u.vx,0,u.vz);return{x:u.vx,z:u.vz,ox:(p.x-base.x)/scale,oy:(p.y-base.y)/scale}}
+function shotMuzzle(actor,id,index){
+ const alternate=(launchesMissiles(weapon(id))||ATTACK_PROFILES[id].alternate)&&index%2;
+ const shoulder=actor.frame===3&&id==='missile';
+ return shoulder?(alternate?'shoulderMuzzle2':'shoulderMuzzle'):(alternate?'muzzle2':'muzzle');
+}
 function resolveAttachment(a){const p=project(a.x,0,a.z);return{x:p.x+a.ox*scale,y:p.y+a.oy*scale}}
 function drawMechSmoke(u,t,destroyed=false){
  const age=t-(u.deathTime??t-20);if(destroyed&&age>9)return;
@@ -3390,7 +3412,7 @@ function drawAttackEffect(e,t){
  }
  for(let i=0;i<profile.beats.length;i++){
   const since=age-profile.beats[i];if(since<0||since>.65)continue;
-  if(!e.origins[i])e.origins[i]=actor?freezeAttachment(actor,(kind==='missile'||profile.alternate)&&i%2?'muzzle2':'muzzle',e.born+profile.beats[i]):{x:e.x,z:e.z,ox:0,oy:-1.4};
+  if(!e.origins[i])e.origins[i]=actor?freezeAttachment(actor,shotMuzzle(actor,e.kind,i),e.born+profile.beats[i]):{x:e.x,z:e.z,ox:0,oy:-1.4};
   const a=resolveAttachment(e.origins[i]),p=since/profile.travel;
   ctx.save();ctx.lineCap='round';
   if(p>=0&&p<=1){
@@ -3548,7 +3570,7 @@ function drawCinematicFire(sequence,actor,pane,t){
   const time=age-beat;
   const missile=sequence.w.id==='locust'||sequence.w.id==='missile';
   if(time<0||time>(missile?.32:.17))continue;
-  const p=mechAttachmentPoint(actor,(sequence.w.id==='missile'||profile.alternate)&&i%2?'muzzle2':'muzzle',missile?sequence.fireAt+beat:t);
+  const p=mechAttachmentPoint(actor,shotMuzzle(actor,sequence.w.id,i),missile?sequence.fireAt+beat:t);
   if(missile){
    const flight=time/.32,reach=flight*pane.w*.48,lift=Math.sin(flight*Math.PI*.7)*scale*.78;
    const x=p.x+reach,y=p.y-lift;
@@ -3730,7 +3752,7 @@ function selectUnit(index){
  const unit=battle.units.find(u=>u.team==='ally'&&u.index===index&&u.alive&&!spent(u));
  if(!unit)return;
  selected=index;focusBattleCamera(unit);
- if((action==='strike'&&!unit.melee)||(action==='move'&&!movementLimit(unit)))action='fire';
+ if((action==='strike'&&!unit.melee)||(action==='missile'&&!shoulderWeapon(unit))||(action==='move'&&!movementLimit(unit)))action='fire';
  renderBattle();persist();
 }
 function focusNextReady(){
@@ -3766,7 +3788,7 @@ canvas.addEventListener('pointerup',async e=>{
   if(picked?.team!=='enemy')return toast('Select a hostile contact');
   const w=selectedWeapon(u);
   if(!w)return toast('Equip a melee weapon in Workshop.');
-  if(u.hp[w.melee?'left':'right']<=0)return toast(w.melee?'Melee arm destroyed. Switch to fire.':'Weapon arm destroyed. Move or brace to support your lance.');
+  if(u.hp[weaponSubsystem(u,w)]<=0)return toast(w.melee?'Melee arm destroyed. Switch to fire.':'Weapon arm destroyed. Move or brace to support your lance.');
  if(u.ap<paidAttackAP(u,w))return toast('Not enough AP. Select another unit or end your turn.');
   if(!canReachTarget(w,picked))return toast('Gunships require ranged fire.');
   if(distance(u,picked)>weaponRange(w,u.training))return toast(w.melee?'Strike requires an adjacent target.':'Target out of range. Move closer.');

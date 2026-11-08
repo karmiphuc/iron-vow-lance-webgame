@@ -92,7 +92,7 @@ const simulate=require('./sim-harness.cjs');
   assert.equal((workshop.match(/data-chassis=/g)||[]).length,3);
   const actual=JSON.parse(stats.run(`createBattle(0);JSON.stringify({
    name:current().name,free:freeMovement(current()),armor:current().armor,ap:current().ap,
-   hp:current().hp,max:current().max,primary:unitWeapon(current()),melee:current().melee&&weapon(current().melee)
+   hp:current().hp,max:current().max,primary:unitWeapon(current()),melee:selectedWeapon(current(),'strike')
   })`));
   assert.ok(workshop.includes(actual.name+' / SORTIE STATS'));
   for(const [label,value] of [

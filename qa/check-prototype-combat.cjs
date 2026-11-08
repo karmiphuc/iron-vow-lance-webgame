@@ -84,9 +84,9 @@ const setTimeout = (callback, ms) => {
  assert.equal(run("canUseWeapon(current(),selectedWeapon(current(),'strike'))"),true);
  run('current().hp.right=100;battle.units[3].x=3;battle.units[3].z=16');
  poses=[];capture=true;
- await run("shoot(current(),battle.units[3],'body',weapon('breach-gauntlet'))");
+ await run("shoot(current(),battle.units[3],'body',selectedWeapon(current(),'strike'))");
  capture=false;
- assert.equal(run('current().ap'),1);
+ assert.equal(run('current().ap'),2);
  assert.ok(poses.some(p=>p.clip==='strike'&&p.level===.54));
  run('selected=1;battle.units[5].x=4;battle.units[5].z=18');
  poses=[];capture=true;

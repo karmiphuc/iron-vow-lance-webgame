@@ -3,10 +3,11 @@
 const chassis = {
   gatecrasher: {
     name: "Gatecrasher", serial: "HV-09", role: "Heavy assault",
-    summary: "Layered crimson armor, a low braced stance, a left shoulder cannon, and an integrated twin forearm cannon.",
-    weapon: "Twin recoil cannon",
+    summary: "An Arc Cleaver in the left hand and a Vesper pod over the right shoulder round out the twin forearm cannon.",
+    weapon: "Morrow AC-2 / Arc Cleaver / Vesper MRL",
     deploy: "The hips settle, the cannon arm rises, and the articulated gripper tightens.",
     fire: "The cannon carriage slides twice while the hips and shoulders absorb the recoil.",
+    strike: "The torso coils, drives the cleaver through the target lane, and returns to guard with both feet planted.",
   },
   hellbreaker: {
     name: "Hellbreaker", serial: "HV-09X", role: "Hostile breach",
@@ -66,6 +67,8 @@ function setControls(ready) {
   for (const button of [...clipButtons, ...cameraButtons, playButton, rigButton]) {
     button.disabled = !ready;
   }
+  const strike = clipButtons.find((button) => button.dataset.clip === "Strike");
+  strike.hidden = activeChassis !== "gatecrasher";
   scrubber.disabled = !ready;
 }
 
@@ -91,6 +94,10 @@ function setClip(name, autoplay) {
   if (mixer) {
     mixer.stopAllAction();
     action = mixer.clipAction(assets.get(activeChassis).animations.find((clip) => clip.name === name));
+    if (name === "Strike") {
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+    }
     action.reset().play();
     mixer.update(0);
   }
@@ -242,7 +249,7 @@ async function selectChassis(id) {
     if (!asset) {
       asset = await loader.loadAsync("./" + id + ".glb");
       const clipNames = new Set(asset.animations.map((clip) => clip.name));
-      if (!clipButtons.every((button) => clipNames.has(button.dataset.clip))) {
+      if (!clipButtons.every((button) => (button.dataset.clip === "Strike" && id !== "gatecrasher") || clipNames.has(button.dataset.clip))) {
         throw new Error("Required motion clips are missing");
       }
       assets.set(id, asset);
@@ -280,7 +287,8 @@ async function selectChassis(id) {
     skeleton.visible = showRig;
     scene.add(skeleton);
     mixer = new THREE.AnimationMixer(model);
-    setClip(preferredClip, !reduceMotion.matches);
+    mixer.addEventListener("finished", () => setPlaying(false));
+    setClip(asset.animations.some((clip) => clip.name === preferredClip) ? preferredClip : "Idle", !reduceMotion.matches);
     setControls(true);
     sizeViewport();
     renderer.render(scene, camera);
@@ -307,7 +315,10 @@ for (const button of cameraButtons) {
     updateCamera();
   });
 }
-playButton.addEventListener("click", () => setPlaying(!playing));
+playButton.addEventListener("click", () => {
+  if (action?.time >= action?.getClip().duration) action.reset().play();
+  setPlaying(!playing);
+});
 rigButton.addEventListener("click", () => {
   showRig = !showRig;
   skeleton.visible = showRig;
