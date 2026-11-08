@@ -1254,6 +1254,7 @@ function chassisArt(i,loadout,direction=-1,stock=false){
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
 }
 function targetPortraitKey(target){
+ if(bastionRig(target))return 'bastion-bst04';
  const model=foundryModel(target.frame);
  if(model!=null)return window.IRON_VOW_FOUNDRY_ART?.[model]?.views?.[0]?.key??'';
  return wardenVisual(target.frame,target.weapon,unitFacing(target))?.key??'';
@@ -2521,7 +2522,7 @@ function refreshTargetPortrait(){
  if(!key)return;
  const target=battle?.units.find(u=>u.id===portrait.dataset.targetId);
  if(!target||target.kind)return;
- const foundry=foundryModel(target.frame)!=null,base=foundry?moduleImage(key):artImages[key];
+ const foundry=foundryModel(target.frame)!=null&&!bastionRig(target),base=foundry?moduleImage(key):artImages[key];
  if(!imageReady(base))return;
  const visual=wardenVisual(target.frame,target.weapon,unitFacing(target));
  const image=foundry?foundryPaint(base,key,target.paint,target.trim):
@@ -3552,9 +3553,33 @@ function draw(ts){
 }
 canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();fieldCamera.overview=false;viewZoom=Math.min(1.65,Math.max(.70,viewZoom*(e.deltaY<0?1.08:.925)))},{passive:false});
 function screenTile(clientX,clientY){let sx=(clientX-origin.x)/(scale*.866),sy=(clientY-origin.y)/(scale*.42);return{x:Math.round((sx+sy)/2),z:Math.round((sy-sx)/2)}}
+const bastionPickMasks=new WeakMap();
+let bastionPickContext;
+function bastionContains(u,x,y){
+ const t=hitstopTime(u,clock),b=recoilingBounds(u,unitBounds(u),t);
+ const px=(x-b.x)/b.w,py=(y-b.y)/b.h;
+ if(px<0||py<0||px>=1||py>=1)return false;
+ const {surface,stamp,baked}=foundryRender(u,t);
+ if(!surface||(baked&&!imageReady(surface)))return false;
+ let cached=bastionPickMasks.get(surface);
+ if(!cached||cached.stamp!==stamp){
+  const size=128;
+  bastionPickContext??=renderSurface(size,size)?.getContext('2d',{willReadFrequently:true});
+  if(!bastionPickContext)return false;
+  const g=bastionPickContext;
+  g.clearRect(0,0,size,size);
+  g.drawImage(surface,0,0,size,size);
+  cached={stamp,mask:g.getImageData(0,0,size,size)};
+  bastionPickMasks.set(surface,cached);
+ }
+ const {width,height,data}=cached.mask;
+ return data[(Math.floor(py*height)*width+Math.floor(px*width))*4+3]>35;
+}
 function pick(clientX,clientY){
  const units=battle.units.filter(u=>u.alive&&(u.team!=='ally'||!spent(u))).sort((a,b)=>(b.vx+b.vz)-(a.vx+a.vz));
- for(const u of units){const visual=activeWardenVisual(u),view=travelVisual(u,clock),b=view?.bounds||(u.kind?vehicleBounds(u,clock):unitBounds(u,visual)),px=(clientX-b.x)/b.w,py=(clientY-b.y)/b.h;if(px<0||py<0||px>1||py>1)continue;
+ for(const u of units){
+ if(!u.kind&&bastionRig(u)){if(bastionContains(u,clientX,clientY))return u;continue}
+ const visual=activeWardenVisual(u),view=travelVisual(u,clock),b=view?.bounds||(u.kind?vehicleBounds(u,clock):unitBounds(u,visual)),px=(clientX-b.x)/b.w,py=(clientY-b.y)/b.h;if(px<0||py<0||px>1||py>1)continue;
  const foundry=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(u.frame)];
  const travel=view;
  if(travel){

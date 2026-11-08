@@ -38,6 +38,7 @@ async function checkBastionGrips({page,mobile,origin,tap}){
  assert.notEqual(await page.locator('#paint-preview').evaluate(c=>c.toDataURL()),startPixels,'Workshop melee actually changes the visible pose');
  await tap('[data-equip="cleaver"]');
  assert.equal(await page.evaluate(()=>save.units[0].melee),'cleaver');
+ await checkBastionSelection(page,mobile);
  await page.evaluate(()=>{
   battle=null;deploy(0,false,[0]);
   Math.random=()=>0;
@@ -101,5 +102,49 @@ async function checkBastionGrips({page,mobile,origin,tap}){
  assert.ok(drift<.001,'both feet remain planted through the strike: '+drift);
  assert.ok(result.tips.length&&Math.max(...result.tips)<.001&&result.visible.every(Boolean),'strike trail follows the rendered blade tip');
  console.log('PASS Bastion HD '+(mobile?'touch-emulated':'desktop')+' melee',result.damage,'damage,',result.tips.length,'tip samples');
+}
+async function checkBastionSelection(page,mobile){
+ await page.evaluate(()=>{
+  createBattle(0,false,false,[0,1]);
+  const bastion=battle.units[0];
+  selected=1;action='fire';hover=null;
+  focusBattleCamera(bastion,true);renderBattle();
+ });
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(resolve)));
+ const points=await page.evaluate(()=>{
+  const bastion=battle.units[0];
+  const bounds=unitBounds(bastion),live=foundryRender(bastion,clock,true);
+  const {width,height}=live.surface;
+  const pixels=live.surface.getContext('2d').getImageData(0,0,width,height).data;
+  const stock=artMasks[window.IRON_VOW_FOUNDRY_ART[foundryModel(bastion.frame)].views[0].key];
+  const alpha=(x,y)=>pixels[(Math.floor(y*height)*width+Math.floor(x*width))*4+3];
+  const found={};
+  for(let row=6;row<94;row++)for(let col=6;col<94;col++){
+   const x=Math.round(bounds.x+bounds.w*col/100),y=Math.round(bounds.y+bounds.h*row/100);
+   if(document.elementFromPoint(x,y)!==canvas)continue;
+   const px=(x-bounds.x)/bounds.w,py=(y-bounds.y)/bounds.h;
+   const stockX=unitFacing(bastion)>0?1-px:px;
+   const stockAlpha=stock.data[(Math.floor(py*stock.height)*stock.width+Math.floor(stockX*stock.width))*4+3];
+   const samples=[alpha(px,py),alpha(px-.015,py),alpha(px+.015,py),alpha(px,py-.015),alpha(px,py+.015)];
+   if(stockAlpha<35&&samples.every(a=>a>230))found.armor??={x,y};
+   if(stockAlpha>80&&samples.every(a=>a<10))found.empty??={x,y};
+  }
+  return {...found,bounds,center:document.elementFromPoint(bounds.x+bounds.w/2,bounds.y+bounds.h/2)?.outerHTML.slice(0,150)};
+ });
+ assert.ok(points.armor&&points.empty,'fixture contains armor and empty space that differ from the old silhouette: '+JSON.stringify(points));
+ const click=({x,y})=>mobile?page.touchscreen.tap(x,y):page.mouse.click(x,y);
+ await click(points.empty);
+ assert.equal(await page.evaluate(()=>selected),1,'empty space inside the Bastion sprite does not select it');
+ await click(points.armor);
+ assert.equal(await page.evaluate(()=>selected),0,'visible Bastion armor selects it');
+ await page.evaluate(()=>{
+  const contact=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+  contact.frame=BASTION_FRAME;contact.name=FRAMES[BASTION_FRAME].name;
+  lockedTarget=contact.id;hover=null;renderBattle();
+ });
+ const portrait=page.locator('.combat-target img');
+ assert.match(await portrait.getAttribute('src'),/\/bastion-bst04\.webp(?:\?|$)/);
+ assert.equal(await portrait.getAttribute('data-visual-key'),'bastion-bst04','combat portrait uses the replacement hull');
+ await portrait.evaluate(image=>image.decode());
 }
 module.exports=checkBastionGrips;
