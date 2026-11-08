@@ -14,5 +14,12 @@ const projection='JSON.stringify(captureSortie())';
  sim.run('finish(true);closeModal()');assert.equal(sim.run('save.sortie'),undefined);assert.equal(sim.run('save.wins'),1);const paid=sim.run('save.credits');const afterVictory=createSimulation({storage:new Map(sim.storage)});assert.equal(afterVictory.run('battle'),null);assert.equal(afterVictory.run('save.wins'),1);assert.equal(afterVictory.run('save.credits'),paid);
  // Reaching level 100 must remain a valid saved career, rather than reset at load.
  const veteran=createSimulation();veteran.run('save.units[0].level=99;save.units[0].xp=9899;deploy(0);closeModal();finish(true);closeModal()');assert.equal(veteran.run('save.units[0].level'),100);assert.equal(veteran.run('validSave(save)'),true);const restoredVeteran=createSimulation({storage:new Map(veteran.storage)});assert.equal(restoredVeteran.run('save.units[0].level'),100);
- console.log('PASS: exact mid-sortie reload, spent AP and pilot skills, pending enemy replay once, corrupt checkpoint recovery, single victory payout and level-100 career persistence.');
+ const shared=new Map(),hangar=createSimulation({storage:shared}),staleShip=createSimulation({storage:shared});
+ assert.equal(hangar.run('queueHangarUpgrade("fabrication")'),true);
+ const currentSave=shared.get('iron-vow-career');
+ staleShip.run('queueShipUpgrade("office");closeModal()');
+ assert.equal(shared.get('iron-vow-career'),currentSave,'an earlier snapshot cannot write even before the storage event');
+ assert.equal(staleShip.run('careerStale'),true);
+ assert.equal(staleShip.node('#modal').hidden,false);
+ console.log('PASS: exact sortie and enemy replay, corrupt checkpoint recovery, single payout, level-100 career and stale tab save protection.');
 })().catch(e=>{console.error(e);process.exitCode=1});

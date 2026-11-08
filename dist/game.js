@@ -432,18 +432,34 @@ function assignPilot(i,kind){
  Object.assign(unit,{pilotId:id,level:incoming.level,xp:incoming.xp});
  delete save.reservePilots[id];persist();return true;
 }
-let save;try{save=loadCareer(JSON.parse(localStorage.getItem('iron-vow-career')))??fresh()}catch{save=fresh()}
+const CAREER_STORAGE='iron-vow-career';
+let save,storedCareer=null,careerStale=false;
+try{storedCareer=localStorage.getItem(CAREER_STORAGE);save=loadCareer(JSON.parse(storedCareer))??fresh()}catch{save=fresh()}
 save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
 const entryPage={'?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'ship';
 let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'base';
 let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
 let page=entryPage,selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=false,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
 try{muted=localStorage.getItem('iron-vow-sound')==='off'}catch{}
+function careerIsCurrent(){
+ if(careerStale)return false;
+ if(localStorage.getItem(CAREER_STORAGE)===storedCareer)return true;
+ closeHelp();
+ modal('CAREER UPDATED','<p>Another tab saved progress. Reload this tab to continue from the latest checkpoint.</p>',[
+  {text:'RELOAD CAREER',fn:()=>window.location.reload()}
+ ]);
+ careerStale=true;
+ for(const selector of ['header','#ui','#scene','#skip-shot'])$(selector).inert=true;
+ return false;
+}
 function persist(enemyPending=false){
  try{
+  if(!careerIsCurrent())return;
   if(battle&&battle.phase==='player'&&!battle.busy)save.sortie=captureSortie(enemyPending);
   else if(!battle)delete save.sortie;
-  localStorage.setItem('iron-vow-career',JSON.stringify(save));
+  const snapshot=JSON.stringify(save);
+  localStorage.setItem(CAREER_STORAGE,snapshot);
+  storedCareer=snapshot;
  }catch{toast('Storage unavailable. Keep this tab open to retain your career.')}
 }
 function captureSortie(enemyPending=false){
@@ -558,7 +574,7 @@ function restoreSortie(){
  action=saved.action==='strike'&&!current()?.melee?'move':saved.action;targetPart=saved.part;effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;focusBattleCamera(current(),true);battle.log=['Sortie restored from the last completed action.'];
  return{enemyPending:saved.enemyPending};
 }
-function toast(s){$('#toast').textContent=s;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
+function toast(s){if(careerStale)return;$('#toast').textContent=s;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
 function money(n){return n.toLocaleString()+' CR'}
 function weapon(id){return WEAPONS.find(w=>w.id===id)||WEAPONS[0]}
 function selectedWeapon(u,mode=action){return u&&(mode==='strike'?(u.melee?weapon(u.melee):null):weapon(u.weapon))}
@@ -1301,8 +1317,8 @@ function importCareer(record){
  if(restored?.enemyPending)void endTurn();
  return Boolean(restored);
 }
-function modal(title,body,buttons){if($('#modal').hidden)modalReturnFocus=document.activeElement;$('#modal').hidden=false;$('#modal').innerHTML=`<div class="modalbox" role="dialog" aria-modal="true" aria-label="${title}"><div class="eyebrow">IRON VOW / COMMAND UPLINK</div><h1>${title}</h1><div>${body}</div><div class="buttons">${buttons.map((b,i)=>`<button class="${i===buttons.length-1?'primary':''}" id="modal-${i}">${b.text}</button>`).join('')}</div></div>`;buttons.forEach((b,i)=>$('#modal-'+i).onclick=b.fn);$('#modal-0').focus()}
-function closeModal(){closeHelp();$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
+function modal(title,body,buttons){if(careerStale)return;if($('#modal').hidden)modalReturnFocus=document.activeElement;$('#modal').hidden=false;$('#modal').innerHTML=`<div class="modalbox" role="dialog" aria-modal="true" aria-label="${title}"><div class="eyebrow">IRON VOW / COMMAND UPLINK</div><h1>${title}</h1><div>${body}</div><div class="buttons">${buttons.map((b,i)=>`<button class="${i===buttons.length-1?'primary':''}" id="modal-${i}">${b.text}</button>`).join('')}</div></div>`;buttons.forEach((b,i)=>$('#modal-'+i).onclick=b.fn);$('#modal-0').focus()}
+function closeModal(){if(careerStale)return;closeHelp();$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
 function quickOrders(){
  const topics=[
   ['arrows-out-cardinal','Move','Free tiles, then +1 tile for '+EXTRA_MOVE_AP+' AP',MOVE_HELP+' Drag to pan or tap the map. Raised terrain blocks movement. Shielded tiles grant cover.'],
@@ -3488,4 +3504,10 @@ window.addEventListener('resize',closeHelp);
 window.addEventListener('blur',closeHelp);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpAnchor){e.preventDefault();e.stopImmediatePropagation();closeHelp()}},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){closeHelp();skipAttackCamera()}syncMusic()});
+window.addEventListener('storage',event=>{
+ if(event.storageArea===localStorage&&(event.key===CAREER_STORAGE||event.key===null))careerIsCurrent();
+});
+window.addEventListener('pageshow',event=>{
+ if(event.persisted)try{careerIsCurrent()}catch{}
+});
 const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';render();startAudio(false);requestAnimationFrame(draw);if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn();}

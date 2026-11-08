@@ -380,3 +380,10 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  .unitbuttons:has([data-unit="3"]) b{font-size:13px;overflow-wrap:anywhere}
  .unitbuttons:has([data-unit="3"]) small{white-space:normal}
 }
+@media(max-width:520px){
+ .hangar-status{top:45px}
+ .hangar-status:has(~ .unit-inspect){visibility:hidden}
+}
+@media(max-width:350px){
+ #nav button{padding-inline:0}
+}
