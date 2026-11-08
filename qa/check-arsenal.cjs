@@ -32,6 +32,9 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','game.js'])run(fs.re
 (async()=>{
  await ready('decodedArt.size===Object.keys(artImages).length');
  assert.equal(document.querySelectorAll('[data-equip]').length,9);
+ const weaponPreviews=[...document.querySelectorAll('[data-equip] .weapon-card-art')];
+ assert.equal(weaponPreviews.length,9);
+ for(const preview of weaponPreviews)assert.ok(fs.existsSync(path.join(dist,preview.getAttribute('src'))));
  click('[data-paint="#577eac"]');await ready("decoded.has('assets/warden-chassis-left-paint.webp')");
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).units[0].paint"),'#577eac');
  assert.ok(run("paintedImages.has('warden-chassis-left#577eac')"));
@@ -63,5 +66,16 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','game.js'])run(fs.re
   return !idle.asset.key.includes('extended')&&hit.asset.key.includes('extended');
  })()`),true);
  assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id].some(p=>p.level===.7))))"));
- console.log('PASS: paint preview cache and custom color, per-chassis saves, hostile red, nine workshop weapons, separate slots, strike checkpoints, AP/damage for five new weapons, three chassis pose libraries and Piledriver extension.');
+ for(const [index,name] of ['relay','corridor','frontier'].entries()){
+  run(`createBattle(${index});action='move';battlefield(clock)`);
+  await ready(`decoded.has('assets/ground-${name}.webp') && Object.values(battle.field.cover).every(prop=>decoded.has('assets/cover-'+prop+'.webp'))`);
+  assert.equal(run('battle.field.ground'),name);
+  assert.equal(run('new Set(Object.values(battle.field.cover)).size'),2);
+  assert.ok(run(`Array.from(battle.cover).every(key=>{
+   const [x,z]=key.split(',').map(Number);
+   return !paths(current()).has(key)&&inCover({x:x-1,z});
+  })`));
+  run('battlefield(clock)');
+ }
+ console.log('PASS: nine weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, new attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

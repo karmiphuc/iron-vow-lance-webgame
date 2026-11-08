@@ -12,3 +12,7 @@ The production meshes and textures contain no external geometry, textures, fonts
 ## Workshop expansion
 
 The Kestrel and Basilisk chassis, their texture atlases, and the Breacher, Vesper and Rampart models are original Iron Vow assets. The Workshop renders derive from these and the existing Warden and weapon meshes. The color masks derive from the original model UVs. The expansion uses no external model or texture assets.
+
+## Battlefield and armory visual pass
+
+All updated meshes, ground textures, and cover sprites are original Iron Vow work. BattleTech's published terrain categories, partial-cover presentation, and use of clear unit roles informed the design direction. No BattleTech art, models, maps, or names were imported.

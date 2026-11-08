@@ -79,3 +79,11 @@ The Workshop saves a free ceramic plate color and separate primary and melee slo
 The Kestrel and Basilisk model sources are under `tools/authoring/`. Their body pivots match Warden's shared rig. Kestrel has a slimmer recon profile and Basilisk launches Vesper missiles from its integral pod sockets. The game uses separately rendered chassis sheets and weapon modules, with UV-derived paint masks. It loads the model pose sheets during combat and keeps the GLBs alongside the 3D bench.
 
 To refresh the game renders, run `blender -b --python-exit-code 1 -t 6 -P tools/render_arsenal.py -- <model>` once per model (`warden`, `kestrel`, `basilisk`, `weapons`). Then run `node tools/assemble_arsenal.cjs`. Commit the generated WebPs and `dist/arsenal-visuals.js` together. The intermediate JSON files stay local.
+
+## Battlefield and armory visual pass
+
+The Workshop displays all nine weapon models on their equipment cards. The four revised ranged modules use the same attachment and effects hooks. The three revised chassis retain their current paint masks and shared animation pivots.
+
+The relay basin, refinery yard, and frozen frontier each load one projected ground texture and two local cover models. They retain the same cover coordinates, adjacency bonus, and movement costs. Reachable tiles that grant cover show a small shield. Painted roads, tracks, and water are visual.
+
+Run `python tools/render_battlefields.py` with Pillow and NumPy to rebuild the three ground textures. Run `blender -b -t 6 -P tools/render_cover.py` to bake the six cover sprites. Chassis and weapon sprite rebuilds use `tools/render_arsenal.py` as described above.

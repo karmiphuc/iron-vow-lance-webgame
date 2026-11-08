@@ -7,7 +7,9 @@ import bpy, bmesh, math, os, random, json, struct
 from mathutils import Vector, Matrix
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
-OUT=os.path.dirname(os.path.abspath(__file__))
+SOURCE_DIR=os.path.dirname(os.path.abspath(__file__))
+OUT=os.environ.get('IRON_VOW_ASSET_OUT',SOURCE_DIR)
+os.makedirs(OUT,exist_ok=True)
 random.seed(7)
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 for d in bpy.data.materials: bpy.data.materials.remove(d)
@@ -106,6 +108,17 @@ for i,c in enumerate(colors):
         stencil(d,(256,186),'CAUTION',54,(53,57,51))
         stencil(d,(256,263),'HYDRAULIC',37,(53,57,51))
         stencil(d,(256,319),'HIGH PRESSURE',28,(53,57,51))
+    if i==15:
+        # Deliberate field-service panel: quiet center, inset lip and small vent bank.
+        edge=tuple(int(v*.66) for v in c);lip=tuple(min(255,v+15) for v in c)
+        poly=[(48,35),(461,35),(482,57),(482,452),(460,477),(49,477),(29,454),(29,57),(48,35)]
+        d.line(poly,fill=edge,width=4);d.line([(50,41),(457,41),(476,60)],fill=lip,width=2)
+        for yy in [97,121,145]:
+            d.rectangle((117,yy,397,yy+9),fill=tuple(int(v*.39) for v in c))
+            d.line((118,yy+11,396,yy+11),fill=lip,width=2)
+        for xx,yy in [(65,69),(446,69),(65,442),(446,442)]:
+            d.ellipse((xx-5,yy-5,xx+5,yy+5),fill=edge);d.line((xx-2,yy,xx+2,yy),fill=lip,width=1)
+        d.rectangle((178,397,334,413),fill=tuple(int(v*.75) for v in c))
     base.paste(tile,(x,y))
     rough=[175,157,121,66,182,182,218,178,175,165,157,185,175,178,127,175][i]
     metal=[35,178,220,240,70,35,18,50,35,155,178,200,45,150,225,40][i]
@@ -113,9 +126,13 @@ for i,c in enumerate(colors):
     od.rectangle((0,0,511,511),outline=(225,min(255,rough+20),metal),width=6)
     orm.paste(ot,(x,y))
     hd=ImageDraw.Draw(height);hd.rectangle((x+12,y+12,x+500,y+500),outline=118,width=3)
+    if i==15:
+        hp=[(x+48,y+35),(x+461,y+35),(x+482,y+57),(x+482,y+452),(x+460,y+477),(x+49,y+477),(x+29,y+454),(x+29,y+57),(x+48,y+35)]
+        hd.line(hp,fill=104,width=4)
+        for yy in [97,121,145]:hd.rectangle((x+117,y+yy,x+397,y+yy+9),fill=98)
     if i==11:
         for k in range(7):hd.rectangle((x+70,y+110+k*43,x+442,y+128+k*43),fill=80)
-base.save(os.path.join(OUT,'warden_basecolor.jpg'),quality=91,subsampling=0,optimize=True)
+base.save(os.path.join(OUT,'warden_basecolor.jpg'),quality=85,subsampling=0,optimize=True)
 orm.save(os.path.join(OUT,'warden_orm.png'),optimize=True)
 h=np.array(height.filter(ImageFilter.GaussianBlur(.65)),dtype=float)/255
 dy,dx=np.gradient(h);norm=np.stack([-dx*5,dy*5,np.ones_like(h)],axis=2);norm/=np.linalg.norm(norm,axis=2,keepdims=True)
@@ -225,14 +242,14 @@ for y in [.23,.36,.49]:cyl(spine,.43,.065,(0,y,0),3,vertices=16)
 loft(spine,[(.38,.62,.38,-.40),(.73,.94,.64,-.65),(1.42,1.16,.65,-.74),(1.98,1.04,.12,-.68)],1,.04)
 for side in [1,-1]:
     panel_outline(spine,[(side*.13,.62),(side*.83,.69),(side*1.12,1.12),(side*.94,1.86),(side*.62,2.01),(side*.35,1.45)],1.05,1,.18,-.22)
-    panel_outline(spine,[(side*.50,1.22),(side*.89,1.25),(side*.79,1.70),(side*.59,1.81)],.96,7,.07,-.20)
+    panel_outline(spine,[(side*.50,1.22),(side*.89,1.25),(side*.79,1.70),(side*.59,1.81)],1.07,7,.07,-.20)
     box(spine,(.31,.09,.12),(side*.79,1.03,.72),2,.012)
     for y in [.87,.99,1.11]:box(spine,(.045,.06,.32),(side*1.13,y,.04),2,.008)
-    fasteners(spine,[(side*.98,1.22,.655),(side*.71,1.71,.54),(side*.45,.88,.735)])
+    fasteners(spine,[(side*.98,1.22,.793),(side*.71,1.71,.688),(side*.45,.88,.866)])
     # inset shoulder-adjacent grille with a raised armored border
     box(spine,(.30,.40,.08),(side*.96,1.53,-.42),11,.02,rot=(0,side*.35,0))
 panel_outline(spine,[(-.43,.56),(.43,.56),(.58,.94),(.45,1.36),(-.40,1.39),(-.58,.95)],1.01,0,.26,-.08)
-panel_outline(spine,[(-.32,.69),(.31,.69),(.37,.94),(.27,1.07),(-.29,1.09)],1.02,7,.07,-.08)
+panel_outline(spine,[(-.32,.69),(.31,.69),(.37,.94),(.27,1.07),(-.29,1.09)],1.02,15,.07,-.08)
 box(spine,(.37,.07,.035),(0,1.23,.928),2,.006)
 box(spine,(.20,.025,.037),(0,1.24,.95),3,.004)
 fasteners(spine,[(-.35,1.27,.944),(.35,1.26,.945),(-.39,.82,.97),(.39,.82,.97)])
@@ -354,6 +371,19 @@ for s,L in [(1,'L'),(-1,'R')]:
     piston(spine,(s*.93,1.54,-.43),sh,(s*.30,-.40,-.40),.065)
     piston(pelvis,(s*.67,.14,-.47),spine,(s*.75,.62,-.50),.062)
 
+# Frontline package: armored shin fronts, shoulder hinge rails and collar louvers.
+for side,L in [(1,'L'),(-1,'R')]:
+    sh,el,wr=arms[L];hip,kn,an=legs[L];paul=groups['pauldron.'+L]
+    panel_outline(kn,[(-.26,-.55),(.26,-.55),(.31,-.99),(.19,-1.28),(-.22,-1.25),(-.31,-.97)],.445,15,.095,.025)
+    box(kn,(.41,.06,.08),(0,-.56,.45),1,.012)
+    box(kn,(.33,.045,.07),(0,-1.22,.43),1,.008)
+    # Two hinge barrels sit within the shoulder crown's existing envelope.
+    for xx in [.10,.45]:cyl(paul,.042,.23,(side*xx,.60,.095),3,(1,0,0),10)
+    for yy in [1.43,1.52,1.61]:
+        box(spine,(.19,.023,.021),(side*.65,yy,1.085-.20*yy),2,.004)
+    # Heavy toe seam and flush locking ears remain above the established sole.
+    box(an,(.38,.035,.09),(0,.063,1.07),3,.006)
+
 # One primitive per joint/material, while attachment empties remain explicit.
 for (parent,material),objs in list(buckets.items()):
     bpy.ops.object.select_all(action='DESELECT')
@@ -372,7 +402,7 @@ for ob in bpy.data.objects:
 
 # Clearance relief is derived from the unchanged production Cleaver/Piledriver poses.
 # The small convex cutters carve the inner shoulder/chest faces only.
-profile=json.load(open(os.path.join(OUT,'clearance_profile.json')))
+profile=json.load(open(os.path.join(SOURCE_DIR,'clearance_profile.json')))
 def relief(target_name,points):
     target=bpy.data.objects[target_name+'.geometry']
     center=sum(points,Vector())/len(points);points=[center+(p-center)*1.018 for p in points]
@@ -392,7 +422,7 @@ for vert in bpy.data.objects['elbow.L.geometry'].data.vertices:
 relief('pauldron.L',points)
 for target,vertices in profile['weapon_cutters'].items():relief(target,[v(p) for p in vertices])
 
-root['asset']='WARDEN MARK II / IRON VOW';root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
+root['asset']='WARDEN MARK II / IRON VOW';root['detail_revision']=3;root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
 bpy.context.view_layer.update()
 triangles=sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in bpy.data.objects if o.type=='MESH')
 for o in bpy.data.objects:o.select_set(True)
@@ -400,6 +430,9 @@ bpy.context.view_layer.objects.active=root
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'warden.glb'),export_format='GLB',use_selection=True,export_yup=True,export_animations=False,export_cameras=False,export_lights=False,export_extras=True,export_image_format='AUTO',export_materials='EXPORT',export_normals=True,export_texcoords=True)
 exported=open(os.path.join(OUT,'warden.glb'),'rb').read();gltf=json.loads(exported[20:20+struct.unpack_from('<I',exported,12)[0]]);triangles=sum(gltf['accessors'][p['indices']]['count']//3 for m in gltf['meshes'] for p in m['primitives'])
 stats={'triangles':triangles,'glb_bytes':os.path.getsize(os.path.join(OUT,'warden.glb')),'rig':joint_contract,'pistons':pairs,'materials':[m.name for m in [mat,visor,stackmat]]}
+assert triangles<=60000,triangles
+assert stats['glb_bytes']<=4000000,stats['glb_bytes']
+stats['paintable_tiles']=[0,7,8,12,15]
 with open(os.path.join(OUT,'warden_contract.json'),'w') as f:json.dump(stats,f,indent=2)
 
 # Studio preview and editable native source; lights are excluded from shipped GLB.
@@ -410,10 +443,10 @@ for name,pos,power,size,col in [('key',(5,10,8),2100,6,(1,.94,.85)),('fill',(-6,
 bpy.ops.object.camera_add();cam=bpy.context.object;cam.name='Preview camera';cam.location=v((10,7.0,15));aim(cam,(0,3.2,0));cam.data.type='ORTHO';cam.data.ortho_scale=7.9;bpy.context.scene.camera=cam
 bpy.ops.mesh.primitive_plane_add(size=200);floor=bpy.context.object;floor.name='Preview ground';floor.location.z=.095
 fm=bpy.data.materials.new('Preview only ground');fm.diffuse_color=(.055,.065,.075,1);floor.data.materials.append(fm)
-scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=64;scene.cycles.use_denoising=False;scene.render.resolution_x=1200;scene.render.resolution_y=1200;scene.render.resolution_percentage=100;scene.render.image_settings.file_format='PNG';scene.render.filepath=os.path.join(OUT,'warden_preview.png')
+scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=40;scene.cycles.use_denoising=False;scene.render.resolution_x=1200;scene.render.resolution_y=1200;scene.render.resolution_percentage=100;scene.render.image_settings.file_format='PNG';scene.render.filepath=os.path.join(OUT,'warden_preview.png')
 scene.view_settings.view_transform='AgX'
 for im in bpy.data.images:
     if im.filepath:im.pack()
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'warden.blend'))
-bpy.ops.render.render(write_still=True)
+if os.environ.get('IRON_VOW_SKIP_PREVIEW')!='1':bpy.ops.render.render(write_still=True)
 print('WARDEN_STATS',json.dumps(stats))

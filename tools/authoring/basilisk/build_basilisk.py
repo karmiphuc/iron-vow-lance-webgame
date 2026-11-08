@@ -7,7 +7,9 @@ import bpy, bmesh, math, os, random, json, struct
 from mathutils import Vector, Matrix
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
-OUT=os.path.dirname(os.path.abspath(__file__))
+SOURCE_DIR=os.path.dirname(os.path.abspath(__file__))
+OUT=os.environ.get('IRON_VOW_ASSET_OUT',SOURCE_DIR)
+os.makedirs(OUT,exist_ok=True)
 random.seed(7)
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 for d in bpy.data.materials: bpy.data.materials.remove(d)
@@ -106,6 +108,17 @@ for i,c in enumerate(colors):
         stencil(d,(256,186),'CAUTION',54,(53,57,51))
         stencil(d,(256,263),'HYDRAULIC',37,(53,57,51))
         stencil(d,(256,319),'HIGH PRESSURE',28,(53,57,51))
+    if i==15:
+        # Deliberate field-service panel: quiet center, inset lip and small vent bank.
+        edge=tuple(int(v*.66) for v in c);lip=tuple(min(255,v+15) for v in c)
+        poly=[(48,35),(461,35),(482,57),(482,452),(460,477),(49,477),(29,454),(29,57),(48,35)]
+        d.line(poly,fill=edge,width=4);d.line([(50,41),(457,41),(476,60)],fill=lip,width=2)
+        for yy in [97,121,145]:
+            d.rectangle((117,yy,397,yy+9),fill=tuple(int(v*.39) for v in c))
+            d.line((118,yy+11,396,yy+11),fill=lip,width=2)
+        for xx,yy in [(65,69),(446,69),(65,442),(446,442)]:
+            d.ellipse((xx-5,yy-5,xx+5,yy+5),fill=edge);d.line((xx-2,yy,xx+2,yy),fill=lip,width=1)
+        d.rectangle((178,397,334,413),fill=tuple(int(v*.75) for v in c))
     base.paste(tile,(x,y))
     rough=[175,157,121,66,182,182,218,178,175,165,157,185,175,178,127,175][i]
     metal=[35,178,220,240,70,35,18,50,35,155,178,200,45,150,225,40][i]
@@ -113,9 +126,13 @@ for i,c in enumerate(colors):
     od.rectangle((0,0,511,511),outline=(225,min(255,rough+20),metal),width=6)
     orm.paste(ot,(x,y))
     hd=ImageDraw.Draw(height);hd.rectangle((x+12,y+12,x+500,y+500),outline=118,width=3)
+    if i==15:
+        hp=[(x+48,y+35),(x+461,y+35),(x+482,y+57),(x+482,y+452),(x+460,y+477),(x+49,y+477),(x+29,y+454),(x+29,y+57),(x+48,y+35)]
+        hd.line(hp,fill=104,width=4)
+        for yy in [97,121,145]:hd.rectangle((x+117,y+yy,x+397,y+yy+9),fill=98)
     if i==11:
         for k in range(7):hd.rectangle((x+70,y+110+k*43,x+442,y+128+k*43),fill=80)
-base.save(os.path.join(OUT,'basilisk_basecolor.jpg'),quality=87,subsampling=0,optimize=True)
+base.save(os.path.join(OUT,'basilisk_basecolor.jpg'),quality=82,subsampling=0,optimize=True)
 orm.save(os.path.join(OUT,'basilisk_orm.png'),optimize=True)
 h=np.array(height.filter(ImageFilter.GaussianBlur(.65)),dtype=float)/255
 dy,dx=np.gradient(h);norm=np.stack([-dx*5,dy*5,np.ones_like(h)],axis=2);norm/=np.linalg.norm(norm,axis=2,keepdims=True)
@@ -365,7 +382,7 @@ def podshell(parent,cx,cy):
         for z,pts in [(-1.55,xy),(.25,xy),(-1.55,inn),(.25,inn)]:
             for k in [i,j]:verts.append(tuple(v((cx+pts[k][0],cy+pts[k][1],z))))
         fs=[(0,1,3,2),(4,6,7,5),(0,4,5,1),(2,3,7,6),(0,2,6,4),(1,5,7,3)]
-        me=bpy.data.meshes.new('launcher shell segment');me.from_pydata(verts,[],fs);me.update();o=bpy.data.objects.new('launcher shell segment',me);bpy.context.collection.objects.link(o);finish(o,parent,1,None,.016)
+        me=bpy.data.meshes.new('launcher shell segment');me.from_pydata(verts,[],fs);me.update();o=bpy.data.objects.new('launcher shell segment',me);bpy.context.collection.objects.link(o);finish(o,parent,7 if i in (2,6) else 1,None,.016)
     # Recessed charcoal blast bulkhead, tube lips and capped munitions visible through the frame.
     box(parent,(1.31,.88,.11),(cx,cy,-.02),2,.04)
     for xx in [-.43,0,.43]:
@@ -381,7 +398,7 @@ def podshell(parent,cx,cy):
         for xx in [-.43,.43]:bolt(parent,(cx+xx,cy+.60,z),(0,1,0),.025)
     for side in [-1,1]:
         box(parent,(.085,.61,.70),(cx+side*.77,cy,-.76),1,.025)
-        box(parent,(.094,.35,.46),(cx+side*.78,cy-.02,-.75),7,.018)
+        box(parent,(.094,.35,.46),(cx+side*.78,cy-.02,-.75),15,.018)
         for z in [-1.32,-.20]:
             box(parent,(.07,.77,.13),(cx+side*.76,cy,z),1,.018)
             for yy in [-.23,.23]:bolt(parent,(cx+side*.805,cy+yy,z),(side,0,0),.025)
@@ -422,6 +439,21 @@ for s,L in [(1,'L'),(-1,'R')]:
     piston(spine,(s*.93,1.54,-.43),sh,(s*.30,-.40,-.40),.065)
     piston(pelvis,(s*.67,.14,-.47),spine,(s*.75,.62,-.50),.062)
 
+# Fire-support package: launch-frame brows, magazine indexing and outboard heel braces.
+for side,L in [(1,'L'),(-1,'R')]:
+    sh,el,wr=arms[L];hip,kn,an=legs[L]
+    cx=side*1.70;cy=2.77
+    # Flush pale brows keep both launch packs readable against dark terrain.
+    box(spine,(.95,.065,.105),(cx,cy+.46,.255),7,.012)
+    for xx in [-.43,0,.43]:box(spine,(.09,.025,.018),(cx+xx,cy-.46,.27),4,.004)
+    box(spine,(.34,.055,.28),(cx,cy+.60,-.20),15,.012)
+    # Braced heel uses only the outside of each foot; stance and sole remain exact.
+    box(an,(.16,.25,.44),(side*.57,-.105,-.25),1,.025)
+    box(an,(.17,.065,.24),(side*.57,.025,-.27),7,.01)
+    panel_outline(hip,[(-.21,-.42),(.24,-.39),(.25,-.69),(-.22,-.72)],.62,15,.035,.06)
+    # Two simple stiffeners on the outboard shin shield suggest recoil bracing.
+    for yy in [-.68,-.91]:box(kn,(.18,.05,.05),(side*.43,yy,.30+.05*yy),3,.008)
+
 # One primitive per joint/material, while attachment empties remain explicit.
 for (parent,material),objs in list(buckets.items()):
     bpy.ops.object.select_all(action='DESELECT')
@@ -440,7 +472,7 @@ for ob in bpy.data.objects:
 
 # Clearance relief is derived from the unchanged production Cleaver/Piledriver poses.
 # The small convex cutters carve the inner shoulder/chest faces only.
-profile=json.load(open(os.path.join(OUT,'clearance_profile.json')))
+profile=json.load(open(os.path.join(SOURCE_DIR,'clearance_profile.json')))
 def relief(target_name,points):
     target=bpy.data.objects[target_name+'.geometry']
     center=sum(points,Vector())/len(points);points=[center+(p-center)*1.018 for p in points]
@@ -460,7 +492,7 @@ for vert in bpy.data.objects['elbow.L.geometry'].data.vertices:
 relief('pauldron.L',points)
 for target,vertices in profile['weapon_cutters'].items():relief(target,[v(p) for p in vertices])
 
-root['asset']='BASILISK MARK II / IRON VOW';root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
+root['asset']='BASILISK MARK II / IRON VOW';root['detail_revision']=3;root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
 bpy.context.view_layer.update()
 triangles=sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in bpy.data.objects if o.type=='MESH')
 for o in bpy.data.objects:o.select_set(True)
@@ -480,10 +512,10 @@ for name,pos,power,size,col in [('key',(5,10,8),2100,6,(1,.94,.85)),('fill',(-6,
 bpy.ops.object.camera_add();cam=bpy.context.object;cam.name='Preview camera';cam.location=v((10,8.0,16));aim(cam,(0,3.55,0));cam.data.type='ORTHO';cam.data.ortho_scale=8.2;bpy.context.scene.camera=cam
 bpy.ops.mesh.primitive_plane_add(size=200);floor=bpy.context.object;floor.name='Preview ground';floor.location.z=.095
 fm=bpy.data.materials.new('Preview only ground');fm.diffuse_color=(.055,.065,.075,1);floor.data.materials.append(fm)
-scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=64;scene.cycles.use_denoising=False;scene.render.resolution_x=1200;scene.render.resolution_y=1200;scene.render.resolution_percentage=100;scene.render.image_settings.file_format='PNG';scene.render.filepath=os.path.join(OUT,'basilisk_preview.png')
+scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=40;scene.cycles.use_denoising=False;scene.render.resolution_x=1200;scene.render.resolution_y=1200;scene.render.resolution_percentage=100;scene.render.image_settings.file_format='PNG';scene.render.filepath=os.path.join(OUT,'basilisk_preview.png')
 scene.view_settings.view_transform='AgX'
 for im in bpy.data.images:
     if im.filepath:im.pack()
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'basilisk.blend'))
-bpy.ops.render.render(write_still=True)
+if os.environ.get('IRON_VOW_SKIP_PREVIEW')!='1':bpy.ops.render.render(write_still=True)
 print('BASILISK_STATS',json.dumps(stats))

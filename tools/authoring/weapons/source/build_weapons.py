@@ -170,34 +170,49 @@ cyl(g,'optic_lens',.060,.009,(0,.875,.579),'glass',n=12)
 ring(g,'optic_front_rim',.077,.061,.025,(0,.875,.58),'warmsteel',12)
 box(g,'optic_elevation_knob',(.09,.035,.10),(0,.984,.28),'warmsteel',.008)
 empty('muzzle',(0,.36,3.25),g);empty('eject',(-.2,.4,.5),g)
-# HAILSTORM: six independent bores, ring bracing and feed drum.
+# HAILSTORM: armored rotary drive, articulated feed and six open precision bores.
 g=empty('hailstorm');P['hailstorm']=g;grip(g)
-box(g,'rotary_receiver',(.56,.56,1.40),(0,.36,.24),'frame',.09)
-box(g,'upper_armor',(.59,.18,1.06),(0,.59,.27),'armor',.045)
-box(g,'rotary_safety_latch',(.38,.055,.22),(0,.707,.54),'accent',.015)
-for s in [-1,1]:
- plate(g,'receiver_cheek',[(.16,-.38),(.52,-.38),(.59,.35),(.41,.84),(.16,.77)],.035,s*.288,'armor2')
- stripes(g,s*.309,.40,-.30)
- for z in [.2,.37,.54]:box(g,'motor_cooling_vent',(.009,.12,.07),(s*.309,.32,z),'rubber',0)
- for z in [-.28,.65]:bolt(g,(s*.31,.20,z))
-cyl(g,'ammunition_drum',.38,.49,(0,-.12,-.25),'frame','x',16)
-for s in [-1,1]:
- cyl(g,'drum_armored_end',.395,.045,(s*.258,-.12,-.25),'armor','x',12)
- ring(g,'drum_outer_rim',.405,.34,.025,(s*.286,-.12,-.25),'steel',16,'x')
- cyl(g,'drum_center_boss',.13,.045,(s*.302,-.12,-.25),'accent','x',8)
- for a in [0,math.pi/2,math.pi,3*math.pi/2]:bolt(g,(s*.314,-.12+.26*math.cos(a),-.25+.26*math.sin(a)),r=.025)
-for i in range(6):
- t=i/5;box(g,'linked_ammunition_belt',(.10,.105,.13),(-.32-.055*math.sin(t*math.pi),-.05+t*.34,-.05+t*.4),'steel',.015)
+hull(g,'rotary_drive_housing',[(-.46,.20,.12,.57,.055),(-.28,.28,.08,.67,.065),(.59,.28,.10,.67,.055),(.92,.21,.17,.57,.045)],'gunmetal')
+for side in [-1,1]:
+ panel(g,'rotary_motor_cheek',[(.16,-.32),(.52,-.37),(.64,-.20),(.62,.39),(.45,.73),(.19,.66)],.033,side*.286,'gunmetal')
+ panel(g,'ceramic_motor_shield',[(.39,-.27),(.58,-.24),(.60,.20),(.49,.43),(.36,.28)],.029,side*.311)
+ panel(g,'lower_motor_service_cover',[(.15,-.10),(.31,-.10),(.38,.43),(.24,.60),(.14,.48)],.018,side*.309,'warmsteel')
+ for z in [.10,.27,.44]:box(g,'motor_air_exhaust',(.009,.10,.073),(side*.326,.28,z),'rubber',.004)
+ for y,z in [(.49,-.19),(.45,.55),(.18,.04)]:bolt(g,(side*.333,y,z),r=.019)
+ idmarks(g,side*.331,.49,-.18)
+box(g,'rotary_dorsal_backbone',(.31,.065,.95),(0,.702,.18),'gunmetal',.017)
+for z in [-.18,.02,.22,.42]:box(g,'dorsal_heat_fin',(.37,.035,.075),(0,.752,z),'warmsteel',.008)
+box(g,'drive_service_switch',(.11,.022,.12),(0,.734,.64),'service',.006)
+# Faceted drum with separate rim, radial ribs and a recessed driven hub.
+cyl(g,'ammunition_drum',.365,.49,(0,-.12,-.25),'frame','x',16)
+for side in [-1,1]:
+ cyl(g,'drum_armored_end',.38,.045,(side*.26,-.12,-.25),'gunmetal','x',12)
+ ring(g,'drum_machined_rim',.393,.337,.035,(side*.289,-.12,-.25),'warmsteel',16,'x')
+ ring(g,'drum_annular_insert',.32,.16,.015,(side*.295,-.12,-.25),'ceramic',12,'x')
+ cyl(g,'drum_driven_hub',.12,.028,(side*.318,-.12,-.25),'frame','x',12)
+ cyl(g,'drum_lock_pin',.043,.039,(side*.337,-.12,-.25),'steel','x',6)
+ for j in range(6):
+  a=j*math.tau/6
+  bolt(g,(side*.312,-.12+.274*math.cos(a),-.25+.274*math.sin(a)),r=.018)
+# Eight belt links are distinct solid cartridges along a bent feed path.
+for i in range(8):
+ t=i/7;x=-.334-.037*math.sin(t*math.pi);y=-.05+t*.36;z=-.05+t*.48
+ box(g,'linked_cartridge',(.085,.085,.10),(x,y,z),'warmsteel',.012)
+ box(g,'feed_link_clip',(.095,.027,.053),(x,y+.045,z),'frame',.006)
+ring(g,'motor_front_flange',.296,.215,.12,(0,.36,.95),'gunmetal',12)
 barrels=empty('barrels',(0,.36,1),g)
-ring(barrels,'rotor_root',.30,.12,.27,(0,0,.12),'frame',12)
+ring(barrels,'rotor_root',.292,.10,.24,(0,0,.12),'gunmetal',12)
 for i in range(6):
  a=i*math.tau/6;x,y=.17*math.cos(a),.17*math.sin(a)
- cyl(barrels,'rotary_barrel',.063,1.77,(x,y,1.055),'steel',n=8)
- ring(barrels,'barrel_bore',.068,.043,.18,(x,y,1.96),'frame',8)
- ring(barrels,'bore_machined_edge',.069,.044,.022,(x,y,2.047),'steel',8)
-for z in [.59,1.15,1.72]:ring(barrels,'barrel_brace',.279,.218,.075,(0,0,z),'frame',12)
-ring(barrels,'front_brace',.28,.225,.08,(0,0,1.94),'armor',12)
-cyl(barrels,'central_drive_shaft',.07,1.55,(0,0,.94),'frame',n=8)
+ cyl(barrels,'rotary_barrel',.063,1.66,(x,y,1.00),'warmsteel',n=12)
+ for z in [.36,1.59]:ring(barrels,'barrel_collar',.071,.057,.075,(x,y,z),'gunmetal',8)
+ ring(barrels,'deep_open_barrel',.067,.043,.23,(x,y,1.935),'gunmetal',12)
+ ring(barrels,'bore_machined_edge',.068,.044,.024,(x,y,2.046),'steel',12)
+for z in [.63,1.30,1.89]:
+ ring(barrels,'rotor_lattice_brace',.281,.222,.075,(0,0,z),'gunmetal',12)
+ ring(barrels,'brace_wear_band',.282,.271,.026,(0,0,z+.025),'warmsteel',12)
+cyl(barrels,'central_rotary_shaft',.064,1.72,(0,0,.98),'frame',n=10)
+cyl(barrels,'front_drive_lock',.077,.055,(0,0,1.97),'warmsteel',n=8)
 empty('muzzle',(0,.36,3.05),g);empty('eject',(-.3,.3,.4),g)
 # LONGBOW: tapered capacitor breech, split ceramic armor, exposed accelerator windows.
 g=empty('longbow');P['longbow']=g;grip(g)
@@ -317,41 +332,119 @@ cyl(spike,'forged_piercing_spike',.17,1.0,(0,0,.70),'edge',n=8,r2=0)
 # Dark longitudinal inset across shaft is kept on translating assembly.
 for s in [-1,1]:box(spike,'ram_groove',(.008,.055,.49),(s*.114,0,-.25),'frame',0)
 empty('tip',(0,0,1.2),spike)
-# Compact Breacher, four-tube Vesper, and the armored 40 mm Rampart.
+# BREACHER: compact twin-bore assault shotgun with a low angular pump carriage.
 g=empty('breacher');P['breacher']=g;grip(g)
-hull(g,'breacher_receiver',[(-.84,.19,.04,.52,.07),(-.52,.25,-.03,.68,.08),(.82,.25,-.03,.66,.08),(1.21,.20,.08,.58,.05)])
+hull(g,'breacher_monocoque',[(-.84,.16,.13,.48,.045),(-.59,.24,.02,.63,.06),(.56,.24,.03,.65,.055),(.92,.21,.13,.57,.045)],'gunmetal')
 for side in [-1,1]:
- panel(g,'receiver_shield',[(.18,-.47),(.61,-.42),(.63,.79),(.39,1.02),(.15,.87)],.048,side*.255)
- for z in [-.34,.76]:bolt(g,(side*.28,.34,z))
-box(g,'pump_guard',(.47,.28,.66),(0,.17,1.22),'gunmetal',.06)
-ribs(g,.78,1.45,.66,.25,5)
+ panel(g,'rear_breach_shell',[(.22,-.63),(.51,-.62),(.64,-.38),(.64,.06),(.48,.25),(.20,.09)],.034,side*.247)
+ panel(g,'breech_locking_cheek',[(.16,.19),(.51,.22),(.59,.48),(.46,.89),(.17,.76)],.035,side*.248,'gunmetal')
+ panel(g,'breech_lock_cam',[(.32,.29),(.45,.29),(.46,.62),(.35,.70),(.27,.60)],.019,side*.273,'warmsteel')
+ box(g,'ejection_recess',(.008,.092,.22),(side*.287,.42,.42),'rubber',.004)
+ box(g,'action_release_lever',(.038,.045,.12),(side*.297,.27,.65),'warmsteel',.008)
+ for y,z in [(.49,-.38),(.28,-.40),(.21,.67)]:bolt(g,(side*.273,y,z),r=.020)
+ idmarks(g,side*.27,.43,-.32)
+ # Magazine slot and armored curved ammunition heel remain in front of the grip.
+ panel(g,'compact_magazine',[(.10,.59),(.10,.86),(-.22,.92),(-.29,.79),(-.22,.64)],.12,side*.09,'gunmetal')
+ box(g,'magazine_stamped_channel',(.012,.18,.06),(side*.156,-.08,.75),'warmsteel',.008)
+box(g,'shotgun_recoil_pad',(.35,.40,.095),(0,.27,-.825),'rubber',.024)
+box(g,'rear_cheek_liner',(.29,.055,.31),(0,.655,-.35),'gunmetal',.012)
+# Twin barrels are visible inside a vented, low-profile front assembly.
 for x in [-.13,.13]:
- cyl(g,'twin_bore',.12,1.05,(x,.37,1.55),'steel',n=12)
- ring(g,'open_bore',.14,.09,.22,(x,.37,2.09),'gunmetal',12)
+ cyl(g,'twin_barrel',.104,1.13,(x,.37,1.35),'warmsteel',n=12)
+ ring(g,'breech_barrel_seat',.126,.106,.13,(x,.37,.91),'gunmetal',12)
+ ring(g,'deep_bore',.137,.091,.29,(x,.37,2.045),'gunmetal',12)
+ ring(g,'bore_machined_lip',.138,.092,.028,(x,.37,2.189),'steel',12)
+for side in [-1,1]:
+ panel(g,'upper_barrel_heat_shield',[(.46,.94),(.58,1.08),(.57,1.79),(.46,1.95),(.45,1.70)],.035,side*.228,'gunmetal')
+ panel(g,'ceramic_barrel_guard',[(.48,1.04),(.59,1.17),(.58,1.48),(.49,1.63)],.022,side*.252)
+ for z in [1.13,1.39,1.65]:box(g,'upper_heat_port',(.012,.055,.12),(side*.25,.49,z),'rubber',.003)
+ # A scalloped pump carriage gives the Breacher a characteristic underslung wedge.
+ panel(g,'pump_carriage',[(.10,.91),(.24,1.01),(.23,1.59),(.10,1.78),(-.035,1.58),(-.035,1.08)],.045,side*.21,'gunmetal')
+ panel(g,'pump_hand_surface',[(.06,1.07),(.16,1.14),(.16,1.47),(.05,1.61),(.00,1.49),(.00,1.16)],.027,side*.244,'rubber')
+ for z in [1.16,1.31,1.46]:box(g,'pump_grip_rib',(.013,.13,.035),(side*.263,.08,z),'warmsteel',.005)
+box(g,'pump_bottom_bridge',(.39,.065,.62),(0,-.048,1.31),'frame',.015)
+box(g,'upper_sight_rail',(.15,.047,1.25),(0,.68,.61),'gunmetal',.010)
+for z in [.10,.28,.46,.64,.82,1.0]:box(g,'sight_rail_tooth',(.20,.027,.044),(0,.714,z),'warmsteel',.006)
+box(g,'rear_ghost_sight',(.19,.12,.09),(0,.765,.04),'gunmetal',.014)
+box(g,'front_blade_sight',(.07,.085,.07),(0,.653,1.81),'warmsteel',.008)
+box(g,'tiny_service_lock',(.073,.022,.09),(0,.690,-.44),'service',.005)
 empty('muzzle',(0,.37,2.22),g);empty('eject',(-.27,.42,.42),g)
 
+# VESPER: four-cell guided launcher, open blast frame and replaceable side cassettes.
 g=empty('vesper');P['vesper']=g;grip(g)
-hull(g,'launcher_shell',[(-.82,.32,-.06,.70,.10),(-.53,.46,-.10,.90,.10),(.92,.46,-.10,.90,.10),(1.20,.38,.00,.78,.08)])
+hull(g,'launcher_rear_chassis',[(-.82,.25,.02,.67,.08),(-.55,.43,-.08,.85,.085),(.33,.43,-.08,.85,.075),(.62,.35,.02,.76,.07)],'gunmetal')
+# The front is assembled from rails and individual cells, avoiding a solid cap over the tubes.
 for side in [-1,1]:
- panel(g,'launcher_ceramic',[(.08,-.47),(.69,-.57),(.86,-.18),(.77,.79),(.22,.97)],.056,side*.465)
- box(g,'launcher_latch',(.044,.20,.22),(side*.50,.46,.58),'service',.017)
+ panel(g,'launcher_outer_beam',[(.00,.37),(.13,.28),(.76,.36),(.86,.56),(.79,1.27),(.67,1.34),(.09,1.31),(-.02,1.13)],.065,side*.406,'gunmetal')
+ panel(g,'launcher_ceramic_cassette',[(.08,-.47),(.65,-.56),(.82,-.27),(.78,.34),(.60,.57),(.20,.53)],.045,side*.455)
+ panel(g,'cassette_forward_retainer',[(.10,.57),(.63,.57),(.76,.69),(.69,1.03),(.17,.97)],.033,side*.454,'gunmetal')
+ box(g,'cassette_locking_rail',(.032,.10,.77),(side*.489,.25,.04),'warmsteel',.014)
+ box(g,'launcher_service_latch',(.040,.15,.14),(side*.495,.53,.29),'service',.011)
+ for y,z in [(.19,-.31),(.67,-.20),(.63,.42),(.27,.78)]:bolt(g,(side*.485,y,z),r=.021)
+ idmarks(g,side*.483,.56,-.32)
+ for z in [-.32,-.12,.08]:box(g,'cassette_air_slot',(.009,.075,.082),(side*.481,.42,z),'rubber',.004)
+box(g,'blast_frame_top',(.76,.09,.68),(0,.85,.99),'gunmetal',.025)
+box(g,'blast_frame_bottom',(.76,.09,.68),(0,-.025,.99),'gunmetal',.025)
+box(g,'front_frame_upper_wear',(.71,.025,.04),(0,.812,1.306),'warmsteel',.006)
+box(g,'front_frame_lower_wear',(.71,.025,.04),(0,.018,1.306),'warmsteel',.006)
 for x in [-.20,.20]:
  for y in [.23,.59]:
-  ring(g,'launch_tube',.165,.118,.42,(x,y,1.14),'steel',12)
-  cyl(g,'loaded_round',.104,.32,(x,y,1.02),'gunmetal',n=12,r2=.054)
+  ring(g,'launch_cell_housing',.177,.125,.63,(x,y,.995),'gunmetal',12)
+  ring(g,'launch_tube_front',.171,.124,.084,(x,y,1.310),'warmsteel',12)
+  ring(g,'inner_cell_insulator',.127,.111,.045,(x,y,1.277),'gunmark',12)
+  cyl(g,'recessed_missile_nose',.103,.26,(x,y,1.09),'gunmetal',n=12,r2=.040)
+  cyl(g,'missile_seeker_cap',.041,.024,(x,y,1.232),'glass',n=10)
+# Recessed rear service bulkhead, low carry handle and angled sight block.
+box(g,'rear_service_panel',(.60,.57,.07),(0,.39,-.815),'frame',.024)
+for y in [.20,.33,.46,.59]:box(g,'rear_exhaust_louver',(.45,.043,.022),(0,y,-.860),'warmsteel',.006)
+for z in [-.35,.48]:box(g,'carry_handle_stanchion',(.10,.13,.10),(0,.90,z),'gunmetal',.014)
+box(g,'carry_handle',(.13,.067,.92),(0,.994,.065),'warmsteel',.018)
+hull(g,'launcher_prism_sight',[(-.05,.09,.875,1.00,.02),(.29,.09,.875,1.00,.02)],'gunmetal')
+cyl(g,'targeting_optic',.048,.012,(0,.935,.302),'glass',n=10)
 empty('muzzle',(-.20,.41,1.36),g);empty('muzzle2',(.20,.41,1.36),g)
 
+# RAMPART: long 40 mm recoil cannon, exposed dampers and armored side ammunition cassette.
 g=empty('rampart');P['rampart']=g;grip(g)
-hull(g,'autocannon_receiver',[(-.91,.24,.04,.58,.07),(-.53,.34,-.12,.86,.12),(.81,.35,-.12,.86,.12),(1.17,.22,.04,.63,.07)])
+hull(g,'autocannon_breech',[(-.91,.18,.13,.53,.045),(-.59,.31,-.06,.77,.085),(.48,.33,-.07,.80,.085),(.93,.27,.04,.67,.06),(1.19,.20,.14,.58,.045)],'gunmetal')
 for side in [-1,1]:
- panel(g,'autocannon_cheek',[(.19,-.47),(.71,-.45),(.77,.48),(.56,.81),(.21,.65)],.06,side*.35)
- for z in [-.36,.58]:bolt(g,(side*.386,.44,z),r=.03)
-box(g,'feed_drum',(.38,.53,.62),(.26,-.04,.32),'frame',.07)
-ribs(g,.28,.98,.87,.36,6)
-cyl(g,'recoil_sleeve',.20,1.1,(0,.38,1.58),'gunmetal',n=12)
-cyl(g,'cannon_tube',.115,1.5,(0,.38,2.19),'steel',n=12)
-for z in [1.28,1.72,2.02]:ring(g,'sleeve_ring',.215,.15,.085,(0,.38,z),'warmsteel',12)
-ring(g,'open_muzzle_brake',.195,.12,.29,(0,.38,2.94),'frame',12)
+ panel(g,'breech_ceramic_cheek',[(.20,-.51),(.60,-.51),(.75,-.29),(.74,.16),(.55,.43),(.21,.32)],.041,side*.334)
+ panel(g,'breech_locking_plate',[(.14,.39),(.53,.35),(.66,.58),(.53,.94),(.26,.91)],.036,side*.345,'gunmetal')
+ panel(g,'bolt_slide_cover',[(.32,.28),(.47,.28),(.51,.56),(.42,.72),(.30,.64)],.021,side*.368,'warmsteel')
+ box(g,'cannon_ejection_port',(.008,.091,.20),(side*.382,.40,.34),'rubber',.004)
+ for y,z in [(.54,-.35),(.27,-.35),(.55,.61)]:bolt(g,(side*.363,y,z),r=.024)
+ idmarks(g,side*.359,.48,-.28)
+ for z in [-.03,.15]:box(g,'breech_vent',(.010,.075,.075),(side*.361,.65,z),'rubber',.004)
+# Distinct asymmetric ammunition cassette and armored belt throat.
+box(g,'ammunition_feed_throat',(.22,.25,.32),(.36,.05,.40),'frame',.025)
+panel(g,'side_ammunition_cassette',[(.31,-.04),(.35,.51),(.19,.73),(-.18,.66),(-.29,.46),(-.27,.02)],.22,.402,'gunmetal',.018)
+panel(g,'cassette_outer_armor',[(.23,.07),(.25,.47),(.12,.60),(-.17,.53),(-.19,.12)],.027,.526)
+for z in [.17,.39]:box(g,'cassette_stamped_recess',(.008,.19,.042),(.544,-.00,z),'frame',.005)
+for y,z in [(.17,.14),(-.12,.47)]:bolt(g,(.548,y,z),r=.020)
+box(g,'cassette_release',(.030,.06,.11),(.54,.20,.51),'service',.006)
+box(g,'cannon_butt_buffer',(.37,.40,.10),(0,.32,-.91),'rubber',.026)
+# A low integrated sight and segmented upper heat spine.
+box(g,'receiver_upper_keel',(.27,.055,.95),(0,.834,.06),'gunmetal',.013)
+for z in [-.27,-.07,.13,.33]:box(g,'receiver_cooling_cap',(.34,.038,.081),(0,.88,z),'warmsteel',.009)
+box(g,'armored_sight_mount',(.16,.065,.21),(0,.92,-.12),'gunmetal',.010)
+cyl(g,'low_bore_sight',.065,.31,(0,.98,-.04),'gunmetal',n=8)
+cyl(g,'bore_sight_glass',.045,.009,(0,.98,.119),'glass',n=10)
+# Floating large bore with twin external recoil dampers and an open skeletal jacket.
+ring(g,'breech_recoil_flange',.235,.135,.18,(0,.38,1.10),'gunmetal',12)
+ring(g,'large_bore_tube',.118,.077,1.67,(0,.38,2.095),'warmsteel',16)
+for side in [-1,1]:
+ cyl(g,'recoil_damper_body',.065,.67,(side*.174,.57,1.53),'gunmetal',n=12)
+ cyl(g,'exposed_recoil_rod',.035,.63,(side*.174,.57,2.04),'steel',n=10)
+ for z in [1.24,1.82]:ring(g,'damper_end_collar',.072,.038,.067,(side*.174,.57,z),'warmsteel',10)
+ panel(g,'barrel_jacket_side',[(.22,1.14),(.30,1.24),(.29,2.20),(.19,2.37),(.12,2.23),(.14,1.33)],.038,side*.18,'gunmetal')
+ panel(g,'barrel_jacket_ceramic',[(.18,1.37),(.25,1.45),(.25,1.91),(.17,2.08)],.025,side*.206)
+for z in [1.35,1.94,2.39]:
+ ring(g,'barrel_support_ring',.204,.126,.07,(0,.38,z),'gunmetal',12)
+ ring(g,'support_ring_wear_edge',.206,.195,.024,(0,.38,z+.02),'warmsteel',12)
+ring(g,'cannon_brake_locknut',.15,.10,.10,(0,.38,2.65),'steel',12)
+ring(g,'deep_muzzle_brake',.193,.12,.36,(0,.38,2.90),'gunmetal',8)
+ring(g,'muzzle_machined_lip',.195,.122,.026,(0,.38,3.078),'warmsteel',8)
+for side in [-1,1]:
+ for z in [2.82,2.96]:box(g,'muzzle_lateral_gas_port',(.008,.095,.073),(side*.194,.38,z),'rubber',.004)
 empty('muzzle',(0,.38,3.10),g);empty('eject',(-.31,.40,.34),g)
 
 # Consolidate each rigid assembly into one mesh per material: modest draw count.
@@ -390,6 +483,20 @@ bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT,'source','weapons.blend')
 with open(os.path.join(OUT,'weapons-manifest.json'),'w') as f:json.dump({'authoring':'Original procedural geometry, no external assets','units':'meters; Y up; +Z forward; grip origin','weapons':assembly_stats,'moving_nodes':{'hailstorm':'barrels (0,0.36,1), rotates local Z','piledriver':'spike (0,0.58,0.95), translates local Z to 2.2'},'emissive_materials':['emissive_rail','emissive_edge']},f,indent=2)
 print('WEAPON_STATS',json.dumps(assembly_stats));print('GLB_BYTES',os.path.getsize(os.path.join(OUT,'weapons.glb')))
 if '--export-only' in sys.argv:
+ sys.exit(0)
+# Four-up studio sheet for upgraded remaining ranged weapons.
+if '--arsenal-review' in sys.argv:
+ selected=['hailstorm','breacher','vesper','rampart']
+ for name,root in P.items():
+  if name not in selected:
+   for ob in [root]+list(root.children_recursive):ob.hide_render=True
+ for i,name in enumerate(selected):P[name].location=cv(((i%2)*2.7,0,-(i//2)*4.65))
+ world=bpy.context.scene.world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.055,.065,.080,1);world.node_tree.nodes['Background'].inputs[1].default_value=.45
+ target=Vector((1.35,1.3,.25))
+ for pos,power,size in [((1,-2,9),1500,7),((-5,3,5),1200,6),((7,6,6),1700,6)]:
+  bpy.ops.object.light_add(type='AREA',location=pos);o=bpy.context.object;o.data.energy=power;o.data.shape='DISK';o.data.size=size;o.rotation_euler=(target-o.location).to_track_quat('-Z','Y').to_euler()
+ bpy.ops.object.camera_add(location=(9,-11,15));cam=bpy.context.object;cam.rotation_euler=(target-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=10.7;bpy.context.scene.camera=cam
+ sc=bpy.context.scene;sc.render.engine='CYCLES';sc.cycles.samples=48;sc.cycles.use_denoising=False;sc.render.resolution_x=1600;sc.render.resolution_y=1600;sc.render.resolution_percentage=100;sc.render.image_settings.file_format='PNG';sc.view_settings.view_transform='AgX';sc.render.filepath=os.path.join(OUT,'ranged-upgrades-review.png');bpy.ops.render.render(write_still=True)
  sys.exit(0)
 # Candidate comparison render; hide unchanged weapons only after GLB/Blend export.
 for name,root in P.items():

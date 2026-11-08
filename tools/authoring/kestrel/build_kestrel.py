@@ -7,7 +7,9 @@ import bpy, bmesh, math, os, random, json, struct
 from mathutils import Vector, Matrix
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
-OUT=os.path.dirname(os.path.abspath(__file__))
+SOURCE_DIR=os.path.dirname(os.path.abspath(__file__))
+OUT=os.environ.get('IRON_VOW_ASSET_OUT',SOURCE_DIR)
+os.makedirs(OUT,exist_ok=True)
 random.seed(7)
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 for d in bpy.data.materials: bpy.data.materials.remove(d)
@@ -106,6 +108,17 @@ for i,c in enumerate(colors):
         stencil(d,(256,186),'CAUTION',54,(53,57,51))
         stencil(d,(256,263),'HYDRAULIC',37,(53,57,51))
         stencil(d,(256,319),'HIGH PRESSURE',28,(53,57,51))
+    if i==15:
+        # Deliberate field-service panel: quiet center, inset lip and small vent bank.
+        edge=tuple(int(v*.66) for v in c);lip=tuple(min(255,v+15) for v in c)
+        poly=[(48,35),(461,35),(482,57),(482,452),(460,477),(49,477),(29,454),(29,57),(48,35)]
+        d.line(poly,fill=edge,width=4);d.line([(50,41),(457,41),(476,60)],fill=lip,width=2)
+        for yy in [97,121,145]:
+            d.rectangle((117,yy,397,yy+9),fill=tuple(int(v*.39) for v in c))
+            d.line((118,yy+11,396,yy+11),fill=lip,width=2)
+        for xx,yy in [(65,69),(446,69),(65,442),(446,442)]:
+            d.ellipse((xx-5,yy-5,xx+5,yy+5),fill=edge);d.line((xx-2,yy,xx+2,yy),fill=lip,width=1)
+        d.rectangle((178,397,334,413),fill=tuple(int(v*.75) for v in c))
     base.paste(tile,(x,y))
     rough=[175,157,121,66,182,182,218,178,175,165,157,185,175,178,127,175][i]
     metal=[35,178,220,240,70,35,18,50,35,155,178,200,45,150,225,40][i]
@@ -113,9 +126,13 @@ for i,c in enumerate(colors):
     od.rectangle((0,0,511,511),outline=(225,min(255,rough+20),metal),width=6)
     orm.paste(ot,(x,y))
     hd=ImageDraw.Draw(height);hd.rectangle((x+12,y+12,x+500,y+500),outline=118,width=3)
+    if i==15:
+        hp=[(x+48,y+35),(x+461,y+35),(x+482,y+57),(x+482,y+452),(x+460,y+477),(x+49,y+477),(x+29,y+454),(x+29,y+57),(x+48,y+35)]
+        hd.line(hp,fill=104,width=4)
+        for yy in [97,121,145]:hd.rectangle((x+117,y+yy,x+397,y+yy+9),fill=98)
     if i==11:
         for k in range(7):hd.rectangle((x+70,y+110+k*43,x+442,y+128+k*43),fill=80)
-base.save(os.path.join(OUT,'kestrel_basecolor.jpg'),quality=91,subsampling=0,optimize=True)
+base.save(os.path.join(OUT,'kestrel_basecolor.jpg'),quality=85,subsampling=0,optimize=True)
 orm.save(os.path.join(OUT,'kestrel_orm.png'),optimize=True)
 h=np.array(height.filter(ImageFilter.GaussianBlur(.65)),dtype=float)/255
 dy,dx=np.gradient(h);norm=np.stack([-dx*5,dy*5,np.ones_like(h)],axis=2);norm/=np.linalg.norm(norm,axis=2,keepdims=True)
@@ -252,7 +269,7 @@ box(spine,(.58,.27,.31),(.66,2.17,-.53),1,.045)
 box(spine,(.54,.21,.055),(.66,2.17,-.345),7,.02)
 for xx,rr in [(.52,.07),(.74,.045)]:
     cyl(spine,rr,.075,(xx,2.17,-.30),2,(0,0,1),16)
-    cyl(spine,rr*.62,.012,(xx,2.17,-.257),0,(0,0,1),16,material=visor)
+    cyl(spine,rr*.62,.012,(xx,2.17,-.257),6,(0,0,1),16)
 box(spine,(.14,.13,.13),(.88,2.17,-.28),4,.012)
 cyl(spine,.055,.28,(-.63,2.03,-.65),1,vertices=12)
 cyl(spine,.022,.73,(-.63,2.48,-.65),3,vertices=8)
@@ -362,6 +379,22 @@ for s,L in [(1,'L'),(-1,'R')]:
     piston(spine,(s*.93,1.54,-.43),sh,(s*.30,-.40,-.40),.065)
     piston(pelvis,(s*.67,.14,-.47),spine,(s*.75,.62,-.50),.062)
 
+# Scout package: asymmetric cooling cassette, sensor brackets and exposed vent paths.
+box(spine,(.34,.29,.045),(-.65,1.39,.625),1,.014)
+for yy in [1.29,1.35,1.41,1.47]:box(spine,(.25,.027,.033),(-.65,yy,.658),3,.004,rot=(.15,0,0))
+panel_outline(spine,[(.46,1.45),(.71,1.48),(.65,1.74),(.49,1.78)],.83,15,.04,-.11)
+cyl(spine,.017,.014,(.82,2.17,-.25),0,(0,0,1),10,material=visor)
+box(spine,(.43,.035,.13),(.66,2.30,-.51),1,.008)
+for yy in [2.10,2.24]:box(spine,(.045,.025,.30),(.39,yy,-.53),3,.004)
+for side,L in [(1,'L'),(-1,'R')]:
+    sh,el,wr=arms[L];hip,kn,an=legs[L];paul=groups['pauldron.'+L]
+    # Five narrow slots on the lower vane distinguish its light ventilated shell.
+    for yy in [-.18,-.12,-.06,.00]:
+        box(paul,(.14,.020,.016),(side*.39,yy,.366-.55*yy),2,.003,rot=(.50,0,0))
+    panel_outline(hip,[(-.19,-.42),(.20,-.40),(.22,-.68),(-.20,-.70)],.61,15,.032,.06)
+    # A lateral ankle link makes the exposed lower leg read as a light strut.
+    cyl(an,.064,.24,(side*.35,.02,-.03),3,(1,0,0),10)
+
 # One primitive per joint/material, while attachment empties remain explicit.
 for (parent,material),objs in list(buckets.items()):
     bpy.ops.object.select_all(action='DESELECT')
@@ -400,7 +433,7 @@ bpy.context.view_layer.objects.active=target;target.select_set(True)
 mod=target.modifiers.new('forearm sweep relief','BOOLEAN');mod.operation='DIFFERENCE';mod.solver='EXACT';mod.object=cut;mod.use_self=True
 bpy.ops.object.modifier_apply(modifier=mod.name);target.select_set(False);bpy.data.objects.remove(cut,do_unlink=True)
 
-root['asset']='KESTREL RECON MARK II / IRON VOW';root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
+root['asset']='KESTREL RECON MARK II / IRON VOW';root['detail_revision']=3;root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
 bpy.context.view_layer.update()
 triangles=sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in bpy.data.objects if o.type=='MESH')
 for o in bpy.data.objects:o.select_set(True)
@@ -408,6 +441,9 @@ bpy.context.view_layer.objects.active=root
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'kestrel.glb'),export_format='GLB',use_selection=True,export_yup=True,export_animations=False,export_cameras=False,export_lights=False,export_extras=True,export_image_format='AUTO',export_materials='EXPORT',export_normals=True,export_texcoords=True)
 exported=open(os.path.join(OUT,'kestrel.glb'),'rb').read();gltf=json.loads(exported[20:20+struct.unpack_from('<I',exported,12)[0]]);triangles=sum(gltf['accessors'][p['indices']]['count']//3 for m in gltf['meshes'] for p in m['primitives'])
 stats={'triangles':triangles,'glb_bytes':os.path.getsize(os.path.join(OUT,'kestrel.glb')),'rig':joint_contract,'pistons':pairs,'materials':[m.name for m in [mat,visor,stackmat]]}
+assert triangles<=60000,triangles
+assert stats['glb_bytes']<=4000000,stats['glb_bytes']
+stats['paintable_tiles']=[0,7,8,12,15]
 with open(os.path.join(OUT,'kestrel_contract.json'),'w') as f:json.dump(stats,f,indent=2)
 
 # Studio preview and editable native source; lights are excluded from shipped GLB.
@@ -423,5 +459,5 @@ scene.view_settings.view_transform='AgX'
 for im in bpy.data.images:
     if im.filepath:im.pack()
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,'kestrel.blend'))
-bpy.ops.render.render(write_still=True)
+if os.environ.get('IRON_VOW_SKIP_PREVIEW')!='1':bpy.ops.render.render(write_still=True)
 print('KESTREL_STATS',json.dumps(stats))
