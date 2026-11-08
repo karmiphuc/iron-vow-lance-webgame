@@ -2337,6 +2337,27 @@ function travelMount(view,u,id,progress=0){
  if(mount&&view.strike&&id===u.attack.kind)mount.angle+=view.direction*(.9-1.85*smoothRange(.36,.78,progress));
  return mount;
 }
+const PART_TINTS=[['body',.35,.27],['pilot',.20,.16],['right',.24,.29],['left',.24,.29],['legs',.32,.37]];
+function drawPartTints(u,t,paint,anchor,scorch=true){
+ if(u.kind||!u.alive)return;
+ const age=t-(u.hitTime??-Infinity),hit=age>=0&&age<.72?u.hitPart:null;
+ if(!hit&&!scorch)return;
+ for(const [part,width,height] of PART_TINTS){
+  if(!u.max[part])continue;
+  const flash=part===hit,health=u.hp[part]/u.max[part];
+  if(!flash&&(!scorch||health>=.5))continue;
+  const p=anchor(part);
+  if(!p)continue;
+  // Repaint within the struck area so the tint respects the sprite's silhouette.
+  ctx.save();
+  ctx.beginPath();ctx.ellipse(p.x,p.y,scale*width,scale*height,0,0,Math.PI*2);ctx.clip();
+  ctx.globalAlpha*=flash?.9*(1-age/.72):.52+.36*(1-health);
+  const filter=ctx.filter;
+  ctx.filter=(filter&&filter!=='none'?filter+' ':'')+(flash?'brightness(1.95) saturate(.48)':'brightness(.35) saturate(.60)');
+  paint();
+  ctx.restore();
+ }
+}
 function drawTravel(u,t,view){
  const {atlas,image,bounds,row,heading}=view,p=project(u.vx,0,u.vz),cell=atlas.cell;
  const foundry=foundryModel(u.frame)!=null,hostile=u.team==='enemy'&&!u.kind;
@@ -2344,7 +2365,9 @@ function drawTravel(u,t,view){
  ctx.save();ctx.fillStyle='#060d148c';ctx.beginPath();
  ctx.ellipse(p.x,p.y,scale*(u.kind||foundryModel(u.frame)===5?.76:.62),scale*.22,0,0,Math.PI*2);ctx.fill();
  if(hostile)ctx.filter=HOSTILE_FILTER;
- ctx.drawImage(body,heading*cell,row*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
+ const paint=()=>ctx.drawImage(body,heading*cell,row*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
+ paint();
+ drawPartTints(u,t,paint,part=>view.points[part]&&spritePoint(bounds,view.points[part]));
  ctx.restore();
  if(!u.kind&&u.hp.right>0&&!(u.frame===2&&u.weapon==='missile')){
   drawWeaponModule(ctx,travelMount(view,u,u.weapon));
@@ -2487,12 +2510,17 @@ function drawUnitBody(u,t,close){
   ctx.save();ctx.fillStyle='#050c12ac';ctx.beginPath();
   ctx.ellipse(p.x,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64),scale*.22,0,0,Math.PI*2);ctx.fill();
   if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
-   ctx.translate(b.x+b.w/2,b.y);if(foundry.flip)ctx.scale(-1,1);
    if(foundry.baked&&u.team==='enemy')ctx.filter=HOSTILE_FILTER;
-   if(foundry.cell){
-    const {cell,index}=foundry;
-    ctx.drawImage(foundry.surface,index%4*cell,Math.floor(index/4)*cell,cell,cell,-b.w/2,0,b.w,b.h);
-   }else ctx.drawImage(foundry.surface,-b.w/2,0,b.w,b.h);
+   const paint=()=>{
+    ctx.save();ctx.translate(b.x+b.w/2,b.y);if(foundry.flip)ctx.scale(-1,1);
+    if(foundry.cell){
+     const {cell,index}=foundry;
+     ctx.drawImage(foundry.surface,index%4*cell,Math.floor(index/4)*cell,cell,cell,-b.w/2,0,b.w,b.h);
+    }else ctx.drawImage(foundry.surface,-b.w/2,0,b.w,b.h);
+    ctx.restore();
+   };
+   paint();
+   drawPartTints(u,t,paint,part=>foundry.anchors[part]&&spritePoint(b,foundry.anchors[part]),foundry.baked);
   }
   ctx.restore();
   if(u.alive){
@@ -2513,14 +2541,20 @@ function drawUnitBody(u,t,close){
  const tintFallback=u.team==='enemy'&&im===body;
  ctx.save();ctx.fillStyle=u.alive?'#050c12aa':'#090e13c9';ctx.beginPath();ctx.ellipse(p.x,p.y+scale*.025,scale*(.67+pose.brace*.05),scale*.22,0,0,Math.PI*2);ctx.fill();ctx.restore();if(!imageReady(original))return;
  if(!u.alive&&pose.explosion>=1){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true);return}
- ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)ctx.scale(-1,1);
+ ctx.save();
  if(tintFallback)ctx.filter=HOSTILE_FILTER;
- if(!u.alive){const root=u.downReason==='pilot'?{x:0,y:pose.kneel*.075,angle:pose.kneel*.12,scale:1-pose.kneel*.1}:destructionRoot(u,pose);ctx.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
  const articulated=!reducedMotion&&(pose.walk>.001||pose.primeProgress>0||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||pose.aim>.001||(!u.alive&&pose.explosion<1));
- if(baked?.frame){const {cell,columns}=baked.atlas,index=baked.frame.index;ctx.drawImage(im,index%columns*cell,Math.floor(index/columns)*cell,cell,cell,-b.w/2,-b.h,b.w,b.h)}
- else if(articulated&&!visual&&rigidParts[u.frame]){const cache=rigidParts[u.frame],bodyPose={...pose,baseOnly:true};drawArticulatedMech(im,u,b.w,b.h,bodyPose,u.team==='enemy'?cache.enemyBase:cache.base);drawRigidUpper(u,b.w,b.h,pose)}
- else if(articulated&&!visual?.modular&&!visual?.native&&foundryModel(u.frame)==null)drawArticulatedMech(im,u,b.w,b.h,{...remaining,baseOnly:true});
- else{if(u.alive&&!reducedMotion&&!spent(u))ctx.rotate(Math.sin(t*.85+u.index)*.001);ctx.drawImage(im,-b.w/2,-b.h,b.w,b.h)}
+ const paint=()=>{
+  ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)ctx.scale(-1,1);
+  if(!u.alive){const root=u.downReason==='pilot'?{x:0,y:pose.kneel*.075,angle:pose.kneel*.12,scale:1-pose.kneel*.1}:destructionRoot(u,pose);ctx.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
+  if(baked?.frame){const {cell,columns}=baked.atlas,index=baked.frame.index;ctx.drawImage(im,index%columns*cell,Math.floor(index/columns)*cell,cell,cell,-b.w/2,-b.h,b.w,b.h)}
+  else if(articulated&&!visual&&rigidParts[u.frame]){const cache=rigidParts[u.frame],bodyPose={...pose,baseOnly:true};drawArticulatedMech(im,u,b.w,b.h,bodyPose,u.team==='enemy'?cache.enemyBase:cache.base);drawRigidUpper(u,b.w,b.h,pose)}
+  else if(articulated&&!visual?.modular&&!visual?.native&&foundryModel(u.frame)==null)drawArticulatedMech(im,u,b.w,b.h,{...remaining,baseOnly:true});
+  else{if(u.alive&&!reducedMotion&&!spent(u))ctx.rotate(Math.sin(t*.85+u.index)*.001);ctx.drawImage(im,-b.w/2,-b.h,b.w,b.h)}
+  ctx.restore();
+ };
+ paint();
+ drawPartTints(u,t,paint,part=>mechAttachmentPoint(u,part,t));
  ctx.restore();
  if(!u.alive){if(u.downReason!=='pilot'){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true)}return}
  if(visual?.modular){

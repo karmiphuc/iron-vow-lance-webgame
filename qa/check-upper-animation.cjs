@@ -13,3 +13,21 @@ sim.run("effects=[];actor.deathStyle='kneel';updateDestruction(actor,.6)");asser
 // An attachment stored in world-relative coordinates follows camera changes exactly.
 sim.run('const attachment=freezeAttachment(battle.units[1],"body",0);const before=resolveAttachment(attachment);scale*=2;origin.x+=100;const after=resolveAttachment(attachment)');assert.ok(sim.run('Number.isFinite(after.x)&&Number.isFinite(after.y)'));
 console.log('PASS: approved feet unchanged; independent arm aim with rigid rifle/planted feet; knee-fold chest drop; distinct fall; reactor blast after collapse exactly once; camera-relative attachments.');
+
+(async()=>{
+ const shot=create({random:()=>0,reducedMotion:true}),run=shot.run;
+ run('deploy(0);closeModal();const foe=battle.units[3]');
+ await run('shoot(current(),foe,"left")');
+ assert.equal(run('foe.hitPart'),'left');
+ assert.ok(run('foe.hp.left<foe.max.left&&foe.hp.left>foe.max.left/2'));
+ const tints=(age,scorch=true)=>JSON.parse(run(`(()=>{
+  const marks=[];ctx.globalAlpha=1;ctx.filter='none';
+  drawPartTints(foe,foe.hitTime+${age},()=>marks.at(-1).push(ctx.filter),part=>{marks.push([part]);return{x:80,y:80}},${scorch});
+  return JSON.stringify(marks);
+ })()`));
+ assert.deepEqual(tints(.15),[['left','brightness(1.95) saturate(.48)']]);
+ run('foe.hp.right=0');
+ assert.deepEqual(tints(1),[['right','brightness(.35) saturate(.60)']]);
+ assert.deepEqual(tints(.15,false),[['left','brightness(1.95) saturate(.48)']],'live meshes keep their own persistent material damage');
+ console.log('PASS: an actual hit flashes the selected subsystem, the flash expires, and a disabled raster subsystem stays dark.');
+})().catch(e=>{console.error(e);process.exitCode=1});
