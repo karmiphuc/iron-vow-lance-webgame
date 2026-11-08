@@ -2,13 +2,14 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkImpact({page,mobile,origin,tap}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
- for(const mode of ['travel','native','baked','live']){
+ for(const mode of ['travel','native','hellbreaker','baked','live']){
   await page.evaluate(mode=>{
    window.originalFoundryDraw??=window.IronVowFoundry.draw;
    window.IronVowFoundry.draw=mode==='live'?window.originalFoundryDraw:()=>null;
    createBattle(mode==='live'||mode==='baked'?2:0);
    const foe=battle.units.find(u=>u.team==='enemy'&&!u.kind&&(mode==='live'||mode==='baked'?foundryModel(u.frame)!=null:true));
    if(mode==='native'){foe.frame=3;foe.weapon='morrow';preloadNativeMotion(3);}
+   if(mode==='hellbreaker'){foe.frame=HELLBREAKER;foe.weapon='morrow';preloadNativeMotion(HELLBREAKER);}
    foe.headingOverride=mode==='travel'?undefined:-Math.PI/4;
    window.impactSubject=foe;
   },mode);

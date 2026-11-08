@@ -103,10 +103,10 @@ def configure_render(scene, tmp):
     aov.name, aov.type = "Plates", "VALUE"
     for mat in bpy.data.materials:
         role = mat.name.rsplit(" / ", 1)[-1]
-        if mat.use_nodes and role in {"armor", "plate"}:
+        if mat.use_nodes and role in {"armor", "plate", "badge"}:
             node = mat.node_tree.nodes.new("ShaderNodeOutputAOV")
             node.aov_name = "Plates"
-            node.inputs["Value"].default_value = .9 if role == "armor" else .62
+            node.inputs["Value"].default_value = .62 if role == "plate" else .9
     tree = bpy.data.node_groups.new("Battlefield color and plate mask", "CompositorNodeTree")
     scene.compositing_node_group = tree
     tree.interface.new_socket(name="Image", in_out="OUTPUT", socket_type="NodeSocketColor")

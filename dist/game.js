@@ -1966,6 +1966,7 @@ function remainingPose(pose,baked){
  return baked?.frame?{...pose,walk:0,recoil:0}:pose;
 }
 const MECH_SIZE=[2.18,2.1,2.35,2.46,2.46,3.18,3.23,3.18,3.21,3.12,3.23];
+MECH_SIZE[HELLBREAKER]=MECH_SIZE[3];
 function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1);return{x:p.x-size*(visual?.groundX??.5),y:p.y-size*(visual?.ground??(foundryModel(u.frame)!=null?.84:.94)),w:size,h:size}}
 // A small skinned mesh articulates the existing armor art without new image requests.
 const MECH_MOTION=[

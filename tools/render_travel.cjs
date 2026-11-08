@@ -40,7 +40,7 @@ function paletteSlot(spec,m,uv){
   const tile=Math.min(3,Math.floor(uv[0]*4))+4*Math.min(3,Math.floor(uv[1]*4));
   return m.map&&knownTiles[spec.stock].includes(tile)?0:-1;
  }
- if(spec.native)return /ceramic|armor|plate/i.test(m.name)?0:-1;
+ if(spec.native)return /ceramic|armor|plate|badge/i.test(m.name)?0:-1;
  if(spec.foundry&&m.userData.paint){
   return ['p','s','a'].findIndex(k=>m.color.equals(new T.Color(spec.foundry.build.pal[k]).convertSRGBToLinear()));
  }

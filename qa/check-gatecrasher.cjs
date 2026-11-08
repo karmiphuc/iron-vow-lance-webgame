@@ -21,6 +21,14 @@ for(const slots of [[0],[0,2],[0,1,2]]){
  assert.equal(run('battle.units.find(u=>u.team==="enemy").frame'),11);
  assert.match(run('battle.units.find(u=>u.team==="enemy").name'),/^HELLBREAKER /);
  assert.equal(run('battle.units.some(u=>u.team==="ally"&&u.frame===HELLBREAKER)'),false);
+ assert.equal(run(`(()=>{
+  const foe=battle.units.find(u=>u.frame===HELLBREAKER);
+  return [-1,1].every(face=>{
+   const close={...foe,face,headingOverride:face*Math.PI/4};
+   return Object.values(unitBounds(close)).every(Number.isFinite)&&
+    ['left','muzzle','muzzle2'].every(part=>Object.values(mechAttachmentPoint(close,part)).every(Number.isFinite));
+  });
+ })()`),true,'Hellbreaker has finite close-combat bounds and hit anchors');
  const restored=simulate({storage:new Map(sim.storage)});
  assert.equal(restored.run('battle.units.find(u=>u.team==="enemy").frame'),11);
 }
@@ -56,6 +64,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','ga
  assert.deepEqual(new Set(json.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire']));
  assert.ok(json.nodes.some(node=>node.name===model.toUpperCase()+' / Rig'));
  if(model==='gatecrasher'){
+  assert.ok(json.materials.some(material=>material.name==='HV-09 / badge'),'raised torso badge has its paint role');
   for(const socket of ['Muzzle.Upper','Muzzle.Lower','Hardpoint.L'])
    assert.ok(json.nodes.some(node=>node.name===socket),socket);
   assert.ok(!json.nodes.some(node=>node.name==='Hardpoint.R'));
