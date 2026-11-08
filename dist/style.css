@@ -22,3 +22,28 @@
 
 .rig-bench-link{display:inline-flex;gap:.5rem;align-items:center;margin:.35rem 0 .7rem;padding:.55rem .7rem;border:1px solid #88775f;color:#eed0a1;font-size:.75rem;font-weight:700;letter-spacing:.075em;text-decoration:none}
 .rig-bench-link:hover,.rig-bench-link:focus-visible{border-color:#eed0a1;background:#e4b87915;color:#fff1d7}
+
+.hangar-rig-preview {
+  position:absolute;
+  right:30px;
+  bottom:167px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:3px 13px 3px 4px;
+  border:1px solid #a88b5a;
+  background:#11181cf2;
+  color:#eeeae1;
+  text-decoration:none;
+}
+.hangar-rig-preview img {object-fit:contain}
+.hangar-rig-preview strong {display:block;font-size:13px;letter-spacing:.08em}
+.hangar-rig-preview small {display:block;margin-top:5px;color:#eed0a1;font-size:9px;letter-spacing:.07em}
+.hangar-rig-preview:hover,.hangar-rig-preview:focus-visible {border-color:#eed0a1;background:#263037}
+@media(min-width:1500px) {
+  .hangar-rig-preview {right:45px;bottom:189px}
+}
+@media(max-width:760px) {
+  .hangar-rig-preview {right:12px;bottom:185px}
+  .hangar-rig-preview img {width:48px;height:48px}
+}
