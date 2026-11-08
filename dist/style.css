@@ -368,7 +368,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .contract-intel ul{margin:0;padding:0 16px 10px 28px;color:var(--ink);font-size:11px;line-height:1.6}
 .card .rescan-contract{margin-top:8px;min-height:44px;width:100%;font-size:10px}
 .inn-duty{margin-top:12px;min-height:44px;font-size:10px}
-.pilot-image img.recruit-portrait{object-fit:contain;object-position:center;padding-top:10px;background:radial-gradient(ellipse at 50% 65%,#42505b,#202a31 72%);image-rendering:pixelated}
+.pilot-image img.recruit-portrait{object-fit:contain;object-position:center;padding-top:10px;background:radial-gradient(ellipse at 50% 65%,#42505b,#202a31 72%)}
 .base-pilot img.recruit-portrait,.inn-pilot img.recruit-portrait,.inn-slot img.recruit-portrait,.unitbuttons img.recruit-portrait{object-fit:contain;object-position:center;background:#24323b}
 .wiki-profile-head{display:flex;align-items:center;gap:12px}
 .wiki-profile-head .pilot-thumb{width:48px;height:48px;object-fit:cover;border:1px solid var(--line);background:#24323b}

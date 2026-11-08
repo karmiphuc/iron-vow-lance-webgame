@@ -7,7 +7,7 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  await page.locator('[data-hire="7"]').waitFor();
  const images=page.locator('.inn-pilot img.recruit-portrait');
  assert.equal(await images.count(),5);
- await page.waitForFunction(()=>[...document.querySelectorAll('.inn-pilot img.recruit-portrait')].every(img=>img.complete&&img.naturalWidth>0));
+ await page.waitForFunction(()=>[...document.querySelectorAll('.inn-pilot img.recruit-portrait')].every(img=>img.complete&&img.naturalWidth>=300));
  assert.deepEqual(await images.evaluateAll(imgs=>imgs.map(img=>img.getAttribute('src'))),ids.map(id=>'assets/pilot-'+id+'.png'));
  await page.evaluate(()=>{
   save.credits=30000;save.rep=50;

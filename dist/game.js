@@ -1503,7 +1503,7 @@ function pilotWiki(){
      <ol>${path.nodes.map((node,rank)=>`<li><small>LV ${TRAINING_LEVELS[rank]}${rank===DOCTRINE_RANK?' · DOCTRINE':''}</small><b>${node.name}</b><span>${node.label}</span></li>`).join('')}</ol>
     </section>`).join('')}</div>
    </div></details>`).join('')}
-  <p class="pilot-credit">Recruit portraits by <a href="https://opengameart.org/content/cyberpunk-portraits">Hyptosis</a> · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a></p>
+  <p class="pilot-credit">Recruit portraits by <a href="https://sakpix.itch.io/cyberpunk-portrait-pack-free-200-sci-fi-character-portraits">SakPix</a> · Cyberpunk Portrait Pack (Free Edition)</p>
  </section>`;
 }
 function journalMarkup(section){
