@@ -264,10 +264,25 @@ const HANGAR_ROOMS={
  recon:{name:'Recon Cell',glyph:'binoculars',tiers:[
   {name:'Signal Mast',cost:1500,wins:1,rep:0,perk:'Reveal enemy rosters on the contract board',detail:'Identify enemy chassis, armor support and aircraft before choosing a lance.'},
   {name:'Survey Drones',cost:3300,wins:2,rep:20,perk:'Reroll one contract’s capacity per day for 350 CR',detail:'Survey a different approach. The new capacity is one of the other two values from 1 to 3. Pay and enemy presence follow the new roll.'}
+ ]},
+ cabins:{name:'Crew Cabins',glyph:'shield-chevron',tiers:[
+  {name:'Crew Bunks',cost:1600,wins:1,rep:0,perk:'4 active pilots',detail:'Open a berth for a relief pilot. Put a hired pilot on active duty below to train them and select them in sortie prep.'},
+  {name:'Officer Cabins',cost:3600,wins:2,rep:20,perk:'5 active pilots',detail:'House a second relief pilot. Use the expanded duty roster to rotate wounded pilots and bring the right skills.'},
+  {name:'Lance Quarters',cost:5600,wins:2,rep:40,perk:'6 active pilots',detail:'House three relief pilots. Contracts roll 1 to 3 regular mech slots, which you can fill with pilots from your active roster.'}
  ]}
 };
 const HANGAR_SERVICE_COST=350;
 const hangarLevel=(room,career=save)=>career.hangar?.levels?.[room]??0;
+const dutyRoster=(career=save)=>career.duty??[];
+const activeCapacity=(career=save)=>LANCE_SLOTS.length+hangarLevel('cabins',career);
+const activeRosterIds=()=>[...LANCE_SLOTS.map(i=>pilotId(pilotClass(i))),...dutyRoster()];
+function setPilotDuty(id,active){
+ if(battle||!Object.hasOwn(save.reservePilots??{},id))return false;
+ const current=dutyRoster();
+ if(active===current.includes(id)||active&&activeRosterIds().length>=activeCapacity())return false;
+ save.duty=active?[...current,id]:current.filter(pilot=>pilot!==id);
+ persist();return true;
+}
 const patchLimit=()=>hangarLevel('fabrication')===2?65:FIELD_PATCH;
 const rebuildIntegrity=()=>[55,70,85][hangarLevel('fabrication')];
 function queueHangarUpgrade(room){
@@ -374,7 +389,8 @@ const learnedTraining=(i,career=save)=>career.training?.[i]??[];
 const earnedTraining=level=>TRAINING_POINT_LEVELS.filter(rank=>rank<=level).length;
 const nextLevelXP=level=>level>=5&&level<10?400+(level-5)*25:level*100;
 const trainingPoints=i=>earnedTraining(save.units[i].level)-learnedTraining(i).length;
-const totalTrainingPoints=()=>PILOTS.reduce((total,_,i)=>total+trainingPoints(i),0);
+const reliefTrainingPoints=id=>earnedTraining(save.reservePilots[id].level)-save.reservePilots[id].training.length;
+const totalTrainingPoints=()=>LANCE_SLOTS.reduce((total,i)=>total+trainingPoints(i),0)+dutyRoster().reduce((total,id)=>total+reliefTrainingPoints(id),0);
 function trainingStatus(i,id,learned,level){
  const branches=PILOT_TREES[i],branch=branches?.find(path=>path.nodes.some(node=>node.id===id));
  if(!branch)return 'UNKNOWN';
@@ -427,14 +443,28 @@ function hirePilot(kind){
 }
 function assignPilot(i,kind){
  if(battle||!save.units[i]||!CREW[kind])return false;
- const id=pilotId(kind),incoming=save.reservePilots?.[id];
- if(!incoming)return false;
- const unit=save.units[i];
- save.reservePilots[pilotId(pilotClass(i))]={level:unit.level,xp:unit.xp,training:learnedTraining(i)};
+ const id=pilotId(kind);
+ if(!Object.hasOwn(save.reservePilots??{},id))return false;
+ seatPilot(i,id);persist();return true;
+}
+function seatPilot(i,id){
+ const from=LANCE_SLOTS.find(slot=>pilotId(pilotClass(slot))===id);
+ if(from===i)return;
+ const previous=pilotId(pilotClass(i)),unit=save.units[i];
+ const outgoing={level:unit.level,xp:unit.xp,training:learnedTraining(i)};
+ const incoming=from===undefined?save.reservePilots[id]:{level:save.units[from].level,xp:save.units[from].xp,training:learnedTraining(from)};
  save.training??=LANCE_SLOTS.map(()=>[]);
  save.training[i]=incoming.training;
  Object.assign(unit,{pilotId:id,level:incoming.level,xp:incoming.xp});
- delete save.reservePilots[id];persist();return true;
+ if(from!==undefined){
+  save.training[from]=outgoing.training;
+  Object.assign(save.units[from],{pilotId:previous,level:outgoing.level,xp:outgoing.xp});
+ }else{
+  save.reservePilots[previous]=outgoing;
+  delete save.reservePilots[id];
+  const berth=dutyRoster().indexOf(id);
+  if(berth>=0)save.duty[berth]=previous;
+ }
 }
 const CAREER_STORAGE='iron-vow-career';
 const PENDING_CAREER_STORAGE=CAREER_STORAGE+'-pending';
@@ -686,7 +716,7 @@ const COUNTER_HELP='One reaction per round for 0 AP. Equipped melee strikes adja
 const FOUNDATION_HELP='Either level 1 skill opens both level 3 skills.';
 function learnReserveTraining(id,skill){
  const pilot=save.reservePilots?.[id];
- if(battle||!hangarLevel('personnel')||!pilot||trainingStatus(pilotKind(id),skill,pilot.training,pilot.level)!=='TRAIN')return false;
+ if(battle||!pilot||!dutyRoster().includes(id)&&!hangarLevel('personnel')||trainingStatus(pilotKind(id),skill,pilot.training,pilot.level)!=='TRAIN')return false;
  pilot.training.push(skill);persist();return true;
 }
 function trainingTree(i,advanced){
@@ -1109,7 +1139,17 @@ function art(name){return asset('assets/'+name+'.webp')}
 function pilotArt(i){return art('pilot-'+['rook','ghost','anchor'][i])}
 function pilotMark(kind,style=''){
  const pilot=CREW[kind];
- return pilot.glyph?`<span class="pilot-emblem ${style}" style="--pilot-color:${pilot.color}" aria-label="${pilot.call} insignia">${icon(pilot.glyph)}</span>`:`<img class="${style}" src="${pilotArt(kind)}" alt="${pilot.name}">`;
+ const portrait=kind<PILOTS.length?pilotArt(kind):asset('assets/pilot-'+pilotId(kind)+'.png');
+ return `<img class="${style}${kind<PILOTS.length?'':' recruit-portrait'}" src="${portrait}" alt="${pilot.name}">`;
+}
+function pilotCard(kind,u,training,assignment,control,points){
+ const pilot=CREW[kind],wound=woundLabel(pilotId(kind)),next=nextLevelXP(u.level);
+ return `<article class="card pilot-card"><div class="pilot-image">${pilotMark(kind)}</div><div class="pilot-details">
+  <div class="eyebrow">${pilot.call} / ${assignment}</div><h2>${pilot.name}</h2>${wound?`<span class="tag wound-status">${wound}</span>`:''}
+  ${stat('PILOT LEVEL',String(u.level).padStart(2,'0'))}${stat('EXPERIENCE',u.xp+' / '+next,Math.min(100,100*u.xp/next))}
+  <div class="pilot-skill">${icon(pilot.glyph??['lightning','crosshair','first-aid-kit'][kind])}<h3>${pilot.skill}</h3>${infoTip(pilot.skill,skillDescription(kind,training))}</div>
+  <button type="button" ${control} class="training-open ${points?'primary':''}">TRAINING TREE <span>${points} PT</span></button>
+ </div></article>`;
 }
 function shipPage(){
  const project=save.ship?.project;
@@ -1143,19 +1183,20 @@ function bindShip(){
 }
 function hangarRoster(){
  const level=hangarLevel('personnel'),used=save.hangar?.treatmentDay===save.day;
+ const active=dutyRoster(),full=activeRosterIds().length>=activeCapacity();
  const roster=[
   ...LANCE_SLOTS.map(i=>({id:pilotId(pilotClass(i)),pilot:save.units[i],slot:i})),
   ...Object.entries(save.reservePilots??{}).map(([id,pilot])=>({id,pilot}))
  ];
  return `<section class="base-roster" aria-label="Hangar crew">
-  <div class="base-roster-head"><div><span class="eyebrow">PERSONNEL ANNEX</span><h2>Duty roster</h2></div><button data-page="inn">HIRING DESK</button></div>
+  <div class="base-roster-head"><div><span class="eyebrow">PERSONNEL ANNEX</span><h2>Duty roster</h2></div><span class="tag" id="duty-count">${activeRosterIds().length} / ${activeCapacity()} ACTIVE</span><button data-page="inn">HIRING DESK</button></div>
   ${level===2?`<p class="base-roster-status">${used?'Trauma Ward · next treatment after a sortie':'Trauma Ward · 1 treatment available'}</p>`:''}
   <div class="base-roster-list">${roster.map(({id,pilot,slot})=>{
-   const kind=pilotKind(id),wound=woundLabel(id),reserve=slot===undefined;
-   const points=reserve?earnedTraining(pilot.level)-pilot.training.length:0;
-   return `<article class="base-pilot">${pilotMark(kind,'pilot-thumb')}
-    <div><strong>${CREW[kind].call}</strong><small>${reserve?'RESERVE':'ACTIVE · '+FRAMES[pilotFrame(slot)].name} / LV ${pilot.level}</small>${wound?`<small class="wound-status">${wound}</small>`:''}</div>
-    <div class="base-pilot-actions">${reserve&&level?`<button data-reserve-training="${id}">TRAIN · ${points} PT</button>`:''}
+   const kind=pilotKind(id),wound=woundLabel(id),unseated=slot===undefined,onDuty=active.includes(id);
+   return `<article class="base-pilot" data-duty-pilot="${id}">${pilotMark(kind,'pilot-thumb')}
+    <div><strong>${CREW[kind].call}</strong><small>${unseated?(onDuty?'ACTIVE · RELIEF':'RESERVE'):'ACTIVE · '+FRAMES[pilotFrame(slot)].name} / LV ${pilot.level}</small>${wound?`<small class="wound-status">${wound}</small>`:''}</div>
+    <div class="base-pilot-actions">${unseated&&(onDuty||level)?`<button data-reserve-training="${id}">TRAIN · ${reliefTrainingPoints(id)} PT</button>`:''}
+     ${unseated&&hangarLevel('cabins')?`<button data-pilot-duty="${id}" data-activate="${!onDuty}" aria-label="${onDuty?'Move '+CREW[kind].call+' to reserve':'Activate '+CREW[kind].call}" ${!onDuty&&full?'disabled':''}>${onDuty?'TO RESERVE':full?'CABINS FULL':'ACTIVATE'}</button>`:''}
      ${wound&&level===2?`<button data-pilot-treatment="${id}" ${used||save.credits<HANGAR_SERVICE_COST?'disabled':''}>TREAT · ${money(HANGAR_SERVICE_COST)}</button>`:''}
     </div></article>`;
   }).join('')}</div></section>`;
@@ -1172,17 +1213,17 @@ function hangarPage(){
     ${queued?`<progress aria-label="Hangar construction progress" max="${queued.wins}" value="${queued.wins-project.wins}"></progress>`:infoTip('Hangar construction','The Hangar has its own construction crew. You can build here while the Ship is upgrading. Contract wins advance both projects.')}</div>
   </section>
   <div class="base-grid">${Object.entries(HANGAR_ROOMS).map(([id,room])=>{
-   const level=hangarLevel(id),current=room.tiers[level-1],next=room.tiers[level],later=level===0?room.tiers[1]:null;
+   const level=hangarLevel(id),current=room.tiers[level-1],next=room.tiers[level],later=room.tiers[level+1];
    const building=project?.room===id;
    const blocked=project?'CREW BUSY':next&&save.rep<next.rep?'REPUTATION TOO LOW':next&&save.credits<next.cost?'INSUFFICIENT CREDITS':'';
    return `<article class="ship-facility base-room" data-base-room="${id}">
-    <div class="ship-facility-head">${icon(room.glyph)}<h2>${room.name}</h2><span class="tag">TIER ${level} / 2</span></div>
+    <div class="ship-facility-head">${icon(room.glyph)}<h2>${room.name}</h2><span class="tag">TIER ${level} / ${room.tiers.length}</span></div>
     <div class="ship-current"><small>${current?current.name+' ONLINE':'STANDARD FACILITY'}</small><span>${current?.perk??'Ready for expansion'}</span></div>
     ${next?`<div class="ship-next"><div class="ship-next-title"><h3>${next.name}</h3>${infoTip(next.name,next.detail)}</div><p>${next.perk}</p>
      <div class="ship-build"><span>${next.wins} WIN${next.wins===1?'':'S'}${next.rep?' · '+next.rep+' REP':''}</span>
       <button type="button" data-build-room="${id}" ${blocked?'disabled':''}>${building?'IN CONSTRUCTION':blocked||'BUILD · '+money(next.cost)}</button>
       ${blocked&&!building?`<small>${money(next.cost)}</small>`:''}</div></div>`:'<div class="ship-next"><span class="eyebrow">FULLY OUTFITTED</span></div>'}
-    ${later?`<div class="ship-plan"><div><small>TIER II</small><b>${later.name}</b><span>${later.perk}</span></div>${infoTip(later.name,money(later.cost)+' · '+later.rep+' REP · '+later.wins+' wins. '+later.detail)}</div>`:''}
+    ${later?`<div class="ship-plan"><div><small>TIER ${level+2}</small><b>${later.name}</b><span>${later.perk}</span></div>${infoTip(later.name,money(later.cost)+' · '+later.rep+' REP · '+later.wins+' wins. '+later.detail)}</div>`:''}
    </article>`;
   }).join('')}</div>
   ${hangarRoster()}
@@ -1198,6 +1239,13 @@ function bindHangar(){
   if(queueHangarUpgrade(room)){render();$('.base-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued in the Hangar.')}
  };
  for(const button of document.querySelectorAll('[data-reserve-training]'))button.onclick=()=>trainingTree(button.dataset.reserveTraining);
+ for(const button of document.querySelectorAll('[data-pilot-duty]'))button.onclick=()=>{
+  const id=button.dataset.pilotDuty,top=$('.base-page').scrollTop;
+  if(setPilotDuty(id,button.dataset.activate==='true')){
+   render();$('.base-page').scrollTop=top;
+   $(`[data-pilot-duty="${id}"]`)?.focus({preventScroll:true});
+  }
+ };
  for(const button of document.querySelectorAll('[data-pilot-treatment]'))button.onclick=()=>{
   const id=button.dataset.pilotTreatment;
   if(treatPilot(id)){render();$('.base-roster-head')?.scrollIntoView({block:'nearest'});toast(CREW[pilotKind(id)].call+' cleared for duty.')}
@@ -1210,7 +1258,7 @@ function spaceInn(){
   const reserve=save.reservePilots?.[pilotId(kind)];
   if(!reserve&&!pilot.fee)return '';
   return `<article class="inn-pilot">
-   ${pilotMark(kind,'pilot-thumb')}<div><span class="eyebrow">${reserve?'RESERVE · LV '+reserve.level:'AVAILABLE FOR HIRE'}</span><h3>${pilot.call}</h3><small>${pilot.name} · ${pilot.skill}</small>${woundLabel(pilotId(kind))?`<small class="wound-status">${woundLabel(pilotId(kind))}</small>`:''}</div>
+   ${pilotMark(kind,'pilot-thumb')}<div><span class="eyebrow">${reserve?(dutyRoster().includes(pilotId(kind))?'ACTIVE RELIEF':'RESERVE')+' · LV '+reserve.level:'AVAILABLE FOR HIRE'}</span><h3>${pilot.call}</h3><small>${pilot.name} · ${pilot.skill}</small>${woundLabel(pilotId(kind))?`<small class="wound-status">${woundLabel(pilotId(kind))}</small>`:''}</div>
    ${infoTip(pilot.skill,pilot.desc)}
    <button ${reserve?'data-seat':'data-hire'}="${kind}" ${!reserve&&save.credits<pilot.fee?'disabled':''}>${reserve?'ASSIGN SEAT':'HIRE · '+money(pilot.fee)}</button>
   </article>`;
@@ -1218,7 +1266,8 @@ function spaceInn(){
  return `<div class="page inn-page"><div class="pagehead"><div><div class="eyebrow">HALCYON / FREEPORT 04</div><h1>SPACE INN.</h1></div><p>Mercenary exchange<br>${money(save.credits)} on hand</p></div>
   <div class="inn-links" aria-label="Freeport services"><button data-page="contracts">${icon('binoculars')} CONTRACT BOARD</button><button data-dock="market">${icon('wrench')} MECH MARKET</button><button data-dock="storage">${icon('shield-chevron')} STORAGE</button><button data-page="pilots">${icon('lightning')} TRAIN PILOTS</button></div>
   <div class="inn-grid"><section class="inn-board"><div class="stat-heading"><h2>Hiring desk</h2>${infoTip('pilot reserves','Hires start in reserve. Assign a seat to swap its pilot. XP and training follow the pilot. The chassis, weapons and paint stay in the seat.')}</div>${crew}</section>
-  <section class="inn-board"><div class="stat-heading"><h2>Active lance</h2><span class="tag">3 SEATS</span></div>${slots}</section></div>
+  <section class="inn-board"><div class="stat-heading"><h2>Active lance</h2><span class="tag">3 MECH SEATS</span></div>${slots}
+   <button class="full inn-duty" data-page="hangar">DUTY ROSTER · ${activeRosterIds().length} / ${activeCapacity()} ACTIVE</button></section></div>
  </div>`;
 }
 function bindInn(){
@@ -1294,20 +1343,15 @@ function render(){
   <h3 class="loadout-slot">SECONDARY / MELEE</h3><div class="equipment">${equipmentChoices(u,MELEE,training)}</div>
    ${u.melee?'<button class="remove-melee" id="remove-melee">UNEQUIP MELEE</button>':''}`}</section></div>`:''}</div>`;
   if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">PERSONNEL / ACTIVE DUTY</div><h1>HUMAN AT THE CORE.</h1></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
-   <div class="grid">${LANCE_SLOTS.map(i=>{const kind=pilotClass(i),pilot=CREW[kind];
-    const u=save.units[i],points=trainingPoints(i);
-    return `<article class="card pilot-card"><div class="pilot-image">${pilotMark(kind)}</div><div class="pilot-details">
-     <div class="eyebrow">${pilot.call} / ${FRAMES[pilotFrame(i)].name}</div><h2>${pilot.name}</h2>${woundLabel(pilotId(kind))?`<span class="tag wound-status">${woundLabel(pilotId(kind))}</span>`:''}
-     ${stat('PILOT LEVEL',String(u.level).padStart(2,'0'))}${stat('EXPERIENCE',u.xp+' / '+(nextLevelXP(u.level)),Math.min(100,100*u.xp/(nextLevelXP(u.level))))}
-      <div class="pilot-skill">${icon(pilot.glyph??['lightning','crosshair','first-aid-kit'][kind])}<h3>${pilot.skill}</h3>${infoTip(pilot.skill,skillDescription(kind,trainingEffects(i)))}</div>
-     <button type="button" id="train-pilot-${i}" data-train-pilot="${i}" class="training-open ${points?'primary':''}">
-      TRAINING TREE <span>${points} PT</span>
-     </button></div></article>`;
+   <div class="grid">${LANCE_SLOTS.map(i=>pilotCard(pilotClass(i),save.units[i],trainingEffects(i),FRAMES[pilotFrame(i)].name,`id="train-pilot-${i}" data-train-pilot="${i}"`,trainingPoints(i))).join('')}
+   ${dutyRoster().map(id=>{
+    const kind=pilotKind(id),u=save.reservePilots[id];
+    return pilotCard(kind,u,effectsForTraining(kind,u.training),'RELIEF PILOT',`data-reserve-training="${id}"`,reliefTrainingPoints(id));
    }).join('')}</div></div>`;
   if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button></div></section></div>`;
   if(page==='journal')$('#ui').innerHTML=`<div class="page journal-page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / REFERENCE</div><h1>FIELD JOURNAL.</h1></div></div>${journalMarkup(journalPage)}</div>`;
   bind();
-  if(page==='pilots')document.querySelectorAll('[data-train-pilot]').forEach(button=>button.onclick=()=>trainingTree(+button.dataset.trainPilot));
+  if(page==='pilots')document.querySelectorAll('[data-train-pilot],[data-reserve-training]').forEach(button=>button.onclick=()=>trainingTree(button.dataset.reserveTraining??Number(button.dataset.trainPilot)));
   if(page==='workshop')bindWorkshop();
    if(page==='inn')bindInn();
   if(page==='ship')bindShip();
@@ -1348,6 +1392,8 @@ function validSave(s){
  }))return false;
  if(s.ship!==undefined&&!validShip(s))return false;
  if(s.hangar!==undefined&&!validHangar(s))return false;
+ if(s.duty!==undefined&&(!Array.isArray(s.duty)||s.duty.length>hangarLevel('cabins',s)||
+    new Set(s.duty).size!==s.duty.length||!s.duty.every(id=>typeof id==='string'&&Object.hasOwn(s.reservePilots??{},id))))return false;
  if(s.wounds!==undefined&&!validRecord(s.wounds,([id,days])=>(pilots.has(pilotKind(id))||Object.hasOwn(s.reservePilots??{},id))&&[1,2].includes(days)))return false;
  if(s.salvage!==undefined&&!validRecord(s.salvage,([id,count])=>String(Number(id))===id&&playerHull(Number(id))&&Number.isSafeInteger(count)&&count>0))return false;
  if(s.dispatch!==undefined&&(!s.dispatch||s.dispatch.day!==s.day||!Array.isArray(s.dispatch.sizes)||s.dispatch.sizes.length!==CONTRACTS.length||!s.dispatch.sizes.every(n=>Number.isInteger(n)&&n>=1&&n<=3)))return false;
@@ -1369,7 +1415,7 @@ function validShip(career){
 }
 function validHangar(career){
  const base=career.hangar;
- if(!base||!validRecord(base.levels,([room,level])=>Object.hasOwn(HANGAR_ROOMS,room)&&[1,2].includes(level)))return false;
+ if(!base||!validRecord(base.levels,([room,level])=>Object.hasOwn(HANGAR_ROOMS,room)&&Number.isInteger(level)&&level>=1&&level<=HANGAR_ROOMS[room].tiers.length))return false;
  for(const day of [base.treatmentDay,base.scanDay])if(day!==undefined&&(!Number.isInteger(day)||day<1||day>career.day))return false;
  const job=base.project;
  if(job===undefined)return true;
@@ -1425,7 +1471,7 @@ function quickOrders(){
   ['crosshair','Strike','Adjacent ground targets','Equip melee in the Workshop. Strike needs a working left arm. Gunships require ranged attacks and can cross cover. Missiles ignore cover.'],
   ['shield-chevron','Brace','1–2 AP · blocks 50% or more','Brace lasts until your next turn. Training can reduce the cost. Pilot skills can be used once per battle.'],
   ['arrow-u-up-left','Counter','0 AP · 1 per round',COUNTER_HELP],
-  ['lightning','End turn','The hostile lance acts','Select your three units in the bottom bar. Neutralize all enemies to win. Tanks and gunships have hull HP and award pilot XP.'],
+  ['lightning','End turn','The hostile lance acts','Select deployed units in the bottom bar. Neutralize all enemies to win. Tanks and gunships have hull HP and award pilot XP.'],
   ['wrench','Refit','Repair between sorties','Contracts earn credits, XP and reputation. Withdraw to bring surviving machines home. The career and completed actions save in this browser. An interrupted enemy phase restarts on reload.'],
   ['binoculars','Attack camera','Skip with Escape','Switch the camera off in Career if you prefer the tactical view.']
  ];
@@ -1447,12 +1493,13 @@ function pilotWiki(){
  return `<section class="pilot-wiki" aria-label="Pilot classes and skills">
   <div class="stat-heading"><h2>Pilot classes &amp; skills</h2>${infoTip('training ranks',FOUNDATION_HELP+' Training points are earned at levels 1 through 6, then at 8 and 10. Your level 5 doctrine unlocks ranks 6, 8 and 10 in its path.')}</div>
   ${CREW.map((pilot,i)=>`<details class="wiki-pilot"><summary><b>${pilot.call}</b><span>${roles[i]} · ${pilot.skill}</span></summary>
-   <div class="wiki-profile"><span class="eyebrow">${pilot.name} / SIGNATURE SKILL</span><p><b>${pilot.skill}</b> · ${pilot.desc}</p>
+   <div class="wiki-profile"><div class="wiki-profile-head">${pilotMark(i,'pilot-thumb')}<div><span class="eyebrow">${pilot.name} / SIGNATURE SKILL</span><p><b>${pilot.skill}</b> · ${pilot.desc}</p></div></div>
     <div class="wiki-paths">${PILOT_TREES[i].map((path,index)=>`<section aria-label="${path.name}">
      <h3>${icon(path.glyph)} ${path.name}</h3><p>${tactics[i][index]}</p>
      <ol>${path.nodes.map((node,rank)=>`<li><small>LV ${TRAINING_LEVELS[rank]}${rank===DOCTRINE_RANK?' · DOCTRINE':''}</small><b>${node.name}</b><span>${node.label}</span></li>`).join('')}</ol>
     </section>`).join('')}</div>
    </div></details>`).join('')}
+  <p class="pilot-credit">Recruit portraits by <a href="https://opengameart.org/content/cyberpunk-portraits">Hyptosis</a> · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a></p>
  </section>`;
 }
 function journalMarkup(section){
@@ -1493,53 +1540,88 @@ const sortieHull=u=>u.index===AUX_SLOT?save.reserve[u.frame]:save.units[u.index]
 function auxiliaryChoices(){
  if(shipLevel('drop')<2)return '';
  const pilots=Object.entries(save.reservePilots??{}),hulls=Object.entries(save.reserve??{}).filter(([,hull])=>hull.condition>=30);
- if(!pilots.length||!hulls.length)return '<p class="note">Auxiliary Cradle ready · Keep one reserve pilot and one stored hull at 30% integrity or better.</p>';
+ if(!pilots.length||!hulls.length)return '<p class="note">Auxiliary Cradle ready · Keep one unseated pilot and one stored hull at 30% integrity or better.</p>';
  return `<fieldset class="auxiliary-choices"><legend>Auxiliary Cradle</legend>
   <label class="aux-enable"><input type="checkbox" id="use-aux"> Deploy one reserve mech</label>
-  <label>Reserve pilot<select id="aux-pilot">${pilots.map(([id,p])=>`<option value="${id}">${CREW[pilotKind(id)].call} · LV ${p.level}${woundDays(id)?' · WOUNDED':''}</option>`).join('')}</select></label>
+  <label>Available pilot<select id="aux-pilot">${pilots.map(([id,p])=>`<option value="${id}">${CREW[pilotKind(id)].call} · LV ${p.level}${woundDays(id)?' · WOUNDED':''}</option>`).join('')}</select></label>
   <label>Stored hull<select id="aux-frame">${hulls.map(([frame,h])=>`<option value="${frame}">${FRAMES[frame].name} · ${h.condition}%</option>`).join('')}</select></label>
  </fieldset>`;
 }
 function prepareSortie(i){
  if(battle)return;
  const size=dispatchSizes()[i],ready=LANCE_SLOTS.filter(slot=>save.units[slot].condition>=30),chosen=new Set(ready.slice(0,size));
- modal('SORTIE ASSIGNMENT',`<div class="stat-heading"><span class="eyebrow">${CONTRACTS[i].name} / ${size} SEAT${size===1?'':'S'}</span>${infoTip('sortie seats','Contract capacity is rolled for each company day. Select the required number of operational mechs. Pilots who stay aboard recover from wounds. A wounded pilot starts combat at 65% pilot HP.')}</div>
-  <div class="seat-choices">${LANCE_SLOTS.map(slot=>`<button type="button" data-sortie-seat="${slot}" aria-pressed="${chosen.has(slot)}" ${!ready.includes(slot)?'disabled':''}><b>${FRAMES[pilotFrame(slot)].name} · ${pilotProfile(slot).call}</b><small>${save.units[slot].condition}% INTEGRITY${ready.includes(slot)?'':' · REPAIR NEEDED'}${woundDays(pilotId(pilotClass(slot)))?' · '+woundLabel(pilotId(pilotClass(slot))):''}</small></button>`).join('')}</div>
+ const active=dutyRoster().length?activeRosterIds():[];
+ const draft=new Map(LANCE_SLOTS.map(slot=>[slot,pilotId(pilotClass(slot))]));
+ const selectedCrew=()=>[...chosen].sort().map(slot=>draft.get(slot));
+ const options=active.map(id=>`<option value="${id}">${CREW[pilotKind(id)].call}${woundDays(id)?' · WOUNDED':''}</option>`).join('');
+ modal('SORTIE ASSIGNMENT',`<div class="stat-heading"><span class="eyebrow">${CONTRACTS[i].name} / ${size} SEAT${size===1?'':'S'}</span>${infoTip('sortie seats','Contract capacity is rolled for each company day. Select the required number of operational mechs. Pilots who stay aboard recover from wounds. A wounded pilot starts combat at 65% pilot HP.'+(active.length?' Pilot changes apply when you deploy. Displaced pilots stay on the active roster.':''))}</div>
+  <div class="seat-choices">${LANCE_SLOTS.map(slot=>{
+   const frame=FRAMES[pilotFrame(slot)].name,canFly=ready.includes(slot),pilot=pilotProfile(slot);
+   return `<div class="sortie-seat"><button type="button" data-sortie-seat="${slot}" aria-pressed="${chosen.has(slot)}" ${!canFly?'disabled':''}><b>${frame}${active.length?'':' · '+pilot.call}</b><small>${save.units[slot].condition}% INTEGRITY${canFly?'':' · REPAIR NEEDED'}${!active.length&&woundDays(draft.get(slot))?' · '+woundLabel(draft.get(slot)):''}</small></button>
+    ${active.length&&canFly?`<label class="sortie-crew">Pilot<select data-sortie-pilot="${slot}" aria-label="Pilot for ${frame}">${options}</select></label>`:''}</div>`;
+  }).join('')}</div>
   ${ready.length>=size?auxiliaryChoices():''}
   <p class="note" id="sortie-count" aria-live="polite"></p>`,
   [{text:'CANCEL',fn:closeModal},...(ready.length<size?[{text:'OPEN WORKSHOP',fn:()=>openRepair(LANCE_SLOTS.find(slot=>!ready.includes(slot)))}]:[
    {text:'DEPLOY',fn:()=>{if(chosen.size===size&&!battle){
     const aux=$('#use-aux')?.checked?{pilotId:$('#aux-pilot').value,frame:Number($('#aux-frame').value)}:null;
-    closeModal();deploy(i,false,[...chosen].sort(),aux);
+    closeModal();deploy(i,false,[...chosen].sort(),aux,active.length?selectedCrew():null);
    }}}
   ])]);
  const buttons=[...document.querySelectorAll('[data-sortie-seat]')],launch=ready.length>=size?$('#modal-1'):null;
+ const selectors=[...document.querySelectorAll('[data-sortie-pilot]')],auxPilot=$('#aux-pilot'),useAux=$('#use-aux');
  const sync=()=>{
   for(const button of buttons)button.setAttribute('aria-pressed',String(chosen.has(Number(button.dataset.sortieSeat))));
+  const picked=selectedCrew();
+  for(const select of selectors){
+   const slot=Number(select.dataset.sortiePilot);
+   select.value=draft.get(slot);
+   select.disabled=!chosen.has(slot);
+   select.parentElement.hidden=select.disabled;
+   for(const option of select.options)option.disabled=option.value!==select.value&&picked.includes(option.value);
+  }
+  if(auxPilot){
+   for(const option of auxPilot.options)option.disabled=picked.includes(option.value);
+   const first=[...auxPilot.options].find(option=>!option.disabled);
+   if(!auxPilot.value||picked.includes(auxPilot.value))auxPilot.value=first?.value??'';
+   useAux.disabled=!first;
+   if(!first)useAux.checked=false;
+  }
   if(launch)launch.disabled=chosen.size!==size;
-  $('#sortie-count').textContent=ready.length<size?'Repair additional hulls to meet the required seats.':chosen.size+' / '+size+' selected'+($('#use-aux')?.checked?' + 1 AUX':'');
+  $('#sortie-count').textContent=ready.length<size?'Repair additional hulls to meet the required seats.':chosen.size+' / '+size+' selected'+(useAux?.checked?' + 1 AUX':'')+(useAux?.disabled?' · No unseated auxiliary pilot available':'');
  };
  for(const button of buttons)button.onclick=()=>{
   const slot=Number(button.dataset.sortieSeat);
   if(!chosen.delete(slot)){
    if(chosen.size===size)chosen.delete(chosen.values().next().value);
+   const picked=selectedCrew();
+   if(active.length&&picked.includes(draft.get(slot)))draft.set(slot,active.find(id=>!picked.includes(id)));
    chosen.add(slot);
   }
   sync();
  };
- if($('#use-aux'))$('#use-aux').onchange=sync;
+ for(const select of selectors)select.onchange=()=>{
+  draft.set(Number(select.dataset.sortiePilot),select.value);sync();
+ };
+ if(useAux)useAux.onchange=sync;
  sync();
 }
 function openRepair(slot){
  closeModal();page='workshop';workshopView='assigned';selected=slot;render();
 }
-function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null){
+function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null){
  if(battle||!CONTRACTS[i]||!validSlots(slots))return;
- if(aux&&(legacy||!validAux(aux)))return toast('The auxiliary seat requires a reserve pilot and an operational stored hull.');
+ if(crew!==null){
+  const active=activeRosterIds();
+  if(legacy||!dutyRoster().length||!Array.isArray(crew)||crew.length!==slots.length||
+     new Set(crew).size!==crew.length||!crew.every(id=>active.includes(id)))return toast('Select one active pilot per mech.');
+ }
+ if(aux&&(legacy||!validAux(aux)||crew?.includes(aux.pilotId)))return toast('The auxiliary seat requires a separate pilot and an operational stored hull.');
  const damaged=slots.find(slot=>save.units[slot].condition<30);
  if(damaged!==undefined){
   modal('REPAIR REQUIRED','<p>A selected chassis has less than 30% integrity.</p>',[{text:'OPEN WORKSHOP',fn:()=>openRepair(damaged)}]);return;
  }
+ if(crew)slots.forEach((slot,index)=>seatPilot(slot,crew[index]));
  createBattle(i,legacy,legacy,slots,true,aux);selected=slots[0];action='move';targetPart='body';effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;
  persist();render();sound('click');if(save.history.length===0)guide();
 }

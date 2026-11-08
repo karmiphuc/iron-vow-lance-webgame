@@ -15,7 +15,7 @@ assert.equal(document.querySelectorAll('.manual-topics > div').length,8);
 click('[data-journal="wiki"]');assert.equal(document.querySelectorAll('.wiki-pilot').length,8);
 assert.equal(document.querySelectorAll('.wiki-paths li').length,96);
 click('#nav [data-page="hangar"]');
-assert.equal(document.body.dataset.view,'hangar');assert.equal(document.querySelectorAll('.base-room').length,3);
+assert.equal(document.body.dataset.view,'hangar');assert.equal(document.querySelectorAll('.base-room').length,4);
 click('[data-hangar-deck="mechs"]');
 click('#inspect');assert.ok(get('.unit-inspect'));click('[data-select="1"]');assert.match(get('.selected-chassis').textContent,/KESTREL/);assert.match(get('.unit-inspect').textContent,/Jin Takeda/);click('#close-inspect');assert.equal(get('.unit-inspect'),null);
 click('[data-page="workshop"]');click('[data-select="0"]');

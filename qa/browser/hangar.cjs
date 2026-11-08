@@ -7,7 +7,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  await page.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('.ship-page').waitFor();
  await nav('hangar');
- assert.equal(await page.locator('.base-room').count(),3);
+ assert.equal(await page.locator('.base-room').count(),4);
  assert.ok(await fit('.base-page'));
  assert.ok(await fit('#nav'));
  const tip=page.locator('[data-base-room="personnel"] .ship-next-title [data-help]');

@@ -1,0 +1,13 @@
+Scout, Marshal, Sapper, Signal Officer and Retriever use original art from
+Cyberpunk Portraits by Hyptosis, released under CC0 1.0.
+
+Author release: https://opengameart.org/content/cyberpunk-portraits
+License: https://creativecommons.org/publicdomain/zero/1.0/
+Individual PNGs: https://gdevelop.io/asset-store/free/cyberpunk-portraits-cyberpunk-portraits
+
+PNG selection from the GDevelop listing:
+Scout: Cyberpunks 3 Portrait 4
+Marshal: Cyberpunks 2 Portrait 4
+Sapper: Cyberpunks 3 Portrait 1
+Signal Officer: Cyberpunks 1 Portrait 4
+Retriever: Cyberpunks 3 Portrait 8
