@@ -4,7 +4,7 @@ const path=require('node:path');
 const {spawnSync,execFileSync}=require('node:child_process');
 const {createCanvas,loadImage,ImageData}=require('../qa/node_modules/@napi-rs/canvas');
 const T=require('../dist/rig-bench/vendor/three.min.js');
-const dist=path.join(__dirname,'../dist'),size=176,columns=8;
+const dist=path.join(__dirname,'../dist'),size=176,columns=4;
 global.THREE=T;global.self=global;global.window={THREE:T};
 global.document={createElement:()=>createCanvas(1,1)};
 global.createImageBitmap=async blob=>{
@@ -175,7 +175,7 @@ async function bake(spec){
   const anchors=sample(row),triangles=geometry(root,spec);
   points.push([]);
   for(let column=0;column<columns;column++){
-   const angle=column*Math.PI/4;
+   const angle=(1+2*column)*Math.PI/4;
    g.putImageData(draw(triangles,angle,span,ground),column*size,row*size);
    if(mg)mg.putImageData(draw(triangles,angle,span,ground,true),column*size,row*size);
    points[row].push(Object.fromEntries(Object.entries(anchors).map(([k,v])=>{
@@ -184,7 +184,7 @@ async function bake(spec){
    })));
   }
  }
- const key='travel-'+spec.key,save=(img,suffix)=>fs.writeFileSync(path.join(dist,'assets',key+suffix+'.webp'),img.toBuffer('image/webp',91));
+ const key='grid-travel-'+spec.key,save=(img,suffix)=>fs.writeFileSync(path.join(dist,'assets',key+suffix+'.webp'),img.toBuffer('image/webp',91));
  save(canvas,'');if(mask)save(mask,'-paint');
  console.log(key,rows*columns+' cells');
  return {key,span,ground,cell:size,columns,points};
@@ -192,8 +192,8 @@ async function bake(spec){
 (async()=>{
  const specs=[...stock.map((key,i)=>({key,stock:i})),...native.map(key=>({key,native:true})),
   ...Array.from({length:6},(_,model)=>({key:'foundry-'+model,model})),...['tank','helicopter'].map(key=>({key,vehicle:true}))];
- const only=process.argv[4],previous=path.join(dist,'travel-visuals.js');
+ const only=process.argv[4],previous=path.join(dist,'grid-travel-visuals.js');
  const output=only?JSON.parse(fs.readFileSync(previous,'utf8').trim().replace(/^window.IRON_VOW_TRAVEL=/,'').replace(/;$/,'')):{};
  for(const spec of specs)if(!only||spec.key===only)output[spec.key]=await bake(spec);
- fs.writeFileSync(path.join(dist,'travel-visuals.js'),'window.IRON_VOW_TRAVEL='+JSON.stringify(output)+';\n');
+ fs.writeFileSync(path.join(dist,'grid-travel-visuals.js'),'window.IRON_VOW_TRAVEL='+JSON.stringify(output)+';\n');
 })().catch(error=>{console.error(error);process.exitCode=1});

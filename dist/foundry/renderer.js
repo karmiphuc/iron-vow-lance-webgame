@@ -102,7 +102,7 @@ function draw(u,t,pose,scope,model){
   setPartState(m,part,hp<=0?2:hp<u.max[part]/2?1:0);
  }
  if(!u.alive&&u.downReason!=='pilot'&&!m.wrecked){wreckMech(m);m.wrecked=true}
- const face=pose.heading??facing*.76, aim=pose.aim;
+ const face=pose.heading??facing*Math.PI/4, aim=pose.aim;
  m.yaw=face;
  const step=pose.phase>0&&u.motion;
  const prime=pose.primeProgress;

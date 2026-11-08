@@ -138,7 +138,7 @@ Each mech can move up to its Mobility before its first action without spending A
 
 Each surviving mech has one reaction per round. It uses an operational melee weapon against an adjacent ground attacker, or returns ranged fire if its weapon arm works and the attacker is in range. Reactions spend no AP and cannot trigger another reaction.
 
-Mechs and vehicles pivot toward their next tile before moving. The field renderer has eight heading views of the original models, with directional gait poses for the mechs. The Foundry WebGL rigs also use the map heading. Each step uses a hydraulic lift cue and a weighted contact cue. The attack preparation uses the same sequence with a separate mechanical lock cue.
+Mechs and vehicles snap to their next tile’s facing before moving. The field renderer has four map facings of the original models, with directional gait poses for the mechs. The Foundry WebGL rigs also use the map heading. Each step uses a hydraulic lift cue and a weighted contact cue. The attack preparation uses the same sequence with a separate mechanical lock cue.
 
 To rebuild the directional assets:
 

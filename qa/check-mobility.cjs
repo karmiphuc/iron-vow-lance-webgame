@@ -60,19 +60,25 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(keys.length,13);
  for(const key of keys){
   const visual=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL['${key}'])`));
-  assert.equal(visual.points[0].length,8);
+  assert.equal(visual.points[0].length,4);
   assert.ok(fs.existsSync(path.join(__dirname,'../dist/assets',visual.key+'.webp')));
  }
  const bins=run(`[[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dz])=>{
   current().heading=headingTo(dx,dz);return travelVisual(current(),clock).heading;
  })`);
- assert.deepEqual(Array.from(bins),[5,1,3,7]);
+ assert.deepEqual(Array.from(bins),[2,0,1,3]);
  for(const kind of ['tank','helicopter']){
   const headings=run(`[[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dz])=>{
    const u=battle.units.find(unit=>unit.kind==='${kind}');
    u.heading=headingTo(dx,dz);return travelVisual(u,clock).heading;
   })`);
-  assert.deepEqual(Array.from(headings),[5,1,3,7]);
+  assert.deepEqual(Array.from(headings),[2,0,1,3]);
  }
- console.log('PASS: free movement, one paid tile, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and eight-view travel assets.');
+ assert.ok(run(`[[-7,2],[2,-7],[5,5],[-5,-5],[0,0]].every(([dx,dz])=>FIELD_HEADINGS.includes(headingTo(dx,dz)))`));
+ assert.equal(run('headingTo(2,-2,FIELD_HEADINGS[1])'),run('FIELD_HEADINGS[1]'));
+ const v24=JSON.parse(sim.storage.get('iron-vow-career'));
+ v24.sortie.units[0].heading=0;
+ const migrated=simulate({storage:new Map([['iron-vow-career',JSON.stringify(v24)]])});
+ assert.ok(migrated.run('FIELD_HEADINGS.includes(battle.units[0].heading)'));
+ console.log('PASS: free movement, one paid tile, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and four-facing travel assets.');
 })().catch(error=>{console.error(error);process.exitCode=1});
