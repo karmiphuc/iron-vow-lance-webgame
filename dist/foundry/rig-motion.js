@@ -10,17 +10,15 @@ const wrapA=a=>((a+PI)%(2*PI)+2*PI)%(2*PI)-PI;
 const dampAngle=(a,b,k,dt)=>a+wrapA(b-a)*(1-Math.exp(-k*dt));
 function spr(s,k,d,dt){s.v+=(-k*s.x-d*s.v)*dt;s.x+=s.v*dt;}
 const VC=window.VowChassis;
-function makeMech(frame,team,weaponId,upgrade,tag,paint){
+function makeMech(frame,team,upgrade,tag,paint){
   const b=VC.build(frame,team,tag,paint),cont=new T.Group();cont.rotation.order='YXZ';cont.add(b.root);const r=b.rig;
   const m={cont,body:b.root,rig:r,dims:b.dims,build:b,frame,team,yaw:0,scale:1,
     gait:{phase:0,w:0},legs:r.legs.map(()=>({planted:V3(),from:V3(),to:V3(),swing:false,settle:null,foot:V3()})),
     s:{comp:{x:0,v:0},pitch:{x:0,v:0},roll:{x:0,v:0},arm:{x:0,v:0},kx:{x:0,v:0},kz:{x:0,v:0}},
-    aim:{blend:0,point:V3(),until:-1},recoil:0,wrecked:false,weaponId:null,wpn:null,shield:b.shield,kitLevel:-1,init:false,seed:Math.random()*10,smokeT:0,
+    aim:{blend:0,point:V3(),until:-1},recoil:0,wrecked:false,shield:b.shield,kitLevel:-1,init:false,seed:Math.random()*10,smokeT:0,
     partState:{body:0,pilot:0,right:0,left:0,legs:0},flicker:0};
-  setWeapon(m,weaponId);setKits(m,upgrade||0);return m;
+  setKits(m,upgrade||0);return m;
 }
-function setWeapon(m,id){if(m.weaponId===id)return;if(m.wpn)m.wpn.mount.parent.remove(m.wpn.mount);
-  const w=VC.weapon(id,m.team,m.build.pal),mount=new T.Group(),rec=new T.Group();mount.rotation.set(PI/2,0,0);rec.add(w.model);mount.add(rec);m.rig.arms.R.so.add(mount);w.mount=mount;w.rec=rec;m.wpn=w;m.weaponId=id;}
 function setKits(m,level){if(m.kitLevel===level)return;m.build.kits.forEach((k,i)=>k.forEach(o=>o.visible=i<level));m.kitLevel=level;}
 /* 0 intact, 1 damaged (scorched paint), 2 destroyed (outer plates blown off). Returns true when the state got worse. */
 function setPartState(m,part,st){const prev=m.partState[part];if(prev===st)return false;m.partState[part]=st;
@@ -91,7 +89,7 @@ function animateMech(m,I,dt,t){
     else m.melee=null;}
   if(m.shield)m.shield.visible=!I.shieldDead;
   for(const a of [aL,aR]){a.paul.rotation.x=a.sh.rotation.x*.28;a.paul.rotation.z=a.sh.rotation.z*.4;}
-  if(m.wpn){m.wpn.rec.position.z=-R0*.35;}
+
   if(!dead)for(const sp of r.spinners)sp.rotation.y+=dt*1.1;
   // cockpit lights: flicker after pilot hits or when the pilot is badly hurt, dark when down
   m.flicker=Math.max(0,m.flicker-dt*1.5);
@@ -110,7 +108,6 @@ const colors=[
  null,null,{p:cream,s:0x45422f,a:0xc8662a}
 ];
 const hostile={p:0xa93036,s:0x382529,a:0xed634f};
-const meshWeapon={hailstorm:'rifle',rampart:'shotgun',locust:'missile',morrow:'shotgun'};
 function palette(model,team,paint,trim){
  if(team==='enemy')return hostile;
  const base=colors[model];
@@ -120,14 +117,8 @@ function palette(model,team,paint,trim){
  for(const part of ['s','a'])if(trim?.[part])color[part]=parseInt(trim[part].slice(1),16);
  return color;
 }
-function buildRig(model,team,paint,primary,melee,tag,upgrade,trim){
- const m=makeMech(model,team,meshWeapon[primary]||primary,upgrade,tag,palette(model,team,paint,trim));
- if(melee){
-  const w=VC.weapon('blade',team,m.build.pal);
-  w.mount=new T.Group();w.mount.rotation.x=PI/2;
-  w.mount.add(w.model);m.rig.arms.L.so.add(w.mount);m.blade=w;
- }
- return m;
+function buildRig(model,team,paint,tag,upgrade,trim){
+ return makeMech(model,team,upgrade,tag,palette(model,team,paint,trim));
 }
 function mountPoints(m){
  const r=m.rig;

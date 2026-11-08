@@ -7,6 +7,8 @@ const T=require('../dist/rig-bench/vendor/three.min.js');
 global.THREE=T;
 global.window={THREE:T};
 global.document={createElement:()=>createCanvas(1,1)};
+require('../dist/rig-bench/vendor/GLTFLoader.js');
+require('../dist/foundry/production-arsenal.js');
 require('../dist/foundry/chassis.js');
 require('../dist/foundry/rig-motion.js');
 const {V3,worldSpan,ground,buildRig,animateMech,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
@@ -89,10 +91,16 @@ function points(m,cam,fitGround=true){
   return [k,[+(.5+(p.x-origin.x)*.5).toFixed(4),+y.toFixed(4)]];
  }));
 }
+async function render(){
+const glb=fs.readFileSync(require('node:path').join(__dirname,'../dist/rig-bench/weapons.glb'));
+const arsenal=window.IronVowProductionArsenal;
+const production=await arsenal.load(glb.buffer.slice(glb.byteOffset,glb.byteOffset+glb.byteLength));
 const cam=camera(.46),visuals=[];
 for(const [model,[weapon,melee]] of defaults.entries()){
- const m=buildRig(model,'ally',null,weapon,melee);
- if(m.blade)m.wpn.mount.visible=false;
+ const m=buildRig(model,'ally');
+ const primary=arsenal.mount(production,weapon,m.rig.arms.R.so);
+ const secondary=melee?arsenal.mount(production,melee,m.rig.arms.L.so):null;
+ if(secondary)primary.mount.visible=false;
  pose(m,-.76);save(raster(m,cam),'foundry-'+model);
  const views=[];
  for(const [view,angle,elevation,target,span] of [['field',-.76,.46,3.55,worldSpan],['front',0,.12,3.55,9.4],['side',Math.PI/2,.10,3.55,9.4],['hip',-.45,.14,2.75,4.2],['back',Math.PI,.10,3.55,9.4],['other-side',-Math.PI/2,.10,3.55,9.4]]){
@@ -100,20 +108,18 @@ for(const [model,[weapon,melee]] of defaults.entries()){
   pose(m,angle);
   if(view!=='field')save(raster(m,viewCamera,ground,false),key);
   if(['field','side','back','other-side'].includes(view)){
-   m.wpn.mount.visible=false;
-   if(m.blade)m.blade.mount.visible=false;
+   primary.mount.visible=false;
+   if(secondary)secondary.mount.visible=false;
    const fit=view==='field',fittedKey=key+'-fit';
    save(raster(m,viewCamera,ground,fit),fittedKey);
    save(raster(m,viewCamera,ground,fit,true),fittedKey+'-paint');
    views.push({key:fittedKey,ortho:span/1.4,direction:angle>0?1:-1,...points(m,viewCamera,fit)});
-   m.wpn.mount.visible=!m.blade;
-   if(m.blade)m.blade.mount.visible=true;
+   primary.mount.visible=!secondary;
+   if(secondary)secondary.mount.visible=true;
   }
  }
  const atlas=createCanvas(size*4,size*5),g=atlas.getContext('2d'),maskAtlas=createCanvas(size*4,size*5),masks=maskAtlas.getContext('2d'),face=-.76;
- const motion=buildRig(model,'ally',null,weapon,melee);
- motion.wpn.mount.visible=false;
- if(motion.blade)motion.blade.mount.visible=false;
+ const motion=buildRig(model,'ally');
  const frames=[];
  const push=name=>{
   const index=frames.length;
@@ -162,9 +168,8 @@ const mix=window.VowChassis.build(3,'ally',null,null,{legs:5,core:3,arms:3});
 const group=new T.Group();group.add(mix.root);group.rotation.y=-.6;
 for(const leg of mix.rig.legs)window.VowChassis.solveLeg(mix.rig,mix.dims,leg,V3(leg.restX,mix.dims.ankleH,leg.restZ));
 save(raster({cont:group},cam),'foundry-modular');
-const weapon=window.VowChassis.weapon('blade','ally');
 const raijin=new T.Group();
-raijin.add(weapon.model);
+const weapon=arsenal.mount(production,'blade',raijin);
 const weaponCamera=camera(.30,0,5.2);
 const weaponViews={};
 for(const [side,direction] of [['left',-1],['right',1]]){
@@ -176,7 +181,9 @@ for(const [side,direction] of [['left',-1],['right',1]]){
   return [(.5+p.x*.5)*size,(.5-p.y*.5)*size];
  };
  const grip=new T.Object3D();weapon.model.add(grip);raijin.updateMatrixWorld(true);
- weaponViews[side]={key,grip:point(grip),axis:point(weapon.base),tip:point(weapon.muzzle),pixelsPerMetre:size/5.2*3.2};
+ weaponViews[side]={key,grip:point(grip),axis:point(weapon.base),tip:point(weapon.tip),pixelsPerMetre:size/5.2*3.2};
  weapon.model.remove(grip);
 }
 fs.writeFileSync(assetDir+'/../foundry/baked.js','window.IRON_VOW_FOUNDRY_ART='+JSON.stringify(visuals)+';\nwindow.IRON_VOW_RAIJIN_ART='+JSON.stringify(weaponViews)+';\n');
+}
+render().catch(error=>{console.error(error);process.exitCode=1});

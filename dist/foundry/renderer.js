@@ -7,7 +7,9 @@ const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,setPartS
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer, scene, camera, failed=false;
-const combat=new Map(), thumbs=new Map();
+const combat=new Map();
+const arsenal=window.IronVowProductionArsenal;
+let armory,armoryRequested=false;
 const clearCombat=()=>{for(const entry of combat.values())disposeRig(entry.m);combat.clear()};
 let combatScope;
 function init(){
@@ -32,6 +34,11 @@ function init(){
   scene.environment=pmrem.fromScene(env,.045).texture;
   pmrem.dispose();
   env.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}});
+  if(arsenal&&!armoryRequested){
+   armoryRequested=true;
+   const path='rig-bench/weapons.glb',url=window.IRON_VOW_INLINE_ASSETS?.[path]||path;
+   arsenal.load(url).then(scene=>{armory=scene},()=>{});
+  }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
   return true;
  }catch(error){disable(error);return false}
@@ -73,21 +80,6 @@ function anchor(o){
  const center=V3().project(camera);
  return [.5+(p.x-center.x)*.5,ground-(p.y-center.y)*.5];
 }
-function thumb(model,team='ally',paint=null,primary='rifle',melee=null,trim=null,angle=-.54,elevation=.18){
- const key=[model,team,paint,primary,melee,trim?.s,trim?.a,angle,elevation].join('/');
- if(thumbs.has(key))return thumbs.get(key);
- if(!init())return null;
- const m=buildRig(model,team,paint,primary,melee,null,0,trim),surface=makeSurface();
- setCamera(elevation);
- if(m.blade)m.wpn.mount.visible=false;
- animateMech(m,{pos:V3(),face:angle,noPlant:true,alive:true,brace:0},.016,0);
- paintRig(m,surface);
- const url=surface.toDataURL('image/webp',.90);
- disposeRig(m);
- if(thumbs.size>=36)thumbs.delete(thumbs.keys().next().value);
- thumbs.set(key,url);
- return url;
-}
 function draw(u,t,pose,scope,model){
  if(!init())return null;
  if(combatScope!==scope){
@@ -96,12 +88,12 @@ function draw(u,t,pose,scope,model){
  const facing=u.face??(u.team==='enemy'?1:-1), key=u.id+'|'+facing;
  let entry=combat.get(key);
  if(!entry){
-  const m=buildRig(model,u.team,u.paint,u.weapon,u.melee,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
+  const m=buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
   entry={m,surface:makeSurface(),stamp:null,anchors:{}};combat.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
- const stamp=[u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),...parts.map(p=>u.hp[p])].join('/');
+ const stamp=[Boolean(armory),u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),...parts.map(p=>u.hp[p])].join('/');
  if(entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){
@@ -139,15 +131,27 @@ function draw(u,t,pose,scope,model){
  }
  // The battle tile is already moving on the 2D board. Use the rig's travel only to solve its planted gait.
  if(step)m.cont.position.set(0,0,0);
- m.wpn.mount.visible=false;
- if(m.blade)m.blade.mount.visible=false;
+ if(armory&&!entry.armed){
+  entry.primary=arsenal.mount(armory,u.weapon,m.rig.arms.R.so);
+  entry.secondary=arsenal.mount(armory,u.melee,m.rig.arms.L.so);
+  entry.armed=true;
+ }
+ if(entry.primary){
+  entry.primary.mount.visible=u.alive&&u.hp.right>0;
+  entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
+ }
+ if(entry.secondary){
+  entry.secondary.mount.visible=u.alive&&u.hp.left>0&&(melee||(model===4&&aim<.2));
+  if(entry.secondary.spike)entry.secondary.spike.position.z=entry.secondary.spikeRest+(pose.strikeProgress>=.61&&pose.strikeProgress<=.81?.50:0);
+ }
  m.cont.updateMatrixWorld(true);
  setCamera(.46);
  paintRig(m,entry.surface);
- const r=m.rig, mounts=mountPoints(m);
- for(const [name,object] of Object.entries({...mounts, muzzle:m.wpn.muzzle,muzzle2:m.wpn.muzzle,body:r.spine,pilot:r.neck,
-  right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,meleeTip:m.blade?.muzzle||r.arms.L.so})){
-  entry.anchors[name]=anchor(object);
+ const r=m.rig,mounts=mountPoints(m),primary=entry.primary,secondary=entry.secondary;
+ for(const [name,object] of Object.entries({...mounts,body:r.spine,pilot:r.neck,
+  right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,
+  muzzle:primary?.muzzle,muzzle2:primary?.muzzle2,meleeTip:secondary?.tip})){
+  if(object)entry.anchors[name]=anchor(object);
  }
  return entry;
 }
@@ -157,5 +161,5 @@ function withFallback(render){
   try{return render(...args)}catch(error){disable(error);return null}
  };
 }
-window.IronVowFoundry={draw:withFallback(draw),thumb:withFallback(thumb),clearCombat};
+window.IronVowFoundry={draw:withFallback(draw),clearCombat};
 })();

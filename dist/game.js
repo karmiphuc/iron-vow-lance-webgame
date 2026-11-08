@@ -433,7 +433,7 @@ function render(){
   if(page==='hangar'){
     const lineup=PILOTS.map((_,i)=>({m:FRAMES[pilotFrame(i)],i}));
     const others=lineup.filter(v=>v.i!==selected);
-    $('#ui').innerHTML=`${(f.native||f.foundry!=null)?`<div class="prototype-hangar" aria-hidden="true"><img src="${f.foundry!=null?(window.IronVowFoundry?.thumb(f.foundry,'ally',u.paint,u.weapon,u.melee,u.trim)||chassisArt(frame,u.weapon,1)):chassisArt(frame,u.weapon,1)}" alt=""></div>`:''}<div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
+    $('#ui').innerHTML=`${(f.native||f.foundry!=null)?`<div class="prototype-hangar" aria-hidden="true">${f.foundry!=null?'<canvas id="foundry-hangar" width="640" height="640"></canvas>':`<img src="${chassisArt(frame,u.weapon,1)}" alt="">`}</div>`:''}<div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
     <div class="hangar-top-right"><button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button><button class="icon" id="hangar-manual">${icon('binoculars')} FIELD MANUAL</button></div>
     <div class="hangar-hotspots" aria-label="Select a mech in the hangar">${lineup.map(({m,i})=>`<button data-select="${i}" aria-label="Select ${m.name}" aria-pressed="${i===selected}"><span>${m.name} / ${m.role}</span></button>`).join('')}</div>
     ${inspectOpen?`<aside class="unit-inspect"><div class="inspect-head"><span class="eyebrow">CHASSIS 0${selected+1} / ${f.model}</span><button id="close-inspect" class="icon" aria-label="Close unit details">${icon('x')}</button></div><h2>${f.name}</h2><p class="note">${f.role} · PILOT LEVEL ${u.level}</p><div class="rule"></div>${stat('BODY INTEGRITY',f.hp+u.upgrade*25+' HP')}${stat('ARMOR',f.armor+u.upgrade*2)}${stat('MOBILITY',(f.move+1)+' TILES')}${stat('WEAPON',w.name)}${stat('CONDITION',u.condition+'%',u.condition)}<div class="pilot"><img class="pilot-thumb" src="${pilotArt(selected)}" alt="${p.name}"><div>${p.name}<small>${p.call} / ${p.skill}</small></div></div><button class="full" data-page="workshop">${icon('wrench')} OPEN WORKSHOP</button><p class="note">${p.desc}</p></aside>`:''}
@@ -458,7 +458,7 @@ function render(){
   if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button><button id="guide">FIELD MANUAL</button></div></section></div>`;
   bind();
   if(page==='workshop')bindWorkshop();
-  if(page==='hangar'){$('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};$('#hangar-manual').onclick=guide;if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
+  if(page==='hangar'){drawFoundryHangar();$('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};$('#hangar-manual').onclick=guide;if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
 }
 function repairCost(i){return Math.ceil((100-save.units[i].condition)*14)}
 function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(FIELD_PATCH,save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(!battle){page=b.dataset.page;render();sound('click')}});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>deploy(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>{let w=weapon(b.dataset.equip),u=save.units[selected];if(w.builtIn||FRAMES[pilotFrame(selected)].native)return;if(!save.owned.includes(w.id)&&(w.melee?u.melee:u.weapon)!==w.id){if(save.credits<w.price)return toast('Insufficient credits');save.credits-=w.price;save.owned.push(w.id)}u[w.melee?'melee':'weapon']=w.id;persist();render();toast(w.name+' equipped')});document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();persist();closeModal();render()}}]);$('#guide').onclick=guide;
@@ -1125,6 +1125,7 @@ function moduleImage(key){
     }catch{}
    }
    if(page==='workshop'&&!battle)drawWorkshopPreview();
+   if(page==='hangar'&&!battle)drawFoundryHangar();
   };
   image.src=art(key);
  }
@@ -1158,15 +1159,12 @@ function paintedSprite(image,key,paint,hostile=false){
   paintedImages.set(id,surface);return surface;
  }catch{return image}
 }
-function foundryPaint(image,key,paint,trim,onReady){
+function foundryPaint(image,key,paint,trim){
  if(!paint&&!trim)return image;
  const id=[key,paint,trim?.s,trim?.a].join('/');
  if(paintedImages.has(id))return paintedImages.get(id);
  const mask=moduleImage(key+'-paint');
- if(!imageReady(mask)){
-  if(onReady&&mask&&!mask.foundryPaintListener){mask.foundryPaintListener=true;mask.addEventListener?.('load',onReady,{once:true})}
-  return image;
- }
+ if(!imageReady(mask))return image;
  const {naturalWidth:width,naturalHeight:height}=image;
  try{
   const surface=renderSurface(width,height),g=surface.getContext('2d',{willReadFrequently:true});
@@ -1220,23 +1218,28 @@ function foundryMount(anchors,bounds,id,direction,progress=0,ortho=8){
  return weaponMount({ortho:id==='blade'?ortho*1.4/3.2:ortho},anchors,bounds,id,direction,progress);
 }
 let foundryPreviewAngle=0;
+function drawFoundryPreview(canvas,u,model,angle){
+ const view=window.IRON_VOW_FOUNDRY_ART?.[model]?.views?.[angle];
+ const key=view?.key||'foundry-'+model,base=moduleImage(key);
+ if(!imageReady(base))return;
+ const size=canvas.width,g=canvas.getContext('2d');
+ const rendered=foundryPaint(base,key,u.paint,u.trim);
+ g.clearRect(0,0,size,size);g.drawImage(rendered,0,0,size,size);
+ if(view){
+  const bounds={x:0,y:0,w:size,h:size};
+  drawWeaponModule(g,foundryMount(view,bounds,u.weapon,view.direction,0,view.ortho));
+  drawWeaponModule(g,foundryMount(view,bounds,u.melee,view.direction,0,view.ortho));
+ }
+}
+function drawFoundryHangar(){
+ const canvas=$('#foundry-hangar');
+ if(canvas&&canvas.getContext)drawFoundryPreview(canvas,save.units[selected],foundryModel(pilotFrame(selected)),0);
+}
 function drawWorkshopPreview(){
  const canvas=$('#paint-preview');if(!canvas)return;
  const g=canvas.getContext('2d'),u=save.units[selected],frame=pilotFrame(selected),visual=wardenVisual(frame,u.weapon,-1);
  const image=artImages[visual?.key],loaded=imageReady(image),size=canvas.width,model=foundryModel(frame);
- if(model!=null){
-  const view=window.IRON_VOW_FOUNDRY_ART?.[model]?.views?.[foundryPreviewAngle];
-  const key=view?.key||legacyChassis[frame],base=moduleImage(key);
-  if(!imageReady(base))return;
-  const rendered=foundryPaint(base,key,u.paint,u.trim,drawWorkshopPreview);
-  g.clearRect(0,0,size,size);g.drawImage(rendered,0,0,size,size);
-  if(view){
-   const bounds={x:0,y:0,w:size,h:size};
-   drawWeaponModule(g,foundryMount(view,bounds,u.weapon,view.direction,0,view.ortho));
-   drawWeaponModule(g,foundryMount(view,bounds,u.melee,view.direction,0,view.ortho));
-  }
-  return;
- }
+ if(model!=null){drawFoundryPreview(canvas,u,model,foundryPreviewAngle);return}
  g.clearRect(0,0,size,size);
  if(!loaded){
   const fallback=artImages[legacyChassis[frame]];
@@ -1509,6 +1512,8 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
  if(foundry){
   const bounds=recoilingBounds(u,unitBounds(u),t),facing=unitFacing(u),strike=part==='meleeTip';
   if(strike||part.startsWith('muzzle')){
+   const production=Boolean(strike?foundry.secondary:foundry.primary);
+   if(production&&foundry.anchors[part])return spritePoint(bounds,foundry.anchors[part]);
    const mount=foundryMount(foundry.anchors,bounds,strike?u.melee:u.weapon,facing,foundry.strikeProgress);
    if(mount)return weaponPoint(mount,strike?'tip':part);
   }
@@ -1589,8 +1594,8 @@ function drawUnit(u,t,close=false){
   if(u.alive){
    const facing=unitFacing(u);
    ctx.save();
-   if(u.hp.right>0)drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.weapon,facing));
-   if(u.hp.left>0&&(pose.strikeKind||(foundryModel(u.frame)===4&&pose.aim<.2)))drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.melee,facing,foundry.strikeProgress));
+   if(u.hp.right>0&&!foundry.primary)drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.weapon,facing));
+   if(u.hp.left>0&&!foundry.secondary&&(pose.strikeKind||(foundryModel(u.frame)===4&&pose.aim<.2)))drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.melee,facing,foundry.strikeProgress));
    ctx.restore();
   }
   if(!u.alive&&u.downReason!=='pilot')drawMechSmoke(u,t,true);

@@ -18,6 +18,11 @@ assets = {
     if path.suffix in {".webp", ".svg", ".mp3", ".wav", ".woff2"}
 }
 
+arsenal = dist / "rig-bench" / "weapons.glb"
+assets["rig-bench/weapons.glb"] = (
+    "data:model/gltf-binary;base64," + base64.b64encode(arsenal.read_bytes()).decode("ascii")
+)
+
 def stylesheet(path):
     css = (dist / path).read_text()
     css = re.sub(r"@import url\(['\"]?([^'\")]+)['\"]?\);", lambda match: stylesheet(match[1]), css)

@@ -5,7 +5,7 @@ const simulate=require('./sim-harness.cjs');
 const savedKey='iron-vow-career';
 const dist=path.join(__dirname,'../dist');
 
-function exerciseRigAdapter(){
+async function exerciseRigAdapter(){
  const vm=require('node:vm');
  const {createCanvas}=require('@napi-rs/canvas');
  const three=require('../dist/rig-bench/vendor/three.min.js');
@@ -24,6 +24,20 @@ function exerciseRigAdapter(){
  const THREE={...three,WebGLRenderer:TestRenderer,PMREMGenerator:TestEnvironment};
  const world={THREE,window:{THREE},document:{createElement:()=>createCanvas(320,320)},console:{warn(){}}};
  vm.createContext(world);
+ vm.runInContext(fs.readFileSync(path.join(dist,'rig-bench/vendor/GLTFLoader.js'),'utf8'),world);
+ vm.runInContext(fs.readFileSync(path.join(dist,'foundry/production-arsenal.js'),'utf8'),world);
+ const buffer=fs.readFileSync(path.join(dist,'rig-bench/weapons.glb'));
+ const arsenal=world.window.IronVowProductionArsenal;
+ const production=await arsenal.load(buffer.buffer.slice(buffer.byteOffset,buffer.byteOffset+buffer.byteLength));
+ for(const [id,name,hook] of [
+  ['rifle','kestrel','muzzle'],['rail','longbow','muzzle'],['shotgun','breacher','muzzle'],
+  ['missile','vesper','muzzle2'],['hailstorm','hailstorm','muzzle'],['rampart','rampart','muzzle'],
+  ['breaker','breaker','tip'],['cleaver','cleaver','tip'],['piledriver','piledriver','spike'],['blade','cleaver','tip']
+ ]){
+  const mounted=arsenal.mount(production,id,new three.Group());
+  assert.equal(mounted.model.name,name);
+  assert.ok(mounted[hook],id+' has its production hardpoint '+hook);
+ }
  for(const file of ['chassis.js','rig-motion.js','renderer.js']){
   vm.runInContext(fs.readFileSync(path.join(dist,'foundry',file),'utf8'),world);
  }
@@ -37,14 +51,18 @@ function exerciseRigAdapter(){
   assert.ok(result.anchors.gripR.every(Number.isFinite));
   assert.ok(result.anchors.leadFoot.every(Number.isFinite));
   assert.notDeepEqual(result.anchors.gripL,result.anchors.axisL);
-  adapter.draw(unit,1,pose,scope,model);
+  if(model===0)await Promise.resolve();
+  const fitted=adapter.draw(unit,1,pose,scope,model);
+  assert.equal(fitted.primary.model.name,'vesper');
+  assert.equal(fitted.secondary.model.name,'cleaver');
+  assert.notDeepEqual(fitted.anchors.muzzle,fitted.anchors.muzzle2);
  }
- assert.equal(frames,6,'idle rerenders reuse their surface');
+ assert.equal(frames,7,'idle rerenders reuse their surface after the arsenal arrives');
  fail=true;
  const unit={id:'failure',index:0,team:'ally',weapon:'rail',alive:true,hp,max:hp};
  assert.equal(adapter.draw(unit,1,pose,scope,0),null);
  assert.equal(adapter.draw(unit,2,pose,scope,0),null);
- assert.equal(adapter.thumb(0),null);
+
 }
 
 (async()=>{
@@ -136,6 +154,6 @@ function exerciseRigAdapter(){
   const mount=foundryMount(f.anchors,unitBounds(u),'piledriver',unitFacing(u),.72);
   return mount.asset.key.includes('extended')&&Number.isFinite(mount.angle);
  })()`),'Piledriver uses the extended ram asset, not the Raijin blade');
- exerciseRigAdapter();
+ await exerciseRigAdapter();
  console.log('PASS: procurement, swap, paint, pilot disable, donor career migration, four fallback battle paths, weapon sockets, Foundry atlases and simulated WebGL failure recovery.');
 })().catch(error=>{console.error(error);process.exitCode=1});

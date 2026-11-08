@@ -100,7 +100,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  position:absolute;inset:0;pointer-events:none;overflow:hidden;
  background:radial-gradient(ellipse at 54% 43%,#1d2933ca,#0c141bec 75%);
 }
-.prototype-hangar img {
+.prototype-hangar img,.prototype-hangar canvas {
  position:absolute;left:50%;top:42%;width:min(77vh,90vw);height:min(77vh,90vw);
  transform:translate(-50%,-50%);object-fit:contain;filter:drop-shadow(0 22px 30px #070d15);
 }
@@ -123,7 +123,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  .chassis-choices button{padding:7px 6px;min-height:62px}
  .chassis-choices small,.chassis-choices span{font-size:8px}
  .lance-tabs button{min-width:0;overflow-wrap:anywhere}
- .prototype-hangar img{top:41%;width:min(108vw,70vh);height:min(108vw,70vh)}
+ .prototype-hangar img,.prototype-hangar canvas{top:41%;width:min(108vw,70vh);height:min(108vw,70vh)}
 }
 
 @media(pointer:coarse){
