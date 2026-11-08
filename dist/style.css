@@ -125,3 +125,8 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  .lance-tabs button{min-width:0;overflow-wrap:anywhere}
  .prototype-hangar img{top:41%;width:min(108vw,70vh);height:min(108vw,70vh)}
 }
+
+@media(pointer:coarse){
+ button{touch-action:manipulation}
+ .account #sound{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+}

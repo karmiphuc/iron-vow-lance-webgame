@@ -166,7 +166,7 @@ try{attackCameraEnabled=localStorage.getItem('iron-vow-attack-camera')!=='off'}c
 let activeCinematic=null;
 function closeAttackCamera(sequence){
  if(activeCinematic!==sequence)return;
- activeCinematic=null;delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
+ activeCinematic=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
 }
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
@@ -177,7 +177,7 @@ function beginAttackCamera(actor,target,w,part){
  if(actor.team==='enemy'&&battle.hostileCameraUsed)return null;
  if(actor.team==='enemy')battle.hostileCameraUsed=true;
  const sequence={actor,target,w,part,start:clock,phase:'aim',result:'',skipped:false,resume:null};
- activeCinematic=sequence;document.body.dataset.shot='active';$('#skip-shot').hidden=false;
+ activeCinematic=sequence;duckMusic();document.body.dataset.shot='active';$('#skip-shot').hidden=false;
  $('#shot-status').textContent=actor.name+(actor.attack?.primeDuration?' steps forward and aims at ':' aiming at ')+target.name;
  for(const [unit,face] of [[actor,1],[target,-1]]){
   const subject={...unit,face};
@@ -322,12 +322,55 @@ function sound(type,cueVolume=1){
   if(type==='piledriver'){noise(now,.12,700,2500,.07,'bandpass');thump(now+.12,1.2);tone(now+.13,.2,610,120,.08,'square')}
  }catch{}
 }
+const musicBuffers=new Map();
+let musicRequest=null,musicVoice=null,musicBus=null;
+function musicBuffer(track){
+ if(!musicBuffers.has(track)){
+  const decoded=fetch('assets/audio/'+track+'-score.mp3')
+   .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Score unavailable')})
+   .then(bytes=>audio.decodeAudioData(bytes)).catch(()=>null);
+  musicBuffers.set(track,decoded);
+ }
+ return musicBuffers.get(track);
+}
+function syncMusic(){
+ if(!audio||typeof fetch!=='function')return;
+ const track=muted||document.hidden?null:battle?'mission':'hangar';
+ if(musicRequest?.track===track||(!musicRequest&&!track))return;
+ const request=track?{track}:null;
+ musicRequest=request;
+ const previous=musicVoice;
+ musicVoice=null;
+ if(previous){
+  const now=audio.currentTime;
+  previous.gain.gain.setTargetAtTime(0,now,.08);
+  previous.source.stop(now+.34);
+ }
+ if(!track)return;
+ if(!musicBus){
+  musicBus=audio.createGain();musicBus.gain.value=.26;musicBus.connect(audio.destination);
+ }
+ musicBuffer(track==='mission'?'hangar':'mission');
+ musicBuffer(track).then(buffer=>{
+  if(!buffer||musicRequest!==request)return;
+  const source=audio.createBufferSource(),gain=audio.createGain(),now=audio.currentTime;
+  source.buffer=buffer;source.loop=true;source.connect(gain);gain.connect(musicBus);
+  gain.gain.setValueAtTime(0,now);
+  gain.gain.linearRampToValueAtTime(track==='mission'?.65:.83,now+.45);
+  source.start(now);
+  musicVoice={source,gain};
+ });
+}
+function duckMusic(){
+ if(musicBus)musicBus.gain.setTargetAtTime(activeCinematic?.15:.26,audio.currentTime,.12);
+}
 $('#sound').onclick=()=>{
  muted=!muted;
  if(soundBus)soundBus.gain.setTargetAtTime(muted?.0001:.62,audio.currentTime,.01);
  $('#sound').innerHTML=icon(muted?'speaker-slash':'speaker-high');
  $('#sound').setAttribute('aria-label',muted?'Enable sound':'Mute sound');
  sound('click');
+ syncMusic();
 };
 function icon(name){return `<img class="ui-icon" src="assets/icons/${name}.svg" alt="">`}
 function art(name){return 'assets/'+name+'.webp'}
@@ -344,7 +387,7 @@ function chassisArt(i,loadout,direction=-1){
  const visual=wardenVisual(i,loadout,direction);
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
 }
-function nav(){document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['hangar','contracts','workshop','pilots','career'].map(p=>`<button data-page="${p}" class="${p===page?'active':''}" ${battle?'disabled':''}>${p.toUpperCase()}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
+function nav(){syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['hangar','contracts','workshop','pilots','career'].map(p=>`<button data-page="${p}" class="${p===page?'active':''}" ${battle?'disabled':''}>${p.toUpperCase()}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
   nav(); $('#hangar-art').style.objectPosition=['28% center','62% center','95% center'][selected]; if(battle){renderBattle();return}
@@ -632,7 +675,7 @@ for(const key of [...mechArtKeys,'concrete','barricade','contract-relay','contra
  im.onerror=()=>{failedArt.add(key);console.warn('Unable to load game artwork:',key);if(!bakedChassis.includes(key))toast('Artwork could not load. Refresh to retry.')};im.src=art(key);
 }
 function imageReady(im){return im&&im.complete&&im.naturalWidth>0}
-function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high'}
+function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,W<760?1.5:2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality=W<760?'medium':'high'}
 window.addEventListener('resize',resize);resize();
 function project(x,y,z){return{x:origin.x+(x-z)*scale*.866,y:origin.y+(x+z)*scale*.42-y*scale}}
 function polygon(points,fill,stroke,width=.7){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke()}}
@@ -1587,9 +1630,18 @@ function drawAttackCamera(t){
  drawAttackPane(sequence,panes[0],sequence.actor,true,t);
  drawAttackPane(sequence,panes[1],sequence.target,false,t);ctx.restore();
 }
+let canvasMode=null,lastHangarPaint=-Infinity;
 function draw(ts){
  const elapsed=Math.max(0,(ts-last)/1000||1/60),dt=Math.min(.05,elapsed);last=ts;clock+=elapsed;frameDt=dt;
- ctx.setTransform(DPR,0,0,DPR,0,0);background();if(battle){battlefield(clock);if(activeCinematic)drawAttackCamera(clock)}else if(page==='hangar')hangar(clock);
+ const mode=battle?'battle':page==='hangar'&&!reducedMotion?'hangar':'static';
+ const repaint=mode==='battle'||mode!==canvasMode||(mode==='hangar'&&ts-lastHangarPaint>=32);
+ if(repaint){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  background();
+  if(battle){battlefield(clock);if(activeCinematic)drawAttackCamera(clock)}
+  else if(mode==='hangar'){hangar(clock);lastHangarPaint=ts}
+  canvasMode=mode;
+ }
  effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);requestAnimationFrame(draw);
 }
 canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();fieldCamera.overview=false;viewZoom=Math.min(1.65,Math.max(.70,viewZoom*(e.deltaY<0?1.08:.925)))},{passive:false});
@@ -1630,6 +1682,7 @@ canvas.addEventListener('pointermove',e=>{
   gesture.x=e.clientX;gesture.y=e.clientY;
   if(gesture.drag)return;
  }
+ if(e.pointerType==='touch')return;
  const picked=pick(e.clientX,e.clientY),p=picked?{x:picked.x,z:picked.z}:screenTile(e.clientX,e.clientY);
  const changed=!hover||hover.x!==p.x||hover.z!==p.z;hover=p;
  if(changed&&picked?.team==='enemy')renderBattle();
@@ -1644,5 +1697,5 @@ document.addEventListener('keydown',e=>{if(!battle||battle.busy||!$('#modal').hi
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(activeCinematic){skipAttackCamera();return}if(!$('#modal').hidden){closeModal();return}if(targetPanelOpen){targetPanelOpen=false;renderBattle();return}}if(e.key==='Tab'&&!$('#modal').hidden){let btns=[...$('#modal').querySelectorAll('button')],first=btns[0],last=btns.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 $('.brand').onclick=e=>{e.preventDefault();if(!battle){page='hangar';render()}};
 $('#skip-shot').onclick=skipAttackCamera;
-document.addEventListener('visibilitychange',()=>{if(document.hidden)skipAttackCamera()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)skipAttackCamera();syncMusic()});
 const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';render();requestAnimationFrame(draw);if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn();}
