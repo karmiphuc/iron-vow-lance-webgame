@@ -193,6 +193,30 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .training-open span,.training-head,.training-rank,.training-state{font-size:10px;letter-spacing:.08em}
 .training-head{color:var(--muted);margin-bottom:9px}
 .training-head > span:last-child{display:flex;align-items:center;gap:4px;text-align:right}
+.reference-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.reference-tabs button{display:flex;align-items:center;gap:6px;min-height:44px;padding:8px 10px;font-size:10px;text-align:left}
+.reference-tabs .ui-icon{width:15px;height:15px}
+.reference-tabs button[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:#2b2c25}
+.journal-page .manual-topics,.journal-page .pilot-wiki{max-width:960px}
+.journal-page .manual-topics > div{padding:12px}
+.pilot-wiki h2{font-size:26px;margin:0}
+.pilot-wiki > .stat-heading{margin:8px 0}
+.wiki-pilot{border:1px solid var(--line);background:#18252c;margin-bottom:8px}
+.wiki-pilot summary{display:list-item;min-height:44px;padding:12px;cursor:pointer;color:var(--accent)}
+.wiki-pilot summary span{color:var(--muted);margin-left:8px;font-size:12px}
+.wiki-profile{padding:0 12px 12px}
+.wiki-profile p{margin:6px 0 10px;font-size:12px;line-height:1.4;color:var(--muted)}
+.wiki-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.wiki-paths section{min-width:0;background:#202b32;padding:9px}
+.wiki-paths h3{font:700 19px Barlow,sans-serif;letter-spacing:.04em;margin:0}
+.wiki-paths h3 .ui-icon{width:14px;height:14px}
+.wiki-paths ol{margin:0;padding:0;list-style:none}
+.wiki-paths li{display:grid;gap:2px;padding:6px 0;border-top:1px solid var(--line);font-size:11px;line-height:1.35}
+.wiki-paths li small{font-size:9px;color:var(--accent)}
+.wiki-paths li span{color:var(--muted)}
+@media(max-width:760px){
+ header{backdrop-filter:none;background:#0e1417}
+}
 .training-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .training-path{display:grid;grid-template-rows:auto 1fr}
 .training-path h2{display:flex;align-items:center;gap:6px;font-size:25px;margin:0 0 8px}
@@ -215,6 +239,10 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  .training-path h2{font-size:21px}
  .training-path button{padding:7px 8px}
  .training-path button strong{font-size:17px}
+ .modalbox:has(.training-paths){padding:16px}
+ .modalbox:has(.training-paths) h1{font-size:34px;margin:10px 0 14px}
+ .modalbox:has(.training-paths) .buttons{margin-top:12px}
+ .wiki-paths{grid-template-columns:1fr}
 }
 @media(max-width:360px){.training-paths{grid-template-columns:1fr}}
 .unitbuttons button.spent{opacity:.37;filter:saturate(.38);background:#0d151c;border-color:#39434b}

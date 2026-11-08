@@ -18,42 +18,60 @@ const RANGED=WEAPONS.filter(w=>!w.melee&&!w.builtIn),MELEE=WEAPONS.filter(w=>w.m
 const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
 const FRAMES=[{name:'WARDEN',model:'WDN–07',role:'ASSAULT',color:'#899681',hp:160,arm:92,leg:110,move:4,armor:5},{name:'KESTREL',model:'KST–12',role:'RECON',color:'#b6a37c',hp:126,arm:78,leg:100,move:5,armor:2},{name:'BASILISK',model:'BSK–04',role:'SUPPORT',color:'#708c92',hp:180,arm:100,leg:90,move:3,armor:7}];
 const PILOTS=[{name:'Mara Voss',call:'ROOK',skill:'Overdrive',desc:'+2 AP this turn. Once per battle.',color:'#9cae8b'},{name:'Jin Takeda',call:'GHOST',skill:'Deadeye',desc:'Next attack deals 50% more damage. Once per battle.',color:'#c1a477'},{name:'Elena Ortiz',call:'ANCHOR',skill:'Field repair',desc:'Restore 45 body HP. Once per battle.',color:'#83a4ac'}];
-const TRAINING_LEVELS=[1,3,5],TRAINING_CAP=5;
+const TRAINING_LEVELS=[1,3,5,6,8,10],TRAINING_POINT_LEVELS=[1,2,3,4,5,6,8,10],DOCTRINE_RANK=2;
 const PILOT_TREES=[
  [
   {name:'Vanguard',glyph:'arrows-out-cardinal',nodes:[
    {id:'pathfinder',name:'Pathfinder',label:'+1 free tile',effects:{move:1}},
    {id:'point-plate',name:'Point Plate',label:'+2 armor',effects:{armor:2}},
-   {id:'redline',name:'Redline',label:'Overdrive grants +4 AP',effects:{overdrive:2}}
+   {id:'redline',name:'Redline',label:'Overdrive grants +4 AP',effects:{overdrive:2}},
+   {id:'marching-orders',name:'Marching Orders',label:'Overdrive keeps your remaining free movement',effects:{overdriveMove:true}},
+   {id:'brace-drill',name:'Brace Drill',label:'Brace costs 1 AP',effects:{braceAP:1}},
+   {id:'spearhead',name:'Spearhead',label:'Overdrive also Braces for free',effects:{overdriveBrace:true}}
   ]},
   {name:'Breacher',glyph:'crosshair',nodes:[
    {id:'close-quarters',name:'Close Quarters',label:'+15% melee power',effects:{meleePower:.15}},
    {id:'breach-drill',name:'Breach Drill',label:'+10 percentage points to melee hit chance',effects:{meleeHit:.10}},
-   {id:'follow-through',name:'Follow Through',label:'Strike costs 1 less AP',effects:{strikeAP:1}}
+   {id:'follow-through',name:'Follow Through',label:'Strike costs 1 less AP',effects:{strikeAP:1}},
+   {id:'close-guard',name:'Close Guard',label:'A successful Strike also Braces',effects:{strikeBrace:true}},
+   {id:'breach-point',name:'Breach Point',label:'Melee bypasses at least half of armor',effects:{meleePierce:.5}},
+   {id:'momentum',name:'Momentum',label:'A Strike that disables a unit refunds 1 AP',effects:{strikeRefund:1}}
   ]}
  ],
  [
   {name:'Marksman',glyph:'crosshair',nodes:[
    {id:'sighter',name:'Sighter',label:'+8 percentage points to ranged hit chance',effects:{rangedHit:.08}},
    {id:'ballistics',name:'Ballistics',label:'+10% ranged power',effects:{rangedPower:.10}},
-   {id:'rangefinder',name:'Rangefinder',label:'+1 tile of ranged reach',effects:{range:1}}
+   {id:'rangefinder',name:'Rangefinder',label:'+1 tile of ranged reach',effects:{range:1}},
+   {id:'set-aim',name:'Set Aim',label:'Ranged fire ignores cover penalties while Braced',effects:{braceAim:true}},
+   {id:'deep-watch',name:'Deep Watch',label:'+1 tile of ranged counter reach',effects:{counterRange:1}},
+   {id:'clean-exit',name:'Clean Exit',label:'A ranged Deadeye kill refunds the shot’s AP',effects:{deadeyeRefund:true}}
   ]},
   {name:'Saboteur',glyph:'lightning',nodes:[
    {id:'weak-points',name:'Weak Points',label:'+15% power against arms and legs',effects:{limbPower:.15}},
    {id:'cockpit-read',name:'Cockpit Read',label:'+10 percentage points to cockpit hit chance',effects:{pilotHit:.10}},
-   {id:'killshot',name:'Killshot',label:'Deadeye doubles attack power',effects:{deadeye:.50}}
+   {id:'killshot',name:'Killshot',label:'Deadeye doubles attack power',effects:{deadeye:.50}},
+   {id:'system-pierce',name:'System Pierce',label:'Hits on arms or legs bypass at least half of armor',effects:{limbPierce:.5}},
+   {id:'signal-jam',name:'Signal Jam',label:'Destroy an arm to stop that attack’s counter',effects:{armJam:true}},
+   {id:'cascade',name:'Cascade',label:'Deadeye stays primed when your attack destroys a limb',effects:{deadeyeCascade:true}}
   ]}
  ],
  [
   {name:'Engineer',glyph:'wrench',nodes:[
    {id:'bulkhead',name:'Bulkhead',label:'+20 maximum body HP',effects:{body:20}},
    {id:'spare-parts',name:'Spare Parts',label:'Field Repair restores up to 65 body HP',effects:{repair:20}},
-   {id:'rebuild',name:'Rebuild',label:'Field Repair also restores up to 30 HP to the weakest damaged limb',effects:{limbRepair:30}}
+   {id:'rebuild',name:'Rebuild',label:'Field Repair also restores up to 30 HP to the weakest damaged limb',effects:{limbRepair:30}},
+   {id:'service-shield',name:'Service Shield',label:'Field Repair also Braces',effects:{repairBrace:true}},
+   {id:'depot-crew',name:'Depot Crew',label:'Field Repair can restore 30 HP to each damaged limb',effects:{repairAll:true}},
+   {id:'failsafe',name:'Failsafe',label:'An unused Field Repair triggers on lethal body damage',effects:{repairFailsafe:true}}
   ]},
   {name:'Sentinel',glyph:'shield-chevron',nodes:[
    {id:'reserve-cell',name:'Reserve Cell',label:'+1 AP at the start of each round',effects:{roundAP:1}},
    {id:'reactive-brace',name:'Reactive Brace',label:'Brace blocks 65% of incoming damage',effects:{brace:.15}},
-   {id:'return-fire',name:'Return Fire',label:'+25% counterattack power',effects:{reactionPower:.25}}
+   {id:'return-fire',name:'Return Fire',label:'+25% counterattack power',effects:{reactionPower:.25}},
+   {id:'guard-arc',name:'Guard Arc',label:'While Braced, ranged counters reach 2 tiles farther',effects:{braceCounterRange:2}},
+   {id:'counterguard',name:'Counterguard',label:'Firing a counter also Braces',effects:{counterBrace:true}},
+   {id:'shield-net',name:'Shield Net',label:'While Braced, adjacent allies take 20% less damage',effects:{shieldNet:.2}}
   ]}
  ]
 ];
@@ -121,16 +139,19 @@ const deploymentHP=(max,condition)=>Math.round(max*Math.max(.3,condition/100));
 const roundAP=training=>ROUND_AP+(training?.roundAP??0);
 const weaponAP=(w,training)=>w.ap-(w.melee?(training?.strikeAP??0):0);
 const weaponRange=(w,training)=>w.range+(w.melee?0:(training?.range??0));
+const counterRange=(w,training,braced=false)=>weaponRange(w,training)+(training?.counterRange??0)+(braced?(training?.braceCounterRange??0):0);
+const braceCost=training=>BRACE_AP-(training?.braceAP??0);
 const braceReduction=training=>.5+(training?.brace??0);
 const overdriveAP=training=>2+(training?.overdrive??0);
 const deadeyePower=training=>1.5+(training?.deadeye??0);
 const repairAmount=training=>45+(training?.repair??0);
+const limbPart=part=>part==='right'||part==='left'||part==='legs';
 function skillDescription(i,training){
- if(!training?.overdrive&&!training?.deadeye&&!training?.repair&&!training?.limbRepair)return PILOTS[i].desc;
+ if(!training?.overdrive&&!training?.deadeye&&!training?.deadeyeRefund&&!training?.repair&&!training?.limbRepair)return PILOTS[i].desc;
  const descriptions=[
-  '+'+overdriveAP(training)+' AP this turn.',
-  'Next attack gains '+Math.round((deadeyePower(training)-1)*100)+'% power.',
-  'Restore up to '+repairAmount(training)+' body HP.'+(training?.limbRepair?' Also restore up to '+training.limbRepair+' HP to the weakest damaged limb.':'')
+  '+'+overdriveAP(training)+' AP this turn.'+(training?.overdriveMove?' Keeps free movement.':'')+(training?.overdriveBrace?' Also Braces.':''),
+  'Next attack gains '+Math.round((deadeyePower(training)-1)*100)+'% power.'+(training?.deadeyeCascade?' Stays primed on limb destruction.':training?.deadeyeRefund?' A ranged kill refunds the shot’s AP.':''),
+  'Restore up to '+repairAmount(training)+' body HP.'+(training?.limbRepair?' Also restore '+training.limbRepair+' HP to '+(training.repairAll?'each':'the weakest')+' damaged limb.':'')+(training?.repairBrace?' Also Braces.':'')+(training?.repairFailsafe?' Triggers on lethal body damage if unused.':'')
  ];
  return descriptions[i]+' Once per battle.';
 }
@@ -148,7 +169,8 @@ function stockHull(i){
 }
 function fresh(){return{version:1,day:1,credits:4500,rep:0,wins:0,kills:0,owned:['rifle','missile'],units:PILOTS.map((_,i)=>({...stockHull(i),level:1,xp:0})),history:[]}}
 const learnedTraining=(i,career=save)=>career.training?.[i]??[];
-const earnedTraining=level=>Math.min(level,TRAINING_CAP);
+const earnedTraining=level=>TRAINING_POINT_LEVELS.filter(rank=>rank<=level).length;
+const nextLevelXP=level=>level>=5&&level<10?400+(level-5)*25:level*100;
 const trainingPoints=i=>earnedTraining(save.units[i].level)-learnedTraining(i).length;
 const totalTrainingPoints=()=>PILOTS.reduce((total,_,i)=>total+trainingPoints(i),0);
 function trainingStatus(i,id,learned,level){
@@ -156,7 +178,8 @@ function trainingStatus(i,id,learned,level){
  if(!branch)return 'UNKNOWN';
  const rank=branch.nodes.findIndex(node=>node.id===id);
  if(learned.includes(id))return 'LEARNED';
- if(rank===TRAINING_LEVELS.length-1&&branches.some(path=>learned.includes(path.nodes[rank].id)))return 'CAPSTONE CHOSEN';
+ const doctrine=branches.find(path=>learned.includes(path.nodes[DOCTRINE_RANK].id));
+ if(rank>=DOCTRINE_RANK&&doctrine&&doctrine!==branch)return rank===DOCTRINE_RANK?'CAPSTONE CHOSEN':'OTHER DOCTRINE';
  if(level<TRAINING_LEVELS[rank])return 'LEVEL '+TRAINING_LEVELS[rank];
  if(rank&&!learned.includes(branch.nodes[rank-1].id))return 'PREVIOUS RANK';
  if(learned.length>=earnedTraining(level))return 'NEEDS 1 POINT';
@@ -178,7 +201,7 @@ function restoreTraining(record){
  if(record.training===undefined)return record;
  const training=PILOTS.map((_,i)=>{
   const learned=[],source=record.training?.[i];
-  if(Array.isArray(source))for(const id of source.slice(0,TRAINING_CAP)){
+  if(Array.isArray(source))for(const id of source.slice(0,TRAINING_POINT_LEVELS.length)){
    if(trainingStatus(i,id,learned,record.units[i].level)==='TRAIN')learned.push(id);
   }
   return learned;
@@ -187,8 +210,10 @@ function restoreTraining(record){
 }
 let save;try{save=loadCareer(JSON.parse(localStorage.getItem('iron-vow-career')))??fresh()}catch{save=fresh()}
 save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
-const entryPage={'?view=workshop':'workshop','?view=pilots':'pilots'}[window.location?.search]??'hangar';
-let page=entryPage,selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=true,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
+const entryPage={'?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'hangar';
+let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
+let page=entryPage,selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=false,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
+try{muted=localStorage.getItem('iron-vow-sound')==='off'}catch{}
 function persist(enemyPending=false){
  try{
   if(battle&&battle.phase==='player'&&!battle.busy)save.sortie=captureSortie(enemyPending);
@@ -263,35 +288,43 @@ function infoTip(label,description){
  return `<button type="button" class="info-tip" aria-label="Help for ${label}" data-help="${escaped}">${icon('info')}</button>`;
 }
 const helpHint=()=>`<span class="info-hint">${icon('info')} <span class="mouse-help">Hover or focus for help</span><span class="touch-help">Tap or hold for help</span></span>`;
-const MOVE_HELP='Move with working legs. Fire, Strike, Brace or a pilot skill ends the free allowance.';
+const MOVE_HELP='Move with working legs. Fire, Strike, Brace and most pilot skills end the free allowance.';
 const COUNTER_HELP='One reaction per round, for 0 AP. A working melee arm has priority against adjacent ground attackers. Otherwise the weapon arm fires within range.';
-function trainingTree(i){
+function trainingTree(i,advanced=save.units[i].level>=6&&PILOT_TREES[i].some(path=>learnedTraining(i).includes(path.nodes[DOCTRINE_RANK].id))){
  const pilot=PILOTS[i],level=save.units[i].level,learned=learnedTraining(i);
+ const start=advanced?DOCTRINE_RANK+1:0,end=advanced?TRAINING_LEVELS.length:DOCTRINE_RANK+1;
  const paths=PILOT_TREES[i].map(path=>`<section class="training-path" aria-label="${path.name}">
   <h2>${icon(path.glyph)} ${path.name}</h2>
-  <ol>${path.nodes.map((node,rank)=>{
+  <ol>${path.nodes.slice(start,end).map((node,index)=>{
+   const rank=start+index;
    const status=trainingStatus(i,node.id,learned,level);
    return `<li><button type="button" data-learn="${node.id}" data-training-state="${status}" ${status==='TRAIN'?'':'disabled'}>
-    <span class="training-rank">${rank+1} · ${rank===2?'CAPSTONE':'LV '+TRAINING_LEVELS[rank]}</span>
+    <span class="training-rank">LV ${TRAINING_LEVELS[rank]}${rank===DOCTRINE_RANK?' · DOCTRINE':rank===TRAINING_LEVELS.length-1?' · MASTERY':''}</span>
     <strong>${node.name}</strong><span class="training-effect">${node.label}</span>
     <span class="training-state">${status==='TRAIN'?'TRAIN · 1 PT':status}</span>
    </button></li>`;
   }).join('')}</ol>
  </section>`).join('');
  modal(pilot.call+' TRAINING',`<div class="stat-heading training-head">
-   <span>LEVEL ${level} · ${trainingPoints(i)} PT AVAILABLE</span><span>ONE CAPSTONE ${infoTip('pilot training','Earn a point at each of the first five levels. Follow either path or mix them. Each pilot can learn one capstone.')}</span>
+   <span>LEVEL ${level} · ${trainingPoints(i)} PT AVAILABLE</span><span>ONE DOCTRINE ${infoTip('pilot training','Earn one point at levels 1 through 6, then at 8 and 10. Mix foundation perks. Your level 5 doctrine opens its advanced ranks.')}</span>
+  </div><div class="reference-tabs" aria-label="Training ranks">
+   <button type="button" data-training-stage="foundation" aria-pressed="${!advanced}">FOUNDATION · 1–5</button>
+   <button type="button" data-training-stage="advanced" aria-pressed="${advanced}">ADVANCED · 6–10</button>
   </div><div class="training-paths">${paths}</div>`,[{text:'DONE',fn:closeModal}]);
+ document.querySelectorAll('[data-training-stage]').forEach(button=>button.onclick=()=>trainingTree(i,button.dataset.trainingStage==='advanced'));
+ $('#modal .modalbox').scrollTop=0;
+ $('#modal [data-training-stage][aria-pressed="true"]')?.focus({preventScroll:true});
  document.querySelectorAll('[data-learn]').forEach(button=>button.onclick=()=>{
   if(!learnTraining(i,button.dataset.learn))return;
   sound('click');render();
   modalReturnFocus=$('#train-pilot-'+i);
-  trainingTree(i);
+  trainingTree(i,advanced);
   $('#modal [data-learn]:not([disabled])')?.focus();
  });
 }
 function workshopStats(i,frame,hull,training=trainingEffects(i)){
  const parts=chassisParts(frame,hull,training),armor=chassisArmor(frame,hull,training),primary=weapon(hull.weapon),melee=hull.melee&&weapon(hull.melee),pilot=PILOTS[i];
- const reach=weaponRange(primary,training);
+ const reach=weaponRange(primary,training),replyReach=counterRange(primary,training);
  const stats=[
   ['Free movement',chassisMobility(frame,false,training)+' tiles',MOVE_HELP],
   ['Extra movement','1 tile / '+EXTRA_MOVE_AP+' AP','One extra tile per round with working legs. It uses the last of your free movement.'],
@@ -308,9 +341,9 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
   <div class="workshop-actions">
    <div>${icon('crosshair')} <span><b>Fire</b> ${weaponAP(primary,training)} AP<small>${primary.name} · ${reach} tiles</small></span></div>
    <div>${icon('crosshair')} <span><b>Strike</b> ${melee?`${weaponAP(melee,training)} AP<small>${melee.name} · adjacent</small>`:'<small>No melee equipped</small>'}</span></div>
-   <div>${icon('shield-chevron')} <span><b>Brace</b> ${BRACE_AP} AP<small>Blocks ${Math.round(braceReduction(training)*100)}% damage</small></span></div>
+   <div>${icon('shield-chevron')} <span><b>Brace</b> ${braceCost(training)} AP<small>Blocks ${Math.round(braceReduction(training)*100)}% damage</small></span></div>
    <div>${icon('lightning')} <span><b>${pilot.skill}</b> 0 AP<small>Once per battle</small></span>${infoTip(pilot.skill,skillDescription(i,training))}</div>
-   <div>${icon('arrow-u-up-left')} <span><b>Counter</b> 0 AP<small>1 / round · ${melee?'melee or ':''}${reach} tiles</small></span>${infoTip('counterattack',COUNTER_HELP+(training.reactionPower?' This pilot gains 25% counterattack power.':''))}</div>
+   <div>${icon('arrow-u-up-left')} <span><b>Counter</b> 0 AP<small>1 / round · ${melee?'melee or ':''}${replyReach} tiles</small></span>${infoTip('counterattack',COUNTER_HELP+(training.reactionPower?' This pilot gains 25% counterattack power.':'')+(training.braceCounterRange?' While Braced, ranged reach is '+counterRange(primary,training,true)+' tiles.':''))}</div>
   </div>
  </section>`;
 }
@@ -439,11 +472,22 @@ function playCombatSample(cue,at,volume,rate=1,pan=0){
  source.start(at);
  return true;
 }
+function startAudio(unlock=true){
+ if(muted)return;
+ try{
+  if(!audio){
+   audio=new(window.AudioContext||window.webkitAudioContext)();
+   audio.onstatechange=syncMusic;
+  }
+  if(unlock&&(audio.state==='suspended'||audio.state==='interrupted'))audio.resume().then(syncMusic).catch(()=>{});
+  syncMusic();
+ }catch{}
+}
 function sound(type,cueVolume=1){
  if(muted)return;
  try{
-  audio??=new(window.AudioContext||window.webkitAudioContext)();
-  if(audio.state==='suspended')audio.resume().catch(()=>{});
+  startAudio();
+  if(!audio)return;
   if(!soundBus){
    soundBus=audio.createGain();soundBus.gain.value=.62;
    const compressor=audio.createDynamicsCompressor();
@@ -575,6 +619,7 @@ function musicBuffer(track){
 function syncMusic(){
  if(!audio||typeof fetch!=='function')return;
  const track=muted||document.hidden?null:battle?'mission':'hangar';
+ if(track&&(audio.state==='suspended'||audio.state==='interrupted'))return;
  if(musicRequest?.track===track||(!musicRequest&&!track))return;
  const request=track?{track}:null;
  musicRequest=request;
@@ -591,7 +636,8 @@ function syncMusic(){
  }
  musicBuffer(track==='mission'?'hangar':'mission');
  musicBuffer(track).then(buffer=>{
-  if(!buffer||musicRequest!==request)return;
+  if(musicRequest!==request)return;
+  if(!buffer){musicBuffers.delete(track);musicRequest=null;return}
   const source=audio.createBufferSource(),gain=audio.createGain(),now=audio.currentTime;
   source.buffer=buffer;source.loop=true;source.connect(gain);gain.connect(musicBus);
   gain.gain.setValueAtTime(0,now);
@@ -603,14 +649,20 @@ function syncMusic(){
 function duckMusic(){
  if(musicBus)musicBus.gain.setTargetAtTime(activeCinematic?.15:.26,audio.currentTime,.12);
 }
-$('#sound').onclick=()=>{
- muted=!muted;
- if(soundBus)soundBus.gain.setTargetAtTime(muted?.0001:.62,audio.currentTime,.01);
+function updateSoundButton(){
  $('#sound').innerHTML=icon(muted?'speaker-slash':'speaker-high');
  $('#sound').setAttribute('aria-label',muted?'Enable sound':'Mute sound');
+}
+$('#sound').onclick=()=>{
+ muted=!muted;
+ try{localStorage.setItem('iron-vow-sound',muted?'off':'on')}catch{}
+ if(soundBus)soundBus.gain.setTargetAtTime(muted?.0001:.62,audio.currentTime,.01);
+ updateSoundButton();
  sound('click');
  syncMusic();
 };
+for(const event of ['click','keydown'])document.addEventListener(event,e=>{if(e.isTrusted)startAudio()},true);
+updateSoundButton();
 function icon(name){return `<img class="ui-icon" src="${asset('assets/icons/'+name+'.svg')}" alt="">`}
 function art(name){return asset('assets/'+name+'.webp')}
 function pilotArt(i){return art('pilot-'+['rook','ghost','anchor'][i])}
@@ -627,7 +679,7 @@ function chassisArt(i,loadout,direction=-1){
  const visual=wardenVisual(i,loadout,direction);
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
 }
-function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['hangar','contracts','workshop','pilots','career'].map(p=>`<button data-page="${p}" class="${p===page?'active':''}" ${battle?'disabled':''}>${p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
+function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['hangar','contracts','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
   nav(); $('#hangar-art').style.objectPosition=['28% center','62% center','95% center'][selected]; if(battle){renderBattle();return}
@@ -636,7 +688,7 @@ function render(){
     const lineup=PILOTS.map((_,i)=>({m:FRAMES[pilotFrame(i)],i}));
     const others=lineup.filter(v=>v.i!==selected);
     $('#ui').innerHTML=`${(f.native||f.foundry!=null)?`<div class="prototype-hangar" aria-hidden="true">${f.foundry!=null?'<canvas id="foundry-hangar" width="640" height="640"></canvas>':`<img src="${chassisArt(frame,u.weapon,1)}" alt="">`}</div>`:''}<div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
-    <div class="hangar-top-right"><button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button><button class="icon" id="hangar-manual">${icon('binoculars')} FIELD MANUAL</button></div>
+    <div class="hangar-top-right"><button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button></div>
     <div class="hangar-hotspots" aria-label="Select a mech in the hangar">${lineup.map(({m,i})=>`<button data-select="${i}" aria-label="Select ${m.name}" aria-pressed="${i===selected}"><span>${m.name} / ${m.role}</span></button>`).join('')}</div>
     ${inspectOpen?`<aside class="unit-inspect"><div class="inspect-head"><span class="eyebrow">CHASSIS 0${selected+1} / ${f.model}</span><button id="close-inspect" class="icon" aria-label="Close unit details">${icon('x')}</button></div><h2>${f.name}</h2><p class="note">${f.role} · PILOT LEVEL ${u.level}</p><div class="rule"></div>${stat('BODY INTEGRITY',chassisParts(f,u,training).body+' HP')}${stat('ARMOR',chassisArmor(f,u,training))}${stat('MOBILITY',(chassisMobility(f,false,training))+' TILES')}${stat('WEAPON',w.name)}${stat('CONDITION',u.condition+'%',u.condition)}<div class="pilot"><img class="pilot-thumb" src="${pilotArt(selected)}" alt="${p.name}"><div>${p.name}<small>${p.call} / ${p.skill}</small></div></div><button class="full" data-page="workshop">${icon('wrench')} OPEN WORKSHOP</button><p class="note">${skillDescription(selected,training)}</p></aside>`:''}
     ${!inspectOpen&&wardenVisual(0,'rifle',-1)?`<a class="hangar-rig-preview" href="rig-bench/"><img src="${art(wardenVisual(0,'rifle',-1).key)}" alt="" width="66" height="66"><span><strong>WARDEN MARK II</strong><small>VIEW RIG IN MOTION</small></span></a>`:''}
@@ -662,20 +714,22 @@ function render(){
     const u=save.units[i],points=trainingPoints(i);
     return `<article class="card pilot-card"><div class="pilot-image"><img src="${pilotArt(i)}" alt="Portrait of ${pilot.name}"></div><div class="pilot-details">
      <div class="eyebrow">${pilot.call} / ${FRAMES[pilotFrame(i)].name}</div><h2>${pilot.name}</h2>
-     ${stat('PILOT LEVEL',String(u.level).padStart(2,'0'))}${stat('EXPERIENCE',u.xp+' / '+(u.level*100),Math.min(100,100*u.xp/(u.level*100)))}
+     ${stat('PILOT LEVEL',String(u.level).padStart(2,'0'))}${stat('EXPERIENCE',u.xp+' / '+(nextLevelXP(u.level)),Math.min(100,100*u.xp/(nextLevelXP(u.level))))}
      <div class="pilot-skill">${icon(['lightning','crosshair','first-aid-kit'][i])}<h3>${pilot.skill}</h3>${infoTip(pilot.skill,skillDescription(i,trainingEffects(i)))}</div>
      <button type="button" id="train-pilot-${i}" data-train-pilot="${i}" class="training-open ${points?'primary':''}">
       TRAINING TREE <span>${points} PT</span>
      </button></div></article>`;
    }).join('')}</div></div>`;
-  if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button><button id="guide">FIELD MANUAL</button></div></section></div>`;
+  if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button></div></section></div>`;
+  if(page==='journal')$('#ui').innerHTML=`<div class="page journal-page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / REFERENCE</div><h1>FIELD JOURNAL.</h1></div></div>${journalMarkup(journalPage)}</div>`;
   bind();
   if(page==='pilots')document.querySelectorAll('[data-train-pilot]').forEach(button=>button.onclick=()=>trainingTree(+button.dataset.trainPilot));
   if(page==='workshop')bindWorkshop();
-  if(page==='hangar'){drawFoundryHangar();$('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};$('#hangar-manual').onclick=guide;if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
+  if(page==='hangar'){drawFoundryHangar();$('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
+  if(page==='journal')bindJournal($('#ui'));
 }
 function repairCost(i){return Math.ceil((100-save.units[i].condition)*14)}
-function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(FIELD_PATCH,save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(!battle){page=b.dataset.page;render();sound('click')}});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>deploy(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>{let w=weapon(b.dataset.equip),u=save.units[selected];if(w.builtIn||FRAMES[pilotFrame(selected)].native)return;if(!save.owned.includes(w.id)&&(w.melee?u.melee:u.weapon)!==w.id){if(save.credits<w.price)return toast('Insufficient credits');save.credits-=w.price;save.owned.push(w.id)}u[w.melee?'melee':'weapon']=w.id;persist();render();toast(w.name+' equipped')});document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();persist();closeModal();render()}}]);$('#guide').onclick=guide;
+function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(FIELD_PATCH,save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(!battle){page=b.dataset.page;render();sound('click')}});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>deploy(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>{let w=weapon(b.dataset.equip),u=save.units[selected];if(w.builtIn||FRAMES[pilotFrame(selected)].native)return;if(!save.owned.includes(w.id)&&(w.melee?u.melee:u.weapon)!==w.id){if(save.credits<w.price)return toast('Insufficient credits');save.credits-=w.price;save.owned.push(w.id)}u[w.melee?'melee':'weapon']=w.id;persist();render();toast(w.name+' equipped')});document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();persist();closeModal();render()}}]);
  $('#attack-camera').onclick=()=>{attackCameraEnabled=!attackCameraEnabled;try{localStorage.setItem('iron-vow-attack-camera',attackCameraEnabled?'on':'off')}catch{}render()};
  }}
 function validHull(u,frame){
@@ -742,19 +796,55 @@ function importCareer(record){
 }
 function modal(title,body,buttons){if($('#modal').hidden)modalReturnFocus=document.activeElement;$('#modal').hidden=false;$('#modal').innerHTML=`<div class="modalbox" role="dialog" aria-modal="true" aria-label="${title}"><div class="eyebrow">IRON VOW / COMMAND UPLINK</div><h1>${title}</h1><div>${body}</div><div class="buttons">${buttons.map((b,i)=>`<button class="${i===buttons.length-1?'primary':''}" id="modal-${i}">${b.text}</button>`).join('')}</div></div>`;buttons.forEach((b,i)=>$('#modal-'+i).onclick=b.fn);$('#modal-0').focus()}
 function closeModal(){closeHelp();$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
-function guide(){
+function quickOrders(){
  const topics=[
   ['arrows-out-cardinal','Move','Free tiles, then +1 tile for '+EXTRA_MOVE_AP+' AP',MOVE_HELP+' Drag to pan or tap the map. Raised terrain blocks movement. Shielded tiles grant cover.'],
   ['crosshair','Fire','Choose a subsystem, then fire','Body or pilot loss disables a mech. Cockpit shots are harder and deal half damage. Destroy the weapon arm to stop fire, legs to stop movement, or the left arm to halve armor.'],
   ['crosshair','Strike','Adjacent ground targets','Equip melee in the Workshop. Strike needs a working left arm. Gunships require ranged attacks and can cross cover. Missiles ignore cover.'],
-  ['shield-chevron','Brace',BRACE_AP+' AP · blocks 50% or more','Brace lasts until your next turn. Pilot skills can be used once per battle.'],
+  ['shield-chevron','Brace','1–2 AP · blocks 50% or more','Brace lasts until your next turn. Training can reduce the cost. Pilot skills can be used once per battle.'],
   ['arrow-u-up-left','Counter','0 AP · 1 per round',COUNTER_HELP],
   ['lightning','End turn','The hostile lance acts','Select your three units in the bottom bar. Neutralize all enemies to win. Tanks and gunships have hull HP and award pilot XP.'],
   ['wrench','Refit','Repair between sorties','Contracts earn credits, XP and reputation. Withdraw to bring surviving machines home. The career and completed actions save in this browser. An interrupted enemy phase restarts on reload.'],
   ['binoculars','Attack camera','Skip with Escape','Switch the camera off in Career if you prefer the tactical view.']
  ];
- modal('FIELD MANUAL',`<div class="stat-heading"><span class="eyebrow">QUICK ORDERS</span>${helpHint()}</div>
-  <div class="manual-topics">${topics.map(([glyph,label,summary,description])=>`<div>${icon(glyph)}<span><b>${label}</b><small>${summary}</small></span>${infoTip(label,description)}</div>`).join('')}</div>`,[{text:'UNDERSTOOD',fn:closeModal}]);
+ return `<div class="stat-heading"><span class="eyebrow">QUICK ORDERS</span>${helpHint()}</div>
+  <div class="manual-topics">${topics.map(([glyph,label,summary,description])=>`<div>${icon(glyph)}<span><b>${label}</b><small>${summary}</small></span>${infoTip(label,description)}</div>`).join('')}</div>`;
+}
+function pilotWiki(){
+ const roles=['Assault','Fire control','Field support'];
+ const tactics=[
+  ['Advance under cover and turn Overdrive into an assault window.','Fight adjacent to conserve AP and break armor.'],
+  ['Brace before long shots and reserve Deadeye for a kill.','Disable arms and legs to interrupt retaliation and maintain Deadeye.'],
+  ['Hold Field Repair for major damage or let Failsafe spend it automatically.','Brace next to allies to protect the line and extend counter reach.']
+ ];
+ return `<section class="pilot-wiki" aria-label="Pilot classes and skills">
+  <div class="stat-heading"><h2>Pilot classes &amp; skills</h2>${infoTip('training ranks','Training points are earned at levels 1 through 6, then at 8 and 10. Your level 5 doctrine unlocks ranks 6, 8 and 10 in its path.')}</div>
+  ${PILOTS.map((pilot,i)=>`<details class="wiki-pilot"><summary><b>${pilot.call}</b><span>${roles[i]} · ${pilot.skill}</span></summary>
+   <div class="wiki-profile"><span class="eyebrow">${pilot.name} / SIGNATURE SKILL</span><p><b>${pilot.skill}</b> · ${pilot.desc}</p>
+    <div class="wiki-paths">${PILOT_TREES[i].map((path,index)=>`<section aria-label="${path.name}">
+     <h3>${icon(path.glyph)} ${path.name}</h3><p>${tactics[i][index]}</p>
+     <ol>${path.nodes.map((node,rank)=>`<li><small>LV ${TRAINING_LEVELS[rank]}${rank===DOCTRINE_RANK?' · DOCTRINE':''}</small><b>${node.name}</b><span>${node.label}</span></li>`).join('')}</ol>
+    </section>`).join('')}</div>
+   </div></details>`).join('')}
+ </section>`;
+}
+function journalMarkup(section){
+ return `<div class="reference-tabs" aria-label="Field Journal sections">
+  <button type="button" data-journal="orders" aria-pressed="${section==='orders'}">${icon('binoculars')} QUICK ORDERS</button>
+  <button type="button" data-journal="wiki" aria-pressed="${section==='wiki'}">${icon('info')} PILOT WIKI</button>
+ </div>${section==='wiki'?pilotWiki():quickOrders()}`;
+}
+function bindJournal(root,inSortie=false){
+ root.querySelectorAll('[data-journal]').forEach(button=>button.onclick=()=>{
+  const section=button.dataset.journal;
+  if(inSortie)guide(section);
+  else{journalPage=section;render()}
+  $(`[data-journal="${section}"]`)?.focus({preventScroll:true});
+ });
+}
+function guide(section='orders'){
+ closeHelp();modal('FIELD JOURNAL',journalMarkup(section),[{text:'UNDERSTOOD',fn:closeModal}]);
+ bindJournal($('#modal'),true);
 }
 // Tactical simulation: part HP, reachable tiles, AP, cover, level scaling and persistent rewards.
 function makeUnit(i,team,x,z){
@@ -799,15 +889,22 @@ function inCover(t){return t.kind!=='helicopter'&&neighborTiles(t.x,t.z).some(([
 function hitChance(a,t,part,w=weapon(a.weapon)){
  const training=a.training,aim=(w.melee?training?.meleeHit:training?.rangedHit)??0;
  const cockpit=part==='pilot'?(training?.pilotHit??0):0;
- return Math.min(.98,Math.max(part==='pilot'?.32:.5,.96-(part==='body'?0:part==='pilot'?.27:.13)-(a.max.pilot&&a.hp.pilot<a.max.pilot*.5?.10:0)-(inCover(t)&&w.id!=='missile'&&!w.guided&&!w.melee?.19:0)+.015*(a.level-1)+aim+cockpit));
+ const cover=inCover(t)&&w.id!=='missile'&&!w.guided&&!w.melee&&!(a.brace&&training?.braceAim)?.19:0;
+ return Math.min(.98,Math.max(part==='pilot'?.32:.5,.96-(part==='body'?0:part==='pilot'?.27:.13)-(a.max.pilot&&a.hp.pilot<a.max.pilot*.5?.10:0)-cover+.015*(a.level-1)+aim+cockpit));
+}
+function shieldProtection(target){
+ if(target.team!=='ally')return 0;
+ const guardian=battle?.units?.find(u=>u.training?.shieldNet);
+ return guardian&&guardian!==target&&guardian.alive&&guardian.brace&&distance(guardian,target)===1?guardian.training.shieldNet:0;
 }
 function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const training=a.training,weaponPower=(w.melee?training?.meleePower:training?.rangedPower)??0;
- const limbPower=part!=='body'&&part!=='pilot'?(training?.limbPower??0):0;
+ const limb=limbPart(part),limbPower=limb?(training?.limbPower??0):0;
  const reactionPower=reaction?(training?.reactionPower??0):0;
  const power=w.damage*(1+.05*(a.level-1))*(a.boost?deadeyePower(training):1)*(1+weaponPower+limbPower+reactionPower);
  const armor=t.hp.left===0?damagedArmor(t.armor):t.armor;
- return Math.max(5,Math.round((power-armor*(w.id==='piledriver'?.25:1))*(t.brace?1-braceReduction(t.training):1)));
+ const pierce=Math.max(w.id==='piledriver'?.75:0,w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0);
+ return Math.max(5,Math.round((power-armor*(1-pierce))*(t.brace?1-braceReduction(t.training):1)*(1-shieldProtection(t))));
 }
 function partDamage(a,t,part,w,reaction=false){
  const amount=damage(a,t,w,part,reaction);
@@ -834,35 +931,45 @@ function renderBattle(){
   const aimPart=targetParts(target).includes(targetPart)?targetPart:'body';
   const targetReaction=reactionStatus(target),counter=target&&u?reactionWeapon(target,u):null;
   const ready=battle.phase==='player'&&!battle.busy,canMove=Boolean(u&&movementLimit(u)),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u)||selectedWeapon(u,'fire');
-  $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p class="field-terrain">${battle.field.label}</p><p>Eliminate all hostile contacts.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>MANUAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
+  $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p class="field-terrain">${battle.field.label}</p><p>Eliminate all hostile contacts.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${String(battle.turn).padStart(2,'0')}<small>${battle.phase==='player'?'YOUR LANCE / TAKE COMMAND':'HOSTILE LANCE / STAND BY'}</small></div>
   <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>SUBSYSTEM DETAILS</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':foundryModel(target.frame)!=null?'enemy foundry-target':'enemy'}" data-visual-key="${wardenVisual(target.frame,target.weapon,unitFacing(target))?.key??''}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target))}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':PART_LABEL[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${partDamage(u,target,aimPart,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=weaponRange(chosen,u.training)?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>${target?.kind?'DESTROY HULL TO NEUTRALIZE':'DISABLE BODY OR PILOT'}</div>${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${targetReaction}${counter?' / '+(counter.melee?'MELEE':'RANGED'):targetReaction==='READY'&&u?' / OUT OF REACH':''}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}${u?`<div class="combat-selected"><span class="eyebrow">${PILOTS[u.index].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${PILOTS[u.index].skill}: ${u.skill?'USED':skillDescription(u.index,u.training)}</p></div>`:''}</aside>
   <div class="log">${battle.log.map(l=>'<div class="log-line">'+l+'</div>').join('')}</div><div class="hint">${battle.busy?'RESOLVING COMBAT':action==='move'?(u?('MOVE / '+freeMovement(u)+' FREE'+(extraMovement(u)?' / +1 TILE FOR '+EXTRA_MOVE_AP+' AP':'')+(u.actionPhase?' / ACTION PHASE':'')):'MOVE / SELECT A READY MECH'):(action==='strike'?'STRIKE / ADJACENT HOSTILE / ':'FIRE / SELECT HOSTILE / ')+(chosen?weaponAP(chosen,u.training):3)+' AP PER ATTACK'}</div>
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}><img src="${pilotArt(t.index)}" alt="${PILOTS[t.index].call}"><span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button><button id="skill" title="${u?skillDescription(u.index,u.training):''}" ${!u||spent(u)||u.skill||!ready||(u.index===2&&u.hp.body===u.max.body&&!repairableLimb(u))?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR'][u.index]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${BRACE_AP} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<BRACE_AP||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${BRACE_AP} AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}><img src="${pilotArt(t.index)}" alt="${PILOTS[t.index].call}"><span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button><button id="skill" title="${u?skillDescription(u.index,u.training):''}" ${!u||spent(u)||u.skill||!ready||(u.index===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR'][u.index]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
   bindTacticalMap();
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy)selectUnit(+b.dataset.unit)});
   document.querySelectorAll('[data-part]').forEach(b=>b.onclick=()=>{targetPart=b.dataset.part;if(W<=760)targetPanelOpen=false;renderBattle();if(W<=760)$('#target-toggle').focus();persist()});
   $('#move').onclick=()=>{if(canMove){action='move';renderBattle();persist()}};$('#fire').onclick=()=>{action='fire';renderBattle();persist()};$('#strike').onclick=()=>{if(canStrike){action='strike';renderBattle();persist()}};$('#skill').onclick=skill;
-  $('#brace').onclick=()=>{if(u&&u.ap>=BRACE_AP&&!u.brace&&!battle.busy){startAction(u);u.ap-=BRACE_AP;u.brace=true;u.braceTime=clock;addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
-  $('#end').onclick=endTurn;$('#manual').onclick=guide;$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
+  $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){startAction(u);u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
+  $('#end').onclick=endTurn;$('#manual').onclick=()=>guide();$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
   $('#withdraw').onclick=()=>{if(battle.busy)return;modal('BREAK CONTACT?','<p>Withdraw your lance. You retain earned experience, but forfeit payment and salvage. Combat damage persists.</p>',[{text:'STAY & FIGHT',fn:closeModal},{text:'WITHDRAW',fn:()=>{closeModal();finish(false)}}])};
 }
-function repairableLimb(u){
- if(!u.training?.limbRepair)return null;
- return ['right','left','legs'].reduce((weakest,part)=>u.hp[part]<u.max[part]&&
-  (!weakest||u.hp[part]/u.max[part]<u.hp[weakest]/u.max[weakest])?part:weakest,null);
+function braceUnit(u){
+ if(u.brace)return;
+ u.brace=true;u.braceTime=clock;
+}
+function repairableLimbs(u){
+ if(!u.training?.limbRepair)return [];
+ const parts=['right','left','legs'].filter(part=>u.hp[part]<u.max[part]);
+ if(u.training.repairAll)return parts;
+ return parts.sort((a,b)=>u.hp[a]/u.max[a]-u.hp[b]/u.max[b]).slice(0,1);
+}
+function fieldRepair(u,limbs=repairableLimbs(u)){
+ let restored=Math.min(repairAmount(u.training),u.max.body-u.hp.body);u.hp.body+=restored;
+ for(const part of limbs){const amount=Math.min(u.training.limbRepair,u.max[part]-u.hp[part]);u.hp[part]+=amount;restored+=amount}
+ if(u.training?.repairBrace)braceUnit(u);
+ effects.push({type:'heal',x:u.x,z:u.z,t:1,text:'+'+restored+' REPAIR'});
 }
 function skill(){
  const u=current();if(!u||u.skill||battle.busy)return;
- const limb=u.index===2?repairableLimb(u):null;
- if(u.index===2&&u.hp.body===u.max.body&&!limb){toast('No repairable damage. Save this skill for later.');return}
- startAction(u);u.skill=true;u.skillTime=clock;effects.push({type:'skill',kind:u.index,x:u.x,z:u.z,t:1});if(u.index===0)u.ap+=overdriveAP(u.training);if(u.index===1)u.boost=true;
- if(u.index===2){
-  let restored=Math.min(repairAmount(u.training),u.max.body-u.hp.body);u.hp.body+=restored;
-  if(limb){const amount=Math.min(u.training.limbRepair,u.max[limb]-u.hp[limb]);u.hp[limb]+=amount;restored+=amount}
-  effects.push({type:'heal',x:u.x,z:u.z,t:1,text:'+'+restored+' REPAIR'});
- }
+ const limbs=u.index===2?repairableLimbs(u):[];
+ if(u.index===2&&u.hp.body===u.max.body&&!limbs.length){toast('No repairable damage. Save this skill for later.');return}
+ if(!u.training?.overdriveMove)startAction(u);
+ u.skill=true;u.skillTime=clock;effects.push({type:'skill',kind:u.index,x:u.x,z:u.z,t:1});
+ if(u.index===0){u.ap+=overdriveAP(u.training);if(u.training?.overdriveBrace)braceUnit(u)}
+ if(u.index===1)u.boost=true;
+ if(u.index===2)fieldRepair(u,limbs);
  addLog(PILOTS[u.index].call+' activated '+PILOTS[u.index].skill+'.');sound('click');renderBattle();persist();
 }
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
@@ -946,24 +1053,41 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false){
  await waitAttack((rockets?lastBeat:flight)*1000,sequence);
  a.attack.releaseAt=clock;
  if(sequence){sequence.phase='result';sequence.impactAt=clock}
+ let jammed=false,keepBoost=false;
  if(!hit){
   if(sequence)sequence.result='MISS';
   if(rockets)sound('missileImpact',.83);
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:'MISS'});addLog(a.name+' missed '+t.name+'.');
  }else{
   const d=partDamage(a,t,part,w,reaction),label=t.kind?'HULL':PART_LABEL[part];t.hitTime=clock;t.hitPart=part;t.hitDamage=d;const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
-  t.hitVector={x:hitX/hitLength,y:hitY/hitLength};shake=Math.max(shake,w.id==='rail'||w.id==='breaker'?7:4);t.hp[part]=Math.max(0,t.hp[part]-d);
-  if(sequence)sequence.result=t.hp.pilot===0?'PILOT DOWN':t.hp.body<=0?'TARGET DOWN':t.hp[part]===0?'SYSTEM DISABLED':'−'+d+' '+label;
+  const before=t.hp[part];
+  t.hitVector={x:hitX/hitLength,y:hitY/hitLength};shake=Math.max(shake,w.id==='rail'||w.id==='breaker'?7:4);t.hp[part]=Math.max(0,before-d);
+  const failsafe=part==='body'&&t.hp.body===0&&t.training?.repairFailsafe&&!t.skill;
+  if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t)}
+  if(sequence)sequence.result=failsafe?'FAILSAFE':t.hp.pilot===0?'PILOT DOWN':t.hp.body<=0?'TARGET DOWN':t.hp[part]===0?'SYSTEM DISABLED':'−'+d+' '+label;
   effects.push({type:'boom',target:t.id,part,x:t.x,z:t.z,t:1,big:false});effects.push({type:'text',x:t.x,z:t.z,t:1,text:'−'+d+' '+label});addLog(a.name+' → '+t.name+' / '+label+' −'+d);sound(rockets?'missileImpact':profile.melee||['rail','rampart','shotgun'].includes(effectKind)?'heavyImpact':'armorImpact');
-  if(t.hp.body<=0||t.hp.pilot===0){beginDestruction(t,t.hp.body>0?'pilot':'body');addLog(t.name+(t.downReason==='pilot'?': pilot down.': ' neutralized.'));if(a.team==='ally'){save.kills++;save.units[a.index].xp+=t.kind?VEHICLES[t.kind].xp:35}}
+  if(failsafe)addLog(t.name+' triggered Failsafe.');
+  if(!reaction&&w.melee&&a.training?.strikeBrace)braceUnit(a);
+  if(t.hp.body<=0||t.hp.pilot===0){
+   beginDestruction(t,t.hp.body>0?'pilot':'body');addLog(t.name+(t.downReason==='pilot'?': pilot down.': ' neutralized.'));
+   if(a.team==='ally'){save.kills++;save.units[a.index].xp+=t.kind?VEHICLES[t.kind].xp:35}
+   if(!reaction){
+    const refund=w.melee?(a.training?.strikeRefund??0):a.boost&&a.training?.deadeyeRefund?weaponAP(w,a.training):0;
+    if(refund){a.ap+=refund;addLog(a.name+' recovered '+refund+' AP.')}
+   }
+  }
   else if(t.hp[part]===0)addLog(t.name+': '+part+' destroyed.');
+  if(!reaction&&before>0&&t.hp[part]===0&&limbPart(part)){
+   jammed=Boolean(a.training?.armJam&&part!=='legs');
+   keepBoost=Boolean(a.boost&&a.training?.deadeyeCascade);
+  }
  }
  if(hit&&w.id==='blade'&&!reducedMotion){
   a.hitstop=t.hitstop={at:clock,until:clock+.085};
   await waitAttack(85,sequence);
  }
  if(sequence&&!sequence.skipped)$('#shot-status').textContent='Impact. '+sequence.result;
- a.boost=false;
+ a.boost=keepBoost;
  const recover=native&&!reducedMotion?Math.max(.12,native.duration-windup-flight):profile.recover;
  a.attack.returnAt=clock+recover;
  const settle=recover+(primeDuration?ATTACK_STEP.returnDuration:0);
@@ -972,6 +1096,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false){
  await waitAttack(hold*1000,sequence);
  if(sequence)closeAttackCamera(sequence);
  if(recovery>hold)await waitAttack((recovery-hold)*1000,sequence);
+ return jammed;
  }finally{
   a.attack=null;
   if(sequence)closeAttackCamera(sequence);
@@ -987,15 +1112,16 @@ function reactionWeapon(defender,attacker){
  const range=distance(defender,attacker),melee=defender.melee&&weapon(defender.melee);
  if(range===1&&melee&&defender.hp.left>0&&canReachTarget(melee,attacker))return melee;
  const ranged=unitWeapon(defender);
- return defender.hp.right>0&&range<=weaponRange(ranged,defender.training)?ranged:null;
+ return defender.hp.right>0&&range<=counterRange(ranged,defender.training,defender.brace)?ranged:null;
 }
 async function engage(attacker,defender,part,w){
- await shoot(attacker,defender,part,w);
+ if(await shoot(attacker,defender,part,w)){addLog(defender.name+' counter jammed.');return}
  const counter=reactionWeapon(defender,attacker);
  if(!counter)return;
  defender.reacted=true;
  addLog(defender.name+(counter.melee?' counters in melee.':' returns fire.'));
  await shoot(defender,attacker,'body',counter,true);
+ if(defender.training?.counterBrace)braceUnit(defender);
 }
 function checkEnd(){if(!battle)return true;if(!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
 async function endTurn(){
@@ -1040,7 +1166,7 @@ function finish(win){
  for(const u of b.units.filter(u=>u.team==='ally')){
   const s=save.units[u.index],before=s.level;
   s.condition=Math.max(12,Math.round(100*(u.hp.body+u.hp.right+u.hp.left+u.hp.legs)/(u.max.body+u.max.right+u.max.left+u.max.legs)));
-  s.xp+=win?70:20;while(s.xp>=s.level*100){s.xp-=s.level*100;s.level++}
+  s.xp+=win?70:20;while(s.xp>=nextLevelXP(s.level)){s.xp-=nextLevelXP(s.level);s.level++}
   if(s.level>before)promotions.push(PILOTS[u.index].call+' LV '+s.level);
  }
  save.history.push({name:c.name,day:save.day,win,pay});save.history=save.history.slice(-100);save.day++;
@@ -2493,4 +2619,4 @@ window.addEventListener('resize',closeHelp);
 window.addEventListener('blur',closeHelp);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpAnchor){e.preventDefault();e.stopImmediatePropagation();closeHelp()}},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){closeHelp();skipAttackCamera()}syncMusic()});
-const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';render();requestAnimationFrame(draw);if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn();}
+const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';render();startAudio(false);requestAnimationFrame(draw);if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn();}
