@@ -11,7 +11,7 @@ module.exports=async function checkPaint({page,origin}){
    const u=window.paintSubject;
    if(mode==='travel'){
     const view=travelVisual(u,5);
-    if(view)return {image:view.image,key:view.atlas.key};
+    if(view)return {image:view.image,key:view.source.key};
    }else if(mode==='baked'){
     const atlas=window.IRON_VOW_FOUNDRY_ART[foundryModel(u.frame)];
     return {image:motionImage(atlas),key:atlas.key};

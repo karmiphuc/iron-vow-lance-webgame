@@ -83,7 +83,7 @@ def light(scene, name, location, energy, color, size):
 
 def configure_render(scene, tmp):
     scene.render.engine = "CYCLES"
-    scene.cycles.samples = 6
+    scene.cycles.samples = 10 if CELL > 248 else 6
     scene.cycles.use_denoising = True
     scene.render.film_transparent = True
     scene.render.image_settings.file_format = "PNG"
@@ -221,8 +221,8 @@ def bake(model, rigs, output, tmp):
         ground = world_to_camera_view(scene, camera, Vector((0, 0, 0)))
         key = f"{model}-combat-{face}"
         sample("Fire", 0)
-        color, paint = render_sprite(scene, tmp, 512)
-        save_pair(color, paint, dest, key, 89)
+        color, paint = render_sprite(scene, tmp, 768 if CELL > 248 else 512)
+        save_pair(color, paint, dest, key, 94 if CELL > 248 else 89)
         visual = {
             "key": key, "native": True, "ground": round(1 - ground.y, 5),
             "groundX": round(ground.x, 5), "scale": 1.26, "hip": .58, "split": .5,
@@ -252,14 +252,18 @@ def bake(model, rigs, output, tmp):
                     **hardpoints(scene, camera, rig, heavy),
                 })
                 index += 1
-        save_pair(atlas, matte, dest, atlas_key, 84)
+        save_pair(atlas, matte, dest, atlas_key, 94 if CELL > 248 else 84)
         result[face] = visual
         print(f"Baked {model} {face}: {index} combat poses", flush=True)
     return result
 
 
 def main():
+    global CELL
     args = sys.argv[sys.argv.index("--") + 1:]
+    if "--hd" in args:
+        args.remove("--hd")
+        CELL = 448
     rigs, output = (Path(arg).resolve() for arg in args[:2])
     data = {}
     for model in args[2:] or ("gatecrasher", "cicada"):

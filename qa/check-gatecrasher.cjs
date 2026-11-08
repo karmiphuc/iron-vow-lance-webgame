@@ -51,6 +51,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','ga
  for(const face of ['left','right']){
   const art=JSON.parse(run(`JSON.stringify(prototypes.${model}.${face})`));
   assert.equal(art.key,`${prefix}-combat-${face}`);
+  assert.equal(art.motion.cell,448);
   assert.notDeepEqual(art.muzzle,art.muzzle2);
   for(const key of [art.key,art.motion.key])for(const suffix of ['','-paint'])
    assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
@@ -59,6 +60,27 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','ga
  assert.equal(atlas.points.length,8);
  assert.ok(atlas.points.every(row=>row.length===4));
  assert.ok(existsSync(join(dist,'assets',atlas.key+'.webp')));
+ const gait=atlas.grounded;
+ assert.equal(gait.detail.cell,384);
+ assert.equal(gait.points.length,2+6*gait.samples);
+ for(const [heading,key] of gait.detail.keys.entries()){
+  for(const suffix of ['','-paint'])assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
+  for(const [kind,start] of Object.entries(gait.walk)){
+   const points=gait.points.slice(start,start+gait.samples).map(row=>row[heading]);
+   const side=kind.at(-1);
+   const stance=points.map(p=>p.planted);
+   const swing=points.map(p=>p['foot'+side]);
+   const travel=(kind.startsWith('stride')?1/3:1/6)*3.65/gait.span;
+   const sign=heading<2?1:-1,depth=heading%3===0?1:-1;
+   for(const [i,foot] of stance.entries()){
+    const distance=i/(gait.samples-1)*travel;
+    assert.ok(Math.abs(foot[0]-stance[0][0]+sign*distance*.866)<.00001,`${model} ${kind} ${heading} stance x`);
+    assert.ok(Math.abs(foot[1]-stance[0][1]+depth*distance*.42)<.00001,`${model} ${kind} ${heading} stance y`);
+   }
+   const mid=(gait.samples-1)/2;
+   assert.ok(swing[mid][1]<(swing[0][1]+swing.at(-1)[1])/2-.018,'swing sole lifts off the floor');
+  }
+ }
  const glb=readFileSync(join(dist,'rig-bench/prototypes',model+'.glb'));
  const json=JSON.parse(glb.subarray(20,20+glb.readUInt32LE(12)));
  assert.deepEqual(new Set(json.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire']));

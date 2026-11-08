@@ -1630,19 +1630,20 @@ async function moveUnit(u,x,z){
  const free=Math.min(freeMovement(u),steps.length);
  u.moveLeft=freeMovement(u)-free;
  if(steps.length>free){startAction(u);u.extraStep=true;u.ap-=EXTRA_MOVE_AP}
- if(!u.kind&&FRAMES[u.frame].native&&!reducedMotion)await readyNativeMotion(u);
+ const grounded=travelAtlas(u)?.grounded;
+ if(!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion)await readyNativeMotion(u);
  const travel=preloadTravel(u);
  if(travel&&!imageReady(travel)&&travel.decode)await Promise.race([travel.decode().catch(()=>{}),delay(900)]);
  const paintedGait=upgradedWardenTravel(travelAtlas(u));
- const duration=reducedMotion?.12:paintedGait?1.06:u.kind?VEHICLES[u.kind].step:MECH_MOTION[u.frame].step,gaitBase=u.walkCount||0;
+ const duration=reducedMotion?.12:grounded?1.40:paintedGait?1.06:u.kind?VEHICLES[u.kind].step:MECH_MOTION[u.frame].step,gaitBase=u.walkCount||0;
  const segments=[];
- if(paintedGait){
+ if(paintedGait||grounded){
   let fromX=u.x,fromZ=u.z;
   for(let i=0;i<steps.length;){
    const dx=steps[i].x-fromX,dz=steps[i].z-fromZ;
    let end=i+1;
    while(end<steps.length&&steps[end].x-steps[end-1].x===dx&&steps[end].z-steps[end-1].z===dz)end++;
-   const length=end-i,paces=wardenPaces(length,gaitBase+i);
+   const length=end-i,paces=wardenPaces(length,gaitBase+i,Boolean(grounded));
    for(let step=i;step<end;step++)segments[step]={index:step-i,length,paces};
    fromX=steps[end-1].x;fromZ=steps[end-1].z;i=end;
   }
@@ -1650,10 +1651,18 @@ async function moveUnit(u,x,z){
  for(let i=0;i<steps.length;i++){
   const p=steps[i],fromX=u.x,fromZ=u.z;
   const turning=turnToward(u,p.x-fromX,p.z-fromZ);if(turning)await turning;
+  if(grounded){
+   const detail=travelDetail(u,grounded,headingIndex(displayedHeading(u)));
+   const images=[detail.image,u.paint&&moduleImage(detail.key+'-paint')].filter(image=>image?.decode&&!imageReady(image));
+   if(images.length)await Promise.race([Promise.allSettled(images.map(image=>image.decode())),delay(1400)]);
+  }
   const mass=u.kind?1:MECH_MOTION[u.frame].mass;
   sound(u.kind?(u.kind==='tank'?'track':'rotor'):'hydraulic',mass);
   u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length,segment:segments[i]};
-  if(!u.kind&&FRAMES[u.frame].native&&!reducedMotion){
+  if(grounded&&!reducedMotion){
+   u.motion.contacts=segments[i].paces.filter(pace=>pace.to>segments[i].index&&pace.to<=segments[i].index+1);
+  }
+  if(!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion){
    await delay(duration*500);
    effects.push({type:'step',x:(fromX+p.x)/2,z:(fromZ+p.z)/2,t:1,mass:MECH_MOTION[u.frame].mass,side:1});
    sound('step',mass*.84);
@@ -1661,7 +1670,7 @@ async function moveUnit(u,x,z){
    await delay(duration*500);
   }else await delay(duration*1000);
   u.vx=p.x;u.vz=p.z;u.motion=null;u.landTime=clock;
-  if(!u.kind){effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});sound('step',mass)}
+  if(!u.kind&&(!grounded||reducedMotion)){effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});sound('step',mass)}
   if(!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||u.frame===HELLBREAKER||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
  }
  u.walkCount=gaitBase+steps.length;
@@ -2576,12 +2585,11 @@ function drawRigidUpper(u,w,h,pose){
 
 const WARDEN_BRACE_DURATION=.58;
 
-function wardenPaces(tiles,firstSide){
- // Six ticks per tile gives exact half paces and two-thirds paces.
- // Start with two half paces only on an odd run, then use three per pair.
+function wardenPaces(tiles,firstSide,breach=false){
+ // Six ticks per tile. Breach hulls take three compact paces per tile.
  const odd=tiles%2;
- const strides=odd?[3,3]:[];
- for(let i=odd;i<tiles;i+=2)strides.push(4,4,4);
+ const strides=breach?Array(tiles*3).fill(2):odd?[3,3]:[];
+ if(!breach)for(let i=odd;i<tiles;i+=2)strides.push(4,4,4);
  let contact=0;
  return [...strides,0].map((next,index)=>{
   const previous=strides[index-1]??0;
@@ -2605,6 +2613,19 @@ function advanceUnitAnimation(u,t,dt){
  const m=u.motion;
  if(m){const p=clamp01((t-m.start)/m.duration),q=fieldStepProgress(p,m.segment);u.vx=m.fromX+(m.toX-m.fromX)*q;u.vz=m.fromZ+(m.toZ-m.fromZ)*q}
  else{u.vx=u.x;u.vz=u.z}
+ if(m?.contacts?.length){
+  const data=travelAtlas(u).grounded,heading=headingIndex(displayedHeading(u));
+  const progress=m.segment.index+fieldStepProgress(clamp01((t-m.start)/m.duration),m.segment);
+  while(m.contacts[0]?.to<=progress+.000001){
+   const pace=m.contacts.shift(),q=pace.to-m.segment.index;
+   const points=data.points[data.walk[pace.kind]+data.samples-1][heading];
+   const [x,y]=points['foot'+pace.kind.at(-1)];
+   const mass=MECH_MOTION[u.frame].mass;
+   effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,
+    ox:(x-.5)*data.span/3.65,oy:(y-data.ground)*data.span/3.65,t:1,mass});
+   sound('step',mass*.78);
+  }
+ }
  updateDestruction(u,t);
  if(u.brace&&upgradedWardenTravel(travelAtlas(u))){
   u.braceBlend=reducedMotion?1:clamp01((t-(u.braceTime??-100))/WARDEN_BRACE_DURATION);
@@ -2750,7 +2771,7 @@ function travelDetail(u,atlas,heading){
 function preloadTravel(u){
  const atlas=travelAtlas(u);
  if(!atlas)return null;
- const detail=travelDetail(u,atlas,headingIndex(displayedHeading(u)));
+ const detail=travelDetail(u,atlas.grounded||atlas,headingIndex(displayedHeading(u)));
  if(detail)return detail.image;
  if(u.paint||u.trim)moduleImage(atlas.key+'-paint');
  return motionImage(atlas);
@@ -2762,6 +2783,27 @@ function travelVisual(u,t){
  const angle=displayedHeading(u),direction=Math.sin(angle)<0?-1:1;
  const heading=headingIndex(angle);
  const phase=u.motion?clamp01((t-u.motion.start)/u.motion.duration):0;
+ const detail=travelDetail(u,atlas.grounded||atlas,heading);
+ if(atlas.grounded&&imageReady(detail?.image)){
+  const data=atlas.grounded,{cell,columns}=data.detail;
+  const motion=u.motion,segment=motion?.segment;
+  let row=u.attack?1:0,x=u.vx,z=u.vz;
+  if(segment&&!reducedMotion){
+   const distance=segment.index+fieldStepProgress(phase,segment);
+   const pace=segment.paces.find(step=>distance<=step.to)??segment.paces.at(-1);
+   const frame=Math.round(clamp01((distance-pace.from)/(pace.to-pace.from))*(data.samples-1));
+   row=data.walk[pace.kind]+frame;
+   // Draw at the sampled root distance so the planted sole stays fixed.
+   const q=pace.from+(pace.to-pace.from)*frame/(data.samples-1)-segment.index;
+   x=motion.fromX+(motion.toX-motion.fromX)*q;
+   z=motion.fromZ+(motion.toZ-motion.fromZ)*q;
+  }
+  const p=project(x,0,z),size=scale*data.span/3.65;
+  const bounds=recoilingBounds(u,{x:p.x-size*.5,y:p.y-size*data.ground,w:size,h:size},t);
+  const source={key:detail.key,cell,x:row%columns,y:Math.floor(row/columns),idleX:0};
+  const strike=u.attack&&ATTACK_PROFILES[u.attack.kind].melee?animationPose(u,t):null;
+  return {atlas,image:detail.image,source,bounds,row,heading,points:data.points[row][heading],direction,strike,grounded:true};
+ }
  const gait=u.motion?(FRAMES[u.frame]?.native?phase:((u.motion.gaitBase+phase)/2)%1):0;
  const prime=u.attack?.primeDuration?clamp01((t-u.attack.start)/u.attack.primeDuration):0;
  const stockRow=u.kind?0:u.motion&&!reducedMotion?1+Math.min(5,Math.floor(gait*6)):
@@ -2788,8 +2830,7 @@ function travelVisual(u,t){
     pose.aim>.12?special.aim+Math.min(2,Math.floor(pose.aim*3)):0;
   }
  }
- const detail=travelDetail(u,atlas,heading);
- const high=imageReady(detail?.image);
+ const high=!atlas.grounded&&imageReady(detail?.image);
  const image=high?detail.image:motionImage(atlas);
  if(!imageReady(image))return null;
  const cell=high?atlas.detail.cell:atlas.cell;
@@ -2841,6 +2882,14 @@ function drawTravel(u,t,view){
  const body=foundry?foundryPaint(image,atlas.key,u.paint,u.trim):paintedSprite(image,source.key,u.paint);
  ctx.save();ctx.fillStyle='#060d148c';ctx.beginPath();
  ctx.ellipse(p.x,p.y,scale*(u.kind||foundryModel(u.frame)===5?.76:.62),scale*.22,0,0,Math.PI*2);ctx.fill();
+ if(view.grounded){
+  const contacts=view.points.planted?[view.points.planted]:[view.points.footL,view.points.footR];
+  ctx.fillStyle='#060d149e';
+  for(const anchor of contacts){
+   const foot=spritePoint(bounds,anchor);
+   ctx.beginPath();ctx.ellipse(foot.x,foot.y,scale*.24,scale*.09,0,0,Math.PI*2);ctx.fill();
+  }
+ }
  const painted=upgradedWardenTravel(atlas);
  const behind=painted&&(heading===1||heading===2);
  if(behind&&u.hp.right>0)drawWeaponModule(ctx,travelMount(view,u,u.weapon));
@@ -3130,7 +3179,9 @@ function drawEffects(t,subject=null,plantOnly=false){for(const e of effects){
  }else if(e.type==='detonation'){drawDetonation(e,t);
  }else if(e.type==='step'){
   const actor=e.attackPlant&&(subject||battle.units.find(u=>u.id===e.actor));
-  const p=actor?mechAttachmentPoint(actor,'leadFoot',t):project(e.x,0,e.z),mass=e.mass||1;ctx.save();ctx.globalAlpha=e.t*.34;ctx.strokeStyle='#c0d4dc';ctx.lineWidth=.9;ctx.beginPath();ctx.ellipse(p.x+(e.side||0)*scale*.15,p.y,scale*phase*.62*mass,scale*phase*.2*mass,0,0,Math.PI*2);ctx.stroke();
+  const p=actor?mechAttachmentPoint(actor,'leadFoot',t):project(e.x,0,e.z),mass=e.mass||1;
+  p.x+=(e.ox||0)*scale;p.y+=(e.oy||0)*scale;
+  ctx.save();ctx.globalAlpha=e.t*.34;ctx.strokeStyle='#c0d4dc';ctx.lineWidth=.9;ctx.beginPath();ctx.ellipse(p.x+(e.side||0)*scale*.15,p.y,scale*phase*.62*mass,scale*phase*.2*mass,0,0,Math.PI*2);ctx.stroke();
   for(let i=0;i<5;i++){const angle=i*2.4;ctx.globalAlpha=e.t*.16;ctx.fillStyle='#aabdc6';ctx.beginPath();ctx.arc(p.x+Math.cos(angle)*phase*scale*.5,p.y+Math.sin(angle)*phase*scale*.14-phase*scale*.12,scale*(.025+phase*.055)*mass,0,Math.PI*2);ctx.fill()}ctx.restore();
  }else if(e.type==='skill'){
   const p=project(e.x,0,e.z);ctx.save();ctx.globalAlpha=e.t*.65;ctx.strokeStyle=['#e8bc77','#b1d7e6','#b6d8c5'][e.kind]??CREW[e.kind].color;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*(.35+phase*.9),scale*(.13+phase*.3),0,0,Math.PI*2);ctx.stroke();ctx.restore();
