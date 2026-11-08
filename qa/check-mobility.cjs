@@ -103,7 +103,7 @@ const simulate=require('./sim-harness.cjs');
    ['Pilot',actual.hp.pilot+' HP']
   ])assert.ok(workshop.includes(`<dt>${label}</dt><dd>${value}</dd>`),actual.name+' '+label);
   assert.ok(workshop.includes(`Fire</b> ${actual.primary.ap} AP<small>${actual.primary.name}`));
-  assert.ok(workshop.includes(actual.melee?`Strike</b> ${actual.melee.ap} AP<small>${actual.melee.name}`:'Strike</b> <small>No melee equipped'));
+  assert.ok(workshop.includes(actual.melee?`Melee</b> ${actual.melee.ap} AP<small>${actual.melee.name}`:'Melee</b> <small>No melee equipped'));
   assert.ok(workshop.includes('Counter</b> 0 AP<small>1 / round'));
   assert.ok(workshop.includes('Losing the left arm reduces armor to '+Math.floor(actual.armor/2)));
   stats.run('createBattle(1,true)');

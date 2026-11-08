@@ -23,6 +23,7 @@ The browser runner uses Playwright Chromium when installed, or a supported local
 | Browser UI | Desktop and phone-size Chromium with touch input, layouts, controls, hold tooltips, default music and mute preference. |
 | Warden upgrade | Four distinct high resolution field atlases, a real two-tile move, a right-foot brace, planted recoil and the firing close-up. |
 | Gatecrasher R2 | Workshop purchase, equip and remove, all four loadout routes, and real pointer and touch input for the optional shoulder salvo and cleaver strike. |
+| Armory | 22 classified weapon cards, 12 new attacks and paired sprites, trained stats, purchase and save resume, missile restrictions, desktop and touch browse, and grip, muzzle, tip and pivot checks on the mounted GLB. |
 
 `npm test --prefix qa` runs the simulation suites. New `qa/check-*.cjs` files are picked up automatically. `npm run test:browser --prefix qa` runs the local browser suite. Browser failures save a screenshot in the temporary directory. Set `IRON_VOW_QA_OUTPUT` when running the simulation alone to request native canvas captures in a separate folder.
 
@@ -42,4 +43,4 @@ After deploying, verify the public copy from the same checkout.
 node qa/release-check.cjs --live https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site/
 ```
 
-This compares served HTML, JavaScript and CSS to the checkout and repeats the browser scenarios. Hosted HTML is compared after removing the platform's injected challenge bootstrap. Test careers use isolated browser storage. Keep the published save fixtures and the reproduction for each future fix in this folder.
+This compares served HTML, JavaScript, CSS and the expansion weapon assets to the checkout, then repeats the browser scenarios. Hosted HTML is compared after removing the platform's injected challenge bootstrap. Test careers use isolated browser storage. Keep the published save fixtures and the reproduction for each future fix in this folder.

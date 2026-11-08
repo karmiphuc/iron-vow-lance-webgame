@@ -17,6 +17,7 @@ const checkCareerTabs=require('./browser/career-tabs.cjs');
 const checkDutyRoster=require('./browser/duty-roster.cjs');
 const checkBastionGrips=require('./browser/bastion.cjs');
 const checkGatecrasherArmed=require('./browser/gatecrasher-armed.cjs');
+const checkArmory=require('./browser/armory.cjs');
 const dist=resolve(__dirname,'../dist');
 
 const types={
@@ -54,7 +55,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin){
+async function checkBrowser(origin,scenarios=[checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed]){
  const server=origin?null:await serve();
  let browser;
  try{
@@ -63,7 +64,7 @@ async function checkBrowser(origin){
   const executablePath=browserPath();
   if(!executablePath&&!existsSync(chromium.executablePath()))throw Error('Install Chromium with npx playwright install chromium in qa, or set IRON_VOW_CHROME.');
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
-  for(const mobile of [false,true])for(const scenario of [checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed]){
+  for(const mobile of [false,true])for(const scenario of scenarios){
    const label=(mobile?'mobile touch':'desktop')+' '+scenario.name;
    const context=await browser.newContext({
     ...(mobile?{...devices['iPhone 13'],deviceScaleFactor:1}:{viewport:{width:1440,height:1000}}),

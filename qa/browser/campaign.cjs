@@ -166,6 +166,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await tap('[data-rebuild="11"]');
  assert.equal(await page.evaluate(()=>save.reserve[HELLBREAKER]?.condition),55);
  await page.reload({waitUntil:'domcontentloaded'});
+ await page.locator('#nav [data-page="workshop"]').waitFor({state:'attached'});
  assert.equal(await page.evaluate(()=>save.reserve[HELLBREAKER]?.condition),55);
  console.log('PASS campaign UI, touch tooltip, reserve reload, Workshop, Wiki, variable seats and new skills');
 };

@@ -49,15 +49,15 @@ function build(){
 }
 function fit(m,armory,id,side){
  if(!armory||!id||id==='missile'&&side==='R')return null;
- const adapter=new T.Group();
+ const adapter=new T.Group(),added=arsenal.isExpansion(id);
  adapter.scale.setScalar(.62);
  if(!['breaker','cleaver','blade'].includes(id))adapter.rotation.x=-Math.PI/2;
- const socket=side==='L'&&id==='piledriver'?m.sockets.ram:side==='R'&&id!=='rifle'?m.sockets.gun:m.sockets[side];
+ const socket=side==='L'&&['piledriver','pike','tonfa'].includes(id)?m.sockets.ram:side==='R'&&!added&&id!=='rifle'?m.sockets.gun:m.sockets[side];
  socket.add(adapter);
- const mount=arsenal.mount(side==='L'?asset.melee:id==='rifle'?asset.carbine:armory,id,adapter);
+ const mount=arsenal.mount(added?armory:side==='L'?asset.melee:id==='rifle'?asset.carbine:armory,id,adapter);
  if(!mount){adapter.parent.remove(adapter);return null}
- const grip=id==='rifle'&&side==='R'?mount.model.getObjectByName('BastionGripContact'):null;
- if(grip){
+ const grip=id==='rifle'&&side==='R'?mount.model.getObjectByName('BastionGripContact'):mount.grip;
+ if(grip&&!added){
   m.cont.updateMatrixWorld(true);
   const local=mount.model.worldToLocal(grip.getWorldPosition(new T.Vector3()));
   mount.model.position.sub(local.multiply(mount.model.scale).applyQuaternion(mount.model.quaternion));
@@ -120,10 +120,14 @@ function animate(m,u,t,pose,armory){
   if(m.melee)m.melee.adapter.parent.remove(m.melee.adapter);
   m.melee=fit(m,armory,u.melee,'L');
  }
- if(m.weapon)m.weapon.mount.visible=u.alive&&u.hp.right>0;
+ if(m.weapon){
+  m.weapon.mount.visible=u.alive&&u.hp.right>0;
+  arsenal.animate(m.weapon,pose);
+ }
  if(m.melee){
   m.melee.mount.visible=u.alive&&u.hp.left>0;
   if(m.melee.spike){const p=pose.strikeProgress||0;m.melee.spike.position.z=m.melee.spikeRest+(p>=.61&&p<=.81?.50:0)}
+  arsenal.animate(m.melee,pose);
  }
  paint(m,u);
  m.cont.updateMatrixWorld(true);

@@ -398,3 +398,60 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 @media(max-width:350px){
  #nav button{padding-inline:0}
 }
+.workshop-refit{grid-template-columns:minmax(0,1.2fr) minmax(290px,.8fr);align-items:start}
+.workshop-armory{min-width:0}
+.armory-title{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-bottom:12px}
+.armory-title h2{margin-top:4px}
+.armory-title .tag{white-space:nowrap}
+.armory-mounted,.armory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.armory-mounted>div{min-width:0;position:relative;display:grid;align-content:start;gap:4px;padding:10px 12px;border:1px solid var(--line);background:#152229}
+.armory-mounted .eyebrow{color:var(--blue);font-size:8px;letter-spacing:1.15px}
+.armory-mounted b{font-family:Barlow,'Arial Narrow',sans-serif;font-size:19px;line-height:1.05}
+.armory-mounted small{color:var(--muted);font-size:10px}
+.armory-mounted .remove-melee{width:max-content;margin:2px 0 0;padding:5px 9px;min-height:30px;font-size:9px}
+.armory-class-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:13px}
+.armory-class-tabs button{min-width:0;min-height:51px;padding:7px 4px;display:grid;justify-items:center;align-content:center;gap:3px;background:#1b272e}
+.armory-class-tabs b{font-family:Barlow,'Arial Narrow',sans-serif;font-size:17px;line-height:1.1}
+.armory-class-tabs b span{font:500 10px Inter,sans-serif;color:var(--muted);margin-left:2px}
+.armory-class-tabs small{font-size:8px;letter-spacing:.45px;color:var(--muted)}
+.armory-class-tabs button[aria-pressed="true"]{border-color:var(--accent);background:#382d20;color:var(--accent)}
+.armory-help{margin:5px 0 7px}
+.armory-jump{display:none}
+.armory-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;position:relative;padding:10px 11px;border:1px solid var(--line);background:linear-gradient(160deg,#243039,#131e24 75%)}
+.armory-card.active{border-color:#e9a54487}
+.armory-card:focus-visible{outline:2px solid var(--accent)}
+.armory-card-head{display:flex;align-items:center;justify-content:space-between;gap:3px;min-height:24px}
+.armory-card-head .eyebrow{font-size:9px;letter-spacing:.8px;color:var(--blue)}
+.armory-card h3{font-size:21px;line-height:1.05;min-height:2.1em}
+.armory-card .weapon-card-art{height:82px;margin:1px 0 6px}
+.armory-card dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:auto 0 0;text-align:center}
+.armory-card dl>div{padding:5px 1px;background:#10191f99}
+.armory-card dt,.armory-trait{color:var(--muted);font-size:9px;letter-spacing:.4px}
+.armory-card dd{margin:3px 0 0;font-weight:700;font-size:12px}
+.armory-card-foot{margin-top:5px}
+.armory-trait{display:block;color:var(--blue);margin:1px 0 5px}
+.armory-card-foot:has(.armory-trait){margin-top:4px}
+.armory-card-foot button{width:100%;min-height:42px;padding:6px 4px;font-size:10px;font-weight:700}
+.armory-card-foot button:disabled{opacity:1;color:var(--muted);background:#111b20}
+.armory-card-foot button[aria-pressed="true"]{opacity:1;background:#342c21;color:var(--accent)}
+.armory-card[data-weapon-card="blade"] .weapon-card-art{object-fit:cover}
+.armory-kits>div{min-width:0}
+@media(min-width:1160px){
+ .workshop-armory>.armory-grid:not(.armory-kits){grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(min-width:761px) and (min-height:950px){
+ .workshop-refit>.workshop-chassis{position:sticky;top:8px}
+}
+@media(max-width:760px){
+ .workshop-refit{grid-template-columns:minmax(0,1fr)}
+ .workshop-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:6px}
+ .armory-jump{display:block;flex:none;margin-left:auto;padding:4px 7px;min-height:44px;font-size:9px;color:var(--blue)}
+ .armory-card h3{font-size:19px}
+ .armory-card .weapon-card-art{height:58px}
+ .armory-card-foot button,.armory-mounted .remove-melee{min-height:44px}
+}
+@media(max-width:350px){
+ .armory-card{padding:7px}
+ .armory-card h3{font-size:18px}
+ .armory-class-tabs small{letter-spacing:0}
+}

@@ -34,8 +34,12 @@ function solveLeg(m,leg,t,pitch){VC.solveLeg(m.rig,m.dims,leg,t,pitch);}
 const _a=V3(),_b=V3(),_c=V3();
 /* melee timeline (s): windup 0-.38, strike .38-.5 (contact .46), hold -.72, recover -1.1 */
 const MEL={wind:.38,hit:.46,strike:.5,hold:.72,end:1.1};
-function meleeKeys(a){if(a<0||a>MEL.end)return null;
-  const P0={sx:-.28,sz:-.07,el:-.62,wr:0,yaw:0,lean:0},P1={sx:-2.55,sz:-.55,el:-1.45,wr:-.3,yaw:-.55,lean:-.12},P2={sx:-.75,sz:.42,el:-.12,wr:.25,yaw:.62,lean:.22};
+const thrustWindup={sx:-.66,sz:-.08,el:-1.35,wr:.36,yaw:-.16,lean:-.08};
+const thrustContact={sx:-1.12,sz:.12,el:-.33,wr:-.10,yaw:.13,lean:.13};
+function meleeKeys(a,thrust){if(a<0||a>MEL.end)return null;
+  const P0={sx:-.28,sz:-.07,el:-.62,wr:0,yaw:0,lean:0};
+  const P1=thrust?thrustWindup:{sx:-2.55,sz:-.55,el:-1.45,wr:-.3,yaw:-.55,lean:-.12};
+  const P2=thrust?thrustContact:{sx:-.75,sz:.42,el:-.12,wr:.25,yaw:.62,lean:.22};
   let A,B,q;if(a<MEL.wind){A=P0;B=P1;q=smooth(a/MEL.wind);}else if(a<MEL.strike){A=P1;B=P2;q=1-Math.pow(1-(a-MEL.wind)/(MEL.strike-MEL.wind),3);}else if(a<MEL.hold){A=P2;B=P2;q=1;}else{A=P2;B=P0;q=smooth((a-MEL.hold)/(MEL.end-MEL.hold));}
   const o={w:a>MEL.hold?1-q*.999:1};for(const k in P0)o[k]=lerp(A[k],B[k],q);return o;}
 function lungeK(a){if(a<0||a>MEL.end)return 0;if(a<MEL.wind)return -.15*smooth(a/MEL.wind);if(a<MEL.strike)return lerp(-.15,1,smooth((a-MEL.wind)/(MEL.strike-MEL.wind)));if(a<MEL.hold)return 1;return 1-smooth((a-MEL.hold)/(MEL.end-MEL.hold));}
@@ -158,7 +162,7 @@ function animateMech(m,I,dt,t){
   aR.wr.rotation.x=-R0*.1;
   const aL=r.arms.L,bl=dead?0:brace;
   aL.sh.rotation.set(lerp(-.2+w*.14*Math.sin(2*PI*g),-1.2,bl)+S.arm.x*.12+(dead?.3*dE:0),0,lerp(.14,-.28,bl));aL.el.rotation.x=lerp(-.75,-1.35,bl)*(dead?1-dE*.7:1);aL.wr.rotation.x=0;
-  if(m.melee&&!dead){const K=meleeKeys(m.melee.age);
+  if(m.melee&&!dead){const K=meleeKeys(m.melee.age,m.melee.thrust);
     if(K){const wv=K.w;aL.sh.rotation.x=lerp(aL.sh.rotation.x,K.sx,wv);aL.sh.rotation.z=lerp(aL.sh.rotation.z,-K.sz,wv);aL.el.rotation.x=lerp(aL.el.rotation.x,K.el,wv);aL.wr.rotation.x=lerp(0,K.wr,wv);
       r.spine.rotation.y-=K.yaw*wv;r.spine.rotation.x+=K.lean*wv;aR.sh.rotation.x=lerp(aR.sh.rotation.x,-.7,wv*.5);}
     else m.melee=null;}

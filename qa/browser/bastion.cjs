@@ -36,6 +36,7 @@ async function checkBastionGrips({page,mobile,origin,tap}){
  const startPixels=await page.locator('#paint-preview').evaluate(c=>c.toDataURL());
  await page.waitForFunction(()=>+document.querySelector('#paint-preview').dataset.rigFrame>302);
  assert.notEqual(await page.locator('#paint-preview').evaluate(c=>c.toDataURL()),startPixels,'Workshop melee actually changes the visible pose');
+ await tap('[data-armory-class="melee"]');
  await tap('[data-equip="cleaver"]');
  assert.equal(await page.evaluate(()=>save.units[0].melee),'cleaver');
  await checkBastionSelection(page,mobile);

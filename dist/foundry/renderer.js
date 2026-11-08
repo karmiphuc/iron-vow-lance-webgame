@@ -59,8 +59,9 @@ function init(){
   scene.environment=studioEnvironment(renderer);
   if(arsenal&&!armoryRequested){
    armoryRequested=true;
-   const path='rig-bench/weapons.glb',url=window.IRON_VOW_INLINE_ASSETS?.[path]||path;
-   arsenal.load(url).then(scene=>{armory=scene;if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
+   const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
+   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb'))
+    .then(scene=>{armory=scene;if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
   return true;
@@ -113,7 +114,7 @@ function drawBastion(u,t,pose,entry){
  const target=hdRenderer(),size=target.domElement.width;
  if(entry.surface.width!==size)entry.surface.width=entry.surface.height=size;
  const stamp=[bastion.frame(u,t,pose),pose.heading,u.alive,Boolean(armory),u.team,u.weapon,u.melee,u.paint,
-  size,pose.strikeKind,pose.strikeProgress,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
+  size,pose.strikeKind,pose.strikeProgress,pose.weaponKick,pose.weaponSpin,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
  if(entry.stamp===stamp)return entry;
  entry.stamp=stamp;
  const {frame,anchors,primary,secondary}=bastion.animate(entry.m,u,t,pose,armory);
@@ -123,7 +124,7 @@ function drawBastion(u,t,pose,entry){
  for(const [key,o] of Object.entries(anchors))if(o)entry.anchors[key]=anchor(o);else delete entry.anchors[key];
  return entry;
 }
-function previewBastion(u,angle,previewFrame){
+function previewBastion(u,angle,previewFrame,previewPose){
  if(!bastion||!init())return null;
  if(!bastionPreview){
   const m=bastion.build();
@@ -132,7 +133,7 @@ function previewBastion(u,angle,previewFrame){
  }
  const hp={body:100,pilot:100,right:100,left:100,legs:100};
  const unit={...u,team:'ally',alive:true,max:hp,hp};
- return drawBastion(unit,0,{previewFrame,heading:[-.68,.68,2.46,-2.46][angle]??-.68},bastionPreview);
+ return drawBastion(unit,0,{...previewPose,previewFrame,heading:[-.68,.68,2.46,-2.46][angle]??-.68},bastionPreview);
 }
 function draw(u,t,pose,scope,model,custom){
  if(!init())return null;
@@ -154,7 +155,7 @@ function draw(u,t,pose,scope,model,custom){
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
- const stamp=[pose.heading,Boolean(armory),u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
+ const stamp=[pose.heading,Boolean(armory),u.alive,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.weaponKick,pose.weaponSpin,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
  if(entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){
@@ -180,7 +181,7 @@ function draw(u,t,pose,scope,model,custom){
  m.aim.until=aim>.01?t+.01:-1;m.aim.blend=aim;
  m.aim.point.set(Math.sin(face)*20,4,Math.cos(face)*20);
  m.recoil=Math.abs(pose.recoil)*.58;
- m.melee=melee?{age:meleeAge}:null;
+ m.melee=melee?{age:meleeAge,thrust:pose.strikeKind==='pike'}:null;
  m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;
  m.s.arm.x=pose.impact*.75;
  animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:1.55,brace:pose.brace,
@@ -200,11 +201,13 @@ function draw(u,t,pose,scope,model,custom){
  }
  if(entry.primary){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
-  entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
+  if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
+  else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
  }
  if(entry.secondary){
   entry.secondary.mount.visible=u.alive&&u.hp.left>0&&(melee||(model===4&&aim<.2));
   if(entry.secondary.spike)entry.secondary.spike.position.z=entry.secondary.spikeRest+(pose.strikeProgress>=.61&&pose.strikeProgress<=.81?.50:0);
+  arsenal.animate(entry.secondary,pose);
  }
  m.cont.updateMatrixWorld(true);
  setCamera(.46);

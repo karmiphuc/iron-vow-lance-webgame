@@ -27,25 +27,36 @@ vm.createContext(context);
 const run=source=>vm.runInContext(source,context);
 const click=selector=>{const node=document.querySelector(selector);assert.ok(node&&!node.disabled,selector);node.click()};
 const ready=async condition=>{for(let i=0;i<100;i++){if(run(condition))return;await new Promise(resolve=>setTimeout(resolve,25))}assert.fail(condition)};
-for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js','prototype-combat.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
+for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js','theater-layouts.js','prototype-combat.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
 
 (async()=>{
  await ready('decodedArt.size===Object.keys(artImages).length');
- assert.equal(document.querySelectorAll('[data-equip]').length,10);
- const weaponPreviews=[...document.querySelectorAll('[data-equip] .weapon-card-art')];
- assert.equal(weaponPreviews.length,10);
- for(const preview of weaponPreviews)assert.ok(fs.existsSync(path.join(dist,preview.getAttribute('src'))));
+ const tab=group=>click('[data-armory-class="'+group+'"]');
+ const listed=new Set();
+ for(const [group,count] of Object.entries({assault:7,strike:7,melee:8})){
+  tab(group);
+  const cards=[...document.querySelectorAll('[data-weapon-card]')];
+  assert.equal(cards.length,count);
+  for(const card of cards){
+   const id=card.dataset.weaponCard,preview=card.querySelector('.weapon-card-art');
+   assert.ok(preview&&fs.existsSync(path.join(dist,preview.getAttribute('src'))),id);
+   assert.equal(run(`armoryClass(weapon('${id}'))`),group,id);
+   listed.add(id);
+  }
+ }
+ assert.equal(listed.size,22);
  click('[data-paint="#577eac"]');await ready("decoded.has('assets/warden-chassis-left-paint.webp')");
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).units[0].paint"),'#577eac');
  assert.ok(run("paintedImages.has('warden-chassis-left#577eac')"));
- click('[data-equip="hailstorm"]');click('[data-equip="cleaver"]');
+ tab('assault');click('[data-equip="hailstorm"]');tab('melee');click('[data-equip="cleaver"]');
  assert.equal(run("save.units[0].weapon+' '+save.units[0].melee"),'hailstorm cleaver');
  click('[data-select="1"]');assert.equal(run('save.units[1].paint'),undefined);
  const custom=document.querySelector('#custom-paint');custom.value='#335544';custom.oninput();custom.onchange();
  assert.equal(run('save.units[1].paint'),'#335544');
  click('[data-select="2"]');assert.ok(run("wardenVisual(selected,'missile',-1).podR"));
- run('save.credits=20000');
- for(const id of ['breaker','piledriver','rampart'])click('[data-equip="'+id+'"]');
+ run('save.credits=20000;render()');
+ for(const id of ['breaker','piledriver'])click('[data-equip="'+id+'"]');
+ tab('strike');click('[data-equip="rampart"]');
  click('#remove-melee');assert.equal(run('save.units[2].melee'),undefined);
  run("createBattle(0);selected=0;action='move';renderBattle();Math.random=()=>0");
  assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>u.paint===HOSTILE_PAINT&&activeWardenVisual(u).modular)"));
@@ -65,7 +76,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
   const hit=weaponMount(v,v,bounds,'piledriver',unitFacing(current()),.7);
   return !idle.asset.key.includes('extended')&&hit.asset.key.includes('extended');
  })()`),true);
- assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id==='blade'?'cleaver':w.id].some(p=>p.level===.7))))"));
+ assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id==='blade'?'cleaver':weaponMotion(w.id)].some(p=>p.level===.7))))"));
  for(const [frame,views] of JSON.parse(run('JSON.stringify(arsenal.chassis)')).entries()){
   for(const [view,visual] of Object.entries(views)){
    const {attackMotion:atlas}=visual;
@@ -98,5 +109,5 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
   })`));
   run('battlefield(clock)');
  }
- console.log('PASS: all six planted attack atlases, ten weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, new attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
+ console.log('PASS: all six planted attack atlases, 22 classified weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});
