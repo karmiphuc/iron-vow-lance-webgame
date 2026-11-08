@@ -2,7 +2,7 @@
 Authoring coordinates: X right, Y up, +Z weapon forward. Grip at origin.
 All meshes authored procedurally from original forms; no third-party art.
 """
-import bpy, bmesh, math, os, json, struct
+import bpy, bmesh, math, os, json, struct, sys
 from mathutils import Vector
 from collections import defaultdict
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -317,6 +317,43 @@ cyl(spike,'forged_piercing_spike',.17,1.0,(0,0,.70),'edge',n=8,r2=0)
 # Dark longitudinal inset across shaft is kept on translating assembly.
 for s in [-1,1]:box(spike,'ram_groove',(.008,.055,.49),(s*.114,0,-.25),'frame',0)
 empty('tip',(0,0,1.2),spike)
+# Compact Breacher, four-tube Vesper, and the armored 40 mm Rampart.
+g=empty('breacher');P['breacher']=g;grip(g)
+hull(g,'breacher_receiver',[(-.84,.19,.04,.52,.07),(-.52,.25,-.03,.68,.08),(.82,.25,-.03,.66,.08),(1.21,.20,.08,.58,.05)])
+for side in [-1,1]:
+ panel(g,'receiver_shield',[(.18,-.47),(.61,-.42),(.63,.79),(.39,1.02),(.15,.87)],.048,side*.255)
+ for z in [-.34,.76]:bolt(g,(side*.28,.34,z))
+box(g,'pump_guard',(.47,.28,.66),(0,.17,1.22),'gunmetal',.06)
+ribs(g,.78,1.45,.66,.25,5)
+for x in [-.13,.13]:
+ cyl(g,'twin_bore',.12,1.05,(x,.37,1.55),'steel',n=12)
+ ring(g,'open_bore',.14,.09,.22,(x,.37,2.09),'gunmetal',12)
+empty('muzzle',(0,.37,2.22),g);empty('eject',(-.27,.42,.42),g)
+
+g=empty('vesper');P['vesper']=g;grip(g)
+hull(g,'launcher_shell',[(-.82,.32,-.06,.70,.10),(-.53,.46,-.10,.90,.10),(.92,.46,-.10,.90,.10),(1.20,.38,.00,.78,.08)])
+for side in [-1,1]:
+ panel(g,'launcher_ceramic',[(.08,-.47),(.69,-.57),(.86,-.18),(.77,.79),(.22,.97)],.056,side*.465)
+ box(g,'launcher_latch',(.044,.20,.22),(side*.50,.46,.58),'service',.017)
+for x in [-.20,.20]:
+ for y in [.23,.59]:
+  ring(g,'launch_tube',.165,.118,.42,(x,y,1.14),'steel',12)
+  cyl(g,'loaded_round',.104,.32,(x,y,1.02),'gunmetal',n=12,r2=.054)
+empty('muzzle',(-.20,.41,1.36),g);empty('muzzle2',(.20,.41,1.36),g)
+
+g=empty('rampart');P['rampart']=g;grip(g)
+hull(g,'autocannon_receiver',[(-.91,.24,.04,.58,.07),(-.53,.34,-.12,.86,.12),(.81,.35,-.12,.86,.12),(1.17,.22,.04,.63,.07)])
+for side in [-1,1]:
+ panel(g,'autocannon_cheek',[(.19,-.47),(.71,-.45),(.77,.48),(.56,.81),(.21,.65)],.06,side*.35)
+ for z in [-.36,.58]:bolt(g,(side*.386,.44,z),r=.03)
+box(g,'feed_drum',(.38,.53,.62),(.26,-.04,.32),'frame',.07)
+ribs(g,.28,.98,.87,.36,6)
+cyl(g,'recoil_sleeve',.20,1.1,(0,.38,1.58),'gunmetal',n=12)
+cyl(g,'cannon_tube',.115,1.5,(0,.38,2.19),'steel',n=12)
+for z in [1.28,1.72,2.02]:ring(g,'sleeve_ring',.215,.15,.085,(0,.38,z),'warmsteel',12)
+ring(g,'open_muzzle_brake',.195,.12,.29,(0,.38,2.94),'frame',12)
+empty('muzzle',(0,.38,3.10),g);empty('eject',(-.31,.40,.34),g)
+
 # Consolidate each rigid assembly into one mesh per material: modest draw count.
 assembly_stats={}
 for parent in list(P.values())+[barrels,spike]:
@@ -352,6 +389,8 @@ open(glbpath,'wb').write(struct.pack('<III',0x46546C67,2,20+len(payload)+len(tai
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT,'source','weapons.blend'))
 with open(os.path.join(OUT,'weapons-manifest.json'),'w') as f:json.dump({'authoring':'Original procedural geometry, no external assets','units':'meters; Y up; +Z forward; grip origin','weapons':assembly_stats,'moving_nodes':{'hailstorm':'barrels (0,0.36,1), rotates local Z','piledriver':'spike (0,0.58,0.95), translates local Z to 2.2'},'emissive_materials':['emissive_rail','emissive_edge']},f,indent=2)
 print('WEAPON_STATS',json.dumps(assembly_stats));print('GLB_BYTES',os.path.getsize(os.path.join(OUT,'weapons.glb')))
+if '--export-only' in sys.argv:
+ sys.exit(0)
 # Candidate comparison render; hide unchanged weapons only after GLB/Blend export.
 for name,root in P.items():
  if name not in ['kestrel','longbow']:

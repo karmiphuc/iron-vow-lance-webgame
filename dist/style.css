@@ -47,3 +47,19 @@
   .hangar-rig-preview {right:12px;bottom:185px}
   .hangar-rig-preview img {width:48px;height:48px}
 }
+
+/* Workshop loadout and identification paint */
+.workshop-chassis{align-self:start;min-height:0;display:flex;flex-direction:column}
+.workshop-chassis .unit-render{position:static;display:block;width:100%;height:auto;aspect-ratio:1;max-height:385px;margin:-9px auto -15px;object-fit:contain}
+.workshop-meta{position:static;padding:18px}
+.paint-panel{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:15px 0;padding:13px 0}
+.paint-swatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.paint-swatch,.paint-custom{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;min-height:34px;font:500 10px Inter,Arial,sans-serif;color:var(--ink);letter-spacing:.2px;text-transform:none}
+.paint-swatch span{width:13px;height:13px;background:var(--swatch);border:1px solid #ffffff50}
+.paint-swatch[aria-pressed="true"]{border-color:var(--accent);background:#e9a54416}
+.paint-custom input{width:22px;height:22px;padding:1px;background:transparent;border:1px solid var(--line);cursor:pointer}
+.loadout-slot{border-top:1px solid var(--line);margin-top:22px;padding-top:13px;font-size:17px;letter-spacing:1px;color:var(--accent)}
+.loadout-slot+.equipment,.loadout-slot+.note+.equipment{margin-top:9px}
+.remove-melee{margin-top:10px;font-size:10px}
+.combat-target img.enemy{filter:grayscale(1) sepia(1) saturate(4.6) hue-rotate(312deg) brightness(.82)}
+@media(max-width:760px){.workshop-chassis{min-height:0;padding:16px}.workshop-chassis .unit-render{height:auto;max-height:345px}.workshop-meta{padding:12px}.actionbuttons .primary{min-width:58px}}

@@ -71,3 +71,11 @@ To refresh the renders after updating the bench GLBs, run `blender -b -t 6 -P to
 The Mark II armor and upgraded rifle/rail meshes have editable Blender generators under `tools/authoring/`. Run `blender -b -P tools/authoring/warden/build_warden.py` and `blender -b -P tools/authoring/weapons/source/build_weapons.py` to rebuild the source GLBs. Keep `clearance_profile.json` beside the Warden script. Copy the rebuilt GLBs to `dist/rig-bench/` before baking. A rebuild also writes the editable Blender files.
 
 The merged Warden rig now adds three ready/aim poses and five authored kneeling poses per weapon/facing. Recoil uses shorter socket travel and smaller counter-rotating shoulder/elbow angles. The twelve approved gait samples retain their original leg kinematics. Death poses and effects share the projected hardpoints. Legacy Kestrel/Basilisk and other Warden loadouts use the layered 2.5D upper rig described above.
+
+## Workshop arsenal and chassis paint
+
+The Workshop saves a free ceramic plate color and separate primary and melee slots for each chassis. Weapons unlock across the company. Strike (X) spends AP to attack an adjacent hostile with the left arm. Hailstorm and Rampart join the ranged catalogue. Breaker, Arc Cleaver and Piledriver use the bench's existing melee poses. Hostiles use red identification paint.
+
+The Kestrel and Basilisk model sources are under `tools/authoring/`. Their body pivots match Warden's shared rig. Kestrel has a slimmer recon profile and Basilisk launches Vesper missiles from its integral pod sockets. The game uses separately rendered chassis sheets and weapon modules, with UV-derived paint masks. It loads the model pose sheets during combat and keeps the GLBs alongside the 3D bench.
+
+To refresh the game renders, run `blender -b --python-exit-code 1 -t 6 -P tools/render_arsenal.py -- <model>` once per model (`warden`, `kestrel`, `basilisk`, `weapons`). Then run `node tools/assemble_arsenal.cjs`. Commit the generated WebPs and `dist/arsenal-visuals.js` together. The intermediate JSON files stay local.

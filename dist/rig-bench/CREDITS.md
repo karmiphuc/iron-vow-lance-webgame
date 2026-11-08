@@ -8,3 +8,7 @@
 | three.js r128 and GLTFLoader | [three.js r128](https://github.com/mrdoob/three.js/tree/r128), exact r128 scripts served from this bench’s vendor directory. | [MIT](https://github.com/mrdoob/three.js/blob/r128/LICENSE) |
 
 The production meshes and textures contain no external geometry, textures, fonts, or kitbash assets. The Mark II uses Iron Vow’s existing Warden concept art as an internal visual reference. The geometry, textures and markings were authored for this game.
+
+## Workshop expansion
+
+The Kestrel and Basilisk chassis, their texture atlases, and the Breacher, Vesper and Rampart models are original Iron Vow assets. The Workshop renders derive from these and the existing Warden and weapon meshes. The color masks derive from the original model UVs. The expansion uses no external model or texture assets.

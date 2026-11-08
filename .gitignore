@@ -1,3 +1,9 @@
 node_modules/
 *.tar.gz
 *.zip
+/tools/warden-arsenal.json
+/tools/kestrel-arsenal.json
+/tools/basilisk-arsenal.json
+/tools/weapons-arsenal.json
+/tools/authoring/weapons/assets/
+/tools/authoring/weapons/source/weapons.blend
