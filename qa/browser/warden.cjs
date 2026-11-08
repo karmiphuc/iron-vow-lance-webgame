@@ -66,6 +66,10 @@ module.exports=async function checkWarden({page,mobile,origin,tap}){
   throw Error('No exposed target');
  });
  await click(target);
+ if(!mobile&&process.env.WARDEN_HANDS_PROOF){
+  await page.waitForFunction(()=>activeCinematic?.phase==='fire');
+  await page.screenshot({path:require('node:path').join(process.env.WARDEN_HANDS_PROOF,'ranged-battle.png')});
+ }
  await page.waitForFunction(()=>!battle.busy&&window.wardenQA.foe.hp.body<window.wardenQA.foe.max.body);
  const frames=await page.evaluate(()=>window.wardenQA.samples);
  const recoil=frames.filter(frame=>frame.recoil);
