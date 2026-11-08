@@ -148,7 +148,7 @@ const simulate=require('./sim-harness.cjs');
  exec('let victim');
  for(const part of ['body','pilot','right','left']){
   exec(`createBattle(0);battle.cover.clear();victim=battle.units[3];victim.x=current().x+1;victim.z=current().z;victim.hp.${part}=1;`);
-  exec(part==='right'?"victim.melee=null":"victim.hp.right=0;victim.melee='blade'");
+  exec(part==='right'?'victim.hp.left=0':"victim.hp.right=0;victim.melee='blade'");
   const attackerHP=exec('current().hp.body');
   await exec(`engage(current(),victim,'${part}',unitWeapon(current()))`);
   assert.equal(exec('Boolean(victim.reacted)'),false,part+' destroyed before retaliation');

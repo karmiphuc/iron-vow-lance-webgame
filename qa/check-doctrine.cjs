@@ -88,10 +88,10 @@ function doctrine(i,path){
  assert.equal(e('pilot.alive'),false,'Failsafe can only consume the unused repair once');
 
  const sentinel=doctrine(2,1),g=sentinel.run;
- g("pilot.x=5;pilot.z=10;hostile.x=5;hostile.z=2;const ally=battle.units[0];ally.x=6;ally.z=10;const before=damage(hostile,ally)");
+ g("pilot.weapon='rifle';pilot.x=5;pilot.z=10;hostile.x=5;hostile.z=4;const ally=battle.units[0];ally.x=6;ally.z=10;const before=damage(hostile,ally)");
  assert.equal(g('reactionWeapon(pilot,hostile)'),null);
  g('braceUnit(pilot)');
- assert.equal(g("reactionWeapon(pilot,hostile).id"),'missile');
+ assert.equal(g("reactionWeapon(pilot,hostile).id"),'rifle');
  assert.equal(g('shieldProtection(ally)'),.2);
  assert.equal(g('damage(hostile,ally)'),Math.round(g('before')*.8));
  g('ally.x++;pilot.brace=false;hostile.z=9');

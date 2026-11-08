@@ -52,7 +52,15 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await nav('pilots');
  for(let i=0;i<3;i++){
   await tap('#train-pilot-'+i);
-  for(const id of paths[i].slice(0,3))await tap('[data-learn="'+id+'"]');
+  if(i===0){
+   assert.equal(await page.locator('[data-learn="sapper-liner"]').getAttribute('data-training-state'),'NEEDS LV 1 SKILL');
+   await tap('[data-learn="sapper-shaped"]');
+   assert.equal(await page.locator('[data-learn="sapper-fuse"]').getAttribute('data-training-state'),'TRAIN');
+   await tap('[data-learn="sapper-liner"]');
+   assert.equal(await page.locator('[data-learn="sapper-liner"]').getAttribute('data-training-state'),'LEARNED');
+   assert.equal(await page.locator('[data-learn="sapper-route"]').getAttribute('data-training-state'),'TRAIN');
+  }
+  for(const id of paths[i].slice(i===0?1:0,3))await tap('[data-learn="'+id+'"]');
   await tap('[data-training-stage="advanced"]');
   await fit();
   for(const id of paths[i].slice(3))await tap('[data-learn="'+id+'"]');
@@ -118,5 +126,20 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await tap('#skill');await support();
  assert.equal(await page.evaluate(()=>current().hp.legs),50);
  assert.equal(await page.locator('#skill').isDisabled(),true);
+ await page.evaluate(()=>{
+  const actor=current(),foe=battle.units[3];
+  foe.weapon='missile';foe.melee=null;delete foe.blackout;foe.reacted=false;
+  foe.x=foe.vx=actor.x;foe.z=foe.vz=actor.z-1;
+  lockedTarget=foe.id;renderBattle();
+ });
+ if(mobile)await tap('#target-toggle');
+ assert.match(await page.locator('.reaction-status').innerText(),/COUNTER READY \/ FREE HAND/);
+ const [damage,reacted]=await page.evaluate(async()=>{
+  Math.random=()=>0;
+  const actor=current(),foe=battle.units[3],before=actor.hp.body;
+  await engage(actor,foe,'body',unitWeapon(actor));
+  return [before-actor.hp.body,foe.reacted];
+ });
+ assert.ok(damage>=5&&damage<=10&&reacted);
  console.log('PASS campaign UI, touch tooltip, reserve reload, Workshop, Wiki, variable seats and new skills');
 };

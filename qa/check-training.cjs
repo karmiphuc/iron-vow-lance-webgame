@@ -92,7 +92,7 @@ function train(sim,i,ids){
  assert.equal(alternate.run('r.ap'),0,'Follow Through reduces real strike AP');
  alternate.run("selected=1;skill()");
  assert.ok(alternate.run("damage(current(),foe)>damage({...current(),training:{}},foe)"));
- alternate.run('foe.hp.body=foe.max.body;foe.x=a.x+1;foe.z=a.z;const before=a.ap;const counterDamage=partDamage(a,foe,"body",unitWeapon(a),true)');
+ alternate.run('a.weapon="rifle";foe.hp.body=foe.max.body;foe.x=a.x+1;foe.z=a.z;const before=a.ap;const counterDamage=partDamage(a,foe,"body",unitWeapon(a),true)');
  assert.ok(alternate.run("counterDamage>partDamage(a,foe,'body',unitWeapon(a))"));
  await alternate.run("engage(foe,a,'body',unitWeapon(foe))");
  assert.equal(alternate.run('a.ap'),alternate.run('before'),'trained reaction still costs no AP');

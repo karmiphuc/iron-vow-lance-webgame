@@ -12,8 +12,8 @@ The browser runner uses Playwright Chromium when installed, or a supported local
 | Area | Regression checks |
 | --- | --- |
 | Hit visuals | Localized flash, expiry and damage shading on travel sprites, native cinematics, baked fallback and live Foundry. Four battlefield facings, a real desktop attack-camera shot and a real mobile touch shot. |
-| Combat | AP, free and paid movement, range, limb damage, counters, facing, gait and weapons, reduced motion, audio cues and destruction. |
-| Company | Hiring and reserves, pilot training and Wiki, Workshop stats and storage, salvage, contract rewards, and saved random 1–3 mech offers. |
+| Combat | AP, free and paid movement, range, limb damage, missile counter lockout, free-hand counter damage and limits, facing, gait and weapons, reduced motion, audio cues and destruction. |
+| Company | Hiring and reserves, shared level-1 training prerequisites and the Pilot Wiki, Workshop stats and storage, salvage, contract rewards, and saved random 1–3 mech offers. |
 | Saves | Published v31 and v32 fixtures, current checkpoints, interrupted enemy phases, corrupt checkpoints and duplicate payout checks. |
 | Browser UI | Desktop and phone-size Chromium with touch input, layouts, controls, hold tooltips, default music and mute preference. |
 
