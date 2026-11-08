@@ -479,7 +479,7 @@ const WEAPONS={gun:[
      const eject=new T.Object3D();eject.position.set(-.2,.4,.5);g.add(eject);
      return {model:g,muzzle,eject};},
    profile:{burst:3,interval:.14,recoil:.6,spread:.35,tracer:0xffc46b,width:.09,shake:.1,cool:.35,sfx:'rifle'}},
-  {id:'hailstorm',name:'HAILSTORM RC-6',meta:'SPIN-UP · 18 RND',socketRot:[PI/2,0,0],
+  {id:'hailstorm',name:'HAILSTORM M-8',meta:'ROTARY GUN · SPIN-UP',socketRot:[PI/2,0,0],
    build(){const g=new T.Group();
      box(g,.58,.58,1.4,M.armor,0,.36,.25); box(g,.6,.1,1.0,M.accent,0,.67,.3);
      for(let i=0;i<4;i++) box(g,.62,.05,.06,M.joint,0,.5,-.2+i*.18);
@@ -495,7 +495,7 @@ const WEAPONS={gun:[
      const eject=new T.Object3D();eject.position.set(-.3,.3,.4);g.add(eject);
      return {model:g,muzzle,eject,barrels};},
    profile:{spinup:.55,burst:18,interval:.06,recoil:.22,spread:.6,tracer:0xffd27a,width:.07,shake:.05,cool:.45,sfx:'rotary'}},
-  {id:'longbow',name:'LONGBOW RG-2',meta:'CHARGE 0.9s · SLUG',socketRot:[PI/2,0,0],
+  {id:'longbow',name:'LONGBOW R-12',meta:'RAIL CANNON · CHARGED SLUG',socketRot:[PI/2,0,0],
    build(){const g=new T.Group();const gm=glowMat(0x58d8ff,.5);
      box(g,.42,.55,1.4,M.frame,0,.36,0); box(g,.52,.32,.7,M.armor,0,.76,-.2); box(g,.54,.08,.4,M.accent,0,.94,-.2);
      box(g,.2,.55,.25,M.joint,0,-.05,.05,.15);

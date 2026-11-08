@@ -30,10 +30,11 @@ module.exports=async function checkWardenRigBench({page,origin,tap}){
   assert.equal(state.melee.parent,'Bench_Hand_L');
   assert.ok(state.gun.gap<.001&&state.melee.gap<.001,JSON.stringify(state));
  }
- for(const id of ['kestrel','hailstorm','longbow']){
+ for(const [id,name] of [['kestrel','KESTREL AR-8'],['hailstorm','HAILSTORM M-8'],['longbow','LONGBOW R-12']]){
   await page.waitForFunction(()=>window.benchState().ready);
   const before=await snapshot();
   assert.equal(before.gun.id,id);
+  assert.equal(await page.locator('#gunName').textContent(),name);
   await tap('#btnFire');
   await page.waitForFunction(shots=>window.benchState().shots>shots,before.shots);
   const during=await snapshot();

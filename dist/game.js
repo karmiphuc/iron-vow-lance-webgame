@@ -1,23 +1,23 @@
 'use strict';
 const $=s=>document.querySelector(s), canvas=$('#scene'),ctx=canvas.getContext('2d');
-const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',damage:36,range:5,ap:3,weight:14,price:0,desc:'Reliable burst fire. Balanced range and accuracy.'},{id:'shotgun',name:'Breacher SG-4',type:'SCATTER CANNON',damage:60,range:3,ap:3,weight:18,price:1500,desc:'Devastating close-range impact. Close the distance.'},{id:'missile',name:'Vesper MRL',type:'MISSILE POD',damage:45,range:7,ap:4,weight:22,price:2400,desc:'Long-range guided ordnance. Ignores cover penalties.'},{id:'rail',name:'Longbow R-12',type:'RAIL CANNON',damage:70,range:8,ap:5,weight:26,price:3600,desc:'Precision anti-armor fire. Powerful, but demanding.'},
+const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',damage:36,range:5,ap:3,weight:14,price:0,desc:'Reliable burst fire. Balanced range and accuracy.'},{id:'shotgun',name:'Breacher SG-4',type:'SCATTER CANNON',damage:60,range:3,ap:3,weight:18,price:1500,desc:'Devastating close-range impact. Close the distance.'},{id:'missile',name:'Vesper MRL',type:'MISSILE POD',damage:45,range:7,ap:4,weight:22,price:2400,desc:'Guided ordnance ignores cover penalties. The launcher cannot counter.'},{id:'rail',name:'Longbow R-12',type:'RAIL CANNON',damage:70,range:8,ap:5,weight:26,price:3600,desc:'Precision anti-armor fire. Powerful, but demanding.'},
  {id:'hailstorm',name:'Hailstorm M-8',type:'ROTARY GUN',damage:49,range:5,ap:4,weight:21,price:2200,desc:'Spins up for sustained fire at medium range.'},
  {id:'rampart',name:'Rampart AC-40',type:'AUTOCANNON',damage:61,range:6,ap:5,weight:25,price:2900,desc:'A single heavy shell with a longer reach than the scatter cannon.'},
  {id:'breaker',name:'Breaker Maul',type:'IMPACT MAUL',damage:66,range:1,ap:4,weight:20,price:1600,melee:true,desc:'An overhead strike for heavy damage against adjacent targets.'},
  {id:'cleaver',name:'Arc Cleaver',type:'HEATED BLADE',damage:40,range:1,ap:2,weight:12,price:1200,melee:true,desc:'A quick sweep for repeated strikes against an adjacent target.'},
- {id:'piledriver',name:'Piledriver',type:'HYDRAULIC RAM',damage:59,range:1,ap:3,weight:18,price:2100,melee:true,desc:'A powered point-blank thrust that punches through armor.'},
+ {id:'piledriver',name:'Piledriver',type:'HYDRAULIC RAM',damage:59,range:1,ap:3,weight:18,price:2100,melee:true,pierce:.75,desc:'A powered point-blank thrust that ignores 75% of armor.'},
  {id:'blade',name:'Raijin HB-9',type:'HEAT BLADE',damage:64,range:1,ap:3,weight:16,price:2200,melee:true,desc:'A planted step and a committed lunge. Ignores cover against adjacent targets.'},
  {id:'sidewinder',name:'Sidewinder SM-2',type:'SUBMACHINE GUN',damage:25,range:4,ap:2,weight:10,price:900,motion:'rifle',falloff:{start:2,step:.05},desc:'A low-AP burst for close work. Accuracy falls by 5 percentage points per tile beyond 2.'},
- {id:'trident',name:'Trident BR-5',type:'BULLPUP CARBINE',damage:43,range:5,ap:3,weight:16,price:2000,motion:'rifle',desc:'A compact service carbine with a heavier burst at standard assault range.'},
+ {id:'trident',name:'Trident BR-5',type:'BULLPUP CARBINE',damage:43,range:5,ap:3,weight:16,price:2000,motion:'rifle',desc:'A premium service carbine. Hits harder than Kestrel at the same reach and AP.'},
  {id:'forge',name:'Forge SG-12',type:'SLUG CANNON',damage:61,range:2,ap:3,weight:21,price:2300,motion:'rampart',pierce:.55,desc:'A single close-range slug punches through 55% of the target’s armor.'},
- {id:'ember',name:'Ember PC-4',type:'PLASMA ACCELERATOR',damage:53,range:4,ap:3,weight:19,price:2800,motion:'rail',desc:'A short accelerator dumps a hot plasma charge at close and medium range.'},
- {id:'watchman',name:'Watchman DMR-8',type:'MARKSMAN RIFLE',damage:47,range:8,ap:4,weight:17,price:2600,motion:'rampart',aim:.08,desc:'A stabilised optic adds 8 percentage points of accuracy for distant subsystem shots.'},
- {id:'falcon',name:'Falcon AC-7',type:'FIELD AUTOCANNON',damage:57,range:7,ap:4,weight:23,price:3200,motion:'rampart',aim:-.08,desc:'Quick cycling for a gun with this reach. Heavy vibration costs 8 percentage points of accuracy.'},
- {id:'cerberus',name:'Cerberus RP-6',type:'ROCKET POD',damage:76,range:6,ap:5,weight:29,price:3900,motion:'missile',desc:'Unguided rockets hit hard. Cover affects aim and the launcher cannot counter.'},
+ {id:'ember',name:'Ember PC-4',type:'PLASMA ACCELERATOR',damage:53,range:4,ap:3,weight:19,price:2800,motion:'rail',desc:'A compact accelerator fires a focused plasma pulse at close and medium range.'},
+ {id:'watchman',name:'Watchman DMR-8',type:'MARKSMAN RIFLE',damage:47,range:8,ap:4,weight:17,price:2600,motion:'rampart',aim:.08,desc:'A stabilised optic adds 8 percentage points of accuracy. Lower impact per shot than Longbow.'},
+ {id:'falcon',name:'Falcon AC-7',type:'FIELD AUTOCANNON',damage:57,range:7,ap:4,weight:23,price:3200,motion:'rampart',aim:-.08,desc:'Fires for 1 AP less than Rampart. Heavy vibration costs 8 percentage points of accuracy.'},
+ {id:'cerberus',name:'Cerberus RP-6',type:'ROCKET POD',damage:76,range:6,ap:5,weight:29,price:3900,motion:'missile',desc:'An unguided two-rocket salvo. Cover reduces accuracy and the launcher cannot counter.'},
  {id:'obelisk',name:'Obelisk R-9',type:'SIEGE RAIL',damage:90,range:9,ap:6,weight:32,price:4800,motion:'rail',desc:'A long accelerator delivers the largest single shot at a steep AP cost.'},
- {id:'hatchet',name:'Cinder Hatchet',type:'BREACHING AXE',damage:47,range:1,ap:2,weight:13,price:1950,melee:true,motion:'cleaver',desc:'A compact wedge head lets the pilot swing twice without giving up the whole turn.'},
- {id:'pike',name:'Pilum Pike',type:'PILE BUNKER',damage:52,range:1,ap:3,weight:15,price:1750,melee:true,motion:'piledriver',pierce:.90,desc:'A forearm-mounted hydraulic spike punches through 90% of armor. Strike from an adjacent tile.'},
- {id:'tonfa',name:'Ward Tonfa',type:'GUARD BATON',damage:32,range:1,ap:2,weight:9,price:900,melee:true,motion:'cleaver',aim:.13,desc:'A controlled strike with 13 extra percentage points of accuracy. Best for hitting a specific part.'},
+ {id:'hatchet',name:'Cinder Hatchet',type:'BREACHING AXE',damage:47,range:1,ap:2,weight:13,price:1950,melee:true,motion:'cleaver',desc:'A premium breaching axe. Hits harder than Arc Cleaver at the same AP.'},
+ {id:'pike',name:'Pilum Pike',type:'PILE BUNKER',damage:52,range:1,ap:3,weight:15,price:1750,melee:true,motion:'piledriver',pierce:.90,desc:'A lower-cost alternative to Piledriver. Its lighter strike ignores 90% of armor.'},
+ {id:'tonfa',name:'Ward Tonfa',type:'IMPACT BATON',damage:32,range:1,ap:2,weight:9,price:900,melee:true,motion:'cleaver',aim:.13,desc:'A controlled strike with 13 extra percentage points of accuracy. Best for hitting a specific part.'},
  {id:'anchor-hammer',name:'Anchor Hammer',type:'SIEGE HAMMER',damage:86,range:1,ap:5,weight:27,price:2750,melee:true,motion:'breaker',desc:'A slow overhead blow with a heavy counterweight. Commit to a single decisive strike.'},
  {id:'morrow',name:'Morrow AC-2',type:'TWIN AUTOCANNON',damage:59,range:6,ap:4,builtIn:true,desc:'Two staggered shells from a sliding carriage. Designed to break a line at medium range.'},
  {id:'locust',name:'Locust MRL-24',type:'GUIDED MISSILE RACKS',damage:47,range:8,ap:4,builtIn:true,guided:true,desc:'Alternating launches from the two shoulder racks. Guided missiles ignore cover penalties.'},
@@ -202,7 +202,7 @@ FRAMES.push(
  {name:'GATECRASHER',model:'HV–09',role:'BREACH',color:'#a94e3c',hp:198,arm:112,leg:116,move:2,armor:8,
   native:'gatecrasher',weapon:'morrow',brief:'The twin cannon is standard. Fit an Arc Cleaver or a right-shoulder Vesper pod in the Workshop.'},
  {name:'CICADA',model:'ML–14',role:'FIRE SUPPORT',color:'#81885e',hp:148,arm:84,leg:95,move:3,armor:4,
-  native:'cicada',weapon:'locust',melee:'pulse-bash',brief:'The company’s longest reach. Keep the launch racks behind the line and fire across cover.'}
+  native:'cicada',weapon:'locust',melee:'pulse-bash',brief:'The integrated Locust racks fire guided missiles across cover. Keep the launcher behind the line.'}
 );
 // Foundry IDs are appended so older career assignments and backups retain their meaning.
 FRAMES.push(
@@ -813,7 +813,7 @@ function armoryCard(u,w,training){
  const equipped=u[armorySlot(w)]===w.id,owned=save.owned.includes(w.id)||equipped;
  const preview=w.id==='blade'?'foundry-raijin':arsenal.weapons?.[w.shoulder?'missile':w.id]?.left?.key;
  const blocked=!owned&&save.credits<w.price;
- const trait=w.shoulder||launchesMissiles(w)?'NO COUNTER':w.pierce||w.id==='piledriver'?'ARMOR PIERCE':w.aim?`${w.aim>0?'+':''}${Math.round(w.aim*100)} AIM`:w.falloff?'CLOSE BURST':'';
+ const trait=w.shoulder||launchesMissiles(w)?'CANNOT COUNTER':w.pierce?`${Math.round(w.pierce*100)}% ARMOR PIERCE`:w.aim?`${w.aim>0?'+':''}${Math.round(w.aim*100)} AIM`:w.falloff?'CLOSE BURST':'';
  return `<article class="armory-card${equipped?' active':''}" data-weapon-card="${w.id}" tabindex="-1">
    <div class="armory-card-head"><span class="eyebrow">${w.type}</span>${infoTip(w.name,w.desc)}</div>
    <h3>${w.name}</h3>
@@ -1748,7 +1748,7 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const charged=chargedLimbShot(a,w,part,reaction),breachPower=charged?training?.breachPower??.60:0;
  const power=w.damage*(1+.05*(a.level-1))*(a.boost?deadeyePower(training):1)*(1+weaponPower+limbPower+reactionPower+support+breachPower);
  const armor=t.hp.left===0?damagedArmor(t.armor):t.armor;
- const pierce=Math.max(w.pierce??(w.id==='piledriver'?.75:0),w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0,charged?training?.breachPierce??.50:0);
+ const pierce=Math.max(w.pierce??0,w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0,charged?training?.breachPierce??.50:0);
  const amount=Math.max(5,Math.round((power-armor*(1-pierce))*(t.brace?1-braceReduction(t.training):1)*(1-shieldProtection(t))));
  return w===FREE_HAND_COUNTER?Math.min(amount,10):amount;
 }
@@ -3492,7 +3492,11 @@ function drawUnitBody(u,t,close){
    drawWeaponModule(ctx,weaponMount(visual,frame,b,pose.strikeKind||u.melee,face,pose.strikeProgress));
   }
  }
- if(u.attack&&!pose.strikeKind&&weaponMotion(u.weapon)==='rail'&&!Number.isFinite(u.attack.fireAt)&&!reducedMotion){const muzzle=mechAttachmentPoint(u,'muzzle',t);ctx.save();ctx.globalAlpha=pose.aim*.8;ctx.fillStyle='#b1e7ed';ctx.shadowColor='#8ac8e5';ctx.shadowBlur=15;ctx.beginPath();ctx.arc(muzzle.x,muzzle.y,scale*(.025+pose.aim*.065),0,Math.PI*2);ctx.fill();ctx.restore()}
+ if(u.attack&&!pose.strikeKind&&weaponMotion(u.weapon)==='rail'&&!Number.isFinite(u.attack.fireAt)&&!reducedMotion){
+  const muzzle=mechAttachmentPoint(u,'muzzle',t),plasma=u.weapon==='ember';
+  ctx.save();ctx.globalAlpha=pose.aim*.8;ctx.fillStyle=plasma?'#ffdfb0':'#b1e7ed';ctx.shadowColor=plasma?'#f88547':'#8ac8e5';
+  ctx.shadowBlur=15;ctx.beginPath();ctx.arc(muzzle.x,muzzle.y,scale*(.025+pose.aim*.065),0,Math.PI*2);ctx.fill();ctx.restore();
+ }
  if(u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
  if(u.hp.body/u.max.body<.4||u.hp.right===0)drawMechSmoke(u,t);
  if(!close)drawUnitReadout(u);
@@ -3521,10 +3525,10 @@ function drawAttackEffect(e,t){
  if(profile.melee){
   if(!actor||age>profile.travel)return;
   const tip=mechAttachmentPoint(actor,'meleeTip',t),previous=mechAttachmentPoint(actor,'meleeTip',t-.06);
-  const strength=Math.sin(Math.PI*clamp01(age/profile.travel));
+  const strength=Math.sin(Math.PI*clamp01(age/profile.travel)),heated=kind==='cleaver'&&e.kind!=='hatchet'&&e.kind!=='tonfa';
   ctx.save();ctx.lineCap='round';ctx.globalAlpha=strength*.8;
-  ctx.shadowBlur=12;ctx.shadowColor=kind==='cleaver'?'#ff632b':'#ffc585';
-  ctx.strokeStyle=kind==='cleaver'?'#ffb27a':'#e8d8ba';ctx.lineWidth=kind==='breaker'?4:2;
+  ctx.shadowBlur=12;ctx.shadowColor=heated?'#ff632b':'#ffc585';
+  ctx.strokeStyle=heated?'#ffb27a':'#e8d8ba';ctx.lineWidth=kind==='breaker'?4:2;
   ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(tip.x,tip.y);ctx.stroke();ctx.restore();
   return;
  }

@@ -28,10 +28,14 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
    await image.evaluate(async img=>{await img.decode()});
    const id=await item.getAttribute('data-weapon-card');
    seen.push(id);
-   assert.deepEqual(await item.locator('dd').allTextContents(),await page.evaluate(id=>{
+   const expected=await page.evaluate(id=>{
     const w=weapon(id),training=trainingEffects(selected);
-    return [String(w.damage),weaponRange(w,training)+(w.melee?' tile':' tiles'),String(weaponAP(w,training))];
-   },id));
+    return {stats:[String(w.damage),weaponRange(w,training)+(w.melee?' tile':' tiles'),String(weaponAP(w,training))],
+     pierce:w.pierce,cannotCounter:launchesMissiles(w)};
+   },id);
+   assert.deepEqual(await item.locator('dd').allTextContents(),expected.stats);
+   if(expected.pierce)assert.equal(await item.locator('.armory-trait').textContent(),Math.round(expected.pierce*100)+'% ARMOR PIERCE');
+   if(expected.cannotCounter)assert.equal(await item.locator('.armory-trait').textContent(),'CANNOT COUNTER');
   }
   assert.ok(await page.locator('#ui .page').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
  }

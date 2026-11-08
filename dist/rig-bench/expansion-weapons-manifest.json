@@ -8,52 +8,52 @@
   ],
   "weapons": {
     "sidewinder": {
-      "triangles": 2532,
-      "meshes": 5
+      "triangles": 3060,
+      "meshes": 7
     },
     "trident": {
-      "triangles": 2428,
-      "meshes": 4
-    },
-    "forge": {
-      "triangles": 2548,
-      "meshes": 9
-    },
-    "ember": {
-      "triangles": 4004,
-      "meshes": 8
-    },
-    "watchman": {
-      "triangles": 3068,
-      "meshes": 5
-    },
-    "falcon": {
-      "triangles": 2672,
-      "meshes": 8
-    },
-    "cerberus": {
-      "triangles": 5208,
-      "meshes": 8
-    },
-    "obelisk": {
-      "triangles": 2668,
+      "triangles": 2932,
       "meshes": 6
     },
+    "forge": {
+      "triangles": 3004,
+      "meshes": 10
+    },
+    "ember": {
+      "triangles": 4460,
+      "meshes": 9
+    },
+    "watchman": {
+      "triangles": 3596,
+      "meshes": 7
+    },
+    "falcon": {
+      "triangles": 3128,
+      "meshes": 9
+    },
+    "cerberus": {
+      "triangles": 5536,
+      "meshes": 10
+    },
+    "obelisk": {
+      "triangles": 3124,
+      "meshes": 7
+    },
     "hatchet": {
-      "triangles": 1952,
-      "meshes": 5
+      "triangles": 2432,
+      "meshes": 6
     },
     "pike": {
-      "triangles": 2428,
-      "meshes": 8
+      "triangles": 2884,
+      "meshes": 9
     },
     "tonfa": {
-      "triangles": 2036,
-      "meshes": 7
+      "triangles": 2156,
+      "meshes": 9
     },
     "anchor-hammer": {
-      "triangles": 1940,
-      "meshes": 7
+      "triangles": 2396,
+      "meshes": 8
     }
   },
   "mechanics": {

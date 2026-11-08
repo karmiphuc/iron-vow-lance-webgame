@@ -51,18 +51,20 @@ def material(name, rgb, metal=.65, rough=.4, emission=0):
 
 
 M = {
-    'frame': material('graphite', (.065, .082, .087)),
-    'plate': material('ceramic', (.47, .455, .38), .28, .57),
-    'olive': material('olive', (.25, .30, .23), .4, .5),
-    'steel': material('steel', (.35, .40, .42), .87, .3),
-    'edge': material('edge', (.65, .70, .69), .9, .26),
-    'black': material('rubber', (.022, .028, .03), .1, .72),
-    'amber': material('ochre', (.70, .29, .055), .45, .48),
+    'frame': material('graphite', (.055, .072, .075), .75, .44),
+    'plate': material('ceramic', (.47, .435, .36), .28, .60),
+    'olive': material('olive', (.26, .30, .17), .65, .42),
+    'steel': material('steel', (.40, .45, .47), .85, .31),
+    'edge': material('edge', (.68, .72, .70), .9, .25),
+    'black': material('rubber', (.025, .03, .028), .1, .77),
+    'amber': material('ochre', (.48, .23, .07), .45, .5),
     'cyan': material('ion', (.07, .66, .81), .5, .25, .9),
     'heat': material('heat', (1, .24, .045), .4, .3, .8),
-    'oxide': material('red_oxide', (.32,.105,.065), .38,.55),
-    'navy': material('blue_slate', (.12,.19,.23), .5,.48),
-    'sand': material('sand_casting', (.40,.33,.22), .28,.56),
+    'oxide': material('red_oxide', (.18,.12,.09), .60,.45),
+    'navy': material('blue_slate', (.095,.125,.135), .65,.44),
+    'sand': material('sand_casting', (.28,.29,.225), .60,.45),
+    'warmsteel': material('warmsteel', (.28,.29,.275), .85,.33),
+    'mark': material('identification', (.67,.65,.56), .22,.56),
 }
 roots, markers, mechanics = {}, {}, {}
 
@@ -188,10 +190,35 @@ def shell(g,poly,width,mat='olive',inset=True):
             j=(i+1)%n
             faces.extend([(i,j,n+j,n+i),(2*n+i,3*n+i,3*n+j,2*n+j),
                           (n+i,n+j,3*n+j,3*n+i),(i,2*n+i,2*n+j,j)])
-        mesh(g,'recessed_casting_rim',vs,faces,mat)
+        mesh(g,'recessed_casting_rim',vs,faces,'frame')
         panel(g,'recess_gasket',inner,.012,sign*(width+.006),'black',.003)
         inner=[(cy+(y-cy)*.70,cz+(z-cz)*.76) for y,z in poly]
         panel(g,'inset_armour',inner,.014,sign*(width+.010),mat,.004)
+        # Short machined lands on the cast rim, rather than a uniform bright outline.
+        for i in range(0,n,2):
+            a,b=poly[i],poly[(i+1)%n]
+            ay,az=cy+(a[0]-cy)*.90,cz+(a[1]-cz)*.92
+            by,bz=cy+(b[0]-cy)*.90,cz+(b[1]-cz)*.92
+            dy,dz=by-ay,bz-az
+            length=math.hypot(dy,dz)
+            if length<.12:continue
+            ny,nz=-dz/length*.009,dy/length*.009
+            end=min(.46,.18/length)
+            cut=[(ay+dy*t+ny*s,az+dz*t+nz*s) for t,s in [(.12,-1),(.12,1),(.12+end,1),(.12+end,-1)]]
+            panel(g,'machined_rim_land',cut,.002,sign*(width+.034),'warmsteel',0)
+        # Flush hex plugs sit on the inset, below the protective perimeter.
+        for i in [0,n//2]:
+            y,z=inner[i];y=cy+(y-cy)*.74;z=cz+(z-cz)*.74
+            ring(g,'service_plug_recess',.034,.020,.003,(sign*(width+.019),y,z),'black','x',6)
+            ring(g,'service_hex_plug',.020,.008,.004,(sign*(width+.020),y,z),'warmsteel','x',6)
+
+
+def service_marks(g,width,y,z,count=3):
+    for sign in [-1,1]:
+        for k in range(count):
+            zz=z+k*.065
+            panel(g,'inspection_mark',[(y-.04,zz),(y+.04,zz+.027),
+                  (y+.04,zz+.049),(y-.04,zz+.022)],.002,sign*width,'mark',0)
 
 
 def forged_edge(g,profile):
@@ -256,6 +283,7 @@ ring(g,'bored_brake',.22,.12,.33,(0,.49,1.86),'frame',n=8)
 ring(g,'bore_lip',.22,.12,.025,(0,.49,2.02),'steel',n=8)
 panel(g,'folded_stock',[(.34,-.49),(.59,-.48),(.67,-.90),(.54,-1.10),(.24,-1.06),(.24,-.94),(.43,-.89)],.33,mat='olive')
 fasteners(g,.36,[(.53,-.25),(.46,.58)])
+service_marks(g,.337,.57,.05,3)
 
 # TRIDENT: bullpup monocoque, rear ammunition shoe, open cast sight arch.
 g=weapon('trident',muzzle=(0,.48,2.59));saddle(g,'sand',.29)
@@ -271,6 +299,7 @@ vents(g,.31,.49,1.16,.59,4)
 ring(g,'bored_carbine',.115,.071,1.15,(0,.48,2.0),'steel')
 ring(g,'brake',.19,.075,.18,(0,.48,2.50),'frame',n=8)
 fasteners(g,.40,[(.53,-.69),(.44,-.03)])
+service_marks(g,.372,.65,-.42,2)
 
 # FORGE: ribbed siege bore, low return cylinder and wedge breech.
 g=weapon('forge',muzzle=(0,.53,2.25));saddle(g,'oxide',.33)
@@ -326,6 +355,7 @@ for z in [1.04,1.42,1.79]:ring(g,'barrel_tensioner',.18,.108,.12,(0,.49,z),'oliv
 for side in [-1,1]:panel(g,'floating_handguard',[(.31,.81),(.42,.94),(.35,2.10),(.23,1.94)],.055,side*.17,'frame')
 ring(g,'precision_brake',.19,.065,.42,(0,.49,3.72),'frame',n=8)
 vents(g,.195,.51,3.59,.25,3);fasteners(g,.33,[(.47,-.18),(.42,.54)])
+service_marks(g,.307,.56,.17,3)
 
 # FALCON: offset feed drum and triangulated barrel jacket around recoil sled.
 g=weapon('falcon',muzzle=(0,.56,3.1225));saddle(g,'sand',.32)
@@ -359,9 +389,14 @@ for side in [-1,1]:
     panel(g,'pod_inset',[(.46,.05),(.87,.05),(.98,.25),(.96,1.49),(.81,1.80),(.46,1.80)],.025,side*.59,'olive')
     vents(g,.615,.71,.35,.85,5)
 box(g,'top_armour',(1.04,.13,1.48),(0,1.10,.83),'sand',.045)
+box(g,'reload_access_gasket',(.62,.006,.72),(0,1.166,.82),'black',.002)
+box(g,'reload_access_plate',(.56,.008,.66),(0,1.171,.82),'warmsteel',.002)
+for x in [-.23,.23]:
+    for z in [.55,1.09]:ring(g,'access_screw',.024,.009,.004,(x,1.177,z),'steel','y',6)
 for z in [.18,1.47]:box(g,'tie_band',(1.22,.055,.14),(0,1.16,z),'frame')
 for x in [-.50,.50]:box(g,'forward_bumper',(.13,.77,.13),(x,.67,2.20),'frame')
 hazard(g,.59,.48,1.49,3);fasteners(g,.62,[(.90,.13),(.49,1.63)])
+service_marks(g,.605,.88,1.10,2)
 
 # OBELISK: wedge capacitors feeding tapered, open-channel accelerator tines.
 g=weapon('obelisk',muzzle=(0,.56,3.84));saddle(g,'navy',.31)
@@ -414,6 +449,10 @@ ring(g,'impact_collar',.28,.17,.18,(0,.30,2.41),'frame',n=8)
 cyl(g,'solid_strike_face',.23,.13,(0,.30,2.555),'edge')
 for side in [-1,1]:box(g,'contact_rail',(.07,.09,1.03),(side*.15,.51,1.64),'amber')
 fasteners(g,.34,[(.38,-.13),(.37,.42)])
+service_marks(g,.313,.42,.04,2)
+for side in [-1,1]:
+    for z,length in [(.91,.17),(1.20,.11),(1.86,.15)]:
+        box(g,'baton_machined_land',(.002,.017,length),(side*.192,.30,z),'warmsteel',0)
 
 # ANCHOR HAMMER: asymmetric solid maul, short shaft and forward shock shoe.
 g=weapon('anchor-hammer',tip=(0,.30,2.5875));saddle(g,'sand',.28)

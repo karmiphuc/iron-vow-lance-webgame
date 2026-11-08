@@ -9,6 +9,13 @@ const createSimulation=require('./sim-harness.cjs');
   melee:['hatchet','pike','tonfa','anchor-hammer']
  };
  assert.equal(run('WEAPONS.filter(w=>w.motion).length'),12);
+ const legacy=[
+  ['rifle',36,5,3,0],['shotgun',60,3,3,1500],['missile',45,7,4,2400],
+  ['rail',70,8,5,3600],['hailstorm',49,5,4,2200],['rampart',61,6,5,2900],
+  ['breaker',66,1,4,1600],['cleaver',40,1,2,1200],['piledriver',59,1,3,2100],['blade',64,1,3,2200]
+ ];
+ const signature=run("JSON.stringify(WEAPONS.filter(w=>!w.motion&&!w.builtIn&&!w.shoulder).map(w=>[w.id,w.damage,w.range,w.ap,w.price]))");
+ assert.deepEqual(JSON.parse(signature),legacy,'the new armory preserves all ten original weapon stat lines');
  run('createBattle(0,false,false,[0]);const attacker=current(),foe=battle.units.find(u=>u.team==="enemy"&&!u.kind);foe.hp.body=foe.max.body=1000');
  for(const [group,ids] of Object.entries(groups))for(const id of ids){
   assert.equal(run(`armoryClass(weapon('${id}'))`),group,id);
@@ -46,7 +53,7 @@ const createSimulation=require('./sim-harness.cjs');
   const near=hitChance(attacker,foe,'left',weapon('sidewinder'));
   foe.x=attacker.x+4;
   const far=hitChance(attacker,foe,'left',weapon('sidewinder'));
-  return damage(attacker,foe,weapon('forge'))===52&&damage(attacker,foe,weapon('pike'))===50
+  return damage(attacker,foe,weapon('forge'))===52&&damage(attacker,foe,weapon('pike'))===50&&damage(attacker,foe,weapon('piledriver'))===54
    &&Math.abs(near-far-.10)<1e-9
    &&weaponRange(weapon('trident'),{range:1})===6&&armoryClass(weapon('trident'))==='assault';
  })()`),'piercing and trained range apply independently of classification');
