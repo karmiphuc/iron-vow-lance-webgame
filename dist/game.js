@@ -437,34 +437,126 @@ function assignPilot(i,kind){
  delete save.reservePilots[id];persist();return true;
 }
 const CAREER_STORAGE='iron-vow-career';
-let save,storedCareer=null,careerStale=false;
-try{storedCareer=localStorage.getItem(CAREER_STORAGE);save=loadCareer(JSON.parse(storedCareer))??fresh()}catch{save=fresh()}
-save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
+const PENDING_CAREER_STORAGE=CAREER_STORAGE+'-pending';
+let save,storedCareer=null,careerStale=false,careerDB=null,databaseCareer;
+let pendingCareerWrite=Promise.resolve();
+const queuedCareerWrites=[];
+try{storedCareer=localStorage.getItem(CAREER_STORAGE)}catch{}
+function loadStoredCareer(raw){
+ try{save=loadCareer(JSON.parse(raw))??fresh()}catch{save=fresh()}
+ save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
+}
+loadStoredCareer(storedCareer);
 const entryPage={'?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'ship';
 let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'base';
 let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
 let page=entryPage,selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=false,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
 try{muted=localStorage.getItem('iron-vow-sound')==='off'}catch{}
-function careerIsCurrent(){
- if(careerStale)return false;
- if(localStorage.getItem(CAREER_STORAGE)===storedCareer)return true;
+function pauseCareer(title,body){
+ if(careerStale)return;
  closeHelp();
- modal('CAREER UPDATED','<p>Another tab saved progress. Reload this tab to continue from the latest checkpoint.</p>',[
+ modal(title,body,[
   {text:'RELOAD CAREER',fn:()=>window.location.reload()}
  ]);
  careerStale=true;
  for(const selector of ['header','#ui','#scene','#skip-shot'])$(selector).inert=true;
+}
+function pauseStaleCareer(){
+ pauseCareer('CAREER UPDATED','<p>Another tab saved progress. Reload this tab to continue from the latest checkpoint.</p>');
+}
+function careerIsCurrent(){
+ if(careerStale)return false;
+ if(localStorage.getItem(CAREER_STORAGE)===storedCareer)return true;
+ pauseStaleCareer();
  return false;
 }
-function persist(enemyPending=false){
+function openCareerDB(){
+ return new Promise((resolve,reject)=>{
+  const request=window.indexedDB.open(CAREER_STORAGE,1);
+  request.onupgradeneeded=()=>request.result.createObjectStore('career');
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error);
+ });
+}
+function readCareerDB(db){
+ return new Promise((resolve,reject)=>{
+  const request=db.transaction('career').objectStore('career').get(CAREER_STORAGE);
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error);
+ });
+}
+function writeCareerDB(snapshot){
+ if(careerStale)return;
+ return new Promise((resolve,reject)=>{
+  const transaction=careerDB.transaction('career','readwrite');
+  const store=transaction.objectStore('career'),check=store.get(CAREER_STORAGE);
+  let applied=false;
+  const accept=()=>{
+   applied=true;
+   // Keep the legacy localStorage copy current and notify other tabs.
+   try{localStorage.setItem(CAREER_STORAGE,snapshot)}catch{}
+  };
+  // Compare the saved checkpoint inside the same transaction as the write.
+  check.onsuccess=()=>{
+   if(check.result===snapshot){accept();return}
+   if(check.result!==databaseCareer||databaseCareer===undefined&&!careerIsCurrent())return;
+   store.put(snapshot,CAREER_STORAGE).onsuccess=accept;
+  };
+  transaction.oncomplete=()=>{
+   if(applied)databaseCareer=storedCareer=snapshot;
+   else pauseStaleCareer();
+   resolve();
+  };
+  transaction.onabort=()=>reject(transaction.error);
+ });
+}
+function stashCareerWrites(){
  try{
-  if(!careerIsCurrent())return;
+  const storage=window.sessionStorage;
+  if(!queuedCareerWrites.length){storage.removeItem(PENDING_CAREER_STORAGE);return}
+  storage.setItem(PENDING_CAREER_STORAGE,JSON.stringify({
+   base:databaseCareer??null,legacy:storedCareer,snapshots:queuedCareerWrites
+  }));
+ }catch{}
+}
+function queueCareerWrite(snapshot){
+ queuedCareerWrites.push(snapshot);
+ stashCareerWrites();
+ pendingCareerWrite=pendingCareerWrite.then(()=>writeCareerDB(snapshot)).catch(()=>{
+  toast('Storage unavailable. Keep this tab open to retain your career.');
+ }).finally(()=>{
+  queuedCareerWrites.shift();
+  stashCareerWrites();
+ });
+ return pendingCareerWrite;
+}
+async function restorePendingCareer(){
+ let raw;
+ try{
+  const saved=JSON.parse(window.sessionStorage.getItem(PENDING_CAREER_STORAGE));
+  const snapshots=saved?.snapshots;
+  if(Array.isArray(snapshots)&&snapshots.every(snapshot=>typeof snapshot==='string')){
+   const prior=databaseCareer??storedCareer;
+   const expected=databaseCareer===undefined?saved.legacy:saved.base;
+   if(prior===expected||snapshots.includes(prior))raw=snapshots.at(-1);
+   if(raw!==undefined&&!loadCareer(JSON.parse(raw)))raw=undefined;
+  }
+ }catch{raw=undefined}
+ if(raw===undefined||raw===databaseCareer){stashCareerWrites();return}
+ await queueCareerWrite(raw);
+ if(!careerStale&&databaseCareer===raw)loadStoredCareer(raw);
+}
+function persist(enemyPending=false){
+ const warn=()=>toast('Storage unavailable. Keep this tab open to retain your career.');
+ try{
+  if(careerStale||!careerDB&&!careerIsCurrent())return;
   if(battle&&battle.phase==='player'&&!battle.busy)save.sortie=captureSortie(enemyPending);
   else if(!battle)delete save.sortie;
   const snapshot=JSON.stringify(save);
+  if(careerDB)return queueCareerWrite(snapshot);
   localStorage.setItem(CAREER_STORAGE,snapshot);
   storedCareer=snapshot;
- }catch{toast('Storage unavailable. Keep this tab open to retain your career.')}
+ }catch{warn()}
 }
 function captureSortie(enemyPending=false){
  return{version:battle.aux||battle.launchAP?8:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action,part:targetPart,enemyPending,
@@ -1818,8 +1910,11 @@ async function engage(attacker,defender,part,w){
 }
 function checkEnd(){if(!battle)return true;if(!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
 async function endTurn(){
- if(!battle||battle.busy)return;
- persist(true);targetPanelOpen=false;battle.busy=true;battle.phase='enemy';battle.hostileCameraUsed=false;
+ if(!battle||battle.busy||careerStale)return;
+ const saving=persist(true);
+ targetPanelOpen=false;battle.busy=true;battle.phase='enemy';battle.hostileCameraUsed=false;
+ await saving;
+ if(careerStale)return;
  const enemies=battle.units.filter(u=>u.team==='enemy'&&u.alive);
  enemies.forEach(u=>{u.ap=ROUND_AP-(u.blackout?.ap??0);u.brace=false;resetMovement(u)});renderBattle();
  for(const enemy of enemies){
@@ -3639,10 +3734,31 @@ window.addEventListener('resize',closeHelp);
 window.addEventListener('blur',closeHelp);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&helpAnchor){e.preventDefault();e.stopImmediatePropagation();closeHelp()}},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){closeHelp();skipAttackCamera()}syncMusic()});
-window.addEventListener('storage',event=>{
- if(event.storageArea===localStorage&&(event.key===CAREER_STORAGE||event.key===null))careerIsCurrent();
-});
-window.addEventListener('pageshow',event=>{
- if(event.persisted)try{careerIsCurrent()}catch{}
-});
-const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';render();startAudio(false);requestAnimationFrame(draw);if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn();}
+function checkExternalCareer(){
+ if(careerStale)return;
+ if(!careerDB){try{careerIsCurrent()}catch{}return}
+ const pending=pendingCareerWrite;
+ void pending.then(async()=>{
+  const latest=await readCareerDB(careerDB);
+  if(pending!==pendingCareerWrite)return;
+  if(latest!==databaseCareer)pauseStaleCareer();
+  else if(databaseCareer===undefined)careerIsCurrent();
+ }).catch(()=>{});
+}
+function startGame(){
+ if(careerStale)return;
+ const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';render();startAudio(false);requestAnimationFrame(draw);
+ if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn()}
+ window.addEventListener('storage',event=>{
+  if(event.storageArea===localStorage&&(event.key===CAREER_STORAGE||event.key===null))checkExternalCareer();
+ });
+ window.addEventListener('pageshow',event=>{if(event.persisted)checkExternalCareer()});
+}
+if(window.indexedDB){
+ void openCareerDB().then(async db=>{
+  databaseCareer=await readCareerDB(db);
+  careerDB=db;
+  if(databaseCareer!==undefined)loadStoredCareer(databaseCareer);
+  await restorePendingCareer();
+ }).then(startGame,()=>pauseCareer('CAREER STORAGE UNAVAILABLE','<p>The saved career could not be opened. Reload to retry before continuing.</p>'));
+}else startGame();

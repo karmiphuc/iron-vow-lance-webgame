@@ -61,7 +61,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  if(mobile)await tap('[data-unit="3"]');
  else await page.keyboard.press('4');
  assert.equal(await page.evaluate(()=>selected),3);
- const snapshot=await page.evaluate(()=>JSON.parse(localStorage.getItem('iron-vow-career')).sortie);
+ const snapshot=await page.evaluate(async()=>{await pendingCareerWrite;return JSON.parse(localStorage.getItem('iron-vow-career')).sortie});
  assert.equal(snapshot.version,8);
  assert.equal(snapshot.units[3].ap,9);
  await page.reload({waitUntil:'domcontentloaded'});
