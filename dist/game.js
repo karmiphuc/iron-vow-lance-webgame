@@ -16,7 +16,7 @@ const PILOTS=[{name:'Mara Voss',call:'ROOK',skill:'Overdrive',desc:'+2 AP this t
 const CONTRACTS=[{name:'Ashes of the relay',place:'KARST BASIN · SECTOR 07',tag:'RECOVERY OPERATION',pay:3200,difficulty:1,desc:'A rival lance occupies a decommissioned relay station. Clear the site and recover its navigation core.',enemies:3,color:'#707e60'},{name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect reinforced enemy chassis.',enemies:4,color:'#a07856'},{name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'A veteran company has claimed the frontier. Break their command lance and make your name.',enemies:5,color:'#658b92'}];
 const FIELD_PATCH=50;
 const VEHICLES={
- tank:{name:'JAVELIN TANK',hp:64,armor:5,move:4,step:.18,xp:20,altitude:0,muzzle:[.20081,.69177],center:[.51,.647],gun:{id:'rampart',name:'85 mm cannon',damage:27,range:5,ap:4}},
+ tank:{name:'JAVELIN TANK',hp:64,armor:5,move:4,step:.18,xp:20,altitude:0,muzzle:[.11105,.76273],center:[.52,.674],gun:{id:'rampart',name:'85 mm cannon',damage:27,range:5,ap:4}},
  helicopter:{name:'KITE GUNSHIP',hp:43,armor:1,move:6,step:.15,xp:25,altitude:.82,muzzle:[.28168,.75768],center:[.45,.584],gun:{id:'rifle',name:'Chin autocannon',damage:19,range:5,ap:4}}
 };
 const DEPLOYMENTS=[
@@ -909,7 +909,7 @@ function drawVehicle(u,t,close=false){
  const p=project(u.vx,0,u.vz),altitude=spec.altitude;
  ctx.save();
  ctx.fillStyle=u.alive?(altitude?'#06101670':'#050c12a0'):'#0a1117a8';
- ctx.beginPath();ctx.ellipse(p.x,p.y,scale*(altitude?.7:.56),scale*.25,0,0,Math.PI*2);ctx.fill();
+ ctx.beginPath();ctx.ellipse(p.x,p.y,scale*(altitude?.78:.66),scale*(altitude?.24:.23),0,0,Math.PI*2);ctx.fill();
  if(imageReady(image)){
   if(!u.alive)ctx.filter='brightness(.43) saturate(.36)';
   ctx.drawImage(image,bounds.x,bounds.y,bounds.w,bounds.h);

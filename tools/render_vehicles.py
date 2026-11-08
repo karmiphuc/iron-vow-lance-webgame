@@ -12,7 +12,9 @@ bpy.ops.wm.read_factory_settings(use_empty=True);scene=bpy.context.scene
 
 def material(name,color,metal=.5,rough=.62):
  m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True;p=m.node_tree.nodes['Principled BSDF'];p.inputs['Base Color'].default_value=(*color,1);p.inputs['Metallic'].default_value=metal;p.inputs['Roughness'].default_value=rough;return m
-armor=material('Oxide red field armor',(.29,.063,.053),.48,.64);steel=material('Machined edges',(.34,.41,.40),.8,.4);dark=material('Rubber and recess',(.025,.035,.035),.1);red=material('Hostile vermilion markings',(.78,.11,.053),.35);glass=material('Smoked blue canopy',(.025,.12,.17),.7,.2);warm=material('Optic lens',(.95,.45,.10),.4,.24)
+armor=material('Deep crimson ceramic armor',(.105,.008,.016),.25,.50);steel=material('Blackened machined metal',(.068,.082,.09),.65,.43);dark=material('Graphite secondary armor',(.009,.013,.018),.25,.55);red=material('Crimson identification panels',(.26,.012,.025),.25,.49);glass=material('Near-black armored canopy',(.004,.012,.018),.12,.34);warm=material('Amber optic lens',(.75,.20,.018),.4,.24)
+glass.node_tree.nodes['Principled BSDF'].inputs['Specular IOR Level'].default_value=.18
+
 
 def finish(o,m,bevel=.01):
  o.data.materials.append(m)
@@ -88,7 +90,17 @@ def tank():
   box('Engine cooling well',(x,.54,.39),(.18,.23,.028),dark,.006)
   for y in [.46,.50,.54,.58,.62]:box('Engine vent louver',(x,y,.41),(.18,.012,.009),steel,.001)
  rod('Low radio mast',(-.23,.35,.65),(-.24,.37,.92),.005,dark)
- return [(0,-1.354,.565)]
+ # Bake deliberate low, long proportions into all meshes, including fitted details.
+ bpy.context.view_layer.update()
+ for o in [o for o in bpy.data.objects if o.type=='MESH']:
+  cannon=any(token in o.name for token in ['Smooth bore cannon','Thermal sleeve','Fume extractor','Muzzle reinforced','Dark cannon'])
+  sy=1.30 if cannon else 1.20
+  world=o.matrix_world.copy();inv=world.inverted()
+  for v in o.data.vertices:
+   w=world@v.co;w.y*=sy;w.z*=.80;v.co=inv@w
+  if any(token in o.name for token in ['Full length side skirt','Composite skirt cassette','Cannon armored mantlet','Turret bustle','Engine cooling','Sloped composite cheek']):
+   o.data.materials.clear();o.data.materials.append(dark)
+ return [(0,-1.354*1.30,.565*.80)]
 
 def helicopter():
  # Narrow angular fuselage and two distinct stepped crew canopy volumes.
@@ -151,6 +163,17 @@ def helicopter():
   for sign in [-1,1]:
    x=sign*.94*math.cos(angle);y=.11+sign*.94*math.sin(angle)
    o=box('Rotor tip marking',(x,y,.962),(.12,.064,.016),red,.001);o.rotation_euler[2]=angle
+ # Extend the entire tail assembly coherently from its root, preserving attachments.
+ bpy.context.view_layer.update()
+ for o in [o for o in bpy.data.objects if o.type=='MESH']:
+  if any(token in o.name for token in ['tail','Tail']):
+   # World-space vertex transform also handles rotated rotor and wheel geometry.
+   world=o.matrix_world.copy();inv=world.inverted()
+   for v in o.data.vertices:
+    w=world@v.co;w.y=.30+(w.y-.30)*1.30;v.co=inv@w
+  if any(token in o.name for token in ['Swept weapon','Rocket pod','Canopy armored','Canopy side','Canopy longitudinal','Rotor transmission','Armored gunship fuselage']):
+   o.data.materials.clear();o.data.materials.append(dark)
+ # Red cheeks and the canopy surround keep the gunship's faction legible against black armor.
  return [(0,-.988,.205),(-.405,-.223,.32),(.405,-.223,.32)]
 
 world=bpy.data.worlds.new('Ambient');scene.world=world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.35,.43,.52,1);world.node_tree.nodes['Background'].inputs[1].default_value=.6
