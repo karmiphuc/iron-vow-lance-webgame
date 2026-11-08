@@ -153,18 +153,64 @@ function waitAttack(ms,sequence){
   sequence.resume=done;timer=setTimeout(done,ms);
  });
 }
+let soundBus=null;
 function sound(type){
- if(muted)return;try{
-  audio??=new(window.AudioContext||window.webkitAudioContext)();audio.resume();
-  const now=audio.currentTime;
-  if(!noiseBuffer){noiseBuffer=audio.createBuffer(1,audio.sampleRate*.8,audio.sampleRate);const d=noiseBuffer.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
-  const boom=['boom','breaker','piledriver','rampart'].includes(type),step=type==='step',click=type==='click',rail=type==='rail',missile=type==='missile';
-  const duration=boom?.55:step?.13:click?.04:rail?.35:missile?.4:.2;
-  const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();source.buffer=noiseBuffer;filter.type='lowpass';filter.frequency.setValueAtTime(boom?600:step?350:rail?3400:missile?1400:2200,now);filter.frequency.exponentialRampToValueAtTime(90,now+duration);gain.gain.setValueAtTime(click?.025:boom?.19:step?.075:.12,now);gain.gain.exponentialRampToValueAtTime(.001,now+duration);source.connect(filter);filter.connect(gain);gain.connect(audio.destination);source.start(now);source.stop(now+duration);
-  if(boom||step||!click){const o=audio.createOscillator(),g=audio.createGain();o.type=rail?'sawtooth':'sine';o.frequency.setValueAtTime(boom?70:step?85:rail?260:100,now);o.frequency.exponentialRampToValueAtTime(boom?25:rail?80:40,now+duration);g.gain.setValueAtTime(boom?.17:step?.045:.075,now);g.gain.exponentialRampToValueAtTime(.001,now+duration);o.connect(g);g.connect(audio.destination);o.start(now);o.stop(now+duration)}
+ if(muted)return;
+ try{
+  audio??=new(window.AudioContext||window.webkitAudioContext)();
+  if(audio.state==='suspended')audio.resume().catch(()=>{});
+  if(!soundBus){
+   soundBus=audio.createGain();soundBus.gain.value=.62;
+   const compressor=audio.createDynamicsCompressor();
+   compressor.threshold.value=-15;compressor.knee.value=12;compressor.ratio.value=6;
+   soundBus.connect(compressor);compressor.connect(audio.destination);
+  }
+  if(!noiseBuffer){
+   noiseBuffer=audio.createBuffer(1,Math.ceil(audio.sampleRate*1.2),audio.sampleRate);
+   const samples=noiseBuffer.getChannelData(0);
+   for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
+  }
+  const now=audio.currentTime+.005;
+  const tone=(at,duration,from,to,volume,wave='sine')=>{
+   const oscillator=audio.createOscillator(),gain=audio.createGain();
+   oscillator.type=wave;oscillator.frequency.setValueAtTime(from,at);
+   oscillator.frequency.exponentialRampToValueAtTime(to,at+duration);
+   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume,at+.008);
+   gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+   oscillator.connect(gain);gain.connect(soundBus);oscillator.start(at);oscillator.stop(at+duration+.01);
+  };
+  const noise=(at,duration,frequency,end,volume,filterType='lowpass')=>{
+   const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
+   source.buffer=noiseBuffer;filter.type=filterType;filter.frequency.setValueAtTime(frequency,at);
+   filter.frequency.exponentialRampToValueAtTime(end,at+duration);
+   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume,at+.005);
+   gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+   source.connect(filter);filter.connect(gain);gain.connect(soundBus);source.start(at);source.stop(at+duration+.01);
+  };
+  const thump=(at,weight=1)=>{tone(at,.27,95,34,.18*weight);noise(at,.20,1000,180,.13*weight);tone(at+.025,.12,410,180,.045*weight,'triangle')};
+  const gun=(at,weight=1)=>{noise(at,.16,3300,240,.18*weight);tone(at,.18,145,42,.16*weight);noise(at+.035,.19,1300,180,.045*weight)};
+  if(type==='click'){tone(now,.06,820,610,.025,'triangle');return}
+  if(type==='step'){thump(now,.8);noise(now+.055,.10,1800,450,.05,'bandpass');return}
+  if(type==='prime'){noise(now,.35,350,1400,.035,'bandpass');tone(now,.3,110,175,.025,'triangle');return}
+  if(type==='boom'){thump(now,1.25);noise(now+.025,.65,1500,120,.16);tone(now+.06,.55,65,27,.13);return}
+  if(type==='rifle'){[0,.09,.18].forEach(t=>gun(now+t,.8));return}
+  if(type==='hailstorm'){for(let i=0;i<7;i++)gun(now+i*.06,.62);tone(now,.48,90,155,.025,'sawtooth');return}
+  if(type==='shotgun'){gun(now,1.35);noise(now+.035,.32,2000,200,.12);return}
+  if(type==='rampart'){gun(now,1.5);tone(now+.035,.42,85,30,.13);return}
+  if(type==='rail'){tone(now,.32,1450,240,.07,'sawtooth');noise(now,.3,5000,350,.12,'bandpass');tone(now+.015,.4,150,35,.16);return}
+  if(type==='missile'){[0,.17].forEach(t=>{thump(now+t,.55);noise(now+t,.42,850,2800,.12,'bandpass')});return}
+  if(type==='cleaver'){noise(now,.22,550,3500,.11,'bandpass');tone(now+.08,.2,1250,460,.05,'triangle');return}
+  if(type==='breaker'){noise(now,.18,420,2100,.10,'bandpass');thump(now+.13,1.15);return}
+  if(type==='piledriver'){noise(now,.12,700,2500,.07,'bandpass');thump(now+.12,1.2);tone(now+.13,.2,610,120,.08,'square')}
  }catch{}
 }
-$('#sound').onclick=()=>{muted=!muted;$('#sound').innerHTML=icon(muted?'speaker-slash':'speaker-high');$('#sound').setAttribute('aria-label',muted?'Enable sound':'Mute sound');sound('click')};
+$('#sound').onclick=()=>{
+ muted=!muted;
+ if(soundBus)soundBus.gain.setTargetAtTime(muted?.0001:.62,audio.currentTime,.01);
+ $('#sound').innerHTML=icon(muted?'speaker-slash':'speaker-high');
+ $('#sound').setAttribute('aria-label',muted?'Enable sound':'Mute sound');
+ sound('click');
+};
 function icon(name){return `<img class="ui-icon" src="assets/icons/${name}.svg" alt="">`}
 function art(name){return 'assets/'+name+'.webp'}
 function pilotArt(i){return art('pilot-'+['rook','ghost','anchor'][i])}
@@ -306,6 +352,7 @@ async function shoot(a,t,part,w=unitWeapon(a)){
  const primeDuration=!a.kind&&a.hp.legs>0&&!reducedMotion?ATTACK_STEP.duration:0;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration};
  if(primeDuration){
+  sound('prime');
   const visual=activeWardenVisual(a);
   if(visual)wardenMotionFrame(a,visual,animationPose(a,clock,visual));
  }
