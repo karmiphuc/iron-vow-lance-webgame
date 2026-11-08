@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkPaint({page,origin}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.evaluate(()=>{
   createBattle(0,false,false,[0]);
   // Exercise the raster paths even when WebGL is available.

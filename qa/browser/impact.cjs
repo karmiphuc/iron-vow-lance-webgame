@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkImpact({page,mobile,origin,tap}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.locator('#nav button').first().waitFor({state:'attached'});
  for(const mode of ['travel','native','hellbreaker','baked','live']){
   await page.evaluate(mode=>{
    window.originalFoundryDraw??=window.IronVowFoundry.draw;

@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkWarden({page,mobile,origin,tap}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.emulateMedia({reducedMotion:'no-preference'});
  const lane=mobile?[1,0]:[0,1];
  await page.evaluate(([dx,dz])=>{

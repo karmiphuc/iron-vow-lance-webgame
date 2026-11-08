@@ -6,6 +6,7 @@ module.exports=async function checkWardenMelee({page,mobile,origin,tap}){
  const weapons=mobile?['piledriver']:['cleaver','breaker','piledriver','blade'];
  for(const weapon of weapons){
   await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('#nav button').first().waitFor({state:'attached'});
   await page.emulateMedia({reducedMotion:'no-preference'});
   const capture=!mobile&&weapon==='cleaver'&&process.env.WARDEN_HANDS_PROOF;
   const braced=weapon==='piledriver';
