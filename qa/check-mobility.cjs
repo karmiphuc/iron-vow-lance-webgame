@@ -81,4 +81,77 @@ const simulate=require('./sim-harness.cjs');
  const migrated=simulate({storage:new Map([['iron-vow-career',JSON.stringify(v24)]])});
  assert.ok(migrated.run('FIELD_HEADINGS.includes(battle.units[0].heading)'));
  console.log('PASS: free movement, one paid tile, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and four-facing travel assets.');
+
+ const stats=simulate();
+ const count=stats.run('FRAMES.length');
+ for(let frame=0;frame<count;frame++){
+  stats.run(`save=fresh();battle=null;save.credits=10000;assignChassis(0,${frame});save.units[0].upgrade=2;save.units[0].condition=57;page='workshop';render()`);
+  const workshop=stats.node('#ui').innerHTML;
+  assert.equal((workshop.match(/data-chassis=/g)||[]).length,count);
+  const actual=JSON.parse(stats.run(`createBattle(0);JSON.stringify({
+   name:current().name,free:freeMovement(current()),armor:current().armor,ap:current().ap,
+   hp:current().hp,max:current().max,primary:unitWeapon(current()),melee:current().melee&&weapon(current().melee)
+  })`));
+  assert.ok(workshop.includes(actual.name+' / SORTIE STATS'));
+  for(const [label,value] of [
+   ['Free movement',actual.free+' tiles'],['Extra movement','1 tile / 1 AP'],
+   ['Armor',actual.armor+' / '+Math.floor(actual.armor/2)+' if left arm lost'],['AP per round',actual.ap],
+   ...Object.entries(actual.max).filter(([part])=>part!=='pilot').map(([part,max])=>[
+    stats.run(`PART_LABEL.${part}`),actual.hp[part]+' / '+max+' HP']),
+   ['Pilot',actual.hp.pilot+' HP']
+  ])assert.ok(workshop.includes(`<dt>${label}</dt><dd>${value}</dd>`),actual.name+' '+label);
+  assert.ok(workshop.includes(`Fire</b> ${actual.primary.ap} AP · ${actual.primary.name}`));
+  assert.ok(workshop.includes(actual.melee?`Strike</b> ${actual.melee.ap} AP · ${actual.melee.name}`:'Strike</b> No melee equipped'));
+  assert.ok(workshop.includes('Counter</b> 0 AP, once per round'));
+  stats.run('createBattle(1,true)');
+  assert.equal(stats.run('freeMovement(current())'),actual.free-1);
+ }
+ console.log('PASS: all eleven Workshop stat sheets match deployed HP, armor, mobility, AP and weapons with worn reinforced hulls; legacy mobility retained.');
+
+ const audit=simulate({random:()=>0,reducedMotion:true});
+ const exec=audit.run;
+ exec(`createBattle(0);battle.cover.clear();const ally=current(),foe=battle.units[3],gunship=battle.units.find(u=>u.kind==='helicopter');
+ ally.x=6;ally.z=6;foe.x=7;foe.z=6;ally.melee='cleaver';foe.melee='blade';ally.ap=0;`);
+ assert.equal(exec('reactionWeapon(ally,foe).id'),'cleaver');
+ assert.equal(exec('reactionWeapon(foe,ally).id'),'blade');
+ exec('foe.z=7');
+ assert.equal(exec('reactionWeapon(ally,foe).id'),'rifle','diagonal is ranged');
+ exec('foe.x=11;foe.z=6');
+ assert.equal(exec('reactionWeapon(ally,foe).id'),'rifle','inclusive weapon range');
+ exec('foe.x=12');
+ assert.equal(exec('reactionWeapon(ally,foe)'),null,'one tile beyond range');
+ exec('gunship.x=7;gunship.z=6;foe.x=7');
+ assert.equal(exec('reactionWeapon(ally,gunship).id'),'rifle','adjacent aircraft requires ranged counter');
+ assert.equal(exec('reactionWeapon(gunship,ally)'),null,'vehicles cannot counter');
+ exec('ally.hp.right=0');
+ assert.equal(exec('reactionWeapon(ally,gunship)'),null);
+ assert.equal(exec('reactionWeapon(ally,foe).id'),'cleaver','left arm alone can counter');
+ exec('ally.hp.left=0;startAction(ally);renderBattle()');
+ assert.ok(audit.node('#ui').innerHTML.includes('SPENT / REACTION UNAVAILABLE'));
+ assert.equal(exec('reactionWeapon(ally,foe)'),null);
+ exec('ally.hp.right=ally.max.right;ally.hp.left=ally.max.left;foe.ap=8');
+ await exec("engage(foe,ally,'body',unitWeapon(foe))");
+ assert.equal(exec('ally.ap'),0);
+ assert.equal(exec('foe.ap'),5);
+ assert.equal(exec('ally.reacted'),true);
+ assert.equal(exec('Boolean(foe.reacted)'),false,'a counter cannot trigger a counter');
+ const foeHP=exec('foe.hp.body');
+ await exec("engage(foe,ally,'body',unitWeapon(foe))");
+ assert.equal(exec('foe.hp.body'),foeHP,'no second reaction');
+ exec('foe.reacted=true;foe.x=17;foe.z=18;battle.units=[ally,foe]');
+ await exec('endTurn()');
+ assert.equal(exec('battle.turn'),2);
+ assert.equal(exec('ally.reacted||foe.reacted'),false,'both sides reset at the round boundary');
+ assert.equal(exec('ally.ap'),8);
+
+ exec('let victim');
+ for(const part of ['body','pilot','right','left']){
+  exec(`createBattle(0);battle.cover.clear();victim=battle.units[3];victim.x=current().x+1;victim.z=current().z;victim.hp.${part}=1;`);
+  exec(part==='right'?"victim.melee=null":"victim.hp.right=0;victim.melee='blade'");
+  const attackerHP=exec('current().hp.body');
+  await exec(`engage(current(),victim,'${part}',unitWeapon(current()))`);
+  assert.equal(exec('Boolean(victim.reacted)'),false,part+' destroyed before retaliation');
+  assert.equal(exec('current().hp.body'),attackerHP);
+ }
+ console.log('PASS: both counter paths, diagonal and range limits, aircraft, both arms, disabled bodies and pilots, AP, no chains and round reset.');
 })().catch(error=>{console.error(error);process.exitCode=1});
