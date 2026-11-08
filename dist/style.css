@@ -107,15 +107,37 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .lance-tabs button small{display:block;color:var(--muted);font:600 9px Inter,sans-serif;letter-spacing:1.3px;margin-bottom:3px}
 .workshop-stats{margin:0 0 15px;padding:14px 15px;background:#131d24bb;border:1px solid var(--line)}
 .workshop-stats dl{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;margin:9px 0}
-.workshop-stats dl div{min-width:0;padding:7px 8px;background:#202b32}
+.workshop-stats dl div{position:relative;min-width:0;min-height:44px;padding:7px 8px;background:#202b32}
 .workshop-stats dt{color:var(--muted);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
 .workshop-stats dd{margin:4px 0 0;font-size:13px;font-weight:700}
-.workshop-stats .note{margin:7px 0}
-.workshop-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:12px;line-height:1.45}
-.workshop-actions p{margin:0}
-.workshop-actions b{color:var(--accent)}
+.stat-heading,.stat-key,.inline-help,.info-hint,.reaction-row{display:flex;align-items:center;gap:6px}
+.stat-heading,.stat-key{justify-content:space-between}
+.stat-key{margin:7px 0;color:var(--muted);font-size:10px}
+.info-hint,.inline-help{color:var(--muted);font-size:10px}
+.info-hint .ui-icon{width:13px;height:13px;flex:none}
+.touch-help{display:none}
+.info-tip,.equipment button.info-tip{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;min-height:0;padding:0;background:transparent;border:1px solid transparent;color:var(--ink);touch-action:manipulation;user-select:none;-webkit-touch-callout:none}
+.info-tip:focus-visible,.info-tip:hover{border-color:var(--accent)}
+.info-tip .ui-icon{width:16px;height:16px}
+.workshop-stats dl div:has(.info-tip) dt{padding-right:15px}
+.workshop-stats dl div > .info-tip,.workshop-actions > div > .info-tip{position:absolute;inset:0;width:100%;height:100%;display:flex;align-items:flex-start;justify-content:flex-end;padding:5px}
+.workshop-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.workshop-actions > div,.manual-topics > div{position:relative;min-width:0;min-height:44px;display:flex;align-items:center;gap:8px;padding:7px 8px;background:#202b32;font-size:12px}
+.workshop-actions > div:has(.info-tip){padding-right:22px}
+.workshop-actions > div > .ui-icon,.manual-topics > div > .ui-icon{flex:none;width:17px;height:17px}
+.workshop-actions b,.manual-topics b{color:var(--accent)}
+.workshop-actions small,.manual-topics small{display:block;margin-top:2px;color:var(--muted);font-size:10px;line-height:1.3}
+.repair-warning{color:var(--red);font-size:12px;margin:0 0 8px}
+.equipment-option{position:relative;min-width:0}
+.equipment-option button[data-equip]{width:100%;height:100%;min-height:0}
+.equipment-option button[data-equip] > small:first-child{display:block;padding-right:30px}
+.equipment-option button.info-tip{position:absolute;top:3px;right:3px}
+.equipment-option .note{margin-top:6px}
+.manual-topics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.manual-topics .info-tip{margin-left:auto}
+#game-help{position:fixed;z-index:30;width:max-content;max-width:min(270px,calc(100vw - 16px));padding:9px 12px;border:1px solid var(--accent);background:#131e27;color:var(--ink);box-shadow:0 4px 20px #0009;font-size:13px;line-height:1.45}
 .chassis-assignment{margin:0 0 22px;padding:15px;background:#131d24bb;border:1px solid var(--line)}
-.chassis-assignment .note{margin:7px 0 10px}
+.chassis-assignment > .stat-heading{margin-bottom:6px}
 .chassis-choices{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 .chassis-choices button{min-width:0;min-height:68px;text-align:left;padding:8px 10px;background:#202b32}
 .chassis-choices strong{display:block;font:700 clamp(14px,2vw,21px) Barlow,sans-serif;letter-spacing:.02em}
@@ -138,6 +160,8 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 }
 
 @media(pointer:coarse){
+ .mouse-help{display:none}
+ .touch-help{display:inline}
  button{touch-action:manipulation}
  .account #sound{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 }
@@ -151,12 +175,18 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .foundry-choices{grid-template-columns:repeat(6,minmax(0,1fr))}
 .foundry-choices button img{height:90px}
 @media(max-width:850px){.foundry-choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:1050px){.workshop-stats dl{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1050px){.workshop-stats dl,.workshop-actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:480px){
- .workshop-actions{grid-template-columns:1fr}
- .chassis-choices,.foundry-choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .workshop-actions,.chassis-choices,.foundry-choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .manual-topics{grid-template-columns:1fr}
+ .stat-heading .info-hint{max-width:85px}
+}
+@media(pointer:coarse){
+ .info-tip,.equipment button.info-tip{width:44px;height:44px}
+ .workshop-stats dl div > .info-tip,.workshop-actions > div > .info-tip{width:100%;height:100%}
 }
 .combat-target img.foundry-target{height:100%;top:0;object-fit:contain;object-position:center;transform:scale(1.34)}
-.combatpanel .reaction-status{margin:8px 0 0;color:var(--accent)}
+.combatpanel .reaction-status{display:flex;align-items:center;gap:4px;margin:0;color:var(--accent)}
+.reaction-status .ui-icon{width:13px;height:13px;flex:none}
 .unitbuttons button.spent{opacity:.37;filter:saturate(.38);background:#0d151c;border-color:#39434b}
 .unitbuttons button.spent img{filter:brightness(.52) grayscale(1)}

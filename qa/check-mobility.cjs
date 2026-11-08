@@ -95,14 +95,15 @@ const simulate=require('./sim-harness.cjs');
   assert.ok(workshop.includes(actual.name+' / SORTIE STATS'));
   for(const [label,value] of [
    ['Free movement',actual.free+' tiles'],['Extra movement','1 tile / 1 AP'],
-   ['Armor',actual.armor+' / '+Math.floor(actual.armor/2)+' if left arm lost'],['AP per round',actual.ap],
+   ['Armor',actual.armor],['AP per round',actual.ap],
    ...Object.entries(actual.max).filter(([part])=>part!=='pilot').map(([part,max])=>[
     stats.run(`PART_LABEL.${part}`),actual.hp[part]+' / '+max+' HP']),
    ['Pilot',actual.hp.pilot+' HP']
   ])assert.ok(workshop.includes(`<dt>${label}</dt><dd>${value}</dd>`),actual.name+' '+label);
-  assert.ok(workshop.includes(`Fire</b> ${actual.primary.ap} AP · ${actual.primary.name}`));
-  assert.ok(workshop.includes(actual.melee?`Strike</b> ${actual.melee.ap} AP · ${actual.melee.name}`:'Strike</b> No melee equipped'));
-  assert.ok(workshop.includes('Counter</b> 0 AP, once per round'));
+  assert.ok(workshop.includes(`Fire</b> ${actual.primary.ap} AP<small>${actual.primary.name}`));
+  assert.ok(workshop.includes(actual.melee?`Strike</b> ${actual.melee.ap} AP<small>${actual.melee.name}`:'Strike</b> <small>No melee equipped'));
+  assert.ok(workshop.includes('Counter</b> 0 AP<small>1 / round'));
+  assert.ok(workshop.includes('Losing the left arm reduces armor to '+Math.floor(actual.armor/2)));
   stats.run('createBattle(1,true)');
   assert.equal(stats.run('freeMovement(current())'),actual.free-1);
  }
