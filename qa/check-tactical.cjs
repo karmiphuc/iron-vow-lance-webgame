@@ -61,6 +61,14 @@ const create=require('./sim-harness.cjs');
   return !paths(heli).has('10,9')&&paths(heli).has('11,9')&&route(heli,11,9).length===2&&!inCover(heli)&&!canReachTarget(weapon('breaker'),heli);
  })()`));
 
+ const range=create();
+ range.run(`createBattle(0);action='fire';const drawnTargets=[];targetingTile=(x,z,locked=false)=>drawnTargets.push({x,z,locked});
+  const contact=battle.units.find(u=>u.kind==='tank');contact.x=contact.vx=2;contact.z=contact.vz=16;lockedTarget=contact.id;battlefield(0)`);
+ assert.ok(range.run("drawnTargets.some(tile=>tile.x===2&&tile.z===16&&tile.locked)"));
+ assert.ok(range.run("drawnTargets.every(tile=>distance(current(),tile)>0&&distance(current(),tile)<=weapon(current().weapon).range)"));
+ range.run("drawnTargets.length=0;battle.busy=true;battlefield(0)");
+ assert.equal(range.run("drawnTargets.length"),0);
+
  const timers=new Map();let timerId=0;
  const live=create({random:()=>0,setTimeout:(fn,ms)=>{const id=++timerId;timers.set(id,{fn,ms});return id}});
  live.sandbox.clearTimeout=id=>timers.delete(id);
@@ -69,8 +77,18 @@ const create=require('./sim-harness.cjs');
  assert.equal(live.run("activeCinematic.phase"),'aim');
  assert.equal(live.run('current().ap'),3);
  assert.equal(live.run('vehicle.hp.body'),64);
- assert.ok([...timers.values()][0].ms>800);
- live.run('draw(16);skipAttackCamera();skipAttackCamera()');
+ assert.equal([...timers.values()][0].ms,600);
+ assert.equal(live.run('animationPose(current(),.3).primePhase'),'step');
+ assert.equal(live.run('animationPose(current(),.3).primeProgress'),.5);
+ assert.equal(live.run('current().attack.fireAt'),null);
+ const [plantId,plant]=[...timers][0];timers.delete(plantId);
+ live.run('draw(600)');plant.fn();await live.flush();
+ assert.equal(live.run('animationPose(current(),clock).primePhase'),'planted');
+ assert.equal(live.run('current().attack.fireAt'),null);
+ assert.equal(live.run("effects.filter(e=>e.attackPlant).length"),1);
+ assert.equal(live.run('vehicle.hp.body'),64);
+ assert.equal([...timers.values()][0].ms,510);
+ live.run('skipAttackCamera();skipAttackCamera()');
  await kill;
  assert.equal(live.run('activeCinematic'),null);
  assert.equal(live.run('vehicle.hp.body'),0);
@@ -88,5 +106,24 @@ const create=require('./sim-harness.cjs');
  const reduced=create({reducedMotion:true});
  reduced.run('createBattle(0);battle.busy=true');
  assert.equal(reduced.run("beginAttackCamera(current(),battle.units[3],weapon('rifle'),'body')"),null);
- console.log('PASS: opening and original contract rosters, exact 2,000-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, attack skip and reduced motion.');
+ const reducedAttack=reduced.run("shoot(current(),battle.units[3],'body')");
+ assert.equal(reduced.run('current().attack.primeDuration'),0);
+ await reducedAttack;
+
+ for(const [actor,kind] of [['current()','breaker'],['battle.units[3]','rampart'],['battle.units[4]','rampart'],['current()','cleaver']]){
+  const firing=create({random:()=>0});
+  firing.run(`createBattle(0);globalThis.actor=${actor};globalThis.target=actor.team==='ally'?battle.units[3]:current();`);
+  if(kind==='cleaver')firing.run('actor.hp.legs=0');
+  const willPrime=!firing.run('actor.kind')&&kind!=='cleaver';
+  const attack=firing.run(`shoot(actor,target,'body',actor.kind?unitWeapon(actor):weapon('${kind}'))`);
+  assert.equal(firing.run('actor.attack.primeDuration'),willPrime?.60:0);
+  if(willPrime){
+   assert.equal(firing.run('animationPose(actor,.25).primePhase'),'step');
+   assert.equal(firing.run('animationPose(actor,.61).primePhase'),'planted');
+   assert.equal(firing.run('animationPose(actor,.25).strikeProgress'),0);
+  }
+  await attack;
+  assert.equal(firing.run('actor.attack'),null);
+ }
+ console.log('PASS: opening and original contract rosters, exact 2,000-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, priming for allied and enemy mechs, attack skip and reduced motion.');
 })().catch(e=>{console.error(e);process.exitCode=1});

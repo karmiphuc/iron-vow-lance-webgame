@@ -66,6 +66,27 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
   return !idle.asset.key.includes('extended')&&hit.asset.key.includes('extended');
  })()`),true);
  assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id].some(p=>p.level===.7))))"));
+ for(const [frame,views] of JSON.parse(run('JSON.stringify(arsenal.chassis)')).entries()){
+  for(const [view,visual] of Object.entries(views)){
+   const {attackMotion:atlas}=visual;
+   const {prime,aim,kick,breaker,cleaver,piledriver}=atlas;
+   assert.equal(prime.length,9);
+   for(const suffix of ['', '-paint'])assert.ok(fs.existsSync(path.join(dist,'assets',atlas.key+suffix+'.webp')));
+   const start=prime[0],plant=prime.at(-1);
+   assert.ok((plant.leadFoot[0]-start.leadFoot[0])*(view==='right'?1:-1)>.04,atlas.key);
+   assert.ok(Math.min(...prime.map(f=>f.leadFoot[1]))<Math.min(start.leadFoot[1],plant.leadFoot[1])-.03,atlas.key);
+   for(const f of [...prime,...aim,...kick,...breaker,...cleaver,...piledriver])assert.deepEqual(f.rearFoot,start.rearFoot,atlas.key);
+   for(const f of [...aim,...kick,...breaker,...cleaver,...piledriver])assert.deepEqual(f.leadFoot,plant.leadFoot,atlas.key);
+   assert.ok([breaker,cleaver,piledriver].every(m=>m.some(f=>f.level===.7)),atlas.key);
+   run(`selected=${frame};current().face=${view==='right'?1:-1};current().attack={kind:'rifle',start:0,primeDuration:.60};drawUnit(current(),.3)`);
+   await ready(`decoded.has('assets/${atlas.key}.webp')`);
+   assert.equal(run("wardenMotionFrame(current(),activeWardenVisual(current()),animationPose(current(),.3)).frame.level"),.5);
+   run("current().attack.fireAt=.9;current().attack.releaseAt=1.1");
+   assert.equal(run("animationPose(current(),1.25).primePhase"),'planted');
+   assert.equal(run("animationPose(current(),1.6).primePhase"),'return');
+   run("current().attack=null");
+  }
+ }
  for(const [index,name] of ['relay','corridor','frontier'].entries()){
   run(`createBattle(${index+1});fieldCamera.overview=true;action='move';battlefield(clock)`);
   await ready(`decoded.has('assets/ground-${name}.webp') && Object.values(battle.field.cover).every(prop=>decoded.has('assets/cover-'+prop+'.webp'))`);
@@ -77,5 +98,5 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','theater-layouts.js'
   })`));
   run('battlefield(clock)');
  }
- console.log('PASS: nine weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, new attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
+ console.log('PASS: all six planted attack atlases, nine weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, new attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

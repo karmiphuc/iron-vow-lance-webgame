@@ -2,6 +2,8 @@
 
 Usage: blender -b --python-exit-code 1 -t 6 -P tools/render_arsenal.py -- warden
 Repeat for kestrel, basilisk and weapons, then run tools/assemble_arsenal.cjs.
+Append --prime-only to update only the attack atlas and its manifest entry.
+With --prime-only, --face-left updates the left-facing atlas alone.
 """
 import json
 import math
@@ -21,6 +23,7 @@ DIST = HERE.parent / "dist"
 BENCH = DIST / "rig-bench"
 ASSETS = DIST / "assets"
 model = sys.argv[sys.argv.index("--") + 1]
+PRIME_ONLY = "--prime-only" in sys.argv
 BODY_TILES = {"warden": [0, 7, 8, 12, 15], "kestrel": [0, 7, 8, 12, 15], "basilisk": [0, 7, 12, 15]}
 WEAPON_ROOTS = {"rifle":"kestrel", "rail":"longbow", "shotgun":"breacher", "missile":"vesper",
                 "hailstorm":"hailstorm", "rampart":"rampart", "breaker":"breaker", "cleaver":"cleaver", "piledriver":"piledriver"}
@@ -48,6 +51,12 @@ def apply_pose(pose):
     rotate("spine",x=pose["spinePitch"],y=left.get("ty",0))
     for side,leg in zip("LR",pose["legs"]):
         rotate("hip."+side,*leg["hip"])
+        if "footTargets" in pose:
+            # Attack IK uses a fixed sagittal knee plane. Apply lateral hip
+            # rotation before pitch so the analytical targets are exact.
+            objects["hip."+side].rotation_quaternion=(
+                Quaternion((0,-1,0),leg["hip"][2]) @
+                Quaternion((1,0,0),leg["hip"][0]))
         rotate("knee."+side,x=leg["knee"])
         rotate("ankle."+side,*leg["ankle"])
     rotate("shoulder.R",*gun["shoulder"])
@@ -160,6 +169,10 @@ def hardpoints(pose):
     }
     if "pod.R" in objects and "pod.L" in objects:
         data.update(podR=project(position("pod.R")),podL=project(position("pod.L")))
+    if "footTargets" in pose:
+        lead=pose.get("leadSide","L");rear="R" if lead=="L" else "L"
+        data.update(leadFoot=project(position("ankle."+lead)-Vector((0,0,.30))),
+                    rearFoot=project(position("ankle."+rear)-Vector((0,0,.30))))
     return data
 
 def body_sheets(tmp):
@@ -167,11 +180,13 @@ def body_sheets(tmp):
     poses=[("gait",None,p) for p in motion["gait"]]
     for name,rows in [("kick",motion["kicks"]),("aim",motion["aims"]),("death",motion["deaths"]),*motion["strikes"].items()]:
         poses.extend((name,row["level"],row["pose"]) for row in rows)
-    output={}
+    manifest=HERE/f"{model}-arsenal.json"
+    output=json.loads(manifest.read_text()) if PRIME_ONLY else {}
     cell,cols=256,6
     ground=.88
     camera_data.ortho_scale=9.65
     for face,sign in [("left",1),("right",-1)]:
+        if PRIME_ONLY and "--face-left" in sys.argv and face!="left":continue
         camera.location=point(10.2,8.2,13.5) if sign==1 else point(-14,8.2,10)
         aim(camera,point(0,3.45,.35))
         camera_data.shift_x=camera_data.shift_y=0
@@ -181,6 +196,10 @@ def body_sheets(tmp):
         camera_data.shift_x,camera_data.shift_y=base[0]-ground_x,ground-base[1]
         bpy.context.view_layer.update()
         key=f"{model}-chassis-{face}"
+        attack_rows=motion["attackLeft" if face=="left" else "attack"]
+        if PRIME_ONLY:
+            bake_attack(tmp,key,output[face],attack_rows,cell,cols)
+            continue
         apply_pose(motion["idle"])
         color,paint=render_sprite(tmp,512)
         color.save(ASSETS/f"{key}.webp",quality=89,method=4)
@@ -203,8 +222,39 @@ def body_sheets(tmp):
             visual["motion"].setdefault(kind,[]).append(frame)
         atlas.save(ASSETS/f"{key}-motion.webp",quality=83,method=4)
         matte.save(ASSETS/f"{key}-motion-paint.webp",lossless=True,method=4)
+        bake_attack(tmp,key,visual,attack_rows,cell,cols)
         output[face]=visual
     return output
+
+def bake_attack(tmp,key,visual,rows,cell,cols):
+    poses=[(kind,row["level"],row["pose"]) for kind,frames in rows.items() for row in frames]
+    data={"key":f"{key}-attack","cell":cell,"columns":cols}
+    dims=(cell*cols,cell*math.ceil(len(poses)/cols))
+    atlas=Image.new("RGBA",dims);matte=Image.new("L",dims)
+    checks=[]
+    for i,(kind,level,pose) in enumerate(poses):
+        apply_pose(pose)
+        for side,target in zip("LR",pose["footTargets"]):
+            error=(position(f"ankle.{side}")-point(*target)).length
+            if error>1e-5:
+                raise ValueError(f"Attack foot drift: {key}/{kind}/{level}/{side}: {error}")
+        color,paint=render_sprite(tmp,cell)
+        box=color.getbbox()
+        if not box or min(box[:2])<2 or max(box[2:])>cell-2:
+            raise ValueError(f"Attack frame cropped: {key}/{kind}/{level}: {box}")
+        pos=(i%cols*cell,i//cols*cell)
+        atlas.paste(color,pos);matte.paste(paint,pos)
+        frame={"index":i,"level":level,**hardpoints(pose)}
+        data.setdefault(kind,[]).append(frame)
+        checks.append({"kind":kind,"level":level,"bounds":box,
+                       "ankles":[list(position(f"ankle.{s}")) for s in "LR"],
+                       "targets":pose["footTargets"]})
+    atlas.save(ASSETS/f"{key}-attack.webp",quality=87,method=4)
+    matte.save(ASSETS/f"{key}-attack-paint.webp",lossless=True,method=4)
+    visual["attackMotion"]=data
+    qa_dir=Path(tempfile.gettempdir())/"iron-vow-attack-qa"
+    qa_dir.mkdir(exist_ok=True)
+    (qa_dir/f"{key}.json").write_text(json.dumps(checks,indent=2))
 
 def weapon_sprites(tmp):
     output={}
