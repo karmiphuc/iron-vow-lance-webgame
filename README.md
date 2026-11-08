@@ -14,9 +14,7 @@ Contract rewards fund four weapons, chassis upgrades, and repairs. Pilot experie
 
 ## Verification
 
-`node --check dist/game.js`
-
-`node check.cjs` runs simulation checks with a minimal DOM/canvas stub: five screens, save validation, pathfinding, limb loss, skills, combat damage, bracing, enemy turns, victory and withdrawal, persistent rewards, and renderer smoke at mobile/tablet/desktop sizes. This is not browser visual QA.
+Run `npm ci --prefix qa` and `npm run test:release --prefix qa` for the current simulation and desktop/mobile browser gate. The same gate runs automatically through `qa/site-package.cjs` before a Sites release. See [Release checks](qa/README.md) for setup, coverage and public verification.
 
 ## Scope
 
