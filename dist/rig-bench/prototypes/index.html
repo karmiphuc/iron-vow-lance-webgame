@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111518">
+  <meta name="description" content="Inspect Gatecrasher and Cicada, two animated prototype chassis from the Iron Vow Workshop.">
+  <title>Prototype Bay · Iron Vow</title>
+  <link rel="stylesheet" href="../../fonts.css">
+  <link rel="stylesheet" href="./bay.css">
+  <script defer src="../vendor/three.min.js"></script>
+  <script defer src="../vendor/GLTFLoader.js"></script>
+  <script defer src="./bay.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a href="../../" class="brand">IRON <strong>VOW</strong></a>
+    <span class="division">ENGINEERING / BAY 02</span>
+    <nav aria-label="Iron Vow">
+      <a href="../../?view=workshop">Workshop</a>
+      <a href="../">Rig Bench</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="mast">
+      <div><p class="eyebrow">CHASSIS DEVELOPMENT</p><h1>PROTOTYPE BAY</h1></div>
+      <p>Two experimental frames. Inspect the mechanisms, then put each chassis through its motion trials.</p>
+    </div>
+
+    <div class="bay">
+      <section class="console" aria-label="Chassis and motion controls">
+        <div class="selector" role="group" aria-label="Prototype chassis">
+          <button type="button" data-chassis="gatecrasher" aria-pressed="true"><span>01 / HV-09</span>Gatecrasher</button>
+          <button type="button" data-chassis="cicada" aria-pressed="false"><span>02 / ML-14</span>Cicada</button>
+        </div>
+        <div class="identity">
+          <p id="role" class="eyebrow">HEAVY ASSAULT</p>
+          <h2 id="name">Gatecrasher</h2>
+          <p id="summary">Weathered steel, layered crimson pauldrons, an asymmetrical chest battery, and a twin forearm cannon.</p>
+        </div>
+        <dl class="specs">
+          <div><dt>Legs</dt><dd>Two-bone IK</dd></div>
+          <div><dt>Actuators</dt><dd>4 telescoping rams</dd></div>
+          <div><dt>Armament</dt><dd id="weapon">Twin recoil cannon</dd></div>
+          <div><dt>Mesh</dt><dd id="geometry">Awaiting model</dd></div>
+        </dl>
+        <div class="trials">
+          <p class="eyebrow">MOTION TRIAL</p>
+          <div class="clips" role="group" aria-label="Motion trial">
+            <button type="button" data-clip="Idle" aria-pressed="true">Idle</button>
+            <button type="button" data-clip="Walk" aria-pressed="false">Walk</button>
+            <button type="button" data-clip="Deploy" aria-pressed="false">Deploy</button>
+            <button type="button" data-clip="Fire" aria-pressed="false">Fire</button>
+          </div>
+          <p id="trial">The pilot scans from a relaxed stance.</p>
+          <div class="transport">
+            <button type="button" id="play" aria-label="Play motion" disabled>Play</button>
+            <label class="sr-only" for="time">Motion timeline</label>
+            <input id="time" type="range" min="0" max="1000" value="0" step="1" disabled>
+            <output id="clock" for="time">0.00 s</output>
+          </div>
+        </div>
+      </section>
+
+      <section class="viewport" aria-label="3D chassis inspection">
+        <canvas id="view" aria-label="Interactive model. Drag to orbit or use the angle buttons."></canvas>
+        <img id="still" src="./gatecrasher.webp" alt="Gatecrasher inspection render">
+        <div class="hud"><span id="serial">HV-09</span><span id="status" role="status">Loading chassis</span></div>
+        <div class="view-controls" role="group" aria-label="Inspection view">
+          <button type="button" data-camera="front" disabled>Front</button>
+          <button type="button" data-camera="threequarter" disabled>¾ View</button>
+          <button type="button" data-camera="rear" disabled>Rear</button>
+          <button type="button" id="rig" aria-pressed="false" disabled>Skeleton</button>
+        </div>
+        <p class="view-help">Drag to orbit · Scroll to zoom</p>
+      </section>
+    </div>
+    <footer><span>IRON VOW / PROTOTYPE EVALUATION</span><span>Four Blender-authored motion trials per chassis</span></footer>
+  </main>
+</body>
+</html>
