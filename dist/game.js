@@ -915,16 +915,17 @@ function bindInn(){
  };
 }
 const wardenVisuals=window.IRON_VOW_WARDEN_ART||{},arsenal=window.IRON_VOW_ARSENAL||{},prototypes=window.IRON_VOW_PROTOTYPES||{};
-function wardenVisual(frame,loadout,direction){
+const wardenUpgrade=window.WARDEN_FIDELITY;
+function wardenVisual(frame,loadout,direction,stock=false){
  const face=direction===1?'right':'left';
  const native=prototypes[FRAMES[frame]?.native]?.[face];
  if(native)return native;
- const modular=arsenal.chassis?.[frame]?.[face],legacy=frame===0?wardenVisuals[loadout]?.[face]:undefined;
+ const modular=(frame===0&&!stock?wardenUpgrade?.views[face]:null)||arsenal.chassis?.[frame]?.[face],legacy=frame===0?wardenVisuals[loadout]?.[face]:undefined;
  return failedArt.has(modular?.key)?legacy:modular||legacy;
 }
-function chassisArt(i,loadout,direction=-1){
+function chassisArt(i,loadout,direction=-1,stock=false){
  const model=foundryModel(i);if(model!=null)return art('foundry-'+model);
- const visual=wardenVisual(i,loadout,direction);
+ const visual=wardenVisual(i,loadout,direction,stock);
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
 }
 function targetPortraitKey(target){
@@ -1242,7 +1243,7 @@ function renderBattle(){
   $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p class="field-terrain">${battle.field.label}</p><p>Eliminate all hostile contacts.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${String(battle.turn).padStart(2,'0')}<small>${battle.phase==='player'?'YOUR LANCE / TAKE COMMAND':'HOSTILE LANCE / STAND BY'}</small></div>
-  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>${targetStatus||'SUBSYSTEM DETAILS'}</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${targetStatus?`<span class="combat-status">${targetStatus}</span>`:''}${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':foundryModel(target.frame)!=null?'enemy foundry-target':'enemy'}" data-target-id="${target.id}" data-visual-key="${target.kind?'':targetPortraitKey(target)}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target))}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':PART_LABEL[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${partDamage(u,target,aimPart,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=weaponRange(chosen,u.training)?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>${target?.kind?'DESTROY HULL TO NEUTRALIZE':'DISABLE BODY OR PILOT'}</div>${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${targetReaction}${counter?' / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):targetReaction==='READY'&&u?' / OUT OF REACH':''}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}${u?`<div class="combat-selected"><span class="eyebrow">${CREW[u.pilot].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${CREW[u.pilot].skill}: ${u.skill?'USED':skillDescription(u.pilot,u.training)}</p></div>`:''}</aside>
+  <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>${targetStatus||'SUBSYSTEM DETAILS'}</small></span></button><aside class="combatpanel" id="target-panel" aria-label="Target subsystem details"><div class="inspect-head"><span class="eyebrow">HOSTILE / TARGET SUBSYSTEM</span><button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button></div><h3>${target?.name||'AREA SECURED'}</h3>${targetStatus?`<span class="combat-status">${targetStatus}</span>`:''}${target?`<div class="combat-target"><img class="${target.kind?'vehicle-target':foundryModel(target.frame)!=null?'enemy foundry-target':'enemy'}" data-target-id="${target.id}" data-visual-key="${target.kind?'':targetPortraitKey(target)}" src="${target.kind?art(vehicleKey(target)):chassisArt(target.frame,target.weapon,unitFacing(target),true)}" alt="Target ${target.name}"></div>`:''}<div class="parts">${targetParts(target).map(p=>`<button data-part="${p}" class="${p===aimPart?'active':''}" style="--part-hp:${target?100*target.hp[p]/target.max[p]:0}%" aria-pressed="${p===aimPart}"><span>${target?.kind?'HULL':PART_LABEL[p]}</span><b>${target?target.hp[p]+'/'+target.max[p]:'—'}</b></button>`).join('')}</div><div class="note">${target&&u?`${Math.round(hitChance(u,target,aimPart,chosen)*100)}% HIT / ${partDamage(u,target,aimPart,chosen)} DMG<br>${!canReachTarget(chosen,target)?'AIRBORNE / USE RANGED FIRE':distance(u,target)<=weaponRange(chosen,u.training)?'IN WEAPON RANGE':'OUT OF RANGE'}${inCover(target)&&!chosen.melee?' / IN COVER':''}`:'SELECT A HOSTILE TO INSPECT'}<br>${target?.kind?'DESTROY HULL TO NEUTRALIZE':'DISABLE BODY OR PILOT'}</div>${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${targetReaction}${counter?' / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):targetReaction==='READY'&&u?' / OUT OF REACH':''}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}${u?`<div class="combat-selected"><span class="eyebrow">${CREW[u.pilot].call} / ${u.ap} AP</span><p style="margin-top:7px"><b>${chosen.name}</b><br>${CREW[u.pilot].skill}: ${u.skill?'USED':skillDescription(u.pilot,u.training)}</p></div>`:''}</aside>
   <div class="log">${battle.log.map(l=>'<div class="log-line">'+l+'</div>').join('')}</div><div class="hint">${battle.busy?'RESOLVING COMBAT':action==='move'?(u?('MOVE / '+freeMovement(u)+' FREE'+(extraMovement(u)?' / +1 TILE FOR '+EXTRA_MOVE_AP+' AP':'')+(u.actionPhase?' / ACTION PHASE':'')):'MOVE / SELECT A READY MECH'):(action==='strike'?'STRIKE / ADJACENT HOSTILE / ':'FIRE / SELECT HOSTILE / ')+(chosen?paidAttackAP(u,chosen):3)+' AP PER ATTACK'+(u&&chargedLimbShot(u,chosen,aimPart,false)?' / CHARGED':'')}</div>
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button><button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button><button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
   refreshTargetPortrait();
@@ -1357,13 +1358,26 @@ async function moveUnit(u,x,z){
  if(!u.kind&&FRAMES[u.frame].native&&!reducedMotion)await readyNativeMotion(u);
  const travel=preloadTravel(u);
  if(travel&&!imageReady(travel)&&travel.decode)await Promise.race([travel.decode().catch(()=>{}),delay(900)]);
- const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:MECH_MOTION[u.frame].step,gaitBase=u.walkCount||0;
+ const paintedGait=upgradedWardenTravel(travelAtlas(u));
+ const duration=reducedMotion?.12:paintedGait?1.06:u.kind?VEHICLES[u.kind].step:MECH_MOTION[u.frame].step,gaitBase=u.walkCount||0;
+ const segments=[];
+ if(paintedGait){
+  let fromX=u.x,fromZ=u.z;
+  for(let i=0;i<steps.length;){
+   const dx=steps[i].x-fromX,dz=steps[i].z-fromZ;
+   let end=i+1;
+   while(end<steps.length&&steps[end].x-steps[end-1].x===dx&&steps[end].z-steps[end-1].z===dz)end++;
+   const length=end-i,paces=wardenPaces(length,gaitBase+i);
+   for(let step=i;step<end;step++)segments[step]={index:step-i,length,paces};
+   fromX=steps[end-1].x;fromZ=steps[end-1].z;i=end;
+  }
+ }
  for(let i=0;i<steps.length;i++){
   const p=steps[i],fromX=u.x,fromZ=u.z;
   const turning=turnToward(u,p.x-fromX,p.z-fromZ);if(turning)await turning;
   const mass=u.kind?1:MECH_MOTION[u.frame].mass;
   sound(u.kind?(u.kind==='tank'?'track':'rotor'):'hydraulic',mass);
-  u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length};
+  u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length,segment:segments[i]};
   if(!u.kind&&FRAMES[u.frame].native&&!reducedMotion){
    await delay(duration*500);
    effects.push({type:'step',x:(fromX+p.x)/2,z:(fromZ+p.z)/2,t:1,mass:MECH_MOTION[u.frame].mass,side:1});
@@ -1385,8 +1399,11 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false){
  const paid=reaction?0:paidAttackAP(a,w),charged=chargedLimbShot(a,w,part,reaction);
  if(!reaction){if(!a.order?.keepMove&&!(charged&&a.training?.breachMove))startAction(a);a.ap-=paid}
  const turning=turnToward(a,t.x-a.x,t.z-a.z);if(turning)await turning;
- const clip=w.melee?'strike':'fire',native=!a.kind&&wardenVisual(a.frame,a.weapon,a.face)?.timing?.[clip];
- const primeDuration=!a.kind&&a.hp.legs>0&&!reducedMotion?(reaction?.40:ATTACK_STEP.duration):0;
+ const clip=w.melee?'strike':'fire',native=!a.kind&&wardenVisual(a.frame,a.weapon,a.face,a.team==='enemy')?.timing?.[clip];
+ const plantedWarden=a.brace&&a.hp.legs>0&&upgradedWardenTravel(travelAtlas(a));
+ const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
+ const primeDuration=!a.kind&&a.hp.legs>0&&!reducedMotion?
+  (plantedWarden?braceTimeLeft:reaction?.40:ATTACK_STEP.duration):0;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,native:native?{...native,clip}:null};
  if(primeDuration){
   sound('hydraulic',MECH_MOTION[a.frame].mass);
@@ -1573,7 +1590,7 @@ const motionPreference=typeof window.matchMedia==='function'?window.matchMedia('
 let reducedMotion=!!motionPreference?.matches;
 motionPreference?.addEventListener?.('change',e=>{reducedMotion=e.matches;if(reducedMotion)skipAttackCamera()});
 const legacyChassis=FRAMES.map(frame=>frame.foundry!=null?'foundry-'+frame.foundry:frame.native?prototypes[frame.native]?.left.key:frame.name.toLowerCase());
-const bakedChassis=[...Object.values(wardenVisuals),...(arsenal.chassis||[]),...Object.values(prototypes)].flatMap(views=>Object.values(views).map(view=>view.key));
+const bakedChassis=[...Object.values(wardenVisuals),...(arsenal.chassis||[]),...(wardenUpgrade?[wardenUpgrade.views]:[]),...Object.values(prototypes)].flatMap(views=>Object.values(views).map(view=>view.key));
 const mechArtKeys=new Set([...legacyChassis.filter(Boolean),...bakedChassis]);
 for(const key of [...mechArtKeys,'concrete','barricade','contract-relay','contract-corridor','contract-frontier','warden-base','kestrel-base','basilisk-base']){
  const im=new Image();im.decoding='async';artImages[key]=im;
@@ -1682,7 +1699,7 @@ function turnToward(u,dx,dz){
 }
 function activeWardenVisual(u){
  if(u.kind)return;
- const visual=wardenVisual(u.frame,u.weapon,unitFacing(u));
+ const visual=wardenVisual(u.frame,u.weapon,unitFacing(u),u.team==='enemy');
  return visual&&(visual.native||imageReady(artImages[visual.key]))?visual:undefined;
 }
 function spriteFlip(u,visual=activeWardenVisual(u)){return !visual&&unitFacing(u)!==(u.frame===1?1:-1)}
@@ -1740,6 +1757,16 @@ function wardenMotionFrame(u,visual,pose){
   }
   return{atlas,image,frame:atlas.gait[Math.floor((pose.cycle%1)*atlas.gait.length)]};
  }
+ if(visual.motion?.brace&&u.alive&&u.brace&&u.hp.legs>0&&!u.motion){
+  const image=motionImage(atlas);
+  if(imageReady(image)){
+   const kick=Math.abs(pose.recoil);
+   const frame=pose.brace<1?nearestFrame(atlas.brace,pose.brace):
+    kick>.08?nearestFrame(atlas.braceKick,kick):
+    pose.aim>.12?nearestFrame(atlas.braceAim,pose.aim):atlas.brace.at(-1);
+   return {atlas,image,frame};
+  }
+ }
  const kick=pose.recoil*(u.weapon==='rail'?1.35:.8)*(1-pose.brace*.4);
  if(u.alive&&pose.primePhase&&attackMotion){
   const image=attackMotionImage(attackMotion,u.paint);
@@ -1763,7 +1790,7 @@ function wardenMotionFrame(u,visual,pose){
   frame=atlas.gait[Math.min(atlas.gait.length-1,Math.floor(pose.primeProgress*atlas.gait.length/2))];
  }else if(pose.strikeKind&&atlas[strike]?.length){
   frame=nearestFrame(atlas[strike],pose.strikeProgress);
- }else if(pose.walk>.12){
+ }else if(pose.walk>.12&&atlas.gait?.length){
   const cycle=((pose.cycle%2)+2)%2;
   frame=atlas.gait[Math.min(atlas.gait.length-1,Math.floor(cycle*atlas.gait.length/2))];
  }else{
@@ -2215,12 +2242,41 @@ function drawRigidUpper(u,w,h,pose){
  }
 }
 
+const WARDEN_BRACE_DURATION=.58;
+
+function wardenPaces(tiles,firstSide){
+ // Six ticks per tile gives exact half paces and two-thirds paces.
+ // Start with two half paces only on an odd run, then use three per pair.
+ const odd=tiles%2;
+ const strides=odd?[3,3]:[];
+ for(let i=odd;i<tiles;i+=2)strides.push(4,4,4);
+ let contact=0;
+ return [...strides,0].map((next,index)=>{
+  const previous=strides[index-1]??0;
+  const suffix=next===3||(!next&&previous===3)?'Half':'';
+  const stage=!previous?'start'+suffix:!next?'settle'+suffix:
+    previous===3&&next===4?'bridge':'stride'+suffix;
+  const phase={from:(contact-previous/2)/6,to:(contact+next/2)/6,kind:stage+((firstSide+index)%2?'R':'L')};
+  contact+=next;
+  return phase;
+ });
+}
+
+function fieldStepProgress(phase,segment){
+ if(!segment||segment.length===1)return phase*phase*(3-2*phase);
+ if(segment.index===0)return phase*phase*(2-phase);
+ if(segment.index===segment.length-1)return phase+phase*phase*(1-phase);
+ return phase;
+}
+
 function advanceUnitAnimation(u,t,dt){
  const m=u.motion;
- if(m){const p=clamp01((t-m.start)/m.duration),q=p*p*(3-2*p);u.vx=m.fromX+(m.toX-m.fromX)*q;u.vz=m.fromZ+(m.toZ-m.fromZ)*q}
+ if(m){const p=clamp01((t-m.start)/m.duration),q=fieldStepProgress(p,m.segment);u.vx=m.fromX+(m.toX-m.fromX)*q;u.vz=m.fromZ+(m.toZ-m.fromZ)*q}
  else{u.vx=u.x;u.vz=u.z}
  updateDestruction(u,t);
- u.braceBlend=(u.braceBlend??0)+((u.brace?1:0)-(u.braceBlend??0))*(1-Math.exp(-dt*13));
+ if(u.brace&&upgradedWardenTravel(travelAtlas(u))){
+  u.braceBlend=reducedMotion?1:clamp01((t-(u.braceTime??-100))/WARDEN_BRACE_DURATION);
+ }else u.braceBlend=(u.braceBlend??0)+((u.brace?1:0)-(u.braceBlend??0))*(1-Math.exp(-dt*13));
 }
 function animationPose(u,t,visual=activeWardenVisual(u)){
  const rig=visual||MECH_MOTION[u.frame],m=u.motion,phase=m?clamp01((t-m.start)/m.duration):0;
@@ -2316,7 +2372,7 @@ function drawArticulatedMech(im,u,w,h,pose,upperTexture=null){
  }
 }
 function recoilingBounds(u,b,t){
- if(reducedMotion||!u.alive)return b;
+ if(reducedMotion||!u.alive||(u.brace&&u.hp.legs>0&&upgradedWardenTravel(travelAtlas(u))))return b;
  if(FRAMES[u.frame]?.native&&u.attack?.primeDuration){
   const pose=animationPose(u,t,activeWardenVisual(u)),q=pose.primeProgress;
   const progress=q*q*(3-2*q);
@@ -2346,37 +2402,79 @@ function vehicleAttachment(u,part,t){
  return spritePoint(vehicleBounds(u,t),[unitFacing(u)>0?1-source[0]:source[0],source[1]]);
 }
 function travelAtlas(u){
+ if(!u.kind&&u.frame===0&&u.team==='ally'&&wardenUpgrade)return wardenUpgrade.travel;
  const f=FRAMES[u.frame];
  return window.IRON_VOW_TRAVEL?.[u.kind||(f?.foundry!=null?'foundry-'+f.foundry:f?.native||f?.name.toLowerCase())];
 }
+function upgradedWardenTravel(atlas){return Boolean(atlas&&atlas===wardenUpgrade?.travel)}
+
+function travelDetail(u,atlas,heading){
+ const key=atlas?.detail?.keys[heading];
+ if(!key)return null;
+ if(u.paint||u.trim)moduleImage(key+'-paint');
+ return {key,image:motionImage({key})};
+}
+
 function preloadTravel(u){
  const atlas=travelAtlas(u);
  if(!atlas)return null;
+ const detail=travelDetail(u,atlas,headingIndex(displayedHeading(u)));
+ if(detail)return detail.image;
  if(u.paint||u.trim)moduleImage(atlas.key+'-paint');
  return motionImage(atlas);
 }
 function travelVisual(u,t){
  if(!u.alive||u.headingOverride!==undefined)return null;
- const atlas=travelAtlas(u),image=atlas&&motionImage(atlas);
- if(!imageReady(image))return null;
+ const atlas=travelAtlas(u);
+ if(!atlas)return null;
  const angle=displayedHeading(u),direction=Math.sin(angle)<0?-1:1;
  const heading=headingIndex(angle);
  const phase=u.motion?clamp01((t-u.motion.start)/u.motion.duration):0;
  const gait=u.motion?(FRAMES[u.frame]?.native?phase:((u.motion.gaitBase+phase)/2)%1):0;
  const prime=u.attack?.primeDuration?clamp01((t-u.attack.start)/u.attack.primeDuration):0;
- const row=u.kind?0:u.motion&&!reducedMotion?1+Math.min(5,Math.floor(gait*6)):
+ const stockRow=u.kind?0:u.motion&&!reducedMotion?1+Math.min(5,Math.floor(gait*6)):
   prime>0&&prime<1?1+Math.min(5,Math.floor(prime*6)):u.attack?7:0;
+ const revised=upgradedWardenTravel(atlas);
+ let row=stockRow;
+ if(revised){
+  const pose=animationPose(u,t),special=atlas.special;
+  if(u.motion&&!reducedMotion){
+   const segment=u.motion.segment??{index:0,length:1,paces:wardenPaces(1,u.motion.gaitBase)};
+   const distance=segment.index+fieldStepProgress(phase,segment);
+   const pace=segment.paces.find(step=>distance<=step.to)??segment.paces.at(-1);
+   const progress=(distance-pace.from)/(pace.to-pace.from);
+   row=atlas.walk[pace.kind]+Math.round(clamp01(progress)*(atlas.samples-1));
+  }else if(u.brace&&u.hp.legs>0){
+   const recoil=Math.abs(pose.recoil);
+   const step=Math.round(pose.brace*atlas.braceSamples);
+   row=pose.brace<1?(step?special.brace+step-1:0):
+    recoil>.08?special.braceKick+Math.min(2,Math.floor(recoil*3)):
+    pose.aim>.12?special.braceAim+Math.min(2,Math.floor(pose.aim*3)):special.brace+atlas.braceSamples-1;
+  }else{
+   const recoil=Math.abs(pose.recoil);
+   row=recoil>.08?special.kick+Math.min(2,Math.floor(recoil*3)):
+    pose.aim>.12?special.aim+Math.min(2,Math.floor(pose.aim*3)):0;
+  }
+ }
+ const detail=travelDetail(u,atlas,heading);
+ const high=imageReady(detail?.image);
+ const image=high?detail.image:motionImage(atlas);
+ if(!imageReady(image))return null;
+ const cell=high?atlas.detail.cell:atlas.cell;
+ const index=4*row+heading;
+ const source=high?{key:detail.key,cell,x:row%atlas.detail.columns,y:Math.floor(row/atlas.detail.columns),idleX:0}:
+  {key:atlas.key,cell,x:revised?index%atlas.columns:heading,y:revised?Math.floor(index/atlas.columns):row,idleX:heading};
  const points=atlas.points[row][heading];
  const strike=u.attack&&ATTACK_PROFILES[u.attack.kind].melee?animationPose(u,t):null;
  let bounds;
  if(u.kind)bounds=vehicleBounds(u,t);
  else{
   const ground=project(u.vx,0,u.vz),size=scale*atlas.span/3.65;
-  const stride=scale*(prime*.15+(strike?.strikeProgress?Math.sin(strike.strikeProgress*Math.PI)*.22:0));
+  const stride=scale*((revised?0:prime)*.15+(strike?.strikeProgress?Math.sin(strike.strikeProgress*Math.PI)*.22:0));
   bounds={x:ground.x-size*.5+Math.sin(angle)*stride,y:ground.y-size*atlas.ground+Math.cos(angle)*stride*.44,w:size,h:size};
   bounds=recoilingBounds(u,bounds,t);
  }
- return {atlas,image,bounds,row,heading,points,direction,strike};
+ return {atlas,image,source,bounds,row,heading,points,direction,strike};
 }
 function travelMount(view,u,id,progress=0){
  const mount=foundryMount(view.points,view.bounds,id,view.direction,progress,
@@ -2406,16 +2504,19 @@ function drawPartTints(u,t,paint,anchor,scorch=true){
  }
 }
 function drawTravel(u,t,view){
- const {atlas,image,bounds,row,heading}=view,p=project(u.vx,0,u.vz),cell=atlas.cell;
+ const {atlas,image,source,bounds,heading}=view,p=project(u.vx,0,u.vz),{cell}=source;
  const foundry=foundryModel(u.frame)!=null;
- const body=foundry?foundryPaint(image,atlas.key,u.paint,u.trim):paintedSprite(image,atlas.key,u.paint);
+ const body=foundry?foundryPaint(image,atlas.key,u.paint,u.trim):paintedSprite(image,source.key,u.paint);
  ctx.save();ctx.fillStyle='#060d148c';ctx.beginPath();
  ctx.ellipse(p.x,p.y,scale*(u.kind||foundryModel(u.frame)===5?.76:.62),scale*.22,0,0,Math.PI*2);ctx.fill();
- const paint=()=>ctx.drawImage(body,heading*cell,row*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
+ const painted=upgradedWardenTravel(atlas);
+ const behind=painted&&(heading===1||heading===2);
+ if(behind&&u.hp.right>0)drawWeaponModule(ctx,travelMount(view,u,u.weapon));
+ const paint=()=>ctx.drawImage(body,source.x*cell,source.y*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
  paint();
  drawPartTints(u,t,paint,part=>view.points[part]&&spritePoint(bounds,view.points[part]));
  ctx.restore();
- if(!u.kind&&u.hp.right>0&&!(u.frame===2&&u.weapon==='missile')){
+ if(!behind&&!u.kind&&u.hp.right>0&&!(u.frame===2&&u.weapon==='missile')){
   drawWeaponModule(ctx,travelMount(view,u,u.weapon));
  }
  if(u.hp.left>0&&(view.strike||(foundry&&u.melee&&foundryModel(u.frame)===4&&!u.attack))){
@@ -2830,7 +2931,9 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  const heightLimit=airborne?(pane.h*.88-49)/2.48:pane.h/(subject.kind?2.25:foundryModel(subject.frame)!=null?3.45:FRAMES[subject.frame]?.native?3.10:2.92);
  scale=Math.max(10,Math.min(pane.w/(subject.kind?3.25:4.08),heightLimit)*zoom);
  const settle=airborne&&!subject.alive?smoothRange(0,VEHICLES.helicopter.wreckAt,vehicleDeathAge(subject,t)):0;
- const feetX=pane.x+pane.w*(attacker?.44:.55),feetY=pane.y+pane.h*(airborne?.88-.14*settle:subject.kind?.74:.82);
+ const painted=upgradedWardenTravel(travelAtlas(subject));
+ const feetX=pane.x+pane.w*(attacker?.44:.55);
+ const feetY=pane.y+pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:.82);
  origin={x:feetX-(subject.vx-subject.vz)*scale*.866,y:feetY-(subject.vx+subject.vz)*scale*.42};
  const hot=attacker?sequence.phase!=='result':sequence.phase==='result';
  ctx.save();
@@ -2899,8 +3002,8 @@ function pick(clientX,clientY){
   let mask=artMasks[key];
   if(!mask){
    try{
-    const size=52,cell=travel.atlas.cell,g=renderSurface(size,size)?.getContext('2d',{willReadFrequently:true});
-    if(g){g.drawImage(travel.image,travel.heading*cell,0,cell,cell,0,0,size,size);mask=artMasks[key]=g.getImageData(0,0,size,size)}
+    const size=52,{cell,idleX}=travel.source,g=renderSurface(size,size)?.getContext('2d',{willReadFrequently:true});
+    if(g){g.drawImage(travel.image,idleX*cell,0,cell,cell,0,0,size,size);mask=artMasks[key]=g.getImageData(0,0,size,size)}
    }catch{}
   }
   if(mask?mask.data[(Math.floor(py*mask.height)*mask.width+Math.floor(px*mask.width))*4+3]>35:
