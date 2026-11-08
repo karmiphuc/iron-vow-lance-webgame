@@ -47,16 +47,17 @@ assert.equal(run('save.units[0].weapon'),'morrow');
 assert.equal(run('validSave(save)'),true);
 assert.equal(simulate({storage:new Map(sim.storage)}).run('pilotFrame(0)'),11);
 
-for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','gatecrasher']]){
+for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare','gatecrasher-bare'],
+ ['gatecrasher-cleaver','gatecrasher-cleaver'],['gatecrasher-vesper','gatecrasher-vesper'],['hellbreaker','gatecrasher']]){
  for(const face of ['left','right']){
-  const art=JSON.parse(run(`JSON.stringify(prototypes.${model}.${face})`));
+  const art=JSON.parse(run(`JSON.stringify(prototypes[${JSON.stringify(model)}].${face})`));
   assert.equal(art.key,`${prefix}-combat-${face}`);
   assert.equal(art.motion.cell,448);
   assert.notDeepEqual(art.muzzle,art.muzzle2);
   for(const key of [art.key,art.motion.key])for(const suffix of ['','-paint'])
    assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
  }
- const atlas=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL.${model})`));
+ const atlas=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL[${JSON.stringify(model)}])`));
  assert.equal(atlas.points.length,8);
  assert.ok(atlas.points.every(row=>row.length===4));
  assert.ok(existsSync(join(dist,'assets',atlas.key+'.webp')));
@@ -81,6 +82,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','ga
    assert.ok(swing[mid][1]<(swing[0][1]+swing.at(-1)[1])/2-.018,'swing sole lifts off the floor');
   }
  }
+ if(model.startsWith('gatecrasher-'))continue;
  const glb=readFileSync(join(dist,'rig-bench/prototypes',model+'.glb'));
  const json=JSON.parse(glb.subarray(20,20+glb.readUInt32LE(12)));
  assert.deepEqual(new Set(json.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire',...(model==='gatecrasher'?['Strike']:[])]));
@@ -92,4 +94,25 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['hellbreaker','ga
   assert.ok(!json.nodes.some(node=>node.name==='Hardpoint.R'));
  }
 }
-console.log('PASS: R2 Gatecrasher routes, Hellbreaker Frontier spawn, salvage-only acquisition and reload, and four exported clips.');
+const purchase=simulate({random:()=>0}).run;
+purchase("save.credits=10000;assignChassis(0,3);selected=0;page='workshop'");
+assert.equal(purchase("save.units[0].melee"),undefined);
+assert.equal(purchase("save.units[0].shoulder"),undefined);
+assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher-bare');
+assert.equal(purchase("save.owned.includes('missile')&&!save.owned.includes('vesper-shoulder')"),true);
+assert.equal(purchase(`(()=>{
+ const old=JSON.parse(JSON.stringify(save));old.units[0].melee='breach-gauntlet';
+ const restored=loadCareer(old);
+ return restored.units[0].melee===undefined&&restored.credits===save.credits;
+})()`),true);
+purchase("equipWeapon('cleaver');equipWeapon('vesper-shoulder')");
+assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher');
+assert.equal(purchase("validSave(save)"),true);
+assert.equal(purchase(`(()=>{
+ const invalid=JSON.parse(JSON.stringify(save));invalid.owned=invalid.owned.filter(id=>id!=='vesper-shoulder');
+ return validSave(invalid);
+})()`),false);
+purchase("assignChassis(0,0);assignChassis(0,3)");
+assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher');
+assert.equal(purchase("validSave(save)"),true);
+console.log('PASS: four Gatecrasher kits, legacy save migration, ownership and hull storage; Hellbreaker salvage and rigs.');

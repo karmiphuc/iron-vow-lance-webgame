@@ -3,8 +3,8 @@
 const chassis = {
   gatecrasher: {
     name: "Gatecrasher", serial: "HV-09", role: "Heavy assault",
-    summary: "An Arc Cleaver in the left hand and a Vesper pod over the right shoulder round out the twin forearm cannon.",
-    weapon: "Morrow AC-2 / Arc Cleaver / Vesper MRL",
+    summary: "The Morrow twin cannon is standard. Preview the optional Arc Cleaver and Vesper pod, available in the Workshop.",
+    weapon: "Morrow AC-2",
     deploy: "The hips settle, the cannon arm rises, and the articulated gripper tightens.",
     fire: "The cannon carriage slides twice while the hips and shoulders absorb the recoil.",
     strike: "The torso coils, drives the cleaver through the target lane, and returns to guard with both feet planted.",
@@ -40,6 +40,9 @@ const playButton = byId("play");
 const rigButton = byId("rig");
 const status = byId("status");
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const equipment = byId("equipment-preview");
+const cleaver = byId("preview-cleaver");
+const vesper = byId("preview-vesper");
 const cameraPresets = { front: 0, threequarter: .50, rear: Math.PI };
 const assets = new Map();
 
@@ -68,8 +71,23 @@ function setControls(ready) {
     button.disabled = !ready;
   }
   const strike = clipButtons.find((button) => button.dataset.clip === "Strike");
-  strike.hidden = activeChassis !== "gatecrasher";
+  strike.hidden = activeChassis !== "gatecrasher" || !cleaver.checked;
+  equipment.hidden = activeChassis !== "gatecrasher";
+  equipment.disabled = !ready;
   scrubber.disabled = !ready;
+}
+
+function updateEquipmentPreview() {
+  if (activeChassis !== "gatecrasher" || !model || !mixer) return;
+  model.traverse(node => {
+    const name = node.name.replace(/[^a-z0-9]/gi, "");
+    if (name === "HardpointL") node.visible = cleaver.checked;
+    if (name === "ShoulderHardpointR") node.visible = vesper.checked;
+  });
+  byId("weapon").textContent = ["Morrow AC-2", cleaver.checked && "Arc Cleaver", vesper.checked && "Vesper pod"]
+    .filter(Boolean).join(" / ");
+  setControls(true);
+  if (!cleaver.checked && activeClip === "Strike") setClip("Idle", !reduceMotion.matches);
 }
 
 function showTrial() {
@@ -288,8 +306,10 @@ async function selectChassis(id) {
     scene.add(skeleton);
     mixer = new THREE.AnimationMixer(model);
     mixer.addEventListener("finished", () => setPlaying(false));
-    setClip(asset.animations.some((clip) => clip.name === preferredClip) ? preferredClip : "Idle", !reduceMotion.matches);
+    const available = preferredClip !== "Strike" || id === "gatecrasher" && cleaver.checked;
+    setClip(available && asset.animations.some((clip) => clip.name === preferredClip) ? preferredClip : "Idle", !reduceMotion.matches);
     setControls(true);
+    updateEquipmentPreview();
     sizeViewport();
     renderer.render(scene, camera);
     status.textContent = "Live 3D · Rig online";
@@ -307,6 +327,8 @@ for (const button of chassisButtons) {
 for (const button of clipButtons) {
   button.addEventListener("click", () => setClip(button.dataset.clip, !reduceMotion.matches));
 }
+cleaver.addEventListener("change", updateEquipmentPreview);
+vesper.addEventListener("change", updateEquipmentPreview);
 for (const button of cameraButtons) {
   button.addEventListener("click", () => {
     azimuth = cameraPresets[button.dataset.camera];

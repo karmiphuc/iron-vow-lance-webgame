@@ -57,7 +57,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('selected'),0);
 
  const keys=run('Object.keys(window.IRON_VOW_TRAVEL)');
- assert.equal(keys.length,14);
+ assert.equal(keys.length,17);
  for(const key of keys){
   const visual=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL['${key}'])`));
   assert.equal(visual.points[0].length,4);

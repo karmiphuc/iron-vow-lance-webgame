@@ -2,12 +2,34 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
  for(const mode of ['missile','strike']){
-  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
   await page.locator('#nav button').first().waitFor({state:'attached'});
   await page.emulateMedia({reducedMotion:'no-preference'});
-  const start=await page.evaluate(mode=>{
-   battle=null;closeModal();save=fresh();
+  const credits=await page.evaluate(()=>{
+   battle=null;closeModal();save=fresh();save.credits=10000;
    if(!acquireHull(3)||!assignChassis(0,3,true))throw Error('Gatecrasher procurement failed');
+   selected=0;page='workshop';workshopView='assigned';render();
+   return save.credits;
+  });
+  assert.equal(await page.evaluate(()=>nativeHullKey(3,save.units[0])),'gatecrasher-bare');
+  assert.match(await page.locator('[data-equip="cleaver"]').innerText(),/BUY & EQUIP/);
+  assert.match(await page.locator('[data-equip="vesper-shoulder"]').innerText(),/BUY & EQUIP/);
+  const item=mode==='missile'?'vesper-shoulder':'cleaver';
+  await tap('[data-equip="'+item+'"]');
+  assert.equal(await page.evaluate(()=>save.credits),credits-(mode==='missile'?2400:1200));
+  if(mode==='missile'){
+   await tap('[data-equip="cleaver"]');
+   assert.equal(await page.evaluate(()=>nativeHullKey(3,save.units[0])),'gatecrasher');
+   await tap('#remove-melee');
+   await tap('[data-equip="cleaver"]');
+   assert.equal(await page.evaluate(()=>save.credits),credits-3600,'owned cleaver equips without a second charge');
+   await tap('#remove-melee');
+   await tap('#remove-shoulder');
+   assert.equal(await page.evaluate(()=>nativeHullKey(3,save.units[0])),'gatecrasher-bare');
+   await tap('[data-equip="vesper-shoulder"]');
+   assert.equal(await page.evaluate(()=>save.credits),credits-3600,'owned pod equips without a second charge');
+  }
+  const start=await page.evaluate(mode=>{
    createBattle(3,false,false,[0]);
    const actor=battle.units.find(u=>u.team==='ally'),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind);
    for(const unit of battle.units)if(unit.kind){unit.hp.body=0;unit.alive=false;unit.downReason='body'}
@@ -34,8 +56,11 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
     });
    };
    const w=selectedWeapon(actor,mode);
-   return {ap:actor.ap,hp:foe.hp.body,cost:paidAttackAP(actor,w),damage:partDamage(actor,foe,'body',w)};
+   return {ap:actor.ap,hp:foe.hp.body,cost:paidAttackAP(actor,w),damage:partDamage(actor,foe,'body',w),kit:nativeHullKey(actor.frame,actor)};
   },mode);
+  assert.equal(start.kit,mode==='missile'?'gatecrasher-vesper':'gatecrasher-cleaver');
+  if(mode==='missile')assert.equal(await page.locator('#strike').isDisabled(),true);
+  else assert.equal(await page.locator('#missile').count(),0);
   if(mobile&&mode==='missile'){
    const viewport=page.viewportSize();
    await page.setViewportSize({width:320,height:735});
@@ -76,5 +101,25 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!battle&&!battle.busy&&!!document.querySelector('#move'));
   assert.equal(await page.evaluate(()=>JSON.stringify(captureSortie())),result.sortie);
+  assert.equal(await page.evaluate(()=>nativeHullKey(current().frame,current())),start.kit);
+ }
+ if(!mobile){
+  await page.goto(new URL('rig-bench/prototypes/',origin).href);
+  await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Live 3D'));
+  const visible=()=>page.evaluate(()=>{
+   const value={};
+   model.traverse(node=>{
+    const name=node.name.replace(/[^a-z0-9]/gi,'');
+    if(['HardpointL','ShoulderHardpointR'].includes(name))value[name]=node.visible;
+   });
+   return value;
+  });
+  assert.deepEqual(await visible(),{HardpointL:false,ShoulderHardpointR:false});
+  assert.equal(await page.locator('[data-clip="Strike"]').isVisible(),false);
+  await page.locator('#preview-cleaver').check();
+  assert.deepEqual(await visible(),{HardpointL:true,ShoulderHardpointR:false});
+  assert.equal(await page.locator('[data-clip="Strike"]').isVisible(),true);
+  await page.locator('#preview-vesper').check();
+  assert.deepEqual(await visible(),{HardpointL:true,ShoulderHardpointR:true});
  }
 };

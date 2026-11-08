@@ -114,6 +114,15 @@ footer { display: flex; justify-content: space-between; gap: 12px; color: var(--
   .viewport { order: -1; min-height: clamp(350px, 64vw, 540px); }
   .view-controls button, .clips button { min-height: 42px; }
 }
+#equipment-preview {
+  min-width: 0;
+  grid-column: 1 / -1;
+  border: 1px solid #5d686b;
+  margin: 10px 0;
+  padding: 6px 10px 9px;
+}
+#equipment-preview label { display: inline-block; margin: 3px 14px 3px 0; }
+#equipment-preview input { vertical-align: middle; }
 @media (max-width: 370px) {
   .console { display: block; }
   .identity { padding-top: 12px; }

@@ -46,6 +46,7 @@ const setTimeout = (callback, ms) => {
  assert.equal(run('save.units[0].condition'),68);
  assert.equal(run('save.units[0].level'),2);
  assert.equal(run('assignChassis(0,3)'),true);
+ run("save.owned.push('cleaver');save.units[0].melee='cleaver'");
  run('deploy(0);closeModal()');
  assert.equal(run("battle.units.filter(u=>u.team==='ally').map(u=>u.frame).join(',')"),'3,4,2');
  assert.equal(run('assignChassis(0,0)'),false);
