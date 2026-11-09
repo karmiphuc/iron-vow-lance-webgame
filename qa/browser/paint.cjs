@@ -38,15 +38,30 @@ module.exports=async function checkPaint({page,origin}){
   },sample.mode);
   const result=await page.evaluate(mode=>{
    const u=window.paintSubject,source=window.paintAsset(mode),mask=moduleImage(source.key+'-paint');
-   const draw=ctx.drawImage;
+   function renderedBody(){
+    const draw=ctx.drawImage,render=drawUnit;
+    let body;
+    drawUnit=(subject,t,close)=>{
+     ctx.drawImage=function(image,...args){
+      body??={image,args,filter:this.filter};
+      return draw.call(this,image,...args);
+     };
+     try{render(subject,t,close)}finally{ctx.drawImage=draw}
+    };
+    ctx.save();ctx.filter='none';
+    try{
+     if(mode==='travel')drawUnit(u,5);
+     else drawAttackPane({start:5,phase:'aim',part:'body'},{x:0,y:0,w:W/2,h:H/2},u,false,5);
+    }finally{ctx.restore();drawUnit=render}
+    if(!body)throw Error('No chassis sprite was drawn');
+    return body;
+   }
+   const originalPaint=u.paint,stock=renderedBody();
    let body;
-   ctx.drawImage=function(image,...args){
-    body??={image,args,filter:this.filter};
-    return draw.call(this,image,...args);
-   };
-   ctx.save();ctx.filter='none';
-   try{drawUnit(u,5,mode!=='travel')}finally{ctx.restore();ctx.drawImage=draw}
-   if(!body)throw Error('No chassis sprite was drawn');
+   try{
+    u.paint='#cf3f4b';
+    body=renderedBody();
+   }finally{u.paint=originalPaint}
    const region=body.args.length===8?body.args.slice(0,4):[0,0,source.image.naturalWidth,source.image.naturalHeight];
    const [,,width,height]=region;
    const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
@@ -65,11 +80,12 @@ module.exports=async function checkPaint({page,origin}){
     if(bare){unpainted++;if(changed)leaked++}
     if(plates[i]>220&&changed&&painted[i]>Math.max(painted[i+1],painted[i+2])+12)changedRed++;
    }
-   return {filter:body.filter,changedRed,unpainted,leaked};
+   return {factory:stock.image===source.image,filter:stock.filter,changedRed,unpainted,leaked};
   },sample.mode);
   const label=sample.mode+' chassis '+sample.frame;
-  assert.equal(result.filter,'none',label+' uses plate paint instead of a full-body filter');
-  assert.ok(result.changedRed>20,label+' has red plates');
+  assert.equal(result.factory,true,label+' keeps the authored enemy finish');
+  assert.equal(result.filter,'none',label+' uses no full-body filter');
+  assert.ok(result.changedRed>20,label+' still supports intentional plate paint');
   assert.ok(result.unpainted>20,label+' has bare materials to compare');
   assert.equal(result.leaked,0,label+' leaves '+result.unpainted+' bare material pixels untouched');
  }
@@ -80,7 +96,10 @@ module.exports=async function checkPaint({page,origin}){
   },frame);
   const portrait=page.locator('.combat-target img');
   assert.equal(await portrait.evaluate(el=>getComputedStyle(el).filter),'none','no portrait color filter');
-  await page.waitForFunction(()=>document.querySelector('.combat-target img')?.src.startsWith('data:image/png'));
+  await page.waitForFunction(()=>{
+   const portrait=document.querySelector('.combat-target img'),key=portrait?.dataset.visualKey;
+   return key&&portrait.getAttribute('src')===art(key);
+  });
  }
- console.log('PASS crimson plate masks on all '+rasterFrames.length+' travel sprites, native and baked close views, and the target portrait');
+ console.log('PASS authored hostile finishes and intentional plate masks on '+rasterFrames.length+' travel sprites, close views, and target portraits');
 };

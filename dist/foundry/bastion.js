@@ -91,11 +91,9 @@ function frame(u,t,pose){
 }
 function paint(m,u){
  const overrides={bone:u.paint&&base(u.paint),trim:u.trim?.s&&base(u.trim.s),accent:u.trim?.a&&base(u.trim.a)};
- const red=u.team==='enemy';
  for(const {mat,original,name,region} of m.materials.values()){
   const value=/bone ceramic|Warm face/.test(name)?overrides.bone:/Blue charcoal/.test(name)?overrides.trim:/Safety amber/.test(name)?overrides.accent:null;
   mat.color.copy(value||original);
-  if(red&&/bone ceramic|Warm face/.test(name))mat.color.copy(base('#ab333a'));
   const max=u.max?.[region],hp=u.hp?.[region];
   if(max&&hp<max*.5)mat.color.multiplyScalar(hp>0?.49:.23);
  }
