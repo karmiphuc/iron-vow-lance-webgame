@@ -60,7 +60,7 @@
       "meshes": 13
     },
     "parallax": {
-      "triangles": 1564,
+      "triangles": 1596,
       "meshes": 9
     }
   },
@@ -133,7 +133,7 @@
         0,
         1
       ],
-      "travel": -0.19
+      "travel": -0.2432
     },
     "parallax": {
       "node": "parallax.pulse_bore",
@@ -143,7 +143,7 @@
         0,
         1
       ],
-      "travel": -0.16
+      "travel": -0.2048
     }
   }
 }
