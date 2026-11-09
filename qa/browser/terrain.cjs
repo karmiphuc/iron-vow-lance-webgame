@@ -29,6 +29,7 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
  assert.deepEqual(move.under,{x:move.x,z:move.z});
  const click=point=>mobile?page.touchscreen.tap(point.x,point.y):page.mouse.click(point.x,point.y);
  await click(move.p);
+ if(mobile){await page.locator('#move-preview').waitFor();await click(move.p)}
  await page.waitForFunction(({x,z})=>current().x===x&&current().z===z&&!battle.busy,move);
  await page.waitForFunction(({x,z})=>JSON.parse(storedCareer)?.sortie?.units.some(u=>u.x===x&&u.z===z),move);
  const saved=await page.evaluate(()=>[battle.terrainSeed,current().x,current().z,JSON.stringify(battle.field.cells)]);

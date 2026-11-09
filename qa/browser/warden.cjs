@@ -57,7 +57,9 @@ module.exports=async function checkWarden({page,mobile,origin,tap}){
  assert.ok(facings.every(([,width])=>width===4080));
  const click=({x,y})=>mobile?page.touchscreen.tap(x,y):page.mouse.click(x,y);
  await tap('#move');
- await click(await page.evaluate(()=>project(window.wardenQA.move.x,0,window.wardenQA.move.z)));
+ const move=await page.evaluate(()=>project(window.wardenQA.move.x,0,window.wardenQA.move.z));
+ await click(move);
+ if(mobile){await page.locator('#move-preview').waitFor();await click(move)}
  await page.waitForFunction(()=>{
   const {ally,move}=window.wardenQA;
   return !battle.busy&&ally.x===move.x&&ally.z===move.z;
