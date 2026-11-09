@@ -27,7 +27,7 @@ function servedSource(file,bytes){
 async function verifyLive(url){
  const dist=join(root,'dist'),base=new URL(url);
  if(base.protocol!=='https:'||base.username||base.password)throw Error('Use the public HTTPS Site URL.');
- const files=readdirSync(dist,{recursive:true}).filter(file=>/\.(?:html|js|css)$|(?:^|[\\/])(?:(?:armory-[^\\/]+|foundry-[67](?:-[^\\/]+)?|bulwark)\.webp|expansion-weapons\.glb|shields\.glb|bulwark\.glb)$/.test(file));
+ const files=readdirSync(dist,{recursive:true}).filter(file=>/\.(?:html|js|css)$|(?:^|[\\/])(?:(?:armory-[^\\/]+|foundry-[678](?:-[^\\/]+)?|bulwark)\.webp|expansion-weapons\.glb|shields\.glb|bulwark\.glb)$/.test(file));
  for(const file of files){
   const asset=new URL(file.replaceAll('\\','/'),base);
   const options={cache:'no-store',signal:AbortSignal.timeout(20000)};

@@ -242,6 +242,8 @@ const LINE_INFANTRY_FRAME=FRAMES.push({name:'LINE INFANTRY',model:'LI-01',role:'
  hp:151,arm:87,leg:98,move:4,armor:4,weapon:'rifle',foundry:6,enemyOnly:true})-1;
 const LINE_ELITE_FRAME=FRAMES.push({name:'LINE INFANTRY ELITE',model:'LI-02',role:'ELITE',color:'#526e86',
  hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true})-1;
+const VANGUARD_FRAME=FRAMES.push({name:'VANGUARD-BRAWLER',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
+ hp:165,arm:88,leg:103,move:3,armor:6,weapon:'hailstorm',melee:'piledriver',foundry:8,enemyOnly:true})-1;
 const ENEMY_NAMES=['JACKAL','RAVEN','MARAUDER','GATEBREAKER','LOCUST','SERAPH','RONIN','TITAN','SENTINEL','RAZOR','CITADEL'];
 const FOUNDRY_HOSTILES={corridor:[1,6,8,9],frontier:[7,6,5,CITADEL_FRAME,2]};
 const foundryModel=frame=>FRAMES[frame]?.foundry;
@@ -251,9 +253,9 @@ const CONTRACTS=[
   deployment:[[6,10],['tank',4,13],['tank',7,14],['helicopter',9,15]]},
  {id:'relay',field:0,name:'Ashes of the relay',place:'KARST BASIN · SECTOR 07',tag:'RECOVERY OPERATION',pay:3200,difficulty:1,desc:'A rival lance occupies a decommissioned relay station. Clear the site and recover its navigation core.',legacyMechs:3,
   deployment:[[6,10],[13,6],[16,3],['tank',4,13],['helicopter',10,16]]},
- {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect reinforced enemy chassis.',legacyMechs:4,
+ {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect Line Infantry Elite. Two- and three-mech sorties also face a Vanguard-Brawler.',legacyMechs:4,
   deployment:[[7,11],[14,6],[15,15],[4,4],['tank',4,14],['helicopter',11,17],['tank',9,8]]},
- {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'A veteran company has claimed the frontier. Break their command lance and make your name.',legacyMechs:5,
+ {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'A veteran company has claimed the frontier. Break their command lance. Two- and three-mech sorties face a Vanguard-Brawler escort.',legacyMechs:5,
   deployment:[[7,12],[12,6],[15,15],[4,4],[14,2],['tank',4,14],['helicopter',10,16],['tank',12,10],['helicopter',9,3]]}
 ];
 const OLD_SORTIE_CONTRACTS=['relay','corridor','frontier'];
@@ -632,6 +634,7 @@ function captureSortie(enemyPending=false){
   ...(battle.frontierHellbreaker?{frontierHellbreaker:true}:{}),
   ...(battle.picketLineInfantry?{picketLineInfantry:true}:{}),
   ...(battle.corridorElite?{corridorElite:true}:{}),
+  ...(battle.hardVanguard?{hardVanguard:true}:{}),
   units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed}))};
 }
 function dispatchSizes(){
@@ -647,7 +650,8 @@ function sortieSpawns(contract,count){
  if(count===1)return [...mechs.slice(0,1),...vehicles.slice(0,contract.id==='picket'?0:1)];
  return [...mechs.slice(0,2),...vehicles.slice(0,mechs.length===1?2:1)];
 }
-function hostileFrame(i,contract,stock=false,hellbreaker=false,picketLineInfantry=true,corridorElite=true){
+function hostileFrame(i,contract,stock=false,hellbreaker=false,picketLineInfantry=true,corridorElite=true,hardVanguard=true){
+ if(i===1&&!stock&&hardVanguard&&contract.difficulty>=2)return VANGUARD_FRAME;
  if(i===0&&!stock){
   if(picketLineInfantry&&contract.id==='picket')return LINE_INFANTRY_FRAME;
   if(corridorElite&&contract.id==='corridor')return LINE_ELITE_FRAME;
@@ -668,7 +672,7 @@ function validAux(aux){
  return !!aux&&shipLevel('drop')===2&&pilotKind(aux.pilotId)>=0&&Object.hasOwn(save.reservePilots??{},aux.pilotId)&&
   Number.isInteger(aux.frame)&&!!FRAMES[aux.frame]&&(save.reserve?.[aux.frame]?.condition??0)>=30;
 }
-function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,frontierHellbreaker=true,aux=null,launchAP=Number(!legacy&&shipLevel('drop')>0),picketLineInfantry=true,corridorElite=true){
+function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,frontierHellbreaker=true,aux=null,launchAP=Number(!legacy&&shipLevel('drop')>0),picketLineInfantry=true,corridorElite=true,hardVanguard=true){
  const contract=CONTRACTS[i],field=FIELDS[contract.field];
  const layout=theaterLayouts?.[contract.field]?.cover||field.cover;
  const cover=legacy?field.cover:layout;
@@ -676,6 +680,7 @@ function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,fron
  battle.frontierHellbreaker=!legacy&&!stockHostiles&&contract.id==='frontier'&&frontierHellbreaker;
  battle.picketLineInfantry=!legacy&&!stockHostiles&&contract.id==='picket'&&picketLineInfantry;
  battle.corridorElite=!legacy&&!stockHostiles&&contract.id==='corridor'&&corridorElite;
+ battle.hardVanguard=!legacy&&!stockHostiles&&contract.difficulty>=2&&slots.length>=2&&hardVanguard;
  const allies=legacy?[[1,8],[2,9],[0,9]]:[[1,16],[2,18],[0,18]];
  const enemies=legacy?Array.from({length:contract.legacyMechs},(_,j)=>[j%3*3+2,Math.floor(j/3)]):sortieSpawns(contract,slots.length);
  battle.units=slots.map((slot,index)=>makeUnit(slot,'ally',...allies[index]));
@@ -715,8 +720,10 @@ function restoreSortie(){
  valid=valid&&(saved.frontierHellbreaker===undefined||saved.frontierHellbreaker===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='frontier');
  valid=valid&&(saved.picketLineInfantry===undefined||saved.picketLineInfantry===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='picket');
  valid=valid&&(saved.corridorElite===undefined||saved.corridorElite===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='corridor');
+ valid=valid&&(saved.hardVanguard===undefined||saved.hardVanguard===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&
+  CONTRACTS[contractIndex]?.difficulty>=2&&regular.length>=2);
  if(valid){
-  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
+  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
   for(let i=0;valid&&i<saved.units.length;i++){
    const state=saved.units[i],u=battle.units[i];
    const keptLaunchAP=u.team==='ally'&&(saved.turn===1||state?.hp?.body===0||state?.hp?.pilot===0);
@@ -1657,7 +1664,7 @@ function hostileLivery(frame,index){
 }
 function makeUnit(i,team,x,z){
  const ally=team==='ally',aux=ally&&i===AUX_SLOT?battle.aux:null;
- const frame=aux?aux.frame:ally?pilotFrame(i):hostileFrame(i,battle.contract,battle.stockHostiles,battle.frontierHellbreaker,battle.picketLineInfantry,battle.corridorElite),f=FRAMES[frame];
+ const frame=aux?aux.frame:ally?pilotFrame(i):hostileFrame(i,battle.contract,battle.stockHostiles,battle.frontierHellbreaker,battle.picketLineInfantry,battle.corridorElite,battle.hardVanguard),f=FRAMES[frame];
  const u=aux?save.reserve[frame]:ally?save.units[i]:{...stockHull(frame),upgrade:Math.max(0,battle.contract.difficulty-1),level:battle.contract.difficulty,
   weapon:f.weapon||['rifle','shotgun','missile'][i%3]};
  const pilot=aux?pilotKind(aux.pilotId):ally?pilotClass(i):undefined,crew=aux?save.reservePilots[aux.pilotId]:u;
@@ -1666,9 +1673,9 @@ function makeUnit(i,team,x,z){
  const max={body,pilot:ally?CREW_HP[pilot]:PILOT_HP[i%PILOT_HP.length],...limbs};
  const hp=Object.fromEntries(Object.entries(max).map(([part,n])=>[part,part==='pilot'?n:deploymentHP(n,u.condition)]));
  if(ally&&woundDays(pilotId(pilot)))hp.pilot=Math.ceil(max.pilot*.65);
- const [paint,secondary]=ally?[u.paint??null]:hostileLivery(frame,i);
+ const [paint,secondary]=ally?[u.paint??null]:frame===VANGUARD_FRAME?[null]:hostileLivery(frame,i);
  return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee:u.melee??null,shoulder:u.shoulder,shield:u.shield,
-  paint,trim:ally?u.trim:{s:secondary},upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
+  paint,trim:ally?u.trim:secondary?{s:secondary}:null,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
 }
 const sortiePilot=u=>u.index===AUX_SLOT?save.reservePilots[battle.aux.pilotId]:save.units[u.index];
 const sortieHull=u=>u.index===AUX_SLOT?save.reserve[u.frame]:save.units[u.index];
@@ -2166,9 +2173,11 @@ async function endTurn(){
   const allies=battle.units.filter(u=>u.team==='ally'&&u.alive);
   if(!allies.length)break;
   const target=allies.sort((a,b)=>distance(enemy,a)-distance(enemy,b))[0],primary=unitWeapon(enemy);
-  const alert=battle.legacy||distance(enemy,target)<=(enemy.kind==='helicopter'?11:12)||targetParts(enemy).some(p=>enemy.hp[p]<enemy.max[p]);
+  const vanguard=enemy.frame===VANGUARD_FRAME;
+  const chaseRange=vanguard&&canUseWeapon(enemy,meleeWeapon(enemy))?1:primary.range;
+  const alert=vanguard||battle.legacy||distance(enemy,target)<=(enemy.kind==='helicopter'?11:12)||targetParts(enemy).some(p=>enemy.hp[p]<enemy.max[p]);
   if(!alert)continue;
-  if(!enemy.blackout?.hold&&distance(enemy,target)>primary.range&&movementLimit(enemy)>0){
+  if(!enemy.blackout?.hold&&distance(enemy,target)>chaseRange&&movementLimit(enemy)>0){
    const options=[...paths(enemy)].map(([key,cost])=>{
     const [x,z]=key.split(',').map(Number);
     return{x,z,cost,d:distance(target,{x,z})};
@@ -2407,6 +2416,7 @@ function preloadNativeMotion(frame,paint,hull){
  if(atlas){
   if(atlas.views?.[0])moduleImage(atlas.views[0].key);
   if(paint)moduleImage(atlas.key+'-paint');
+  if(atlas.variants)return atlas.variants.map(key=>motionImage({key}));
   if(atlas.unarmedKey){
    motionImage({key:atlas.unarmedKey});
    if(paint)moduleImage(atlas.unarmedKey+'-paint');
@@ -2517,7 +2527,8 @@ MECH_SIZE[HELLBREAKER]=MECH_SIZE[3];
 MECH_SIZE[CITADEL_FRAME]=MECH_SIZE[BASTION_FRAME];
 MECH_SIZE[LINE_INFANTRY_FRAME]=2.60;
 MECH_SIZE[LINE_ELITE_FRAME]=2.85;
-function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1);return{x:p.x-size*(visual?.groundX??.5),y:p.y-size*(visual?.ground??(foundryModel(u.frame)!=null?.84:.94)),w:size,h:size}}
+MECH_SIZE[VANGUARD_FRAME]=3.25;
+function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1);return{x:p.x-size*(visual?.groundX??.5),y:p.y-size*(visual?.ground??(u.frame===VANGUARD_FRAME?(window.IRON_VOW_FOUNDRY_ART?.[8]?.ground??.84):foundryModel(u.frame)!=null?.84:.94)),w:size,h:size}}
 // A small skinned mesh articulates the existing armor art without new image requests.
 const MECH_MOTION=[
  {step:.31,hip:.59,split:.52,foot:[.96,.98],mass:1,muzzle:[.075,.565]},
@@ -2532,6 +2543,7 @@ MECH_MOTION[HELLBREAKER]=MECH_MOTION[3];
 MECH_MOTION[CITADEL_FRAME]={...MECH_MOTION[BASTION_FRAME],step:.66};
 MECH_MOTION[LINE_INFANTRY_FRAME]={...MECH_MOTION[0],step:.44};
 MECH_MOTION[LINE_ELITE_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.52,mass:1.28};
+MECH_MOTION[VANGUARD_FRAME]={...MECH_MOTION[3],step:.57};
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
 function dampedImpulse(age,frequency=35,decay=15){return age>=0&&age<.8?Math.sin(age*frequency)*Math.exp(-age*decay):0}
@@ -3514,6 +3526,21 @@ function drawMechSmoke(u,t,destroyed=false){
  for(let i=0;i<count;i++){const v=(t*.38+i/count)%1,fade=destroyed?Math.exp(-Math.max(0,age)*.22):1;ctx.globalAlpha=(1-v)*fade*(destroyed?.3:.18);ctx.fillStyle=destroyed?'#a9a8a0':'#aebbc4';ctx.beginPath();ctx.arc(p.x+Math.sin(i*3+t*.7)*scale*(.07+v*.14),p.y-v*scale*(destroyed?1.2:.8),scale*(.045+v*.16),0,Math.PI*2);ctx.fill()}
  ctx.restore();
 }
+function vanguardArtFrame(u,pose,atlas){
+ if(!u.alive)return u.downReason==='pilot'?atlas.pilotDown:atlas.wreck;
+ const clips=atlas.clips;
+ if(pose.strikeKind){
+  if(pose.primePhase==='step')return clips.prime[Math.round(pose.primeProgress*(clips.prime.length-1))];
+  const levels=atlas.levels.strike;
+  return clips.strike[levels.findIndex((level,i)=>i===levels.length-1||pose.strikeProgress<=(level+levels[i+1])/2)];
+ }
+ if(u.attack&&u.hp.right>0){
+  const age=pose.time-(u.attack.fireAt??Infinity);
+  if(age>=0&&age<.33&&!reducedMotion)return clips.kick[Math.min(clips.kick.length-1,Math.floor(age/.11))];
+  if(pose.aim>.02)return clips.aim[Math.round(pose.aim*(clips.aim.length-1))];
+ }
+ return u.motion&&!reducedMotion?Math.floor(pose.cycle*8)%8:atlas.idle;
+}
 function foundryRender(u,t,liveOnly=false){
  const model=foundryModel(u.frame);
  if(model==null)return null;
@@ -3526,8 +3553,9 @@ function foundryRender(u,t,liveOnly=false){
  if(liveOnly)return null;
  if(bastionRig(u))return {surface:artImages['bastion-bst04'],cell:0,anchors:{body:[.50,.46],pilot:[.50,.29],right:[.31,.59],left:[.70,.59],legs:[.50,.72],muzzle:[.20,.53],leadFoot:[.43,.84]},flip:false,baked:true,primary:true};
  if(!atlas||atlas.frames.length<19)return null;
- const sprite=u.hp.right<=0&&atlas.unarmedKey?{key:atlas.unarmedKey}:atlas,image=motionImage(sprite);
- const index=!u.alive?u.downReason==='pilot'?17:18:
+ const variant=atlas.variants?.[Number(u.hp.right<=0)+2*Number(u.hp.left<=0)];
+ const sprite=variant?{key:variant}:u.hp.right<=0&&atlas.unarmedKey?{key:atlas.unarmedKey}:atlas,image=motionImage(sprite);
+ const index=u.frame===VANGUARD_FRAME?vanguardArtFrame(u,pose,atlas):!u.alive?u.downReason==='pilot'?17:18:
   pose.strikeKind&&pose.primePhase!=='step'?13+Math.min(2,Math.floor(pose.strikeProgress*3)):
   Math.abs(pose.recoil)>.05?12:pose.aim>.35?11:
   pose.primeProgress>0?8+Math.min(2,Math.floor(pose.primeProgress*3)):
@@ -3536,7 +3564,7 @@ function foundryRender(u,t,liveOnly=false){
  const anchors=flip?Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([k,[x,y]])=>[k,[1-x,y]])):frame;
  const loaded=imageReady(image),key=loaded?sprite.key:legacyChassis[u.frame],base=loaded?image:artImages[key];
  const surface=loaded?foundryPaint(base,key,u.paint,u.trim,atlas.paintBlend):base;
- return {surface,cell:loaded?atlas.cell:0,index,anchors,flip,baked:true,primary:atlas.primary===true,strikeProgress:pose.strikeProgress};
+ return {surface,cell:loaded?atlas.cell:0,index,anchors,flip,baked:true,primary:atlas.primary===true,secondary:atlas.secondary===true,strikeProgress:pose.strikeProgress};
 }
 function drawUnit(u,t,close=false){
  const inactive=spent(u)&&!u.attack&&!u.motion&&!u.turning;
