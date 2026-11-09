@@ -5,15 +5,29 @@ const simulate=require('./sim-harness.cjs');
  const sim=simulate({random:()=>0,reducedMotion:true}),{run}=sim;
  run("deploy(0,false,[0]);closeModal();const ally=current(),foe=battle.units[1];foe.x=ally.x+1;foe.z=ally.z");
  assert.ok(run("RANGED.filter(w=>armoryClass(w)==='assault').every(w=>w.burst)"));
- for(const [id,count] of [['rifle',8],['sidewinder',12],['trident',8],['forge',8],['ember',8],['hailstorm',12],
-  ['shotgun',12],['needle-carbine',8],['flechette-scattergun',12]]){
+ for(const [id,count,scatter=false] of [['rifle',8],['sidewinder',12],['trident',8],['forge',12,true],['ember',12,true],['hailstorm',12],
+  ['shotgun',12,true],['needle-carbine',8],['flechette-scattergun',12,true]]){
   const volley=JSON.parse(run(`JSON.stringify(planVolley(ally,foe,'body',weapon('${id}'),false))`));
   assert.equal(volley.rounds.length,count);
   assert.equal(volley.landed,count);
   assert.equal(volley.impacts.reduce((n,p)=>n+p.amount,0),
    run(`Math.round(partDamage(ally,foe,'body',weapon('${id}'))*1.15)`));
-  assert.equal(run(`attackProfile(ally,'${id}').beats.length`),id.includes('scatter')||id==='shotgun'?1:count);
+  const profile=JSON.parse(run(`JSON.stringify(attackProfile(ally,'${id}'))`));
+  assert.equal(profile.beats.length,scatter?1:count);
+  if(scatter){
+   assert.equal(profile.effect||id,'shotgun');
+   assert.deepEqual(volley.impacts.map(hit=>hit.part).sort(),['body','left','legs','pilot','right']);
+  }
  }
+ assert.ok(run("FRAMES.every((_,frame)=>['ally','enemy'].every(team=>dodgeChance({team,frame})===(frame===AERO_FRAME?.15:.08)))"));
+ assert.equal(run("dodgeChance({frame:0,kind:'tank'})"),0);
+ run(`let evadeRolls=0;Math.random=()=>{evadeRolls++;return .93};
+  const evadedShell=planVolley(ally,foe,'body',weapon('ember'),false);
+  Math.random=()=>.90;
+  const standard=planVolley(ally,foe,'body',weapon('forge'),false);
+  const aero=planVolley(ally,{...foe,frame:AERO_FRAME},'body',weapon('forge'),false)`);
+ assert.equal(run('evadeRolls'),1);
+ assert.ok(run('evadedShell.dodged&&evadedShell.landed===0&&aero.dodged&&!standard.dodged'));
  run(`const gun=weapon('rifle'),chance=hitChance(ally,foe,'body',gun);
   let calls=0;
   const rng=[0,1,.86*chance,1,.91*chance,.98*chance,0,1];
@@ -56,5 +70,5 @@ const simulate=require('./sim-harness.cjs');
  legacy("save.day=4;createBattle(1,false,false,[0],true,null,0,true,true,true,true,true,true,null,0);persist()");
  const restored=simulate({storage:new Map(previous.storage)});
  assert.equal(restored.run('battle.units[1].frame'),0,'older Relay checkpoint keeps its Warden');
- console.log('PASS burst counts, independent misses, scatter, capped damage, shield break, one kill and XP award, and rotated salvage reload/rebuild.');
+ console.log('PASS burst counts, independent misses, scatter, chassis evasion, capped damage, shield break, one kill and XP award, and rotated salvage reload/rebuild.');
 })().catch(error=>{console.error(error);process.exitCode=1});

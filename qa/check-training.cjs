@@ -66,7 +66,7 @@ function train(sim,i,ids){
  lance.run("target.z=9;renderBattle()");
  assert.equal(lance.run('reactionWeapon(g,target)'),null);
  assert.match(lance.node('#ui').innerHTML,/OUT OF RANGE/);
- assert.ok(Math.abs(lance.run("hitChance(g,target,'pilot')")-.93)<1e-10);
+ assert.ok(Math.abs(lance.run("hitChance(g,target,'pilot')-.93*(1-dodgeChance(target))"))<1e-10);
  assert.ok(lance.run("partDamage(g,target,'right',unitWeapon(g))>partDamage(g,target,'body',unitWeapon(g))"));
  assert.ok(lance.run("partDamage(g,target,'body',unitWeapon(g))>partDamage({...g,training:{}},target,'body',unitWeapon(g))"));
  lance.run('selected=2;const anchor=current();anchor.hp.body-=80;anchor.hp.right=0;anchor.hp.left=5;skill()');

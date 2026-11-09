@@ -80,7 +80,7 @@ const ids=['cleaver','breaker','piledriver','blade'];
  assert.equal(resumed.run('current().hp.legs=0;canJumpjet(current())'),false);
 
  play('battle.cover.clear();attacker.x=aero.x+1;attacker.z=aero.z');
- assert.equal(play('hitChance(attacker,aero,"body")'),play('hitChance(attacker,{...aero,frame:0},"body")*.85'));
+ assert.equal(play('hitChance(attacker,aero,"body")'),play('hitChance(attacker,{...aero,frame:null},"body")*.85'));
  const initialHP=play('aero.hp.body');
  roll=.86;
  for(const id of ['rifle','missile','breaker']){

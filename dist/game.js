@@ -9,8 +9,8 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'blade',name:'Raijin HB-9',type:'HEAT BLADE',damage:64,range:1,ap:3,weight:16,price:2200,melee:true,desc:'A planted step and a committed lunge. Ignores cover against adjacent targets.'},
  {id:'sidewinder',name:'Sidewinder SM-2',type:'SUBMACHINE GUN',burst:12,damage:25,range:4,ap:2,weight:10,price:900,motion:'rifle',falloff:{start:2,step:.05},desc:'A low-AP burst for close work. Accuracy falls by 5 percentage points per tile beyond 2.'},
  {id:'trident',name:'Trident BR-5',type:'BULLPUP CARBINE',burst:8,damage:43,range:5,ap:3,weight:16,price:2000,motion:'rifle',desc:'A premium service carbine. Hits harder than Kestrel at the same reach and AP.'},
- {id:'forge',name:'Forge SG-12',type:'SLUG CANNON',burst:8,damage:61,range:2,ap:3,weight:21,price:2300,motion:'rampart',pierce:.55,desc:'A close-range burst of slugs punches through 55% of the target’s armor.'},
- {id:'ember',name:'Ember PC-4',type:'PLASMA ACCELERATOR',burst:8,damage:53,range:4,ap:3,weight:19,price:2800,motion:'rail',desc:'A compact accelerator fires a burst of plasma pulses at close and medium range.'},
+ {id:'forge',name:'Forge SG-12',type:'SLUG SHOTGUN',burst:12,scatter:true,damage:61,range:2,ap:3,weight:21,price:2300,motion:'rampart',pierce:.55,desc:'A 12-slug shell rakes all intact parts on a hit and punches through 55% of the target’s armor.'},
+ {id:'ember',name:'Ember PC-4',type:'PLASMA SHOTGUN',burst:12,scatter:true,damage:53,range:4,ap:3,weight:19,price:2800,motion:'rail',desc:'A single discharge fans out into 12 plasma bolts, raking all intact parts on a hit.'},
  {id:'watchman',name:'Watchman DMR-8',type:'MARKSMAN RIFLE',damage:47,range:8,ap:4,weight:17,price:2600,motion:'rampart',aim:.08,desc:'A stabilised optic adds 8 percentage points of accuracy. Lower impact per shot than Longbow.'},
  {id:'falcon',name:'Falcon AC-7',type:'FIELD AUTOCANNON',damage:57,range:7,ap:4,weight:23,price:3200,motion:'rampart',aim:-.08,desc:'Fires for 1 AP less than Rampart. Heavy vibration costs 8 percentage points of accuracy.'},
  {id:'cerberus',name:'Cerberus RP-6',type:'ROCKET POD',damage:76,range:6,ap:5,weight:29,price:3900,motion:'missile',desc:'An unguided two-rocket salvo. Cover reduces accuracy and the launcher cannot counter.'},
@@ -274,7 +274,8 @@ const AERO_MELEE=['cleaver','breaker','piledriver','blade'];
 const JUMPJET_RANGE=5,JUMPJET_AP=2;
 const JUMPJET_HELP='Leap over cover and units to a clear tile within '+JUMPJET_RANGE+' tiles. Costs '+JUMPJET_AP+' AP. Once per sortie. Requires working legs.';
 const dailyAeroMelee=()=>AERO_MELEE[(save.day-1)%AERO_MELEE.length];
-const dodgeChance=u=>FRAMES[u?.frame]?.dodge??0;
+const chassisEvade=frame=>frame.dodge??.08;
+const dodgeChance=u=>u&&!u.kind&&FRAMES[u.frame]?chassisEvade(FRAMES[u.frame]):0;
 const salvageableHull=frame=>playerHull(frame)&&!FRAMES[frame].noSalvage;
 const ENEMY_NAMES=['JACKAL','RAVEN','MARAUDER','GATEBREAKER','LOCUST','SERAPH','RONIN','TITAN','SENTINEL','RAZOR','CITADEL'];
 const FOUNDRY_HOSTILES={corridor:[1,6,8,9],frontier:[7,6,5,CITADEL_FRAME,2]};
@@ -897,7 +898,7 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
  const stats=[
   ['Free movement',chassisMobility(frame,false,training)+' tiles',MOVE_HELP],
   ['Extra movement','1 tile / '+EXTRA_MOVE_AP+' AP','One extra tile per round with working legs. It uses the last of your free movement.'],
-  ...(frame.dodge?[['Dodge',Math.round(frame.dodge*100)+'%','Chance to evade any incoming attack.']]:[]),
+  ['Dodge',Math.round(chassisEvade(frame)*100)+'%','Chance to evade an incoming round or shell.'],
   ...(frame.jumpjet?[['Jumpjet',JUMPJET_RANGE+' tiles / '+JUMPJET_AP+' AP',JUMPJET_HELP]]:[]),
   ['Armor',armor,'Losing the left arm reduces armor to '+damagedArmor(armor)+'.'],
   ['AP per round',roundAP(training)],
@@ -1025,7 +1026,7 @@ function chassisAssignments(i,training){
    <small>${shield?shield.name+' · −'+shieldPercent(shield)+' arm damage':melee?melee.name+' · '+weaponAP(melee,training)+' AP':'No melee'}</small>
    <small>Counter · ${counterSummary(primary,melee,training,shield)} · 0 AP</small>
    ${frame.jumpjet?'<small>Jumpjet · '+JUMPJET_RANGE+' tiles / '+JUMPJET_AP+' AP · once per sortie</small>':''}
-   ${frame.dodge?'<small>Dodge · '+Math.round(frame.dodge*100)+'% of incoming attacks</small>':''}
+   <small>Dodge · ${Math.round(chassisEvade(frame)*100)}% per incoming round or shell</small>
    <div class="bay-actions">${salvaged?`<button data-rebuild="${index}" ${hullOwned(index)||save.credits<rebuildPrice(index)?'disabled':''}>${hullOwned(index)?'HULL OWNED':'REBUILD · '+money(rebuildPrice(index))}</button><button data-recycle="${index}">RECYCLE · +${money(scrapPrice(index))}</button>`:view==='market'?`<button data-buy-hull="${index}" ${save.credits<frame.cost?'disabled':''}>BUY · ${money(frame.cost)}</button>`:`<button data-chassis="${index}" aria-pressed="${index===assigned}" ${index===assigned?'disabled':''}>${index===assigned?'SELECTED':slot>=0?'SWAP WITH '+pilotProfile(slot).call:'ASSIGN TO '+pilotProfile(i).call}</button>`}</div>
    ${view==='storage'&&hangarLevel('fabrication')&&hull.condition<patchLimit()?`<button data-patch-storage="${index}">FIELD PATCH · ${patchLimit()}%</button>`:''}
   </article>`;
@@ -2264,7 +2265,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   return connected?p:{...p,ox:p.ox+(.55+.06*(index%4))*(a.face||1),oy:p.oy-(.22+.09*(index%5))};
  }):null;
  effects.push({type:'shot',actor:a.id,target:t.id,part:actual,kind:w.id,x:a.x,z:a.z,tx:t.x,tz:t.z,t:1,born:clock,life:flight+.12,origins:[],impact,projectiles});
- sound(power?.sound||weaponMotion(w.id),1,w.burst&&!w.scatter?profile.beats:null);
+ sound(power?.sound||(w.scatter&&w.id!=='ember'?'shotgun':weaponMotion(w.id)),1,w.burst&&!w.scatter?profile.beats:null);
  const lastBeat=profile.beats.at(-1);
  if(rockets){
   await waitAttack(profile.travel*1000,sequence);
@@ -2778,7 +2779,7 @@ MECH_SIZE[VANGUARD_FRAME]=3.25;
 MECH_SIZE[REAVER_FRAME]=3.40;
 MECH_SIZE[BULWARK_FRAME]=3.65;
 MECH_SIZE[ASHIGARU_FRAME]=2.58;
-MECH_SIZE[AERO_FRAME]=3.55;
+MECH_SIZE[AERO_FRAME]=3.18;
 // Match the breach hull's padded travel cells to its close-up silhouette.
 const GATECRASHER_TRAVEL_SCALE=1.34;
 function jumpjetHeight(u,t){
@@ -2839,7 +2840,7 @@ const ATTACK_PROFILES={
  'signal-knife':{raise:.35,beats:[0],travel:.12,recover:.42,melee:true,effect:'cleaver',cue:16,contact:21},
  [FREE_HAND_COUNTER.id]:{raise:.21,beats:[0],travel:.12,recover:.26,melee:true}
 };
-for(const w of WEAPONS)if(w.motion)ATTACK_PROFILES[w.id]={...ATTACK_PROFILES[w.motion],effect:w.motion};
+for(const w of WEAPONS)if(w.motion)ATTACK_PROFILES[w.id]={...ATTACK_PROFILES[w.motion],effect:w.scatter?'shotgun':w.motion};
 const VOLLEY_PROFILES=Object.fromEntries(WEAPONS.filter(w=>w.burst).map(w=>[
  w.id,{...ATTACK_PROFILES[w.id],beats:w.scatter?[0]:Array.from({length:w.burst},(_,i)=>i*(w.burst===12?.039:.051))}
 ]));
@@ -4174,7 +4175,7 @@ function drawPoweredRelease(actor,profile,age,t){
 }
 function drawAttackEffect(e,t){
  const actor=battle.units.find(u=>u.id===e.actor),profile=attackProfile(actor,e.kind),age=t-e.born;
- const kind=profile.effect||e.kind;
+ const kind=profile.effect||e.kind,plasma=e.kind==='ember';
  const endpoint=e.impact?resolveAttachment(e.impact):project(e.tx,1.3,e.tz);
  if(profile.melee){
   if(!actor||age>profile.travel)return;
@@ -4200,15 +4201,14 @@ function drawAttackEffect(e,t){
     ctx.fillStyle='#fff0bb';ctx.shadowColor='#ffb765';ctx.shadowBlur=16;ctx.beginPath();ctx.arc(x,y,Math.max(2,scale*.055),0,Math.PI*2);ctx.fill();
     for(let j=1;j<=4;j++){const q=Math.max(0,p-j*.045),sx=a.x+(impact.x-a.x)*q,sy=a.y+(impact.y-a.y)*q-Math.sin(q*Math.PI)*scale*1.25;ctx.globalAlpha=(1-j/5)*.25;ctx.fillStyle='#c1b8a5';ctx.beginPath();ctx.arc(sx,sy,scale*(.025+j*.015),0,Math.PI*2);ctx.fill()}
    }else if(kind==='rail'){
-    const plasma=e.kind==='ember';
-    ctx.globalAlpha=1-p*.65;ctx.shadowColor=plasma?'#f88547':'#b3e9f4';ctx.shadowBlur=16;ctx.strokeStyle=plasma?'#ffa064':'#8ec7dc';ctx.lineWidth=5*(1-p*.7);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(impact.x,impact.y);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle=plasma?'#fff0bd':'#f5ffff';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.globalAlpha=1-p*.65;ctx.shadowColor='#b3e9f4';ctx.shadowBlur=16;ctx.strokeStyle='#8ec7dc';ctx.lineWidth=5*(1-p*.7);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(impact.x,impact.y);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#f5ffff';ctx.lineWidth=1.5;ctx.stroke();
    }else{
     const scatter=kind==='shotgun'&&e.projectiles;
     for(let pellet=0;pellet<(scatter?scatter.length:1);pellet++){
      const end=scatter?resolveAttachment(scatter[pellet]):impact;
      const spread=scatter?(pellet-(scatter.length-1)/2)*scale*.018:0;
      const x=a.x+(end.x-a.x)*p,y=a.y+(end.y-a.y+spread)*p;
-     ctx.strokeStyle=pellet%2?'#fff0c4':'#e9b971';ctx.lineWidth=scatter?1.4:2;ctx.shadowColor='#eab36b';ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(x-(end.x-a.x)*.10,y-(end.y-a.y)*.10);ctx.lineTo(x,y);ctx.stroke();
+     ctx.strokeStyle=plasma?'#ffa064':pellet%2?'#fff0c4':'#e9b971';ctx.lineWidth=scatter?1.4:2;ctx.shadowColor=plasma?'#f88547':'#eab36b';ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(x-(end.x-a.x)*.10,y-(end.y-a.y)*.10);ctx.lineTo(x,y);ctx.stroke();
     }
    }
   }
@@ -4217,7 +4217,7 @@ function drawAttackEffect(e,t){
    const angle=Math.atan2(impact.y-a.y,impact.x-a.x);ctx.translate(a.x,a.y);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(0,-scale*.07);ctx.lineTo(scale*.33,0);ctx.lineTo(0,scale*.07);ctx.fill();
   }
   ctx.restore();
-  if(['rifle','shotgun','hailstorm','rampart'].includes(kind)&&since<.55&&!reducedMotion){
+  if(!plasma&&['rifle','shotgun','hailstorm','rampart'].includes(kind)&&since<.55&&!reducedMotion){
    ctx.save();const x=a.x+scale*.45*since,y=a.y-scale*.7*since+scale*1.4*since*since;ctx.translate(x,y);ctx.rotate(since*19+i);ctx.globalAlpha=1-since/.55;ctx.fillStyle='#d8b982';ctx.fillRect(-2,-.8,4,1.6);ctx.restore();
   }
  }

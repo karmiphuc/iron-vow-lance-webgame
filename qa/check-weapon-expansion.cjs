@@ -20,11 +20,13 @@ const createSimulation=require('./sim-harness.cjs');
  for(const [group,ids] of Object.entries(groups))for(const id of ids){
   assert.equal(run(`armoryClass(weapon('${id}'))`),group,id);
   assert.ok(await run(`(async()=>{
-   const w=weapon('${id}');attacker.ap=ROUND_AP;const hp=foe.hp.body;
+   const w=weapon('${id}');attacker.ap=ROUND_AP;
+   const health=()=>w.scatter?Object.values(foe.hp).reduce((sum,hp)=>sum+hp,0):foe.hp.body;
+   const hp=health();
    if(w.melee)attacker.melee=w.id;else attacker.weapon=w.id;
    effects=[];await shoot(attacker,foe,'body',w);
    return ATTACK_PROFILES[w.id].melee===w.melee&&attacker.ap===ROUND_AP-w.ap
-    &&hp-foe.hp.body===Math.round(damage(attacker,foe,w)*(w.burst?1.15:1))&&effects.some(e=>e.type==='shot'&&e.kind===w.id);
+    &&hp-health()===Math.round(damage(attacker,foe,w)*(w.burst?1.15:1))&&effects.some(e=>e.type==='shot'&&e.kind===w.id);
   })()`),id+' uses its own damage, AP, profile and impact');
  }
  assert.ok(run(`(()=>{
@@ -35,7 +37,7 @@ const createSimulation=require('./sim-harness.cjs');
   const covered=hitChance(attacker,foe,'left',rocket);
   const guided=hitChance(attacker,foe,'left',vesper);
   battle.cover=cover;
-  return Math.abs(clear-covered-.19)<1e-9&&guided===clear&&counterRange(rocket,{range:1,counterRange:1})===0
+  return Math.abs(clear-covered-.19*(1-dodgeChance(foe)))<1e-9&&guided===clear&&counterRange(rocket,{range:1,counterRange:1})===0
    &&shotMuzzle(attacker,'cerberus',0)==='muzzle'&&shotMuzzle(attacker,'cerberus',1)==='muzzle2';
  })()`),'Cerberus respects cover, locks out counters and uses its own muzzle');
  assert.ok(run(`(()=>{
@@ -54,7 +56,7 @@ const createSimulation=require('./sim-harness.cjs');
   foe.x=attacker.x+4;
   const far=hitChance(attacker,foe,'left',weapon('sidewinder'));
   return damage(attacker,foe,weapon('forge'))===52&&damage(attacker,foe,weapon('pike'))===50&&damage(attacker,foe,weapon('piledriver'))===54
-   &&Math.abs(near-far-.10)<1e-9
+   &&Math.abs(near-far-.10*(1-dodgeChance(foe)))<1e-9
    &&weaponRange(weapon('trident'),{range:1})===6&&armoryClass(weapon('trident'))==='assault';
  })()`),'piercing and trained range apply independently of classification');
  const career=createSimulation();
