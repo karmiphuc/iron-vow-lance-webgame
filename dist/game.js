@@ -4645,7 +4645,9 @@ function previewMoveShots(u,spot,cost){
   if(!inRange.length)continue;
   const w=inRange.find(gun=>!attackObstruction(from,target,gun));
   const state=!w?'blocked':highGroundAim(from,target,w)?'high':launchesMissiles(w)&&ridgeBlocks(from,target)?'arc':'clear';
-  shots.push({target,state});
+  const part=targetParts(target).includes(targetPart)?targetPart:'body';
+  const hit=w&&target.hp[part]>0?Math.round(hitChance(from,target,part,w)*100):null;
+  shots.push({target,state,hit});
  }
  return {shots,canFire:guns.length>0};
 }
@@ -4657,9 +4659,9 @@ function showMovePreview(spot,preview){
   if(!panel.hidden){panel.hidden=true;hint.hidden=false}
   return;
  }
- const labels=preview.shots.map(({target,state})=>{
+ const labels=preview.shots.map(({target,state,hit})=>{
   const {color,glyph,label}=MOVE_SHOT_STYLE[state];
-  return `<span class="move-contact" data-shot="${state}" style="--shot-color:${color}"><b aria-hidden="true">${glyph}</b> ${target.name} <small>${label}</small></span>`;
+  return `<span class="move-contact" data-shot="${state}" style="--shot-color:${color}"><b aria-hidden="true">${glyph}</b> ${target.name} <span class="move-hit">${hit===null?'—':hit+'%'}</span> <small>${label}</small></span>`;
  }).join('');
  const markup=`<div class="move-contacts">${labels||(preview.canFire?'NO TARGET IN RANGE':'NO SHOT')}</div>${moveTap?'<span class="move-confirm">TAP AGAIN TO MOVE</span>':''}`;
  if(!panel.hidden&&movePreviewMarkup===markup)return;

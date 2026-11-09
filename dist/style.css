@@ -202,6 +202,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .move-contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;font-size:10px}
 .move-contact{padding:3px 6px;border:1px solid var(--shot-color);color:var(--ink);background:#101922;white-space:nowrap}
 .move-contact b,.move-contact small{color:var(--shot-color)}
+.move-hit{font-weight:700;font-variant-numeric:tabular-nums}
 .move-contact small{font-size:inherit;text-transform:uppercase}
 .move-confirm{display:block;margin-top:5px;color:#b5d7df;font-size:9px}
 body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-toggle small){display:none}
