@@ -32,7 +32,7 @@ function recruit(kind,path=null,slot=0){
  assert.match(restored.run('pilotWiki()'),/SIGNAL OFFICER.*Electronic warfare/);
 
  const sapper=recruit(5,0),b=sapper.run;
- b('deploy(0,false,[0]);closeModal();let a=current(),t=battle.units[1];t.x=1;t.z=13;t.hp.legs=t.max.legs=250;let plain=partDamage(a,t,"legs",unitWeapon(a));skill()');
+ b('deploy(0,false,[0]);closeModal();let a=current(),t=battle.units[1],legs=t.max.legs;t.x=1;t.z=13;t.hp.legs=t.max.legs=250;let plain=partDamage(a,t,"legs",unitWeapon(a));skill()');
  assert.equal(b('a.ap'),7);
  assert.equal(b('a.breach'),2);
  assert.ok(b('partDamage(a,t,"legs",unitWeapon(a))>plain'));
@@ -40,7 +40,7 @@ function recruit(kind,path=null,slot=0){
  await b('engage(a,t,"legs",unitWeapon(a))');
  assert.equal(b('Boolean(t.reacted)'),false,'a surviving defender cannot counter a charged hit');
  assert.equal(b('a.breach'),1);
- b('t.hp.legs=t.max.legs=110;persist()');
+ b('t.hp.legs=t.max.legs=legs;persist()');
  const charged=resume(sapper);
  assert.equal(charged.run('current().breach'),1);
  assert.equal(charged.run('current().skill'),true);

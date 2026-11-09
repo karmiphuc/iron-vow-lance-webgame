@@ -4,7 +4,7 @@ module.exports=async function checkPaint({page,origin}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.evaluate(()=>{
-  createBattle(0,false,false,[0]);
+  createBattle(0,false,true,[0]);
   // Exercise the raster paths even when WebGL is available.
   window.IronVowFoundry.draw=()=>null;
   window.paintSubject=battle.units.find(u=>u.team==='enemy'&&!u.kind);
@@ -22,7 +22,7 @@ module.exports=async function checkPaint({page,origin}){
    }
   };
  });
- const rasterFrames=await page.evaluate(()=>FRAMES.flatMap((f,frame)=>f.rig==='bastion'?[]:[frame]));
+ const rasterFrames=await page.evaluate(()=>FRAMES.flatMap((f,frame)=>f.rig==='bastion'||frame===LINE_INFANTRY_FRAME?[]:[frame]));
  const cases=[...rasterFrames.map(frame=>({mode:'travel',frame})),
   {mode:'close',frame:0},{mode:'close',frame:3},{mode:'close',frame:11},{mode:'baked',frame:8}];
  for(const sample of cases){

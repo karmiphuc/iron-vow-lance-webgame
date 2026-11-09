@@ -22,7 +22,7 @@ const simulate=require('./sim-harness.cjs');
 
  run("resetMovement(rook);rook.ap=8;hostile.x=rook.x+1;hostile.z=rook.z;hostile.melee='blade';hostile.ap=0");
  assert.equal(run("reactionWeapon(hostile,rook).id"),'blade');
- assert.equal(run("(()=>{hostile.hp.left=0;const id=reactionWeapon(hostile,rook).id;hostile.hp.left=92;return id})()"),'rifle');
+ assert.equal(run("(()=>{const left=hostile.hp.left;hostile.hp.left=0;const id=reactionWeapon(hostile,rook).id;hostile.hp.left=left;return id})()"),'rifle');
  assert.equal(run("(()=>{hostile.x+=9;const w=reactionWeapon(hostile,rook);hostile.x-=9;return w})()"),null);
  assert.equal(run("reactionWeapon(battle.units[4],rook)"),null);
  run("cues.length=0");

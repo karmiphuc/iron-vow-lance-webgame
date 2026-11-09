@@ -58,7 +58,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
  for(const id of ['breaker','piledriver'])click('[data-equip="'+id+'"]');
  tab('strike');click('[data-equip="rampart"]');
  click('#remove-melee');assert.equal(run('save.units[2].melee'),undefined);
- run("createBattle(0);selected=0;action='move';renderBattle();Math.random=()=>0");
+ run("createBattle(0,false,true);selected=0;action='move';renderBattle();Math.random=()=>0");
  assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>u.paint===HOSTILE_PAINT&&activeWardenVisual(u).modular)"));
  click('#strike');assert.equal(run('action'),'strike');
  run('persist()');

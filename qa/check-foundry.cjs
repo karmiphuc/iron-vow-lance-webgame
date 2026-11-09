@@ -97,7 +97,8 @@ async function exerciseRigAdapter(){
 
 (async()=>{
  const sim=simulate({random:()=>0,foundry:true}),{run}=sim;
- assert.equal(run('FRAMES.length'),13);
+ assert.equal(run('FRAMES.length'),14);
+ assert.equal(run('LINE_INFANTRY_FRAME'),13);
  assert.equal(run('HELLBREAKER'),11);
  assert.equal(run('CITADEL_FRAME'),12);
  assert.equal(run('BASTION_FRAME'),10);
@@ -147,10 +148,11 @@ async function exerciseRigAdapter(){
  assert.equal(migrated.run('captureSortie().stockHostiles'),true);
  const generated={};
  new Function('window',fs.readFileSync(path.join(dist,'foundry/baked.js'),'utf8'))(generated);
- for(const visual of generated.IRON_VOW_FOUNDRY_ART){
+ for(const [model,visual] of generated.IRON_VOW_FOUNDRY_ART.entries()){
   assert.equal(visual.frames.length,19);
   assert.ok(visual.frames.every(f=>f.pilot.every(Number.isFinite)&&f.gripL.every(Number.isFinite)&&f.axisR.every(Number.isFinite)));
-  for(const asset of [visual,...visual.views])for(const suffix of ['', '-paint']){
+  const suffixes=model===run('foundryModel(LINE_INFANTRY_FRAME)')?['']:['','-paint'];
+  for(const asset of [visual,...visual.views])for(const suffix of suffixes){
    assert.ok(fs.existsSync(path.join(dist,'assets',asset.key+suffix+'.webp')));
   }
  }

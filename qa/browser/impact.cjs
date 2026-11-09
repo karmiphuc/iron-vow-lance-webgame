@@ -7,8 +7,9 @@ module.exports=async function checkImpact({page,mobile,origin,tap}){
   await page.evaluate(mode=>{
    window.originalFoundryDraw??=window.IronVowFoundry.draw;
    window.IronVowFoundry.draw=mode==='live'?window.originalFoundryDraw:()=>null;
-   createBattle(mode==='live'||mode==='baked'?2:0);
-   const foe=battle.units.find(u=>u.team==='enemy'&&!u.kind&&(mode==='live'||mode==='baked'?foundryModel(u.frame)!=null:true));
+   const foundry=mode==='live'||mode==='baked';
+   createBattle(foundry?2:0,false,!foundry);
+   const foe=battle.units.find(u=>u.team==='enemy'&&!u.kind&&(!foundry||foundryModel(u.frame)!=null));
    if(mode==='native'){foe.frame=3;foe.weapon='morrow';preloadNativeMotion(3);}
    if(mode==='hellbreaker'){foe.frame=HELLBREAKER;foe.weapon='morrow';preloadNativeMotion(HELLBREAKER);}
    foe.headingOverride=mode==='travel'?undefined:-Math.PI/4;
