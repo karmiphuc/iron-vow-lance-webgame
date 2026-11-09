@@ -22,6 +22,7 @@ const checkArmory=require('./browser/armory.cjs');
 const checkLineInfantry=require('./browser/line-infantry.cjs');
 const checkLineElite=require('./browser/line-elite.cjs');
 const checkVanguard=require('./browser/vanguard.cjs');
+const checkReaver=require('./browser/reaver.cjs');
 const checkShields=require('./browser/shields.cjs');
 const checkAttackExchange=require('./browser/attack-exchange.cjs');
 const dist=resolve(__dirname,'../dist');
@@ -61,7 +62,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkVanguard,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed]){
+async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkVanguard,checkReaver,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed]){
  const server=origin?null:await serve();
  let browser;
  try{

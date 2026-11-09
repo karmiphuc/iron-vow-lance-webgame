@@ -97,7 +97,7 @@ async function exerciseRigAdapter(){
 
 (async()=>{
  const sim=simulate({random:()=>0,foundry:true}),{run}=sim;
- assert.equal(run('FRAMES.length'),16);
+ assert.equal(run('FRAMES.length'),17);
  assert.equal(run('VANGUARD_FRAME'),15);
  assert.equal(run('LINE_INFANTRY_FRAME'),13);
  assert.equal(run('LINE_ELITE_FRAME'),14);
@@ -151,9 +151,11 @@ async function exerciseRigAdapter(){
  const generated={};
  new Function('window',fs.readFileSync(path.join(dist,'foundry/baked.js'),'utf8'))(generated);
  for(const [model,visual] of generated.IRON_VOW_FOUNDRY_ART.entries()){
+  if(model===run('foundryModel(VANGUARD_FRAME)')&&!visual)continue; // Vanguard loads its own atlas.
   assert.equal(visual.frames.length,19);
   assert.ok(visual.frames.every(f=>f.pilot.every(Number.isFinite)&&f.gripL.every(Number.isFinite)&&f.axisR.every(Number.isFinite)));
-  const suffixes=model===run('foundryModel(LINE_INFANTRY_FRAME)')?['']:['','-paint'];
+  const paintedInBake=run('[LINE_INFANTRY_FRAME,REAVER_FRAME].map(foundryModel)').includes(model);
+  const suffixes=paintedInBake?['']:['','-paint'];
   for(const asset of [visual,...visual.views])for(const suffix of suffixes){
    assert.ok(fs.existsSync(path.join(dist,'assets',asset.key+suffix+'.webp')));
   }

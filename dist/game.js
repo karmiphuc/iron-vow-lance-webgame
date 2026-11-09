@@ -244,6 +244,9 @@ const LINE_ELITE_FRAME=FRAMES.push({name:'LINE INFANTRY ELITE',model:'LI-02',rol
  hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true})-1;
 const VANGUARD_FRAME=FRAMES.push({name:'VANGUARD-BRAWLER',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
  hp:165,arm:88,leg:103,move:3,armor:6,weapon:'hailstorm',melee:'piledriver',foundry:8,enemyOnly:true})-1;
+const REAVER_FRAME=FRAMES.push({name:'REAVER',model:'RV-04',role:'MEDIUM+',color:'#a1242c',
+ hp:172,arm:98,leg:114,move:4,armor:6,weapon:'rifle',foundry:9,enemyOnly:true})-1;
+const REAVER_ATLASES=['reaver-bare','reaver-left','reaver-right','reaver-dual'];
 const ENEMY_NAMES=['JACKAL','RAVEN','MARAUDER','GATEBREAKER','LOCUST','SERAPH','RONIN','TITAN','SENTINEL','RAZOR','CITADEL'];
 const FOUNDRY_HOSTILES={corridor:[1,6,8,9],frontier:[7,6,5,CITADEL_FRAME,2]};
 const foundryModel=frame=>FRAMES[frame]?.foundry;
@@ -253,9 +256,9 @@ const CONTRACTS=[
   deployment:[[6,10],['tank',4,13],['tank',7,14],['helicopter',9,15]]},
  {id:'relay',field:0,name:'Ashes of the relay',place:'KARST BASIN · SECTOR 07',tag:'RECOVERY OPERATION',pay:3200,difficulty:1,desc:'A rival lance occupies a decommissioned relay station. Clear the site and recover its navigation core.',legacyMechs:3,
   deployment:[[6,10],[13,6],[16,3],['tank',4,13],['helicopter',10,16]]},
- {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect Line Infantry Elite. Two- and three-mech sorties also face a Vanguard-Brawler.',legacyMechs:4,
+ {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect Line Infantry Elite, Vanguard-Brawler at two or more seats, and a Reaver at three.',legacyMechs:4,
   deployment:[[7,11],[14,6],[15,15],[4,4],['tank',4,14],['helicopter',11,17],['tank',9,8]]},
- {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'A veteran company has claimed the frontier. Break their command lance. Two- and three-mech sorties face a Vanguard-Brawler escort.',legacyMechs:5,
+ {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'Break the veteran command lance. Two- and three-mech sorties face a Vanguard-Brawler escort. A Reaver joins the escort at three seats.',legacyMechs:5,
   deployment:[[7,12],[12,6],[15,15],[4,4],[14,2],['tank',4,14],['helicopter',10,16],['tank',12,10],['helicopter',9,3]]}
 ];
 const OLD_SORTIE_CONTRACTS=['relay','corridor','frontier'];
@@ -368,7 +371,8 @@ function onBoard(x,z){const {width,depth}=dimensions();return x>=0&&x<width&&z>=
 function canReachTarget(w,target){return !(w.melee&&target.kind==='helicopter')}
 const asset=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
 const targetParts=u=>u?.kind?['body']:['body','pilot','right','left','legs'];
-const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:weapon(u.weapon);
+const REAVER_AUTOCANNON={...weapon('rifle'),name:'RV-04 Autocannon',type:'AUTOCANNON'};
+const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:u.frame===REAVER_FRAME?REAVER_AUTOCANNON:weapon(u.weapon);
 const isArmed=u=>u.kind||u.hp.right>0;
 const chassisMobility=(frame,legacy=false,training)=>frame.move+(legacy?0:1)+(training?.move??0);
 const mobility=u=>u.kind?VEHICLES[u.kind].move:chassisMobility(FRAMES[u.frame],battle.legacy,u.training);
@@ -635,6 +639,7 @@ function captureSortie(enemyPending=false){
   ...(battle.picketLineInfantry?{picketLineInfantry:true}:{}),
   ...(battle.corridorElite?{corridorElite:true}:{}),
   ...(battle.hardVanguard?{hardVanguard:true}:{}),
+  ...(battle.reaverHostiles?{reaverHostiles:true}:{}),
   units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed}))};
 }
 function dispatchSizes(){
@@ -650,12 +655,14 @@ function sortieSpawns(contract,count){
  if(count===1)return [...mechs.slice(0,1),...vehicles.slice(0,contract.id==='picket'?0:1)];
  return [...mechs.slice(0,2),...vehicles.slice(0,mechs.length===1?2:1)];
 }
-function hostileFrame(i,contract,stock=false,hellbreaker=false,picketLineInfantry=true,corridorElite=true,hardVanguard=true){
+const reaverSlot=contract=>contract.id==='corridor'?2:contract.id==='frontier'?4:-1;
+function hostileFrame(i,contract,stock=false,hellbreaker=false,picketLineInfantry=true,corridorElite=true,hardVanguard=true,reaverHostiles=true){
  if(i===1&&!stock&&hardVanguard&&contract.difficulty>=2)return VANGUARD_FRAME;
  if(i===0&&!stock){
   if(picketLineInfantry&&contract.id==='picket')return LINE_INFANTRY_FRAME;
   if(corridorElite&&contract.id==='corridor')return LINE_ELITE_FRAME;
  }
+ if(!stock&&reaverHostiles&&i===reaverSlot(contract))return REAVER_FRAME;
  return i===0&&hellbreaker?HELLBREAKER:(stock?null:FOUNDRY_HOSTILES[contract.id])?.[i]??i%3;
 }
 function contractIntel(i,count){
@@ -670,9 +677,9 @@ const contractPay=(contract,count,tier=shipLevel('office'))=>Math.round(contract
 const validSlots=slots=>Array.isArray(slots)&&slots.length>=1&&slots.length<=3&&new Set(slots).size===slots.length&&slots.every(i=>LANCE_SLOTS.includes(i));
 function validAux(aux){
  return !!aux&&shipLevel('drop')===2&&pilotKind(aux.pilotId)>=0&&Object.hasOwn(save.reservePilots??{},aux.pilotId)&&
-  Number.isInteger(aux.frame)&&!!FRAMES[aux.frame]&&(save.reserve?.[aux.frame]?.condition??0)>=30;
+  Number.isInteger(aux.frame)&&playerHull(aux.frame)&&(save.reserve?.[aux.frame]?.condition??0)>=30;
 }
-function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,frontierHellbreaker=true,aux=null,launchAP=Number(!legacy&&shipLevel('drop')>0),picketLineInfantry=true,corridorElite=true,hardVanguard=true){
+function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,frontierHellbreaker=true,aux=null,launchAP=Number(!legacy&&shipLevel('drop')>0),picketLineInfantry=true,corridorElite=true,hardVanguard=true,reaverHostiles=true){
  const contract=CONTRACTS[i],field=FIELDS[contract.field];
  const layout=theaterLayouts?.[contract.field]?.cover||field.cover;
  const cover=legacy?field.cover:layout;
@@ -681,6 +688,7 @@ function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,fron
  battle.picketLineInfantry=!legacy&&!stockHostiles&&contract.id==='picket'&&picketLineInfantry;
  battle.corridorElite=!legacy&&!stockHostiles&&contract.id==='corridor'&&corridorElite;
  battle.hardVanguard=!legacy&&!stockHostiles&&contract.difficulty>=2&&slots.length>=2&&hardVanguard;
+ battle.reaverHostiles=!legacy&&!stockHostiles&&reaverSlot(contract)>=0&&slots.length===3&&reaverHostiles;
  const allies=legacy?[[1,8],[2,9],[0,9]]:[[1,16],[2,18],[0,18]];
  const enemies=legacy?Array.from({length:contract.legacyMechs},(_,j)=>[j%3*3+2,Math.floor(j/3)]):sortieSpawns(contract,slots.length);
  battle.units=slots.map((slot,index)=>makeUnit(slot,'ally',...allies[index]));
@@ -722,8 +730,9 @@ function restoreSortie(){
  valid=valid&&(saved.corridorElite===undefined||saved.corridorElite===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='corridor');
  valid=valid&&(saved.hardVanguard===undefined||saved.hardVanguard===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&
   CONTRACTS[contractIndex]?.difficulty>=2&&regular.length>=2);
+ valid=valid&&(saved.reaverHostiles===undefined||saved.reaverHostiles===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&reaverSlot(CONTRACTS[contractIndex])>=0&&regular.length===3);
  if(valid){
-  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
+  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true,saved.reaverHostiles===true);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
   for(let i=0;valid&&i<saved.units.length;i++){
    const state=saved.units[i],u=battle.units[i];
    const keptLaunchAP=u.team==='ally'&&(saved.turn===1||state?.hp?.body===0||state?.hp?.pilot===0);
@@ -1664,7 +1673,7 @@ function hostileLivery(frame,index){
 }
 function makeUnit(i,team,x,z){
  const ally=team==='ally',aux=ally&&i===AUX_SLOT?battle.aux:null;
- const frame=aux?aux.frame:ally?pilotFrame(i):hostileFrame(i,battle.contract,battle.stockHostiles,battle.frontierHellbreaker,battle.picketLineInfantry,battle.corridorElite,battle.hardVanguard),f=FRAMES[frame];
+ const frame=aux?aux.frame:ally?pilotFrame(i):hostileFrame(i,battle.contract,battle.stockHostiles,battle.frontierHellbreaker,battle.picketLineInfantry,battle.corridorElite,battle.hardVanguard,battle.reaverHostiles),f=FRAMES[frame];
  const u=aux?save.reserve[frame]:ally?save.units[i]:{...stockHull(frame),upgrade:Math.max(0,battle.contract.difficulty-1),level:battle.contract.difficulty,
   weapon:f.weapon||['rifle','shotgun','missile'][i%3]};
  const pilot=aux?pilotKind(aux.pilotId):ally?pilotClass(i):undefined,crew=aux?save.reservePilots[aux.pilotId]:u;
@@ -1673,7 +1682,7 @@ function makeUnit(i,team,x,z){
  const max={body,pilot:ally?CREW_HP[pilot]:PILOT_HP[i%PILOT_HP.length],...limbs};
  const hp=Object.fromEntries(Object.entries(max).map(([part,n])=>[part,part==='pilot'?n:deploymentHP(n,u.condition)]));
  if(ally&&woundDays(pilotId(pilot)))hp.pilot=Math.ceil(max.pilot*.65);
- const [paint,secondary]=ally?[u.paint??null]:frame===VANGUARD_FRAME?[null]:hostileLivery(frame,i);
+ const [paint,secondary]=ally?[u.paint??null]:frame===VANGUARD_FRAME||frame===REAVER_FRAME?[null]:hostileLivery(frame,i);
  return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee:u.melee??null,shoulder:u.shoulder,shield:u.shield,
   paint,trim:ally?u.trim:secondary?{s:secondary}:null,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
 }
@@ -1842,7 +1851,7 @@ function renderBattle(){
   const aimPart=targetParts(target).includes(targetPart)?targetPart:'body';
   const targetReaction=reactionStatus(target),counter=target&&u?reactionWeapon(target,u):null;
   const targetShield=activeShield(target);
-  const targetStatus=[targetShield?'SHIELD ACTIVE':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED · '+target.painted.shots:''].filter(Boolean).join(' / ');
+  const targetStatus=[target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role:'',targetShield?'SHIELD ACTIVE':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED · '+target.painted.shots:''].filter(Boolean).join(' / ');
   const ready=battle.phase==='player'&&!battle.busy,canMove=Boolean(u&&movementLimit(u)),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u)||selectedWeapon(u,'fire');
   const missile=shoulderWeapon(u),canMissile=canUseWeapon(u,missile);
   $('#ui').innerHTML=`<div class="battle-top"><span class="eyebrow">${battle.contract.tag}</span><h2>${battle.contract.name}</h2><p class="field-terrain">${battle.field.label}</p><p>Eliminate all hostile contacts.<br>${battle.units.filter(t=>t.team==='enemy'&&t.alive).length} hostile signatures remaining</p><div style="display:flex;gap:16px;margin-top:10px"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
@@ -2415,6 +2424,7 @@ function preloadNativeMotion(frame,paint,hull){
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(frame)];
  if(atlas){
   if(atlas.views?.[0])moduleImage(atlas.views[0].key);
+  if(frame===REAVER_FRAME)return REAVER_ATLASES.map(key=>motionImage({key}));
   if(paint)moduleImage(atlas.key+'-paint');
   if(atlas.variants)return atlas.variants.map(key=>motionImage({key}));
   if(atlas.unarmedKey){
@@ -2528,7 +2538,14 @@ MECH_SIZE[CITADEL_FRAME]=MECH_SIZE[BASTION_FRAME];
 MECH_SIZE[LINE_INFANTRY_FRAME]=2.60;
 MECH_SIZE[LINE_ELITE_FRAME]=2.85;
 MECH_SIZE[VANGUARD_FRAME]=3.25;
-function unitBounds(u,visual=activeWardenVisual(u)){const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1);return{x:p.x-size*(visual?.groundX??.5),y:p.y-size*(visual?.ground??(u.frame===VANGUARD_FRAME?(window.IRON_VOW_FOUNDRY_ART?.[8]?.ground??.84):foundryModel(u.frame)!=null?.84:.94)),w:size,h:size}}
+MECH_SIZE[REAVER_FRAME]=3.40;
+function unitBounds(u,visual=activeWardenVisual(u)){
+ const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1),model=foundryModel(u.frame);
+ const ground=window.IRON_VOW_FOUNDRY_ART?.[model]?.ground;
+ const groundX=Array.isArray(ground)?(unitFacing(u)>0?1-ground[0]:ground[0]):undefined;
+ const groundY=Array.isArray(ground)?ground[1]:ground;
+ return{x:p.x-size*(visual?.groundX??groundX??.5),y:p.y-size*(visual?.ground??groundY??(model!=null?.84:.94)),w:size,h:size};
+}
 // A small skinned mesh articulates the existing armor art without new image requests.
 const MECH_MOTION=[
  {step:.31,hip:.59,split:.52,foot:[.96,.98],mass:1,muzzle:[.075,.565]},
@@ -2544,6 +2561,7 @@ MECH_MOTION[CITADEL_FRAME]={...MECH_MOTION[BASTION_FRAME],step:.66};
 MECH_MOTION[LINE_INFANTRY_FRAME]={...MECH_MOTION[0],step:.44};
 MECH_MOTION[LINE_ELITE_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.52,mass:1.28};
 MECH_MOTION[VANGUARD_FRAME]={...MECH_MOTION[3],step:.57};
+MECH_MOTION[REAVER_FRAME]={...MECH_MOTION[0],step:.54};
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
 function dampedImpulse(age,frequency=35,decay=15){return age>=0&&age<.8?Math.sin(age*frequency)*Math.exp(-age*decay):0}
@@ -3548,12 +3566,13 @@ function foundryRender(u,t,liveOnly=false){
  const pose=animationPose(u,poseTime);
  pose.heading=displayedHeading(u);pose.cinematic=u.headingOverride!==undefined;pose.reducedMotion=reducedMotion;
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[model];
+ const reaver=u.frame===REAVER_FRAME;
  const live=atlas?.primary?null:window.IronVowFoundry?.draw(u,poseTime,pose,battle,model,FRAMES[u.frame]?.rig);
  if(live)return {...live,strikeProgress:pose.strikeProgress};
- if(liveOnly)return null;
+ if(liveOnly&&!reaver)return null;
  if(bastionRig(u))return {surface:artImages['bastion-bst04'],cell:0,anchors:{body:[.50,.46],pilot:[.50,.29],right:[.31,.59],left:[.70,.59],legs:[.50,.72],muzzle:[.20,.53],leadFoot:[.43,.84]},flip:false,baked:true,primary:true};
  if(!atlas||atlas.frames.length<19)return null;
- const variant=atlas.variants?.[Number(u.hp.right<=0)+2*Number(u.hp.left<=0)];
+ const variant=reaver?REAVER_ATLASES[2*Number(u.hp.right>0)+Number(u.hp.left>0)]:atlas.variants?.[Number(u.hp.right<=0)+2*Number(u.hp.left<=0)];
  const sprite=variant?{key:variant}:u.hp.right<=0&&atlas.unarmedKey?{key:atlas.unarmedKey}:atlas,image=motionImage(sprite);
  const index=u.frame===VANGUARD_FRAME?vanguardArtFrame(u,pose,atlas):!u.alive?u.downReason==='pilot'?17:18:
   pose.strikeKind&&pose.primePhase!=='step'?13+Math.min(2,Math.floor(pose.strikeProgress*3)):
@@ -3564,7 +3583,7 @@ function foundryRender(u,t,liveOnly=false){
  const anchors=flip?Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([k,[x,y]])=>[k,[1-x,y]])):frame;
  const loaded=imageReady(image),key=loaded?sprite.key:legacyChassis[u.frame],base=loaded?image:artImages[key];
  const surface=loaded?foundryPaint(base,key,u.paint,u.trim,atlas.paintBlend):base;
- return {surface,cell:loaded?atlas.cell:0,index,anchors,flip,baked:true,primary:atlas.primary===true,secondary:atlas.secondary===true,strikeProgress:pose.strikeProgress};
+ return {surface,cell:loaded?atlas.cell:0,index,anchors,flip,baked:true,primary:atlas.primary===true,secondary:reaver||atlas.secondary===true,strikeProgress:pose.strikeProgress};
 }
 function drawUnit(u,t,close=false){
  const inactive=spent(u)&&!u.attack&&!u.motion&&!u.turning;
