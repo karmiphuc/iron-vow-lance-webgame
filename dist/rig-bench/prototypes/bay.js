@@ -33,6 +33,22 @@ const chassis = {
     bash: "The lead leg drives the shield forward, then the chassis settles back into guard.",
     grip: "The fingers open and close around the equipped handles while the sockets retain both modules.",
   },
+  scout: {
+    name: "Recon Interceptor", serial: "IV-S07", role: "Hostile scout",
+    summary: "Run the quickstep and try three weapon actions with the scout.",
+    weapon: "Needle carbine / Flechette scattergun / Signal knife",
+    legs: "Quickstep with alternating plants", mechanisms: "30 digit joints",
+    clips: ["Idle", "Quickstep", "Fire", "Burst", "Strike"],
+    quickstep: "Two quick steps carry the scout across the pad. Use Side View to watch the foot plants.",
+    fire: "The right hand seats the Needle carbine and fires from a short brace.",
+    burst: "The Flechette scattergun fires twice from the right hand.",
+    strike: "The left hand holds the Signal knife through a short drive and cut.",
+  },
+};
+const scoutAttacks = {
+  Fire: { weapon: "carbine", label: "Needle carbine", flashes: [.29] },
+  Burst: { weapon: "scatter", label: "Flechette scattergun", flashes: [.125, .375] },
+  Strike: { weapon: "knife", label: "Signal knife", flashes: [] },
 };
 const standardClips = ["Idle", "Walk", "Deploy", "Fire"];
 const descriptions = {
@@ -54,7 +70,7 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const equipment = byId("equipment-preview");
 const cleaver = byId("preview-cleaver");
 const vesper = byId("preview-vesper");
-const cameraPresets = { front: 0, threequarter: .50, rear: Math.PI };
+const cameraPresets = { front: 0, threequarter: .50, side: Math.PI / 2, rear: Math.PI };
 const assets = new Map();
 
 const requestedChassis = new URLSearchParams(location.search).get("chassis");
@@ -65,10 +81,11 @@ let renderer, scene, camera, loader, model, skeleton, mixer, action;
 let playing = false;
 let showRig = false;
 let cameraPreset = "threequarter";
-let azimuth = activeChassis === "bulwark" ? -cameraPresets.threequarter : cameraPresets.threequarter;
+let azimuth = presetAngle(activeChassis, cameraPreset);
 let elevation = .19;
 let distanceScale = 1;
 let orbitPointer = null;
+let scoutWeapons, scoutFlashes;
 
 function setPlaying(value) {
   playing = value;
@@ -85,7 +102,9 @@ function clipAvailable(id, name) {
 }
 
 function presetAngle(id, preset) {
-  return id === "bulwark" && preset === "threequarter" ? -cameraPresets[preset] : cameraPresets[preset];
+  if (preset === "threequarter" && id === "bulwark") return -cameraPresets[preset];
+  if (preset === "threequarter" && id === "scout") return .79;
+  return cameraPresets[preset];
 }
 
 function setControls(ready) {
@@ -96,6 +115,11 @@ function setControls(ready) {
     button.disabled = !ready;
   }
   for (const button of clipButtons) button.hidden = !clipAvailable(activeChassis, button.dataset.clip);
+  for (const button of cameraButtons) {
+    if (button.dataset.camera === "side") button.hidden = activeChassis !== "scout";
+  }
+  byId("fire").textContent = activeChassis === "scout" ? "Carbine" : "Fire";
+  byId("strike").textContent = activeChassis === "scout" ? "Knife" : "Strike";
   equipment.hidden = activeChassis !== "gatecrasher";
   equipment.disabled = !ready;
   scrubber.disabled = !ready;
@@ -128,6 +152,12 @@ function updateClock() {
   scrubber.value = String(Math.round(1000 * seconds / duration));
   scrubber.setAttribute("aria-valuetext", seconds.toFixed(2) + " seconds");
   byId("clock").textContent = seconds.toFixed(2) + " s";
+  if (scoutFlashes) {
+    const attack = scoutAttacks[activeClip];
+    for (const [key, flash] of scoutFlashes) {
+      flash.visible = attack?.weapon === key && attack.flashes.some(t => seconds >= t && seconds < t + .055);
+    }
+  }
 }
 
 function setClip(name, autoplay) {
@@ -136,19 +166,24 @@ function setClip(name, autoplay) {
   if (mixer) {
     mixer.stopAllAction();
     action = mixer.clipAction(assets.get(activeChassis).animations.find((clip) => clip.name === name));
-    if (name === "Strike" || name === "Bash") {
+    if (name === "Strike" || name === "Bash" || (activeChassis === "scout" && name !== "Idle")) {
       action.setLoop(THREE.LoopOnce, 1);
       action.clampWhenFinished = true;
     }
     action.reset().play();
     mixer.update(0);
   }
+  if (activeChassis === "scout") {
+    const attack = scoutAttacks[name];
+    for (const [key, node] of scoutWeapons ?? []) node.visible = attack?.weapon === key;
+    byId("weapon").textContent = attack?.label || chassis.scout.weapon;
+  }
   setPlaying(Boolean(action) && autoplay);
   updateClock();
 }
 
 function updateCamera() {
-  const height = activeChassis === "bulwark" ? 6.5 : activeChassis === "cicada" ? 5.3 : 6;
+  const height = ["bulwark", "scout"].includes(activeChassis) ? 6.5 : activeChassis === "cicada" ? 5.3 : 6;
   const aspect = camera.aspect;
   const distance = height * (aspect < 1 ? 2.05 / Math.max(.72, aspect) : 1.83) * distanceScale;
   const target = height * .47;
@@ -270,7 +305,10 @@ async function selectChassis(id) {
   const serial = ++loadSerial;
   const meta = chassis[id];
   const preferredClip = clipAvailable(id, activeClip) ? activeClip : "Idle";
-  if (id !== activeChassis && (id === "bulwark" || activeChassis === "bulwark")) azimuth = presetAngle(id, cameraPreset);
+  if (id !== activeChassis) {
+    if (cameraPreset === "side" && id !== "scout") cameraPreset = "threequarter";
+    azimuth = presetAngle(id, cameraPreset);
+  }
   activeChassis = id;
   activeClip = preferredClip;
   setPlaying(false);
@@ -312,6 +350,24 @@ async function selectChassis(id) {
       scene.remove(model);
     }
     model = asset.scene;
+    scoutWeapons = scoutFlashes = undefined;
+    if (id === "scout") {
+      scoutWeapons = new Map();
+      scoutFlashes = new Map();
+      model.traverse(node => {
+        if (node.userData.scout_weapon) scoutWeapons.set(node.userData.scout_weapon, node);
+        if (node.userData.scout_muzzle) {
+          let flash = node.children.find(child => child.name === "Scout muzzle flash");
+          if (!flash) {
+            flash = new THREE.Mesh(new THREE.IcosahedronGeometry(.12, 0),
+              new THREE.MeshBasicMaterial({ color: 0xffc179 }));
+            flash.name = "Scout muzzle flash";
+            node.add(flash);
+          }
+          scoutFlashes.set(node.userData.scout_muzzle, flash);
+        }
+      });
+    }
     let triangles = 0;
     model.traverse((obj) => {
       if (!obj.isMesh) return;

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="./bay.css">
   <script defer src="../vendor/three.min.js"></script>
   <script defer src="../vendor/GLTFLoader.js"></script>
-  <script defer src="./bay.js?rev=bulwark"></script>
+  <script defer src="./bay.js?rev=scout"></script>
 </head>
 <body>
   <header class="topbar">
@@ -35,6 +35,7 @@
           <button type="button" data-chassis="cicada" aria-pressed="false"><span>02 / ML-14</span>Cicada</button>
           <button type="button" data-chassis="hellbreaker" aria-pressed="false"><span>03 / HV-09X</span>Hellbreaker</button>
           <button type="button" data-chassis="bulwark" aria-pressed="false"><span>04 / M02</span>Bulwark-Aegis</button>
+          <button type="button" data-chassis="scout" aria-pressed="false"><span>05 / IV-S07</span>Recon Interceptor</button>
         </div>
         <div class="identity">
           <p id="role" class="eyebrow">HEAVY ASSAULT</p>
@@ -58,8 +59,10 @@
             <button type="button" data-clip="Idle" aria-pressed="true">Idle</button>
             <button type="button" data-clip="Walk" aria-pressed="false">Walk</button>
             <button type="button" data-clip="Deploy" aria-pressed="false">Deploy</button>
-            <button type="button" data-clip="Fire" aria-pressed="false">Fire</button>
-            <button type="button" data-clip="Strike" aria-pressed="false" hidden>Strike</button>
+            <button type="button" data-clip="Quickstep" aria-pressed="false" hidden>Quickstep</button>
+            <button type="button" id="fire" data-clip="Fire" aria-pressed="false">Fire</button>
+            <button type="button" data-clip="Burst" aria-pressed="false" hidden>Scattergun</button>
+            <button type="button" id="strike" data-clip="Strike" aria-pressed="false" hidden>Strike</button>
             <button type="button" data-clip="Bash" aria-pressed="false" hidden>Shield Bash</button>
             <button type="button" data-clip="Grip" aria-pressed="false" hidden>Grip Check</button>
           </div>
@@ -80,6 +83,7 @@
         <div class="view-controls" role="group" aria-label="Inspection view">
           <button type="button" data-camera="front" disabled>Front</button>
           <button type="button" data-camera="threequarter" disabled>¾ View</button>
+          <button type="button" data-camera="side" disabled hidden>Side View</button>
           <button type="button" data-camera="rear" disabled>Rear</button>
           <button type="button" id="rig" aria-pressed="false" disabled>Skeleton</button>
         </div>

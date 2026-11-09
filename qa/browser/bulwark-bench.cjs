@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 
 module.exports=async function checkBulwarkBench({page,origin,tap}){
- await page.route('**/rig-bench/prototypes/bay.js?rev=bulwark',async route=>{
+ await page.route('**/rig-bench/prototypes/bay.js?*',async route=>{
   const response=await route.fetch();
   await route.fulfill({response,body:(await response.text())+`
     window.bulwarkSample=()=>{
