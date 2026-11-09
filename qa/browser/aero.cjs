@@ -21,7 +21,7 @@ module.exports=async function checkAero({page,mobile,origin,tap}){
  const card=page.locator('.bay-card').filter({has:page.getByRole('heading',{name:'AERO',exact:true})});
  assert.match(await card.innerText(),/400,000 CR/);
  assert.match(await card.innerText(),/15% per incoming round or shell/);
- assert.ok(await page.locator('.bay-card').filter({hasText:'8% per incoming round or shell'}).count()>0);
+ assert.equal(await page.locator('.bay-card').filter({hasText:'8% per incoming round or shell'}).count(),0);
  assert.equal(await card.getByRole('button').isDisabled(),true);
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.evaluate(()=>{Math.random=()=>.5});

@@ -27,6 +27,8 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
   const [x,z]=fixture[0].split(',').map(Number),a=current();
   for(const other of battle.units)if(other!==u&&other!==a){other.alive=false;other.hp.body=0}
   Math.random=()=>0;
+  a.max.body=a.hp.body=500;
+  a.max.pilot=a.hp.pilot=500;
   Object.assign(a,{x,z,vx:x,vz:z});
   const types=frames.map(f=>images.indexOf(f.surface));
   return {types,model:u.name,paint:u.paint,pre:distance(u,a),index:frames[0].index,
@@ -48,7 +50,8 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
   await page.screenshot({path:join(process.env.IRON_VOW_VANGUARD_PROOF,mobile?'vanguard-touch.png':'vanguard-desktop.png')});
  }
  await page.waitForFunction(()=>battle?.turn===2&&!battle.busy);
- assert.ok(await page.evaluate(()=>battle.log.some(line=>line.startsWith('GRAVEMAW 2 → WARDEN'))&&current().hp.body<current().max.body));
+ assert.ok(await page.evaluate(()=>battle.log.some(line=>line.startsWith('GRAVEMAW 2 → WARDEN'))&&
+  Object.keys(current().hp).some(part=>current().hp[part]<current().max[part])));
  console.log('PASS Vanguard pursuit, Piledriver cinematic and independently disarmed atlases');
 };
 

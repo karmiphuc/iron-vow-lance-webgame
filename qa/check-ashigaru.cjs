@@ -20,7 +20,8 @@ const carbine='needle-carbine',scatter='flechette-scattergun',knife='signal-knif
  const old=simulate({...options,storage:new Map(sim.storage)});
  assert.equal(old.run('battle.units.find(u=>u.id==="enemy1").kind'),'tank');
  assert.equal(old.run('JSON.stringify(captureSortie())'),run('JSON.stringify(captureSortie())'));
- assert.equal(run('playerHull(ASHIGARU_FRAME)||hullOnMarket(ASHIGARU_FRAME)||acquireHull(ASHIGARU_FRAME)||assignChassis(0,ASHIGARU_FRAME,true)'),false);
+ assert.equal(run('hullOnMarket(ASHIGARU_FRAME)||acquireHull(ASHIGARU_FRAME)||assignChassis(0,ASHIGARU_FRAME,true)'),false);
+ assert.ok(run('salvageableHull(ASHIGARU_FRAME)'));
  assert.equal(run('RANGED.concat(MELEE).some(w=>w.scout)'),false);
  const seen=[];
  sim.sandbox.seen=seen;

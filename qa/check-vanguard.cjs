@@ -21,10 +21,10 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  run('createBattle(2,false,true)');
  assert.equal(count(),0);
  run('save.credits=100000;save.rep=100;workshopView="market"');
- assert.equal(run('playerHull(VANGUARD_FRAME)||hullOnMarket(VANGUARD_FRAME)||acquireHull(VANGUARD_FRAME)||assignChassis(0,VANGUARD_FRAME,true)'),false);
+ assert.equal(run('hullOnMarket(VANGUARD_FRAME)||acquireHull(VANGUARD_FRAME)||assignChassis(0,VANGUARD_FRAME,true)'),false);
  assert.equal(run('chassisAssignments(0).includes("GRAVEMAW")'),false);
- assert.equal(run('validSave({...save,reserve:{[VANGUARD_FRAME]:stockHull(VANGUARD_FRAME)}})'),false);
- assert.equal(run('validSave({...save,salvage:{[VANGUARD_FRAME]:1}})'),false);
+ assert.ok(run('validSave({...save,reserve:{[VANGUARD_FRAME]:stockHull(VANGUARD_FRAME)}})'));
+ assert.ok(run('validSave({...save,salvage:{[VANGUARD_FRAME]:1}})'));
 
  for(const upgraded of [false,true]){
   const fixture=simulate(options);
@@ -45,6 +45,7 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
   battle.units=battle.units.filter(x=>x===u||x===a);
   battle.cover.clear();
   Object.assign(u,{x:7,z:11,vx:7,vz:11});
+  a.max.body=a.max.pilot=500;
   Object.assign(a,{x:7,z:15,vx:7,vz:15,hp:{...a.max},alive:true});
  }`;
  run(arrange);
@@ -54,7 +55,7 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  await run('endTurn()');
  assert.equal(run('distance('+vanguard+',current())'),1);
  assert.equal(shotKinds[0],'piledriver');
- assert.ok(run('current().hp.body<current().max.body'));
+ assert.ok(run('Object.keys(current().hp).some(part=>current().hp[part]<current().max[part])'));
  run(arrange);
  run(vanguard+'.hp.left=0');
  shotKinds.length=0;
@@ -68,7 +69,7 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  assert.equal(shotKinds[0],'piledriver');
 
  run('for(const u of battle.units)if(u.team==="enemy")u.alive=false;finish(true)');
- assert.equal(run('save.salvage?.[VANGUARD_FRAME]'),undefined);
+ assert.equal(run('save.salvage?.[VANGUARD_FRAME]'),1);
  console.log('PASS Vanguard Hard+ roster, existing and new checkpoints, melee pursuit, Hailstorm fallback and acquisition gates');
 })().catch(error=>{console.error(error);process.exitCode=1});
 
