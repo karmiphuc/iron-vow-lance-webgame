@@ -2687,8 +2687,10 @@ MECH_SIZE[LINE_ELITE_FRAME]=2.85;
 MECH_SIZE[VANGUARD_FRAME]=3.25;
 MECH_SIZE[REAVER_FRAME]=3.40;
 MECH_SIZE[BULWARK_FRAME]=3.65;
-MECH_SIZE[ASHIGARU_FRAME]=3.12;
+MECH_SIZE[ASHIGARU_FRAME]=2.58;
 MECH_SIZE[AERO_FRAME]=3.55;
+// Match the breach hull's padded travel cells to its close-up silhouette.
+const GATECRASHER_TRAVEL_SCALE=1.34;
 function jumpjetHeight(u,t){
  if(reducedMotion||!u.motion?.jumpjet)return 0;
  const progress=clamp01((t-u.motion.start)/u.motion.duration);
@@ -3266,6 +3268,10 @@ function fieldStepProgress(phase,segment){
  return phase;
 }
 
+function groundedTravelSpan(u,data){
+ return data.span/3.65*(u.frame===3?GATECRASHER_TRAVEL_SCALE:1);
+}
+
 function advanceUnitAnimation(u,t,dt){
  const m=u.motion;
  if(m){const p=clamp01((t-m.start)/m.duration),q=fieldStepProgress(p,m.segment);u.vx=m.fromX+(m.toX-m.fromX)*q;u.vz=m.fromZ+(m.toZ-m.fromZ)*q}
@@ -3277,9 +3283,9 @@ function advanceUnitAnimation(u,t,dt){
    const pace=m.contacts.shift(),q=pace.to-m.segment.index;
    const points=data.points[data.walk[pace.kind]+data.samples-1][heading];
    const [x,y]=points['foot'+pace.kind.at(-1)];
-   const mass=MECH_MOTION[u.frame].mass;
+   const mass=MECH_MOTION[u.frame].mass,span=groundedTravelSpan(u,data);
    effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,
-    ox:(x-.5)*data.span/3.65,oy:(y-data.ground)*data.span/3.65,t:1,mass});
+    ox:(x-.5)*span,oy:(y-data.ground)*span,t:1,mass});
    sound('step',mass*.78);
   }
  }
@@ -3478,7 +3484,7 @@ function travelVisual(u,t){
     Math.round(progress*(data.strike.samples-1));
    row=data.strike.first+frame;
   }
-  const p=project(x,0,z),size=scale*data.span/3.65;
+  const p=project(x,0,z),size=scale*groundedTravelSpan(u,data);
   const bounds=recoilingBounds(u,{x:p.x-size*.5,y:p.y-size*data.ground,w:size,h:size},t);
   const source={key:detail.key,cell,x:row%columns,y:Math.floor(row/columns),idleX:0};
   const strike=u.attack&&ATTACK_PROFILES[u.attack.kind].melee?animationPose(u,t):null;
@@ -3876,7 +3882,7 @@ function drawUnitBody(u,t,close){
   if(!u.alive&&u.downReason!=='pilot'&&(!foundry.destruction||pose.deathAge>=DESTRUCTION.kneelEnd))
    drawMechSmoke(u,t,true,chest);
   if(u.alive&&u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
-  if(u.alive&&!close)drawUnitReadout(u,(foundryModel(u.frame)===5?2.12:2.35)+jumpjetHeight(u,t));
+  if(u.alive&&!close)drawUnitReadout(u,(u.frame===ASHIGARU_FRAME?2.0:foundryModel(u.frame)===5?2.12:2.35)+jumpjetHeight(u,t));
   return;
  }
  const baked=wardenMotionFrame(u,visual,pose),remaining=remainingPose(pose,baked);
@@ -4166,19 +4172,27 @@ function drawCinematicFire(sequence,actor,pane,t){
   ctx.restore();
  }
 }
+function mechAttackPaneFit(pane,u){
+ const heightLimit=pane.h/(foundryModel(u.frame)!=null?3.45:FRAMES[u.frame]?.native?3.10:2.92);
+ // Keep the raised tower shield below the header in compact panes.
+ if(u.frame===BULWARK_FRAME)return Math.min(heightLimit,(pane.h*.82-49)/2.48);
+ if(u.frame===3&&pane.h<300)return Math.min(heightLimit,(pane.h*.78-48)/2.18);
+ return heightLimit;
+}
 function drawAttackPane(sequence,pane,subject,attacker,t){
  const firstPane=attacker!==Boolean(sequence.reaction),face=firstPane?1:-1;
  const actor={...subject,face,headingOverride:face*Math.PI/4};
  const previousOrigin=origin,previousScale=scale;
  const zoom=.94+.08*smoothRange(0,.29,t-sequence.start);
- const airborne=subject.kind==='helicopter',bulwark=subject.frame===BULWARK_FRAME;
+ const airborne=subject.kind==='helicopter',opponent=attacker?sequence.target:sequence.actor;
  const compactInfantry=pane.h<300&&window.IRON_VOW_FOUNDRY_ART?.[foundryModel(subject.frame)]?.destruction;
  const settle=airborne&&!subject.alive?smoothRange(0,VEHICLES.helicopter.wreckAt,vehicleDeathAge(subject,t)):0;
  const painted=upgradedWardenTravel(travelAtlas(subject));
- const floor=pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:compactInfantry?.78:.82);
- const heightLimit=airborne?(pane.h*.88-49)/2.48:pane.h/(subject.kind?2.25:foundryModel(subject.frame)!=null?3.45:FRAMES[subject.frame]?.native?3.10:2.92);
- // Include the raised tower shield above the shoulders in the compact attack panes.
- const fit=bulwark?Math.min(heightLimit,(floor-49)/2.48):heightLimit;
+ const breachFloor=subject.frame===3||subject.frame===ASHIGARU_FRAME&&opponent?.frame===3;
+ const floor=pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:(compactInfantry||breachFloor)?.78:.82);
+ // Fit both mechs with the same lens so a cutaway preserves their relative size.
+ const fit=airborne?(pane.h*.88-49)/2.48:subject.kind?pane.h/2.25:
+  Math.min(mechAttackPaneFit(pane,subject),opponent&&!opponent.kind?mechAttackPaneFit(pane,opponent):Infinity);
  scale=Math.max(10,Math.min(pane.w/(subject.kind?3.25:4.08),fit)*zoom);
  const feetX=pane.x+pane.w*(firstPane?.44:.55);
  const feetY=pane.y+floor;
