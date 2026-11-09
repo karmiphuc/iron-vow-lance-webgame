@@ -2460,7 +2460,9 @@ function preloadNativeMotion(frame,paint,hull){
    motionImage({key:atlas.unarmedKey});
    if(paint)moduleImage(atlas.unarmedKey+'-paint');
   }
-  return [motionImage(atlas)];
+  const images=[motionImage(atlas)];
+  if(atlas.destruction)images.push(attackMotionImage(atlas.destruction,paint||hull?.trim));
+  return images;
  }
  const views=prototypes[nativeHullKey(frame,hull)];
  return views?Object.values(views).map(visual=>{
@@ -3572,9 +3574,9 @@ function shotMuzzle(actor,id,index){
  return shoulder?(alternate?'shoulderMuzzle2':'shoulderMuzzle'):(alternate?'muzzle2':'muzzle');
 }
 function resolveAttachment(a){const p=project(a.x,0,a.z);return{x:p.x+a.ox*scale,y:p.y+a.oy*scale}}
-function drawMechSmoke(u,t,destroyed=false){
+function drawMechSmoke(u,t,destroyed=false,anchor=null){
  const age=t-(u.deathTime??t-20);if(destroyed&&age>9)return;
- const p=destroyed?project(u.vx,.35,u.vz):mechAttachmentPoint(u,u.hp.right===0?'right':'body',t);
+ const p=anchor||(destroyed?project(u.vx,.35,u.vz):mechAttachmentPoint(u,u.hp.right===0?'right':'body',t));
  ctx.save();const count=destroyed?6:3;
  for(let i=0;i<count;i++){const v=(t*.38+i/count)%1,fade=destroyed?Math.exp(-Math.max(0,age)*.22):1;ctx.globalAlpha=(1-v)*fade*(destroyed?.3:.18);ctx.fillStyle=destroyed?'#a9a8a0':'#aebbc4';ctx.beginPath();ctx.arc(p.x+Math.sin(i*3+t*.7)*scale*(.07+v*.14),p.y-v*scale*(destroyed?1.2:.8),scale*(.045+v*.16),0,Math.PI*2);ctx.fill()}
  ctx.restore();
@@ -3622,17 +3624,24 @@ function foundryRender(u,t,liveOnly=false){
  if(!atlas||atlas.frames.length<19)return null;
  const variantIndex=Number(u.hp.right<=0)+2*Number(u.hp.left<=0);
  const variant=reaver?REAVER_ATLASES[2*Number(u.hp.right>0)+Number(u.hp.left>0)]:atlas.variants?.[variantIndex];
- const sprite=variant?{key:variant}:u.hp.right<=0&&atlas.unarmedKey?{key:atlas.unarmedKey}:atlas,image=motionImage(sprite);
- const index=u.frame===BULWARK_FRAME?bulwarkArtFrame(u,pose,atlas):u.frame===VANGUARD_FRAME?vanguardArtFrame(u,pose,atlas):!u.alive?u.downReason==='pilot'?17:18:
+ const destruction=!u.alive&&atlas.destruction&&imageReady(motionImage(atlas.destruction))?atlas.destruction:null;
+ const clip=destruction?.clips[u.downReason==='pilot'?'pilot':'body'];
+ const sprite=destruction||(variant?{key:variant}:u.hp.right<=0&&atlas.unarmedKey?{key:atlas.unarmedKey}:atlas);
+ const image=motionImage(sprite);
+ const progress=reducedMotion||!Number.isFinite(u.deathTime)?1:clip?clamp01(pose.deathAge/clip.duration):0;
+ const index=clip?clip.start+Math.round(progress*(clip.count-1)):
+  u.frame===BULWARK_FRAME?bulwarkArtFrame(u,pose,atlas):
+  u.frame===VANGUARD_FRAME?vanguardArtFrame(u,pose,atlas):!u.alive?u.downReason==='pilot'?17:18:
   pose.strikeKind&&pose.primePhase!=='step'?13+Math.min(2,Math.floor(pose.strikeProgress*3)):
   Math.abs(pose.recoil)>.05?12:pose.aim>.35?11:
   pose.primeProgress>0?8+Math.min(2,Math.floor(pose.primeProgress*3)):
   u.motion&&!reducedMotion?Math.floor(pose.cycle*8)%8:16;
- const flip=unitFacing(u)>0,frame=atlas.frames[index];
- const anchors=flip?Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([k,[x,y]])=>[k,[1-x,y]])):frame;
+ const flip=unitFacing(u)>0,span=destruction?.span||1,frame=(destruction||atlas).frames[index];
+ const anchors=flip||destruction?Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p))
+  .map(([k,[x,y]])=>[k,[.5+(x-.5)*span*(flip?-1:1),.5+(y-.5)*span]])):frame;
  const loaded=imageReady(image),key=loaded?sprite.key:legacyChassis[u.frame],base=loaded?image:artImages[key];
  const surface=loaded?foundryPaint(base,key,u.paint,u.trim,atlas.paintBlend):base;
- return {surface,cell:loaded?atlas.cell:0,index:atlas.layouts?.[variantIndex]?.[index]??index,anchors,flip,baked:true,
+ return {surface,cell:loaded?atlas.cell:0,index:atlas.layouts?.[variantIndex]?.[index]??index,anchors,flip,span,destruction,baked:true,
   primary:atlas.primary===true,secondary:reaver||atlas.secondary===true,shield:atlas.shield===true,strikeProgress:pose.strikeProgress};
 }
 function drawUnit(u,t,close=false){
@@ -3651,14 +3660,16 @@ function drawUnitBody(u,t,close){
  const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
  const foundry=live||foundryRender(u,t);
  if(foundry){
+  const chest=foundry.destruction?spritePoint(b,foundry.anchors.body):null;
+  const fall=chest&&u.downReason!=='pilot'?(reducedMotion?1:smoothRange(DESTRUCTION.kneelEnd,DESTRUCTION.fallEnd,pose.deathAge)):0;
   ctx.save();ctx.fillStyle='#050c12ac';ctx.beginPath();
-  ctx.ellipse(p.x,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64),scale*.22,0,0,Math.PI*2);ctx.fill();
+  ctx.ellipse(p.x+((chest?.x??p.x)-p.x)*fall,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64+fall*.36),scale*.22,0,0,Math.PI*2);ctx.fill();
   if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
    const paint=()=>{
     ctx.save();ctx.translate(b.x+b.w/2,b.y);if(foundry.flip)ctx.scale(-1,1);
     if(foundry.cell){
-     const {cell,index}=foundry;
-     ctx.drawImage(foundry.surface,index%4*cell,Math.floor(index/4)*cell,cell,cell,-b.w/2,0,b.w,b.h);
+     const {cell,index,span=1}=foundry;
+     ctx.drawImage(foundry.surface,index%4*cell,Math.floor(index/4)*cell,cell,cell,-b.w*span/2,(1-span)*b.h/2,b.w*span,b.h*span);
     }else ctx.drawImage(foundry.surface,-b.w/2,0,b.w,b.h);
     ctx.restore();
    };
@@ -3674,7 +3685,8 @@ function drawUnitBody(u,t,close){
    if(activeShield(u)&&!foundry.shield)drawWeaponModule(ctx,shieldMount(u,foundry.anchors,b,facing,8));
    ctx.restore();
   }
-  if(!u.alive&&u.downReason!=='pilot')drawMechSmoke(u,t,true);
+  if(!u.alive&&u.downReason!=='pilot'&&(!foundry.destruction||pose.deathAge>=DESTRUCTION.kneelEnd))
+   drawMechSmoke(u,t,true,chest);
   if(u.alive&&u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
   if(u.alive&&!close)drawUnitReadout(u,foundryModel(u.frame)===5?2.12:2.35);
   return;
@@ -3968,9 +3980,10 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  const previousOrigin=origin,previousScale=scale;
  const zoom=.94+.08*smoothRange(0,.29,t-sequence.start);
  const airborne=subject.kind==='helicopter',bulwark=subject.frame===BULWARK_FRAME;
+ const compactInfantry=pane.h<300&&window.IRON_VOW_FOUNDRY_ART?.[foundryModel(subject.frame)]?.destruction;
  const settle=airborne&&!subject.alive?smoothRange(0,VEHICLES.helicopter.wreckAt,vehicleDeathAge(subject,t)):0;
  const painted=upgradedWardenTravel(travelAtlas(subject));
- const floor=pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:.82);
+ const floor=pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:compactInfantry?.78:.82);
  const heightLimit=airborne?(pane.h*.88-49)/2.48:pane.h/(subject.kind?2.25:foundryModel(subject.frame)!=null?3.45:FRAMES[subject.frame]?.native?3.10:2.92);
  // Include the raised tower shield above the shoulders in the compact attack panes.
  const fit=bulwark?Math.min(heightLimit,(floor-49)/2.48):heightLimit;
