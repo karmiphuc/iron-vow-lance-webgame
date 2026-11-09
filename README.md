@@ -2,7 +2,25 @@
 
 A self-contained, original browser tactical mech game inspired by part-based strategy games such as Front Mission 3. No original game assets are used.
 
-Open `dist/index.html` in a modern browser, or serve `dist/` through any static web server. No build step or dependencies are required. Fonts, icons and artwork are included locally.
+This repository contains the complete Iron Vow Sites project through **Site version 84**, including its source history, game assets, 3D models, authoring tools, tests, and fixtures. The playable `dist/` directory matches the published Sites source exactly. Import provenance is recorded in [docs/sites-export.json](docs/sites-export.json).
+
+## Run locally
+
+Install Node.js 22 or newer, then:
+
+```sh
+git clone https://github.com/karmiphuc/iron-vow-lance-webgame.git
+cd iron-vow-lance-webgame
+npm run dev
+```
+
+Open **http://127.0.0.1:5173**. No dependency installation, build step, API key, or Sites connection is required to play. Fonts, models, artwork, and audio are included locally. The server also serves the Rig Bench, Prototype Bay, and Foundry Studio.
+
+Set `IRON_VOW_PORT` or `IRON_VOW_HOST` to change the local address. Alternatively, serve `dist/` with any static HTTP server. Using HTTP allows browser model and asset loading to work consistently.
+
+Career saves belong to each browser origin. To move an existing career from the live Site, export it from Career there, then import the backup in your local game.
+
+The current game includes a persistent company and pilot roster, part-based mech combat, modular equipment, terrain and elevation, the Workshop, and model inspection tools. The existing live game is at [Iron Vow Sites](https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site).
 
 ## Play
 
@@ -14,11 +32,17 @@ Contract rewards fund four weapons, chassis upgrades, and repairs. Pilot experie
 
 ## Verification
 
-Run `npm ci --prefix qa` and `npm run test:release --prefix qa` for the current simulation and desktop/mobile browser gate. The same gate runs automatically through `qa/site-package.cjs` before a Sites release. See [Release checks](qa/README.md) for setup, coverage and public verification.
+Run `npm run setup:qa`, then `npm test` for the simulation suites. `npm run test:browser` checks desktop and touch behavior; `npm run test:release` runs the complete release gate. Browser checks require Chromium as described in [Release checks](qa/README.md). QA dependencies are development-only.
+
+The same release gate runs through `qa/site-package.cjs` before a Sites publication. `.openai/hosting.json` retains the existing Site identity. GitHub pushes do not automatically deploy the Site; use the Sites source and publication workflow when a deployment is requested.
 
 ## Scope
 
-Three pilots, three chassis, four weapons, three repeatable contracts, and an ongoing mercenary progression loop. This is an original compact tactical game, not a reproduction of the full Front Mission 3 campaign, narrative, roster, or mechanics.
+An original tactical browser game with a persistent mercenary career, recruitable pilots, multiple chassis and weapons, repeatable contracts, and saved sorties. Source is in `dist/`; asset generators and exporters are in `tools/`; regression checks and save fixtures are in `qa/`; design records are in `design/` and `design-qa.md`.
+
+## Development history
+
+The sections below record earlier milestones, including the original smaller roster and renderer. The current game combines live Foundry rigs with baked fallback art.
 
 ## Visual rebuild
 
