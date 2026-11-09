@@ -4276,6 +4276,32 @@ function mechAttackPaneFit(pane,u){
  if(u.frame===3&&pane.h<300)return Math.min(heightLimit,(pane.h*.78-48)/2.18);
  return heightLimit;
 }
+const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
+function drawAttackPartHP(sequence,pane,subject,t){
+ const parts=targetParts(subject),gap=3,width=Math.min(33,(pane.w*.51-4*gap)/5);
+ const start=pane.x+pane.w-12-parts.length*(width+gap)+gap,y=pane.y+6;
+ const age=t-(subject.hitTime??-Infinity);
+ const hit=sequence.phase==='result'&&sequence.target===subject&&
+  subject.hitTime>=sequence.fireAt&&age>=0&&age<.55?subject.hitPart:null;
+ ctx.textAlign='center';
+ for(const [i,part] of parts.entries()){
+  const x=start+i*(width+gap),hp=subject.hp[part],flash=hit===part;
+  ctx.fillStyle=hp===0?'#000':flash?'#49361d':'#1c2a33';
+  ctx.fillRect(x,y,width,31);
+  ctx.strokeStyle=flash?'#ffe1a2':'#52636c';ctx.lineWidth=1;
+  ctx.strokeRect(x+.5,y+.5,width-1,30);
+  if(hp>0){
+   ctx.fillStyle=flash?'#ffe1a2':subject.team==='ally'?'#9cbec8':'#d8997e';
+   ctx.fillRect(x+2,y+27,(width-4)*clamp01(hp/subject.max[part]),2);
+  }
+  ctx.fillStyle=hp===0?'#a5afb4':'#dce7ea';
+  ctx.font='700 8px Inter,Arial,sans-serif';
+  ctx.fillText(subject.kind?'HULL':ATTACK_PART_LABEL[part],x+width/2,y+10,width-4);
+  ctx.font='700 11px Inter,Arial,sans-serif';
+  ctx.fillText(hp,x+width/2,y+23,width-4);
+ }
+ return start;
+}
 function drawAttackPane(sequence,pane,subject,attacker,t){
  const firstPane=attacker!==Boolean(sequence.reaction),face=firstPane?1:-1;
  const actor={...subject,face,headingOverride:face*Math.PI/4};
@@ -4308,14 +4334,15 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
   else drawEffects(t,actor);
   if(!hot){ctx.fillStyle='#10192438';ctx.fillRect(pane.x,pane.y,pane.w,pane.h)}
   ctx.fillStyle='#101820d9';ctx.fillRect(pane.x,pane.y,pane.w,43);
+  const labelWidth=drawAttackPartHP(sequence,pane,subject,t)-pane.x-20;
   ctx.fillStyle=hot?'#e9bf7d':'#8fa5ad';ctx.textAlign='left';ctx.font='700 10px Inter,Arial,sans-serif';
   const priming=subject.attack?.primeDuration&&t-subject.attack.start<subject.attack.primeDuration;
   const poweredStage=attacker&&{pullback:'PULLBACK',charge:'STORING ENERGY',impact:'CONTACT'}[subject.attack?.stage];
   const stage=poweredStage||(sequence.phase==='aim'?(subject.turning?'TURNING':priming?'BRACE & PRIME':'WINDUP'):sequence.phase==='fire'?'RELEASE':'RECOVERY');
   const role=attacker&&sequence.reaction?(sequence.w.melee?'RETURN STRIKE / ':'RETURN FIRE / '):'';
-  ctx.fillText((firstPane?'01 / ':'02 / ')+(attacker?role+stage:sequence.phase==='result'?'IMPACT':'TARGET'),pane.x+13,pane.y+15);
+  ctx.fillText((firstPane?'01 / ':'02 / ')+(attacker?role+stage:sequence.phase==='result'?'IMPACT':'TARGET'),pane.x+13,pane.y+15,labelWidth);
   ctx.fillStyle='#f2eee3';ctx.font='700 14px Inter,Arial,sans-serif';
-  ctx.fillText(subject.name,pane.x+13,pane.y+34);
+  ctx.fillText(subject.name,pane.x+13,pane.y+34,labelWidth);
   ctx.fillStyle='#101820e8';ctx.fillRect(pane.x,pane.y+pane.h-31,pane.w,31);
   ctx.fillStyle=hot?'#f3d19a':'#aec0c3';ctx.font='600 11px Inter,Arial,sans-serif';
   const detail=attacker?sequence.w.name:sequence.result||(subject.kind?'HULL':sequence.part.toUpperCase());
