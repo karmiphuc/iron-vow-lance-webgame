@@ -32,7 +32,10 @@ module.exports=async function checkImpact({page,mobile,origin,tap}){
     u.face=facing;u.heading=facing*Math.PI/4;
     if(close)u.headingOverride=u.heading;
     u.hp[part]=hp;u.hitTime=age==null?undefined:t-age;u.hitPart=age==null?undefined:part;
-    drawUnit(u,t,close);
+    // Measure sprite tint independently of the part HP readout.
+    const drawReadout=drawUnitReadout;
+    drawUnitReadout=()=>{};
+    try{drawUnit(u,t,close)}finally{drawUnitReadout=drawReadout}
     const anchor=mechAttachmentPoint(u,part,t);
     const data=ctx.getImageData(x-span/2,y-span,span,span+30).data;
     origin=oldOrigin;scale=oldScale;ctx.restore();
