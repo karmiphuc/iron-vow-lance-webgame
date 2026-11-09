@@ -22,6 +22,25 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
   u.hp.right=original.right;u.hp.left=0;frames.push(foundryRender(u,clock));
   u.hp.right=0;frames.push(foundryRender(u,clock));
   u.hp=original;
+  const walker={...u,attack:null,motion:{start:0,duration:1,gaitBase:0,stepIndex:0,totalSteps:1,
+   fromX:u.x,fromZ:u.z,toX:u.x+1,toZ:u.z}};
+  const {cell}=atlas,legTop=Math.floor(cell*.67),legHeight=Math.floor(cell*.28);
+  const layer=new OffscreenCanvas(cell,legHeight),g=layer.getContext('2d',{willReadFrequently:true});
+  const walk=Array.from({length:8},(_,i)=>{
+   const pose=foundryRender(walker,(i+.5)/8);
+   g.clearRect(0,0,cell,legHeight);
+   g.drawImage(pose.surface,pose.index%4*cell,Math.floor(pose.index/4)*cell+legTop,
+    cell,legHeight,0,0,cell,legHeight);
+   return {index:pose.index,pixels:g.getImageData(0,0,cell,legHeight).data};
+  });
+  const legChange=walk.map(({pixels})=>{
+   let changed=0,occupied=0;
+   for(let i=3;i<pixels.length;i+=4){
+    const a=walk[0].pixels[i]>=128,b=pixels[i]>=128;
+    occupied+=Number(a||b);changed+=Number(a!==b);
+   }
+   return changed/occupied;
+  });
   const fixture=[...paths(u)].find(([key,n])=>n===4&&!battle.cover.has(key)&&!occupied(...key.split(',').map(Number)));
   if(!fixture)throw Error('No pursuit fixture within four reachable steps.');
   const [x,z]=fixture[0].split(',').map(Number),a=current();
@@ -32,6 +51,7 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
   Object.assign(a,{x,z,vx:x,vz:z});
   const types=frames.map(f=>images.indexOf(f.surface));
   return {types,model:u.name,paint:u.paint,pre:distance(u,a),index:frames[0].index,
+   walk:walk.map(pose=>pose.index),legChange,
    primary:frames[0].primary,secondary:frames[0].secondary,tip:frames[0].anchors.meleeTip,
    muzzle:frames[0].anchors.muzzle,atlasFrames:atlas.frames.length};
  });
@@ -41,6 +61,9 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
  assert.equal(art.pre,4);
  assert.ok(art.primary&&art.secondary&&art.tip.every(Number.isFinite)&&art.muzzle.every(Number.isFinite));
  assert.ok(art.atlasFrames>=30);
+ assert.deepEqual(art.walk,[0,1,2,3,4,5,6,7],'walking selects each of the eight gait cells');
+ assert.ok(art.legChange.filter(change=>change>.08).length>=4,
+  'Gravemaw should lift and swing its legs through the gait: '+JSON.stringify(art.legChange));
  await tap('#end');
  await page.waitForFunction(()=>activeCinematic?.actor.frame===VANGUARD_FRAME&&activeCinematic.phase==='fire');
  const contact=await page.evaluate(()=>({weapon:activeCinematic.actor.attack.kind,

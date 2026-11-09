@@ -1463,7 +1463,11 @@ $('#sound').onclick=()=>{
 for(const event of ['click','keydown'])document.addEventListener(event,e=>{if(e.isTrusted)startAudio()},true);
 updateSoundButton();
 function icon(name){return `<img class="ui-icon" src="${asset('assets/icons/'+name+'.svg')}" alt="">`}
-function art(name){return asset('assets/'+name+'.webp')}
+function art(name){
+ const path='assets/'+name+'.webp';
+ const gait=/^foundry-(?:[67]-(?:motion|unarmed)|8-(?:motion|right-down|left-down|disarmed))(?:-paint|-parts)?$/.test(name);
+ return asset(gait&&!window.IRON_VOW_INLINE_ASSETS?.[path]?path+'?rev=combat-gait':path);
+}
 function pilotArt(i){return art('pilot-'+['rook','ghost','anchor'][i])}
 function pilotMark(kind,style=''){
  const pilot=CREW[kind];

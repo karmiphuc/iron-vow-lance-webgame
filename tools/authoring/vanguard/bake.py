@@ -1,4 +1,7 @@
-"""Bake the Vanguard-Brawler factory kit from the approved R10 rig."""
+"""Bake the Vanguard-Brawler factory kit from the approved R10 rig.
+
+Pass --walk-only after the output directory to render the eight gait poses.
+"""
 import json
 import math
 import sys
@@ -14,6 +17,7 @@ assert scene["accepted_clay"].startswith("R7")
 assert scene["exact_handle_pad_fit"]
 out = Path(sys.argv[sys.argv.index("--")+1]).resolve()
 out.mkdir(parents=True, exist_ok=True)
+walk_only = "--walk-only" in sys.argv
 camera = scene.camera
 target = Vector((0, -.12, 3.00))
 camera.location = target + Vector((.54, -.84, .185)) * 16
@@ -52,15 +56,27 @@ def place(name, displacement):
 
 def gait(index):
     phase = index / 8
-    place("pelvis", (.025*math.cos(math.tau*phase), 0, -.070+.025*math.cos(2*math.tau*phase)))
+    place("pelvis", (.025*math.cos(math.tau*phase), 0, -.10+.022*math.cos(2*math.tau*phase)))
     for side, offset in (("L", 0), ("R", .5)):
         t = (phase+offset)%1
         if t < .5:
-            y, z = .43-.86*t*2, .21*math.sin(math.tau*t)
+            swing = t*2
+            y, z = .56-1.12*swing*swing*(3-2*swing), .29*math.sin(math.tau*t)
         else:
-            y, z = -.43+.86*(t-.5)*2, 0
+            y, z = -.56+1.12*(t-.5)*2, 0
         place("CTRL.foot."+side, (0, y, z))
         place("CTRL.knee."+side, (0, y*.28, 0))
+
+def hold_guard():
+    animation = rig.animation_data
+    saved = animation.action, animation.action_slot, animation.use_nla
+    pose = [(bone, bone.matrix_basis.copy()) for bone in rig.pose.bones]
+    # A render evaluates the keyed action again, which would overwrite the gait.
+    animation.action = None
+    animation.use_nla = False
+    for bone, basis in pose:
+        bone.matrix_basis = basis
+    return saved
 
 def turn_torso(angle):
     p = rig.pose.bones["torso"]
@@ -106,10 +122,13 @@ levels = {"strike":[0,.15,.32,.52,.7,.80,.89,.95,1]}
 variants = {"full":set(), "right-down":{"R"}, "left-down":{"L"}, "disarmed":{"R","L"}}
 frames = []
 for i,(name,n) in enumerate(states):
+    if walk_only and name != "walk":
+        break
     rig.matrix_world = Matrix.Identity(4)
     scene.frame_set(2)
     scene.frame_set(n)
     if name == "walk":
+        guard = hold_guard()
         gait(i)
     elif name == "pilot-down":
         turn_torso(.30)
@@ -120,12 +139,19 @@ for i,(name,n) in enumerate(states):
         rig.location = camera.rotation_euler.to_matrix() @ Vector((1.37,0,0)) + Vector((0,0,.028-low))
     bpy.context.view_layer.update()
     frames.append({"name":name, **anchors()})
+    if name == "walk":
+        for side in ("L", "R"):
+            foot = rig.pose.bones["foot."+side]
+            frames[-1]["foot"+side] = projection(world(foot.head.lerp(foot.tail, .58)))
     for key, lost in variants.items():
         for side, meshes in weapon_meshes.items():
             for obj in meshes:
                 obj.hide_render = side in lost or name in ("wreck","pilot-down")
         scene.render.filepath = str(out / f"{key}-{i:02}.png")
         bpy.ops.render.render(write_still=True)
+    if name == "walk":
+        animation = rig.animation_data
+        animation.action, animation.action_slot, animation.use_nla = guard
 meta = {"key":"foundry-8-motion","cell":320,"frames":frames,"clips":clips,"levels":levels,
         "idle":8,"pilotDown":9,"wreck":10,"ground":projection(Vector((0,0,0)))[1]}
 (out/"atlas.json").write_text(json.dumps(meta,separators=(",",":")),encoding="utf-8")
