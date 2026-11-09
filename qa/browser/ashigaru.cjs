@@ -11,6 +11,9 @@ module.exports=async function checkAshigaru({page,mobile,origin,tap}){
  await tap('#modal-0');
  const setup=await page.evaluate(async()=>{
   const u=battle.units.find(u=>u.frame===ASHIGARU_FRAME),a=current();
+  lockedTarget=u.id;targetPanelOpen=true;renderBattle();
+  const portrait=document.querySelector('.combat-target img').getAttribute('src');
+  targetPanelOpen=false;renderBattle();
   const atlas=window.IRON_VOW_ASHIGARU_ART,image=motionImages[atlas.key];
   await image.decode();
   battle.cover.clear();
@@ -32,10 +35,11 @@ module.exports=async function checkAshigaru({page,mobile,origin,tap}){
   };
   requestAnimationFrame(trace);
   return {name:u.name,model:FRAMES[u.frame].model,id:u.id,primary:foundryRender(u,clock).primary,
-   atlas:image.naturalWidth,ground:atlas.ground,authored:u.paint===null&&u.trim===null};
+   atlas:image.naturalWidth,ground:atlas.ground,authored:u.paint===null&&u.trim===null,portrait};
  });
  assert.deepEqual([setup.name,setup.model,setup.id],['ASHIGARU 2','IV-S07','enemy1']);
  assert.ok(setup.authored&&setup.primary&&setup.atlas>=1200&&setup.ground[1]>.75&&setup.ground[1]<.9);
+ assert.equal(setup.portrait,'assets/ashigaru.webp');
  for(const [round,range,id] of [[2,8,'needle-carbine'],[3,2,'flechette-scattergun'],[4,1,'signal-knife']]){
   await page.evaluate(range=>{
    const u=battle.units.find(u=>u.frame===ASHIGARU_FRAME),a=current();

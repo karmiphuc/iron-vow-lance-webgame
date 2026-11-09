@@ -1485,6 +1485,7 @@ function wardenVisual(frame,loadout,direction,stock=false,hull){
 }
 function chassisArt(i,loadout,direction=-1,stock=false,hull){
  if(i===BASTION_FRAME)return art('bastion-bst04');
+ if(i===ASHIGARU_FRAME)return art('ashigaru');
  const model=foundryModel(i);if(model!=null)return art('foundry-'+model);
  const visual=wardenVisual(i,loadout,direction,stock,hull);
  return art(visual&&(visual.native||imageReady(artImages[visual.key]))?visual.key:FRAMES[i].name.toLowerCase());
