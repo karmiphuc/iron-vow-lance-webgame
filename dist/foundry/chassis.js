@@ -161,8 +161,10 @@ const DIMS=[
    stance:.62,toe:.03,sway:.1,
    // Predator carry: chest forward, chin down, a shoulder roll with each step.
    carry:{lean:.14,swagger:.07,chin:.08,supportYaw:-.4,supportIdle:false,
-    gunUp:[-.35,-2.65,-.12],cross:[-.5,-.6,.9],bladeForward:[-1.25,.05,-.3,1.32],
-    dual:[['gunUp'],['bladeForward'],['gunUp','bladeForward']]},
+    gunUp:[-1.4,-1.3,-.3],cross:[-.5,-.6,.9],bladeForward:[-1.25,.05,-.3,1.32],
+    dual:[['gunUp'],['bladeForward'],['gunUp','bladeForward']],
+    // Empty left hand when firing: left foot steps forward, hips and chest blade, left hand on the under-barrel.
+    fire:{hips:.4,chest:.5,grip:[-.15,-.6,1.4],step:1.0,back:.25,narrow:.15,lift:.45}},
    // Duelist cut: high guard beside the head, then a diagonal downward stroke that ends at chest height.
    // The blade sits across the fist, so blade pitch = forearm pitch + 90deg - wrist: guard ~3.2 rad, contact ~1.22 rad.
    melee:{wind:{sx:-2.3,sz:-.3,el:-.6,wr:1.27,yaw:-.25,lean:-.1},hit:{sx:-1.3,sz:.1,el:-.12,wr:1.77,yaw:.28,lean:.2},offArm:-.3}},
