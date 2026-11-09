@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const { join } = require("node:path");
 
 module.exports = async function checkScoutBench({ page, origin, tap, mobile }) {
-  await page.route("**/rig-bench/prototypes/bay.js?rev=scout", async route => {
+  await page.route(url => url.pathname.endsWith("/rig-bench/prototypes/bay.js"), async route => {
     const response = await route.fetch();
     await route.fulfill({ response, body: (await response.text()) + `
       window.scoutSample = () => {
@@ -98,4 +98,10 @@ module.exports = async function checkScoutBench({ page, origin, tap, mobile }) {
   await page.waitForFunction(() => document.querySelector("#status").textContent === "Live 3D · Rig online");
   assert.equal(await page.locator('[data-clip="Burst"]').isVisible(), false);
   assert.equal(await page.locator('[data-clip="Fire"]').textContent(), "Fire");
+  for (const [id, name] of [["cicada", "Cicada"], ["hellbreaker", "Hellbreaker"]]) {
+    await tap(`[data-chassis="${id}"]`);
+    await page.waitForFunction(() => document.querySelector("#status").textContent === "Live 3D · Rig online");
+    assert.equal(await page.locator("#name").textContent(), name);
+    assert.equal(await page.locator('[data-clip="Fire"]').isEnabled(), true);
+  }
 };
