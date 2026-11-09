@@ -193,8 +193,9 @@ function draw(u,t,pose,scope,model,custom){
   m.primaryWeapon=entry.primary&&u.hp.right>0?entry.primary:null;
   animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
-  armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step,artillery,mortarAge},dt,t);
- if(prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)){
+  armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
+ // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
+ if(prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
   const lead=m.rig.legs[1];
   const target=V3(lead.restX,m.dims.ankleH+primeLift,lead.restZ+prime*.82);
   VC.solveLeg(m.rig,m.dims,lead,target,-primeLift*.32);

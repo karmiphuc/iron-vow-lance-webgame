@@ -147,5 +147,53 @@ async function oniCarry(){
  }
 }
 
-Promise.all([oniCut(),oniCarry()]).then(()=>console.log('PASS Foundry gait IK and planted feet ('+gaits.map(g=>`${g.name} ${(g.slide*1000).toFixed(1)}mm`).join(', ')+
- '), Behemoth four-beat walk and planted kneel fold, Oni duelist cut, narrow stance, two-hand rifle grip, gun-up and blade-forward guards')).catch(error=>{console.error(error);process.exitCode=1;});
+// Points of the rifle mesh inside Oni's pauldrons or head (local boxes shrunk by 4 cm).
+function rifleClipping(m){
+ m.cont.updateMatrixWorld(true);
+ const boxes=[m.rig.arms.R.paul,m.rig.arms.L.paul,m.rig.neck].map(group=>{
+  const box=new T.Box3(),inverse=new T.Matrix4().copy(group.matrixWorld).invert();
+  group.traverse(o=>{if(!o.isMesh)return;o.geometry.computeBoundingBox();
+   box.union(o.geometry.boundingBox.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(inverse,o.matrixWorld)));});
+  return {box:box.expandByScalar(-.04),inverse};
+ });
+ let inside=0;
+ m.primaryWeapon.model.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.attributes.position;
+  for(let i=0;i<p.count;i+=7){const v=V3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);
+   if(boxes.some(({box,inverse})=>box.containsPoint(v.clone().applyMatrix4(inverse))))inside++;}});
+ return inside;
+}
+async function oniFiring(){
+ const A=sandbox.IronVowProductionArsenal,glb=readFileSync(join(dist,'rig-bench/weapons.glb'));
+ const armory=await A.load(glb.buffer.slice(glb.byteOffset,glb.byteOffset+glb.byteLength));
+ const world=o=>o.getWorldPosition(V3());
+ // Every blade-hand guard keeps the rifle clear of the pauldrons and head, standing and walking.
+ for(const style of [0,1,2]){
+  const m=R.buildRig(4,'ally');m.primaryWeapon=A.mount(armory,'rifle',m.rig.arms.R.so);A.mount(armory,'blade',m.rig.arms.L.so);m.offhand='blade';
+  m.carryStyle=style;m.carryMoving=false;let t=settle(m,{noPlant:true},90),distance=0;
+  // The shipped gun-up guard drove 166 of 1380 sampled rifle points through the right pauldron.
+  assert.equal(rifleClipping(m),0,`Oni guard ${style} rifle clips its armour standing`);
+  for(let i=0;i<60;i++){t+=dt;distance+=2.6*dt;m.carryStyle=style;
+   R.animateMech(m,{pos:V3(0,0,distance),face:0,heading:0,moving:true,speed:2.6,stepLen:1.55,alive:true,brace:0},dt,t);}
+  m.carryStyle=style;assert.equal(rifleClipping(m),0,`Oni guard ${style} rifle clips its armour walking`);
+ }
+ // Empty left hand firing: lead with the left foot, blade the torso, left hand on the under-barrel, exact aim, no clipping.
+ const m=R.buildRig(4,'ally');m.primaryWeapon=A.mount(armory,'rifle',m.rig.arms.R.so);m.offhand='free';
+ let t=settle(m,{noPlant:true}),worstClip=0;
+ m.aim.point.set(0,4,20);
+ const step=(frames,ready)=>{for(let i=0;i<frames;i++){t+=dt;if(ready)m.aim.until=t+.05;
+  R.animateMech(m,{pos:V3(),face:0,heading:0,alive:true,brace:0,noPlant:true,ready},dt,t);worstClip=Math.max(worstClip,rifleClipping(m));}};
+ step(80,true);
+ const [lead,trail]=m.rig.legs.map(leg=>world(leg.an));
+ assert.ok(lead.z-trail.z>1.2,`Oni's left foot leads by only ${(lead.z-trail.z).toFixed(2)} m when firing`);
+ const base=world(m.rig.arms.R.so),muzzle=world(m.primaryWeapon.muzzle),hand=world(m.rig.arms.L.so),axis=muzzle.clone().sub(base);
+ const along=hand.clone().sub(base).dot(axis)/axis.lengthSq(),off=hand.distanceTo(base.clone().addScaledVector(axis,along));
+ assert.ok(off<.03&&along>.3,`Oni's left hand is ${off.toFixed(2)} m off the rifle at ${along.toFixed(2)} of its length`);
+ const error=axis.clone().normalize().angleTo(m.aim.point.clone().sub(muzzle).normalize());
+ assert.ok(error<.026,`Oni's shouldered rifle misses its aim by ${(error*57.3).toFixed(1)} degrees`);
+ m.recoil=.7;step(20,true);step(90,false);
+ assert.equal(worstClip,0,'Oni firing stance drives the rifle into its armour');
+ assert.ok(!m.fireStance&&m.fireStep<.05,'Oni leaves its firing stance after the shot');
+}
+
+Promise.all([oniCut(),oniCarry(),oniFiring()]).then(()=>console.log('PASS Foundry gait IK and planted feet ('+gaits.map(g=>`${g.name} ${(g.slide*1000).toFixed(1)}mm`).join(', ')+
+ '), Behemoth four-beat walk and planted kneel fold, Oni duelist cut, narrow stance, two-hand rifle grip, clear guards, left-foot firing stance')).catch(error=>{console.error(error);process.exitCode=1;});

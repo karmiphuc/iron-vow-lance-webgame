@@ -129,11 +129,29 @@ function carryWeights(m,I,C,dt,dead){
   if(m.carryMoving!==moving||m.carryStyle==null){m.carryMoving=moving;m.carryStyle=Math.floor(Math.random()*C.dual.length);}
   const hand=m.offhand??'free',style=hand==='blade'?C.dual[m.carryStyle]:[];
   const target={gunUp:style.includes('gunUp')?1:0,bladeForward:style.includes('bladeForward')?1:0,
-    support:hand==='free'&&(moving||m.aim.blend>.01||C.supportIdle)?1:0};
-  for(const k in W)W[k]=damp(W[k],target[k],5,dt);
+    support:hand==='free'&&(moving||m.fireStance||C.supportIdle)?1:0};
+  // The free hand grabs quickly and lets go quickly; guards blend more slowly.
+  for(const k in W)W[k]=damp(W[k],target[k],k==='support'?10:5,dt);
   return W;
 }
 const _g0=V3(),_g1=V3(),_gp=V3(),_gs=V3(),_gt=V3();
+function shoulderRifle(m,arm,weight,recoil,F){
+  const r=m.rig,D=m.dims,spine=r.spine;
+  m.cont.updateMatrixWorld(true);
+  const toSpine=spine.getWorldQuaternion(new T.Quaternion()).invert();
+  const shoulder=arm.sh.getWorldPosition(V3()),L=D.fo+(D.so||.26);
+  // Recoil drives the grip down and back along the stock, never straight into the head.
+  const grip=spine.localToWorld(V3(F.grip[0],D.shY+F.grip[1]-recoil*.18,(D.shZ||0)+F.grip[2]-recoil*.16));
+  const line=m.aim.point.clone().sub(grip).normalize();
+  const upper=grip.clone().addScaledVector(line,-L).sub(shoulder).normalize();
+  const u=upper.applyQuaternion(toSpine),f=line.clone().applyQuaternion(toSpine);
+  const Y=u.clone().negate(),Z=f.clone().addScaledVector(u,-f.dot(u)).normalize(),X=Y.clone().cross(Z);
+  const q=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(X,Y,Z));
+  arm.sh.quaternion.slerp(q,weight);
+  arm.el.rotation.x=lerp(arm.el.rotation.x,-u.angleTo(f),weight);
+  // The rifle sits 0.11 rad off the forearm in the wrist frame; cancel it so the barrel follows the line of fire.
+  arm.wr.rotation.x=lerp(arm.wr.rotation.x,.1103-recoil*.1,weight);
+}
 function supportGrip(m,arm,weight){
   const r=m.rig,D=m.dims,spine=r.spine,sc=m.scale;
   m.cont.updateMatrixWorld(true);
@@ -186,14 +204,21 @@ function animateMech(m,I,dt,t){
   const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
   // Fraction of each cycle a foot stays planted. Above .5 gives double support; heavy frames keep more feet down.
   const duty=D.duty??.5;
+  // Firing stance (dims.carry.fire, empty left hand): lead with the left foot and blade the torso so the left hand
+  // reaches the under-barrel. Driven by I.ready (attack priming or aiming) and blended so it also animates under noPlant.
+  const F=D.carry?.fire,ready=Boolean(F&&!dead&&!I.moving&&(m.offhand??'free')==='free'&&m.primaryWeapon&&((I.ready??t<m.aim.until)||m.aim.blend>.35));
+  m.fireStance=ready;m.fireStep=damp(m.fireStep||0,ready?1:0,7,dt);const fs=smooth(clamp(m.fireStep,0,1));
   // Pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's.
   const p=r.pelvis,brace=I.brace;
   const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
   p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
   p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
+  p.rotation.y=F?-F.hips*fs:0;
   let settling=m.legs.some(L=>L.settle);
-  r.legs.forEach((l,i)=>{const L=m.legs[i];const home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ)).clone();let pitch=0;
-    if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;}
+  r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
+    const home=cont.localToWorld(_a.set(l.restX-(lead?F.narrow*fs:0),D.ankleH,l.restZ+(F?(lead?F.step:-F.back)*fs:0))).clone();let pitch=0;
+    if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;
+      if(lead&&!dead){L.foot.y+=F.lift*Math.sin(PI*fs)*sc;pitch=.3*Math.sin(PI*fs);}}
     else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;L.settle=null;
       if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
       else{if(!L.swing){L.swing=true;L.from.copy(L.planted);}const q=(ph-duty)/(1-duty);L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=home.y;
@@ -207,14 +232,16 @@ function animateMech(m,I,dt,t){
   if(r.skirts)VC.skirtPose(r.skirts);
   m.aim.blend=damp(m.aim.blend,t<m.aim.until&&!dead?1:0,t<m.aim.until?9:2.5,dt);
   let ay=0,el=0;
-  if(m.aim.blend>.01){const sp=r.spine.getWorldPosition(_c);const dx=m.aim.point.x-sp.x,dz=m.aim.point.z-sp.z,dy=m.aim.point.y-(sp.y+1.4*sc);const hz=Math.hypot(dx,dz)||1;
+  if(m.aim.blend>.01||fs>.01){const sp=r.spine.getWorldPosition(_c);const dx=m.aim.point.x-sp.x,dz=m.aim.point.z-sp.z,dy=m.aim.point.y-(sp.y+1.4*sc);const hz=Math.hypot(dx,dz)||1;
     ay=clamp(wrapA(Math.atan2(dx,dz)-m.yaw)+Math.asin(Math.min(.45,D.shX*.9*sc/hz)),-.9,.9);el=Math.atan2(dy,hz);}
   m.recoil*=Math.exp(-dt*7);const R0=m.recoil;
   // Authored carry (dims.carry): ready poses chosen by what the left hand holds, blended smoothly.
   const C=D.carry,hold=carryWeights(m,I,C,dt,dead),b=m.aim.blend;
-  const sup=hold.support*(1-b*.35);
+  // In the firing stance the hand takes the barrel once the rifle is up, and lets go before the rifle comes down.
+  const stance=smooth(clamp(m.fireStep??0,0,1)),grab=I.moving||!D.carry?.fire?1:smooth(clamp((stance-.5)/.5,0,1));
+  const sup=hold.support*(1-b*.35*(1-stance))*grab;
   r.spine.rotation.set(S.pitch.x*.18+w*.08+brace*.14-R0*.06+(pd?.55:.3)*dE+(C&&!dead?C.lean:0),
-    ay*b+(C&&!dead?(C.swagger*w*Math.sin(2*PI*g)+C.supportYaw*sup):0),-p.rotation.z*1.3);
+    ay*Math.max(b,fs)+(C&&!dead?(C.swagger*w*Math.sin(2*PI*g)+C.supportYaw*sup*(1-fs)-(F?F.chest*fs:0)):0),-p.rotation.z*1.3);
   // Behemoth's crew cabin is inset into the imported chest, rather than a swivel head.
   if(m.build.mods.core===5)r.neck.rotation.set(0,0,0);
   else r.neck.rotation.set(-el*.35*b+(pd?.45*dE:0)+(C&&!dead?C.chin:0),Math.sin(t*.45+m.seed)*.18*(1-b)*(dead?0:1),0);
@@ -230,7 +257,10 @@ function animateMech(m,I,dt,t){
   const tot=-PI/2-el,sh0=-.5-.55*el,el0=tot-sh0;
   if(I.armDead||dead){aR.sh.rotation.set(lerp(-.28,.16,dead?dE:1)+(dead?0:Math.sin(t*3+m.seed)*.03),0,-.2);aR.el.rotation.x=dead?lerp(-.62,-.1,dE):-.12;}
   else{aR.sh.rotation.set(lerp(carrySh,sh0,b)+R0*.38+S.arm.x*.06,0,lerp(carryZ,-.07,b));aR.el.rotation.x=Math.min(0,lerp(carryEl,el0,b)-R0*.55);}
-  aR.wr.rotation.x=-R0*.1;
+  // Rifles sit 0.11 rad off the forearm; chassis with authored carry poses cancel it so the barrel meets the target.
+  aR.wr.rotation.x=-R0*.1-(C&&!dead?.1103*b:0);
+  // Shouldered rifle in the firing stance: forearm on the line of fire, grip in front of the chest, exact aim.
+  if(F&&fs>.001&&!I.armDead&&!dead)shoulderRifle(m,aR,fs,R0,F);
   const aL=r.arms.L,bl=dead?0:brace;
   aL.sh.rotation.set(lerp(-.2+w*.14*Math.sin(2*PI*g),-1.2,bl)+S.arm.x*.12+(dead?.3*dE:0),0,lerp(.14,-.28,bl));aL.el.rotation.x=lerp(-.75,-1.35,bl)*(dead?1-dE*.7:1);aL.wr.rotation.x=0;
   if(C&&!dead){
