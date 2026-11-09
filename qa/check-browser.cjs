@@ -33,6 +33,7 @@ const checkAero=require('./browser/aero.cjs');
 const checkShields=require('./browser/shields.cjs');
 const checkAttackExchange=require('./browser/attack-exchange.cjs');
 const checkVolley=require('./browser/volley.cjs');
+const checkPartMasks=require('./browser/part-masks.cjs');
 const dist=resolve(__dirname,'../dist');
 
 const types={
@@ -70,7 +71,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkVolley,checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryDestruction,checkRosterDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkAshigaru,checkAero,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed,checkChassisScale]){
+async function checkBrowser(origin,scenarios=[checkPartMasks,checkVolley,checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryDestruction,checkRosterDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkAshigaru,checkAero,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed,checkChassisScale]){
  const timeout=Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000);
  if(!Number.isFinite(timeout)||timeout<1000||timeout>120000)throw Error('IRON_VOW_QA_TIMEOUT_MS must be between 1000 and 120000.');
  const server=origin?null:await serve();

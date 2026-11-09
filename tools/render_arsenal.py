@@ -4,6 +4,7 @@ Usage: blender -b --python-exit-code 1 -t 6 -P tools/render_arsenal.py -- warden
 Repeat for kestrel, basilisk and weapons, then run tools/assemble_arsenal.cjs.
 Append --prime-only to update only the attack atlas and its manifest entry.
 With --prime-only, --face-left updates the left-facing atlas alone.
+Append --parts-only to bake lossless armor IDs beside existing chassis artwork.
 """
 import json
 import math
@@ -24,6 +25,7 @@ BENCH = DIST / "rig-bench"
 ASSETS = DIST / "assets"
 model = sys.argv[sys.argv.index("--") + 1]
 PRIME_ONLY = "--prime-only" in sys.argv
+PARTS_ONLY = "--parts-only" in sys.argv
 BODY_TILES = {"warden": [0, 7, 8, 12, 15], "kestrel": [0, 7, 8, 12, 15], "basilisk": [0, 7, 12, 15]}
 WEAPON_ROOTS = {"rifle":"kestrel", "rail":"longbow", "shotgun":"breacher", "missile":"vesper",
                 "hailstorm":"hailstorm", "rampart":"rampart", "breaker":"breaker", "cleaver":"cleaver", "piledriver":"piledriver"}
@@ -134,7 +136,7 @@ def setup_mask():
     tree.links.new(render.outputs["Image"],composite.inputs[0])
     return mask
 
-mask=setup_mask() if model!="weapons" else None
+mask=setup_mask() if model!="weapons" and not PARTS_ONLY else None
 def render_sprite(tmp,size):
     scene.cycles.samples=28 if size>=480 else 12
     scene.render.resolution_x=scene.render.resolution_y=size
@@ -291,6 +293,45 @@ def weapon_sprites(tmp):
                 spike.location=original
             output.setdefault(id,{})[face]=slot
     return output
+
+def bake_parts():
+    sys.path.insert(0,str(HERE))
+    from bake_native_parts import registry,sheet,verify_and_save
+    from blender_part_mask import render_part_mask
+    art=registry("arsenal-visuals.js","window.IRON_VOW_ARSENAL = ")
+    views=art["chassis"][list(BODY_TILES).index(model)]
+    motion=json.loads(subprocess.check_output(["node",str(HERE/"sample_warden_motion.cjs"),"--arsenal","--model",model]))
+    sources={"gait":[{"pose":pose} for pose in motion["gait"]],"kick":motion["kicks"],
+             "aim":motion["aims"],"death":motion["deaths"],**motion["strikes"]}
+    for face,sign in [("left",1),("right",-1)]:
+        view=views[face]
+        camera_data.ortho_scale=view["ortho"]
+        camera.location=point(10.2,8.2,13.5) if sign==1 else point(-14,8.2,10)
+        aim(camera,point(0,3.45,.35))
+        camera_data.shift_x=camera_data.shift_y=0
+        bpy.context.view_layer.update()
+        base=project(point(0,.10,.2))
+        camera_data.shift_x,camera_data.shift_y=base[0]-view["groundX"],view["ground"]-base[1]
+        apply_pose(motion["idle"])
+        static=sheet(view["key"])
+        verify_and_save(render_part_mask(scene,static.width),view["key"])
+        for prop,clips in (("motion",sources),("attackMotion",motion["attackLeft" if sign==1 else "attack"])):
+            atlas=view[prop]
+            key,cell,cols=atlas["key"],atlas["cell"],atlas["columns"]
+            mask=sheet(key)
+            for kind,rows in clips.items():
+                frames=atlas[kind]
+                if len(rows)!=len(frames):
+                    raise ValueError(f"{key}/{kind}: expected {len(frames)} frames, got {len(rows)}")
+                for row,frame in zip(rows,frames):
+                    apply_pose(row["pose"])
+                    index=frame["index"]
+                    mask.paste(render_part_mask(scene,cell),(index%cols*cell,index//cols*cell))
+            verify_and_save(mask,key)
+
+if PARTS_ONLY:
+    bake_parts()
+    sys.exit(0)
 
 with tempfile.TemporaryDirectory() as tmp:
     data=weapon_sprites(Path(tmp)) if model=="weapons" else body_sheets(Path(tmp))

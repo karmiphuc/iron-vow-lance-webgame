@@ -32,45 +32,44 @@ module.exports=async function checkImpact({page,mobile,origin,tap}){
     u.face=facing;u.heading=facing*Math.PI/4;
     if(close)u.headingOverride=u.heading;
     u.hp[part]=hp;u.hitTime=age==null?undefined:t-age;u.hitPart=age==null?undefined:part;
-    // Measure sprite tint independently of the part HP readout.
-    const drawReadout=drawUnitReadout;
-    drawUnitReadout=()=>{};
-    try{drawUnit(u,t,close)}finally{drawUnitReadout=drawReadout}
-    const anchor=mechAttachmentPoint(u,part,t);
-    const data=ctx.getImageData(x-span/2,y-span,span,span+30).data;
-    origin=oldOrigin;scale=oldScale;ctx.restore();
-    return {data,anchor};
+    const drawTint=drawPartTints;
+    const read=()=>ctx.getImageData(x-span/2,y-span,span,span+30).data;
+    let before,after;
+    drawPartTints=(...args)=>{before=read();drawTint(...args);after=read()};
+    try{drawUnit(u,t,close)}finally{drawPartTints=drawTint;origin=oldOrigin;scale=oldScale;ctx.restore()}
+    return {before,after};
    }
    function diff(a,b){
-    let count=0,outside=0,alpha=0;
-    for(let i=0;i<a.data.length;i+=4){
-     if(!a.data[i+3]||!b.data[i+3]){if(a.data[i+3]!==b.data[i+3])alpha++;continue}
-     const d=Math.max(...[0,1,2].map(c=>Math.abs(a.data[i+c]-b.data[i+c])));
+    let count=0,alpha=0,peakAlpha=0;
+    for(let i=0;i<a.length;i+=4){
+     if(!a[i+3]||!b[i+3]){if(a[i+3]!==b[i+3]){alpha++;peakAlpha=Math.max(peakAlpha,a[i+3],b[i+3])}continue}
+     const d=Math.max(...[0,1,2].map(c=>Math.abs(a[i+c]-b[i+c])));
      if(d<7)continue;
-     const p=i/4;
-     if(Math.hypot(x-span/2+p%span-b.anchor.x,y-span+Math.floor(p/span)-b.anchor.y)>32)outside++;
      count++;
     }
-    return {count,outside,alpha};
+    return {count,alpha,peakAlpha};
    }
    // Warm the canvas readback path before making pixel comparisons.
    for(let i=0;i<5;i++)sample(null,max);
-   const undamaged=sample(null,max),moderate=sample(null,Math.ceil(max*.7)),hit=sample(.17,Math.ceil(max*.7)),aged=sample(3,Math.ceil(max*.7)),worn=sample(null,Math.ceil(max*.3));
-   const report={flash:diff(moderate,hit),damage:diff(undamaged,worn),aged:diff(moderate,aged)};
+   const moderate=Math.ceil(max*.7),low=Math.ceil(max*.3);
+   const hit=sample(.17,moderate),aged=sample(3,moderate),worn=sample(null,low);
+   const report={flash:diff(hit.before,hit.after),
+    damage:diff(mode==='live'?sample(null,max).after:worn.before,worn.after),
+    aged:diff(aged.before,aged.after)};
    if(mode==='travel'){
     report.facings=[-3,-1,1,3].map(heading=>{
-     const before=sample(null,Math.ceil(max*.7),heading),rightHit=sample(.17,Math.ceil(max*.7),heading);
-     return diff(before,rightHit);
+     const hit=sample(.17,moderate,heading);
+     return diff(hit.before,hit.after);
     });
    }
    return report;
   },{mode});
   assert.ok(result.flash.count>15,mode+' visible impact');
-  assert.equal(result.flash.outside,0,mode+' flash stays on the hit subsystem');
+  assert.equal(result.flash.alpha,0,mode+' flash stays within the visible silhouette '+JSON.stringify(result.flash));
   assert.ok(result.damage.count>15,mode+' persistent damage');
   assert.equal(result.aged.count,0,mode+' flash clears');
-  if(mode!=='live')assert.equal(result.damage.outside,0,mode+' damage stays localized');
-  if(result.facings)assert.ok(result.facings.every(facing=>facing.count>15&&facing.outside===0),'tint follows all four facings');
+  if(mode!=='live')assert.equal(result.damage.alpha,0,mode+' damage stays within the visible silhouette');
+  if(result.facings)assert.ok(result.facings.every(facing=>facing.count>15&&facing.alpha===0),'tint follows all four facings '+JSON.stringify(result.facings));
  }
  if(!mobile)await page.emulateMedia({reducedMotion:'no-preference'});
  await page.evaluate(()=>{
@@ -83,14 +82,14 @@ module.exports=async function checkImpact({page,mobile,origin,tap}){
   lockedTarget=foe.id;focusBattleCamera(ally,true);renderBattle();persist();
   window.partTrace={field:false,camera:false,scorch:false};
   const draw=drawPartTints;
-  drawPartTints=(u,t,paint,anchor,scorch)=>draw(u,t,paint,part=>{
-   if(u.id===foe.id&&part==='left'&&u.hitPart===part){
+  drawPartTints=(u,t,paint,anchor,scorch,mask)=>{
+   if(u.id===foe.id&&(u.hitParts??[u.hitPart]).includes('left')){
     const age=t-u.hitTime;
     if(age>=0&&age<.72)window.partTrace[u.headingOverride===undefined?'field':'camera']=true;
     else if(age>=.72&&u.headingOverride===undefined)window.partTrace.scorch=true;
    }
-   return anchor(part);
-  },scorch);
+   return draw(u,t,paint,anchor,scorch,mask);
+  };
  });
  await tap('#modal-0');
  await tap('#fire');

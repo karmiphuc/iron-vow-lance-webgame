@@ -3,6 +3,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {spawnSync,execFileSync}=require('node:child_process');
 const {createCanvas,loadImage,ImageData}=require('../qa/node_modules/@napi-rs/canvas');
+const {damageMeshes,partColor,normalizeMask,savePartMask}=require('./chassis-part-mask.cjs');
+const {stockDamageMeshes}=require('./stock-part-map.cjs');
 const T=require('../dist/rig-bench/vendor/three.min.js');
 const dist=path.join(__dirname,'../dist'),size=176,columns=4;
 global.THREE=T;global.self=global;global.window={THREE:T};
@@ -69,7 +71,7 @@ function geometry(root,spec){
     n.fromBufferAttribute(a.normal,j).applyMatrix3(normalMat).normalize();
     const light=Math.max(0,n.dot(shadeLight));
     const tone=color.clone().multiplyScalar(.53+.89*light).addScalar(.019+.025*light).convertLinearToSRGB();
-    data.push(p.x,p.y,p.z,tone.r*255,tone.g*255,tone.b*255,slot);
+    data.push(p.x,p.y,p.z,tone.r*255,tone.g*255,tone.b*255,slot,spec.partIds?.get(o)??0);
    }
   }
  });
@@ -100,11 +102,12 @@ function raster(values){
  return new ImageData(pixels,size,size);
 }
 function draw(data,angle,span,ground,mask=false){
- const values=new Float32Array(data.length/7*6);
- for(let i=0,j=0;i<data.length;i+=7,j+=6){
+ const values=new Float32Array(data.length/8*6);
+ for(let i=0,j=0;i<data.length;i+=8,j+=6){
   const [x,y,z]=projectPoint(data[i],data[i+1],data[i+2],angle,span,ground);
   values[j]=x;values[j+1]=y;values[j+2]=z;
-  for(let c=0;c<3;c++)values[j+3+c]=mask?data[i+6]===c?255:0:data[i+3+c];
+  const color=mask==='parts'?partColor(data[i+7]):null;
+  for(let c=0;c<3;c++)values[j+3+c]=color?color[c]:mask?data[i+6]===c?255:0:data[i+3+c];
  }
  if(process.argv[2]==='-')return raster(values);
  const head=Buffer.alloc(8);head.writeInt32LE(size);head.writeInt32LE(values.length/18,4);
@@ -188,18 +191,29 @@ async function bake(spec){
   const {scene}=await glTF(path.join(process.argv[3],spec.key+'.glb'));root=scene;span=3.2;ground=.72;rows=1;
   sample=()=>({body:named(root,'body').getWorldPosition(V3()),muzzle:named(root,'muzzle').getWorldPosition(V3())});
  }else{
-  const m=buildRig(spec.model,'ally');spec.foundry=m;root=m.cont;span=11.2;sample=row=>foundryPose(m,row);
+  const m=buildRig(spec.model,'ally');spec.foundry=m;spec.partIds=damageMeshes(m);root=m.cont;span=11.2;sample=row=>foundryPose(m,row);
  }
+ const partsOnly=process.argv.includes('--parts-only');
+ if(spec.stock!==undefined||spec.native)spec.partIds=stockDamageMeshes(root);
+ if(partsOnly&&!spec.partIds)throw Error('No authoritative damage mesh map for '+spec.key);
  const canvas=createCanvas(columns*size,rows*size),g=canvas.getContext('2d');
  const mask=spec.vehicle?null:createCanvas(columns*size,rows*size),mg=mask?.getContext('2d');
+ const parts=spec.partIds?createCanvas(columns*size,rows*size):null,pg=parts?.getContext('2d');
  const points=[];
  for(let row=0;row<rows;row++){
   const anchors=sample(row),triangles=geometry(root,spec);
   points.push([]);
   for(let column=0;column<columns;column++){
    const angle=(1+2*column)*Math.PI/4;
-   g.putImageData(draw(triangles,angle,span,ground),column*size,row*size);
-   if(mg)mg.putImageData(draw(triangles,angle,span,ground,true),column*size,row*size);
+   if(!partsOnly){
+    g.putImageData(draw(triangles,angle,span,ground),column*size,row*size);
+    if(mg)mg.putImageData(draw(triangles,angle,span,ground,true),column*size,row*size);
+   }
+   if(pg){
+    const frame=draw(triangles,angle,span,ground,'parts');
+    normalizeMask(frame.data);
+    pg.putImageData(frame,column*size,row*size);
+   }
    points[row].push(Object.fromEntries(Object.entries(anchors).map(([k,v])=>{
     const [x,y]=projectPoint(v.x,v.y,v.z,angle,span,ground);
     return [k,[+(x/size).toFixed(4),+(y/size).toFixed(4)]];
@@ -207,15 +221,25 @@ async function bake(spec){
   }
  }
  const key='grid-travel-'+spec.key,save=(img,suffix)=>fs.writeFileSync(path.join(dist,'assets',key+suffix+'.webp'),img.toBuffer('image/webp',91));
- save(canvas,'');if(mask)save(mask,'-paint');
+ if(!partsOnly){save(canvas,'');if(mask)save(mask,'-paint')}
+ const partMask=parts?key+'-parts':null;
+ if(parts)savePartMask(parts,path.join(dist,'assets',partMask+'.webp'));
  console.log(key,rows*columns+' cells');
- return {key,span,ground,cell:size,columns,points};
+ return {key,span,ground,cell:size,columns,points,...(partMask?{partMask}:{})};
 }
 (async()=>{
  const specs=[...stock.map((key,i)=>({key,stock:i})),...native.map(key=>({key,native:true})),
   ...Array.from({length:6},(_,model)=>({key:'foundry-'+model,model})),...['tank','helicopter'].map(key=>({key,vehicle:true}))];
  const only=process.argv[4],previous=path.join(dist,'grid-travel-visuals.js');
  const output=only?JSON.parse(fs.readFileSync(previous,'utf8').trim().replace(/^window.IRON_VOW_TRAVEL=/,'').replace(/;$/,'')):{};
- for(const spec of specs)if(!only||spec.key===only)output[spec.key]=await bake(spec);
+ for(const spec of specs)if(!only||spec.key===only){
+  const baked=await bake(spec);
+  if(process.argv.includes('--parts-only')){
+   const old=output[spec.key];
+   if(!old||old.key!==baked.key||old.cell!==baked.cell||old.columns!==baked.columns||
+    old.points.length!==baked.points.length)throw Error('Travel sheet layout has changed');
+   old.partMask=baked.partMask;
+  }else output[spec.key]=baked;
+ }
  fs.writeFileSync(path.join(dist,'grid-travel-visuals.js'),'window.IRON_VOW_TRAVEL='+JSON.stringify(output)+';\n');
 })().catch(error=>{console.error(error);process.exitCode=1});

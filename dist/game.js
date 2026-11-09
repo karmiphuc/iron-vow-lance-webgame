@@ -1,5 +1,6 @@
 'use strict';
-const $=s=>document.querySelector(s), canvas=$('#scene'),ctx=canvas.getContext('2d');
+const $=s=>document.querySelector(s),canvas=$('#scene');
+let ctx=canvas.getContext('2d');
 const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,damage:36,range:5,ap:3,weight:14,price:0,desc:'Reliable burst fire. Balanced range and accuracy.'},{id:'shotgun',name:'Breacher SG-4',type:'SCATTER CANNON',burst:12,scatter:true,damage:60,range:3,ap:3,weight:18,price:1500,desc:'A landed shell spreads pellets across every working subsystem unless a shield blocks it.'},{id:'missile',name:'Vesper MRL',type:'MISSILE POD',damage:45,range:7,ap:4,weight:22,price:2400,desc:'Guided ordnance ignores cover penalties. The launcher cannot counter.'},{id:'rail',name:'Longbow R-12',type:'RAIL CANNON',damage:70,range:8,ap:5,weight:26,price:3600,desc:'Precision anti-armor fire. Powerful, but demanding.'},
  {id:'hailstorm',name:'Hailstorm M-8',type:'ROTARY GUN',burst:12,damage:49,range:5,ap:4,weight:21,price:2200,desc:'Spins up for sustained fire at medium range.'},
  {id:'rampart',name:'Rampart AC-40',type:'AUTOCANNON',damage:61,range:6,ap:5,weight:25,price:2900,desc:'A single heavy shell with a longer reach than the scatter cannon.'},
@@ -2639,14 +2640,19 @@ function activeWardenVisual(u){
 function spriteFlip(u,visual=activeWardenVisual(u)){return !visual&&unitFacing(u)!==(u.frame===1?1:-1)}
 const motionImages={};
 const foundryArmVariant=u=>Number(u?.hp?.right<=0)+2*Number(u?.hp?.left<=0);
-function motionImage(atlas){
- let image=motionImages[atlas.key];
+function motionRaster(key){
+ let image=motionImages[key];
  if(!image){
-  image=motionImages[atlas.key]=new Image();
+  image=motionImages[key]=new Image();
   image.decoding='async';
-  image.src=art(atlas.key);
+  image.src=art(key);
  }
  return image;
+}
+function motionImage(atlas){
+ const mask=partTintKey(atlas.key,atlas.partMask);
+ if(mask)motionRaster(mask);
+ return motionRaster(atlas.key);
 }
 function preloadNativeMotion(frame,paint,hull){
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(frame)];
@@ -3498,7 +3504,7 @@ function drawMeshTriangle(im,source,dest,renderWidth=im.naturalWidth||im.width,r
  g.save();g.beginPath();for(let i=0;i<3;i++){const v=dest[i],vx=v.x-center.x,vy=v.y-center.y,len=Math.hypot(vx,vy)||1;const x=v.x+vx/len*.24,y=v.y+vy/len*.24;i?g.lineTo(x,y):g.moveTo(x,y)}g.closePath();g.clip();
  g.transform(ax,bx,cx,dx,p.x-ax*a.x-cx*a.y,p.y-bx*a.x-dx*a.y);g.drawImage(im,0,0,renderWidth,renderHeight);g.restore();
 }
-function drawArticulatedMech(im,u,w,h,pose,upperTexture=null){
+function drawArticulatedMech(im,u,w,h,pose,upperTexture=null,g=ctx){
  const upperActive=pose.aim>.001||Math.abs(pose.recoil)>.008||pose.death>0,columns=pose.baseOnly?(u.alive?(pose.walk>.001?(w>210?9:6):3):6):upperActive?(w>210?13:10):(w>210?9:6),rows=pose.baseOnly?(u.alive?(pose.walk>.001?(w>210?13:10):10):14):upperActive?(w>210?18:15):(w>210?13:10),iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height;
  const source=[],dest=[];
  for(let j=0;j<=rows;j++)for(let i=0;i<=columns;i++){
@@ -3506,8 +3512,8 @@ function drawArticulatedMech(im,u,w,h,pose,upperTexture=null){
  }
  for(let j=0;j<rows;j++)for(let i=0;i<columns;i++){
   const a=j*(columns+1)+i,b=a+1,c=a+columns+1,d=c+1,texture=upperTexture&&(j+.5)/rows<pose.rig.hip+.08?upperTexture:im;
-  drawMeshTriangle(texture,[source[a],source[b],source[d]],[dest[a],dest[b],dest[d]],iw,ih);
-  drawMeshTriangle(texture,[source[a],source[d],source[c]],[dest[a],dest[d],dest[c]],iw,ih);
+  drawMeshTriangle(texture,[source[a],source[b],source[d]],[dest[a],dest[b],dest[d]],iw,ih,g);
+  drawMeshTriangle(texture,[source[a],source[d],source[c]],[dest[a],dest[d],dest[c]],iw,ih,g);
  }
 }
 function recoilingBounds(u,b,t){
@@ -3669,26 +3675,158 @@ function travelMount(view,u,id,progress=0){
  if(mount&&view.strike&&id===u.attack.kind&&!upgradedWardenTravel(view.atlas))mount.angle+=view.direction*(.9-1.85*smoothRange(.36,.78,progress));
  return mount;
 }
-const PART_TINTS=[['body',.35,.27],['pilot',.20,.16],['right',.24,.29],['left',.24,.29],['legs',.32,.37]];
-function drawPartTints(u,t,paint,anchor,scorch=true){
- if(u.kind||!u.alive)return;
- const age=t-(u.hitTime??-Infinity),hits=age>=0&&age<.72?u.hitParts??[u.hitPart]:null;
- if(!hits&&!scorch)return;
- for(const [part,width,height] of PART_TINTS){
-  if(!u.max[part])continue;
-  const flash=hits?.includes(part),health=u.hp[part]/u.max[part];
-  if(!flash&&(!scorch||health>=.5))continue;
-  const p=anchor(part);
-  if(!p)continue;
-  // Repaint within the struck area so the tint respects the sprite's silhouette.
-  ctx.save();
-  ctx.beginPath();ctx.ellipse(p.x,p.y,scale*width,scale*height,0,0,Math.PI*2);ctx.clip();
-  ctx.globalAlpha*=flash?.9*(1-age/.72):.52+.36*(1-health);
-  const filter=ctx.filter;
-  ctx.filter=(filter&&filter!=='none'?filter+' ':'')+(flash?'brightness(1.95) saturate(.48)':'brightness(.35) saturate(.60)');
-  paint();
-  ctx.restore();
+const PART_TINTS=[['body',.35],['pilot',.20],['right',.24],['left',.24],['legs',.32]];
+const TINT_DEBUG=/[?&]tintdebug(?:[=&]|$)/.test(window.location?.search??'')?
+ {body:'#4f8fd8',pilot:'#f2d24b',right:'#e0573f',left:'#5ec27a',legs:'#b06ad9'}:null;
+const partTintLayers={},partTintCells=new Map();
+function partTintKey(key,declared){
+ return declared??window.IRON_VOW_PART_MASKS?.[key];
+}
+function partTintSource(key,source,bounds,draw,cell=0,sx=0,sy=0,declared){
+ const partMask=partTintKey(key,declared);
+ if(!partMask||!source)return null;
+ const width=source.naturalWidth||source.width,height=source.naturalHeight||source.height;
+ return {key:partMask,width,height,sx,sy,cell,w:cell||width,h:cell||height,bounds,draw};
+}
+function tintLayer(name,w,h){
+ let surface=partTintLayers[name];
+ if(!surface||surface.width<w||surface.height<h)
+  surface=partTintLayers[name]=renderSurface(Math.max(w,surface?.width??0),Math.max(h,surface?.height??0));
+ return surface;
+}
+function tintNoise(){
+ if(partTintLayers.noise)return partTintLayers.noise;
+ const surface=renderSurface(160,160),g=surface.getContext('2d');
+ let seed=11;const rand=()=>(seed=seed*16807%2147483647)/2147483647;
+ for(let i=0;i<60;i++){
+  const x=rand()*160,y=rand()*160,r=5+rand()*22,a=.18+rand()*.42;
+  for(const dx of [-160,0,160])for(const dy of [-160,0,160]){
+   const gr=g.createRadialGradient(x+dx,y+dy,0,x+dx,y+dy,r);
+   gr.addColorStop(0,`rgba(9,6,4,${a})`);gr.addColorStop(1,'rgba(9,6,4,0)');
+   g.fillStyle=gr;g.fillRect(x+dx-r,y+dy-r,r*2,r*2);
+  }
  }
+ return partTintLayers.noise=surface;
+}
+function tintMaskCell(mask,image,part){
+ const {key,w,h,sx,sy}=mask,id=PART_TINTS.findIndex(([name])=>name===part)+1;
+ const cacheKey=[key,w,h,sx,sy,id].join('/');
+ if(partTintCells.has(cacheKey))return partTintCells.get(cacheKey);
+ const surface=renderSurface(w,h),g=surface.getContext('2d',{willReadFrequently:true});
+ g.drawImage(image,sx,sy,w,h,0,0,w,h);
+ const pixels=g.getImageData(0,0,w,h),data=pixels.data;
+ for(let i=0;i<data.length;i+=4){
+  const color=(data[i]===255?1:0)|(data[i+1]===255?2:0)|(data[i+2]===255?4:0);
+  if(color!==id)data[i+3]=0;
+ }
+ g.putImageData(pixels,0,0);
+ if(partTintCells.size>=32)partTintCells.delete(partTintCells.keys().next().value);
+ partTintCells.set(cacheKey,surface);
+ return surface;
+}
+function tintPartRegion(site,sites,w,h){
+ let polygon=[[0,0],[w,0],[w,h],[0,h]];
+ for(const other of sites){
+  if(other===site)continue;
+  const nx=2*(other.x-site.x),ny=2*(other.y-site.y);
+  const limit=other.x**2+other.y**2-other.radius**2-(site.x**2+site.y**2-site.radius**2),next=[];
+  for(let i=0;i<polygon.length;i++){
+   const p=polygon[i],q=polygon[(i+1)%polygon.length];
+   const a=nx*p[0]+ny*p[1]-limit,b=nx*q[0]+ny*q[1]-limit;
+   if(a<=0)next.push(p);
+   if((a<=0)!==(b<=0)){const t=a/(a-b);next.push([p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t])}
+  }
+  polygon=next;if(polygon.length<3)return [];
+ }
+ return polygon;
+}
+function drawPartTints(u,t,paint,anchor,scorch=true,mask=null){
+ if(u.kind||(!u.alive&&!TINT_DEBUG))return;
+ const age=t-(u.hitTime??-Infinity),hits=age>=0&&age<.72?u.hitParts??[u.hitPart]:null;
+ const jobs=[];
+ for(const [part] of PART_TINTS)if(u.max[part]){
+  const health=clamp01(u.hp[part]/u.max[part]),flash=hits?.includes(part);
+  if(TINT_DEBUG||flash||(scorch&&health<.5))jobs.push({part,health,flash});
+ }
+ if(!jobs.length||typeof ctx.getTransform!=='function')return;
+ const m=ctx.getTransform();
+ if(!m)return;
+ const unit=scale*Math.hypot(m.a,m.b),image=mask&&motionRaster(mask.key);
+ const exact=imageReady(image)&&mask.width===image.naturalWidth&&mask.height===image.naturalHeight&&
+  mask.sx>=0&&mask.sy>=0&&mask.sx+mask.w<=mask.width&&mask.sy+mask.h<=mask.height;
+ const project=({x,y})=>({x:m.a*x+m.c*y+m.e,y:m.b*x+m.d*y+m.f});
+ const sites=exact?[]:PART_TINTS.flatMap(([part,radius])=>{
+  const p=u.max[part]&&anchor(part);
+  return p?[{part,radius:radius*unit,...project(p)}]:[];
+ });
+ const b=exact&&mask.bounds;
+ const points=b?[project(b),project({x:b.x+b.w,y:b.y}),project({x:b.x,y:b.y+b.h}),project({x:b.x+b.w,y:b.y+b.h})]:sites;
+ if(!points.length)return;
+ const pad=exact?2:unit;
+ const x=Math.max(0,Math.floor(Math.min(...points.map(p=>p.x))-pad));
+ const y=Math.max(0,Math.floor(Math.min(...points.map(p=>p.y))-pad));
+ const w=Math.min(canvas.width,Math.ceil(Math.max(...points.map(p=>p.x))+pad))-x;
+ const h=Math.min(canvas.height,Math.ceil(Math.max(...points.map(p=>p.y))+pad))-y;
+ if(w<4||h<4)return;
+ const sprite=tintLayer('sprite',w,h),layer=tintLayer('part',w,h),regionLayer=exact?tintLayer('region',w,h):null;
+ if(!sprite||!layer||(exact&&!regionLayer))return;
+ const a=sprite.getContext('2d'),g=layer.getContext('2d'),main=ctx,alpha=main.globalAlpha;
+ const transform=target=>target.setTransform(m.a,m.b,m.c,m.d,m.e-x,m.f-y);
+ a.save();a.clearRect(0,0,w,h);transform(a);
+ a.imageSmoothingEnabled=main.imageSmoothingEnabled;
+ a.imageSmoothingQuality=main.imageSmoothingQuality;
+ ctx=a;try{paint()}finally{ctx=main;a.restore()}
+ const local=sites.map(p=>({...p,x:p.x-x,y:p.y-y}));
+ main.save();
+ try{
+  main.setTransform(1,0,0,1,0,0);
+  // Do not increase the opacity of the sprite's antialiased silhouette.
+  main.globalCompositeOperation='source-atop';
+  for(const {part,health,flash} of jobs){
+   const cell=exact?tintMaskCell(mask,image,part):null;
+   const site=local.find(p=>p.part===part),region=site?tintPartRegion(site,local,w,h):[];
+   if(!cell&&!region.length)continue;
+   if(cell){
+    const r=regionLayer.getContext('2d');
+    r.save();r.clearRect(0,0,w,h);transform(r);r.imageSmoothingEnabled=false;
+    try{mask.draw(r,cell)}finally{r.restore()}
+   }
+   g.save();
+   try{
+    const applyRegion=()=>{
+     g.globalCompositeOperation='destination-in';g.globalAlpha=1;
+     if(cell)g.drawImage(regionLayer,0,0,w,h,0,0,w,h);
+     else{
+      g.beginPath();g.moveTo(...region[0]);
+      for(const p of region.slice(1))g.lineTo(...p);
+      g.closePath();g.fill();
+     }
+    };
+    g.globalCompositeOperation='copy';g.drawImage(sprite,0,0,w,h,0,0,w,h);
+    applyRegion();
+    const burn=1-health*2;
+    if(TINT_DEBUG){
+     g.globalCompositeOperation='source-atop';g.fillStyle=TINT_DEBUG[part];g.fillRect(0,0,w,h);
+    }else{
+     if(flash){
+      g.globalCompositeOperation='screen';g.fillStyle='#ffe2b8';g.globalAlpha=.4;g.fillRect(0,0,w,h);
+     }else{
+      g.globalCompositeOperation='saturation';g.fillStyle='#808080';g.globalAlpha=.55+.35*burn;g.fillRect(0,0,w,h);
+      g.globalCompositeOperation='multiply';g.fillStyle='#4a423a';g.globalAlpha=1;g.fillRect(0,0,w,h);
+     }
+     g.globalAlpha=1;g.globalCompositeOperation='destination-in';g.drawImage(sprite,0,0,w,h,0,0,w,h);
+     applyRegion();
+     if(!flash){
+      g.globalCompositeOperation='source-atop';g.globalAlpha=.3+.4*burn;
+      g.fillStyle=g.createPattern(tintNoise(),'repeat');
+      const offset=(u.index||0)*41;g.translate(-offset,-offset*.6);g.fillRect(offset,offset*.6,w,h);
+     }
+    }
+    main.globalAlpha=alpha*(TINT_DEBUG?1:flash?.85*(1-age/.72):.55+.4*burn);
+    main.drawImage(layer,0,0,w,h,x,y,w,h);
+   }finally{g.restore()}
+  }
+ }finally{main.restore()}
 }
 function drawTravel(u,t,view){
  const {atlas,image,source,bounds,heading}=view,p=project(u.vx,0,u.vz),{cell}=source;
@@ -3713,8 +3851,10 @@ function drawTravel(u,t,view){
  if(behind&&melee)drawWeaponModule(ctx,melee);
  if(behind&&shield)drawWeaponModule(ctx,shield);
  const paint=()=>ctx.drawImage(body,source.x*cell,source.y*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
+ const mask=partTintSource(source.key,image,bounds,(g,part)=>g.drawImage(part,bounds.x,bounds.y,bounds.w,bounds.h),
+  cell,source.x*cell,source.y*cell,source.key===atlas.key?atlas.partMask:undefined);
  paint();
- drawPartTints(u,t,paint,part=>view.points[part]&&spritePoint(bounds,view.points[part]));
+ drawPartTints(u,t,paint,part=>view.points[part]&&spritePoint(bounds,view.points[part]),true,mask);
  ctx.restore();
  if(!behind&&!u.kind&&u.hp.right>0&&!(u.frame===2&&u.weapon==='missile')){
   drawWeaponModule(ctx,travelMount(view,u,u.weapon));
@@ -3876,12 +4016,13 @@ function bulwarkArtFrame(u,pose,atlas){
 }
 function bulwarkBaked(u,pose,atlas){
  const heading=headingIndex(pose.heading),view=atlas.directions[heading],arm=foundryArmVariant(u);
- const image=motionImage({key:view.variants[arm]}),loaded=imageReady(image);
+ const key=view.variants[arm],image=motionImage({key}),loaded=imageReady(image);
  const idle=motionImage(atlas),idleReady=imageReady(idle);
  const frame=loaded&&u.alive?bulwarkArtFrame(u,pose,atlas):atlas.idle;
  return stagedFoundryDeath(u,pose,atlas,{surface:loaded?image:idleReady?idle:artImages[legacyChassis[u.frame]],
   cell:loaded?atlas.cell:idleReady?atlas.fallbackCell:0,
   index:loaded?atlas.layouts[arm][frame]:heading*4+arm,anchors:view.frames[frame],
+  key:loaded?key:idleReady?atlas.key:legacyChassis[u.frame],partMask:!loaded&&idleReady?atlas.partMask:undefined,
   flip:false,baked:true,primary:true,secondary:true,shield:true},view.frames[frame]);
 }
 function authoredFoundryDeath(u,pose,atlas){
@@ -3896,7 +4037,7 @@ function authoredFoundryDeath(u,pose,atlas){
  const flip=!destruction.directions&&unitFacing(u)>0;
  const anchors=mapFoundryAnchors(view.frames[index],flip,([x,y])=>[.5+(x-.5)*span,.5+(y-.5)*span]);
  const surface=destruction.paint===false?image:foundryPaint(image,view.key,u.paint,u.trim,atlas.paintBlend);
- return {surface,cell:destruction.cell??atlas.cell,index,anchors,flip,span,destruction,baked:true,primary:true,secondary:true};
+ return {surface,key:view.key,partMask:view.partMask,cell:destruction.cell??atlas.cell,index,anchors,flip,span,destruction,baked:true,primary:true,secondary:true};
 }
 // Keep the soles planted as the knees give way, then tip the upper mass over the hips.
 function stagedFoundryDeath(u,pose,atlas,render,frame){
@@ -3941,7 +4082,7 @@ function foundryRender(u,t,liveOnly=false){
  if(liveOnly&&!reaver&&u.frame!==ASHIGARU_FRAME)return null;
  if(bastionRig(u)){
   const anchors={body:[.50,.46],pilot:[.50,.29],right:[.31,.59],left:[.70,.59],legs:[.50,.72],muzzle:[.20,.53],leadFoot:[.43,.84]};
-  return stagedFoundryDeath(u,pose,atlas,{surface:artImages['bastion-bst04'],cell:0,anchors,flip:false,baked:true,primary:true},anchors);
+  return stagedFoundryDeath(u,pose,atlas,{surface:artImages['bastion-bst04'],key:'bastion-bst04',cell:0,anchors,flip:false,baked:true,primary:true},anchors);
  }
  if(!atlas||atlas.frames.length<19)return null;
  const strike=u.alive&&u.hp.left>0?atlas.strikes?.[pose.strikeKind]:null;
@@ -3951,7 +4092,7 @@ function foundryRender(u,t,liveOnly=false){
   const index=strike.levels.findIndex((value,i)=>i===strike.levels.length-1||level<=(value+strike.levels[i+1])/2);
   const flip=unitFacing(u)>0,frame=strike.frames[index];
   const anchors=flip?mapFoundryAnchors(frame,flip):frame;
-  return {surface:strikeImage,cell:atlas.cell,index,anchors,flip,baked:true,primary:false,secondary:true,ortho:atlas.ortho,
+  return {surface:strikeImage,key:strike.key,partMask:strike.partMask,cell:atlas.cell,index,anchors,flip,baked:true,primary:false,secondary:true,ortho:atlas.ortho,
    strikeProgress:pose.strikeProgress};
  }
  const variantIndex=foundryArmVariant(u);
@@ -3969,7 +4110,7 @@ function foundryRender(u,t,liveOnly=false){
  const anchors=flip?mapFoundryAnchors(frame,flip):frame;
  const loaded=imageReady(image),key=loaded?sprite.key:legacyChassis[u.frame],base=loaded?image:artImages[key];
  const surface=loaded?foundryPaint(base,key,u.paint,u.trim,atlas.paintBlend):base;
- return stagedFoundryDeath(u,pose,atlas,{surface,cell:loaded?atlas.cell:0,index:atlas.layouts?.[variantIndex]?.[index]??index,anchors,flip,baked:true,
+ return stagedFoundryDeath(u,pose,atlas,{surface,key,partMask:loaded?sprite.partMask:undefined,cell:loaded?atlas.cell:0,index:atlas.layouts?.[variantIndex]?.[index]??index,anchors,flip,baked:true,
   primary:atlas.primary===true,secondary:reaver||atlas.secondary===true,shield:atlas.shield===true,strikeProgress:pose.strikeProgress,ortho:atlas.ortho},frame);
 }
 function mapFoundryAnchors(frame,flip,transform=p=>p){
@@ -3978,19 +4119,20 @@ function mapFoundryAnchors(frame,flip,transform=p=>p){
  }));
 }
 const settledFoundryArt=new WeakMap();
-function drawFoundryCollapse(render,w,h){
- if(!render.settled){paintFoundryCollapse(render,w,h,ctx);return}
+function drawFoundryCollapse(render,w,h,g=ctx){
+ if(!render.settled){paintFoundryCollapse(render,w,h,g);return}
  let frames=settledFoundryArt.get(render.surface);
  if(!frames){frames=new Map();settledFoundryArt.set(render.surface,frames)}
  const key=[render.cell,render.index,render.settled].join('/');
  let surface=frames.get(key);
  if(!surface){
   surface=renderSurface(450,450);
-  const g=surface.getContext('2d');
-  g.translate(225,75);paintFoundryCollapse(render,300,300,g);
+  const layer=surface.getContext('2d');
+  layer.imageSmoothingEnabled=g.imageSmoothingEnabled;
+  layer.translate(225,75);paintFoundryCollapse(render,300,300,layer);
   frames.set(key,surface);
  }
- ctx.drawImage(surface,-.75*w,-.25*h,1.5*w,1.5*h);
+ g.drawImage(surface,-.75*w,-.25*h,1.5*w,1.5*h);
 }
 function paintFoundryCollapse(render,w,h,g){
  const {surface,cell,index,collapse}=render;
@@ -4023,7 +4165,7 @@ function ashigaruArtFrame(u,pose,atlas){
  return u.hp.right>0?atlas.idle:atlas.bare;
 }
 function drawUnit(u,t,close=false){
- const inactive=spent(u)&&!u.attack&&!u.motion&&!u.turning;
+ const inactive=!TINT_DEBUG&&spent(u)&&!u.attack&&!u.motion&&!u.turning;
  if(!inactive){drawUnitBody(u,t,close);if(u.frame===BULWARK_FRAME)drawBulwarkCharge(u,t);return}
  ctx.save();
  try{ctx.filter='brightness(.37) saturate(.42)';drawUnitBody(u,t,close)}
@@ -4059,17 +4201,21 @@ function drawUnitBody(u,t,close){
   ctx.ellipse(p.x+((chest?.x??p.x)-p.x)*fall,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64+fall*.36),scale*.22,0,0,Math.PI*2);ctx.fill();
   drawJumpjetExhaust(u,t);
   if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
-   const paint=()=>{
-    ctx.save();ctx.translate(b.x+b.w/2,b.y);if(foundry.flip)ctx.scale(-1,1);
-    if(foundry.collapse)drawFoundryCollapse(foundry,b.w,b.h);
-    else if(foundry.cell){
-     const {cell,index,span=1}=foundry;
-     ctx.drawImage(foundry.surface,index%4*cell,Math.floor(index/4)*cell,cell,cell,-b.w*span/2,(1-span)*b.h/2,b.w*span,b.h*span);
-    }else ctx.drawImage(foundry.surface,-b.w/2,0,b.w,b.h);
-    ctx.restore();
+   const {cell,index,span=1}=foundry;
+   const sx=cell?index%4*cell:0,sy=cell?Math.floor(index/4)*cell:0;
+   const draw=(g,part)=>{
+    g.save();g.translate(b.x+b.w/2,b.y);if(foundry.flip)g.scale(-1,1);
+    if(foundry.collapse)drawFoundryCollapse(part?{...foundry,surface:part,cell:0,index:0}:foundry,b.w,b.h,g);
+    else if(cell&&!part)g.drawImage(foundry.surface,sx,sy,cell,cell,-b.w*span/2,(1-span)*b.h/2,b.w*span,b.h*span);
+    else g.drawImage(part||foundry.surface,-b.w*span/2,(1-span)*b.h/2,b.w*span,b.h*span);
+    g.restore();
    };
+   const area=foundry.collapse?{x:b.x-b.w*.5,y:b.y-b.h*.5,w:b.w*2,h:b.h*2}:
+    {x:b.x+(1-span)*b.w/2,y:b.y+(1-span)*b.h/2,w:b.w*span,h:b.h*span};
+   const mask=partTintSource(foundry.key,foundry.surface,area,draw,cell,sx,sy,foundry.partMask);
+   const paint=()=>draw(ctx);
    paint();
-   drawPartTints(u,t,paint,part=>foundry.anchors[part]&&spritePoint(b,foundry.anchors[part]),foundry.baked);
+   drawPartTints(u,t,paint,part=>foundry.anchors[part]&&spritePoint(b,foundry.anchors[part]),foundry.baked,mask);
   }
   ctx.restore();
   if(u.alive){
@@ -4093,17 +4239,30 @@ function drawUnitBody(u,t,close){
  if(!u.alive&&pose.explosion>=1){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true);return}
  ctx.save();
  const articulated=!reducedMotion&&(pose.walk>.001||pose.primeProgress>0||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||pose.aim>.001||(!u.alive&&pose.explosion<1));
- const paint=()=>{
-  ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)ctx.scale(-1,1);
-  if(!u.alive){const root=destructionRoot(u,pose);ctx.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
-  if(baked?.frame){const {cell,columns}=baked.atlas,index=baked.frame.index;ctx.drawImage(im,index%columns*cell,Math.floor(index/columns)*cell,cell,cell,-b.w/2,-b.h,b.w,b.h)}
-  else if(articulated&&!visual&&rigidParts[u.frame]){const cache=rigidParts[u.frame],bodyPose={...pose,baseOnly:true};drawArticulatedMech(im,u,b.w,b.h,bodyPose,cache.base);drawRigidUpper(u,b.w,b.h,pose)}
-  else if(articulated&&!visual?.modular&&!visual?.native&&foundryModel(u.frame)==null)drawArticulatedMech(im,u,b.w,b.h,{...remaining,baseOnly:true});
-  else{if(u.alive&&!reducedMotion&&!spent(u))ctx.rotate(Math.sin(t*.85+u.index)*.001);ctx.drawImage(im,-b.w/2,-b.h,b.w,b.h)}
-  ctx.restore();
+ const sheet=baked?.frame?baked.atlas:null,cell=sheet?.cell??0,index=baked?.frame?.index;
+ const sx=cell?index%sheet.columns*cell:0,sy=cell?Math.floor(index/sheet.columns)*cell:0;
+ const rigid=articulated&&!visual&&rigidParts[u.frame];
+ const warped=articulated&&!visual?.modular&&!visual?.native&&foundryModel(u.frame)==null;
+ const draw=(g,part)=>{
+  g.save();g.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)g.scale(-1,1);
+  if(!u.alive){
+   const root=destructionRoot(u,pose);
+   if(!part)g.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;
+   g.translate(root.x*b.w,root.y*b.h);g.rotate(root.angle);g.scale(root.scale,root.scale);
+  }
+  if(sheet){
+   if(part)g.drawImage(part,-b.w/2,-b.h,b.w,b.h);
+   else g.drawImage(im,sx,sy,cell,cell,-b.w/2,-b.h,b.w,b.h);
+  }else if(rigid){drawArticulatedMech(im,u,b.w,b.h,{...pose,baseOnly:true},rigid.base,g);drawRigidUpper(u,b.w,b.h,pose)}
+  else if(warped)drawArticulatedMech(part||im,u,b.w,b.h,{...remaining,baseOnly:true},null,g);
+  else{if(u.alive&&!reducedMotion&&!spent(u))g.rotate(Math.sin(t*.85+u.index)*.001);g.drawImage(part||im,-b.w/2,-b.h,b.w,b.h)}
+  g.restore();
  };
+ const area=u.alive&&(sheet||!warped)?b:{x:b.x-b.w*.65,y:b.y-b.h*.4,w:b.w*2.3,h:b.h*1.8};
+ const mask=rigid?null:partTintSource(bodyKey,body,area,draw,cell,sx,sy,sheet?sheet.partMask:visual?.partMask);
+ const paint=()=>draw(ctx);
  paint();
- drawPartTints(u,t,paint,part=>mechAttachmentPoint(u,part,t));
+ drawPartTints(u,t,paint,part=>mechAttachmentPoint(u,part,t),true,mask);
  ctx.restore();
  if(!u.alive){if(u.downReason!=='pilot'){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true)}return}
  if(visual?.modular){

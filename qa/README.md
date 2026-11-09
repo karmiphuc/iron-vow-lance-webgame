@@ -16,7 +16,7 @@ assertion. The default remains parallel device checks with a 15-second wait limi
 
 | Area | Regression checks |
 | --- | --- |
-| Hit visuals | Localized flash, expiry and damage shading on travel sprites, native cinematics, baked fallback and live Foundry. Four battlefield facings, a real desktop attack-camera shot and a real mobile touch shot. |
+| Hit visuals | Localized flash, expiry and damage shading on travel sprites, native cinematics, baked fallback and live Foundry. The browser checks sample three chassis in four headings across walk, attack and death with `?tintdebug`, and fire real desktop and touch shots. |
 | Chassis finish | Save-stable hostile livery mixes, muted crimson, untouched bare materials, and paired colors in live Foundry, baked combat, and portraits. |
 | Combat | AP, free and paid movement, range, limb damage, missile counter lockout, free-hand counter damage and limits, facing, gait and weapons, reduced motion, audio cues and destruction. |
 | Company | Hiring and reserves, shared level-1 training prerequisites and the Pilot Wiki, Workshop stats and storage, salvage, contract rewards, and saved random 1–3 mech offers. |

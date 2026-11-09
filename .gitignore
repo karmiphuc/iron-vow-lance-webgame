@@ -1,4 +1,5 @@
 node_modules/
+__pycache__/
 *.tar.gz
 *.zip
 /tools/warden-arsenal.json

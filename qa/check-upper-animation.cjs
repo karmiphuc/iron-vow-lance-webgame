@@ -1,4 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),create=require('./sim-harness.cjs');
+const {createCanvas}=require('@napi-rs/canvas');
 const sim=create();sim.run('deploy(0);closeModal()');
 // Explicit regression against the feet the user approved, rather than a new gait implementation.
 for(const row of JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/walk-feet-approved.json'),'utf8'))){const{frame,phase,x,y}=row;const p=sim.run(`(()=>{const u=battle.units[${frame}];u.face=-1;u.motion={fromX:1,fromZ:8,toX:1,toZ:7,start:0,duration:MECH_MOTION[${frame}].step,gaitBase:${frame},stepIndex:1,totalSteps:4};return deformMechVertex(u,${x},${y},animationPose(u,MECH_MOTION[${frame}].step*${phase}))})()`);assert.ok(Math.abs(p.x-row.result.x)<1e-10&&Math.abs(p.y-row.result.y)<1e-10,'Approved feet changed')}
@@ -20,14 +21,24 @@ console.log('PASS: approved feet unchanged; independent arm aim with rigid rifle
  await run('shoot(current(),foe,"left")');
  assert.equal(run('foe.hitPart'),'left');
  assert.ok(run('foe.hp.left<foe.max.left&&foe.hp.left>foe.max.left/2'));
- const tints=(age,scorch=true)=>JSON.parse(run(`(()=>{
-  const marks=[];ctx.globalAlpha=1;ctx.filter='none';
-  drawPartTints(foe,foe.hitTime+${age},()=>marks.at(-1).push(ctx.filter),part=>{marks.push([part]);return{x:80,y:80}},${scorch});
-  return JSON.stringify(marks);
- })()`));
- assert.deepEqual(tints(.15),[['left','brightness(1.95) saturate(.48)']]);
+ shot.sandbox.tintCanvas=createCanvas(192,160);
+ shot.sandbox.OffscreenCanvas=function(w,h){return createCanvas(w,h)};
+ run(`canvas.width=192;canvas.height=160;ctx=tintCanvas.getContext('2d');scale=40;
+  const partPoints={body:{x:96,y:72},pilot:{x:96,y:35},right:{x:55,y:72},left:{x:137,y:72},legs:{x:96,y:115}};
+  function sampleTints(age,scorch){
+   ctx.clearRect(0,0,192,160);
+   const paint=()=>{ctx.fillStyle='#859aa7';ctx.fillRect(20,15,150,130)};
+   paint();drawPartTints(foe,foe.hitTime+age,paint,part=>partPoints[part],scorch);
+   return Object.values(partPoints).map(({x,y})=>[...ctx.getImageData(x,y,1,1).data].slice(0,3));
+  }`);
+ const plain=[133,154,167],tints=(age,scorch=true)=>JSON.parse(run(`JSON.stringify(sampleTints(${age},${scorch}))`));
+ const flash=tints(.15);
+ assert.ok(flash[3][0]>plain[0]);
+ assert.deepEqual(flash.filter((_,i)=>i!==3),Array(4).fill(plain));
  run('foe.hp.right=0');
- assert.deepEqual(tints(1),[['right','brightness(.35) saturate(.60)']]);
- assert.deepEqual(tints(.15,false),[['left','brightness(1.95) saturate(.48)']],'live meshes keep their own persistent material damage');
+ const worn=tints(1);
+ assert.ok(worn[2][0]<plain[0]&&worn[2][1]<plain[1]&&worn[2][2]<plain[2]);
+ assert.deepEqual(worn.filter((_,i)=>i!==2),Array(4).fill(plain));
+ assert.deepEqual(tints(.15,false),flash,'live meshes keep their own persistent material damage');
  console.log('PASS: an actual hit flashes the selected subsystem, the flash expires, and a disabled raster subsystem stays dark.');
 })().catch(e=>{console.error(e);process.exitCode=1});

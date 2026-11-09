@@ -3,6 +3,7 @@
 const fs=require('node:fs');
 const {spawnSync}=require('node:child_process');
 const {createCanvas,ImageData}=require('../qa/node_modules/@napi-rs/canvas');
+const {damageMeshes,partColor,normalizeMask,savePartMask,rasterPixels}=require('./chassis-part-mask.cjs');
 const T=require('../dist/rig-bench/vendor/three.min.js');
 global.THREE=T;
 global.window={THREE:T};
@@ -17,7 +18,9 @@ const size=320, assetDir=require('node:path').resolve(__dirname,'../dist/assets'
 const defaults=[['rifle'],['shotgun'],['missile'],['rifle'],['rifle','blade'],['missile']];
 const names=['Aegis','Shrike','Bastion','Valkyrie','Oni','Behemoth'];
 const only=process.argv[3]===undefined?null:Number(process.argv[3]);
+const partsOnly=process.argv.includes('--parts-only');
 if(only!==null&&(!Number.isInteger(only)||!defaults[only]))throw Error('Unknown Foundry model index');
+if(partsOnly&&only===null)throw Error('Select the existing model index for a parts-only bake');
 const lights=[V3(-.5,.85,.65).normalize(),V3(.7,.38,-.8).normalize()];
 const color=new T.Color(),normalMatrix=new T.Matrix3();
 const pos=V3(),normal=V3(),textureCache=new WeakMap();
@@ -36,7 +39,7 @@ function texel(map,u,v){
  const index=(Math.min(data.height-1,Math.floor((1-((v+1)%1))*data.height))*data.width+Math.floor(((u+1)%1)*data.width))*4;
  return data.data.subarray(index,index+4);
 }
-function raster(rig,cam,center=.84,fitGround=true,paintMask=false){
+function raster(rig,cam,center=.84,fitGround=true,paintMask=false,partIds=null){
  rig.cont.updateMatrixWorld(true);
  const pivot=V3().project(cam),offset=fitGround?center-(.5-pivot.y*.5):0,values=[];
  rig.cont.traverseVisible(o=>{
@@ -47,6 +50,7 @@ function raster(rig,cam,center=.84,fitGround=true,paintMask=false){
   normalMatrix.getNormalMatrix(matrixWorld);
   const palette=rig.build?.pal;
   const layer=paintMask&&palette&&m.userData.paint?['p','s','a'].findIndex(k=>m.color.equals(new T.Color(palette[k]).convertSRGBToLinear())):-1;
+  const maskColor=partIds&&partColor(partIds.get(o)??0);
   for(let i=0;i<n;i+=3){
    const sample=[0,1,2].map(k=>g.index?g.index.getX(i+k):i+k);
    const uv=a.uv&&sample.reduce(([u,v],j)=>[u+a.uv.getX(j)/3,v+a.uv.getY(j)/3],[0,0]);
@@ -54,6 +58,10 @@ function raster(rig,cam,center=.84,fitGround=true,paintMask=false){
    if(tex&&tex[3]<92)continue;
    for(const j of sample){
     pos.fromBufferAttribute(a.position,j).applyMatrix4(matrixWorld).project(cam);
+    if(maskColor){
+     values.push((.5+pos.x*.5)*size,(.5-pos.y*.5+offset)*size,pos.z,...maskColor);
+     continue;
+    }
     normal.fromBufferAttribute(a.normal,j).applyMatrix3(normalMatrix).normalize();
     const warm=Math.max(0,normal.dot(lights[0])),cool=Math.max(0,normal.dot(lights[1]));
     if(paintMask){
@@ -71,14 +79,21 @@ function raster(rig,cam,center=.84,fitGround=true,paintMask=false){
    }
   }
  });
- const header=Buffer.alloc(8);header.writeInt32LE(size);header.writeInt32LE(values.length/18,4);
- const result=spawnSync(process.argv[2],[],{input:Buffer.concat([header,Buffer.from(new Float32Array(values).buffer)]),maxBuffer:2*1024*1024});
- if(result.status!==0||result.stdout.length!==size*size*4)throw Error('Foundry raster failed');
+ const vertices=new Float32Array(values);
+ let pixels;
+ if(process.argv[2]==='-')pixels=rasterPixels(vertices,size);
+ else{
+  const header=Buffer.alloc(8);header.writeInt32LE(size);header.writeInt32LE(values.length/18,4);
+  const result=spawnSync(process.argv[2],[],{input:Buffer.concat([header,Buffer.from(vertices.buffer)]),maxBuffer:2*1024*1024});
+  if(result.status!==0||result.stdout.length!==size*size*4)throw Error('Foundry raster failed');
+  pixels=new Uint8ClampedArray(result.stdout);
+ }
  const canvas=createCanvas(size,size);
- canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(result.stdout),size,size),0,0);
+ canvas.getContext('2d').putImageData(new ImageData(partIds?normalizeMask(pixels):pixels,size,size),0,0);
  return canvas;
 }
 function save(canvas,key){fs.writeFileSync(assetDir+'/'+key+'.webp',canvas.toBuffer('image/webp',90))}
+function saveParts(canvas,key){savePartMask(canvas,assetDir+'/'+key+'-parts.webp');return key+'-parts'}
 function pose(m,face,overrides={}){
  animateMech(m,{pos:V3(),face,heading:face,noPlant:true,alive:true,brace:0,...overrides},1/60,0);
  m.cont.rotation.y=face;
@@ -114,18 +129,20 @@ for(const [model,[weapon,melee]] of defaults.entries()){
  const primary=arsenal.mount(production,weapon,m.rig.arms.R.so);
  const secondary=melee?arsenal.mount(production,melee,m.rig.arms.L.so):null;
  if(secondary)primary.mount.visible=false;
- pose(m,-.76);save(raster(m,cam),'foundry-'+model);
+ pose(m,-.76);if(!partsOnly)save(raster(m,cam),'foundry-'+model);
  const views=[];
  for(const [view,angle,elevation,target,span] of [['field',-.76,.46,3.55,worldSpan],['front',0,.12,3.55,9.4],['side',Math.PI/2,.10,3.55,9.4],['hip',-.45,.14,2.75,4.2],['back',Math.PI,.10,3.55,9.4],['other-side',-Math.PI/2,.10,3.55,9.4]]){
   const viewCamera=camera(elevation,target,span),key='foundry-'+model+(view==='field'?'':'-'+view);
   pose(m,angle);
-  if(view!=='field')save(raster(m,viewCamera,ground,false),key);
+  if(view!=='field'&&!partsOnly)save(raster(m,viewCamera,ground,false),key);
   if(['field','side','back','other-side'].includes(view)){
    primary.mount.visible=false;
    if(secondary)secondary.mount.visible=false;
    const fit=view==='field',fittedKey=key+'-fit';
-   save(raster(m,viewCamera,ground,fit),fittedKey);
-   save(raster(m,viewCamera,ground,fit,true),fittedKey+'-paint');
+   if(!partsOnly){
+    save(raster(m,viewCamera,ground,fit),fittedKey);
+    save(raster(m,viewCamera,ground,fit,true),fittedKey+'-paint');
+   }
    views.push({key:fittedKey,ortho:span/1.4,direction:angle>0?1:-1,...points(m,viewCamera,fit)});
    primary.mount.visible=!secondary;
    if(secondary)secondary.mount.visible=true;
@@ -133,12 +150,16 @@ for(const [model,[weapon,melee]] of defaults.entries()){
  }
  const atlas=createCanvas(size*4,size*5),g=atlas.getContext('2d'),maskAtlas=createCanvas(size*4,size*5),masks=maskAtlas.getContext('2d'),face=-.76;
  const motion=buildRig(model,'ally');
+ const motionParts=damageMeshes(motion),partAtlas=createCanvas(size*4,size*5),partCells=partAtlas.getContext('2d');
  const frames=[];
  const push=name=>{
   const index=frames.length;
   const x=index%4*size,y=Math.floor(index/4)*size;
-  g.drawImage(raster(motion,cam),x,y);
-  masks.drawImage(raster(motion,cam,ground,true,true),x,y);
+  if(!partsOnly){
+   g.drawImage(raster(motion,cam),x,y);
+   masks.drawImage(raster(motion,cam,ground,true,true),x,y);
+  }
+  partCells.drawImage(raster(motion,cam,ground,true,false,motionParts),x,y);
   frames.push({name,...points(motion,cam)});
  };
  for(let i=0;i<8;i++){
@@ -177,15 +198,20 @@ for(const [model,[weapon,melee]] of defaults.entries()){
  pose(motion,face,{alive:false,down:'pilot',deathAge:2});push('pilot');
  for(const part of ['body','right','left'])setPartState(motion,part,2);
  wreckMech(motion);pose(motion,face,{alive:false,down:'body',deathAge:2});push('wreck');
- save(atlas,'foundry-'+model+'-motion');
- save(maskAtlas,'foundry-'+model+'-motion-paint');
- visuals.push({key:'foundry-'+model+'-motion',cell:size,frames,views});
+ const key='foundry-'+model+'-motion';
+ if(!partsOnly){save(atlas,key);save(maskAtlas,key+'-paint')}
+ const partMask=saveParts(partAtlas,key);
+ visuals.push({key,partMask,cell:size,frames,views});
  console.log(names[model],frames.length+' poses');
 }
 if(only!==null){
- existing.IRON_VOW_FOUNDRY_ART[only]=visuals[0];
+ if(partsOnly){
+  const atlas=existing.IRON_VOW_FOUNDRY_ART[only],baked=visuals[0];
+  if(atlas.key!==baked.key||atlas.cell!==size||atlas.frames.length!==baked.frames.length)throw Error('Foundry sheet layout has changed');
+  atlas.partMask=baked.partMask;
+ }else existing.IRON_VOW_FOUNDRY_ART[only]=visuals[0];
  fs.writeFileSync(bakedFile,'window.IRON_VOW_FOUNDRY_ART='+JSON.stringify(existing.IRON_VOW_FOUNDRY_ART)+';\nwindow.IRON_VOW_RAIJIN_ART='+JSON.stringify(existing.IRON_VOW_RAIJIN_ART)+';\n');
- if(only!==5)return;
+ if(only!==5||partsOnly)return;
 }
 const mix=window.VowChassis.build(3,'ally',null,null,{legs:5,core:3,arms:3});
 const group=new T.Group();group.add(mix.root);group.rotation.y=-.6;
