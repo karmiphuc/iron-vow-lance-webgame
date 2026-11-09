@@ -22,7 +22,7 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  assert.equal(count(),0);
  run('save.credits=100000;save.rep=100;workshopView="market"');
  assert.equal(run('playerHull(VANGUARD_FRAME)||hullOnMarket(VANGUARD_FRAME)||acquireHull(VANGUARD_FRAME)||assignChassis(0,VANGUARD_FRAME,true)'),false);
- assert.equal(run('chassisAssignments(0).includes("VANGUARD-BRAWLER")'),false);
+ assert.equal(run('chassisAssignments(0).includes("GRAVEMAW")'),false);
  assert.equal(run('validSave({...save,reserve:{[VANGUARD_FRAME]:stockHull(VANGUARD_FRAME)}})'),false);
  assert.equal(run('validSave({...save,salvage:{[VANGUARD_FRAME]:1}})'),false);
 

@@ -242,7 +242,7 @@ const LINE_INFANTRY_FRAME=FRAMES.push({name:'LINE INFANTRY',model:'LI-01',role:'
  hp:151,arm:87,leg:98,move:4,armor:4,weapon:'rifle',foundry:6,enemyOnly:true})-1;
 const LINE_ELITE_FRAME=FRAMES.push({name:'LINE INFANTRY ELITE',model:'LI-02',role:'ELITE',color:'#526e86',
  hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true})-1;
-const VANGUARD_FRAME=FRAMES.push({name:'VANGUARD-BRAWLER',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
+const VANGUARD_FRAME=FRAMES.push({name:'GRAVEMAW',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
  hp:165,arm:88,leg:103,move:3,armor:6,weapon:'hailstorm',melee:'piledriver',foundry:8,enemyOnly:true})-1;
 const REAVER_FRAME=FRAMES.push({name:'REAVER',model:'RV-04',role:'MEDIUM+',color:'#a1242c',
  hp:172,arm:98,leg:114,move:4,armor:6,weapon:'rifle',foundry:9,enemyOnly:true})-1;
@@ -256,9 +256,9 @@ const CONTRACTS=[
   deployment:[[6,10],['tank',4,13],['tank',7,14],['helicopter',9,15]]},
  {id:'relay',field:0,name:'Ashes of the relay',place:'KARST BASIN · SECTOR 07',tag:'RECOVERY OPERATION',pay:3200,difficulty:1,desc:'A rival lance occupies a decommissioned relay station. Clear the site and recover its navigation core.',legacyMechs:3,
   deployment:[[6,10],[13,6],[16,3],['tank',4,13],['helicopter',10,16]]},
- {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect Line Infantry Elite, Vanguard-Brawler at two or more seats, and a Reaver at three.',legacyMechs:4,
+ {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect Line Infantry Elite, Gravemaw at two or more seats, and a Reaver at three.',legacyMechs:4,
   deployment:[[7,11],[14,6],[15,15],[4,4],['tank',4,14],['helicopter',11,17],['tank',9,8]]},
- {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'Break the veteran command lance. Two- and three-mech sorties face a Vanguard-Brawler escort. A Reaver joins the escort at three seats.',legacyMechs:5,
+ {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'Break the veteran command lance. Two- and three-mech sorties face a Gravemaw escort. A Reaver joins the escort at three seats.',legacyMechs:5,
   deployment:[[7,12],[12,6],[15,15],[4,4],[14,2],['tank',4,14],['helicopter',10,16],['tank',12,10],['helicopter',9,3]]}
 ];
 const OLD_SORTIE_CONTRACTS=['relay','corridor','frontier'];

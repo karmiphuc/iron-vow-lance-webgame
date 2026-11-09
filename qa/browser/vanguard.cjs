@@ -4,7 +4,7 @@ const {join}=require('node:path');
 module.exports=async function checkVanguard({page,mobile,origin,tap}){
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
  await tap('[data-bay="market"]');
- assert.equal(await page.getByRole('heading',{name:'VANGUARD-BRAWLER',exact:true}).count(),0);
+ assert.equal(await page.getByRole('heading',{name:'GRAVEMAW',exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.evaluate(()=>{Math.random=()=>.5});
  await tap('#nav [data-page="contracts"]');
@@ -34,7 +34,7 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
    muzzle:frames[0].anchors.muzzle,atlasFrames:atlas.frames.length};
  });
  assert.deepEqual(art.types,[0,1,2,3]);
- assert.equal(art.model,'VANGUARD-BRAWLER 2');
+ assert.equal(art.model,'GRAVEMAW 2');
  assert.equal(art.paint,null);
  assert.equal(art.pre,4);
  assert.ok(art.primary&&art.secondary&&art.tip.every(Number.isFinite)&&art.muzzle.every(Number.isFinite));
@@ -48,7 +48,7 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
   await page.screenshot({path:join(process.env.IRON_VOW_VANGUARD_PROOF,mobile?'vanguard-touch.png':'vanguard-desktop.png')});
  }
  await page.waitForFunction(()=>battle?.turn===2&&!battle.busy);
- assert.ok(await page.evaluate(()=>battle.log.some(line=>line.startsWith('VANGUARD-BRAWLER 2 → WARDEN'))&&current().hp.body<current().max.body));
+ assert.ok(await page.evaluate(()=>battle.log.some(line=>line.startsWith('GRAVEMAW 2 → WARDEN'))&&current().hp.body<current().max.body));
  console.log('PASS Vanguard pursuit, Piledriver cinematic and independently disarmed atlases');
 };
 
