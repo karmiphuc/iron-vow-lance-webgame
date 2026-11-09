@@ -62,6 +62,13 @@ function mount(scene,id,socket){
   });
  }
  const grip=marker('grip'),spike=marker('spike'),motion=rigs[id],pivot=motion?marker(motion.node):null;
+ const belt=id==='rivet'?marker('belt'):null,chargeMaterials=[];
+ if(id==='parallax')model.traverse(o=>{
+  if(o.isMesh&&o.material.name==='armory_charge'){
+   o.material=o.material.clone();
+   chargeMaterials.push(o.material);
+  }
+ });
  if(added&&grip){
   model.updateMatrixWorld(true);
   model.position.sub(model.worldToLocal(grip.getWorldPosition(new T.Vector3())));
@@ -69,9 +76,11 @@ function mount(scene,id,socket){
  recoil.add(model);mount.add(recoil);socket.add(mount);
  return {id,model,mount,recoil,grip,axis:marker('axis'),muzzle:marker('muzzle'),
   muzzle2:marker('muzzle2'),tip:marker('tip'),base:marker('base'),spike,spikeRest:spike?.position.z,
-  pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0};
+  pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0,belt,chargeMaterials};
 }
-function animate(weapon,{weaponKick=0,weaponSpin=0,strikeProgress=0}={}){
+function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,strikeProgress=0}={}){
+ if(weapon.belt)weapon.belt.position.x=.14*weaponFeed;
+ for(const material of weapon.chargeMaterials)material.emissiveIntensity=.2+5.8*weaponCharge;
  if(!weapon.pivot)return;
  const {kind,amount}=weapon.motion;
  const drive=kind==='strike'?Math.max(0,1-Math.abs(strikeProgress-.7)/.16):kind==='spin'?weaponSpin:weaponKick;

@@ -56,12 +56,12 @@
       "meshes": 8
     },
     "rivet": {
-      "triangles": 3344,
-      "meshes": 11
+      "triangles": 4152,
+      "meshes": 13
     },
     "parallax": {
-      "triangles": 1380,
-      "meshes": 8
+      "triangles": 1564,
+      "meshes": 9
     }
   },
   "mechanics": {
@@ -133,7 +133,7 @@
         0,
         1
       ],
-      "travel": -0.095
+      "travel": -0.19
     },
     "parallax": {
       "node": "parallax.pulse_bore",
@@ -143,7 +143,7 @@
         0,
         1
       ],
-      "travel": -0.073
+      "travel": -0.16
     }
   }
 }

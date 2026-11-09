@@ -103,10 +103,45 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  assert.ok(rigs.filter(r=>r.moved).length>=6);
  for(const rig of rigs)assert.ok(rig.clear&&rig.locked&&rig.fitted&&rig.aligned&&(rig.strikeAdvance==null||rig.strikeAdvance>.35),JSON.stringify(rig));
  for(const rig of rigs.filter(r=>r.stroke!=null))assert.ok(Math.abs(rig.stroke-Math.abs(rig.amount))<1e-5,rig.id+' tip travels with its moving piece');
- for(const id of ['rivet','parallax']){
+ for(const [id,reach] of [['rivet',4.124],['parallax',5.918]]){
   const rig=rigs.find(r=>r.id===id);
-  assert.ok(rig.moved&&rig.bore[0]<-.5&&rig.bore[1]>2.9,id+' muzzle sits below the fist and recoils');
+  assert.ok(rig.moved&&rig.bore[0]<-.5&&Math.abs(rig.bore[1]-reach)<1e-4,id+' extended muzzle sits below the fist and recoils');
  }
+ await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.waitForFunction(()=>!reducedMotion);
+ const firing=await page.evaluate(async()=>{
+  const point=node=>node.getWorldPosition(new THREE.Vector3());
+  const show=(id,pose)=>window.IronVowFoundry.previewBastion({weapon:id},0,188,pose).primary;
+  const rivet={weapon:'rivet',attack:{kind:'rivet',fireAt:1}};
+  const beats=attackProfile(rivet,'rivet').beats;
+  const kicks=beats.map(beat=>firingPose(rivet,1+beat+.005));
+  const feeds=beats.map(beat=>firingPose(rivet,1+beat+.053));
+  const first=show('rivet',kicks[0]),muzzle=point(first.muzzle),grip=point(first.grip),belt=first.belt.position.x;
+  const second=show('rivet',feeds[0]);
+  const feedMoves=second.belt.position.x>belt+.05&&point(second.muzzle).distanceTo(muzzle)>.05&&point(second.grip).distanceTo(grip)<1e-6;
+  const parallax={weapon:'parallax',attack:{kind:'parallax',start:0,primeDuration:0,windup:.72,fireAt:null}};
+  const winding=[.02,.36,.68].map(t=>firingPose(parallax,t));
+  const glow=winding.map(pose=>show('parallax',pose).chargeMaterials[0].emissiveIntensity);
+  parallax.attack.fireAt=.72;
+  const pulse=firingPose(parallax,.73);
+  const firing=show('parallax',pulse),fixed=point(firing.grip).distanceTo(point(firing.adapter.parent))<1e-6;
+  const baked=[];
+  for(const [id,poses] of [['rivet',[kicks[0],feeds[0]]],['parallax',[...winding,pulse]]])for(const face of [-1,1]){
+   const slot=window.IRON_VOW_EXPANSION_ART[id][face===1?'right':'left'];
+   await Promise.all(Object.values(slot).filter(part=>part?.key).map(part=>moduleImage(part.key).decode()));
+   const body=wardenVisual(0,'rifle',face),bounds={x:0,y:0,w:640,h:640};
+   const mounts=poses.map(pose=>weaponMount(body,body,bounds,id,face,0,pose));
+   baked.push({id,frames:new Set(mounts.map(m=>m.asset.key)).size,grip:mounts.every(m=>m.grip.x===mounts[0].grip.x&&m.grip.y===mounts[0].grip.y)});
+  }
+  return {rounds:beats.length,allKick:kicks.every(p=>p.weaponSprite==='kick'),allFeed:feeds.every(p=>p.weaponSprite==='feed'),
+   feedMoves,glow,fixed,pulses:attackProfile(parallax,'parallax').beats.length,baked};
+ });
+ assert.equal(firing.rounds,12);
+ assert.ok(firing.allKick&&firing.allFeed&&firing.feedMoves);
+ assert.ok(firing.glow[2]>firing.glow[1]&&firing.glow[1]>firing.glow[0]&&firing.fixed);
+ assert.equal(firing.pulses,1);
+ for(const pose of firing.baked)assert.ok(pose.grip&&pose.frames===(pose.id==='rivet'?2:4));
+ await page.emulateMedia({reducedMotion:'reduce'});
  if(process.env.IRON_VOW_ARMORY_PROOF&&!mobile){
   const capture=await page.evaluate(()=>{
    const plate=document.createElement('canvas');

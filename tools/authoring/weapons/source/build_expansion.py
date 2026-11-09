@@ -60,6 +60,7 @@ M = {
     'black': material('rubber', (.025, .03, .028), .1, .77),
     'amber': material('ochre', (.48, .23, .07), .45, .5),
     'cyan': material('ion', (.07, .66, .81), .5, .25, .9),
+    'charge': material('charge', (.035, .47, .65), .5, .25, .20),
     'heat': material('heat', (1, .24, .045), .4, .3, .8),
     'oxide': material('red_oxide', (.18,.12,.09), .60,.45),
     'navy': material('blue_slate', (.095,.125,.135), .65,.44),
@@ -481,7 +482,7 @@ for side in [-1,1]:
 hazard(g,.43,.36,1.74,3)
 
 # RIVET: low slung, belt-fed machine gun with an armored feed can and open barrel cage.
-g=weapon('rivet',muzzle=(0,-.62,2.975))
+g=weapon('rivet',muzzle=(0,-.62,4.124))
 overhead_grip(g,'sand',.24)
 hull(g,'steel_receiver',[(-.80,.23,-.87,-.44,.055),(-.54,.34,-.94,-.32,.07),
      (.77,.34,-.94,-.32,.07),(1.11,.255,-.83,-.42,.055)],'frame')
@@ -491,40 +492,56 @@ box(g,'feed_can',(.34,.60,1.04),(-.435,-.94,-.12),'olive',.07)
 box(g,'feed_can_lid',(.38,.12,1.09),(-.435,-.67,-.12),'sand',.032)
 for z in [-.47,-.23,.01,.25]:
     box(g,'feed_can_stamping',(.033,.36,.055),(-.62,-.94,z),'frame',.009)
-    cyl(g,'exposed_brass_link',.039,.16,(-.37,-.67,z),'amber','x')
 box(g,'latch',(.16,.16,.13),(-.62,-.77,.31),'steel')
+box(g,'feed_entry',(.22,.16,.36),(-.55,-.37,.42),'warmsteel',.022)
+box(g,'feed_chamber',(.27,.20,.36),(.27,-.33,.42),'sand',.027)
+belt=empty('rivet.belt',parent=g)
+for i in range(6):
+    x=-.58+.14*i
+    cyl(belt,'belt_round',.058,.29,(x,-.288,.43),'amber')
+    box(belt,'belt_clip',(.088,.10,.11),(x,-.28,.42),'frame',.013)
+    box(belt,'belt_link',(.157,.047,.10),(x,-.326,.42),'steel',.009)
 service_marks(g,.365,-.60,.34)
 for z in [1.06,1.32,1.59,1.86,2.13]:
-    ring(g,'perforated_jacket_hoop',.259,.184,.115,(0,-.62,z),'sand',n=8)
+    ring(g,'perforated_jacket_hoop',.259,.184,.115,(0,-.62,1.06+(z-1.06)*1.6),'sand',n=8)
 for x in [-.203,.203]:
     for y in [-.72,-.52]:
-        box(g,'jacket_rail',(.075,.07,1.22),(x,y,1.59),'warmsteel',.015)
-p=pivot(g,'barrel_sled',(0,-.62,1.06),'translate',-.095)
-cyl(p,'heavy_barrel',.109,1.68,(0,0,.88),'steel')
-ring(p,'compensator',.171,.094,.31,(0,0,1.75),'frame',n=8)
-ring(p,'bore_lip',.171,.094,.025,(0,0,1.9025),'edge',n=8)
+        box(g,'jacket_rail',(.075,.07,1.952),(x,y,1.908),'warmsteel',.015)
+p=pivot(g,'barrel_sled',(0,-.62,1.06),'translate',-.19)
+cyl(p,'heavy_barrel',.109,2.688,(0,0,1.408),'steel')
+ring(p,'compensator',.171,.094,.40,(0,0,2.852),'frame',n=8)
+ring(p,'bore_lip',.171,.094,.025,(0,0,3.0515),'edge',n=8)
 
 # PARALLAX: faceted accelerator spine, recessed cyan rail and an electronic sight.
-g=weapon('parallax',muzzle=(0,-.59,4.145))
+g=weapon('parallax',muzzle=(0,-.59,5.918))
 overhead_grip(g,'navy',.21)
 hull(g,'capacitor_receiver',[(-.87,.20,-.79,-.43,.045),(-.54,.32,-.90,-.31,.065),
      (.58,.30,-.88,-.34,.065),(1.29,.20,-.76,-.42,.045)],'navy')
+hull(g,'rising_forearm_stock',[(-2.16,.12,.09,.26,.027),(-1.88,.18,.02,.28,.035),
+     (-1.32,.17,-.31,-.11,.035),(-.68,.23,-.68,-.38,.047)],'navy')
+box(g,'forearm_saddle',(.42,.095,.48),(0,.23,-1.90),'black',.039)
+for side in [-1,1]:
+    panel(g,'saddle_lip',[(.19,-2.13),(.33,-2.06),(.31,-1.73),(.18,-1.67)],.05,side*.185,'steel',.010)
+
+def accelerator_z(z):
+    return 1.19+(z-1.19)*1.6 if z>1.19 else z
+
 for side in [-1,1]:
     panel(g,'floating_ceramic_cover',[(-.45,-.76),(-.33,-.45),(-.37,.57),(-.54,1.24),
           (-.72,.84),(-.83,-.48)],.068,side*.283,'plate',.025)
     panel(g,'sight_glass',[(-.31,.41),(-.27,.50),(-.32,.86),(-.38,.65)],.046,side*.185,'cyan')
-    panel(g,'capacitor_port',[(-.81,-.39),(-.74,-.46),(-.73,.52),(-.78,.67)],.023,side*.291,'cyan')
-    panel(g,'accelerator_prong',[(-.50,1.02),(-.39,1.29),(-.43,2.85),(-.53,3.93),
-          (-.66,4.06),(-.77,3.64),(-.81,1.22)],.115,side*.215,'navy')
-    panel(g,'machined_rail_inlay',[(-.51,1.43),(-.49,2.82),(-.57,3.70),
-          (-.62,3.44),(-.61,1.53)],.026,side*.278,'steel',.006)
-    box(g,'rail_emitter',(.034,.045,1.56),(side*.284,-.646,2.30),'cyan',.005)
+    panel(g,'capacitor_port',[(-.81,-.39),(-.74,-.46),(-.73,.52),(-.78,.67)],.023,side*.291,'charge')
+    panel(g,'accelerator_prong',[(y,accelerator_z(z)) for y,z in [(-.50,1.02),(-.39,1.29),
+          (-.43,2.85),(-.53,3.93),(-.66,4.06),(-.77,3.64),(-.81,1.22)]],.115,side*.215,'navy')
+    panel(g,'machined_rail_inlay',[(y,accelerator_z(z)) for y,z in [(-.51,1.43),
+          (-.49,2.82),(-.57,3.70),(-.62,3.44),(-.61,1.53)]],.026,side*.278,'steel',.006)
+    box(g,'rail_emitter',(.038,.053,2.496),(side*.284,-.646,accelerator_z(2.30)),'charge',.006)
 for z in [1.40,2.86,3.84]:
-    ring(g,'accelerator_collar',.235,.145,.087,(0,-.59,z),'navy',n=6)
-p=pivot(g,'pulse_bore',(0,-.59,1.19),'translate',-.073)
-cyl(p,'accelerator_spine',.093,2.77,(0,0,1.37),'warmsteel')
-ring(p,'emitter_seal',.128,.084,.29,(0,0,2.81),'frame',n=8)
-ring(p,'pulse_aperture',.127,.08,.018,(0,0,2.946),'cyan',n=8)
+    ring(g,'accelerator_collar',.235,.145,.087,(0,-.59,accelerator_z(z)),'navy',n=6)
+p=pivot(g,'pulse_bore',(0,-.59,1.19),'translate',-.16)
+cyl(p,'accelerator_spine',.093,4.432,(0,0,2.192),'warmsteel')
+ring(p,'emitter_seal',.128,.084,.41,(0,0,4.52),'frame',n=8)
+ring(p,'pulse_aperture',.127,.08,.024,(0,0,4.716),'charge',n=8)
 
 # Move markers with their driven assemblies while preserving the authored pose.
 bpy.context.view_layer.update()
@@ -536,7 +553,7 @@ for name, data in mechanics.items():
         marker.matrix_world = world
 
 # Consolidate only within rigid pivots/materials, retaining mechanical hierarchy.
-for parent in list(roots.values())+[bpy.data.objects[v['node']] for v in mechanics.values()]:
+for parent in [*roots.values(),belt,*[bpy.data.objects[v['node']] for v in mechanics.values()]]:
     groups = defaultdict(list)
     for obj in parent.children:
         if obj.type == 'MESH': groups[obj.data.materials[0].name].append(obj)
@@ -614,8 +631,10 @@ else:
     bake_names=roots
 with tempfile.TemporaryDirectory() as tmp:
     for face,delta in [('left',(10.2,4.75,13.15)),('right',(-14,4.75,9.65))]:
-        focus=point((0,.1,1.1));camera.location=focus+point(delta);aim(camera,focus)
         for name in bake_names:
+            focus=point((0,-.1,1.85) if name=='parallax' else (0,-.1,1.60) if name=='rivet' else (0,.1,1.1))
+            camera.location=focus+point(delta);aim(camera,focus)
+            camdata.ortho_scale=8.8 if name=='parallax' else 6.4
             for other,assembly in roots.items():
                 for obj in assembly.children_recursive: obj.hide_render=other!=name
             def bake(key):
@@ -627,7 +646,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 def xy(marker):
                     p=world_to_camera_view(scene,camera,marker.matrix_world.translation)
                     return [round(p.x*SIZE-bounds[0],2),round((1-p.y)*SIZE-bounds[1],2)]
-                return {'key':key,**{role:xy(obj) for role,obj in markers[name].items()},'pixelsPerMetre':SIZE/6.4}
+                return {'key':key,**{role:xy(obj) for role,obj in markers[name].items()},'pixelsPerMetre':round(SIZE/camdata.ortho_scale,5)}
             key='armory-'+name+'-'+face
             slot=bake(key)
             if name in ['pike','anchor-hammer']:
@@ -637,6 +656,28 @@ with tempfile.TemporaryDirectory() as tmp:
                 slot['impact']=bake(key+'-impact')
                 moving.matrix_basis=rest
                 bpy.context.view_layer.update()
+            if name=='rivet':
+                moving=bpy.data.objects[mechanics[name]['node']]
+                rest=moving.location.copy()
+                moving.location+=point((0,0,mechanics[name]['travel']))
+                belt.location=point((.035,0,0))
+                slot['kick']=bake(key+'-kick')
+                moving.location=rest
+                belt.location=point((.10,0,0))
+                slot['feed']=bake(key+'-feed')
+                belt.location=point((0,0,0))
+            if name=='parallax':
+                glow=M['charge'].node_tree.nodes.get('Principled BSDF').inputs['Emission Strength']
+                glow.default_value=1.7
+                slot['charge']=bake(key+'-charge')
+                glow.default_value=6.0
+                slot['charged']=bake(key+'-charged')
+                moving=bpy.data.objects[mechanics[name]['node']]
+                rest=moving.location.copy()
+                moving.location+=point((0,0,mechanics[name]['travel']))
+                slot['kick']=bake(key+'-kick')
+                moving.location=rest
+                glow.default_value=.20
             visuals.setdefault(name,{})[face]=slot
 rigs={name:{'node':data['node'].split('.',1)[1],'amount':data['travel'],
             'kind':'spin' if data['motion']=='rotate' else 'strike' if name in ['pike','anchor-hammer'] else 'recoil'}

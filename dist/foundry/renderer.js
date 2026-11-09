@@ -60,7 +60,7 @@ function init(){
   if(arsenal&&!armoryRequested){
    armoryRequested=true;
    const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
-   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=undercarry'),url('rig-bench/shields.glb'))
+   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=undercarry-firing'),url('rig-bench/shields.glb'))
     .then(scene=>{armory=scene;if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
@@ -114,7 +114,7 @@ function drawBastion(u,t,pose,entry){
  const target=hdRenderer(),size=target.domElement.width;
  if(entry.surface.width!==size)entry.surface.width=entry.surface.height=size;
  const stamp=[bastion.frame(u,t,pose),pose.heading,u.alive,Boolean(armory),u.team,u.weapon,u.melee,u.shield,u.paint,
-  size,pose.strikeKind,pose.strikeProgress,pose.weaponKick,pose.weaponSpin,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
+  size,pose.strikeKind,pose.strikeProgress,pose.weaponKick,pose.weaponSpin,pose.weaponFeed,pose.weaponCharge,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
  if(entry.stamp===stamp)return entry;
  entry.stamp=stamp;
  const {frame,anchors,primary,secondary,shield}=bastion.animate(entry.m,u,t,pose,armory);
@@ -155,7 +155,7 @@ function draw(u,t,pose,scope,model,custom){
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
- const stamp=[pose.heading,Boolean(armory),u.alive,u.shield,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.weaponKick,pose.weaponSpin,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
+ const stamp=[pose.heading,Boolean(armory),u.alive,u.shield,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.weaponKick,pose.weaponSpin,pose.weaponFeed,pose.weaponCharge,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
  if(entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){

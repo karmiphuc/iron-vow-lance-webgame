@@ -1323,6 +1323,11 @@ function sound(type,cueVolume=1,shot=null){
   };
   const thump=(at,weight=1)=>{tone(at,.27,95,34,.18*weight);noise(at,.20,1000,180,.13*weight);tone(at+.025,.12,410,180,.045*weight,'triangle')};
   const gun=(at,weight=1)=>{noise(at,.16,3300,240,.18*weight);tone(at,.18,145,42,.16*weight);noise(at+.035,.19,1300,180,.045*weight)};
+  if(type==='parallax-charge'){
+   tone(now,.68,155,1040,.085,'triangle');
+   tone(now+.22,.46,340,1810,.034,'sawtooth');
+   return;
+  }
   if(type==='click'){tone(now,.06,820,610,.025,'triangle');return}
   if(type==='hydraulic'){
    tone(now,.24,150,325,.071,'triangle');
@@ -2482,6 +2487,11 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
  const profile=attackProfile(a,w.id),power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
+ if((profile.feed||profile.charge)&&!reducedMotion){
+  const frames=Object.values(arsenal.weapons[w.id]??{}).flatMap(side=>Object.values(side).filter(value=>value?.key));
+  const images=frames.map(frame=>moduleImage(frame.key)).filter(image=>image.decode&&!imageReady(image));
+  if(images.length)await Promise.race([Promise.allSettled(images.map(image=>image.decode())),delay(700)]);
+ }
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const targetAtlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(t.frame)];
@@ -2510,8 +2520,8 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const primeDuration=!lionStrike&&!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
   (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
  const windup=reducedMotion?.06:native?native.cue*native.duration:profile.raise+(!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction?(primeDuration?.12:.51):0),raise=primeDuration+windup;
- a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,native:native?{...native,clip}:null,
-  ...(power?{windup,stage:'pullback'}:{})};
+ a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,windup,native:native?{...native,clip}:null,
+  ...(power?{stage:'pullback'}:{})};
  if(primeDuration&&!sequence?.skipped){
   sound('hydraulic',MECH_MOTION[a.frame].mass);
   const visual=activeWardenVisual(a);
@@ -2529,6 +2539,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(armTime){
   if(windup>armTime)await waitAttack((windup-armTime)*1000,sequence);
   if(!sequence?.skipped)sound('missileArm',windup<.28?.55:1);
+ }
+ if(profile.charge&&!reducedMotion&&!sequence?.skipped){
+  sound('parallax-charge');
+  if(sequence)$('#shot-status').textContent=a.name+' charges the Parallax.';
  }
  if(power&&!reducedMotion){
   if(!sequence?.skipped)sound('hydraulic',1.2);
@@ -3258,6 +3272,8 @@ const ATTACK_PROFILES={
  missile:{raise:.35,beats:[0,.17],travel:.42,recover:.39},
  hailstorm:{raise:.36,beats:[0,.06,.12,.18,.24,.30,.36],travel:.09,recover:.39},
  rampart:{raise:.31,beats:[0],travel:.13,recover:.48},
+ rivet:{raise:.28,beats:[0],interval:.072,travel:.095,recover:.38,effect:'hailstorm',feed:true},
+ parallax:{raise:.72,beats:[0],travel:.075,recover:.56,effect:'rail',charge:true},
  breaker:{raise:.47,beats:[0],travel:.19,recover:.51,melee:true},
  cleaver:{raise:.21,beats:[0],travel:.16,recover:.30,melee:true},
  blade:{raise:.38,beats:[0],travel:.08,recover:.55,melee:true,effect:'cleaver'},
@@ -3275,9 +3291,9 @@ const ATTACK_PROFILES={
  'signal-knife':{raise:.35,beats:[0],travel:.12,recover:.42,melee:true,effect:'cleaver',cue:16,contact:21},
  [FREE_HAND_COUNTER.id]:{raise:.21,beats:[0],travel:.12,recover:.26,melee:true}
 };
-for(const w of WEAPONS)if(w.motion)ATTACK_PROFILES[w.id]={...ATTACK_PROFILES[w.motion],effect:w.scatter?'shotgun':w.motion};
+for(const w of WEAPONS)if(w.motion&&!ATTACK_PROFILES[w.id])ATTACK_PROFILES[w.id]={...ATTACK_PROFILES[w.motion],effect:w.scatter?'shotgun':w.motion};
 const VOLLEY_PROFILES=Object.fromEntries(WEAPONS.filter(w=>w.burst).map(w=>[
- w.id,{...ATTACK_PROFILES[w.id],beats:w.scatter?[0]:Array.from({length:w.burst},(_,i)=>i*(w.burst===12?.082:.105))}
+ w.id,{...ATTACK_PROFILES[w.id],beats:w.scatter?[0]:Array.from({length:w.burst},(_,i)=>i*(ATTACK_PROFILES[w.id].interval??(w.burst===12?.082:.105)))}
 ]));
 function attackProfile(actor,id){
  const volley=actor&&!actor.kind&&actor.frame!==REAVER_FRAME?VOLLEY_PROFILES[id]:null;
@@ -3548,13 +3564,15 @@ function refreshTargetPortrait(){
 function spritePoint(bounds,point=[.5,.36]){
  return {x:bounds.x+point[0]*bounds.w,y:bounds.y+point[1]*bounds.h};
 }
-function weaponMount(visual,frame,bounds,id,direction,strike=0){
+function weaponMount(visual,frame,bounds,id,direction,strike=0,firing){
  const side=direction===1?'right':'left';
  const slot=id==='blade'?window.IRON_VOW_RAIJIN_ART?.[side]||arsenal.weapons?.cleaver?.[side]:arsenal.weapons?.[id]?.[side];
  if(!slot)return;
  const impact=slot.impact&&moduleImage(slot.impact.key);
  const striking=strike>=.61&&strike<=.81;
- const asset=striking?(imageReady(impact)?slot.impact:slot.extended??slot):slot;
+ const shot=slot[firing?.weaponSprite];
+ const asset=striking?(imageReady(impact)?slot.impact:slot.extended??slot):
+  shot&&imageReady(moduleImage(shot.key))?shot:slot;
  const isMelee=weapon(id).melee;
  const grip=spritePoint(bounds,isMelee?frame.gripL:frame.gripR);
  const forearm=weaponMotion(id)==='piledriver'||id==='tonfa';
@@ -3582,10 +3600,10 @@ function shieldMount(u,points,bounds,direction,span){
 }
 // The rig's left socket (+X) rotates away from the +Z camera on positive yaw.
 function shieldBehind(heading){return Math.sin(heading)>0}
-function foundryMount(anchors,bounds,id,direction,progress=0,ortho=8){
+function foundryMount(anchors,bounds,id,direction,progress=0,ortho=8,firing){
  if(!id||!anchors?.gripR||!anchors?.gripL)return null;
  // Raijin was rendered in the Foundry's own model scale. Other weapons share the Site arsenal scale.
- return weaponMount({ortho:id==='blade'?ortho*1.4/3.2:ortho},anchors,bounds,id,direction,progress);
+ return weaponMount({ortho:id==='blade'?ortho*1.4/3.2:ortho},anchors,bounds,id,direction,progress,firing);
 }
 let foundryPreviewAngle=0;
 let bastionPreviewDemo=0;
@@ -3860,6 +3878,20 @@ function weaponRigPose(profile,age){
  },0);
  return {weaponKick,weaponSpin:smoothRange(0,.3,age)};
 }
+function firingPose(u,t){
+ const attack=u.attack,profile=ATTACK_PROFILES[u.weapon];
+ if(reducedMotion||attack?.kind!==u.weapon||!(profile?.feed||profile?.charge))return;
+ const age=Number.isFinite(attack.fireAt)?t-attack.fireAt:-1;
+ if(profile.feed){
+  const round=Math.floor((age+1e-7)/profile.interval);
+  if(round<0||round>=weapon(u.weapon).burst)return {weaponKick:0,weaponFeed:0};
+  const phase=Math.max(0,(age-round*profile.interval)/profile.interval);
+  return {weaponKick:1-smoothRange(.13,.67,phase),weaponFeed:phase,weaponSprite:phase<.52?'kick':'feed'};
+ }
+ const charge=age<0?smoothRange(0,attack.windup,t-attack.start-attack.primeDuration):1-smoothRange(0,.19,age);
+ const kick=age<0?0:1-smoothRange(0,.13,age);
+ return {weaponKick:kick,weaponCharge:charge,weaponSprite:kick>.35?'kick':charge>.66?'charged':charge>.18?'charge':undefined};
+}
 function animationPose(u,t,visual=activeWardenVisual(u)){
  const rig=visual||MECH_MOTION[u.frame],m=u.motion,phase=m?clamp01((t-m.start)/m.duration):0;
  const cycle=m?m.gaitBase+phase:0,routePhase=m?(m.stepIndex+phase)/m.totalSteps:0;
@@ -3881,7 +3913,7 @@ function animationPose(u,t,visual=activeWardenVisual(u)){
    primePhase='planted';primeProgress=1;
   }
  }
- let aim=attack&&!strikeKind?smoothRange(0,profile.raise,windupAge):0;
+ let aim=attack&&!strikeKind?smoothRange(0,profile.raise*(profile.charge ? .58 : 1),windupAge):0;
  if(attack&&Number.isFinite(attack.releaseAt))aim*=1-smoothRange(0,profile.recover,t-attack.releaseAt);
  let strikeProgress=0;
  if(strikeKind){
@@ -3900,7 +3932,7 @@ function animationPose(u,t,visual=activeWardenVisual(u)){
  const landAge=t-(u.landTime??-100),land=!reducedMotion&&landAge>=0&&landAge<.4?Math.sin(landAge*30)*Math.exp(-landAge*15):0;
  const pose={rig,flip,strikeKind,strikeProgress,primePhase,primeProgress,nativeDirection:visual?unitFacing(u):u.frame===1?1:-1,phase,cycle,walk,dx,dy,recoil,impact,death,deathAge,kneel,explosion,aim:reducedMotion?0:aim,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion||spent(u)?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
  if(!reducedMotion&&!strikeKind&&attack?.kind===u.weapon&&window.IRON_VOW_EXPANSION_RIG?.[u.weapon])
-  Object.assign(pose,weaponRigPose(profile,age));
+  Object.assign(pose,firingPose(u,t)||weaponRigPose(profile,age));
  pose.time=t;pose.podRecoil=profile.beats.map(beat=>reducedMotion||strikeKind?0:dampedImpulse(age-beat,32,18));pose.upper=upperPose(u,pose);return pose;
 }
 function deformMechVertex(u,x,y,pose){
@@ -4109,9 +4141,9 @@ function travelVisual(u,t){
  }
  return {atlas,image,source,bounds,row,heading,points,direction,strike,strikeFrame};
 }
-function travelMount(view,u,id,progress=0){
+function travelMount(view,u,id,progress=0,t=clock){
  const mount=foundryMount(view.points,view.bounds,id,view.direction,progress,
-  foundryModel(u.frame)!=null?view.atlas.span/1.4:view.atlas.span);
+  foundryModel(u.frame)!=null?view.atlas.span/1.4:view.atlas.span,id===u.weapon?firingPose(u,t):undefined);
  if(mount&&view.strike&&id===u.attack.kind&&!upgradedWardenTravel(view.atlas))mount.angle+=view.direction*(.9-1.85*smoothRange(.36,.78,progress));
  return mount;
 }
@@ -4288,7 +4320,7 @@ function drawTravel(u,t,view){
  const farShield=shieldBehind(FIELD_HEADINGS[heading]);
  const melee=!atlas.grounded?.strike&&u.hp.left>0&&(view.strike||(foundry&&u.melee&&foundryModel(u.frame)===4&&!u.attack))?
   travelMount(view,u,view.strike?u.attack.kind:u.melee,view.strike?.strikeProgress):null;
- if(behind&&u.hp.right>0)drawWeaponModule(ctx,travelMount(view,u,u.weapon));
+ if(behind&&u.hp.right>0)drawWeaponModule(ctx,travelMount(view,u,u.weapon,0,t));
  if(behind&&melee)drawWeaponModule(ctx,melee);
  if(farShield)drawWeaponModule(ctx,shield);
  const paint=()=>ctx.drawImage(body,source.x*cell,source.y*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
@@ -4298,7 +4330,7 @@ function drawTravel(u,t,view){
  drawPartTints(u,t,paint,part=>view.points[part]&&spritePoint(bounds,view.points[part]),true,mask);
  ctx.restore();
  if(!behind&&!u.kind&&u.hp.right>0&&!(u.frame===2&&u.weapon==='missile')){
-  drawWeaponModule(ctx,travelMount(view,u,u.weapon));
+  drawWeaponModule(ctx,travelMount(view,u,u.weapon,0,t));
  }
  if(!behind&&melee)drawWeaponModule(ctx,melee);
  if(!farShield)drawWeaponModule(ctx,shield);
@@ -4371,7 +4403,7 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
    const blade=travelMount(travel,u,u.attack?.kind||u.melee,travel.strike?.strikeProgress);
    return blade?weaponPoint(blade,'tip'):spritePoint(travel.bounds,travel.points.left||travel.points.body);
   }
-  const mount=part.startsWith('muzzle')&&!(u.frame===2&&u.weapon==='missile')?travelMount(travel,u,u.weapon):null;
+  const mount=part.startsWith('muzzle')&&!(u.frame===2&&u.weapon==='missile')?travelMount(travel,u,u.weapon,0,t):null;
   if(mount)return weaponPoint(mount,part);
   return spritePoint(travel.bounds,travel.points[part]||travel.points.muzzle||travel.points.body);
  }
@@ -4385,7 +4417,7 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
   if(strike||part.startsWith('muzzle')){
    const production=Boolean(strike?foundry.secondary:foundry.primary);
    if(production&&foundry.anchors[part])return spritePoint(bounds,foundry.anchors[part]);
-   const mount=foundryMount(foundry.anchors,bounds,strike?u.melee:u.weapon,facing,foundry.strikeProgress,foundry.ortho);
+   const mount=foundryMount(foundry.anchors,bounds,strike?u.melee:u.weapon,facing,foundry.strikeProgress,foundry.ortho,strike?undefined:firingPose(u,t));
    if(mount)return weaponPoint(mount,strike?'tip':part);
   }
   return spritePoint(bounds,foundry.anchors[part]||foundry.anchors.body);
@@ -4409,7 +4441,7 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
   if(part==='meleeTip'||part.startsWith('muzzle')){
    const melee=part==='meleeTip',id=melee?(pose.strikeKind||u.melee):u.weapon;
    if(!melee&&u.frame===2&&id==='missile')return spritePoint(b,part==='muzzle2'?frame.podL:frame.podR);
-   const mount=weaponMount(visual,frame,b,id,unitFacing(u),pose.strikeProgress);
+   const mount=weaponMount(visual,frame,b,id,unitFacing(u),pose.strikeProgress,melee?undefined:pose);
    if(mount)return weaponPoint(mount,melee?'tip':part);
   }
   return spritePoint(b,frame[part]||visual[part]||(part==='pilot'?[frame.body[0],frame.body[1]-.14]:frame.body));
@@ -4693,7 +4725,7 @@ function drawUnitBody(u,t,close){
   ctx.restore();
   if(u.alive){
    ctx.save();
-   if(u.hp.right>0&&!foundry.primary)drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.weapon,facing,0,foundry.ortho));
+   if(u.hp.right>0&&!foundry.primary)drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.weapon,facing,0,foundry.ortho,pose));
    if(u.hp.left>0&&!foundry.secondary&&(pose.strikeKind||(foundryModel(u.frame)===4&&pose.aim<.2)))drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.melee,facing,foundry.strikeProgress));
    if(!farShield)drawWeaponModule(ctx,shield);
    ctx.restore();
@@ -4741,7 +4773,7 @@ function drawUnitBody(u,t,close){
  if(!u.alive){if(u.downReason!=='pilot'){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true)}return}
  if(visual?.modular){
   const frame=baked?.frame||visual,face=unitFacing(u);
-  if(u.hp.right>0&&!(u.frame===2&&u.weapon==='missile'))drawWeaponModule(ctx,weaponMount(visual,frame,b,u.weapon,face));
+  if(u.hp.right>0&&!(u.frame===2&&u.weapon==='missile'))drawWeaponModule(ctx,weaponMount(visual,frame,b,u.weapon,face,0,pose));
   if(u.hp.left>0&&u.melee&&(pose.strikeKind||(action==='strike'&&current()===u))){
    drawWeaponModule(ctx,weaponMount(visual,frame,b,pose.strikeKind||u.melee,face,pose.strikeProgress));
   }
@@ -4852,7 +4884,8 @@ function drawAttackEffect(e,t){
   }
   ctx.restore();
   if(!plasma&&['rifle','shotgun','hailstorm','rampart'].includes(kind)&&since<.55&&!reducedMotion){
-   ctx.save();const x=a.x+scale*.45*since,y=a.y-scale*.7*since+scale*1.4*since*since;ctx.translate(x,y);ctx.rotate(since*19+i);ctx.globalAlpha=1-since/.55;ctx.fillStyle='#d8b982';ctx.fillRect(-2,-.8,4,1.6);ctx.restore();
+   const feed=e.kind==='rivet'&&actor?resolveAttachment(e.feed??=freezeAttachment(actor,'gripR',e.born)):a;
+   ctx.save();const x=feed.x+scale*.45*since,y=feed.y-scale*.7*since+scale*1.4*since*since;ctx.translate(x,y);ctx.rotate(since*19+i);ctx.globalAlpha=1-since/.55;ctx.fillStyle='#d8b982';ctx.fillRect(-2,-.8,4,1.6);ctx.restore();
   }
  }
 }
@@ -5223,7 +5256,7 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
   ctx.fillStyle=hot?'#e9bf7d':'#8fa5ad';ctx.textAlign='left';ctx.font='700 10px Inter,Arial,sans-serif';
   const priming=subject.attack?.primeDuration&&t-subject.attack.start<subject.attack.primeDuration;
   const poweredStage=attacker&&{pullback:'PULLBACK',charge:'STORING ENERGY',impact:'CONTACT'}[subject.attack?.stage];
-  const stage=poweredStage||(sequence.phase==='aim'?(subject.turning?'TURNING':priming?'BRACE & PRIME':'WINDUP'):sequence.phase==='fire'?'RELEASE':'RECOVERY');
+  const stage=poweredStage||(sequence.phase==='aim'?(subject.turning?'TURNING':priming?'BRACE & PRIME':subject.attack?.kind==='parallax'?'CHARGING':'WINDUP'):sequence.phase==='fire'?'RELEASE':'RECOVERY');
   const role=attacker&&sequence.reaction?(sequence.w.melee?'RETURN STRIKE / ':'RETURN FIRE / '):'';
   ctx.fillText((firstPane?'01 / ':'02 / ')+(attacker?role+stage:receiving?'IMPACT':'TARGET'),pane.x+13,pane.y+15,labelWidth);
   ctx.fillStyle='#f2eee3';ctx.font='700 14px Inter,Arial,sans-serif';
