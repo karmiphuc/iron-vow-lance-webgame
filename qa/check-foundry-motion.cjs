@@ -110,5 +110,42 @@ async function oniCut(){
  m.melee=null;
 }
 
-oniCut().then(()=>console.log('PASS Foundry gait IK and planted feet ('+gaits.map(g=>`${g.name} ${(g.slide*1000).toFixed(1)}mm`).join(', ')+
- '), Behemoth four-beat walk and planted kneel fold, Oni duelist guard and downward cut')).catch(error=>{console.error(error);process.exitCode=1;});
+// Oni's stance and carry: feet under the shoulders and pointed forward; a free left hand grips the rifle while moving;
+// with a blade in the left hand, the gun-up and blade-forward ready poses hold their weapons where they should.
+async function oniCarry(){
+ const A=sandbox.IronVowProductionArsenal,glb=readFileSync(join(dist,'rig-bench/weapons.glb'));
+ const armory=await A.load(glb.buffer.slice(glb.byteOffset,glb.byteOffset+glb.byteLength));
+ const build=offhand=>{const m=R.buildRig(4,'ally');m.primaryWeapon=A.mount(armory,'rifle',m.rig.arms.R.so);m.offhand=offhand;
+  const blade=offhand==='blade'?A.mount(armory,'blade',m.rig.arms.L.so):null;return {m,blade};};
+ const world=o=>o.getWorldPosition(V3());
+ {
+  const {m}=build('free');settle(m,{noPlant:true});m.cont.updateMatrixWorld(true);
+  const [left,right]=m.rig.legs.map(leg=>world(leg.an));
+  // The shipped stance put the ankles 3.6 m apart, wider than the 3.2 m shoulders, with toes turned out 0.17 rad.
+  assert.ok(Math.abs(left.x-right.x)<2.2,`Oni ankles ${Math.abs(left.x-right.x).toFixed(2)} m apart`);
+  assert.ok(Math.abs(m.dims.toe)<.06,`Oni toes turned out ${m.dims.toe} rad`);
+  let t=1,distance=0,worst=0;
+  for(let i=0;i<180;i++){t+=dt;distance+=2.6*dt;
+   R.animateMech(m,{pos:V3(0,0,distance),face:0,heading:0,moving:true,speed:2.6,stepLen:1.55,alive:true,brace:0},dt,t);
+   if(i>60){m.cont.updateMatrixWorld(true);const hand=world(m.rig.arms.L.so),base=world(m.rig.arms.R.so),muzzle=world(m.primaryWeapon.muzzle);
+    const axis=muzzle.clone().sub(base),k=Math.max(0,Math.min(1,hand.clone().sub(base).dot(axis)/axis.lengthSq()));
+    worst=Math.max(worst,hand.distanceTo(base.clone().addScaledVector(axis,k)));}}
+  assert.ok(worst<.03,`Oni's free hand leaves the rifle by ${worst.toFixed(3)} m while walking`);
+  const axis=world(m.primaryWeapon.muzzle).sub(world(m.rig.arms.R.so)).normalize();
+  assert.ok(axis.z>.8&&axis.y<0,'Oni carries the two-handed rifle forward at a low ready');
+ }
+ for(const [style,check] of [[0,'gunUp'],[1,'bladeForward']]){
+  const {m,blade}=build('blade');m.carryStyle=style;m.carryMoving=false;settle(m,{noPlant:true},90);m.cont.updateMatrixWorld(true);
+  if(check==='gunUp'){
+   const muzzle=world(m.primaryWeapon.muzzle),base=world(m.rig.arms.R.so),head=world(m.rig.neck);
+   assert.ok(muzzle.y>head.y&&muzzle.y-base.y>2,'Oni raises the gun muzzle-up beside its head');
+  }else{
+   const tip=world(blade.tip),base=world(blade.base),shoulder=world(m.rig.arms.L.sh);
+   const direction=tip.clone().sub(base).normalize();
+   assert.ok(direction.z>.9&&tip.z>shoulder.z+2,'Oni braces the blade forward at the enemy');
+  }
+ }
+}
+
+Promise.all([oniCut(),oniCarry()]).then(()=>console.log('PASS Foundry gait IK and planted feet ('+gaits.map(g=>`${g.name} ${(g.slide*1000).toFixed(1)}mm`).join(', ')+
+ '), Behemoth four-beat walk and planted kneel fold, Oni duelist cut, narrow stance, two-hand rifle grip, gun-up and blade-forward guards')).catch(error=>{console.error(error);process.exitCode=1;});

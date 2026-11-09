@@ -120,6 +120,46 @@ function poseBehemothMortar(m,age){
   const fold=1-easeRange(age,1.47,MORTAR.end);
   return [easeRange(age,.10,.73)*fold,easeRange(age,.04,.71)*fold,easeRange(age,.20,.71)*fold];
 }
+/* Ready poses for chassis with dims.carry. m.offhand ('blade'|'shield'|'free'|'none') and m.primaryWeapon are set by the
+   renderer. A blade in the left hand picks one of C.dual at random each time the mech starts or stops moving. */
+function carryWeights(m,I,C,dt,dead){
+  const W=m.carryW||(m.carryW={gunUp:0,bladeForward:0,support:0});
+  if(!C||dead){for(const k in W)W[k]=0;return W;}
+  const moving=Boolean(I.moving);
+  if(m.carryMoving!==moving||m.carryStyle==null){m.carryMoving=moving;m.carryStyle=Math.floor(Math.random()*C.dual.length);}
+  const hand=m.offhand??'free',style=hand==='blade'?C.dual[m.carryStyle]:[];
+  const target={gunUp:style.includes('gunUp')?1:0,bladeForward:style.includes('bladeForward')?1:0,
+    support:hand==='free'&&(moving||m.aim.blend>.01||C.supportIdle)?1:0};
+  for(const k in W)W[k]=damp(W[k],target[k],5,dt);
+  return W;
+}
+const _g0=V3(),_g1=V3(),_gp=V3(),_gs=V3(),_gt=V3();
+function supportGrip(m,arm,weight){
+  const r=m.rig,D=m.dims,spine=r.spine,sc=m.scale;
+  m.cont.updateMatrixWorld(true);
+  const base=r.arms.R.so.getWorldPosition(_g0),muzzle=m.primaryWeapon.muzzle.getWorldPosition(_g1);
+  const shoulder=arm.sh.getWorldPosition(_gs),reach=(D.up+D.fo+(D.so||.26))*sc*.97;
+  // Farthest point along the handguard/barrel the left hand can reach; nearest point if none is reachable.
+  let best=null,closest=Infinity,point=null;
+  for(let k=.62;k>=.16;k-=.02){
+    _gp.lerpVectors(base,muzzle,k);const d=_gp.distanceTo(shoulder);
+    if(d<=reach){best=_gp.clone();break;}
+    if(d<closest){closest=d;point=_gp.clone();}
+  }
+  const target=spine.worldToLocal(_gt.copy(best||point));
+  const A=D.up,B=D.fo+(D.so||.26),s=arm.sh.position;
+  const axis=target.clone().sub(s),len=clamp(axis.length()/1,Math.abs(A-B)+.01,A+B-.01);axis.normalize();
+  const side=Math.sign(s.x)||1,pole=V3(side*.7,-.45,-.55);pole.addScaledVector(axis,-pole.dot(axis)).normalize();
+  const along=(A*A-B*B+len*len)/(2*len);
+  const up=axis.clone().multiplyScalar(along).addScaledVector(pole,Math.sqrt(Math.max(0,A*A-along*along))).normalize();
+  const down=axis.clone().multiplyScalar(len).addScaledVector(up,-A).normalize();
+  const Y=up.clone().negate(),Z=down.clone().addScaledVector(up,-down.dot(up)).normalize(),X=Y.clone().cross(Z);
+  const q=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(X,Y,Z));
+  arm.sh.quaternion.slerp(q,weight);
+  arm.el.rotation.x=lerp(arm.el.rotation.x,-up.angleTo(down),weight);
+  arm.wr.rotation.x=lerp(arm.wr.rotation.x,0,weight);
+  m.supportTarget=best||point;
+}
 /* in: {pos,moving,speed,stepLen,heading,face,brace,alive,deathAge,down,pilotRatio,armDead,legsDead,shieldDead,ground,onStep,noPlant} */
 function animateMech(m,I,dt,t){
   const r=m.rig,cont=m.cont,S=m.s,sc=m.scale,D=m.dims;
@@ -170,17 +210,37 @@ function animateMech(m,I,dt,t){
   if(m.aim.blend>.01){const sp=r.spine.getWorldPosition(_c);const dx=m.aim.point.x-sp.x,dz=m.aim.point.z-sp.z,dy=m.aim.point.y-(sp.y+1.4*sc);const hz=Math.hypot(dx,dz)||1;
     ay=clamp(wrapA(Math.atan2(dx,dz)-m.yaw)+Math.asin(Math.min(.45,D.shX*.9*sc/hz)),-.9,.9);el=Math.atan2(dy,hz);}
   m.recoil*=Math.exp(-dt*7);const R0=m.recoil;
-  r.spine.rotation.set(S.pitch.x*.18+w*.08+brace*.14-R0*.06+(pd?.55:.3)*dE,ay*m.aim.blend,-p.rotation.z*1.3);
+  // Authored carry (dims.carry): ready poses chosen by what the left hand holds, blended smoothly.
+  const C=D.carry,hold=carryWeights(m,I,C,dt,dead),b=m.aim.blend;
+  const sup=hold.support*(1-b*.35);
+  r.spine.rotation.set(S.pitch.x*.18+w*.08+brace*.14-R0*.06+(pd?.55:.3)*dE+(C&&!dead?C.lean:0),
+    ay*b+(C&&!dead?(C.swagger*w*Math.sin(2*PI*g)+C.supportYaw*sup):0),-p.rotation.z*1.3);
   // Behemoth's crew cabin is inset into the imported chest, rather than a swivel head.
   if(m.build.mods.core===5)r.neck.rotation.set(0,0,0);
-  else r.neck.rotation.set(-el*.35*m.aim.blend+(pd?.45*dE:0),Math.sin(t*.45+m.seed)*.18*(1-m.aim.blend)*(dead?0:1),0);
-  const aR=r.arms.R,carrySh=-.28+w*.12*Math.sin(2*PI*g+PI),carryEl=-.62;
-  const tot=-PI/2-el,sh0=-.5-.55*el,el0=tot-sh0,b=m.aim.blend;
-  if(I.armDead||dead){aR.sh.rotation.set(lerp(-.28,.16,dead?dE:1)+(dead?0:Math.sin(t*3+m.seed)*.03),0,-.2);aR.el.rotation.x=dead?lerp(carryEl,-.1,dE):-.12;}
-  else{aR.sh.rotation.set(lerp(carrySh,sh0,b)+R0*.38+S.arm.x*.06,0,-.07);aR.el.rotation.x=Math.min(0,lerp(carryEl,el0,b)-R0*.55);}
+  else r.neck.rotation.set(-el*.35*b+(pd?.45*dE:0)+(C&&!dead?C.chin:0),Math.sin(t*.45+m.seed)*.18*(1-b)*(dead?0:1),0);
+  const aR=r.arms.R;
+  let carrySh=-.28+w*.12*Math.sin(2*PI*g+PI),carryEl=-.62,carryZ=-.07;
+  if(C){
+    // Gun raised beside the shoulder, elbow bent, muzzle up; or held across the chest for a two-hand grip.
+    const up=hold.gunUp,cross=hold.support,rest=1-up-cross,bob=w*.05*Math.sin(4*PI*g);
+    carrySh=carrySh*rest+(C.gunUp[0]+bob)*up+(C.cross[0]+bob)*cross;
+    carryEl=carryEl*rest+C.gunUp[1]*up+C.cross[1]*cross;
+    carryZ=carryZ*rest+C.gunUp[2]*up+C.cross[2]*cross;
+  }
+  const tot=-PI/2-el,sh0=-.5-.55*el,el0=tot-sh0;
+  if(I.armDead||dead){aR.sh.rotation.set(lerp(-.28,.16,dead?dE:1)+(dead?0:Math.sin(t*3+m.seed)*.03),0,-.2);aR.el.rotation.x=dead?lerp(-.62,-.1,dE):-.12;}
+  else{aR.sh.rotation.set(lerp(carrySh,sh0,b)+R0*.38+S.arm.x*.06,0,lerp(carryZ,-.07,b));aR.el.rotation.x=Math.min(0,lerp(carryEl,el0,b)-R0*.55);}
   aR.wr.rotation.x=-R0*.1;
   const aL=r.arms.L,bl=dead?0:brace;
   aL.sh.rotation.set(lerp(-.2+w*.14*Math.sin(2*PI*g),-1.2,bl)+S.arm.x*.12+(dead?.3*dE:0),0,lerp(.14,-.28,bl));aL.el.rotation.x=lerp(-.75,-1.35,bl)*(dead?1-dE*.7:1);aL.wr.rotation.x=0;
+  if(C&&!dead){
+    // Blade arm braced forward, edge toward the enemy (blade pitch = forearm pitch + 90deg - wrist).
+    const f=hold.bladeForward*(1-bl),[sx,sz,ex,wx]=C.bladeForward;
+    aL.sh.rotation.x=lerp(aL.sh.rotation.x,sx,f);aL.sh.rotation.z=lerp(aL.sh.rotation.z,sz,f);
+    aL.el.rotation.x=lerp(aL.el.rotation.x,ex,f);aL.wr.rotation.x=lerp(0,wx,f);
+    // Free left hand takes the rifle's handguard or barrel, as far forward as the arm reaches.
+    if(sup>.01&&m.primaryWeapon?.muzzle&&!I.armDead)supportGrip(m,aL,sup*(1-bl));
+  }
   if(m.melee&&!dead){const K=meleeKeys(m.melee.age,m.melee.thrust,D.melee);
     if(K){const wv=K.w;aL.sh.rotation.x=lerp(aL.sh.rotation.x,K.sx,wv);aL.sh.rotation.z=lerp(aL.sh.rotation.z,-K.sz,wv);aL.el.rotation.x=lerp(aL.el.rotation.x,K.el,wv);aL.wr.rotation.x=lerp(0,K.wr,wv);
       r.spine.rotation.y-=K.yaw*wv;r.spine.rotation.x+=K.lean*wv;aR.sh.rotation.x=lerp(aR.sh.rotation.x,D.melee?.offArm??-.7,wv*.5);}

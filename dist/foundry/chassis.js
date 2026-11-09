@@ -157,6 +157,12 @@ const DIMS=[
   {stance:.86,py:2.68,spY:.36,neck:[0,1.86,.62],shX:1.86,shY:1.5,up:1.0,fo:1.0,hipX:1.04,legA:1.25,legB:1.3,ankleH:.42,restX:.96,restZ:.08,lift:.5,reverse:false,scale:1},
   {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1},
   {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1,duty:.6,stride:.8,walkDrop:.16,
+   // Feet under the shoulders and pointed forward: no splayed, toes-out gait.
+   stance:.62,toe:.03,sway:.1,
+   // Predator carry: chest forward, chin down, a shoulder roll with each step.
+   carry:{lean:.14,swagger:.07,chin:.08,supportYaw:-.4,supportIdle:false,
+    gunUp:[-.35,-2.65,-.12],cross:[-.5,-.6,.9],bladeForward:[-1.25,.05,-.3,1.32],
+    dual:[['gunUp'],['bladeForward'],['gunUp','bladeForward']]},
    // Duelist cut: high guard beside the head, then a diagonal downward stroke that ends at chest height.
    // The blade sits across the fist, so blade pitch = forearm pitch + 90deg - wrist: guard ~3.2 rad, contact ~1.22 rad.
    melee:{wind:{sx:-2.3,sz:-.3,el:-.6,wr:1.27,yaw:-.25,lean:-.1},hit:{sx:-1.3,sz:.1,el:-.12,wr:1.77,yaw:.28,lean:.2},offArm:-.3}},
@@ -984,7 +990,7 @@ function mergeStatic(root,Bc,anchors){root.updateMatrixWorld(true);const anc=o=>
 const BUILDERS=[warden,kestrel,basilisk,valkyrie,oni,behemoth];
 /* Every chassis is three modules: LEGS (pelvis, hips, legs, gait), CORE (torso, head, back units) and ARMS (pauldrons, arms, hands).
    Dimensions are split the same way, so any legs can carry any core and any arms. */
-const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','duty','stride','walkDrop','sway','scale'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so','melee'];
+const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','duty','stride','walkDrop','sway','scale','toe'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so','melee','carry'];
 function composeDims(l,c,a){const D={};for(const [src,keys] of [[l,LEG_KEYS],[c,CORE_KEYS],[a,ARM_KEYS]])for(const k of keys)if(DIMS[src][k]!==undefined)D[k]=DIMS[src][k];
   // combat stance: biped feet planted wider than the shoulders, toes turned out, limited by what the legs can reach with a bent knee
   if(!D.quad){const vert=D.py+(D.hipY??-.1)-D.ankleH,maxH=Math.sqrt(Math.max(0,(.95*(D.legA+D.legB))**2-vert*vert));D.restX=Math.max(D.restX,Math.min(D.shX*(D.stance??1.1),D.hipX+maxH));D.toe=D.toe??.17;}

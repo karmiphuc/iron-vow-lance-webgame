@@ -188,7 +188,10 @@ function draw(u,t,pose,scope,model,custom){
  m.melee=melee?{age:meleeAge,thrust:pose.strikeKind==='pike'}:null;
  m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;
  m.s.arm.x=pose.impact*.75;
- animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
+  // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
+  m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
+  m.primaryWeapon=entry.primary&&u.hp.right>0?entry.primary:null;
+  animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step,artillery,mortarAge},dt,t);
  if(prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)){
@@ -216,7 +219,7 @@ function draw(u,t,pose,scope,model,custom){
   else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
  }
  if(entry.secondary){
-  entry.secondary.mount.visible=u.alive&&u.hp.left>0&&(melee||(model===4&&aim<.2));
+  entry.secondary.mount.visible=u.alive&&u.hp.left>0&&(melee||model===4);
   if(entry.secondary.spike)entry.secondary.spike.position.z=entry.secondary.spikeRest+(pose.strikeProgress>=.61&&pose.strikeProgress<=.81?.50:0);
   arsenal.animate(entry.secondary,pose);
  }
