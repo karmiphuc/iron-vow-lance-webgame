@@ -36,7 +36,7 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  await tap('[data-learn="scout-optics"]');
  await tap('#modal-0');
  await page.evaluate(()=>{
-  save.ship={levels:{drop:2}};acquireHull(6);
+  save.ship={levels:{drop:2}};save.credits+=FRAMES[6].cost;acquireHull(6);
   save.dispatch={day:save.day,sizes:[3,2,1,3]};persist();
  });
  await nav('contracts');

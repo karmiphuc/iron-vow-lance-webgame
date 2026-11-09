@@ -108,6 +108,7 @@ async function exerciseRigAdapter(){
  assert.equal(run('stockHull(BASTION_FRAME).weapon'),'rifle');
  assert.equal(run('FOUNDRY_HOSTILES.frontier.includes(CITADEL_FRAME)'),true);
  assert.equal(run('acquireHull(CITADEL_FRAME)||assignChassis(0,CITADEL_FRAME,true)||validHull(stockHull(CITADEL_FRAME),CITADEL_FRAME)'),false);
+ run('save.credits=FRAMES[6].cost+1300');
  assert.equal(run('assignChassis(0,6,true)'),true);
  assert.equal(run('save.credits'),1300);
  assert.equal(run("save.owned.includes('blade')"),true);
@@ -189,7 +190,7 @@ async function exerciseRigAdapter(){
  donor.units[1].mech=3;
  assert.equal(run(`loadCareer(${JSON.stringify(donor)})`),null);
 
- run("battle=null;save.credits=12000;assignChassis(1,7,true);createBattle(3);selected=1");
+ run("battle=null;save.credits=FRAMES[7].cost+12000;assignChassis(1,7,true);createBattle(3);selected=1");
  assert.ok(run(`(()=>{
   const u=current(),a=mechAttachmentPoint(u,'muzzle'),b=mechAttachmentPoint(u,'muzzle2');
   return Math.hypot(a.x-b.x,a.y-b.y)>1;

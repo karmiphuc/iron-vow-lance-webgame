@@ -32,7 +32,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await tap('#inspect');
  await page.locator('.unit-inspect').waitFor();
  await tap('.hangar-top-right [data-page="ship"]');
- await page.evaluate(()=>{save.credits=24000;save.rep=30;save.history=[{name:'Picket sweep',day:1,win:true,pay:1300}];hirePilot(3);acquireHull(6);persist();render()});
+ await page.evaluate(()=>{save.credits=FRAMES[6].cost+24000;save.rep=30;save.history=[{name:'Picket sweep',day:1,win:true,pay:1300}];hirePilot(3);acquireHull(6);persist();render()});
  const before=await page.evaluate(()=>save.credits);
  await tap('[data-build-facility="drop"]');
  assert.equal(await page.evaluate(()=>save.credits),before-2200);

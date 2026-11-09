@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 async function checkBastionGrips({page,mobile,origin,tap}){
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'load'});
+ await page.evaluate(()=>{save.credits+=FRAMES[BASTION_FRAME].cost;render()});
  await tap('[data-bay="market"]');
  assert.equal(await page.locator('[data-buy-hull="12"]').count(),0,'Citadel is absent from the market');
  await tap('[data-buy-hull="10"]');

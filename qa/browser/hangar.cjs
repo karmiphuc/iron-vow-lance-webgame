@@ -47,7 +47,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  await page.evaluate(()=>{
   save.hangar.levels={personnel:2,fabrication:2,recon:2};
   save.wounds={rook:2,scout:2};
-  acquireHull(6);save.reserve[6].condition=30;
+  save.credits+=FRAMES[6].cost;acquireHull(6);save.reserve[6].condition=30;
   save.dispatch={day:save.day,sizes:[1,2,3,2]};
   persist();render();
  });

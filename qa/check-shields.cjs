@@ -10,7 +10,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('save.units[0].melee'),undefined);
  run(`equipWeapon('cleaver');equipWeapon('bulwark-shield');equipWeapon('citadel-shield')`);
  assert.equal(run('save.credits'),150,'re-equipping owned kits is free');
- run(`save.credits=20000;assignChassis(0,BASTION_FRAME);equipWeapon('bulwark-shield');
+ run(`save.credits=FRAMES[BASTION_FRAME].cost+FRAMES[3].cost+FRAMES[4].cost+20000;assignChassis(0,BASTION_FRAME);equipWeapon('bulwark-shield');
   assignChassis(0,0);assignChassis(1,3);selected=1;equipWeapon('bulwark-shield');equipWeapon('vesper-shoulder')`);
  assert.equal(run('save.units[0].shield'),'citadel-shield');
  assert.equal(run('save.units[1].shield'),'bulwark-shield');

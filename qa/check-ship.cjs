@@ -39,7 +39,7 @@ const resolve=(run,win=true)=>run(`for(const u of battle.units)if(u.team==='enem
  }
 
  const crew=simulate({random:()=>0,reducedMotion:true}),play=crew.run;
- play('save.credits=20000;hirePilot(3);acquireHull(6);save.reserve[6].condition=35;save.units[1].condition=60;createBattle(0,false,false,[0]);battle.units[0].hp.pilot=0;battle.units[0].alive=false');
+ play('save.credits=FRAMES[6].cost+20000;hirePilot(3);acquireHull(6);save.reserve[6].condition=35;save.units[1].condition=60;createBattle(0,false,false,[0]);battle.units[0].hp.pilot=0;battle.units[0].alive=false');
  resolve(play,false);
  assert.equal(play('woundDays("rook")'),2);
  assert.equal(play('assignPilot(1,0)'),false,'active pilots cannot be duplicated');
@@ -66,7 +66,7 @@ const resolve=(run,win=true)=>run(`for(const u of battle.units)if(u.team==='enem
  assert.equal(play('save.reservePilots.ghost.xp-reserveXP'),25);
 
  const aux=simulate({random:()=>.99,reducedMotion:true}),fly=aux.run;
- fly('save.credits=30000;save.rep=30;hirePilot(3);acquireHull(6);save.reserve[6].paint="#193857";save.reserve[6].condition=85;Object.assign(save.reservePilots.scout,{level:3,training:["scout-optics"]});save.ship={levels:{drop:2,office:1}};const seat={pilotId:"scout",frame:6}');
+ fly('save.credits=FRAMES[6].cost+30000;save.rep=30;hirePilot(3);acquireHull(6);save.reserve[6].paint="#193857";save.reserve[6].condition=85;Object.assign(save.reservePilots.scout,{level:3,training:["scout-optics"]});save.ship={levels:{drop:2,office:1}};const seat={pilotId:"scout",frame:6}');
  assert.equal(fly('validAux(seat)'),true);
  assert.equal(fly('validAux({...seat,pilotId:"rook"})||validAux({...seat,frame:0})'),false);
  for(let contract=0;contract<4;contract++)for(let count=1;count<=3;count++){

@@ -38,6 +38,7 @@ assert.equal(run('save.salvage[HELLBREAKER]'),1);
 assert.equal(run('acquireHull(HELLBREAKER)'),false);
 assert.equal(run('assignChassis(0,HELLBREAKER)'),false);
 assert.equal(run('workshopView="salvage";chassisAssignments(0,trainingEffects(0)).includes("HELLBREAKER")'),true);
+ run('save.credits=rebuildPrice(HELLBREAKER)');
 assert.equal(run('acquireHull(HELLBREAKER,true)'),true);
 assert.equal(run('save.reserve[HELLBREAKER].condition'),55);
 assert.equal(run('save.salvage[HELLBREAKER]'),undefined);
@@ -95,7 +96,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare
  }
 }
 const purchase=simulate({random:()=>0}).run;
-purchase("save.credits=10000;assignChassis(0,3);selected=0;page='workshop'");
+purchase("save.credits=FRAMES[3].cost+10000;assignChassis(0,3);selected=0;page='workshop'");
 assert.equal(purchase("save.units[0].melee"),undefined);
 assert.equal(purchase("save.units[0].shoulder"),undefined);
 assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher-bare');

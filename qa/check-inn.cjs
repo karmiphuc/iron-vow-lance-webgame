@@ -84,7 +84,7 @@ const backup=sim=>JSON.parse(sim.storage.get(careerKey));
  assert.equal(run('acquireHull(1,true)'),false,'cannot rebuild an owned hull');
  assert.equal(run('recycleHullBody(1)'),true);
  assert.equal(run('recycleHullBody(1)'),false);
- run('save.salvage[7]=1;persist()');
+ run('save.salvage[7]=1;save.credits+=rebuildPrice(7)+FRAMES[6].cost;persist()');
  const credit=run('save.credits'),cost=run('rebuildPrice(7)');
  assert.equal(run('acquireHull(7,true)'),true);
  assert.equal(run('save.credits'),credit-cost);

@@ -45,6 +45,12 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>save.reservePilots.rook.training.join()),'pathfinder');
  await tap('[data-dock="market"]');
  await fit();
+ for(const [frame,price] of [[3,'350,000'],[4,'300,000']]){
+  const buy=page.locator('[data-buy-hull="'+frame+'"]');
+  assert.equal(await buy.innerText(),'BUY · '+price+' CR');
+  assert.equal(await buy.isDisabled(),true);
+ }
+ await page.evaluate(()=>{save.credits+=FRAMES[6].cost;render()});
  await tap('[data-buy-hull="6"]');
  assert.equal(await page.locator('[data-bay="storage"]').getAttribute('aria-pressed'),'true');
  assert.equal(await page.evaluate(()=>save.reserve[6].melee),'blade');
@@ -146,7 +152,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  });
  assert.equal(await page.locator('[data-buy-hull="11"]').count(),0);
  await page.evaluate(()=>{
-  save.credits+=1500;
+  save.credits+=FRAMES[3].cost+1500;
   if(!hullOwned(3))acquireHull(3);
   if(pilotFrame(0)!==3)assignChassis(0,3,true);
   effects=[];createBattle(3,false,false,[0]);selected=0;renderBattle();
@@ -163,7 +169,12 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  });
  const salvage=page.getByRole('button',{name:'VIEW SALVAGE'});
  await (mobile?salvage.tap():salvage.click());
+ const rebuild=page.locator('[data-rebuild="11"]');
+ assert.equal(await rebuild.innerText(),'REBUILD · 140,000 CR');
+ assert.equal(await rebuild.isDisabled(),true);
+ await page.evaluate(()=>{save.credits=rebuildPrice(HELLBREAKER);render()});
  await tap('[data-rebuild="11"]');
+ assert.equal(await page.evaluate(()=>save.credits),0);
  assert.equal(await page.evaluate(()=>save.reserve[HELLBREAKER]?.condition),55);
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('#nav [data-page="workshop"]').waitFor({state:'attached'});

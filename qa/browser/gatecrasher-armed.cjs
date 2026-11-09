@@ -6,7 +6,7 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
   await page.locator('#nav button').first().waitFor({state:'attached'});
   await page.emulateMedia({reducedMotion:'no-preference'});
   const credits=await page.evaluate(()=>{
-   battle=null;closeModal();save=fresh();save.credits=10000;
+   battle=null;closeModal();save=fresh();save.credits=FRAMES[3].cost+10000;
    if(!acquireHull(3)||!assignChassis(0,3,true))throw Error('Gatecrasher procurement failed');
    selected=0;page='workshop';workshopView='assigned';render();
    return save.credits;

@@ -41,7 +41,7 @@ assert.equal(run('validSave({...save,duty:["rook"]})'),false);
 assert.equal(run('validSave({...save,duty:["scout","signal","sapper","marshal"]})'),false);
 assert.equal(run('validSave({...save,hangar:{levels:{personnel:3,cabins:3}}})'),false);
 
-run('save.ship={levels:{drop:2}};acquireHull(6);save.units[0].paint="#294356";save.reservePilots.scout.xp=71;save.wounds={scout:1};persist()');
+run('save.ship={levels:{drop:2}};save.credits+=FRAMES[6].cost;acquireHull(6);save.units[0].paint="#294356";save.reservePilots.scout.xp=71;save.wounds={scout:1};persist()');
 const prior=run('JSON.stringify(save)');
 run('deploy(0,false,[0,1],null,["scout","scout"])');
 run('deploy(0,false,[0],{pilotId:"scout",frame:6},["scout"])');

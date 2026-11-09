@@ -30,7 +30,7 @@ const setTimeout = (callback, ms) => {
 (async()=>{
  sim = createSimulation({random:()=>0,setTimeout});
  const run = sim.run;
- run("save.units[0].level=2;save.units[0].xp=33;save.units[0].condition=68;save.units[0].paint='#577eac';save.units[0].upgrade=1");
+ run("save.credits=FRAMES[3].cost+FRAMES[4].cost;save.units[0].level=2;save.units[0].xp=33;save.units[0].condition=68;save.units[0].paint='#577eac';save.units[0].upgrade=1");
  assert.equal(run('assignChassis(0,3)'),true);
  assert.equal(run('assignChassis(1,3)'),false);
  assert.equal(run('assignChassis(1,4)'),true);
