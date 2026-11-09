@@ -2443,6 +2443,7 @@ function activeWardenVisual(u){
 }
 function spriteFlip(u,visual=activeWardenVisual(u)){return !visual&&unitFacing(u)!==(u.frame===1?1:-1)}
 const motionImages={};
+const foundryArmVariant=u=>Number(u?.hp?.right<=0)+2*Number(u?.hp?.left<=0);
 function motionImage(atlas){
  let image=motionImages[atlas.key];
  if(!image){
@@ -2456,6 +2457,10 @@ function preloadNativeMotion(frame,paint,hull){
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(frame)];
  if(atlas){
   if(atlas.views?.[0])moduleImage(atlas.views[0].key);
+  if(atlas.directions){
+   const arm=foundryArmVariant(hull);
+   return [motionImage(atlas),...atlas.directions.map(view=>motionImage({key:view.variants[arm]}))];
+  }
   if(frame===REAVER_FRAME)return REAVER_ATLASES.map(key=>motionImage({key}));
   if(paint)moduleImage(atlas.key+'-paint');
   if(atlas.variants)return atlas.variants.map(key=>motionImage({key}));
@@ -2579,8 +2584,8 @@ MECH_SIZE[REAVER_FRAME]=3.40;
 MECH_SIZE[BULWARK_FRAME]=3.65;
 function unitBounds(u,visual=activeWardenVisual(u)){
  const p=project(u.vx,0,u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1),model=foundryModel(u.frame);
- const ground=window.IRON_VOW_FOUNDRY_ART?.[model]?.ground;
- const groundX=Array.isArray(ground)?(unitFacing(u)>0?1-ground[0]:ground[0]):undefined;
+ const atlas=window.IRON_VOW_FOUNDRY_ART?.[model],ground=atlas?.ground;
+ const groundX=Array.isArray(ground)?(!atlas.directions&&unitFacing(u)>0?1-ground[0]:ground[0]):undefined;
  const groundY=Array.isArray(ground)?ground[1]:ground;
  return{x:p.x-size*(visual?.groundX??groundX??.5),y:p.y-size*(visual?.ground??groundY??(model!=null?.84:.94)),w:size,h:size};
 }
@@ -3615,6 +3620,16 @@ function bulwarkArtFrame(u,pose,atlas){
  }
  return u.motion&&!reducedMotion?Math.floor(pose.cycle*8)%8:atlas.idle;
 }
+function bulwarkBaked(u,pose,atlas){
+ const heading=headingIndex(pose.heading),view=atlas.directions[heading],arm=foundryArmVariant(u);
+ const image=motionImage({key:view.variants[arm]}),loaded=imageReady(image);
+ const idle=motionImage(atlas),idleReady=imageReady(idle);
+ const frame=loaded?bulwarkArtFrame(u,pose,atlas):atlas.idle;
+ return {surface:loaded?image:idleReady?idle:artImages[legacyChassis[u.frame]],
+  cell:loaded?atlas.cell:idleReady?atlas.fallbackCell:0,
+  index:loaded?atlas.layouts[arm][frame]:heading*4+arm,anchors:view.frames[frame],
+  flip:false,baked:true,primary:true,secondary:true,shield:true};
+}
 function foundryRender(u,t,liveOnly=false){
  const model=foundryModel(u.frame);
  if(model==null)return null;
@@ -3622,13 +3637,14 @@ function foundryRender(u,t,liveOnly=false){
  const pose=animationPose(u,poseTime);
  pose.heading=displayedHeading(u);pose.cinematic=u.headingOverride!==undefined;pose.reducedMotion=reducedMotion;
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[model];
+ if(atlas?.directions)return bulwarkBaked(u,pose,atlas);
  const reaver=u.frame===REAVER_FRAME;
  const live=atlas?.primary?null:window.IronVowFoundry?.draw(u,poseTime,pose,battle,model,FRAMES[u.frame]?.rig);
  if(live)return {...live,strikeProgress:pose.strikeProgress};
  if(liveOnly&&!reaver)return null;
  if(bastionRig(u))return {surface:artImages['bastion-bst04'],cell:0,anchors:{body:[.50,.46],pilot:[.50,.29],right:[.31,.59],left:[.70,.59],legs:[.50,.72],muzzle:[.20,.53],leadFoot:[.43,.84]},flip:false,baked:true,primary:true};
  if(!atlas||atlas.frames.length<19)return null;
- const variantIndex=Number(u.hp.right<=0)+2*Number(u.hp.left<=0);
+ const variantIndex=foundryArmVariant(u);
  const variant=reaver?REAVER_ATLASES[2*Number(u.hp.right>0)+Number(u.hp.left>0)]:atlas.variants?.[variantIndex];
  const destruction=!u.alive&&atlas.destruction&&imageReady(motionImage(atlas.destruction))?atlas.destruction:null;
  const clip=destruction?.clips[u.downReason==='pilot'?'pilot':'body'];
@@ -3636,7 +3652,6 @@ function foundryRender(u,t,liveOnly=false){
  const image=motionImage(sprite);
  const progress=reducedMotion||!Number.isFinite(u.deathTime)?1:clip?clamp01(pose.deathAge/clip.duration):0;
  const index=clip?clip.start+Math.round(progress*(clip.count-1)):
-  u.frame===BULWARK_FRAME?bulwarkArtFrame(u,pose,atlas):
   u.frame===VANGUARD_FRAME?vanguardArtFrame(u,pose,atlas):!u.alive?u.downReason==='pilot'?17:18:
   pose.strikeKind&&pose.primePhase!=='step'?13+Math.min(2,Math.floor(pose.strikeProgress*3)):
   Math.abs(pose.recoil)>.05?12:pose.aim>.35?11:
@@ -3774,8 +3789,10 @@ function drawPoweredRelease(actor,profile,age,t){
  ctx.lineWidth=Math.max(2,scale*.07*strength);
  ctx.beginPath();
  if(power.clip==='bash'){
-  const dir=actor.face||1,reach=scale*(.09+.58*q);
-  ctx.ellipse(p.x+dir*reach,p.y,scale*(.14+.23*q),scale*(.21+.50*q),.11*dir,-Math.PI*.45,Math.PI*.55);
+  const atlas=window.IRON_VOW_FOUNDRY_ART[foundryModel(actor.frame)];
+  const [dx,dy]=atlas.directions[headingIndex(displayedHeading(actor))].forward;
+  const reach=scale*(.09+.58*q)/Math.hypot(dx,dy);
+  ctx.ellipse(p.x+dx*reach,p.y+dy*reach,scale*(.14+.23*q),scale*(.21+.50*q),Math.atan2(dy,dx),-Math.PI*.45,Math.PI*.55);
  }else{
   const a=mechAttachmentPoint(actor,'bladeTip',t-.085),b=mechAttachmentPoint(actor,'bladeTip',t-.043);
   ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(b.x,b.y,p.x,p.y);
@@ -4090,6 +4107,18 @@ function pick(clientX,clientY){
  const visual=activeWardenVisual(u),view=travelVisual(u,clock),b=view?.bounds||(u.kind?vehicleBounds(u,clock):unitBounds(u,visual)),px=(clientX-b.x)/b.w,py=(clientY-b.y)/b.h;if(px<0||py<0||px>1||py>1)continue;
  const foundry=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(u.frame)];
  const travel=view;
+ if(foundry?.directions){
+  const cell=foundry.fallbackCell,index=headingIndex(displayedHeading(u))*4+foundryArmVariant(u);
+  const key=foundry.key+'/'+index,image=motionImage(foundry);
+  let mask=artMasks[key];
+  if(!mask&&imageReady(image)){
+   const g=renderSurface(cell,cell)?.getContext('2d',{willReadFrequently:true});
+   if(g){g.drawImage(image,index%4*cell,Math.floor(index/4)*cell,cell,cell,0,0,cell,cell);mask=artMasks[key]=g.getImageData(0,0,cell,cell)}
+  }
+  const ix=Math.min(cell-1,Math.floor(px*cell)),iy=Math.min(cell-1,Math.floor(py*cell));
+  if(mask?mask.data[(iy*cell+ix)*4+3]>35:Math.abs(px-.5)<.31&&py>.2&&py<.88)return u;
+  continue;
+ }
  if(travel){
   const b=travel.bounds,px=(clientX-b.x)/b.w,py=(clientY-b.y)/b.h;
   if(px<0||py<0||px>=1||py>=1)continue;
