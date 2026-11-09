@@ -72,6 +72,7 @@
 .map-tools{display:flex;gap:4px;margin-bottom:5px}
 .map-tools button{font:700 9px Inter,Arial,sans-serif;padding:4px 5px;flex:1;min-height:23px;color:#e1ca9a}
 .map-tools button:last-child{flex:0 0 26px;font-size:15px;line-height:1}
+.map-zoom button,.map-zoom button:last-child{flex:1;font-size:16px;line-height:1;min-height:28px}
 .map-radar{display:block;position:relative;width:100%;aspect-ratio:1.34;background:#102630;background-image:linear-gradient(90deg,#c5e4e215 1px,transparent 1px),linear-gradient(#c5e4e215 1px,transparent 1px);background-size:10% 10%;border:1px solid #7b959852;overflow:hidden}
 .map-pin,.map-focus{position:absolute;transform:translate(-50%,-50%);pointer-events:none}
 .map-pin{left:var(--map-x);top:var(--map-z);width:5px;height:5px;border-radius:50%;background:#ee806d;font:700 6px Inter,Arial,sans-serif;color:#14202a;display:grid;place-content:center}
@@ -82,6 +83,7 @@
 .map-caption{display:block;margin-top:4px;font:700 7px Inter,Arial,sans-serif;letter-spacing:.09em;color:#aec5c8}
 .combat-target .vehicle-target{height:100%;top:0;object-fit:cover;object-position:center 67%;filter:none}
 @media(max-width:760px){.field-navigation{left:auto;right:8px;bottom:auto;top:144px;width:108px;padding:5px}.map-caption{font-size:6px}.map-tools button{font-size:8px}.map-pin.ally,.map-pin.tank,.map-pin.helicopter{height:7px;width:7px;font-size:5px}body[data-target-panel=open] .field-navigation{visibility:hidden}}
+@media(max-width:760px){.map-zoom button,.map-zoom button:last-child{font-size:17px;min-height:36px}}
 #skip-shot{position:fixed;z-index:8;top:88px;right:max(16px,9.5vw);padding:8px 11px;pointer-events:auto;background:#12212ceb;border:1px solid #b9b6947d;color:#f1ddac;font:700 10px Inter,Arial,sans-serif;letter-spacing:.06em}
 #skip-shot span{color:#879fa7;font-size:8px;margin-left:5px}
 #skip-shot[hidden]{display:none}

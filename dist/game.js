@@ -677,6 +677,7 @@ function captureSortie(enemyPending=false){
   ...(battle.ashigaruHostile?{ashigaruHostile:true}:{}),
   ...(battle.aeroMelee?{aeroMelee:battle.aeroMelee}:{}),
   ...(battle.relayLead?{relayLead:battle.relayLead}:{}),
+  ...(battle.terrainSeed!==null?{terrainSeed:battle.terrainSeed}:{}),
   units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,jumpjetUsed:u.jumpjetUsed||undefined}))};
 }
 function dispatchSizes(){
@@ -731,7 +732,7 @@ function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,fron
  const contract=CONTRACTS[i],field=FIELDS[contract.field];
  const layout=theaterLayouts?.[contract.field]?.cover||field.cover;
  const cover=legacy?field.cover:layout;
- battle={contract,field:{...field,cover},size:legacy?{width:10,depth:10}:NEW_BOARD,legacy,stockHostiles,slots:aux?[...slots,AUX_SLOT]:[...slots],aux,launchAP,turn:1,phase:'player',units:[],cover:new Set(Object.keys(cover)),log:['Lance deployed. Reactor signatures detected.'],busy:false};
+ battle={contract,field:{...field,cover},size:legacy?{width:10,depth:10}:NEW_BOARD,legacy,stockHostiles,slots:aux?[...slots,AUX_SLOT]:[...slots],aux,launchAP,terrainSeed:null,turn:1,phase:'player',units:[],cover:new Set(Object.keys(cover)),log:['Lance deployed. Reactor signatures detected.'],busy:false};
  battle.frontierHellbreaker=!legacy&&!stockHostiles&&contract.id==='frontier'&&frontierHellbreaker;
  battle.picketLineInfantry=!legacy&&!stockHostiles&&contract.id==='picket'&&picketLineInfantry;
  battle.corridorElite=!legacy&&!stockHostiles&&contract.id==='corridor'&&corridorElite;
@@ -761,6 +762,14 @@ function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,fron
  }
  focusBattleCamera(battle.units[0],true);
 }
+function surveyTerrain(seed){
+ const {contract,size,units}=battle;
+ const deployment=[...contract.deployment.map(spawn=>spawn.slice(-2)),...units.map(u=>[u.x,u.z])];
+ const {cells,cover}=window.ironVowTerrain(contract.field,seed,size,deployment);
+ battle.terrainSeed=seed;
+ battle.field={...battle.field,cells,cover};
+ battle.cover=new Set(Object.keys(cover));
+}
 function makeVehicle(kind,index,x,z){
  const {name,hp,armor,gun}=VEHICLES[kind],tier=battle.contract.difficulty-1,body=hp+tier*8;
  return{id:'enemy'+index,index,kind,team:'enemy',x,z,vx:x,vz:z,name:name+' '+(index+1),weapon:gun.id,level:1,armor:armor+tier,hp:{body},max:{body},ap:ROUND_AP,brace:false,skill:false,boost:false,alive:true};
@@ -789,8 +798,11 @@ function restoreSortie(){
  valid=valid&&(saved.aeroMelee===undefined||saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='relay'&&
   regular.length>=2&&AERO_MELEE.includes(saved.aeroMelee));
  valid=valid&&(saved.relayLead===undefined||saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='relay'&&RELAY_LEADS.includes(saved.relayLead));
+ valid=valid&&(saved.terrainSeed===undefined||saved.version>=7&&!legacy&&integer(saved.terrainSeed,0,0xffffffff));
  if(valid){
-  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true,saved.reaverHostiles===true,saved.bulwarkHostile===true,saved.ashigaruHostile===true,saved.aeroMelee??null,saved.relayLead??0);valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
+  createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true,saved.reaverHostiles===true,saved.bulwarkHostile===true,saved.ashigaruHostile===true,saved.aeroMelee??null,saved.relayLead??0);
+  if(saved.terrainSeed!==undefined)surveyTerrain(saved.terrainSeed);
+  valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
   for(let i=0;valid&&i<saved.units.length;i++){
    const state=saved.units[i],u=battle.units[i];
    const keptLaunchAP=u.team==='ally'&&(saved.turn===1||state?.hp?.body===0||state?.hp?.pilot===0);
@@ -1690,7 +1702,7 @@ function modal(title,body,buttons){if(careerStale)return;if($('#modal').hidden)m
 function closeModal(){if(careerStale)return;closeHelp();$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
 function quickOrders(){
  const topics=[
-  ['arrows-out-cardinal','Move','Free tiles, then +1 tile for '+EXTRA_MOVE_AP+' AP',MOVE_HELP+' Drag to pan or tap the map. Raised terrain blocks movement. Shielded tiles grant cover.'],
+  ['arrows-out-cardinal','Move','Free tiles, then +1 tile for '+EXTRA_MOVE_AP+' AP',MOVE_HELP+' Cross terraces on foot. Obstacles block movement and give cover to adjacent units. Drag to pan, or use the map and zoom controls.'],
   ['crosshair','Fire','Choose a subsystem, then fire','Body or pilot loss disables a mech. Cockpit shots are harder and deal half damage. Destroy the weapon arm to stop fire, legs to stop movement, or the left arm to halve armor.'],
   ['crosshair','Strike','Adjacent ground targets','Equip melee in the Workshop. Strike needs a working left arm. Gunships require ranged attacks and can cross cover. Missiles ignore cover.'],
   ['shield-chevron','Brace','1–2 AP · blocks 50% or more','Brace lasts until your next turn. Training can reduce the cost. Pilot skills can be used once per battle.'],
@@ -1856,7 +1868,9 @@ function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null){
   modal('REPAIR REQUIRED','<p>A selected chassis has less than 30% integrity.</p>',[{text:'OPEN WORKSHOP',fn:()=>openRepair(damaged)}]);return;
  }
  if(crew)slots.forEach((slot,index)=>seatPilot(slot,crew[index]));
- createBattle(i,legacy,legacy,slots,true,aux);selected=slots[0];action='move';targetPart='body';effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;
+ createBattle(i,legacy,legacy,slots,true,aux);
+ if(!legacy)surveyTerrain(Math.floor(Math.random()*4294967296));
+ selected=slots[0];action='move';targetPart='body';effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;
  persist();render();sound('click');if(save.history.length===0)guide();
 }
 function current(){return battle?.units.find(u=>u.team==='ally'&&u.index===selected&&u.alive)}
@@ -2550,9 +2564,24 @@ for(const key of [...mechArtKeys,'concrete','barricade','contract-relay','contra
 function imageReady(im){return im&&im.complete&&im.naturalWidth>0}
 function resize(){W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,W<760?1.5:2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality=W<760?'medium':'high'}
 window.addEventListener('resize',resize);resize();
-function project(x,y,z){return{x:origin.x+(x-z)*scale*.866,y:origin.y+(x+z)*scale*.42-y*scale}}
+const TERRAIN_RISE=.19;
+function terrainCell(x,z){
+ const {width,depth}=battle.size;
+ if(x>=0&&z>=0&&x<width&&z<depth)return battle.field.cells[z*width+x];
+}
+function terrainHeight(x,z){
+ if(!battle?.field.cells)return 0;
+ const ax=Math.floor(x),az=Math.floor(z);
+ const fx=clamp01((x-ax-.32)/.36),fz=clamp01((z-az-.32)/.36);
+ const height=(a,b)=>terrainCell(a,b)?.level??0;
+ return TERRAIN_RISE*((1-fz)*((1-fx)*height(ax,az)+fx*height(ax+1,az))+
+  fz*((1-fx)*height(ax,az+1)+fx*height(ax+1,az+1)));
+}
+function projectPlane(x,y,z){return{x:origin.x+(x-z)*scale*.866,y:origin.y+(x+z)*scale*.42-y*scale}}
+function project(x,y,z){return projectPlane(x,y+terrainHeight(x,z),z)}
 function polygon(points,fill,stroke,width=.7){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke()}}
-function tile(x,z,color,stroke,y=0,width=.7){polygon([[x-.5,y,z-.5],[x+.5,y,z-.5],[x+.5,y,z+.5],[x-.5,y,z+.5]].map(p=>project(...p)),color,stroke,width)}
+function tileCorners(x,z,y){return [projectPlane(x-.5,y,z-.5),projectPlane(x+.5,y,z-.5),projectPlane(x+.5,y,z+.5),projectPlane(x-.5,y,z+.5)]}
+function tile(x,z,color,stroke,y=0,width=.7){polygon(tileCorners(x,z,y+terrainHeight(x,z)),color,stroke,width)}
 function targetingTile(x,z,locked=false){
  const y=locked?.025:.010,width=locked?2.3:1.25;
  tile(x,z,locked?'#ef9b4266':'#e7a34c3d','#291a14b8',y,width+1.5);
@@ -2583,7 +2612,46 @@ function fieldAtmosphere(t,field){
  ctx.restore();
 }
 function hangar(t){rain(t);}
-function drawTerrain(field){
+const TERRAIN_SURFACES=[
+ {top:['#555b4c','#616757','#69695c'],side:['#30352c','#414438'],route:'#c4b79684'},
+ {top:['#55544c','#666155','#6b6251'],side:['#353731','#494235'],route:'#e1b667b0'},
+ {top:['#718084','#8a9999','#577483'],side:['#394d55','#455c66'],route:'#abcad356'}
+];
+function drawSurveyTerrain(field,highlight){
+ const texture=moduleImage('theater-tiles'),ready=imageReady(texture);
+ const {width,depth}=battle.size,palette=TERRAIN_SURFACES[battle.contract.field];
+ for(let row=0;row<width+depth-1;row++)for(let x=Math.max(0,row-depth+1);x<=Math.min(row,width-1);x++){
+  const z=row-x,cell=terrainCell(x,z),y=cell.level*TERRAIN_RISE;
+  const p=projectPlane(x,y,z);
+  if(p.x<-scale||p.x>W+scale||p.y<-scale||p.y>H+scale)continue;
+  const corners=tileCorners(x,z,y);
+  for(const [dx,dz,i,j,side] of [[1,0,1,2,0],[0,1,2,3,1]]){
+   const neighbor=terrainCell(x+dx,z+dz),base=neighbor?neighbor.level*TERRAIN_RISE:-TERRAIN_RISE;
+   if(base>=y)continue;
+   const h=(y-base)*scale,a=corners[i],b=corners[j];
+   polygon([a,b,{x:b.x,y:b.y+h},{x:a.x,y:a.y+h}],palette.side[side],'#10191d70');
+  }
+  if(!ready)polygon(corners,palette.top[cell.material]);
+  if(ready||cell.links){
+   const a=corners[0];
+   ctx.save();
+   ctx.transform(scale*.866,scale*.42,-scale*.866,scale*.42,a.x,a.y);
+   if(ready)ctx.drawImage(texture,(cell.material*4+cell.variant)*128,battle.contract.field*128,128,128,0,0,1,1);
+   if(cell.links){
+    ctx.fillStyle=palette.route;
+    if(cell.links&1)ctx.fillRect(.6,.48,.4,.04);
+    if(cell.links&2)ctx.fillRect(.48,.6,.04,.4);
+    if(cell.links&4)ctx.fillRect(0,.48,.4,.04);
+    if(cell.links&8)ctx.fillRect(.48,0,.04,.4);
+   }
+   ctx.restore();
+  }
+  polygon(corners,null,field.grid);
+  highlight?.(x,z);
+ }
+}
+function drawTerrain(field,highlight){
+ if(field.cells){drawSurveyTerrain(field,highlight);return}
  const ground=moduleImage('ground-'+field.ground);
  const image=imageReady(ground)?ground:artImages.concrete;
  const {width,depth}=battle.size;
@@ -2600,6 +2668,7 @@ function drawTerrain(field){
  for(let i=.5;i<depth-.5;i++){const a=floor(-.5,i),b=floor(width-.5,i);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y)}
  ctx.lineWidth=.6;ctx.strokeStyle=field.grid;ctx.stroke();
  polygon(area(-.5,-.5,width-.5,depth-.5),null,field.border);
+ if(highlight)for(let x=0;x<width;x++)for(let z=0;z<depth;z++)highlight(x,z);
 }
 function drawCoverMarker(x,z){
  const p=project(x,0,z),r=Math.max(2,scale*.070),y=p.y+scale*.13;
@@ -3149,6 +3218,8 @@ function shieldMount(u,points,bounds,direction,span){
  const grip=spritePoint(bounds,points?.gripL||points?.left||[direction>0?.28:.72,.63]);
  return {asset,grip,angle:direction*.10,scale:bounds.w/(span||8)/asset.pixelsPerMetre};
 }
+// The rig's left socket (+X) rotates away from the +Z camera on positive yaw.
+function shieldBehind(heading){return Math.sin(heading)>0}
 function foundryMount(anchors,bounds,id,direction,progress=0,ortho=8){
  if(!id||!anchors?.gripR||!anchors?.gripL)return null;
  // Raijin was rendered in the Foundry's own model scale. Other weapons share the Site arsenal scale.
@@ -3165,8 +3236,12 @@ function drawFoundryPreview(canvas,u,model,angle,previewFrame,previewPose){
   const g=canvas.getContext('2d');
   g.imageSmoothingQuality='high';
   if(live)canvas.dataset.rigFrame=String(live.frame);
-  g.clearRect(0,0,canvas.width,canvas.height);g.drawImage(image,0,0,canvas.width,canvas.height);
-  if(!live?.shield)drawWeaponModule(g,shieldMount(u,live?.anchors,{x:0,y:0,w:canvas.width,h:canvas.height},angle===1||angle===2?1:-1,8));
+  const direction=angle===1||angle===2?1:-1;
+  const shield=!live?.shield&&shieldMount(u,live?.anchors,{x:0,y:0,w:canvas.width,h:canvas.height},direction,8);
+  g.clearRect(0,0,canvas.width,canvas.height);
+  if(direction>0)drawWeaponModule(g,shield);
+  g.drawImage(image,0,0,canvas.width,canvas.height);
+  if(direction<0)drawWeaponModule(g,shield);
   return;
  }
  const view=window.IRON_VOW_FOUNDRY_ART?.[model]?.views?.[angle];
@@ -3174,12 +3249,14 @@ function drawFoundryPreview(canvas,u,model,angle,previewFrame,previewPose){
  if(!imageReady(base))return;
  const size=canvas.width,g=canvas.getContext('2d');
  const rendered=foundryPaint(base,key,u.paint,u.trim);
- g.clearRect(0,0,size,size);g.drawImage(rendered,0,0,size,size);
+ const bounds={x:0,y:0,w:size,h:size},shield=view&&shieldMount(u,view,bounds,view.direction,view.ortho);
+ g.clearRect(0,0,size,size);
+ if(view?.direction>0)drawWeaponModule(g,shield);
+ g.drawImage(rendered,0,0,size,size);
  if(view){
-  const bounds={x:0,y:0,w:size,h:size};
   drawWeaponModule(g,foundryMount(view,bounds,u.weapon,view.direction,0,view.ortho));
   drawWeaponModule(g,foundryMount(view,bounds,u.melee,view.direction,0,view.ortho));
-  drawWeaponModule(g,shieldMount(u,view,bounds,view.direction,view.ortho));
+  if(view.direction<0)drawWeaponModule(g,shield);
  }
 }
 function testBastionGrip(melee){
@@ -3845,11 +3922,12 @@ function drawTravel(u,t,view){
  const painted=upgradedWardenTravel(atlas);
  const behind=painted&&(heading===1||heading===2);
  const shield=activeShield(u)&&shieldMount(u,view.points,bounds,view.direction,atlas.span);
+ const farShield=shieldBehind(FIELD_HEADINGS[heading]);
  const melee=!atlas.grounded?.strike&&u.hp.left>0&&(view.strike||(foundry&&u.melee&&foundryModel(u.frame)===4&&!u.attack))?
   travelMount(view,u,view.strike?u.attack.kind:u.melee,view.strike?.strikeProgress):null;
  if(behind&&u.hp.right>0)drawWeaponModule(ctx,travelMount(view,u,u.weapon));
  if(behind&&melee)drawWeaponModule(ctx,melee);
- if(behind&&shield)drawWeaponModule(ctx,shield);
+ if(farShield)drawWeaponModule(ctx,shield);
  const paint=()=>ctx.drawImage(body,source.x*cell,source.y*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
  const mask=partTintSource(source.key,image,bounds,(g,part)=>g.drawImage(part,bounds.x,bounds.y,bounds.w,bounds.h),
   cell,source.x*cell,source.y*cell,source.key===atlas.key?atlas.partMask:undefined);
@@ -3860,7 +3938,7 @@ function drawTravel(u,t,view){
   drawWeaponModule(ctx,travelMount(view,u,u.weapon));
  }
  if(!behind&&melee)drawWeaponModule(ctx,melee);
- if(!behind&&shield)drawWeaponModule(ctx,shield);
+ if(!farShield)drawWeaponModule(ctx,shield);
  if(!u.kind&&u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
  if(u.hp.body/u.max.body<.4)drawMechSmoke(u,t);
  drawUnitReadout(u,u.kind?1.5+VEHICLES[u.kind].altitude:2.30);
@@ -4194,12 +4272,16 @@ function drawUnitBody(u,t,close){
  const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=unitBounds(u,visual),b=visual?.modular||visual?.native||foundryModel(u.frame)!=null?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual);
  const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
  const foundry=live||foundryRender(u,t);
+ // Fallback sprites without four views are flipped to match the current facing.
+ const facing=unitFacing(u),farShield=shieldBehind(facing*Math.PI/4);
  if(foundry){
   const chest=!u.alive?spritePoint(b,foundry.anchors.body):null;
   const fall=chest&&u.downReason!=='pilot'?(reducedMotion?1:smoothRange(DESTRUCTION.kneelEnd,DESTRUCTION.fallEnd,pose.deathAge)):0;
   ctx.save();ctx.fillStyle='#050c12ac';ctx.beginPath();
   ctx.ellipse(p.x+((chest?.x??p.x)-p.x)*fall,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64+fall*.36),scale*.22,0,0,Math.PI*2);ctx.fill();
   drawJumpjetExhaust(u,t);
+  const shield=activeShield(u)&&!foundry.shield&&shieldMount(u,foundry.anchors,b,facing,foundry.ortho||8);
+  if(farShield)drawWeaponModule(ctx,shield);
   if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
    const {cell,index,span=1}=foundry;
    const sx=cell?index%4*cell:0,sy=cell?Math.floor(index/4)*cell:0;
@@ -4219,11 +4301,10 @@ function drawUnitBody(u,t,close){
   }
   ctx.restore();
   if(u.alive){
-   const facing=unitFacing(u);
    ctx.save();
    if(u.hp.right>0&&!foundry.primary)drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.weapon,facing,0,foundry.ortho));
    if(u.hp.left>0&&!foundry.secondary&&(pose.strikeKind||(foundryModel(u.frame)===4&&pose.aim<.2)))drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.melee,facing,foundry.strikeProgress));
-   if(activeShield(u)&&!foundry.shield)drawWeaponModule(ctx,shieldMount(u,foundry.anchors,b,facing,8));
+   if(!farShield)drawWeaponModule(ctx,shield);
    ctx.restore();
   }
   if(!u.alive&&u.downReason!=='pilot'&&pose.deathAge>=DESTRUCTION.kneelEnd)
@@ -4238,6 +4319,8 @@ function drawUnitBody(u,t,close){
  ctx.save();ctx.fillStyle=u.alive?'#050c12aa':'#090e13c9';ctx.beginPath();ctx.ellipse(p.x,p.y+scale*.025,scale*(.67+pose.brace*.05),scale*.22,0,0,Math.PI*2);ctx.fill();ctx.restore();if(!imageReady(original))return;
  if(!u.alive&&pose.explosion>=1){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true);return}
  ctx.save();
+ const shield=activeShield(u)&&shieldMount(u,baked?.frame||visual,b,facing,visual?.ortho);
+ if(farShield)drawWeaponModule(ctx,shield);
  const articulated=!reducedMotion&&(pose.walk>.001||pose.primeProgress>0||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||pose.aim>.001||(!u.alive&&pose.explosion<1));
  const sheet=baked?.frame?baked.atlas:null,cell=sheet?.cell??0,index=baked?.frame?.index;
  const sx=cell?index%sheet.columns*cell:0,sy=cell?Math.floor(index/sheet.columns)*cell:0;
@@ -4272,7 +4355,7 @@ function drawUnitBody(u,t,close){
    drawWeaponModule(ctx,weaponMount(visual,frame,b,pose.strikeKind||u.melee,face,pose.strikeProgress));
   }
  }
- if(activeShield(u))drawWeaponModule(ctx,shieldMount(u,baked?.frame||visual,b,unitFacing(u),visual?.ortho));
+ if(!farShield)drawWeaponModule(ctx,shield);
  if(u.attack&&!pose.strikeKind&&weaponMotion(u.weapon)==='rail'&&!Number.isFinite(u.attack.fireAt)&&!reducedMotion){
   const muzzle=mechAttachmentPoint(u,'muzzle',t),plasma=u.weapon==='ember';
   ctx.save();ctx.globalAlpha=pose.aim*.8;ctx.fillStyle=plasma?'#ffdfb0':'#b1e7ed';ctx.shadowColor=plasma?'#f88547':'#8ac8e5';
@@ -4425,7 +4508,8 @@ function tacticalMapMarkup(){
   const label=u.kind==='tank'?'T':u.kind==='helicopter'?'H':u.team==='ally'?String(u.index+1):'';
   return `<span class="map-pin ${u.team} ${u.kind||''}" style="--map-x:${100*(u.x+.5)/width}%;--map-z:${100*(u.z+.5)/depth}%;" aria-hidden="true">${label}</span>`;
  }).join('');
- return `<div class="field-navigation" aria-label="Tactical map"><div class="map-tools"><button type="button" id="map-overview" aria-pressed="${fieldCamera.overview}" ${battle.busy?'disabled':''}>${fieldCamera.overview?'CLOSE VIEW':'OVERVIEW'}</button><button type="button" id="map-center" title="Center on selected unit" aria-label="Center on selected unit" ${battle.busy?'disabled':''}>◎</button></div><button type="button" id="map-radar" class="map-radar" aria-label="Pan the battlefield using the tactical map" ${battle.busy?'disabled':''}>${pins}<span class="map-focus" aria-hidden="true"></span></button><span class="map-caption">${width} × ${depth} / DRAG TO PAN</span></div>`;
+ const disabled=battle.busy?'disabled':'';
+ return `<div class="field-navigation" aria-label="Tactical map"><div class="map-tools"><button type="button" id="map-overview" aria-pressed="${fieldCamera.overview}" ${disabled}>${fieldCamera.overview?'CLOSE VIEW':'OVERVIEW'}</button><button type="button" id="map-center" title="Center on selected unit" aria-label="Center on selected unit" ${disabled}>◎</button></div><div class="map-tools map-zoom"><button type="button" id="map-zoom-out" aria-label="Zoom out" ${disabled}>−</button><button type="button" id="map-zoom-in" aria-label="Zoom in" ${disabled}>+</button></div><button type="button" id="map-radar" class="map-radar" aria-label="Pan the battlefield using the tactical map" ${disabled}>${pins}<span class="map-focus" aria-hidden="true"></span></button><span class="map-caption">${width} × ${depth} / DRAG TO PAN</span></div>`;
 }
 function bindTacticalMap(){
  $('#map-overview').onclick=()=>{
@@ -4433,6 +4517,8 @@ function bindTacticalMap(){
   fieldCamera.overview=!fieldCamera.overview;hover=null;renderBattle();
  };
  $('#map-center').onclick=()=>{if(!battle.busy){focusBattleCamera(current(),true);hover=null;renderBattle()}};
+ $('#map-zoom-out').onclick=()=>zoomField(.73);
+ $('#map-zoom-in').onclick=()=>zoomField(1/.73);
  $('#map-radar').onclick=e=>{
   if(battle.busy)return;
   if(!e.detail){fieldCamera.overview=!fieldCamera.overview;renderBattle();return}
@@ -4448,16 +4534,34 @@ function panField(dx,dy){
  fieldCamera.z=Math.max(-.5,Math.min(depth-.5,fieldCamera.z-(vertical-horizontal)/2));
  hover=null;
 }
-function setFieldProjection(){
- const mobile=W<760,{width,depth}=battle.size,overview=fieldCamera.overview;
+function fieldScale(){
+ const mobile=W<760,{width,depth}=battle.size;
  const span=width+depth;
  const usableWidth=W-(mobile?30:Math.min(390,W*.32));
  const usableHeight=H-(mobile?270:245);
- const fit=Math.max(7,Math.min(usableWidth/(span*.866),usableHeight/(span*.42+3)));
+ const fit=Math.max(5,Math.min(usableWidth/(span*.866),usableHeight/(span*.42+3)));
  const base=mobile?Math.min(W/12,H/19):Math.min((W-365)/18,(H-225)/10.7);
- scale=overview?fit:Math.max(mobile?24:33,base)*viewZoom;
+ return {fit,close:2*Math.max(mobile?24:33,base)};
+}
+function zoomField(factor){
+ if(!battle||battle.busy)return;
+ const {fit,close}=fieldScale();
+ const from=fieldCamera.overview?fit/close:viewZoom;
+ viewZoom=Math.min(1.65,Math.max(fit/close,from*factor));
+ if(fieldCamera.overview){
+  if(viewZoom===fit/close)return;
+  fieldCamera.x=(battle.size.width-1)/2;fieldCamera.z=(battle.size.depth-1)/2;
+  fieldCamera.overview=false;renderBattle();
+ }
+ hover=null;setFieldProjection();
+}
+function setFieldProjection(){
+ const mobile=W<760,{width,depth}=battle.size,overview=fieldCamera.overview;
+ const {fit,close}=fieldScale();
+ scale=overview?fit:Math.max(fit,close*viewZoom);
  const x=overview?(width-1)/2:fieldCamera.x,z=overview?(depth-1)/2:fieldCamera.z;
- origin={x:W*(mobile?.5:.51)-(x-z)*scale*.866,y:H*(mobile?.55:.53)-(x+z)*scale*.42};
+ const centerX=mobile?W*.5:overview?W*.5-30:W*.51;
+ origin={x:centerX-(x-z)*scale*.866,y:H*(mobile?.55:.53)-(x+z)*scale*.42+(overview?0:terrainHeight(x,z)*scale)};
  const radar=$('.map-focus');
  if(radar?.style){
   radar.style.left=100*(fieldCamera.x+.5)/width+'%';
@@ -4471,8 +4575,7 @@ function battlefield(t){
  const targetingWeapon=u&&!spent(u)&&battle.phase==='player'&&!battle.busy&&action!=='move'&&!jumpMode?selectedWeapon(u):null;
  const targetingRange=targetingWeapon?weaponRange(targetingWeapon,u.training):0;
  ctx.save();if(!reducedMotion&&shake>.15){ctx.translate(Math.sin(t*110)*shake,Math.cos(t*93)*shake*.5)}
- drawTerrain(battle.field);
- for(let x=0;x<battle.size.width;x++)for(let z=0;z<battle.size.depth;z++){
+ drawTerrain(battle.field,(x,z)=>{
   const key=x+','+z;
   if(jumpMode&&jumpjetLanding(u,x,z))tile(x,z,'#619fcb44','#90dcff',.009,1.05);
   if(reachable?.get(key)>0){
@@ -4484,7 +4587,7 @@ function battlefield(t){
    const range=distance(u,{x,z});
    if(range>0&&range<=targetingRange)targetingTile(x,z,hover?.x===x&&hover?.z===z);
   }else if(!battle.busy&&!jumpMode&&hover?.x===x&&hover?.z===z)tile(x,z,'#e7be6e3c','#eac07e',.016);
- }
+ });
  for(const unit of battle.units){advanceUnitAnimation(unit,t,frameDt);if(unit.team==='ally'&&unit.alive&&!spent(unit))tile(unit.vx,unit.vz,selected===unit.index?'#e6b76a2d':'#a0c6d018',selected===unit.index?'#e6b76a':'#83b0c080',.02);else if(unit.alive&&unit.id===lockedTarget&&!battle.busy){
   if(targetingWeapon&&canReachTarget(targetingWeapon,unit)&&distance(u,unit)<=targetingRange)targetingTile(unit.vx,unit.vz,true);
   else tile(unit.vx,unit.vz,'#d8877330','#d89279',.02,1.35);
@@ -4594,7 +4697,7 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  scale=Math.max(10,Math.min(pane.w/(subject.kind?3.25:4.08),fit)*zoom);
  const feetX=pane.x+pane.w*(firstPane?.44:.55);
  const feetY=pane.y+floor;
- origin={x:feetX-(subject.vx-subject.vz)*scale*.866,y:feetY-(subject.vx+subject.vz)*scale*.42};
+ origin={x:feetX-(subject.vx-subject.vz)*scale*.866,y:feetY-(subject.vx+subject.vz)*scale*.42+terrainHeight(subject.vx,subject.vz)*scale};
  const hot=attacker?sequence.phase!=='result':sequence.phase==='result';
  ctx.save();
  try{
@@ -4658,8 +4761,20 @@ function draw(ts){
  }
  effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);requestAnimationFrame(draw);
 }
-canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();fieldCamera.overview=false;viewZoom=Math.min(1.65,Math.max(.70,viewZoom*(e.deltaY<0?1.08:.925)))},{passive:false});
-function screenTile(clientX,clientY){let sx=(clientX-origin.x)/(scale*.866),sy=(clientY-origin.y)/(scale*.42);return{x:Math.round((sx+sy)/2),z:Math.round((sy-sx)/2)}}
+canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();zoomField(e.deltaY<0?1.12:1/1.12)},{passive:false});
+function screenTile(clientX,clientY){
+ const sx=(clientX-origin.x)/(scale*.866),sy=(clientY-origin.y)/(scale*.42);
+ const flat={x:Math.round((sx+sy)/2),z:Math.round((sy-sx)/2)};
+ if(!battle.field.cells)return flat;
+ // Test the inverse projection on each top plane, starting with the foreground.
+ for(let level=3;level>=0;level--){
+  const lift=level*TERRAIN_RISE/.42;
+  const x=Math.round((sx+sy+lift)/2),z=Math.round((sy+lift-sx)/2);
+  if(terrainCell(x,z)?.level===level)return {x,z};
+ }
+ // Exposed cliff faces and the space beyond the board are not ground targets.
+ return {x:-1,z:-1};
+}
 const bastionPickMasks=new WeakMap();
 let bastionPickContext;
 function bastionContains(u,x,y){
@@ -4732,7 +4847,10 @@ function pick(clientX,clientY){
   continue;
  }
  if(mask){const ix=Math.min(mask.width-1,Math.floor(((foundryModel(u.frame)!=null?unitFacing(u)>0:spriteFlip(u,visual))?1-px:px)*mask.width)),iy=Math.min(mask.height-1,Math.floor(py*mask.height));if(mask.data[(iy*mask.width+ix)*4+3]<35)continue}
- else if(Math.abs(px-.5)>.36||(foundryModel(u.frame)!=null&&(py<.25||py>.87)))continue;return u}return null;
+ else if(Math.abs(px-.5)>.36||(foundryModel(u.frame)!=null&&(py<.25||py>.87)))continue;return u}
+ // A contact remains tappable by its tile when zoom makes its silhouette small.
+ const {x,z}=screenTile(clientX,clientY);
+ return units.find(u=>u.team==='enemy'&&u.x===x&&u.z===z)??null;
 }
 let pointerGesture=null,drawerTap=null;
 canvas.addEventListener('pointerdown',e=>{

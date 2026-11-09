@@ -69,6 +69,7 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
   }
   await page.waitForFunction(()=>travelVisual(breachQA.actor,clock)?.grounded&&travelVisual(breachQA.foe,clock)?.grounded);
   await tap('#'+mode);
+  if(mode==='missile')for(let i=0;i<(mobile?5:2);i++)await tap('#map-zoom-out');
   const target=await page.evaluate(()=>{
    const {foe}=breachQA,b=travelVisual(foe,clock).bounds;
    for(const dy of [.48,.55,.42,.62,.35,.68])for(const dx of [.5,.55,.45,.6,.4,.65,.35]){
