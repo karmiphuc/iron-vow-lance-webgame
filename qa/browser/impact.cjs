@@ -9,7 +9,7 @@ module.exports=async function checkImpact({page,mobile,origin,tap}){
    window.IronVowFoundry.draw=mode==='live'?window.originalFoundryDraw:()=>null;
    const foundry=mode==='live'||mode==='baked';
    createBattle(foundry?2:0,false,!foundry);
-   const foe=battle.units.find(u=>u.team==='enemy'&&!u.kind&&(!foundry||foundryModel(u.frame)!=null));
+   const foe=battle.units.find(u=>u.team==='enemy'&&!u.kind&&(!foundry||foundryModel(u.frame)!=null&&u.frame!==LINE_ELITE_FRAME));
    if(mode==='native'){foe.frame=3;foe.weapon='morrow';preloadNativeMotion(3);}
    if(mode==='hellbreaker'){foe.frame=HELLBREAKER;foe.weapon='morrow';preloadNativeMotion(HELLBREAKER);}
    foe.headingOverride=mode==='travel'?undefined:-Math.PI/4;

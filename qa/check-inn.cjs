@@ -78,7 +78,7 @@ const backup=sim=>JSON.parse(sim.storage.get(careerKey));
  assert.equal(play('s.order'),undefined);
  console.log('PASS: skill range, costs, checkpoint restore, paid discounts, misses and reactions.');
 
- run('battle=null;save.credits=12000;createBattle(2,false,false,[0]);selected=0;for(const u of battle.units)if(u.team==="enemy"){u.alive=false;u.hp.body=u.kind?0:50}finish(true)');
+ run('battle=null;save.credits=12000;createBattle(2,false,false,[0],true,null,undefined,true,false);selected=0;for(const u of battle.units)if(u.team==="enemy"){u.alive=false;u.hp.body=u.kind?0:50}finish(true)');
  assert.equal(run('save.units[2].xp'),0,'benched active seat earns no XP');
  assert.equal(run('save.salvage[1]'),1);
  assert.equal(run('acquireHull(1,true)'),false,'cannot rebuild an owned hull');
