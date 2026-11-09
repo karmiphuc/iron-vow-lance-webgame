@@ -39,7 +39,7 @@ def main():
         ("foot-b", "steps", 2.16, .44, "highpass=f=45,lowpass=f=6900", .89, (.002, .17)),
         ("foot-heavy", "heavy", .884, .53, "highpass=f=36,lowpass=f=5100", .94, (.003, .24)),
         ("vent", "hiss", .145, .245, "pan=mono|c0=c0,highpass=f=1300,lowpass=f=10200", .77, (.022, .12)),
-        ("boot", "startup", 10.58, 2.90, "highpass=f=55,lowpass=f=5400", .85, (.19, .91)),
+        ("boot", "m1a1-tank-start", 2.14, .50, "highpass=f=48,lowpass=f=6700", .76, (.012, .12)),
     ]
     for name, recording, offset, duration, tone, peak, fade in cues:
         write_cue(name, decode(inputs / f"{recording}.mp3", offset, duration, tone), peak, fade)

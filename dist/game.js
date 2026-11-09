@@ -1403,12 +1403,12 @@ function sound(type,cueVolume=1,shot=null){
  }catch{}
 }
 const musicBuffers=new Map();
-const MACHINERY_MIX={liftGain:.42,liftRate:.94,stepGain:.86,stepRate:1,ventGain:.32,ventRate:1,
- bootGain:.77,bootRate:1,idleGain:.11,heavyAt:1.25};
+const MACHINERY_MIX={liftGain:.306,liftRate:.784,stepGain:.936,stepRate:.8176,ventGain:.36,ventRate:.9296,
+ bootGain:.89,idleGain:.16};
 const machinerySamples=new Map();
 let machineryVoice=null,startedMachinery=null;
 function loadMachinerySamples(){
- for(const cue of ['servo','arm','foot-a','foot-b','foot-heavy','vent','boot','idle']){
+ for(const cue of ['servo','arm','foot-heavy','vent','boot','idle']){
   fetch(asset('assets/audio/mech-'+cue+'.wav'))
    .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Machinery audio unavailable')})
    .then(bytes=>audio.decodeAudioData(bytes))
@@ -1434,29 +1434,32 @@ function syncMachinery(){
  idle.buffer=idleBuffer;idle.loop=true;idle.connect(gain);idle.start(now);
  let boot;
  if(startedMachinery!==sortie){
-  const rise=Math.max(.35,(bootBuffer.duration||2.1)/mix.bootRate-.65);
-  gain.gain.setValueAtTime(0,now+rise);
-  boot=playSample(bootBuffer,now+.005,mix.bootGain,mix.bootRate);
+  const bootAt=now+.005,bootEnd=bootAt+bootBuffer.duration;
+  gain.gain.setValueAtTime(0,Math.max(bootAt,bootEnd-.18));
+  boot=playSample(bootBuffer,bootAt,mix.bootGain);
   startedMachinery=sortie;
-  gain.gain.linearRampToValueAtTime(mix.idleGain,now+rise+.9);
+  gain.gain.linearRampToValueAtTime(mix.idleGain,bootEnd);
  }else gain.gain.linearRampToValueAtTime(mix.idleGain,now+.35);
  machineryVoice={sortie,gain,idle,boot};
 }
 function gaitSound(u,kind,side){
  if(muted||document.hidden)return;
- const mass=MECH_MOTION[u.frame].mass,mix=MACHINERY_MIX;
- const weight=Math.min(1.15,.55+mass*.35),pan=side*.13,pitch=Math.min(1.15,1.12/mass**.28);
- const now=(audio?.currentTime??0)+.005;
- if(kind==='lift'||kind==='arm'){
-  const arm=kind==='arm';
-  if(!playSample(machinerySamples.get(arm?'arm':'servo'),now,mix.liftGain*weight*(arm?.83:1),mix.liftRate*pitch,pan))
-   sound('hydraulic',mass*(arm?.42:.65));
+ const mix=MACHINERY_MIX,pan=side*.13,now=(audio?.currentTime??0)+.005;
+ if(kind==='arm'){
+  const mass=MECH_MOTION[u.frame].mass;
+  const weight=Math.min(1.15,.55+mass*.35),pitch=Math.min(1.15,1.12/mass**.28);
+  if(!playSample(machinerySamples.get('arm'),now,.42*.83*weight,.94*pitch,pan))
+   sound('hydraulic',mass*.42);
   return;
  }
- const foot=mass>=mix.heavyAt?'foot-heavy':side<0?'foot-a':'foot-b';
- if(!playSample(machinerySamples.get(foot),now,mix.stepGain*weight,mix.stepRate*pitch,pan))
-  sound('step',mass);
- playSample(machinerySamples.get('vent'),now+.085,mix.ventGain*weight,mix.ventRate*pitch,pan);
+ if(kind==='lift'){
+  if(!playSample(machinerySamples.get('servo'),now,mix.liftGain,mix.liftRate,pan))
+   sound('hydraulic',.65);
+  return;
+ }
+ if(!playSample(machinerySamples.get('foot-heavy'),now,mix.stepGain,mix.stepRate,pan))
+  sound('step');
+ playSample(machinerySamples.get('vent'),now+.085,mix.ventGain,mix.ventRate,pan);
 }
 let musicRequest=null,musicVoice=null,musicBus=null;
 function musicBuffer(track){
