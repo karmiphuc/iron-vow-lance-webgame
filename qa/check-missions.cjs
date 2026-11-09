@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),createSimulation=require('./sim-harness.cjs');
 const playerTurn=`(async()=>{
- const dangerArm=t=>t.frame===VANGUARD_FRAME&&t.hp.left>0?'left':'right';
+ const dangerArm=t=>(t.frame===VANGUARD_FRAME||t.frame===AERO_FRAME)&&t.hp.left>0?'left':'right';
  for(const ally of battle.units.filter(u=>u.team==='ally'&&u.alive)){
   selected=ally.index;
   if(!ally.skill&&ally.index===2&&ally.hp.body<=ally.max.body-30)skill();
@@ -32,8 +32,33 @@ if(require.main===module)(async()=>{
   assert.ok(wins>=9,'Picket must support smaller sorties');
   console.log('Picket seats '+slots.join(',')+': '+wins+'/12 victories');
  }
- // A real career loop, using only earned money and documented refits between sorties.
- const career=createSimulation({seed:19});for(let mission=0;mission<5;mission++){if(mission){career.run(`closeModal();for(const u of save.units){const cost=Math.ceil((100-u.condition)*14);if(save.credits>=cost){save.credits-=cost;u.condition=100}else u.condition=Math.max(u.condition,FIELD_PATCH)};if(!save.owned.includes('rail')&&save.credits>=3600){save.credits-=3600;save.owned.push('rail');save.units[0].weapon='rail'};for(const idx of [0,2,1]){const u=save.units[idx];if(save.credits>=1800+u.upgrade*1200&&u.upgrade<3){save.credits-=1800+u.upgrade*1200;u.upgrade++}};persist()`)}const r=await play(career,[0,1,2,0,3][mission]);console.log('Career sortie',mission+1,JSON.stringify(r));assert.equal(r.win,true,'Earned repairs and refits should support the full contract ladder');}
+ // A real career loop, spending earned credits and training points between sorties.
+ const career=createSimulation({seed:19});
+ const ladder=[0,1,2,0,3];
+ for(const [mission,contract] of ladder.entries()){
+  if(mission)career.run(`
+   closeModal();
+   for(const i of LANCE_SLOTS)for(const path of PILOT_TREES[pilotClass(i)])for(const node of path.nodes)learnTraining(i,node.id);
+   for(const u of save.units){
+    const cost=Math.ceil((100-u.condition)*14);
+    if(save.credits>=cost){save.credits-=cost;u.condition=100}
+    else u.condition=Math.max(u.condition,FIELD_PATCH);
+   }
+   for(const [slot,id] of [[0,'rail'],[1,'watchman']]){
+    const {price}=weapon(id);
+    if(save.owned.includes(id)||save.credits<price)continue;
+    save.credits-=price;save.owned.push(id);save.units[slot].weapon=id;
+   }
+   for(const idx of [0,2,1]){
+    const u=save.units[idx],cost=1800+u.upgrade*1200;
+    if(save.credits>=cost&&u.upgrade<3){save.credits-=cost;u.upgrade++}
+   }
+   persist();
+  `);
+  const result=await play(career,contract);
+  console.log('Career sortie',mission+1,JSON.stringify(result));
+  assert.equal(result.win,true,'Earned refits and training should support the full contract ladder');
+ }
  const recovery=[];for(let seed=1;seed<=12;seed++){const sim=createSimulation({seed});sim.run('save.credits=0;save.units.forEach(u=>u.condition=FIELD_PATCH)');recovery.push(await play(sim,0))};const recovered=recovery.filter(r=>r.win).length;assert.ok(recovered>=9,'Emergency field patches must support a realistic comeback');console.log('Zero-reserve recovery:',recovered+'/12 victories');
  assert.ok(wins>=9,'Starting contract should be approachable with coordinated normal play');
  console.log('PASS: complete seeded missions resolve without forced kills; rewards, persistent damage, repairs, refits and redeployment exercised.');

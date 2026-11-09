@@ -85,7 +85,7 @@ function recruit(kind,path=null,slot=0){
  assert.ok(p('t.brace&&canUseWeapon(t,unitWeapon(t))&&["right","left","legs"].every(k=>t.hp[k]===Math.max(60,Math.ceil(t.max[k]*.75)))'));
  assert.equal(p('useSupportSkill(a,t)'),false);
  const salvage=recruit(7,1),w=salvage.run;
- w('createBattle(1,false,false,[0,1]);let a=current();a.hp.right=0;a.hp.legs=0;useSupportSkill(a,a)');
+ w('createBattle(1,false,false,[0,1],true,null,0,true,true,true,true,true,true,null);let a=current();a.hp.right=0;a.hp.legs=0;useSupportSkill(a,a)');
  assert.equal(w('a.skill'),false);
  assert.equal(w('a.recoveryUsed'),1);
  assert.equal(w('a.hp.right'),50);

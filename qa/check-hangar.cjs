@@ -78,7 +78,8 @@ for(let i=0;i<4;i++)for(let size=1;size<=3;size++){
  const intel=run(`contractIntel(${i},${size})`);
  const enemyNames=JSON.parse(run(`(()=>{
   createBattle(${i},false,false,LANCE_SLOTS.slice(0,${size}));
-  const names=battle.units.filter(u=>u.team==='enemy').map(u=>u.kind?VEHICLES[u.kind].name:FRAMES[u.frame].name);
+  const names=battle.units.filter(u=>u.team==='enemy').map(u=>u.kind?VEHICLES[u.kind].name:
+   FRAMES[u.frame].name+(u.frame===AERO_FRAME?' · '+weapon(u.melee).name:''));
   battle=null;
   return JSON.stringify(names);
  })()`));

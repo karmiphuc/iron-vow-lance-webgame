@@ -1,0 +1,29 @@
+:root{color-scheme:dark;font:16px/1.5 Inter,system-ui,sans-serif;color:#e1e8e2;background:#101517}
+*{box-sizing:border-box}
+body{margin:0}
+header{display:flex;justify-content:space-between;gap:1rem;padding:1rem clamp(1rem,5vw,4.5rem);border-bottom:1px solid #354248;letter-spacing:.12em;font-size:.74rem}
+a{color:#c8dbd3;text-underline-offset:.24em}
+header a{text-decoration:none}
+header span,.eyebrow,.stage-top,output{color:#a4b7ad}
+main{max-width:73rem;margin:auto;padding:clamp(1rem,4vw,3rem);display:grid;grid-template-columns:minmax(0,1.45fr) minmax(17rem,1fr);gap:clamp(1rem,4vw,3rem);align-items:start}
+.stage{position:relative;border:1px solid #40514e;background:radial-gradient(ellipse at 55% 68%,#31423f,#161e21 72%)}
+.stage-top{position:absolute;inset:0 0 auto;display:flex;justify-content:space-between;padding:.8rem;font:.73rem ui-monospace,monospace;letter-spacing:.05em}
+#phase[data-impact=true]{color:#fda373}
+canvas{display:block;width:100%;height:auto;aspect-ratio:1}
+.transport{display:flex;align-items:center;gap:.9rem;padding:.8rem;border-top:1px solid #40514e;background:#141c1f}
+button{font:inherit;color:inherit;background:#1d292c;border:1px solid #465956;border-radius:4px;cursor:pointer;min-height:44px}
+button:hover,button[aria-pressed=true]{border-color:#dc8b69;background:#352d27}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #f7bd8d;outline-offset:3px}
+#play{min-width:4.5rem}
+input{flex:1;min-width:0;accent-color:#eb9872}
+output{min-width:4.2rem;font: .84rem ui-monospace,monospace;text-align:right}
+.eyebrow{font:.74rem ui-monospace,monospace;letter-spacing:.16em;margin:0 0 .5rem}
+h1{font-size:clamp(1.6rem,4vw,2.45rem);line-height:1.12;margin:0}
+.intro,#detail,#status{color:#becbc4}
+#weapons{display:grid;gap:.45rem}
+#weapons button{text-align:left;padding:.52rem .8rem}
+#weapons button small{display:block;color:#b8c9bf}
+#detail{min-height:3rem}
+.return{font-size:.9rem}
+#status{font-size:.86rem}
+@media(max-width:700px){main{grid-template-columns:1fr}.controls{grid-row:1}#weapons{grid-template-columns:1fr 1fr}#detail{min-height:0}}

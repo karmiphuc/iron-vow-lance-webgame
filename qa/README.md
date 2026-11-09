@@ -28,6 +28,7 @@ The browser runner uses Playwright Chromium when installed, or a supported local
 | RV-04 Reaver | Medium+ hostile deployment, braced AI fire on desktop and touch, four arm states, player acquisition exclusions, and pre-Reaver and Reaver checkpoints. |
 | LI-02 Elite | Iron Corridor AI fire, separate paint channels in both weapon states, heavier armor, acquisition exclusion and pre-Elite checkpoint recovery. |
 | Infantry destruction | Lethal body and cockpit shots, staged falls on the field and in the attack camera, timed detonation, and settled wrecks after resume. |
+| IV-03 Aero | Premium purchase and assignment, Jumpjet landing and checkpoint recovery, passive dodge, four Rig Bench replays and live Relay strikes. |
 
 `npm test --prefix qa` runs the simulation suites. New `qa/check-*.cjs` files are picked up automatically. `npm run test:browser --prefix qa` runs the local browser suite. Browser failures save a screenshot in the temporary directory. Set `IRON_VOW_QA_OUTPUT` when running the simulation alone to request native canvas captures in a separate folder.
 

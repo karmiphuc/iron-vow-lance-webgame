@@ -48,7 +48,7 @@ const backup=sim=>JSON.parse(sim.storage.get(careerKey));
  }
  console.log('PASS: deterministic reload of daily offers and exact one-, two- and three-mech checkpoints.');
 
- run('battle=null;createBattle(1,false,false,[0,2]);let scout=battle.units[0],marshal=battle.units[1],foe=battle.units[2];selected=0');
+ run('battle=null;createBattle(1,false,false,[0,2],true,null,0,true,true,true,true,true,true,null);let scout=battle.units[0],marshal=battle.units[1],foe=battle.units[2];selected=0');
  assert.equal(run('useSupportSkill(scout,foe)'),false,'range checked at resolution');
  run('foe.x=1;foe.z=12;let prior=hitChance(scout,foe,"pilot");selected=0');
  assert.equal(run('useSupportSkill(scout,foe)'),true);
