@@ -18,6 +18,9 @@ assert scene["exact_handle_pad_fit"]
 out = Path(sys.argv[sys.argv.index("--")+1]).resolve()
 out.mkdir(parents=True, exist_ok=True)
 walk_only = "--walk-only" in sys.argv
+dense_walk = "--dense" in sys.argv
+assert not dense_walk or walk_only
+walk_samples = 24 if dense_walk else 8
 camera = scene.camera
 target = Vector((0, -.12, 3.00))
 camera.location = target + Vector((.54, -.84, .185)) * 16
@@ -55,7 +58,7 @@ def place(name, displacement):
     bone.location = bone.bone.matrix_local.to_3x3().inverted() @ Vector(displacement)
 
 def gait(index):
-    phase = index / 8
+    phase = index / walk_samples
     place("pelvis", (.025*math.cos(math.tau*phase), 0, -.10+.022*math.cos(2*math.tau*phase)))
     for side, offset in (("L", 0), ("R", .5)):
         t = (phase+offset)%1
@@ -107,7 +110,7 @@ def anchors():
         result["muzzle"+str(index)] = projection(b @ Vector((.209*math.cos(a), .209*math.sin(a), 1.915)))
     return result
 
-states = [("walk",1)]*8 + [("idle",1), ("pilot-down",13), ("wreck",1)]
+states = [("walk",1)]*walk_samples + [("idle",1), ("pilot-down",13), ("wreck",1)]
 parts = {
     "prime": [25,31,36,43],
     "strike": [43,45,47,49,51,57,65,73,80],

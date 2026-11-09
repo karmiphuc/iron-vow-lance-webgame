@@ -72,7 +72,7 @@ function frame(u,t,pose){
   return 57+40*q*q*(3-2*q);
  }
  const braceAge=t-(u.braceTime??-100);
- if(u.motion&&pose.phase>0&&!pose.reducedMotion)return 1+48*clamp(pose.phase,0,1);
+ if(u.motion&&pose.phase>0&&!pose.reducedMotion)return 1+48*clamp(pose.stride??pose.phase,0,1);
  if(u.attack){
   const age=u.attack.fireAt!=null?t-u.attack.fireAt:null;
   if(age==null&&u.brace&&u.hp.legs>0&&!pose.reducedMotion&&braceAge<1.22)

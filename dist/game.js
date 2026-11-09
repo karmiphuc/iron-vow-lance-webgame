@@ -2432,19 +2432,26 @@ async function moveUnit(u,x,z){
  if(u.mechState?.valkyrieStep){delete u.mechState.valkyrieStep;u.moveLeft=0}
  if(steps.length>free){startAction(u);u.extraStep=true;u.ap-=EXTRA_MOVE_AP}
  const grounded=travelAtlas(u)?.grounded;
+ const twoStep=!grounded&&!u.kind&&u.frame>3&&!reducedMotion;
  if(!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion)await readyNativeMotion(u);
+ const walk=twoStep&&foundryWalk(u);
+ if(walk){
+  const images=[motionImage(walk),(u.paint||u.trim)&&walk.paint&&moduleImage(walk.key+'-paint')].filter(image=>image?.decode&&!imageReady(image));
+  if(images.length)await Promise.race([Promise.allSettled(images.map(image=>image.decode())),delay(900)]);
+ }
  const travel=preloadTravel(u);
  if(travel&&!imageReady(travel)&&travel.decode)await Promise.race([travel.decode().catch(()=>{}),delay(900)]);
  const paintedGait=upgradedWardenTravel(travelAtlas(u));
- const duration=reducedMotion?.12:grounded?1.40:paintedGait?1.06:u.kind?VEHICLES[u.kind].step:MECH_MOTION[u.frame].step,gaitBase=u.walkCount||0;
+ const duration=reducedMotion?.12:grounded?1.40:paintedGait?1.06:u.kind?VEHICLES[u.kind].step:
+  twoStep?.22+1.3*MECH_MOTION[u.frame].step:MECH_MOTION[u.frame].step,gaitBase=u.walkCount||0;
  const segments=[];
- if(paintedGait||grounded){
+ if(paintedGait||grounded||twoStep){
   let fromX=u.x,fromZ=u.z;
   for(let i=0;i<steps.length;){
    const dx=steps[i].x-fromX,dz=steps[i].z-fromZ;
    let end=i+1;
    while(end<steps.length&&steps[end].x-steps[end-1].x===dx&&steps[end].z-steps[end-1].z===dz)end++;
-   const length=end-i,paces=wardenPaces(length,gaitBase+i,Boolean(grounded));
+   const length=end-i,paces=twoStep?undefined:wardenPaces(length,gaitBase+i,Boolean(grounded));
    for(let step=i;step<end;step++)segments[step]={index:step-i,length,paces};
    fromX=steps[end-1].x;fromZ=steps[end-1].z;i=end;
   }
@@ -2460,19 +2467,22 @@ async function moveUnit(u,x,z){
   const mass=u.kind?1:MECH_MOTION[u.frame].mass;
   sound(u.kind?(u.kind==='tank'?'track':'rotor'):'hydraulic',mass);
   u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length,segment:segments[i]};
+  if(twoStep)u.motion.stepBeats=0;
   if(grounded&&!reducedMotion){
    u.motion.contacts=segments[i].paces.filter(pace=>pace.to>segments[i].index&&pace.to<=segments[i].index+1);
   }
-  if(!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion){
+  if(!twoStep&&!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion){
    await delay(duration*500);
    effects.push({type:'step',x:(fromX+p.x)/2,z:(fromZ+p.z)/2,t:1,mass:MECH_MOTION[u.frame].mass,side:1});
    sound('step',mass*.84);
    sound('hydraulic',mass*.72);
    await delay(duration*500);
   }else await delay(duration*1000);
-  u.vx=p.x;u.vz=p.z;u.motion=null;u.landTime=clock;
-  if(!u.kind&&(!grounded||reducedMotion)){effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});sound('step',mass)}
-  if(!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||u.frame===HELLBREAKER||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
+  if(twoStep)twoStepContacts(u,1);
+  u.vx=p.x;u.vz=p.z;u.motion=null;
+  if(!twoStep||segments[i].index===segments[i].length-1)u.landTime=clock;
+  if(!twoStep&&!u.kind&&(!grounded||reducedMotion)){effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});sound('step',mass)}
+  if(!twoStep&&!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||u.frame===HELLBREAKER||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
  }
  u.walkCount=gaitBase+steps.length;
 }
@@ -3079,6 +3089,11 @@ function activeWardenVisual(u){
 function spriteFlip(u,visual=activeWardenVisual(u)){return !visual&&unitFacing(u)!==(u.frame===1?1:-1)}
 const motionImages={};
 const foundryArmVariant=u=>Number(u?.hp?.right<=0)+2*Number(u?.hp?.left<=0);
+function foundryWalk(u){
+ const walk=window.IRON_VOW_WALK?.[foundryModel(u.frame)];
+ const clip=walk?.directions?.[headingIndex(displayedHeading(u))]??walk;
+ return clip?.variants?.[foundryArmVariant(u)]??clip;
+}
 function motionRaster(key){
  let image=motionImages[key];
  if(!image){
@@ -3849,9 +3864,22 @@ function groundedTravelSpan(u,data){
  return data.span/3.65*(u.frame===3?GATECRASHER_TRAVEL_SCALE:1);
 }
 
+function twoStepContacts(u,progress){
+ const m=u.motion,mass=MECH_MOTION[u.frame].mass;
+ while(m.stepBeats<2&&progress+1e-6>=(m.stepBeats+1)/2){
+  const q=++m.stepBeats/2;
+  effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,t:1,mass,side:q===.5?1:-1});
+  sound('step',mass*.78);
+ }
+}
+
 function advanceUnitAnimation(u,t,dt){
  const m=u.motion;
- if(m){const p=clamp01((t-m.start)/m.duration),q=fieldStepProgress(p,m.segment);u.vx=m.fromX+(m.toX-m.fromX)*q;u.vz=m.fromZ+(m.toZ-m.fromZ)*q}
+ if(m){
+  const p=clamp01((t-m.start)/m.duration),q=fieldStepProgress(p,m.segment);
+  u.vx=m.fromX+(m.toX-m.fromX)*q;u.vz=m.fromZ+(m.toZ-m.fromZ)*q;
+  if(m.stepBeats!=null)twoStepContacts(u,q);
+ }
  else{u.vx=u.x;u.vz=u.z}
  if(m?.contacts?.length){
   const data=travelAtlas(u).grounded,heading=headingIndex(displayedHeading(u));
@@ -3894,7 +3922,8 @@ function firingPose(u,t){
 }
 function animationPose(u,t,visual=activeWardenVisual(u)){
  const rig=visual||MECH_MOTION[u.frame],m=u.motion,phase=m?clamp01((t-m.start)/m.duration):0;
- const cycle=m?m.gaitBase+phase:0,routePhase=m?(m.stepIndex+phase)/m.totalSteps:0;
+ const stride=m?.stepBeats!=null?fieldStepProgress(phase,m.segment):phase;
+ const cycle=m?m.gaitBase+stride:0,routePhase=m?(m.stepIndex+stride)/m.totalSteps:0;
  const walk=m&&!reducedMotion?smoothRange(0,.12,routePhase)*(1-smoothRange(.87,1,routePhase)):0;
  const flip=spriteFlip(u,visual),facing=flip?-1:1,frameSize=MECH_SIZE[u.frame];
  const dx=m?((m.toX-m.fromX)-(m.toZ-m.fromZ))*.866/frameSize*facing:0;
@@ -3930,7 +3959,7 @@ function animationPose(u,t,visual=activeWardenVisual(u)){
  const kneel=u.alive?0:reducedMotion?1:smoothRange(.04,DESTRUCTION.kneelEnd,deathAge);
  const explosion=u.alive||u.downReason==='pilot'?0:reducedMotion?1:smoothRange(DESTRUCTION.blast-.02,DESTRUCTION.blast+.15,deathAge);
  const landAge=t-(u.landTime??-100),land=!reducedMotion&&landAge>=0&&landAge<.4?Math.sin(landAge*30)*Math.exp(-landAge*15):0;
- const pose={rig,flip,strikeKind,strikeProgress,primePhase,primeProgress,nativeDirection:visual?unitFacing(u):u.frame===1?1:-1,phase,cycle,walk,dx,dy,recoil,impact,death,deathAge,kneel,explosion,aim:reducedMotion?0:aim,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion||spent(u)?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
+ const pose={rig,flip,strikeKind,strikeProgress,primePhase,primeProgress,nativeDirection:visual?unitFacing(u):u.frame===1?1:-1,phase,stride,cycle,walk,dx,dy,recoil,impact,death,deathAge,kneel,explosion,aim:reducedMotion?0:aim,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion||spent(u)?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
  if(!reducedMotion&&!strikeKind&&attack?.kind===u.weapon&&window.IRON_VOW_EXPANSION_RIG?.[u.weapon])
   Object.assign(pose,firingPose(u,t)||weaponRigPose(profile,age));
  pose.time=t;pose.podRecoil=profile.beats.map(beat=>reducedMotion||strikeKind?0:dampedImpulse(age-beat,32,18));pose.upper=upperPose(u,pose);return pose;
@@ -4082,7 +4111,8 @@ function travelVisual(u,t){
   return {atlas,image:detail.image,source,bounds,row,heading,points:data.points[row][heading],direction,strike,grounded:true};
  }
  if(u.frame===3)return null;
- const gait=u.motion?(FRAMES[u.frame]?.native?phase:((u.motion.gaitBase+phase)/2)%1):0;
+ const gait=u.motion?(u.motion.stepBeats!=null?fieldStepProgress(phase,u.motion.segment):
+  FRAMES[u.frame]?.native?phase:((u.motion.gaitBase+phase)/2)%1):0;
  const prime=u.attack?.primeDuration?clamp01((t-u.attack.start)/u.attack.primeDuration):0;
  const stockRow=u.kind?0:u.motion&&!reducedMotion?1+Math.min(5,Math.floor(gait*6)):
   prime>0&&prime<1?1+Math.min(5,Math.floor(prime*6)):u.attack?7:0;
@@ -4409,7 +4439,8 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
  }
  const foundry=live||foundryRender(u,t);
  if(foundry){
-  const bounds=u.lionTrial?unitBounds(u):recoilingBounds(u,unitBounds(u),t),facing=unitFacing(u),strike=part==='meleeTip';
+  const raw=sampledWalkBounds(u,unitBounds(u),foundry);
+  const bounds=u.lionTrial?raw:recoilingBounds(u,raw,t),facing=unitFacing(u),strike=part==='meleeTip';
   if(part==='shield'&&!foundry.anchors.shield){
    const mount=shieldMount(u,foundry.anchors,bounds,facing,8);
    if(mount)return weaponPoint(mount,'face');
@@ -4576,6 +4607,19 @@ function foundryRender(u,t,liveOnly=false){
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[model];
  const death=authoredFoundryDeath(u,pose,atlas);
  if(death)return death;
+ const walk=u.alive&&!u.attack&&u.motion?.stepBeats!=null&&!u.motion.jumpjet&&foundryWalk(u);
+ if(walk){
+  const image=motionImage(walk);
+  if(imageReady(image)){
+   const sample=Math.round(pose.stride*walk.frames.length),index=sample%walk.frames.length;
+   const flip=!atlas.directions&&unitFacing(u)>0,frame=walk.frames[index];
+   return {surface:walk.paint?foundryPaint(image,walk.key,u.paint,u.trim,atlas.paintBlend):image,
+    key:walk.key,partMask:walk.partMask,cell:walk.cell,index,anchors:flip?mapFoundryAnchors(frame,flip):frame,
+    strideOffset:sample/walk.frames.length-pose.stride,flip,baked:true,
+    primary:atlas.primary===true,secondary:u.frame===REAVER_FRAME||atlas.secondary===true,
+    shield:atlas.shield===true||Boolean(atlas.directions),ortho:atlas.ortho};
+  }
+ }
  if(atlas?.directions)return bulwarkBaked(u,pose,atlas);
  const reaver=u.frame===REAVER_FRAME;
  const live=atlas?.primary||u.frame===AERO_FRAME?null:window.IronVowFoundry?.draw(u,poseTime,pose,battle,model,FRAMES[u.frame]?.rig);
@@ -4618,6 +4662,13 @@ function mapFoundryAnchors(frame,flip,transform=p=>p){
  return Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([key,p])=>{
   const [x,y]=transform(p);return [key,[flip?1-x:x,y]];
  }));
+}
+function sampledWalkBounds(u,bounds,walk){
+ if(!walk?.strideOffset)return bounds;
+ const m=u.motion,q=walk.strideOffset;
+ const center=project(u.vx,0,u.vz);
+ const sampled=project(u.vx+(m.toX-m.fromX)*q,0,u.vz+(m.toZ-m.fromZ)*q);
+ return {...bounds,x:bounds.x+sampled.x-center.x,y:bounds.y+sampled.y-center.y};
 }
 const settledFoundryArt=new WeakMap();
 function drawFoundryCollapse(render,w,h,g=ctx){
@@ -4662,7 +4713,7 @@ function ashigaruArtFrame(u,pose,atlas){
    cue*clamp01((pose.time-attack.start)/profile.raise);
   return clip[Math.round(f)];
  }
- if(u.motion&&!reducedMotion)return atlas.walk[Math.min(atlas.walk.length-1,Math.floor((u.motion.gaitBase%2+pose.phase)*atlas.walk.length/2))];
+ if(u.motion&&!reducedMotion)return atlas.walk[Math.round(pose.stride*atlas.walk.length)%atlas.walk.length];
  return u.hp.right>0?atlas.idle:atlas.bare;
 }
 function drawUnit(u,t,close=false){
@@ -4692,9 +4743,9 @@ function drawUnitBody(u,t,close){
  const live=foundryRender(u,t,true),travel=!close&&!live&&travelVisual(u,t);
  if(travel){drawTravel(u,t,travel);return}
  if(u.kind){drawVehicle(u,t,close);return}
- const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=unitBounds(u,visual),b=!u.lionTrial&&(visual?.modular||visual?.native||foundryModel(u.frame)!=null)?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual);
- const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
  const foundry=live||foundryRender(u,t);
+ const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=sampledWalkBounds(u,unitBounds(u,visual),foundry),b=!u.lionTrial&&(visual?.modular||visual?.native||foundryModel(u.frame)!=null)?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual);
+ const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
  // Fallback sprites without four views are flipped to match the current facing.
  const facing=unitFacing(u),farShield=shieldBehind(facing*Math.PI/4);
  if(foundry){

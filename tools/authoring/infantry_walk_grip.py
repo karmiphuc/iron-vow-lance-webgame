@@ -1,4 +1,4 @@
-"""Rebake Line Infantry R32 Service or Elite E7's eight walk cells.
+"""Rebake the Line Infantry R32 Service or Elite E7 walk.
 
 blender -b SOURCE.blend --python infantry_walk_grip.py -- OUTPUT
 """
@@ -146,6 +146,8 @@ def bake():
             obj.animation_data_clear()
         obj.hide_viewport = False
     p = rig.pose.bones
+    dense = "--dense" in args
+    samples = tuple(12 + i * 1.5 for i in range(24)) if dense else FRAMES
     hand, forearm, upper, shoulder, torso = (p[name] for name in
         ("Hand.R", "Forearm.R", "UpperArm.R", "ShoulderShell.R", "Torso"))
     # Keep the original unarmed swing and the authored rifle-ready orientation.
@@ -176,7 +178,7 @@ def bake():
     camera.data.ortho_scale = 7.45
     scene.render.film_transparent = True
     scene.render.resolution_x = scene.render.resolution_y = 320
-    scene.cycles.samples = 12
+    scene.cycles.samples = 8 if dense else 12
     bpy.data.objects["Studio cyclorama floor"].hide_render = True
     if model == 6:
         bpy.data.materials["Service livery / shell"]["paint_channel"] = 0
@@ -198,7 +200,7 @@ def bake():
     def points():
         right_socket = rifle.matrix_world
         left_socket = bpy.data.objects["WEAPON_SOCKET_L"].matrix_world
-        return {
+        anchors = {
             "gripR": project(right_socket.translation),
             "axisR": project(right_socket @ Vector((0, .35, 0))),
             "muzzle": project(muzzle.matrix_world.translation),
@@ -206,6 +208,16 @@ def bake():
             "gripL": project(left_socket.translation),
             "axisL": project(left_socket @ Vector((0, .35, 0))),
         }
+        if dense:
+            def bone(name, fraction=0):
+                pose = p[name]
+                return rig.matrix_world @ pose.head.lerp(pose.tail, fraction)
+
+            anchors.update(body=project(bone("Torso", .40)), pilot=project(bone("Head", .35)),
+                           left=project(bone("Forearm.L", .45)), legs=project(bone("Shin.L", .38)),
+                           leadFoot=project(bone("Foot.L", .45)),
+                           footL=project(bone("Foot.L", .45)), footR=project(bone("Foot.R", .45)))
+        return anchors
 
     def pose_carry():
         from_forearm = forearm.matrix.to_quaternion() @ forearm_ready
@@ -249,11 +261,11 @@ def bake():
     report = []
     animation = rig.animation_data
     action, slot, use_nla = animation.action, animation.action_slot, animation.use_nla
-    for index, frame in enumerate(FRAMES):
+    for index, frame in enumerate(samples):
         animation.action = action
         animation.action_slot = slot
         animation.use_nla = use_nla
-        scene.frame_set(frame)
+        scene.frame_set(int(frame), subframe=frame % 1)
         bpy.context.view_layer.update()
         # The render engine reevaluates the timeline. Keep the sampled pose
         # while applying the carry, then restore the source action to advance.
