@@ -19,7 +19,7 @@ const create=require('./sim-harness.cjs');
  assert.equal(restored.run('captureSortie().version'),7);
 
  assert.equal(restored.run('battle.contract.id'),'picket');
- assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,tank,tank,helicopter');
+ assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,mech,tank,helicopter');
  assert.equal(restored.run("CONTRACTS[1].id"),'relay');
  assert.equal(restored.run("CONTRACTS[1].deployment.length"),5);
  assert.equal(restored.run("const reserve=save.credits;finish(true);save.credits-reserve"),2000);

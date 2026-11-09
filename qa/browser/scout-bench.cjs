@@ -31,7 +31,7 @@ module.exports = async function checkScoutBench({ page, origin, tap, mobile }) {
   await page.goto(new URL("rig-bench/", origin).href, { waitUntil: "domcontentloaded" });
   await tap('.prototype-links a[href$="chassis=scout"]');
   await page.waitForFunction(() => document.querySelector("#status").textContent === "Live 3D · Rig online");
-  assert.equal(await page.locator("#name").textContent(), "Recon Interceptor");
+  assert.equal(await page.locator("#name").textContent(), "Ashigaru");
   assert.equal(await page.locator("#role").textContent(), "Hostile scout");
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth === innerWidth));
 

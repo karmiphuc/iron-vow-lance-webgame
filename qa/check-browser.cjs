@@ -14,6 +14,7 @@ const checkWardenRigBench=require('./browser/warden-rig-bench.cjs');
 const checkBulwarkBench=require('./browser/bulwark-bench.cjs');
 const checkScoutBench=require('./browser/scout-bench.cjs');
 const checkBulwarkCombat=require('./browser/bulwark-combat.cjs');
+const checkAshigaru=require('./browser/ashigaru.cjs');
 const checkShip=require('./browser/ship.cjs');
 const checkHangar=require('./browser/hangar.cjs');
 const checkCareerTabs=require('./browser/career-tabs.cjs');
@@ -65,7 +66,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed]){
+async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkAshigaru,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed]){
  const server=origin?null:await serve();
  let browser;
  try{

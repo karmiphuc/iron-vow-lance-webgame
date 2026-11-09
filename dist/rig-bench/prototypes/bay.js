@@ -34,7 +34,7 @@ const chassis = {
     grip: "The fingers open and close around the equipped handles while the sockets retain both modules.",
   },
   scout: {
-    name: "Recon Interceptor", serial: "IV-S07", role: "Hostile scout",
+    name: "Ashigaru", serial: "IV-S07", role: "Hostile scout",
     summary: "Run the quickstep and try three weapon actions with the scout.",
     weapon: "Needle carbine / Flechette scattergun / Signal knife",
     legs: "Quickstep with alternating plants", mechanisms: "30 digit joints",

@@ -23,7 +23,7 @@ module.exports=async function checkPaint({page,origin}){
    }
   };
  });
- const rasterFrames=await page.evaluate(()=>FRAMES.flatMap((f,frame)=>f.rig==='bastion'||[LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,VANGUARD_FRAME,REAVER_FRAME,BULWARK_FRAME].includes(frame)?[]:[frame]));
+ const rasterFrames=await page.evaluate(()=>FRAMES.flatMap((f,frame)=>f.fixedLivery||f.rig==='bastion'||[LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,VANGUARD_FRAME,REAVER_FRAME,BULWARK_FRAME].includes(frame)?[]:[frame]));
  const cases=[...rasterFrames.map(frame=>({mode:'travel',frame})),
   {mode:'close',frame:0},{mode:'close',frame:3},{mode:'close',frame:11},{mode:'baked',frame:8},
   ...(await page.evaluate(()=>[LINE_INFANTRY_FRAME,LINE_ELITE_FRAME])).map(frame=>({mode:'baked',frame}))];

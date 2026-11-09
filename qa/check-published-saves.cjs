@@ -5,13 +5,14 @@ const simulate=require('./sim-harness.cjs');
 const key='iron-vow-career';
 
 // Synthetic careers exported by the deployed builds.
-for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v53-picket.json','v55-corridor.json']){
+for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v53-picket.json','v55-corridor.json','ashigaru-picket.json']){
  const raw=readFileSync(join(__dirname,'fixtures',file),'utf8'),{sortie:expected,...career}=JSON.parse(raw);
  const sim=simulate({storage:new Map([[key,raw]]),random:()=>0,reducedMotion:true});
  function check(){
   if(file==='v35-frontier.json')assert.equal(sim.run('battle.units[3].frame'),7,'existing Frontier keeps Behemoth');
   if(file==='v53-picket.json')assert.equal(sim.run('battle.units[1].frame'),0,'existing Picket keeps the original hostile');
   if(file==='v55-corridor.json')assert.equal(sim.run('battle.units[1].frame'),1,'existing Corridor keeps the original hostile');
+  if(file==='ashigaru-picket.json')assert.equal(sim.run('battle.units.find(u=>u.id==="enemy1").frame'),sim.run('ASHIGARU_FRAME'),'Picket restores its Ashigaru');
   const {sortie,...actual}=JSON.parse(sim.run('JSON.stringify(save)'));
   assert.deepEqual(actual,career,file+' career, roster, hull and offer data');
   const {version,...checkpoint}=JSON.parse(sim.run('JSON.stringify(captureSortie())'));
