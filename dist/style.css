@@ -198,6 +198,13 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .combatpanel .inspect-head h3{font-size:22px;margin:0 0 8px}
 .shot-readout{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-top:10px;font-size:10px}
 .shot-readout small{color:var(--accent);font-size:9px}
+.hint:has(.move-preview:not([hidden])){width:min(440px,calc(100% - 24px));max-width:none;padding:7px 9px}
+.move-contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;font-size:10px}
+.move-contact{padding:3px 6px;border:1px solid var(--shot-color);color:var(--ink);background:#101922;white-space:nowrap}
+.move-contact b,.move-contact small{color:var(--shot-color)}
+.move-contact small{font-size:inherit;text-transform:uppercase}
+.move-confirm{display:block;margin-top:5px;color:#b5d7df;font-size:9px}
+body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-toggle small){display:none}
 @media(max-width:760px){
  .battle-top{padding:10px}
  .battle-top h2{font-size:19px}

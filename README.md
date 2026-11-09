@@ -2,7 +2,7 @@
 
 A self-contained, original browser tactical mech game inspired by part-based strategy games such as Front Mission 3. No original game assets are used.
 
-This repository contains the complete Iron Vow Sites project through **Site version 84**, including its source history, game assets, 3D models, authoring tools, tests, and fixtures. The playable `dist/` directory matches the published Sites source exactly. Import provenance is recorded in [docs/sites-export.json](docs/sites-export.json).
+This repository contains the complete Iron Vow Sites project through **Site version 85**, including its source history, game assets, 3D models, authoring tools, tests, and fixtures. The playable `dist/` directory matches the published Sites source exactly. Import provenance is recorded in [docs/sites-export.json](docs/sites-export.json).
 
 ## Run locally
 
@@ -24,11 +24,11 @@ The current game includes a persistent company and pilot roster, part-based mech
 
 ## Play
 
-Choose a contract, select one of three mechs, and click highlighted tiles to move. Choose Fire and click an enemy to attack its selected subsystem. Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Every action spends AP. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
+Choose a contract, deploy your lance, select a unit, and click highlighted tiles to move. Choose Fire and click an enemy to attack its selected subsystem. Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Actions use the unit's movement and AP allowances. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
 
 Keyboard: 1–3 selects a unit; M moves; F fires; Q activates a skill; E ends the turn. Mouse/touch supports every action. Sound is opt-in.
 
-Contract rewards fund four weapons, chassis upgrades, and repairs. Pilot experience increases damage. Career state saves to browser localStorage. Career screen supports backup export/import. Free field patches prevent an economy dead end.
+Contract rewards fund weapons, chassis, upgrades, and repairs. Pilot experience unlocks training and improves combat performance. Career state saves to browser localStorage. Career screen supports backup export/import. Free field patches prevent an economy dead end.
 
 ## Verification
 

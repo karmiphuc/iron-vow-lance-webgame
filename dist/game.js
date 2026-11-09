@@ -558,6 +558,7 @@ let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'
 let armoryGroup='assault';
 let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
 let page=entryPage,selected=0,battle=null,action='move',targetPart='body',effects=[],hover=null,clock=0,last=0,muted=false,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
+let moveTap=null;
 try{muted=localStorage.getItem('iron-vow-sound')==='off'}catch{}
 function pauseCareer(title,body){
  if(careerStale)return;
@@ -1698,7 +1699,7 @@ function importCareer(record){
  if(restored?.enemyPending)void endTurn();
  return Boolean(restored);
 }
-function modal(title,body,buttons){if(careerStale)return;if($('#modal').hidden)modalReturnFocus=document.activeElement;$('#modal').hidden=false;$('#modal').innerHTML=`<div class="modalbox" role="dialog" aria-modal="true" aria-label="${title}"><div class="eyebrow">IRON VOW / COMMAND UPLINK</div><h1>${title}</h1><div>${body}</div><div class="buttons">${buttons.map((b,i)=>`<button class="${i===buttons.length-1?'primary':''}" id="modal-${i}">${b.text}</button>`).join('')}</div></div>`;buttons.forEach((b,i)=>$('#modal-'+i).onclick=b.fn);$('#modal-0').focus()}
+function modal(title,body,buttons){if(careerStale)return;moveTap=null;if($('#modal').hidden)modalReturnFocus=document.activeElement;$('#modal').hidden=false;$('#modal').innerHTML=`<div class="modalbox" role="dialog" aria-modal="true" aria-label="${title}"><div class="eyebrow">IRON VOW / COMMAND UPLINK</div><h1>${title}</h1><div>${body}</div><div class="buttons">${buttons.map((b,i)=>`<button class="${i===buttons.length-1?'primary':''}" id="modal-${i}">${b.text}</button>`).join('')}</div></div>`;buttons.forEach((b,i)=>$('#modal-'+i).onclick=b.fn);$('#modal-0').focus()}
 function closeModal(){if(careerStale)return;closeHelp();$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
 function quickOrders(){
  const topics=[
@@ -2034,6 +2035,7 @@ function aiPart(a,t,w){
 }
 function addLog(s){battle.log.push(s);battle.log=battle.log.slice(-4)}
 function renderBattle(){
+  moveTap=null;
   nav();const u=current(),under=hover&&battle.units.find(t=>t.alive&&t.team==='enemy'&&t.x===hover.x&&t.z===hover.z),target=under||battle.units.find(t=>t.alive&&t.id===lockedTarget)||battle.units.find(t=>t.alive&&t.team==='enemy');
   if(u&&!battle.busy&&action!=='move'&&u.hp.legs>0&&!reducedMotion){
    for(const face of [1,-1]){
@@ -2071,7 +2073,7 @@ function renderBattle(){
    ${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${counterStatus}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
-  <div class="hint">${battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':''):'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,aimPart,false)?' · CHARGED':''):'SELECT MECH'}</div>
+  <div class="hint"><span id="field-hint">${battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':''):'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,aimPart,false)?' · CHARGED':''):'SELECT MECH'}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="Right shoulder Vesper MRL">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy?'disabled':''}>END TURN</button></div></div>`;
   refreshTargetPortrait();
   bindTacticalMap();
@@ -4590,7 +4592,7 @@ function panField(dx,dy){
  const horizontal=dx/(scale*.866),vertical=dy/(scale*.42),{width,depth}=battle.size;
  fieldCamera.x=Math.max(-.5,Math.min(width-.5,fieldCamera.x-(horizontal+vertical)/2));
  fieldCamera.z=Math.max(-.5,Math.min(depth-.5,fieldCamera.z-(vertical-horizontal)/2));
- hover=null;
+ hover=moveTap=null;
 }
 function fieldScale(){
  const mobile=W<760,{width,depth}=battle.size;
@@ -4611,7 +4613,7 @@ function zoomField(factor){
   fieldCamera.x=(battle.size.width-1)/2;fieldCamera.z=(battle.size.depth-1)/2;
   fieldCamera.overview=false;renderBattle();
  }
- hover=null;setFieldProjection();
+ hover=moveTap=null;setFieldProjection();
 }
 function setFieldProjection(){
  const mobile=W<760,{width,depth}=battle.size,overview=fieldCamera.overview;
@@ -4626,9 +4628,67 @@ function setFieldProjection(){
   radar.style.top=100*(fieldCamera.z+.5)/depth+'%';
  }
 }
+const MOVE_SHOT_STYLE={
+ clear:{color:'#b0e4ef',glyph:'✓',label:'Clear'},
+ high:{color:'#ffdb8d',glyph:'↑',label:'High'},
+ blocked:{color:'#f3a09a',glyph:'×',label:'Ridge'},
+ arc:{color:'#c6c2ff',glyph:'⤴',label:'Arc'}
+};
+function previewMoveShots(u,spot,cost){
+ const from={...u,x:spot.x,z:spot.z,ap:u.ap-(cost>freeMovement(u)?EXTRA_MOVE_AP:0)};
+ const guns=[selectedWeapon(u,'fire'),shoulderWeapon(u)].filter(w=>canUseWeapon(from,w));
+ const shots=[];
+ for(const target of battle.units){
+  if(target.team!=='enemy'||!target.alive)continue;
+  const range=distance(from,target);
+  const inRange=guns.filter(w=>range<=weaponRange(w,from.training));
+  if(!inRange.length)continue;
+  const w=inRange.find(gun=>!attackObstruction(from,target,gun));
+  const state=!w?'blocked':highGroundAim(from,target,w)?'high':launchesMissiles(w)&&ridgeBlocks(from,target)?'arc':'clear';
+  shots.push({target,state});
+ }
+ return {shots,canFire:guns.length>0};
+}
+let movePreviewMarkup='';
+function showMovePreview(spot,preview){
+ const panel=$('#move-preview'),hint=$('#field-hint');
+ if(!panel||!hint)return;
+ if(!spot){
+  if(!panel.hidden){panel.hidden=true;hint.hidden=false}
+  return;
+ }
+ const labels=preview.shots.map(({target,state})=>{
+  const {color,glyph,label}=MOVE_SHOT_STYLE[state];
+  return `<span class="move-contact" data-shot="${state}" style="--shot-color:${color}"><b aria-hidden="true">${glyph}</b> ${target.name} <small>${label}</small></span>`;
+ }).join('');
+ const markup=`<div class="move-contacts">${labels||(preview.canFire?'NO TARGET IN RANGE':'NO SHOT')}</div>${moveTap?'<span class="move-confirm">TAP AGAIN TO MOVE</span>':''}`;
+ if(!panel.hidden&&movePreviewMarkup===markup)return;
+ movePreviewMarkup=markup;panel.innerHTML=markup;panel.hidden=false;hint.hidden=true;
+}
+function drawMovePreview(spot,shots){
+ tile(spot.x,spot.z,'#b5e3ee30','#d8f9ff',.028,1.8);
+ const start=project(spot.x,.04,spot.z);
+ ctx.save();
+ for(const {target,state} of shots){
+  const end=project(target.vx,.04+(target.kind==='helicopter'?VEHICLES.helicopter.altitude:0),target.vz);
+  const {color}=MOVE_SHOT_STYLE[state];
+  ctx.strokeStyle=color;ctx.lineWidth=1.35;
+  ctx.setLineDash(state==='blocked'?[4,5]:[]);
+  ctx.beginPath();ctx.moveTo(start.x,start.y);
+  if(state==='arc')ctx.quadraticCurveTo((start.x+end.x)/2,Math.min(start.y,end.y)-scale*.8,end.x,end.y);
+  else ctx.lineTo(end.x,end.y);
+  ctx.stroke();ctx.setLineDash([]);
+  tile(target.vx,target.vz,null,color,.025,1.5);
+ }
+ ctx.restore();
+}
 function battlefield(t){
  setFieldProjection();
  const u=current(),reachable=u&&battle.phase==='player'&&!battle.busy&&action==='move'?paths(u):null;
+ const moveTile=reachable&&!targetPanelOpen&&$('#modal').hidden?(moveTap??hover):null;
+ const moveCost=moveTile&&reachable.get(moveTile.x+','+moveTile.z);
+ const preview=moveCost>0?previewMoveShots(u,moveTile,moveCost):null;
+ showMovePreview(preview?moveTile:null,preview);
  const jumpMode=u&&battle.phase==='player'&&!battle.busy&&action==='jumpjet';
  const targetingWeapon=u&&!spent(u)&&battle.phase==='player'&&!battle.busy&&action!=='move'&&!jumpMode?selectedWeapon(u):null;
  const targetingRange=targetingWeapon?weaponRange(targetingWeapon,u.training):0;
@@ -4644,12 +4704,13 @@ function battlefield(t){
   if(targetingWeapon&&!battle.cover.has(key)){
    const range=distance(u,{x,z});
    if(range>0&&range<=targetingRange&&!attackObstruction(u,{x,z},targetingWeapon))targetingTile(x,z,hover?.x===x&&hover?.z===z);
-  }else if(!battle.busy&&!jumpMode&&hover?.x===x&&hover?.z===z)tile(x,z,'#e7be6e3c','#eac07e',.016);
+  }else if(!preview&&!battle.busy&&!jumpMode&&hover?.x===x&&hover?.z===z)tile(x,z,'#e7be6e3c','#eac07e',.016);
  });
- for(const unit of battle.units){advanceUnitAnimation(unit,t,frameDt);if(unit.team==='ally'&&unit.alive&&!spent(unit))tile(unit.vx,unit.vz,selected===unit.index?'#e6b76a2d':'#a0c6d018',selected===unit.index?'#e6b76a':'#83b0c080',.02);else if(unit.alive&&unit.id===lockedTarget&&!battle.busy){
+ for(const unit of battle.units){advanceUnitAnimation(unit,t,frameDt);if(unit.team==='ally'&&unit.alive&&!spent(unit))tile(unit.vx,unit.vz,selected===unit.index?'#e6b76a2d':'#a0c6d018',selected===unit.index?'#e6b76a':'#83b0c080',.02);else if(unit.alive&&unit.id===lockedTarget&&!battle.busy&&!preview){
   if(targetingWeapon&&!attackObstruction(u,unit,targetingWeapon)&&distance(u,unit)<=targetingRange)targetingTile(unit.vx,unit.vz,true);
   else tile(unit.vx,unit.vz,'#d8877330','#d89279',.02,1.35);
  }}
+ if(preview)drawMovePreview(moveTile,preview.shots);
  const entities=[...Array.from(battle.cover,key=>{const[x,z]=key.split(',').map(Number);return{x,z,type:'cover',model:battle.field.cover[key]}}),...battle.units.map(u=>({x:u.vx,z:u.vz,type:'unit',u}))].sort((a,b)=>(a.x+a.z-(a.u&&!a.u.alive?2:0))-(b.x+b.z-(b.u&&!b.u.alive?2:0)));
  for(const e of entities){
   const p=project(e.x,0,e.z);
@@ -4922,18 +4983,20 @@ canvas.addEventListener('pointermove',e=>{
  const gesture=pointerGesture;
  if(gesture&&gesture.id===e.pointerId){
   if(Math.hypot(e.clientX-gesture.startX,e.clientY-gesture.startY)>8)gesture.drag=true;
-  if(gesture.drag&&!fieldCamera.overview)panField(e.clientX-gesture.x,e.clientY-gesture.y);
+  if(gesture.drag){hover=moveTap=null;if(!fieldCamera.overview)panField(e.clientX-gesture.x,e.clientY-gesture.y)}
   gesture.x=e.clientX;gesture.y=e.clientY;
   if(gesture.drag)return;
  }
  if(e.pointerType==='touch')return;
+ moveTap=null;
  const picked=pick(e.clientX,e.clientY),tile=screenTile(e.clientX,e.clientY),u=current();
  const through=picked?.team==='ally'&&u&&action==='move'&&paths(u).get(tile.x+','+tile.z);
  const p=picked&&!through?{x:picked.x,z:picked.z}:tile;
  const changed=!hover||hover.x!==p.x||hover.z!==p.z;hover=p;
  if(changed&&picked?.team==='enemy')renderBattle();
 });
-canvas.addEventListener('pointercancel',()=>{pointerGesture=null});
+canvas.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')hover=null});
+canvas.addEventListener('pointercancel',()=>{pointerGesture=hover=moveTap=null});
 canvas.addEventListener('click',()=>{
  const tap=drawerTap;drawerTap=null;
  if(!tap||tap!==battle||battle.busy||action!=='fire'||!$('#modal').hidden)return;
@@ -4980,7 +5043,12 @@ canvas.addEventListener('pointerup',async e=>{
    if(W>760)toast('Target acquired. Select a subsystem, then fire.');
    return;
   }
-  if(!walk)return toast('Choose a highlighted tile within movement range');
+  if(!walk){moveTap=null;return toast('Choose a highlighted tile within movement range')}
+  if(e.pointerType==='touch'){
+   hover=null;
+   if(moveTap?.x!==tile.x||moveTap?.z!==tile.z){moveTap=tile;return}
+  }
+  moveTap=hover=null;
   battle.busy=true;await moveUnit(u,tile.x,tile.z);focusBattleCamera(u);
  }else{
   if(picked?.team!=='enemy')return toast('Select a hostile contact');
@@ -5014,7 +5082,7 @@ document.addEventListener('keydown',e=>{
  else return;
  renderBattle();persist();
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(activeCinematic){skipAttackCamera();return}if(!$('#modal').hidden){closeModal();return}if(targetPanelOpen){targetPanelOpen=false;renderBattle();$('#target-toggle').focus();return}}if(e.key==='Tab'&&!$('#modal').hidden){let btns=[...$('#modal').querySelectorAll('button')],first=btns[0],last=btns.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(activeCinematic){skipAttackCamera();return}if(!$('#modal').hidden){closeModal();return}if(targetPanelOpen){targetPanelOpen=false;renderBattle();$('#target-toggle').focus();return}moveTap=null}if(e.key==='Tab'&&!$('#modal').hidden){let btns=[...$('#modal').querySelectorAll('button')],first=btns[0],last=btns.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 $('.brand').onclick=e=>{e.preventDefault();if(!battle){page='ship';render()}};
 $('#skip-shot').onclick=skipAttackCamera;
 let helpAnchor=null,helpPress=null,helpTimer;
