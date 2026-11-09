@@ -1211,6 +1211,7 @@ function closeAttackCamera(sequence){
 }
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
+ effects=effects.filter(e=>e.type!=='shot'||e.actor!==sequence.actor.id||e.born!==sequence.fireAt);
  sequence.skipped=true;sequence.resume?.();closeAttackCamera(sequence);
 }
 function beginAttackCamera(actor,target,w,part){
@@ -1237,8 +1238,17 @@ function waitAttack(ms,sequence){
 let soundBus=null;
 const combatSamples=new Map();
 const COMBAT_CUES={
- missileArm:'pod-arm',rocketLaunch:'rocket-launch',armorImpact:'armor-hit',
- heavyImpact:'heavy-hit',missileImpact:'missile-hit',boom:'missile-hit'
+ missileArm:'pod-arm',rocketLaunch:'rocket-launch',armorImpact:'plate-strike',
+ shieldImpact:'shield-strike',heavyImpact:'heavy-hit',missileImpact:'missile-hit',boom:'missile-hit',
+ rifleReport:'rifle-report',rotaryReport:'rotary-report',shotgunReport:'shotgun-report',
+ cannonReport:'cannon-report',railReport:'rail-report'
+};
+const FIRE_REPORTS={
+ rifle:['rifleReport',1,.77],sidewinder:['rifleReport',1.18,.63],trident:['rifleReport',.94,.83],
+ 'needle-carbine':['rifleReport',1.12,.70],hailstorm:['rotaryReport',1,.78],rivet:['rotaryReport',.88,.88],
+ shotgun:['shotgunReport',1,1],forge:['cannonReport',1.13,.98],rampart:['cannonReport',1,1.07],
+ morrow:['cannonReport',.92,1.07],rail:['railReport',1,1.06],parallax:['railReport',.86,1.13],
+ ember:['railReport',1.21,.92]
 };
 function loadCombatSamples(){
  for(const file of new Set(Object.values(COMBAT_CUES))){
@@ -1268,33 +1278,27 @@ function startAudio(unlock=true){
   if(!audio){
    audio=new(window.AudioContext||window.webkitAudioContext)();
    audio.onstatechange=syncMusic;
+   soundBus=audio.createGain();soundBus.gain.value=.72;
+   const compressor=audio.createDynamicsCompressor();
+   compressor.threshold.value=-9;compressor.knee.value=7;compressor.ratio.value=4;
+   soundBus.connect(compressor);compressor.connect(audio.destination);
+   if(typeof fetch==='function')loadCombatSamples();
   }
   if(unlock&&(audio.state==='suspended'||audio.state==='interrupted'))audio.resume().then(syncMusic).catch(()=>{});
   syncMusic();
  }catch{}
 }
-function sound(type,cueVolume=1,volleyBeats=null){
+function sound(type,cueVolume=1,shot=null){
  if(muted)return;
  try{
   startAudio();
   if(!audio)return;
-  if(!soundBus){
-   soundBus=audio.createGain();soundBus.gain.value=.62;
-   const compressor=audio.createDynamicsCompressor();
-   compressor.threshold.value=-15;compressor.knee.value=12;compressor.ratio.value=6;
-   soundBus.connect(compressor);compressor.connect(audio.destination);
-   if(typeof fetch==='function')loadCombatSamples();
-  }
   const now=audio.currentTime+.005;
-  const rate=type==='boom'?.78:1;
-  if(playCombatSample(type,now,cueVolume*rate,rate))return;
-  if(type==='missile'||type==='locust'){
-   const beats=ATTACK_PROFILES[type].beats;
-   const pitch=type==='locust'?1.12:1;
-   if(playCombatSample('rocketLaunch',now,1,pitch,-.22)){
-    playCombatSample('rocketLaunch',now+beats[1],.93,pitch*.90,.22);
-    return;
-   }
+  const rate=(type==='boom'?.78:1)*(shot?.rate??1),pan=shot?.pan??0;
+  if(playCombatSample(type,now,cueVolume*rate,rate,pan))return;
+  if(shot?.weapon){
+   const [cue,pitch,level]=FIRE_REPORTS[shot.weapon]??FIRE_REPORTS[type]??[];
+   if(cue&&playCombatSample(cue,now,cueVolume*level,pitch*rate,pan))return;
   }
   if(!noiseBuffer){
    noiseBuffer=audio.createBuffer(1,Math.ceil(audio.sampleRate*1.2),audio.sampleRate);
@@ -1364,7 +1368,7 @@ function sound(type,cueVolume=1,volleyBeats=null){
    tone(now+.175,.06,710,250,.10,'triangle');
    return;
   }
-  if(type==='armorImpact'){thump(now,.8);noise(now,.065,5300,750,.16);return}
+  if(type==='armorImpact'||type==='shieldImpact'){thump(now,.8);noise(now,.065,5300,750,.16);return}
   if(type==='missileImpact'){explosion(now,1.15);return}
   if(type==='heavyImpact'){
    noise(now,.09,5700,1100,.24);
@@ -1373,29 +1377,16 @@ function sound(type,cueVolume=1,volleyBeats=null){
    tone(now+.025,.23,830,190,.075,'triangle');
    return;
   }
-  if(volleyBeats){
-   const plasma=type==='rail',heavy=type==='rampart',rotary=type==='hailstorm';
-   for(const [i,beat] of volleyBeats.entries()){
-    noise(now+beat,.07,plasma?5100:3400,plasma?900:320,heavy?.21:.13,'bandpass');
-    tone(now+beat,heavy?.14:.08,plasma?780:heavy?155:122,plasma?285:42,.095+(i===0?.04:0),plasma?'sawtooth':'sine');
-   }
-   if(rotary)tone(now,.49,90,155,.025,'sawtooth');
-   return;
-  }
-  if(type==='rifle'){[0,.09,.18].forEach(t=>gun(now+t,.8));return}
-  if(type==='hailstorm'){for(let i=0;i<7;i++)gun(now+i*.06,.62);tone(now,.48,90,155,.025,'sawtooth');return}
+  if(type==='rifle'||type==='hailstorm'){gun(now,type==='rifle'?.8:1);return}
   if(type==='shotgun'){gun(now,1.35);noise(now+.035,.32,2000,200,.12);return}
   if(type==='rampart'){gun(now,1.5);tone(now+.035,.42,85,30,.13);return}
-  if(type==='morrow'){[0,.299].forEach(t=>{gun(now+t,1.35);tone(now+t+.02,.31,94,32,.11)});return}
+  if(type==='morrow'){gun(now,1.35);tone(now+.02,.31,94,32,.11);return}
   if(type==='rail'){tone(now,.32,1450,240,.07,'sawtooth');noise(now,.3,5000,350,.12,'bandpass');tone(now+.015,.4,150,35,.16);return}
-  if(type==='missile'||type==='locust'){
-   for(const beat of ATTACK_PROFILES[type].beats){
-    const ignition=now+beat;
-    noise(ignition,.065,6100,1250,.29);
-    tone(ignition+.008,.22,180,65,.25);
-    noise(ignition+.036,.44,1600,230,.27);
-    noise(ignition+.066,.46,630,210,.16,'bandpass');
-   }
+  if(type==='rocketLaunch'){
+   noise(now,.065,6100,1250,.29);
+   tone(now+.008,.22,180,65,.25);
+   noise(now+.036,.44,1600,230,.27);
+   noise(now+.066,.46,630,210,.16,'bandpass');
    return;
   }
   if(type==='cleaver'||type==='blade'){noise(now,.22,550,3500,.11,'bandpass');tone(now+.08,.2,1250,460,.05,'triangle');return}
@@ -1446,7 +1437,7 @@ function syncMusic(){
  });
 }
 function duckMusic(){
- if(musicBus)musicBus.gain.setTargetAtTime(activeCinematic?.15:.26,audio.currentTime,.12);
+ if(musicBus)musicBus.gain.setTargetAtTime(activeCinematic?.095:.26,audio.currentTime,.12);
 }
 function updateSoundButton(){
  $('#sound').innerHTML=icon(muted?'speaker-slash':'speaker-high');
@@ -1455,7 +1446,7 @@ function updateSoundButton(){
 $('#sound').onclick=()=>{
  muted=!muted;
  try{localStorage.setItem('iron-vow-sound',muted?'off':'on')}catch{}
- if(soundBus)soundBus.gain.setTargetAtTime(muted?.0001:.62,audio.currentTime,.01);
+ if(soundBus)soundBus.gain.setTargetAtTime(muted?.0001:.72,audio.currentTime,.01);
  updateSoundButton();
  sound('click');
  syncMusic();
@@ -2187,6 +2178,23 @@ function planVolley(a,t,aimed,w,reaction){
  }
  return {rounds,impacts,landed,dodged:evades===count,guard:Boolean(shield&&landed)};
 }
+function shotContacts(w,profile,rounds,impacts){
+ const spread=w.scatter?(reducedMotion?.021:.046):0;
+ const contacts=(w.burst?rounds:profile.beats.map(()=>rounds[0])).map(({part,hit},index)=>({
+  part,hit,index,amount:0,travel:profile.travel+index*spread,
+  at:profile.travel+index*spread+(profile.beats[index]??0)
+ }));
+ // Spread each part's already-rounded damage over its own contacts.
+ for(const {part,amount} of impacts){
+  const hits=contacts.filter(contact=>contact.hit&&contact.part===part);
+  let assigned=0;
+  for(const [i,contact] of hits.entries()){
+   const next=Math.round(amount*(i+1)/hits.length);
+   contact.amount=next-assigned;assigned=next;
+  }
+ }
+ return contacts;
+}
 function attackPreview(a,t,part,w){
  const hit=Math.round(hitChance(a,t,part,w)*100)+'%';
  const damage=attackBudget(a,t,part,w);
@@ -2470,7 +2478,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(ownsCamera)sequence=beginAttackCamera(a,t,w,part);
  try{
  if(sequence&&!sequence.skipped){
-  Object.assign(sequence,{actor:a,target:t,w,part,reaction,phase:'aim',result:'',fireAt:null});
+  Object.assign(sequence,{actor:a,target:t,w,part,reaction,phase:'aim',result:'',fireAt:null,contacts:null,contact:null});
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
  const profile=attackProfile(a,w.id),power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
@@ -2533,8 +2541,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  a.fireTime=clock;a.attack.fireAt=clock;
  if(power)a.attack.stage='release';
  if(sequence){sequence.phase='fire';sequence.fireAt=clock}
- const flight=profile.beats.at(-1)+profile.travel;
  const {rounds,impacts,landed,dodged,guard}=planVolley(a,t,part,w,reaction);
+ const contacts=shotContacts(w,profile,rounds,impacts),flight=contacts.at(-1).at;
+ if(sequence)sequence.contacts=contacts;
  if(!reaction&&!w.melee&&a.mechSkills){
   const state=mechState(a);
   if(!launchesMissiles(w))state.fired=true;
@@ -2549,28 +2558,62 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const impact=freezeAttachment(t,guard?'shield':actual);
  if(!hit){impact.ox+=.55*(a.face||1);impact.oy-=.38}
  const anchors=new Map();
- const projectiles=w.burst?rounds.map(({part:targetPart,hit:connected},index)=>{
+ const projectiles=contacts.map(({part:targetPart,hit:connected},index)=>{
   const key=connected&&guard?'shield':targetPart;
   if(!anchors.has(key))anchors.set(key,freezeAttachment(t,key));
   const p=anchors.get(key);
   return connected?p:{...p,ox:p.ox+(.55+.06*(index%4))*(a.face||1),oy:p.oy-(.22+.09*(index%5))};
- }):null;
- effects.push({type:'shot',actor:a.id,target:t.id,part:actual,kind:w.id,x:a.x,z:a.z,tx:t.x,tz:t.z,t:1,born:clock,life:flight+.12,origins:[],impact,projectiles});
- sound(power?.sound||(w.scatter&&w.id!=='ember'?'shotgun':weaponMotion(w.id)),1,w.burst&&!w.scatter?profile.beats:null);
- const lastBeat=profile.beats.at(-1);
- if(rockets){
-  await waitAttack(profile.travel*1000,sequence);
-  if(!sequence?.skipped)sound('missileImpact',.62);
- }
+ });
+ if(!sequence?.skipped)effects.push({type:'shot',actor:a.id,target:t.id,part:actual,kind:w.id,x:a.x,z:a.z,tx:t.x,tz:t.z,t:1,born:clock,life:flight+.12,origins:[],impact,projectiles,contacts});
+ const shots=profile.beats.map((at,index)=>({at,index,report:true}));
+ const timeline=[...shots,...contacts].sort((x,y)=>x.at-y.at);
  if(aeroStrike&&!reducedMotion&&a.hp.legs>0){
   const plant=Math.max(0,Math.min(flight,(profile.raise+profile.travel)*(.59/.70)-profile.raise));
-  await waitAttack(plant*1000,sequence);
-  if(!sequence?.skipped){
-   effects.push({type:'step',actor:a.id,x:a.x,z:a.z,t:1,mass:MECH_MOTION[a.frame].mass,attackPlant:true});
-   sound('step',MECH_MOTION[a.frame].mass);
+  timeline.splice(1,0,{at:plant,plant:true});
+ }
+ const disabled=[];
+ let d=0,lost=0,last=0;
+ const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
+ for(const event of timeline){
+  if(event.at>last)await waitAttack((event.at-last)*1000,sequence);
+  last=event.at;
+  const rate=[1,.956,1.027,.981][event.index%4];
+  if(event.report){
+   if(sequence?.skipped)continue;
+   const type=rockets?'rocketLaunch':power?.sound||(w.scatter&&w.id!=='ember'?'shotgun':weaponMotion(w.id));
+   sound(type,event.index?.93:1,{weapon:w.id,
+    rate:rockets?(w.id==='locust'?1.12:1)*(event.index?.90:1):rate,
+    pan:rockets?(event.index?.22:-.22):(a.face||1)*-.23});
+   continue;
   }
-  await waitAttack((flight-plant)*1000,sequence);
- }else await waitAttack((rockets?lastBeat:flight)*1000,sequence);
+  if(event.plant){
+   if(!sequence?.skipped){
+    effects.push({type:'step',actor:a.id,x:a.x,z:a.z,t:1,mass:MECH_MOTION[a.frame].mass,attackPlant:true});
+    sound('step',MECH_MOTION[a.frame].mass);
+   }
+   continue;
+  }
+  if(sequence)sequence.contact=event;
+  if(rockets&&!sequence?.skipped)sound('missileImpact',event.index?.83:.62,{rate,pan:(a.face||1)*.23});
+  if(!event.hit)continue;
+  const before=t.hp[event.part];
+  t.hp[event.part]=Math.max(0,before-event.amount);
+  event.damage=before-t.hp[event.part];
+  d+=event.amount;lost+=event.damage;
+  const broken=before>0&&t.hp[event.part]===0;
+  if(broken)disabled.push(event.part);
+  t.hitTime=clock;t.hitPart=event.part;t.hitParts=[event.part];t.hitDamage=event.damage;
+  t.hitVector={x:hitX/hitLength,y:hitY/hitLength};
+  if(sequence?.skipped)continue;
+  const light=Boolean(w.burst);
+  effects.push({type:'boom',target:t.id,part:event.part,x:t.x,z:t.z,t:1,light,broken,big:Boolean(power&&!reducedMotion),
+   ...(guard?{shieldImpact:impact}:{})});
+  shake=Math.max(shake,power?.shake??(broken?6:light?2.8:4));
+  if(!rockets){
+   const heavy=profile.melee||!light&&['rail','rampart','shotgun'].includes(effectKind);
+   sound(guard?'shieldImpact':heavy?'heavyImpact':'armorImpact',light?(broken?.94:w.scatter?.57:.83):1,{rate,pan:(a.face||1)*.24});
+  }
+ }
  a.attack.releaseAt=clock;
  if(power)a.attack.stage='impact';
  if(sequence)sequence.phase='result';
@@ -2578,23 +2621,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(!hit){
   const result=dodged?'DODGE':'MISS';
   if(sequence)sequence.result=result;
-  if(rockets)sound('missileImpact',.83);
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:result});
   addLog(dodged?t.name+' dodged '+a.name+'’s attack.':a.name+' missed '+t.name+'.');
  }else{
-  const disabled=[];
-  let d=0,lost=0;
-  for(const {part:hitPart,amount} of impacts){
-   const before=t.hp[hitPart];
-   t.hp[hitPart]=Math.max(0,before-amount);
-   d+=amount;lost+=before-t.hp[hitPart];
-   if(before>0&&t.hp[hitPart]===0)disabled.push(hitPart);
-   effects.push({type:'boom',target:t.id,part:hitPart,x:t.x,z:t.z,t:1,big:Boolean(power&&!reducedMotion),...(guard?{shieldImpact:impact}:{})});
-  }
   const label=guard?'SHIELD / LEFT ARM':t.kind?'HULL':PART_LABEL[actual];
-  t.hitTime=clock;t.hitPart=actual;t.hitParts=impacts.map(({part})=>part);t.hitDamage=d;
-  const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
-  t.hitVector={x:hitX/hitLength,y:hitY/hitLength};shake=Math.max(shake,power?.shake??(['rail','breaker'].includes(weaponMotion(w.id))?7:4));
   const failsafe=disabled.includes('body')&&t.training?.repairFailsafe&&!t.skill;
   if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t)}
   const broken=guard&&t.hp.left===0;
@@ -2603,7 +2633,6 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:broken?'SHIELD ARM LOST':guard?'BLOCK · −'+d:w.burst?volleyText:'−'+d+' '+label});
   const report=w.burst&&!guard?impacts.map(({part,amount})=>(t.kind?'HULL':PART_LABEL[part])+' −'+amount).join(' · '):label+' −'+d;
   addLog(a.name+(w.scout?' · '+w.name:'')+' → '+t.name+' / '+report);
-  sound(rockets?'missileImpact':profile.melee||['rail','rampart','shotgun'].includes(effectKind)?'heavyImpact':'armorImpact');
   if(failsafe)addLog(t.name+' triggered Failsafe.');
   if(!reaction&&w.melee&&a.training?.strikeBrace)braceUnit(a);
   if(t.hp.body<=0||t.hp.pilot===0){
@@ -3248,7 +3277,7 @@ const ATTACK_PROFILES={
 };
 for(const w of WEAPONS)if(w.motion)ATTACK_PROFILES[w.id]={...ATTACK_PROFILES[w.motion],effect:w.scatter?'shotgun':w.motion};
 const VOLLEY_PROFILES=Object.fromEntries(WEAPONS.filter(w=>w.burst).map(w=>[
- w.id,{...ATTACK_PROFILES[w.id],beats:w.scatter?[0]:Array.from({length:w.burst},(_,i)=>i*(w.burst===12?.039:.051))}
+ w.id,{...ATTACK_PROFILES[w.id],beats:w.scatter?[0]:Array.from({length:w.burst},(_,i)=>i*(w.burst===12?.082:.105))}
 ]));
 function attackProfile(actor,id){
  const volley=actor&&!actor.kind&&actor.frame!==REAVER_FRAME?VOLLEY_PROFILES[id]:null;
@@ -4794,11 +4823,12 @@ function drawAttackEffect(e,t){
  }
  for(let i=0;i<profile.beats.length;i++){
   const since=age-profile.beats[i];if(since<0||since>.65)continue;
+  const scatter=kind==='shotgun'&&e.projectiles;
   const impact=kind!=='shotgun'&&e.projectiles?.[i]?resolveAttachment(e.projectiles[i]):endpoint;
   if(!e.origins[i])e.origins[i]=actor?freezeAttachment(actor,shotMuzzle(actor,e.kind,i),e.born+profile.beats[i]):{x:e.x,z:e.z,ox:0,oy:-1.4};
   const a=resolveAttachment(e.origins[i]),p=since/profile.travel;
   ctx.save();ctx.lineCap='round';
-  if(p>=0&&p<=1){
+  if(p<=1||scatter&&since<=e.contacts.at(-1).travel){
    if(kind==='missile'){
     const x=a.x+(impact.x-a.x)*p,y=a.y+(impact.y-a.y)*p-Math.sin(p*Math.PI)*scale*1.25;
     ctx.strokeStyle='#e1d2b34d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo((a.x+impact.x)/2,Math.min(a.y,impact.y)-scale*1.25,x,y);ctx.stroke();
@@ -4807,11 +4837,11 @@ function drawAttackEffect(e,t){
    }else if(kind==='rail'){
     ctx.globalAlpha=1-p*.65;ctx.shadowColor='#b3e9f4';ctx.shadowBlur=16;ctx.strokeStyle='#8ec7dc';ctx.lineWidth=5*(1-p*.7);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(impact.x,impact.y);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#f5ffff';ctx.lineWidth=1.5;ctx.stroke();
    }else{
-    const scatter=kind==='shotgun'&&e.projectiles;
     for(let pellet=0;pellet<(scatter?scatter.length:1);pellet++){
      const end=scatter?resolveAttachment(scatter[pellet]):impact;
-     const spread=scatter?(pellet-(scatter.length-1)/2)*scale*.018:0;
-     const x=a.x+(end.x-a.x)*p,y=a.y+(end.y-a.y+spread)*p;
+     const progress=scatter?since/e.contacts[pellet].travel:p;
+     if(progress>1)continue;
+     const x=a.x+(end.x-a.x)*progress,y=a.y+(end.y-a.y)*progress;
      ctx.strokeStyle=plasma?'#ffa064':pellet%2?'#fff0c4':'#e9b971';ctx.lineWidth=scatter?1.4:2;ctx.shadowColor=plasma?'#f88547':'#eab36b';ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(x-(end.x-a.x)*.10,y-(end.y-a.y)*.10);ctx.lineTo(x,y);ctx.stroke();
     }
    }
@@ -4846,6 +4876,22 @@ function drawEffects(t,subject=null,plantOnly=false){for(const e of effects){
  }else if(subject&&(e.x!==subject.x||e.z!==subject.z||!e.deathImpact&&!['boom','detonation'].includes(e.type)))continue;
  const phase=1-e.t;if(e.type==='shot'){drawAttackEffect(e,t);
  }else if(e.type==='boom'){
+  if(e.light&&!e.broken){
+   const target=subject||battle.units.find(u=>u.id===e.target);
+   const p=target?mechAttachmentPoint(target,e.shieldImpact?'shield':e.part,t):project(e.x,1.1,e.z);
+   const radius=scale*.34;
+   ctx.save();ctx.globalAlpha=e.t;ctx.strokeStyle=e.shieldImpact?'#dffbff':'#ffe2a5';
+   ctx.lineWidth=1.3;ctx.shadowColor='#ed8a47';ctx.shadowBlur=7;
+   ctx.beginPath();
+   for(let i=0;i<9;i++){
+    const angle=i*2.399,reach=radius*(.23+phase)*(.48+(i%4)*.19);
+    const dx=Math.cos(angle)*reach,dy=Math.sin(angle)*reach;
+    ctx.moveTo(p.x+dx*.34,p.y+dy*.34);ctx.lineTo(p.x+dx,p.y+dy+radius*phase*phase*.45);
+   }
+   ctx.stroke();ctx.fillStyle='#fff4cf';ctx.beginPath();
+   ctx.arc(p.x,p.y,Math.max(1.2,radius*.15*e.t),0,Math.PI*2);ctx.fill();ctx.restore();
+   continue;
+  }
   const target=subject||battle.units.find(u=>u.id===e.target),p=e.shieldImpact&&!subject?resolveAttachment(e.shieldImpact):target?mechAttachmentPoint(target,e.shieldImpact?'shield':e.part||'body',t):project(e.x,1.1,e.z),radius=scale*(e.big?1.1:.5);ctx.save();ctx.globalAlpha=e.t;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,radius*(.3+phase));g.addColorStop(0,'#fff8dc');g.addColorStop(.22,'#ffda8f');g.addColorStop(.5,'#f2873c99');g.addColorStop(1,'#b54c1200');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.3+phase),0,Math.PI*2);ctx.fill();for(let i=0;i<(e.big?22:13);i++){const angle=i*2.399,v=(.25+(i%5)*.19)*phase*radius*2;ctx.strokeStyle=i%2?'#ffba6c':'#fff2c6';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(p.x+Math.cos(angle)*v*.65,p.y+Math.sin(angle)*v*.65+phase*phase*scale*.5);ctx.lineTo(p.x+Math.cos(angle)*v,p.y+Math.sin(angle)*v+phase*phase*scale*.5);ctx.stroke()}ctx.restore();
  }else if(e.type==='detonation'){drawDetonation(e,t,subject);
  }else if(e.type==='step'){
@@ -4917,11 +4963,16 @@ function zoomField(factor){
  }
  hover=moveTap=null;setFieldProjection();
 }
-function setFieldProjection(){
+function setFieldProjection(cinematicPush=0){
  const mobile=W<760,{width,depth}=battle.size,overview=fieldCamera.overview;
  const {fit,close}=fieldScale();
  scale=overview?fit:Math.max(fit,close*viewZoom);
- const x=overview?(width-1)/2:fieldCamera.x,z=overview?(depth-1)/2:fieldCamera.z;
+ let x=overview?(width-1)/2:fieldCamera.x,z=overview?(depth-1)/2:fieldCamera.z;
+ if(cinematicPush){
+  const actor=activeCinematic.actor;
+  x+=(actor.vx-x)*cinematicPush;z+=(actor.vz-z)*cinematicPush;
+  scale*=1+.35*cinematicPush;
+ }
  const centerX=mobile?W*.5:overview?W*.5-30:W*.51;
  origin={x:centerX-(x-z)*scale*.866,y:H*(mobile?.55:.53)-(x+z)*scale*.42+(overview?0:terrainHeight(x,z)*scale)};
  const radar=$('.map-focus');
@@ -4990,7 +5041,8 @@ function drawMovePreview(spot,shots){
  ctx.restore();
 }
 function battlefield(t){
- setFieldProjection();
+ const push=activeCinematic?smoothRange(0,.22,t-activeCinematic.start):0;
+ setFieldProjection(push);
  const u=current(),reachable=u&&battle.phase==='player'&&!battle.busy&&action==='move'?paths(u):null;
  const moveTile=reachable&&!targetPanelOpen&&$('#modal').hidden?(moveTap??hover):null;
  const moveCost=moveTile&&reachable.get(moveTile.x+','+moveTile.z);
@@ -5090,12 +5142,29 @@ function mechAttackPaneFit(pane,u){
  return heightLimit;
 }
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
+function drawIncomingRounds(sequence,subject,pane,t){
+ if(!sequence.contacts||sequence.w.melee)return;
+ const age=t-sequence.fireAt,missile=launchesMissiles(sequence.w),lead=missile?.16:.082;
+ ctx.save();ctx.lineCap='round';
+ for(const contact of sequence.contacts){
+  const until=contact.at-age;
+  if(until>lead||until<(contact.hit?0:-.07))continue;
+  const point=mechAttachmentPoint(subject,contact.hit&&sequence.part==='shield'?'shield':contact.part,t);
+  const miss=contact.hit?0:scale*(.48+(contact.index%4)*.09);
+  const span=pane.w*.53,dx=until/lead*span*subject.face;
+  const x=point.x+dx,y=point.y-miss-(missile?Math.abs(dx)*.41:dx*.075);
+  ctx.strokeStyle=sequence.w.id==='ember'?'#ff9e63':'#fff0b7';
+  ctx.shadowColor='#ffa45f';ctx.shadowBlur=missile?13:7;ctx.lineWidth=missile?3:1.7;
+  ctx.beginPath();ctx.moveTo(x+subject.face*scale*.31,y-(missile?scale*.18:0));ctx.lineTo(x,y);ctx.stroke();
+ }
+ ctx.restore();
+}
 function drawAttackPartHP(sequence,pane,subject,t){
  const parts=targetParts(subject),gap=3,width=Math.min(33,(pane.w*.51-4*gap)/5);
  const start=pane.x+pane.w-12-parts.length*(width+gap)+gap,y=pane.y+6;
  const age=t-(subject.hitTime??-Infinity);
- const hits=sequence.phase==='result'&&sequence.target===subject&&
-  subject.hitTime>=sequence.fireAt&&age>=0&&age<.55?subject.hitParts??[subject.hitPart]:null;
+ const hits=sequence.fireAt!=null&&sequence.target===subject&&
+  subject.hitTime>=sequence.fireAt&&age>=0&&age<(sequence.contacts?.length>1?.12:.55)?[subject.hitPart]:null;
  ctx.textAlign='center';
  for(const [i,part] of parts.entries()){
   const x=start+i*(width+gap),hp=subject.hp[part],flash=hits?.includes(part);
@@ -5119,7 +5188,10 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  const firstPane=attacker!==Boolean(sequence.reaction),face=firstPane?1:-1;
  const actor={...subject,face,headingOverride:face*Math.PI/4};
  const previousOrigin=origin,previousScale=scale;
- const zoom=.94+.08*smoothRange(0,.29,t-sequence.start);
+ const receiving=Boolean(sequence.contact)||sequence.phase==='result';
+ const focus=attacker?smoothRange(.04,.24,t-sequence.start):sequence.contact?
+  smoothRange(0,.19,t-sequence.fireAt-sequence.contacts[0].at):0;
+ const zoom=.94+.08*smoothRange(0,.29,t-sequence.start)+(attacker?0:.045*focus);
  const airborne=subject.kind==='helicopter',opponent=attacker?sequence.target:sequence.actor;
  const compactInfantry=pane.h<300&&window.IRON_VOW_FOUNDRY_ART?.[foundryModel(subject.frame)]?.destruction;
  const settle=airborne&&!subject.alive?smoothRange(0,VEHICLES.helicopter.wreckAt,vehicleDeathAge(subject,t)):0;
@@ -5130,10 +5202,10 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  const fit=airborne?(pane.h*.88-49)/2.48:subject.kind?pane.h/2.25:
   Math.min(mechAttackPaneFit(pane,subject),opponent&&!opponent.kind?mechAttackPaneFit(pane,opponent):Infinity);
  scale=Math.max(10,Math.min(pane.w/(subject.kind?3.25:4.08),fit)*zoom);
- const feetX=pane.x+pane.w*(firstPane?.44:.55);
+ const feetX=pane.x+pane.w*((firstPane?.44:.55)+face*.025*focus);
  const feetY=pane.y+floor;
  origin={x:feetX-(subject.vx-subject.vz)*scale*.866,y:feetY-(subject.vx+subject.vz)*scale*.42+terrainHeight(subject.vx,subject.vz)*scale};
- const hot=attacker?sequence.phase!=='result':sequence.phase==='result';
+ const hot=attacker?!receiving:receiving;
  ctx.save();
  try{
   ctx.beginPath();ctx.rect(pane.x,pane.y,pane.w,pane.h);ctx.clip();
@@ -5144,7 +5216,7 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
   ctx.fillStyle=veil;ctx.fillRect(pane.x,pane.y,pane.w,pane.h);
   drawUnit(actor,t,true);
   if(attacker){drawEffects(t,actor,true);drawCinematicFire(sequence,actor,pane,t)}
-  else drawEffects(t,actor);
+  else{drawIncomingRounds(sequence,actor,pane,t);drawEffects(t,actor)}
   if(!hot){ctx.fillStyle='#10192438';ctx.fillRect(pane.x,pane.y,pane.w,pane.h)}
   ctx.fillStyle='#101820d9';ctx.fillRect(pane.x,pane.y,pane.w,43);
   const labelWidth=drawAttackPartHP(sequence,pane,subject,t)-pane.x-20;
@@ -5153,13 +5225,16 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
   const poweredStage=attacker&&{pullback:'PULLBACK',charge:'STORING ENERGY',impact:'CONTACT'}[subject.attack?.stage];
   const stage=poweredStage||(sequence.phase==='aim'?(subject.turning?'TURNING':priming?'BRACE & PRIME':'WINDUP'):sequence.phase==='fire'?'RELEASE':'RECOVERY');
   const role=attacker&&sequence.reaction?(sequence.w.melee?'RETURN STRIKE / ':'RETURN FIRE / '):'';
-  ctx.fillText((firstPane?'01 / ':'02 / ')+(attacker?role+stage:sequence.phase==='result'?'IMPACT':'TARGET'),pane.x+13,pane.y+15,labelWidth);
+  ctx.fillText((firstPane?'01 / ':'02 / ')+(attacker?role+stage:receiving?'IMPACT':'TARGET'),pane.x+13,pane.y+15,labelWidth);
   ctx.fillStyle='#f2eee3';ctx.font='700 14px Inter,Arial,sans-serif';
   ctx.fillText(subject.name,pane.x+13,pane.y+34,labelWidth);
   ctx.fillStyle='#101820e8';ctx.fillRect(pane.x,pane.y+pane.h-31,pane.w,31);
   ctx.fillStyle=hot?'#f3d19a':'#aec0c3';ctx.font='600 11px Inter,Arial,sans-serif';
-  const detail=attacker?sequence.w.name:sequence.result||(subject.kind?'HULL':sequence.part.toUpperCase());
-  ctx.fillText(detail,pane.x+13,pane.y+pane.h-11);
+  const contact=sequence.contact,multi=sequence.contacts?.length>1;
+  const contactLabel=contact&&multi?`${contact.index+1}/${sequence.contacts.length} · ${contact.hit?
+   (sequence.part==='shield'?'SHIELD':subject.kind?'HULL':ATTACK_PART_LABEL[contact.part])+(contact.damage?'  −'+contact.damage:''):'MISS'}`:'';
+  const detail=attacker?sequence.w.name:sequence.result||contactLabel||(subject.kind?'HULL':sequence.part.toUpperCase());
+  ctx.fillText(detail,pane.x+13,pane.y+pane.h-11,pane.w-26);
  }finally{ctx.restore();origin=previousOrigin;scale=previousScale}
  ctx.strokeStyle=hot?'#d8ad65aa':'#8faeb14d';ctx.lineWidth=1;
  ctx.strokeRect(pane.x+.5,pane.y+.5,pane.w-1,pane.h-1);
@@ -5172,7 +5247,9 @@ function drawAttackCamera(t){
  const panes=stacked?
   [{x:margin,y,w:width,h:(height-gap)/2},{x:margin,y:y+(height+gap)/2,w:width,h:(height-gap)/2}]:
   [{x:margin,y,w:(width-gap)/2,h:height},{x:margin+(width+gap)/2,y,w:(width-gap)/2,h:height}];
- ctx.save();ctx.fillStyle='#060d15de';ctx.fillRect(0,0,W,H);
+ ctx.save();
+ ctx.globalAlpha=smoothRange(.07,.29,t-sequence.start);
+ ctx.fillStyle='#060d15de';ctx.fillRect(0,0,W,H);
  if(sequence.reaction){
   drawAttackPane(sequence,panes[0],sequence.target,false,t);
   drawAttackPane(sequence,panes[1],sequence.actor,true,t);
@@ -5194,7 +5271,7 @@ function draw(ts){
   else if(mode==='hangar'){hangar(clock);lastHangarPaint=ts}
   canvasMode=mode;
  }
- effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);requestAnimationFrame(draw);
+ effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.light&&!e.broken?5:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);requestAnimationFrame(draw);
 }
 canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();zoomField(e.deltaY<0?1.12:1/1.12)},{passive:false});
 function screenTile(clientX,clientY){

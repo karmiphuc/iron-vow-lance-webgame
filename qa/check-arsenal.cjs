@@ -66,8 +66,10 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
  for(const id of ['breaker','cleaver','piledriver','hailstorm','rampart']){
   assert.ok(await run(`(async()=>{
    const u=current(),target=battle.units[3],w=weapon('${id}');u.ap=8;target.hp.left=target.max.left;
+   const effectStart=effects.length;
    await shoot(u,target,'left',w);
-   return u.ap===8-w.ap&&target.hp.left<target.max.left&&effects.at(-3).kind===w.id;
+   return u.ap===8-w.ap&&target.hp.left<target.max.left&&
+    effects.slice(effectStart).some(effect=>effect.type==='shot'&&effect.kind===w.id);
   })()`),id);
  }
  assert.equal(run(`(()=>{

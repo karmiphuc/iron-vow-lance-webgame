@@ -42,16 +42,43 @@ async function salvo(id,miss){
  assert.equal(create({storage:new Map(sim.storage)}).run('muted'),true);
  sim.run("$('#sound').onclick()");
  await sim.flush();
- assert.equal(sim.run('combatSamples.size'),5);
+ assert.equal(sim.run('combatSamples.size'),11);
  const initialHP=sim.run('battle.units[3].hp.body');
+ if(id==='rifle'){
+  sim.run(`const shooter=current(),target=battle.units[3],w=weapon('rifle');
+   const chance=hitChance(shooter,target,'body',w);
+   const rolls=[0,.999,.86*chance,.999,.93*chance,0,.999,0];
+   let index=0;
+   Math.random=()=>rolls[index++]??0;
+   const riflePlan=planVolley(shooter,target,'body',w,false);
+   index=0;`);
+ }
  const attack=sim.run(`shoot(current(),battle.units[3],'body',weapon('${id}'))`);
+ const changes=[];
+ let previous=JSON.stringify(sim.run('battle.units[3].hp'));
  while(timers.length){
   const {callback,ms}=timers.shift();
   sim.run(`clock+=${ms}/1000`);
   callback();
   await sim.flush();
+  const next=JSON.stringify(sim.run('battle.units[3].hp'));
+  if(next!==previous){changes.push({at:sim.run('clock'),part:sim.run('battle.units[3].hitPart')});previous=next}
  }
  await attack;
+ if(id==='rifle'){
+  const shots=plays.filter(entry=>entry.cue==='rifle-report');
+  const hits=plays.filter(entry=>entry.cue==='plate-strike');
+  assert.equal(shots.length,8);
+  assert.equal(hits.length,5);
+  const landed=JSON.parse(sim.run('JSON.stringify(riflePlan.rounds)')).flatMap((round,index)=>round.hit?[{...round,index}]:[]);
+  const travel=sim.run("attackProfile(current(),'rifle').travel");
+  assert.deepEqual(changes.map(change=>change.part),landed.map(round=>round.part));
+  for(const [i,round] of landed.entries()){
+   assert.ok(Math.abs(hits[i].at-shots[round.index].at-travel)<1e-6,'each impact follows its own report');
+   assert.ok(Math.abs(hits[i].at-changes[i].at-.005)<1e-6,'impact audio and HP change share a contact');
+  }
+  return;
+ }
  assert.deepEqual(plays.map(entry=>entry.cue),['pod-arm','rocket-launch','rocket-launch','missile-hit','missile-hit']);
  const [arm,first,second,firstImpact,lastImpact]=plays;
  const near=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-6,`${id} ${actual} != ${expected}`);
@@ -68,5 +95,6 @@ async function salvo(id,miss){
 (async()=>{
  await salvo('missile',false);
  await salvo('locust',true);
- console.log('PASS: both missile launchers use the authored arming, paired ignition, and synchronized detonation sounds on hits and misses.');
+ await salvo('rifle',false);
+ console.log('PASS missile arming, paired ignition and detonation; eight rifle reports with five independently timed hits, part HP changes and three silent misses.');
 })().catch(error=>{console.error(error);process.exitCode=1});

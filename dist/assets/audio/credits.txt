@@ -1,0 +1,13 @@
+Iron Vow ballistic audio
+
+The rifle, rotary, and rail reports use "AR15 rifle shot" by michorvath.
+https://freesound.org/people/michorvath/sounds/427596/
+
+The shotgun and cannon reports use "20 gauge shotgun gunshot" by michorvath.
+https://freesound.org/people/michorvath/sounds/427595/
+
+Plate and shield contacts use "Metal Radiator Hit Bang Impact 96kHz.flac" by qubodup.
+https://freesound.org/people/qubodup/sounds/50674/
+
+All three recordings are CC0. The Iron Vow cues use edited excerpts and
+original synthesized layers. The edit recipe is tools/render_ballistic_audio.py.
