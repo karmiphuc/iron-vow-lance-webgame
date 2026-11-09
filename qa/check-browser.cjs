@@ -72,7 +72,7 @@ async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,c
   const executablePath=browserPath();
   if(!executablePath&&!existsSync(chromium.executablePath()))throw Error('Install Chromium with npx playwright install chromium in qa, or set IRON_VOW_CHROME.');
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
-  for(const mobile of [false,true])for(const scenario of scenarios){
+  async function checkDevice(mobile){for(const scenario of scenarios){
    const label=(mobile?'mobile touch':'desktop')+' '+scenario.name;
    const context=await browser.newContext({
     ...(mobile?{...devices['iPhone 13'],deviceScaleFactor:1}:{viewport:{width:1440,height:1000}}),
@@ -94,7 +94,9 @@ async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,c
     try{await page.screenshot({path:capture,timeout:3000});console.error('Browser failure screenshot '+capture)}catch{}
     throw Error(label+' failed: '+error.message,{cause:error});
    }finally{await context.close()}
-  }
+  }}
+  const results=await Promise.allSettled([checkDevice(false),checkDevice(true)]);
+  for(const result of results)if(result.status==='rejected')throw result.reason;
  }finally{
   try{await browser?.close()}finally{if(server)await new Promise(done=>server.close(done))}
  }

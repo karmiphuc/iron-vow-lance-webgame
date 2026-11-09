@@ -14,6 +14,8 @@ module.exports=async function checkReaver({page,mobile,origin,tap}){
  const result=await page.evaluate(async()=>{
   const foe=battle.units.find(u=>u.frame===REAVER_FRAME),ally=current();
   await Promise.all(REAVER_ATLASES.map(key=>motionImages[key].decode()));
+  const atlas=window.IRON_VOW_FOUNDRY_ART[foundryModel(foe.frame)];
+  const hd=atlas.cell===640&&REAVER_ATLASES.every(key=>motionImages[key].naturalWidth===2560&&motionImages[key].naturalHeight===3200);
   const [right,left]=[foe.hp.right,foe.hp.left];
   const variants=[[0,0],[0,left],[right,0],[right,left]].map(([r,l],i)=>{
    foe.hp.right=r;foe.hp.left=l;
@@ -25,9 +27,9 @@ module.exports=async function checkReaver({page,mobile,origin,tap}){
   ally.x=ally.vx=x;ally.z=ally.vz=z;
   for(const other of battle.units)if(other!==foe&&other!==ally){other.alive=false;other.hp.body=0}
   lockedTarget=foe.id;renderBattle();
-  return {contract:battle.contract.id,team:foe.team,name:foe.name,paint:foe.paint,trim:foe.trim,variants};
+  return {contract:battle.contract.id,team:foe.team,name:foe.name,paint:foe.paint,trim:foe.trim,variants,hd};
  });
- assert.deepEqual(result,{contract:'corridor',team:'enemy',name:'REAVER 3',paint:null,trim:null,variants:[true,true,true,true]});
+ assert.deepEqual(result,{contract:'corridor',team:'enemy',name:'REAVER 3',paint:null,trim:null,variants:[true,true,true,true],hd:true});
  assert.match(await page.locator('#target-toggle').textContent(),/MEDIUM\+/);
  await tap('#end');
  await page.waitForFunction(()=>activeCinematic?.actor.frame===REAVER_FRAME&&activeCinematic.phase==='aim'&&foundryRender(activeCinematic.actor,clock,true).index===11);
