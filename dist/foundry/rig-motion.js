@@ -192,10 +192,8 @@ const colors=[
  {p:cream,s:0x454836,a:0xbf602a},{p:cream,s:0x5c5446,a:0xcf702a},{p:cream,s:0x323c43,a:0xd6a030},
  null,null,{p:cream,s:0x45422f,a:0xc8662a}
 ];
-const hostile={p:0xa93036,s:0x382529,a:0xed634f};
 function palette(model,team,paint,trim){
- if(team==='enemy')return hostile;
- const base=colors[model];
+ const base=team==='enemy'?null:colors[model];
  if(!paint&&!trim)return base;
  const color={...base};
  if(paint)color.p=parseInt(paint.slice(1),16);

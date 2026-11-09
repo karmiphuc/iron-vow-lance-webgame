@@ -15,17 +15,18 @@ module.exports=async function checkLineInfantry({page,mobile,origin,tap}){
  const atlases=await page.evaluate(async()=>{
   const unit=battle.units.find(u=>u.frame===LINE_INFANTRY_FRAME);
   const armed=motionImages['foundry-6-motion'],unarmed=motionImages['foundry-6-unarmed'];
-  await Promise.all([armed.decode(),unarmed.decode()]);
+  await Promise.all([armed,unarmed,moduleImage('foundry-6-motion-paint'),moduleImage('foundry-6-unarmed-paint')].map(im=>im.decode()));
   const view=foundryRender(unit,clock);
   const armHP=unit.hp.right;
   unit.hp.right=0;
-  const disabled=foundryRender(unit,clock).surface===unarmed;
+  const disabled=foundryRender(unit,clock).surface===foundryPaint(unarmed,'foundry-6-unarmed',unit.paint,unit.trim,true);
   unit.hp.right=armHP;
-  return {name:unit.name,paint:unit.paint,armed:armed.naturalWidth,unarmed:unarmed.naturalWidth,primary:view.primary,
+  return {name:unit.name,painted:view.surface!==armed,livery:HOSTILE_LIVERIES.some(([p,s])=>unit.paint===p&&unit.trim.s===s),armed:armed.naturalWidth,unarmed:unarmed.naturalWidth,primary:view.primary,
    muzzle:view.anchors.muzzle,disabled};
  });
  assert.equal(atlases.name,'LINE INFANTRY 1');
- assert.equal(atlases.paint,null,'preserves the approved service paint');
+ assert.equal(atlases.livery,true);
+ assert.equal(atlases.painted,true);
  assert.equal(atlases.armed,1280);
  assert.equal(atlases.unarmed,1280);
  assert.equal(atlases.disabled,true);

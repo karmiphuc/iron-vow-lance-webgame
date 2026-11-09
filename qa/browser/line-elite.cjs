@@ -17,7 +17,8 @@ module.exports=async function checkLineElite({page,mobile,origin,tap}){
   const mask=moduleImage(atlas.key+'-paint'),disabledMask=moduleImage(atlas.unarmedKey+'-paint');
   await Promise.all([armed,unarmed,mask,disabledMask].map(img=>img.decode()));
   const defaultView=foundryRender(foe,clock);
-  const authoredFinish=defaultView.surface===armed&&foe.paint===null;
+  const livery=HOSTILE_LIVERIES.some(([paint,trim])=>foe.paint===paint&&foe.trim.s===trim);
+  const painted=defaultView.surface!==armed&&defaultView.surface===foundryPaint(armed,atlas.key,foe.paint,foe.trim,atlas.paintBlend);
   const armHP=foe.hp.right;
   foe.hp.right=0;
   const disabled=foundryRender(foe,clock).surface===foundryPaint(unarmed,atlas.unarmedKey,foe.paint,foe.trim,atlas.paintBlend);
@@ -44,12 +45,13 @@ module.exports=async function checkLineElite({page,mobile,origin,tap}){
     if(a||b)leak++;
    }
   }
-  return {contract:battle.contract.id,name:foe.name,disabled,authoredFinish,primary,secondary,bare,leak};
+  return {contract:battle.contract.id,name:foe.name,disabled,livery,painted,primary,secondary,bare,leak};
  });
  assert.equal(result.contract,'corridor');
  assert.equal(result.name,'LINE INFANTRY ELITE 1');
  assert.equal(result.disabled,true);
- assert.equal(result.authoredFinish,true);
+ assert.equal(result.livery,true);
+ assert.equal(result.painted,true);
  assert.ok(result.primary>500&&result.secondary>50&&result.bare>100,JSON.stringify(result));
  assert.equal(result.leak,0,'each paint channel preserves the other layer and the mechanical surfaces');
  await tap('#end');

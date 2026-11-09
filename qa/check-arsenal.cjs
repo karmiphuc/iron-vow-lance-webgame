@@ -59,7 +59,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
  tab('strike');click('[data-equip="rampart"]');
  click('#remove-melee');assert.equal(run('save.units[2].melee'),undefined);
  run("createBattle(0,false,true);selected=0;action='move';renderBattle();Math.random=()=>0");
- assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>u.paint===null&&u.trim===null&&activeWardenVisual(u).modular)"));
+ assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>HOSTILE_LIVERIES.some(([p,s])=>u.paint===p&&u.trim.s===s)&&activeWardenVisual(u).modular)"));
  click('#strike');assert.equal(run('action'),'strike');
  run('persist()');
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).sortie.action"),'strike');
@@ -109,5 +109,5 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
   })`));
   run('battlefield(clock)');
  }
- console.log('PASS: all six planted attack atlases, 22 classified weapon previews, per-chassis paint, red hostiles, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
+ console.log('PASS: all six planted attack atlases, 22 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

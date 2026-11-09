@@ -35,6 +35,12 @@ const equippedShield=u=>shieldItem(u?.shield);
 const activeShield=u=>u?.alive&&u.hp.left>0?equippedShield(u):undefined;
 const shieldPercent=shield=>Math.round(shield.reduction*100)+'%';
 const SHIELD_HELP='Every landed hit goes to the left arm for 0 AP, from any direction. The arm takes reduced damage and absorbs the whole hit that breaks it. A shield occupies the melee slot. Repair the arm to restore the shield.';
+const HOSTILE_LIVERIES=[
+ ['#626d4f','#373b38'],['#515e4d','#64696b'],
+ ['#626a6d','#373c3e'],['#686967','#623b40'],
+ ['#383b3e','#56634b'],['#3e4142','#6c4046'],
+ ['#6f3d43','#404641'],['#683a40','#676c69']
+];
 const PAINT_PRESETS=[['Factory',null],['Bone','#c6bd9f'],['Olive','#708657'],['Slate','#577eac'],['Sand','#c19960'],['Graphite','#555e69'],['Ivory','#d9ddd5']];
 const RANGED=WEAPONS.filter(w=>!w.melee&&!w.builtIn&&!w.shoulder),MELEE=WEAPONS.filter(w=>w.melee&&!w.builtIn);
 const ARMORY_CLASSES={assault:'Assault',strike:'Strike',melee:'Melee',shields:'Shields'};
@@ -1642,6 +1648,13 @@ function guide(section='orders'){
  bindJournal($('#modal'),true);
 }
 // Tactical simulation: part HP, reachable tiles, AP, cover, level scaling and persistent rewards.
+function hostileLivery(frame,index){
+ // Mix the saved contract roll with the encounter and unit identity so reloads keep the same colors.
+ const key=[save.day,battle.contract.id,save.dispatch?.sizes.join(''),frame,index].join('/');
+ let hash=2166136261;
+ for(const char of key)hash=Math.imul(hash^char.charCodeAt(0),16777619);
+ return HOSTILE_LIVERIES[((hash^(hash>>>16))>>>0)%HOSTILE_LIVERIES.length];
+}
 function makeUnit(i,team,x,z){
  const ally=team==='ally',aux=ally&&i===AUX_SLOT?battle.aux:null;
  const frame=aux?aux.frame:ally?pilotFrame(i):hostileFrame(i,battle.contract,battle.stockHostiles,battle.frontierHellbreaker,battle.picketLineInfantry,battle.corridorElite),f=FRAMES[frame];
@@ -1653,8 +1666,9 @@ function makeUnit(i,team,x,z){
  const max={body,pilot:ally?CREW_HP[pilot]:PILOT_HP[i%PILOT_HP.length],...limbs};
  const hp=Object.fromEntries(Object.entries(max).map(([part,n])=>[part,part==='pilot'?n:deploymentHP(n,u.condition)]));
  if(ally&&woundDays(pilotId(pilot)))hp.pilot=Math.ceil(max.pilot*.65);
+ const [paint,secondary]=ally?[u.paint??null]:hostileLivery(frame,i);
  return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee:u.melee??null,shoulder:u.shoulder,shield:u.shield,
-  paint:ally?u.paint??null:null,trim:ally?u.trim:null,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
+  paint,trim:ally?u.trim:{s:secondary},upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
 }
 const sortiePilot=u=>u.index===AUX_SLOT?save.reservePilots[battle.aux.pilotId]:save.units[u.index];
 const sortieHull=u=>u.index===AUX_SLOT?save.reserve[u.frame]:save.units[u.index];
