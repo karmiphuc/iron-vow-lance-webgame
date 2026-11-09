@@ -98,6 +98,40 @@ const create=require('./sim-harness.cjs');
  assert.equal(live.run('current().ap'),3);
  assert.equal(live.run("effects.filter(e=>e.type==='boom').length"),1);
 
+ const exchanges=create({random:()=>0});
+ exchanges.run(`createBattle(0,false,false,[0]);battle.busy=true;const ally=current(),foe=battle.units[1];
+  foe.x=ally.x+1;foe.z=ally.z;ally.heading=FIELD_HEADINGS[2];
+  const moments=[];const cue=waitAttack;
+  waitAttack=(ms,sequence)=>{
+   moments.push({active:!!activeCinematic&&activeCinematic===sequence,sequence,actor:sequence?.actor.id,
+    reaction:sequence?.reaction,phase:sequence?.phase,prime:animationPose(sequence?.actor??ally,clock).primePhase});
+   return cue(ms,sequence);
+  };`);
+ const exchange=exchanges.run("engage(ally,foe,'body',weapon('rifle'))");
+ assert.equal(exchanges.run("activeCinematic?.actor===ally&&ally.turning"),true,'split screen opens before the turning beat');
+ await exchange;
+ assert.ok(exchanges.run("moments.every(m=>m.active&&m.sequence===moments[0].sequence)"),'one uninterrupted split screen');
+ assert.ok(exchanges.run("moments.some(m=>m.actor===ally.id&&m.prime==='step')"),'initial attack plants inside split screen');
+ assert.ok(exchanges.run("moments.some(m=>m.actor===foe.id&&m.reaction&&m.phase==='fire')"),'return shot is shown');
+ assert.equal(exchanges.run('activeCinematic'),null);
+ assert.equal(exchanges.run('ally.ap'),5);
+ assert.equal(exchanges.run('foe.ap'),8);
+
+ const hostile=create({random:()=>0});
+ hostile.run(`createBattle(0,false,false,[0,1]);battle.busy=true;battle.phase='enemy';
+  const [first,second,foe]=battle.units;first.x=foe.x+1;first.z=foe.z;second.x=foe.x;second.z=foe.z+1;
+  const openings=[];const open=beginAttackCamera;
+  beginAttackCamera=(...args)=>{const shot=open(...args);if(shot)openings.push(shot);return shot};
+  const attack=target=>engage(foe,target,'body',weapon('rifle'));`);
+ const skipped=hostile.run('const pending=attack(first);skipAttackCamera();pending');
+ await skipped;
+ assert.equal(hostile.run('activeCinematic'),null);
+ assert.equal(hostile.run('first.reacted'),true,'skip still resolves the eligible counter');
+ await hostile.run('attack(second)');
+ assert.equal(hostile.run('openings.length'),2,'a later enemy exchange also opens the camera');
+ assert.equal(hostile.run('openings[1].actor===second&&openings[1].reaction'),true);
+ assert.equal(hostile.run('activeCinematic'),null);
+
  const miss=create({random:()=>.9999});
  miss.run('createBattle(0);battle.busy=true');
  await miss.run("shoot(current(),battle.units.find(u=>u.kind==='tank'),'body')");
