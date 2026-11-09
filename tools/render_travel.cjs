@@ -17,7 +17,6 @@ require('../dist/foundry/rig-motion.js');
 const {V3,buildRig,animateMech,mountPoints}=window.IronVowFoundryRig;
 const stock=['warden','kestrel','basilisk'],native=['gatecrasher','cicada','hellbreaker'];
 const knownTiles=[[0,7,8,12,15],[0,7,8,12,15],[0,7,12,15]];
-const poses=JSON.parse(execFileSync(process.execPath,[path.join(__dirname,'sample_warden_motion.cjs'),'--arsenal']));
 const texCache=new WeakMap(),materials=new WeakMap();
 const normalMat=new T.Matrix3(),p=V3(),n=V3();
 const shadeLight=V3(-.43,.83,.36).normalize();
@@ -173,6 +172,7 @@ async function bake(spec){
  let root,sample,span,ground=.84,rows=8;
  if(spec.stock!==undefined){
   const {scene}=await glTF(path.join(dist,'rig-bench',spec.key+'.glb'));root=scene;span=9.65;
+  const poses=JSON.parse(execFileSync(process.execPath,[path.join(__dirname,'sample_warden_motion.cjs'),'--arsenal','--model',spec.key]));
   sample=row=>{stockPose(root,row===0?poses.idle:row===7?poses.aims[2].pose:poses.gait[(row-1)*2]);root.updateMatrixWorld(true);return stockPoints(root)};
  }else if(spec.native){
   const {scene,animations}=await glTF(path.join(dist,'rig-bench/prototypes',spec.key+'.glb'));root=scene;

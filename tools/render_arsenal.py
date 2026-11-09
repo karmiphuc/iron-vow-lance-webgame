@@ -176,7 +176,7 @@ def hardpoints(pose):
     return data
 
 def body_sheets(tmp):
-    motion=json.loads(subprocess.check_output(["node",str(HERE/"sample_warden_motion.cjs"),"--arsenal"]))
+    motion=json.loads(subprocess.check_output(["node",str(HERE/"sample_warden_motion.cjs"),"--arsenal","--model",model]))
     poses=[("gait",None,p) for p in motion["gait"]]
     for name,rows in [("kick",motion["kicks"]),("aim",motion["aims"]),("death",motion["deaths"]),*motion["strikes"].items()]:
         poses.extend((name,row["level"],row["pose"]) for row in rows)

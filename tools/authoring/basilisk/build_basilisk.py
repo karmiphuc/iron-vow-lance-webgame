@@ -230,10 +230,10 @@ def handle(parent,a,b,r=.035):
 
 # Compact waist and overlapping hip skirt leave a dark, convincing joint cavity.
 loft(pelvis,[(-.35,.68,.42,-.46),(.1,.79,.48,-.48),(.25,.65,.38,-.40)],2,.03)
-cyl(pelvis,.24,1.72,(0,-.08,0),2,(1,0,0),16)
+cyl(pelvis,.24,2.28,(0,-.08,0),2,(1,0,0),16)
 for s in [1,-1]:
     panel_outline(pelvis,[(s*.08,.05),(s*.67,.02),(s*.72,-.45),(s*.51,-.68),(s*.10,-.52)],.58,7,.13,.16)
-    panel_outline(pelvis,[(s*.76,.12),(s*1.0,-.01),(s*1.13,-.65),(s*.86,-.79),(s*.73,-.43)],.17,1,.24,-.10)
+    panel_outline(pelvis,[(s*1.04,.12),(s*1.28,-.01),(s*1.41,-.65),(s*1.14,-.79),(s*1.01,-.43)],.17,1,.24,-.10)
     fasteners(pelvis,[(s*.18,-.13,.59),(s*.56,-.15,.59)])
 cyl(spine,.49,.26,(0,.11,0),2,vertices=20)
 for y in [.23,.36,.49]:cyl(spine,.43,.065,(0,y,0),3,vertices=16)
@@ -320,7 +320,8 @@ for side,L in [(1,'L'),(-1,'R')]:
     panel_outline(el,[(side*.31,-.25),(side*.54,-.38),(side*.52,-.79),(side*.28,-.95)],.04,1,.32,-.04)
     for yy in [-.42,-.59,-.76]:box(el,(.10,.045,.27),(side*.48,yy,-.13),3,.008)
     arms[L]=(sh,el,wr)
-    hip=empty('hip.'+L,pelvis,(side*.62,-.1,0));kn=empty('knee.'+L,hip,(0,-1.45,0));an=empty('ankle.'+L,kn,(0,-1.55,0));legs[L]=(hip,kn,an)
+    hip=empty('hip.'+L,pelvis,(side*.90,-.1,0));kn=empty('knee.'+L,hip,(0,-1.45,0));an=empty('ankle.'+L,kn,(0,-1.55,0));legs[L]=(hip,kn,an)
+    # Outboard hip pivots give the thighs clearance; foot IK uses a wider track.
     # Wide thighs taper into a visible circular knee bearing.
     cyl(hip,.31,.70,(0,0,0),2,(1,0,0),20)
     loft(hip,[(-1.20,.25,.27,-.27),(-.91,.43,.39,-.35),(-.30,.45,.42,-.37),(-.08,.31,.27,-.28)],2,.025)
@@ -492,7 +493,7 @@ for vert in bpy.data.objects['elbow.L.geometry'].data.vertices:
 relief('pauldron.L',points)
 for target,vertices in profile['weapon_cutters'].items():relief(target,[v(p) for p in vertices])
 
-root['asset']='BASILISK MARK II / IRON VOW';root['detail_revision']=3;root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
+root['asset']='BASILISK MARK II / IRON VOW';root['detail_revision']=4;root['license']='Original procedural geometry and textures';root['units']='metres';root['forward']='+Z';root['sole_y_relative_ankle']=-.30
 bpy.context.view_layer.update()
 triangles=sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in bpy.data.objects if o.type=='MESH')
 for o in bpy.data.objects:o.select_set(True)

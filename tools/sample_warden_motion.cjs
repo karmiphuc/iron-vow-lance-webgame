@@ -4,6 +4,11 @@ const vm = require('node:vm');
 const path = require('node:path');
 const gaitFrames = 12;
 const kickLevels = [.22, .48, .8];
+// Preserve the approved Warden/Kestrel tracks; Basilisk needs room for its heavy thighs and boots.
+const modelIndex = process.argv.indexOf('--model');
+const model = modelIndex < 0 ? 'warden' : process.argv[modelIndex + 1];
+const hipX = model === 'basilisk' ? .90 : .62;
+const footX = model === 'basilisk' ? 1.06 : .68;
 
 function sample(blend, cycle, recoil, elevation = 0, kneel = 0, melee = null) {
   const pelvis = motion.walkPelvis(blend, cycle, 0, 0, 0, melee?.lunge??0);
@@ -12,8 +17,8 @@ function sample(blend, cycle, recoil, elevation = 0, kneel = 0, melee = null) {
   pelvis.position[2] += kneel*.25;
   const legs = [1, -1].map((side, i) => {
     const foot = motion.gaitFoot(cycle+i*.5);
-    const target = [side*.68, .40+foot.y*blend, side*.18*(1-blend)+foot.z*blend+(i===0?-kneel*.70:0)];
-    const leg = motion.solveLeg(pelvis.position, [side*.62, -.10, 0], pelvis.roll, target);
+    const target = [side*footX, .40+foot.y*blend, side*.18*(1-blend)+foot.z*blend+(i===0?-kneel*.70:0)];
+    const leg = motion.solveLeg(pelvis.position, [side*hipX, -.10, 0], pelvis.roll, target);
     leg.ankle[0] += foot.pitch*blend;
     return leg;
   });
@@ -39,10 +44,10 @@ function attackSample(prime=1, recoil=0, elevation=.10, melee=null, leadSide='L'
   // melee lunge compresses/translates the pelvis. No foot sliding on recoil.
   pose.leadSide=leadSide;
   pose.footTargets=leadSide==='L'
-    ? [[.68,.40+lift,.18+.78*advance],[-.68,.40,-.18]]
-    : [[.68,.40,.18],[-.68,.40+lift,-.18+1.14*advance]];
+    ? [[footX,.40+lift,.18+.78*advance],[-footX,.40,-.18]]
+    : [[footX,.40,.18],[-footX,.40+lift,-.18+1.14*advance]];
   pose.legs=pose.footTargets.map((target,i)=>motion.solveLeg(
-    pose.pelvis.position,[(i===0?1:-1)*.62,-.10,0],0,target));
+    pose.pelvis.position,[(i===0?1:-1)*hipX,-.10,0],0,target));
   return pose;
 }
 
