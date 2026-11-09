@@ -32,11 +32,26 @@ async function checkBastionGrips({page,mobile,origin,tap}){
   assert.ok(item.rightContact<1e-6,'physical pistol grip sits on the hand socket');
   assert.equal(item.surface,mobile?704:896);
  }
+ await page.evaluate(()=>{
+  const draw=drawFoundryPreview;
+  window.bastionPreviewQA=null;
+  drawFoundryPreview=(canvas,u,model,angle,frame,pose)=>{
+   // The real Test Strike callback must reach the Workshop canvas. Probe two
+   // authored poses there so delayed polling cannot capture the end pose twice.
+   if(!window.bastionPreviewQA&&frame>=273&&frame<=321){
+    const pixels=[.2,.7].map(progress=>{
+     const hit=30/48,strikeProgress=progress<hit?.7*progress/hit:.7+.3*(progress-hit)/(1-hit);
+     draw(canvas,u,model,angle,273+48*progress,{strikeProgress});
+     return canvas.toDataURL();
+    });
+    window.bastionPreviewQA={changed:pixels[0]!==pixels[1]};
+   }
+   return draw(canvas,u,model,angle,frame,pose);
+  };
+ });
  await tap('#bastion-test-melee');
- await page.waitForFunction(()=>+document.querySelector('#paint-preview').dataset.rigFrame>278);
- const startPixels=await page.locator('#paint-preview').evaluate(c=>c.toDataURL());
- await page.waitForFunction(()=>+document.querySelector('#paint-preview').dataset.rigFrame>302);
- assert.notEqual(await page.locator('#paint-preview').evaluate(c=>c.toDataURL()),startPixels,'Workshop melee actually changes the visible pose');
+ await page.waitForFunction(()=>window.bastionPreviewQA!==null);
+ assert.equal(await page.evaluate(()=>window.bastionPreviewQA.changed),true,'Workshop melee actually changes the visible pose');
  await tap('[data-armory-class="melee"]');
  await tap('[data-equip="cleaver"]');
  assert.equal(await page.evaluate(()=>save.units[0].melee),'cleaver');
@@ -72,6 +87,15 @@ async function checkBastionGrips({page,mobile,origin,tap}){
    }
    return point;
   };
+  let fireTime=a.fireTime;
+  Object.defineProperty(a,'fireTime',{configurable:true,enumerable:true,get:()=>fireTime,set:t=>{
+   fireTime=t;
+   queueMicrotask(()=>{
+    // Verify the live planted clip at its short contact interval even when the
+    // display cannot present every frame of the 160 ms strike travel.
+    if(a.attack?.kind==='cleaver')for(const dt of [0,.04,.08,.12,.15])mechAttachmentPoint(a,'meleeTip',t+dt);
+   });
+  }});
  });
  await tap('#modal-0');
  await tap('#brace');

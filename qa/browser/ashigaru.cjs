@@ -20,10 +20,17 @@ module.exports=async function checkAshigaru({page,mobile,origin,tap}){
   for(const other of battle.units)if(other!==u&&other!==a){other.alive=false;other.hp.body=0}
   Object.assign(a,{x:8,z:15,vx:8,vz:15});
   Object.assign(u,{x:8,z:7,vx:8,vz:7});
-  window.ashTrace={walk:[],attacks:[]};
+  window.ashTrace={walk:[],walkTimeline:{},attacks:[]};
   const trace=()=>{
    const rendered=foundryRender(u,clock),attack=u.attack;
-   if(u.motion)window.ashTrace.walk.push({frame:rendered.index,step:u.motion.duration});
+   if(u.motion){
+    const half=u.motion.gaitBase%2;
+    window.ashTrace.walk.push({frame:rendered.index,step:u.motion.duration,half});
+    // Sample the actual moving unit across each half's full timeline. A slow
+    // browser may display fewer frames during the 290 ms tile traversal.
+    if(!window.ashTrace.walkTimeline[half])window.ashTrace.walkTimeline[half]=Array.from({length:12},(_,i)=>
+     foundryRender(u,u.motion.start+u.motion.duration*(i+.5)/12).index);
+   }
    if(attack&&activeCinematic?.actor===u){
     const clip=atlas.attacks[weapon(attack.kind).scout];
     window.ashTrace.attacks.push({id:attack.kind,frame:rendered.index,belongs:clip.includes(rendered.index),
@@ -54,7 +61,8 @@ module.exports=async function checkAshigaru({page,mobile,origin,tap}){
   await page.waitForFunction(round=>battle?.turn===round&&!battle.busy,round);
  }
  const trace=await page.evaluate(()=>window.ashTrace);
- assert.ok(new Set(trace.walk.map(f=>f.frame)).size>=12,'both quickstep halves are played');
+ assert.deepEqual([...new Set(trace.walk.map(f=>f.half))].sort(),[0,1],'both quickstep halves are played');
+ assert.equal(new Set(Object.values(trace.walkTimeline).flat()).size,24,'all quickstep poses render across the two halves');
  assert.ok(trace.walk.every(f=>f.step===.29),'scout tile traversal takes 290 ms');
  for(const [id,range,reach] of [['needle-carbine',3,.07],['flechette-scattergun',2,.04],['signal-knife',1,.11]]){
   const clip=trace.attacks.filter(f=>f.id===id);

@@ -12,6 +12,7 @@ global.createImageBitmap=async blob=>{
  canvas.getContext('2d').drawImage(im,0,0);return canvas;
 };
 require('../dist/rig-bench/vendor/GLTFLoader.js');
+require('../dist/foundry/behemoth-core.js');
 require('../dist/foundry/chassis.js');
 require('../dist/foundry/rig-motion.js');
 const {V3,buildRig,animateMech,mountPoints}=window.IronVowFoundryRig;

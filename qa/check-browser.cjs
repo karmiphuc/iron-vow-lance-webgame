@@ -70,6 +70,8 @@ function browserPath(){
 }
 
 async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryDestruction,checkRosterDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkAshigaru,checkAero,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed,checkChassisScale]){
+ const timeout=Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000);
+ if(!Number.isFinite(timeout)||timeout<1000||timeout>120000)throw Error('IRON_VOW_QA_TIMEOUT_MS must be between 1000 and 120000.');
  const server=origin?null:await serve();
  let browser;
  try{
@@ -89,7 +91,7 @@ async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,c
     reducedMotion:'reduce'
    });
    const page=await context.newPage(),errors=[];
-   page.setDefaultTimeout(15000);
+   page.setDefaultTimeout(timeout);
    page.on('pageerror',e=>errors.push(e.message));
    page.on('response',res=>{
     if(res.status()>=400&&new URL(res.url()).origin===url.origin)errors.push(res.status()+' '+res.url());
@@ -101,14 +103,20 @@ async function checkBrowser(origin,scenarios=[checkAttackExchange,checkShields,c
     console.log('PASS '+label);
     break;
    }catch(error){
+    console.error(label+' failed: '+error.message);
     const capture=join(mkdtempSync(join(tmpdir(),'iron-vow-qa-')),'failure.png');
     try{await page.screenshot({path:capture,timeout:3000});console.error('Browser failure screenshot '+capture)}catch{}
     if(attempt<2)console.error('RETRY '+label+' ('+(attempt+1)+'/2): '+error.message);
     else throw Error(label+' failed: '+error.message,{cause:error});
    }finally{await context.close()}
   }}}
-  const results=await Promise.allSettled([checkDevice(false),checkDevice(true)]);
-  for(const result of results)if(result.status==='rejected')throw result.reason;
+  if(process.env.IRON_VOW_QA_SERIAL==='1'){
+   await checkDevice(false);
+   await checkDevice(true);
+  }else{
+   const results=await Promise.allSettled([checkDevice(false),checkDevice(true)]);
+   for(const result of results)if(result.status==='rejected')throw result.reason;
+  }
  }finally{
   try{await browser?.close()}finally{if(server)await new Promise(done=>server.close(done))}
  }

@@ -156,7 +156,7 @@ const DIMS=[
   {stance:.86,py:2.68,spY:.36,neck:[0,1.86,.62],shX:1.86,shY:1.5,up:1.0,fo:1.0,hipX:1.04,legA:1.25,legB:1.3,ankleH:.42,restX:.96,restZ:.08,lift:.5,reverse:false,scale:1},
   {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1},
   {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1},
-  {quad:true,py:2.7,spY:.6,neck:[0,1.33,2.23],shX:1.86,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.315,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[0,.5,.5,0],sway:.05}
+  {quad:true,py:2.7,spY:.6,neck:[0,1.52716,1.15736],shX:1.86,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.315,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[0,.5,.5,0],sway:.05}
 ];
 function warden(K,M){
   const {pelvis,spine,neck,arms,legs}=K,{p,s,a,frame,joint,steel}=M,s2=M.s;
@@ -817,7 +817,42 @@ function oni(K,M){
   B.shield=sh;
 }
 
-/* ======================= BEHEMOTH: tetrapod artillery, humanoid upper body (AC tetra) ======================= */
+/* Authored Gatecrasher core, refitted to Behemoth's spine. Decode geometry lazily
+   so the other Foundry chassis do not allocate the imported vertex buffers. */
+let behemothCoreGeometry;
+function gatecrasherCore(spine,neck,M){
+  const source=window.IronVowBehemothCore;
+  if(!source)throw Error('Behemoth core geometry is unavailable');
+  if(!behemothCoreGeometry){
+    const unpack=(s,Type)=>{const raw=atob(s),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new Type(bytes.buffer);};
+    behemothCoreGeometry=source.meshes.map(spec=>{
+      const g=new T.BufferGeometry();
+      g.setAttribute('position',new T.BufferAttribute(Float32Array.from(unpack(spec.positions,Int16Array),v=>v/4096),3));
+      g.setAttribute('normal',new T.BufferAttribute(Float32Array.from(unpack(spec.normals,Int8Array),v=>v/127),3));
+      g.setAttribute('uv',new T.BufferAttribute(unpack(spec.uvs,Float32Array),2));
+      g.setIndex(new T.BufferAttribute(unpack(spec.index,Uint16Array),1));
+      g.computeBoundingSphere();return g;
+    });
+  }
+  const materials={armor:M.p,plate:M.s,paint:M.a,badge:M.a,frame:M.frame,steel:M.steel,
+    chrome:M.steel,void:SH.black,rubber:SH.rubber,optic:M.visor,signal:SH.red};
+  source.meshes.forEach((spec,i)=>{
+    // The raised number belongs to Gatecrasher; Behemoth keeps its own 22 decal.
+    if(spec.material==='mark')return;
+    const mat=materials[spec.material];
+    if(!mat)throw Error('Unmapped Behemoth core material '+spec.material);
+    B.part=spec.part;
+    const mesh=new T.Mesh(behemothCoreGeometry[i],mat);
+    mesh.name='BHM Gatecrasher '+spec.part+' / '+spec.material;
+    (spec.part==='pilot'?neck:spine).add(mesh);
+    reg(mesh,mat,{part:spec.part,detach:spec.material==='plate'||spec.material==='badge'});
+    if(spec.material==='optic')B.visor.push(mesh);
+  });
+  B.part='body';
+  Dec(spine,M.numTex,.396,.396,-.8547,1.818,1.0258,0,0,0,{detachWith:'body'});
+}
+
+/* ======================= BEHEMOTH: Gatecrasher core on a tetrapod artillery base ======================= */
 function behemoth(K,M){
   const {pelvis,spine,neck,arms,legs}=K,{p,frame,joint,steel}=M,s2=M.s,A=M.a;
   B.part='body';
@@ -852,40 +887,15 @@ function behemoth(K,M){
   S(pelvis,s2,1.5,.6,.5,0,.15,-1.75,0,0,0,{bev:.05});vent(pelvis,frame,1.1,.4,6,0,.18,-2.0,0,PI,0,.06);
   for(const x of [1,-1]){Cy(pelvis,joint,.18,.24,.5,x*.55,.4,-1.95,PI/2+.3,0,0,14);Cy(pelvis,M.stack,.16,.16,.02,x*.55,.32,-2.19,PI/2+.3,0,0,14,{shadow:false});const top=new T.Object3D();top.position.set(x*.55,.3,-2.25);pelvis.add(top);B.stackTops.push(top);
     tube(pelvis,SH.rubber,[[x*.75,.5,-1.5],[x*.95,.62,-1.0],[x*1.05,.5,-.6]],.05,12);}
-  /* Headless artillery hull and forward command bay. */
+  /* Gatecrasher's inset cockpit and layered chest sit on the tetrapod slew ring. */
   B.part='body';
   Cy(spine,joint,.68,.79,.27,0,.07,0,0,0,0,24);
   Cy(spine,frame,.78,.78,.078,0,.22,0,0,0,0,24);
-  S(spine,frame,2.05,.30,2.62,0,.36,.04,0,0,0,{bev:.10});
-  P(spine,p,[[-1.65,.57],[1.00,.54],[1.52,.82],[1.61,1.32],[1.24,1.75],[-1.18,1.75],[-1.67,1.43],[-1.82,.91]],2.70,'x',0,0,0,0,0,0,{bev:.13});
-  S(spine,s2,2.65,.21,1.75,0,1.64,-.29,0,0,0,{bev:.075});
-  for(const side of [-1,1]){
-    const y=side*1.36;
-    P(spine,s2,[[-1.43,.74],[.98,.71],[1.45,1.02],[1.17,1.55],[-1.19,1.56],[-1.53,1.34]],.17,'x',y,0,0,0,0,0,{bev:.045});
-    P(spine,p,[[-1.12,.92],[.85,.87],[1.12,1.10],[.92,1.46],[-1.0,1.46],[-1.2,1.26]],.10,'x',side*1.49,0,0,0,0,0,{bev:.035});
-    S(spine,A,.053,.044,.83,side*1.551,1.02,-.36,0,0,0,{bev:.008});
-    for(const z of [-.94,.81])for(const h of [1.02,1.37])bolts(spine,[[side*1.553,h,z]],'x',.035);
-    for(let i=0;i<6;i++)S(spine,frame,.055,.082,.052,side*1.549,1.36,-.68+.12*i,0,0,0,{bev:.004});
-    S(spine,s2,.81,.10,1.1,side*.69,1.80,-.30,0,0,0,{bev:.043});
-    S(spine,p,.66,.073,.91,side*.69,1.86,-.30,0,0,0,{bev:.026});
-    for(const z of [-.64,.04])bolts(spine,[[side*.45,1.902,z],[side*.93,1.902,z]],'y',.030);
-  }
-  S(spine,s2,1.96,.77,.84,0,1.07,1.53,0,0,0,{bev:.10});
-  P(spine,p,[[-.89,.72],[.89,.72],[1.04,.93],[1.04,1.34],[.80,1.57],[-.80,1.57],[-1.04,1.34],[-1.04,.93]],.72,'z',0,0,1.84,0,0,0,{bev:.08});
-  S(spine,frame,1.21,.34,.10,0,1.27,2.216,0,0,0,{bev:.047});
-  S(spine,M.visor,.99,.092,.027,0,1.33,2.278,0,0,0,{bev:.023,shadow:false});
-  for(const side of [-1,1]){
-    S(spine,s2,.35,.48,.20,side*.75,1.21,2.17,0,0,side*.10,{bev:.059});
-    S(spine,A,.25,.047,.028,side*.74,.99,2.282,0,0,0,{bev:.01});
-    CZ(spine,steel,.077,.085,side*.743,1.31,2.271,14);
-    CZ(spine,SH.black,.051,.020,side*.743,1.31,2.325,12,{shadow:false});
-  }
-  for(const x of [-.27,.27])S(spine,s2,.037,.123,.035,x,1.33,2.296,0,0,0,{bev:.004});
-  S(spine,frame,.69,.073,.22,0,.72,1.96,0,0,0,{bev:.018});
-  // The pilot hardpoint stays on the integrated command bay.
-  neck.position.set(0,1.33,2.23);
-  const gun=J('mortar.elevation',spine,-.35,2.07,-.73);
-  S(spine,s2,.79,.22,.80,-.35,1.97,-.73,0,0,0,{bev:.065});
+  gatecrasherCore(spine,neck,M);
+  // Raised rear saddle clears the cockpit and preserves the independent mortar track.
+  const gun=J('mortar.elevation',spine,-.847,2.61,-1.095);
+  for(const x of [-1.144,-.55])S(spine,frame,.13,.42,.61,x,2.346,-1.095,0,0,0,{bev:.025});
+  S(spine,s2,.79,.16,.80,-.847,2.522,-1.095,0,0,0,{bev:.045});
   CX(gun,steel,.237,.68,0,0,0,18);
   S(gun,frame,.47,.41,.67,0,0,.18,0,0,0,{bev:.066});
   const barrel=J('mortar.recoil',gun,0,0,0);

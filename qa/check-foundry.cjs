@@ -22,7 +22,7 @@ async function exerciseRigAdapter(){
   dispose(){}
  }
  const THREE={...three,WebGLRenderer:TestRenderer,PMREMGenerator:TestEnvironment};
- const world={THREE,window:{THREE},document:{createElement:()=>createCanvas(320,320)},console:{warn(){}}};
+ const world={atob,THREE,window:{THREE},document:{createElement:()=>createCanvas(320,320)},console:{warn(){}}};
  vm.createContext(world);
  vm.runInContext(fs.readFileSync(path.join(dist,'rig-bench/vendor/GLTFLoader.js'),'utf8'),world);
  vm.runInContext(fs.readFileSync(path.join(dist,'foundry/production-arsenal.js'),'utf8'),world);
@@ -38,7 +38,7 @@ async function exerciseRigAdapter(){
   assert.equal(mounted.model.name,name);
   assert.ok(mounted[hook],id+' has its production hardpoint '+hook);
  }
- for(const file of ['chassis.js','rig-motion.js','renderer.js']){
+ for(const file of ['behemoth-core.js','chassis.js','rig-motion.js','renderer.js']){
   vm.runInContext(fs.readFileSync(path.join(dist,'foundry',file),'utf8'),world);
  }
  const adapter=world.window.IronVowFoundry,scope={};
@@ -73,6 +73,13 @@ async function exerciseRigAdapter(){
  for(const [t,kick] of [[1.66,0],[1.99,.8],[2.24,.5],[2.78,0]]){
   const entry=adapter.draw(artillery,t,{...pose,heading:-Math.PI/4,primePhase:'planted',primeProgress:1,aim:1,recoil:kick},scope,5);
   checkContact(entry);
+  assert.ok(entry.m.build.parts.pilot.some(e=>e.m.parent===entry.m.rig.neck),'inset crew cabin has its own damage part');
+  assert.equal(entry.m.rig.neck.rotation.x,0,'inset cabin stays seated during aiming and recoil');
+  assert.equal(entry.m.rig.neck.rotation.y,0,'inset cabin does not swivel out of the chest');
+  const slit=entry.m.build.visor[0];
+  assert.equal(slit.parent,entry.m.rig.neck,'pilot target and viewing slit share the cabin transform');
+  slit.geometry.computeBoundingBox();
+  assert.ok(slit.geometry.boundingBox.getCenter(new three.Vector3()).length()<.02,'pilot target is centered on the viewing slit');
   assert.equal(entry.primary.model.name,'vesper');
   assert.equal(entry.primary.mount.parent,entry.m.rig.arms.R.so);
   assert.equal(entry.primary.recoil.position.z,-kick*.22);

@@ -24,21 +24,21 @@ module.exports=async function checkWardenMelee({page,mobile,origin,tap}){
    lockedTarget=foe.id;focusBattleCamera(ally,true);renderBattle();
    window.wardenStrikeQA={ally,foe,trace:[],capture:[]};
    let lastCapture=0;
-   setInterval(()=>{
+   const sampleStrike=(t=clock)=>{
     if(!ally.attack)return;
-    const travel=travelVisual(ally,hitstopTime(ally,clock));
+    const travel=travelVisual(ally,hitstopTime(ally,t));
     if(travel?.strikeFrame==null)return;
     const pose=travel.strike;
     const mount=travelMount(travel,ally,weapon,pose.strikeProgress);
-    const blade=weaponPoint(mount,'tip'),effect=mechAttachmentPoint(ally,'meleeTip',clock);
+    const blade=weaponPoint(mount,'tip'),effect=mechAttachmentPoint(ally,'meleeTip',t);
     const actor={...ally,face:1,headingOverride:Math.PI/4};
     const view=activeWardenVisual(actor);
-    const close=view&&wardenMotionFrame(actor,view,animationPose(actor,clock,view));
+    const close=view&&wardenMotionFrame(actor,view,animationPose(actor,t,view));
     window.wardenStrikeQA.trace.push({
      frame:travel.strikeFrame,left:travel.points.gripL,right:travel.points.gripR,soleL:travel.points.soleL,soleR:travel.points.soleR,
      error:Math.hypot(blade.x-effect.x,blade.y-effect.y),close:close?.atlas.key,
     });
-    if(capture&&activeCinematic&&clock-lastCapture>.065){
+    if(capture&&t===clock&&activeCinematic&&clock-lastCapture>.065){
      const margin=Math.max(18,W*.095),width=W-2*margin,height=Math.min(H*.61,width*.42);
      const y=Math.max(50,(H-height)*.51),pane=(width-8)/2;
      const crop=document.createElement('canvas');
@@ -47,7 +47,17 @@ module.exports=async function checkWardenMelee({page,mobile,origin,tap}){
      window.wardenStrikeQA.capture.push(crop.toDataURL('image/webp',.9).split(',')[1]);
      lastCapture=clock;
     }
-   },20);
+   };
+   setInterval(sampleStrike,20);
+   let attack=ally.attack;
+   Object.defineProperty(ally,'attack',{configurable:true,enumerable:true,get:()=>attack,set:value=>{
+    attack=value;
+    if(value)queueMicrotask(()=>{
+     if(attack!==value)return;
+     const profile=attackProfile(ally,weapon);
+     for(let i=0;i<=12;i++)sampleStrike(value.start+value.primeDuration+profile.raise*i/12);
+    });
+   }});
   },{weapon,capture:!!capture});
   await tap('#modal-0');
   await page.waitForFunction(()=>travelVisual(current(),clock)?.source.cell===272);

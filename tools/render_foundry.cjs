@@ -9,6 +9,7 @@ global.window={THREE:T};
 global.document={createElement:()=>createCanvas(1,1)};
 require('../dist/rig-bench/vendor/GLTFLoader.js');
 require('../dist/foundry/production-arsenal.js');
+require('../dist/foundry/behemoth-core.js');
 require('../dist/foundry/chassis.js');
 require('../dist/foundry/rig-motion.js');
 const {V3,worldSpan,ground,buildRig,animateMech,behemothBrace,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;

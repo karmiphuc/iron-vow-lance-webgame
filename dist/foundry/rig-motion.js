@@ -156,7 +156,9 @@ function animateMech(m,I,dt,t){
     ay=clamp(wrapA(Math.atan2(dx,dz)-m.yaw)+Math.asin(Math.min(.45,D.shX*.9*sc/hz)),-.9,.9);el=Math.atan2(dy,hz);}
   m.recoil*=Math.exp(-dt*7);const R0=m.recoil;
   r.spine.rotation.set(S.pitch.x*.18+w*.08+brace*.14-R0*.06+(pd?.55:.3)*dE,ay*m.aim.blend,-p.rotation.z*1.3);
-  r.neck.rotation.set(-el*.35*m.aim.blend+(pd?.45*dE:0),Math.sin(t*.45+m.seed)*.18*(1-m.aim.blend)*(dead?0:1),0);
+  // Behemoth's crew cabin is inset into the imported chest, rather than a swivel head.
+  if(m.build.mods.core===5)r.neck.rotation.set(0,0,0);
+  else r.neck.rotation.set(-el*.35*m.aim.blend+(pd?.45*dE:0),Math.sin(t*.45+m.seed)*.18*(1-m.aim.blend)*(dead?0:1),0);
   const aR=r.arms.R,carrySh=-.28+w*.12*Math.sin(2*PI*g+PI),carryEl=-.62;
   const tot=-PI/2-el,sh0=-.5-.55*el,el0=tot-sh0,b=m.aim.blend;
   if(I.armDead||dead){aR.sh.rotation.set(lerp(-.28,.16,dead?dE:1)+(dead?0:Math.sin(t*3+m.seed)*.03),0,-.2);aR.el.rotation.x=dead?lerp(carryEl,-.1,dE):-.12;}

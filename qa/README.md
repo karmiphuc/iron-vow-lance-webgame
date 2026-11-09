@@ -9,6 +9,11 @@ npm run test:release --prefix qa
 
 The browser runner uses Playwright Chromium when installed, or a supported local Chrome installation. Set `IRON_VOW_CHROME` to a Chromium executable for a custom installation. To install Playwright Chromium, run `npx playwright install chromium` from `qa/`. A missing browser fails the gate. The browser runner starts and stops its own loopback server. The release run hashes the source before and after testing and fails if it changed.
 
+On a software renderer, set `IRON_VOW_QA_SERIAL=1` and
+`IRON_VOW_QA_TIMEOUT_MS=60000` to give each device suite its own GPU time and allow
+for slower model-bench rendering. These settings preserve every scenario and
+assertion. The default remains parallel device checks with a 15-second wait limit.
+
 | Area | Regression checks |
 | --- | --- |
 | Hit visuals | Localized flash, expiry and damage shading on travel sprites, native cinematics, baked fallback and live Foundry. Four battlefield facings, a real desktop attack-camera shot and a real mobile touch shot. |

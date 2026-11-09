@@ -22,15 +22,26 @@ module.exports=async function checkWarden({page,mobile,origin,tap}){
   lockedTarget=foe.id;focusBattleCamera(ally,true);renderBattle();
   Math.random=()=>0;
   window.wardenQA={ally,foe,x,z,move:{x:x+2*dx,z:z+2*dz},samples:[]};
-  window.wardenSample=()=>{
-   const view=travelVisual(ally,clock);
+  window.wardenSample=(t=clock)=>{
+   const view=travelVisual(ally,t);
    if(!view)return null;
    const {atlas,source,row,points}=view;
    return {row,cell:source.cell,left:points.soleL,right:points.soleR,
     recoil:row>=atlas.special.braceKick&&row<atlas.special.braceAim,
     shot:activeCinematic?.phase,
-    close:wardenMotionFrame({...ally,face:1},wardenVisual(ally.frame,ally.weapon,1),animationPose(ally,clock))?.atlas.cell};
+    close:wardenMotionFrame({...ally,face:1},wardenVisual(ally.frame,ally.weapon,1),animationPose(ally,t))?.atlas.cell};
   };
+  // Capture the actual firing event, then probe the brief authored recoil poses.
+  // Timer polling alone can miss the entire kick on a slow software renderer.
+  let fireTime=ally.fireTime;
+  Object.defineProperty(ally,'fireTime',{configurable:true,enumerable:true,get:()=>fireTime,set:t=>{
+   fireTime=t;
+   queueMicrotask(()=>{
+    for(const dt of [.025,.05,.115,.14,.205,.23]){
+     const frame=window.wardenSample(t+dt);if(frame)window.wardenQA.samples.push(frame);
+    }
+   });
+  }});
   setInterval(()=>{const frame=window.wardenSample();if(frame)window.wardenQA.samples.push(frame)},20);
  },lane);
  await tap('#modal-0');

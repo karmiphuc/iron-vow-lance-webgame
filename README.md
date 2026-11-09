@@ -122,6 +122,19 @@ c++ -O3 -std=c++17 tools/foundry-raster.cpp -o /tmp/foundry-raster
 node tools/render_foundry.cjs /tmp/foundry-raster
 ```
 
+Behemoth uses Gatecrasher R2's authored torso and inset crew cabin on its original
+tetrapod undercarriage. The torso and cabin are 10% larger than the approved local
+fit (1.012× the Gatecrasher source); the mortar saddle follows the enlarged rear
+deck. Its arms, arsenal mounts, kneeling supports, and independent
+rear-deck mortar remain Behemoth's. The imported armor uses the chassis's primary,
+secondary, and accent paint; the forward viewing slit is the pilot target.
+Run `node tools/extract_behemoth_core.cjs` after changing Gatecrasher's source GLB.
+This emits the synchronous geometry asset `dist/foundry/behemoth-core.js`, with its
+source hash and fitting measurements. Then rebuild Behemoth's stills and 19-pose
+fallback atlas with `node tools/render_foundry.cjs /tmp/foundry-raster 5`, and its
+four directional field views with
+`node tools/render_travel.cjs /tmp/foundry-raster /tmp/unused-vehicles foundry-5`.
+
 Run `npm test --prefix qa` for the simulation and renderer suite. `python3 tools/package_offline.py /path/to/Iron-Vow-Foundry.html` creates a single-file campaign with local assets embedded. The Rig Bench and Foundry Studio links open the hosted reference tools.
 
 Foundry backups exported by the donor's v2 game can be imported from Career. The importer maps the donor's frame IDs to the six Foundry frames and carries over assignments, reserves, armaments, paint, condition, experience and the campaign record. The donor's in-progress sortie uses a different map and enemy roster. An imported career starts its next sortie on the Sites ruleset.
