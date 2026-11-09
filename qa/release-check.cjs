@@ -27,7 +27,7 @@ function servedSource(file,bytes){
 async function verifyLive(url){
  const dist=join(root,'dist'),base=new URL(url);
  if(base.protocol!=='https:'||base.username||base.password)throw Error('Use the public HTTPS Site URL.');
- const files=readdirSync(dist,{recursive:true}).filter(file=>file===join('assets','theater-tiles.webp')||file.endsWith('-parts.webp')||/\.(?:html|js|css)$|(?:^|[\\/])(?:(?:aero-[^\\/]+|armory-[^\\/]+|foundry-[6789](?:-[^\\/]+)?|reaver-[^\\/]+|bulwark|scout|ashigaru(?:-combat)?|foundry-1[01]|foundry-1[0-2]-death(?:-[0-3])?|aegis-(?:idle|[0-3]-(?:full|right-down|left-down|disarmed)))\.webp|expansion-weapons\.glb|shields\.glb|bulwark\.glb|scout\.glb)$/.test(file));
+ const files=readdirSync(dist,{recursive:true}).filter(file=>file===join('assets','theater-tiles.webp')||file.endsWith('-parts.webp')||/\.(?:html|js|css)$|(?:^|[\\/])(?:(?:aero-[^\\/]+|lion-[^\\/]+|armory-[^\\/]+|foundry-[6789](?:-[^\\/]+)?|reaver-[^\\/]+|bulwark|scout|ashigaru(?:-combat)?|foundry-1[01]|foundry-1[0-2]-death(?:-[0-3])?|aegis-(?:idle|[0-3]-(?:full|right-down|left-down|disarmed)))\.webp|expansion-weapons\.glb|shields\.glb|bulwark\.glb|scout\.glb)$/.test(file));
  for(const file of files){
   const asset=new URL(file.replaceAll('\\','/'),base);
   const options={cache:'no-store',signal:AbortSignal.timeout(20000)};

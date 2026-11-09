@@ -627,6 +627,8 @@ function seatPilot(i,id){
 }
 const CAREER_STORAGE='iron-vow-career';
 const PENDING_CAREER_STORAGE=CAREER_STORAGE+'-pending';
+const LION_TRIAL_WEAPONS=['cleaver','hatchet','breaker'];
+const lionTrial=/(?:^|[?&])lion=(cleaver|hatchet|breaker)(?:&|$)/.exec(window.location?.search??'')?.[1];
 let save,storedCareer=null,careerStale=false,careerDB=null,databaseCareer;
 let pendingCareerWrite=Promise.resolve();
 const queuedCareerWrites=[];
@@ -635,7 +637,8 @@ function loadStoredCareer(raw){
  try{save=loadCareer(JSON.parse(raw))??fresh()}catch{save=fresh()}
  save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
 }
-loadStoredCareer(storedCareer);
+if(lionTrial)save=fresh();
+else loadStoredCareer(storedCareer);
 const entryPage={'?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'ship';
 let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'base';
 let armoryGroup='assault';
@@ -738,6 +741,7 @@ async function restorePendingCareer(){
  if(!careerStale&&databaseCareer===raw)loadStoredCareer(raw);
 }
 function persist(enemyPending=false){
+ if(lionTrial)return;
  const warn=()=>toast('Storage unavailable. Keep this tab open to retain your career.');
  try{
   if(careerStale||!careerDB&&!careerIsCurrent())return;
@@ -945,7 +949,7 @@ function selectedWeapon(u,mode=action,target=null){
 }
 const paidAttackAP=(u,w)=>Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0));
 function weaponSubsystem(u,w){return w===shoulderWeapon(u)?'body':w.hand||(w.melee?'left':'right')}
-function canUseWeapon(u,w){return Boolean(u&&w&&u.ap>=paidAttackAP(u,w)&&u.hp[weaponSubsystem(u,w)]>0)}
+function canUseWeapon(u,w){return Boolean(u&&w&&(!u.lionTrial||w.melee&&LION_TRIAL_WEAPONS.includes(w.id))&&u.ap>=paidAttackAP(u,w)&&u.hp[weaponSubsystem(u,w)]>0)}
 function scoutWeapon(u,target,reaction=false){
  const range=distance(u,target);
  return [meleeWeapon(u),weapon('flechette-scattergun'),unitWeapon(u)].find(w=>w&&range<=w.range&&
@@ -1671,7 +1675,7 @@ function render(){
   <section class="workshop-chassis" tabindex="-1"><div class="workshop-preview-heading"><span class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</span>${f.native||f.fixedWeapons?'':'<button type="button" id="armory-back" class="armory-jump">↑ WEAPONS</button>'}</div>
   ${arsenal.chassis?.[frame]||f.native||f.foundry!=null?`<canvas class="unit-render" id="paint-preview" width="640" height="640" role="img" aria-label="${f.name} paint and loadout preview"></canvas>`:`<img class="unit-render" src="${chassisArt(frame,u.weapon)}" alt="${f.name} armored mech">`}
   <div class="workshop-meta"><h2>${f.name}</h2>${f.foundry!=null?'<button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>':''}${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}${workshopPaint(u)}
-  ${frame===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH</a>':''}<a class="rig-bench-link" href="rig-bench/prototypes/">OPEN PROTOTYPE BAY</a>${stat('CONDITION',u.condition+'%',u.condition)}
+  ${frame===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH</a>':''}<a class="rig-bench-link" href="rig-bench/prototypes/">OPEN PROTOTYPE BAY</a><a class="rig-bench-link" href="?lion=cleaver">LION WEAPONS TRIAL</a>${stat('CONDITION',u.condition+'%',u.condition)}
   <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><div class="inline-help"><small>+25 BODY HP · +2 ARMOR PER MK</small>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div></div></section>
   </div>`:''}</div>`;
   if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">PERSONNEL / ACTIVE DUTY</div><h1>HUMAN AT THE CORE.</h1></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
@@ -2007,6 +2011,25 @@ function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null){
  persist();render();sound('click');if(save.history.length===0)guide();
 }
 function current(){return battle?.units.find(u=>u.team==='ally'&&u.index===selected&&u.alive)}
+function startLionTrial(id){
+ if(!lionTrial||battle?.busy||!LION_TRIAL_WEAPONS.includes(id))return;
+ createBattle(0,false,true,[0],false,null,0);
+ const [lion,target]=battle.units;
+ battle.lionTrial=true;
+ battle.contract={...battle.contract,name:'LION WEAPONS TRIAL'};
+ battle.units=[lion,target];
+ battle.cover.clear();battle.field.cover={};
+ Object.assign(lion,{lionTrial:true,name:'LION',melee:id,shield:null});
+ Object.assign(target,{name:'PRACTICE TARGET',x:lion.x+1,z:lion.z,vx:lion.x+1,vz:lion.z,reacted:true});
+ target.max.body=target.hp.body=200;
+ lion.heading=headingTo(1,0);lion.face=1;
+ target.heading=headingTo(-1,0);target.face=-1;
+ battle.log=['Training range ready. Select Strike, then tap the adjacent target.'];
+ selected=0;action='strike';targetPart='body';effects=[];hover=null;lockedTarget=target.id;targetPanelOpen=false;
+ focusBattleCamera(lion,true);
+ lionMotionImages(id);
+ render();
+}
 function occupied(x,z){return battle.units.some(u=>u.alive&&u.x===x&&u.z===z)}
 const neighborTiles=(x,z)=>[[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
 function paths(u,flight=false){
@@ -2231,8 +2254,11 @@ function renderBattle(){
   const shotPreview=inRange&&!obstruction?(barrage||attackPreview(u,target,aimPart,chosen)+(targetShield?' → LEFT ARM':'')):'';
   const contacts=battle.units.filter(t=>t.team==='enemy'&&t.alive).length;
   const missile=shoulderWeapon(u),canMissile=canUseWeapon(u,missile);
+  const lionLoadout=battle.lionTrial?`<div class="lion-trial-loadout" role="group" aria-label="Lion trial weapon">
+   ${LION_TRIAL_WEAPONS.map(id=>`<button type="button" data-lion-weapon="${id}" aria-pressed="${u?.melee===id}" ${battle.busy?'disabled':''}>${weapon(id).name}</button>`).join('')}
+  </div>`:'';
   const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${JUMPJET_HELP}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+' AP'}</span></span></button>`:'';
-  $('#ui').innerHTML=`<div class="battle-top"><h2>${battle.contract.name}</h2><p>${contacts} ${contacts===1?'HOSTILE':'HOSTILES'}</p><div class="battle-links"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>WITHDRAW</button></div></div>
+  $('#ui').innerHTML=`<div class="battle-top"><h2>${battle.contract.name}</h2><p>${battle.lionTrial?'PRACTICE RANGE':contacts+' '+(contacts===1?'HOSTILE':'HOSTILES')}</p><div class="battle-links"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>${battle.lionTrial?'EXIT TRIAL':'WITHDRAW'}</button></div>${lionLoadout}</div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${battle.turn} <small>${battle.phase==='player'?'YOUR TURN':'ENEMY TURN'}</small></div>
   <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">
@@ -2260,7 +2286,12 @@ function renderBattle(){
   if(missile)$('#missile').onclick=()=>{if(canMissile){action='missile';renderBattle();persist()}};
   $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){startAction(u);u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
   $('#end').onclick=endTurn;$('#manual').onclick=()=>guide();$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
-  $('#withdraw').onclick=()=>{if(battle.busy)return;modal('BREAK CONTACT?','<p>Withdraw your lance. You retain earned experience, but forfeit payment and salvage. Combat damage persists.</p>',[{text:'STAY & FIGHT',fn:closeModal},{text:'WITHDRAW',fn:()=>{closeModal();finish(false)}}])};
+  $('#withdraw').onclick=()=>{if(battle.busy)return;if(battle.lionTrial){window.location.href='rig-bench/prototypes/';return}modal('BREAK CONTACT?','<p>Withdraw your lance. You retain earned experience, but forfeit payment and salvage. Combat damage persists.</p>',[{text:'STAY & FIGHT',fn:closeModal},{text:'WITHDRAW',fn:()=>{closeModal();finish(false)}}])};
+  if(battle.lionTrial){
+   $('#end').textContent='RESET TARGET';
+   for(const button of document.querySelectorAll('[data-lion-weapon]'))
+    button.onclick=()=>startLionTrial(button.dataset.lionWeapon);
+  }
 }
 function braceUnit(u){
  if(u.brace)return;
@@ -2440,9 +2471,14 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  }
  const profile=attackProfile(a,w.id),power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
+ const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const targetAtlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(t.frame)];
  const targetMotion=targetAtlas?.destruction?readyNativeMotion(t,2400):null;
  if(aeroStrike||!a.kind&&(FRAMES[a.frame].native||power)&&!reducedMotion)await readyNativeMotion(a);
+ if(lionStrike){
+  const missing=lionMotionImages(w.id).filter(image=>!imageReady(image)&&image.decode);
+  if(missing.length)await Promise.race([Promise.allSettled(missing.map(image=>image.decode())),delay(1400)]);
+ }
  if(targetMotion)await targetMotion;
  const paid=reaction?0:paidAttackAP(a,w),charged=chargedLimbShot(a,w,part,reaction);
  if(!reaction){if(!a.order?.keepMove&&!(charged&&a.training?.breachMove))startAction(a);a.ap-=paid}
@@ -2455,13 +2491,13 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  }
  const shoulder=w===shoulderWeapon(a),clip=w.melee?'strike':'fire';
  const plantedCleaver=a.frame===3&&w.id==='cleaver';
- const native=!shoulder&&!a.kind&&wardenVisual(a.frame,a.weapon,a.face,a.team==='enemy',a)?.timing?.[clip];
+ const native=!lionStrike&&!shoulder&&!a.kind&&wardenVisual(a.frame,a.weapon,a.face,a.team==='enemy',a)?.timing?.[clip];
  const plantedBastion=a.brace&&bastionRig(a);
  const plantedWarden=a.brace&&a.hp.legs>0&&upgradedWardenTravel(travelAtlas(a));
  const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
- const primeDuration=!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
+ const primeDuration=!lionStrike&&!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
   (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
- const windup=reducedMotion?.06:native?native.cue*native.duration:profile.raise+(!aeroStrike&&!w.scout&&!power&&sequence&&!reaction?(primeDuration?.12:.51):0),raise=primeDuration+windup;
+ const windup=reducedMotion?.06:native?native.cue*native.duration:profile.raise+(!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction?(primeDuration?.12:.51):0),raise=primeDuration+windup;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,native:native?{...native,clip}:null,
   ...(power?{windup,stage:'pullback'}:{})};
  if(primeDuration&&!sequence?.skipped){
@@ -2686,6 +2722,7 @@ function enemyAttackWeapon(u,t,primary){
 }
 async function endTurn(){
  if(!battle||battle.busy||careerStale)return;
+ if(battle.lionTrial){startLionTrial(current()?.melee??lionTrial);return}
  if(action==='jumpjet')action='move';
  const saving=persist(true);
  targetPanelOpen=false;battle.busy=true;battle.phase='enemy';
@@ -2777,6 +2814,7 @@ function settleShip(win,allies,promotions){
  return {serviced,online};
 }
 function finish(win){
+ if(battle.lionTrial){battle.busy=false;startLionTrial(current()?.melee??lionTrial);return}
  const b=battle,c=b.contract,promotions=[];
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
  const newHull=frame=>!hullOwned(frame)&&!save.salvage?.[frame];
@@ -3149,6 +3187,10 @@ function jumpjetHeight(u,t){
 }
 function unitBounds(u,visual=activeWardenVisual(u)){
  const p=project(u.vx,jumpjetHeight(u,clock),u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1),model=foundryModel(u.frame);
+ if(u.lionTrial&&window.IRON_VOW_LION_ART){
+  const {ground}=window.IRON_VOW_LION_ART,span=scale*3.45;
+  return {x:p.x-span*.5,y:p.y-span*ground,w:span,h:span};
+ }
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[model],ground=atlas?.ground;
  const groundX=Array.isArray(ground)?(!atlas.directions&&unitFacing(u)>0?1-ground[0]:ground[0]):undefined;
  const groundY=Array.isArray(ground)?ground[1]:ground;
@@ -3207,6 +3249,8 @@ const VOLLEY_PROFILES=Object.fromEntries(WEAPONS.filter(w=>w.burst).map(w=>[
 function attackProfile(actor,id){
  const volley=actor&&!actor.kind&&actor.frame!==REAVER_FRAME?VOLLEY_PROFILES[id]:null;
  const profile=volley??ATTACK_PROFILES[id],strike=actor?.frame===AERO_FRAME&&window.IRON_VOW_AERO_STRIKES?.[id];
+ const lion=actor?.lionTrial&&window.IRON_VOW_LION_ART;
+ if(lion?.strikes?.[id])return {...profile,raise:(lion.contact-3)/lion.fps,travel:3/lion.fps,recover:(lion.strikes[id].right.frames.length-1-lion.contact)/lion.fps};
  return strike?{...profile,...strike.timing}:profile;
 }
 const ATTACK_STEP={duration:.60,returnDuration:.35};
@@ -4300,7 +4344,7 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
  }
  const foundry=live||foundryRender(u,t);
  if(foundry){
-  const bounds=recoilingBounds(u,unitBounds(u),t),facing=unitFacing(u),strike=part==='meleeTip';
+  const bounds=u.lionTrial?unitBounds(u):recoilingBounds(u,unitBounds(u),t),facing=unitFacing(u),strike=part==='meleeTip';
   if(part==='shield'&&!foundry.anchors.shield){
    const mount=shieldMount(u,foundry.anchors,bounds,facing,8);
    if(mount)return weaponPoint(mount,'face');
@@ -4435,7 +4479,30 @@ function stagedFoundryDeath(u,pose,atlas,render,frame){
  return {...render,collapse,settled:age>=DESTRUCTION.end?(cockpit?'pilot':'body'):null,
   anchors:mapFoundryAnchors(frame,render.flip,collapse)};
 }
+function lionMotionImages(id){
+ const strike=window.IRON_VOW_LION_ART?.strikes[id];
+ return strike?Object.values(strike).map(motionImage):[];
+}
+function lionBaked(u,t){
+ const art=window.IRON_VOW_LION_ART,attack=u.attack;
+ const view=art?.strikes[u.melee]?.[unitFacing(u)>0?'right':'left'];
+ if(!view)return null;
+ const surface=motionImage(view),cue=art.contact-3,last=view.frames.length-1;
+ if(!imageReady(surface))return null;
+ let tick=0;
+ if(attack){
+  const profile=attackProfile(u,attack.kind);
+  tick=reducedMotion?(Number.isFinite(attack.fireAt)?art.contact:0):
+   Number.isFinite(attack.releaseAt)?art.contact+(last-art.contact)*clamp01((t-attack.releaseAt)/profile.recover):
+   Number.isFinite(attack.fireAt)?cue+(art.contact-cue)*clamp01((t-attack.fireAt)/profile.travel):
+   cue*clamp01((t-attack.start)/profile.raise);
+ }
+ const index=Math.round(tick);
+ return {surface,key:view.key,cell:art.cell,index,anchors:view.frames[index],flip:false,baked:true,
+  primary:true,secondary:true,ortho:art.ortho,strikeProgress:tick/last};
+}
 function foundryRender(u,t,liveOnly=false){
+ if(u.lionTrial)return lionBaked(u,hitstopTime(u,t));
  const model=foundryModel(u.frame);
  if(model==null)return null;
  const poseTime=hitstopTime(u,t);
@@ -4560,7 +4627,7 @@ function drawUnitBody(u,t,close){
  const live=foundryRender(u,t,true),travel=!close&&!live&&travelVisual(u,t);
  if(travel){drawTravel(u,t,travel);return}
  if(u.kind){drawVehicle(u,t,close);return}
- const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=unitBounds(u,visual),b=visual?.modular||visual?.native||foundryModel(u.frame)!=null?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual);
+ const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=unitBounds(u,visual),b=!u.lionTrial&&(visual?.modular||visual?.native||foundryModel(u.frame)!=null)?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual);
  const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
  const foundry=live||foundryRender(u,t);
  // Fallback sprites without four views are flipped to match the current facing.
@@ -5012,6 +5079,7 @@ function drawCinematicFire(sequence,actor,pane,t){
 }
 function mechAttackPaneFit(pane,u){
  const heightLimit=pane.h/(foundryModel(u.frame)!=null?3.45:FRAMES[u.frame]?.native?3.10:2.92);
+ if(u.lionTrial)return Math.min(heightLimit,(pane.h*.82-45)/2.7);
  // Keep the raised tower shield below the header in compact panes.
  if(u.frame===BULWARK_FRAME)return Math.min(heightLimit,(pane.h*.82-49)/2.48);
  if(u.frame===3&&pane.h<300)return Math.min(heightLimit,(pane.h*.78-48)/2.18);
@@ -5387,6 +5455,7 @@ function checkExternalCareer(){
 }
 function startGame(){
  if(careerStale)return;
+ if(lionTrial){startLionTrial(lionTrial);startAudio(false);requestAnimationFrame(draw);return}
  const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';render();startAudio(false);requestAnimationFrame(draw);
  if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn()}
  window.addEventListener('storage',event=>{
@@ -5394,7 +5463,7 @@ function startGame(){
  });
  window.addEventListener('pageshow',event=>{if(event.persisted)checkExternalCareer()});
 }
-if(window.indexedDB){
+if(window.indexedDB&&!lionTrial){
  void openCareerDB().then(async db=>{
   databaseCareer=await readCareerDB(db);
   careerDB=db;

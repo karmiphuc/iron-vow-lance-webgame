@@ -192,6 +192,9 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .battle-top h2{font-size:23px;margin:0 0 5px}
 .battle-links{display:flex;gap:14px;margin-top:4px}
 .battle-links .icon{padding:5px 0}
+.lion-trial-loadout{display:grid;gap:4px;margin-top:6px}
+.lion-trial-loadout button{min-height:32px;padding:5px 8px;text-align:left;font-size:11px}
+.lion-trial-loadout button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 .turn{min-width:0;padding:9px 13px}
 .turn small{display:inline;margin-left:6px}
 .combatpanel{padding:13px}
