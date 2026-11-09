@@ -163,7 +163,7 @@ function draw(u,t,pose,scope,model,custom){
   const hp=u.hp[part];
   setPartState(m,part,hp<=0?2:hp<u.max[part]/2?1:0);
  }
- if(!u.alive&&u.downReason!=='pilot'&&!m.wrecked){wreckMech(m);m.wrecked=true}
+ if(!u.alive&&u.downReason!=='pilot'&&pose.explosion>=.65&&!m.wrecked){wreckMech(m);m.wrecked=true}
  const face=pose.heading??facing*Math.PI/4, aim=pose.aim;
  m.yaw=face;
  const step=pose.phase>0&&u.motion;
@@ -185,7 +185,7 @@ function draw(u,t,pose,scope,model,custom){
  m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;
  m.s.arm.x=pose.impact*.75;
  animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:1.55,brace:pose.brace,
-  alive:u.alive,down:u.downReason,deathAge:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
+  alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step,artillery,mortarAge},dt,t);
  if(prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)){
   const lead=m.rig.legs[1];

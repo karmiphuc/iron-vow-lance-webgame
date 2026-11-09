@@ -123,8 +123,10 @@ function animateMech(m,I,dt,t){
     r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
   cont.position.set(I.pos.x+S.kx.x,I.ground||0,I.pos.z+S.kz.x);
   const targetYaw=I.moving?I.heading:I.face;m.yaw=dampAngle(m.yaw,targetYaw,I.moving?8:4.5,dt);
-  const dead=!I.alive,pd=dead&&I.down==='pilot',dA=dead?clamp(I.deathAge/(pd?1.7:1.1),0,1):0,dE=smooth(dA);
-  cont.rotation.set(pd?0:-.95*dE,m.yaw,pd?.05*dE:.32*dE);
+  const dead=!I.alive,pd=dead&&I.down==='pilot';
+  const dE=dead?smooth(clamp((I.deathAge-.05)/(pd?.85:.51),0,1)):0;
+  const tip=dead&&!pd?smooth(clamp((I.deathAge-.42)/.52,0,1)):0;
+  cont.rotation.set(-.95*tip,m.yaw,pd?.05*dE:.32*tip);
   cont.updateMatrixWorld(true);
   spr(S.comp,80,11,dt);S.comp.x=clamp(S.comp.x,-.4,.12);spr(S.pitch,55,7,dt);spr(S.arm,60,7,dt);spr(S.kx,40,9,dt);spr(S.kz,40,9,dt);
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;

@@ -259,6 +259,10 @@ const ASHIGARU_FRAME=FRAMES.push({name:'ASHIGARU',model:'IV-S07',role:'HOSTILE S
  hp:82,arm:45,leg:72,move:6,armor:1,weapon:'needle-carbine',melee:'signal-knife',foundry:12,enemyOnly:true,fixedLivery:true})-1;
 if(window.IRON_VOW_ASHIGARU_ART&&window.IRON_VOW_FOUNDRY_ART)
  window.IRON_VOW_FOUNDRY_ART[FRAMES[ASHIGARU_FRAME].foundry]=window.IRON_VOW_ASHIGARU_ART;
+for(const [model,death] of Object.entries(window.IRON_VOW_ROSTER_DESTRUCTION??{})){
+ const atlas=window.IRON_VOW_FOUNDRY_ART?.[model];
+ if(atlas)atlas.destruction=death;
+}
 const AERO_FRAME=FRAMES.push({name:'AERO',model:'IV-03',role:'ELITE RECON',color:'#385647',
  hp:134,arm:84,leg:108,move:6,armor:3,cost:400000,weapon:'rifle',melee:'blade',
  foundry:11,noSalvage:true,fixedLivery:true,dodge:.15,jumpjet:true})-1;
@@ -2256,7 +2260,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const recover=native&&!reducedMotion?Math.max(.12,native.duration-windup-flight):profile.recover;
  a.attack.returnAt=clock+recover;
  const settle=recover+(primeDuration?ATTACK_STEP.returnDuration:0);
- const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:DESTRUCTION.end);
+ const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:DESTRUCTION.end*destructionPace(t));
  const cinematicHold=w.scout&&t.alive?1.2-raise-flight:t.alive&&reaction?.5:(t.alive?2.43:2.66)-raise-flight;
  const hold=sequence?Math.max(recovery,cinematicHold):recovery;
  await waitAttack(hold*1000,sequence);
@@ -2559,25 +2563,24 @@ function motionImage(atlas){
 function preloadNativeMotion(frame,paint,hull){
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(frame)];
  if(atlas){
+  const death=atlas.destruction,views=death?.directions??(death?[death]:[]);
+  const deathImages=views.map(view=>motionImage(view));
+  if(death?.paint!==false&&(paint||hull?.trim))for(const view of views)deathImages.push(moduleImage(view.key+'-paint'));
   if(atlas.views?.[0])moduleImage(atlas.views[0].key);
   if(atlas.directions){
    const arm=foundryArmVariant(hull);
-   return [motionImage(atlas),...atlas.directions.map(view=>motionImage({key:view.variants[arm]}))];
+   return [motionImage(atlas),...atlas.directions.map(view=>motionImage({key:view.variants[arm]})),...deathImages];
   }
-  if(frame===REAVER_FRAME)return REAVER_ATLASES.map(key=>motionImage({key}));
+  if(frame===REAVER_FRAME)return [...REAVER_ATLASES.map(key=>motionImage({key})),...deathImages];
   const strike=atlas.strikes?.[hull?.melee];
   if(paint)moduleImage(atlas.key+'-paint');
-  if(atlas.variants)return atlas.variants.map(key=>motionImage({key}));
+  if(atlas.variants)return [...atlas.variants.map(key=>motionImage({key})),...deathImages];
   if(atlas.unarmedKey){
    motionImage({key:atlas.unarmedKey});
    if(paint)moduleImage(atlas.unarmedKey+'-paint');
   }
-  const images=[motionImage(atlas)];
+  const images=[motionImage(atlas),...deathImages];
   if(strike)images.push(motionImage(strike));
-  if(atlas.destruction){
-   images.push(motionImage(atlas.destruction));
-   if(paint||hull?.trim)images.push(moduleImage(atlas.destruction.key+'-paint'));
-  }
   return images;
  }
  const views=prototypes[nativeHullKey(frame,hull)];
@@ -2823,8 +2826,15 @@ function articulateUpperVertex(u,x,y,pose){
  if(weaponWeight){const q=upper.weaponPoint(v);p.x+=(q.x-p.x)*weaponWeight;p.y+=(q.y-p.y)*weaponWeight;coverage=Math.max(coverage,weaponWeight)}
  return{x:p.x,y:p.y,coverage};
 }
-function destructionStyle(u){return u.deathStyle||(u.frame===1||FRAMES[u.frame]?.native?'fall':'kneel')}
+function destructionPace(u){
+ if(u.frame===ASHIGARU_FRAME)return .82;
+ if(u.frame===REAVER_FRAME)return 1.22;
+ return MECH_MOTION[u.frame]?.mass>=1.4?1.55:1;
+}
+function destructionAge(u,t){return Number.isFinite(u.deathTime)?(t-u.deathTime)/destructionPace(u):DESTRUCTION.end}
+function destructionStyle(u){return u.deathStyle||(u.frame===1||FRAMES[u.frame]?.native||destructionPace(u)>=1.5?'fall':'kneel')}
 function destructionRoot(u,pose){
+ if(u.downReason==='pilot')return {x:0,y:pose.kneel*.075,angle:pose.kneel*.12,scale:1-pose.kneel*.1};
  const fall=destructionStyle(u)==='fall'?smoothRange(.42,.96,pose.deathAge):0;
  return{x:fall*.03,y:0,angle:-fall*1.12,scale:1-fall*.12};
 }
@@ -2849,12 +2859,14 @@ function mechSourcePoint(u,x,y,pose){
 function beginDestruction(u,reason='body'){
  u.downReason=reason;
  u.alive=false;u.deathTime=clock;u.deathStyle=u.kind?'vehicle':destructionStyle(u);u.deathEvents=0;u.attack=null;
+ const death=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(u.frame)]?.destruction;
+ if(death)u.deathFallback=(death.directions??[death]).some(view=>!imageReady(motionImage(view)));
  if(u.kind)moduleImage(vehicleKey(u,true));
 }
 function updateDestruction(u,t){
- if(u.alive||u.downReason==='pilot'||!Number.isFinite(u.deathTime))return;const age=t-u.deathTime;if(age>DESTRUCTION.end+.5)return;
+ if(u.alive||u.downReason==='pilot'||!Number.isFinite(u.deathTime))return;
  if(u.kind){
-  const elapsed=age-VEHICLES[u.kind].wreckAt;
+  const elapsed=t-u.deathTime-VEHICLES[u.kind].wreckAt;
   if(elapsed>=0&&!u.deathEvents){
    u.deathEvents=1;
    if(!reducedMotion&&elapsed<.55){
@@ -2864,13 +2876,22 @@ function updateDestruction(u,t){
   }
   return;
  }
+ const age=destructionAge(u,t),pace=destructionPace(u),mass=MECH_MOTION[u.frame].mass;
+ if(age>DESTRUCTION.end+.5)return;
  if(age>=DESTRUCTION.kneelEnd&&!(u.deathEvents&8)){u.deathEvents=(u.deathEvents||0)|8;if(!reducedMotion&&age-DESTRUCTION.kneelEnd<.3){effects.push({type:'step',x:u.x,z:u.z,t:1,mass:MECH_MOTION[u.frame].mass*1.5,side:-1});shake=Math.max(shake,2*MECH_MOTION[u.frame].mass);sound('step')}}
+ if(pace>=1.5&&age>=DESTRUCTION.fallEnd&&!(u.deathEvents&16)){
+  u.deathEvents|=16;
+  if(!reducedMotion&&age-DESTRUCTION.fallEnd<.25){
+   effects.push({type:'step',x:u.x,z:u.z,t:1,mass:mass*2.2,side:1,deathImpact:true});
+   shake=Math.max(shake,4.5*mass);sound('step');
+  }
+ }
  const cues=[{at:.67,big:false},{at:DESTRUCTION.blast,big:true},{at:1.28,big:false}];
  for(let i=0;i<cues.length;i++){
   const cue=cues[i],flag=1<<i;if(age<cue.at||(u.deathEvents&flag))continue;u.deathEvents=(u.deathEvents||0)|flag;
-  if(age-cue.at>.6||reducedMotion)continue;
-  const anchor=freezeAttachment(u,'body',u.deathTime+cue.at);
-  effects.push({type:'detonation',x:u.x,z:u.z,anchor,t:1-(age-cue.at)/.85,big:cue.big,seed:u.index+u.frame*7});
+  if((age-cue.at)*pace>.6||reducedMotion)continue;
+  const at=u.deathTime+cue.at*pace,anchor=freezeAttachment(u,'body',at);
+  effects.push({type:'detonation',x:u.x,z:u.z,anchor,at,t:1-(age-cue.at)*pace/.85,big:cue.big,seed:u.index+u.frame*7});
   if(cue.big){sound('boom');shake=Math.max(shake,9*MECH_MOTION[u.frame].mass)}
  }
 }
@@ -2882,7 +2903,7 @@ function drawDestructionDebris(u,t,pose){
  const iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height,ground=project(u.vx,0,u.vz);
  ctx.save();ctx.globalAlpha=fade*.7;ctx.fillStyle='#080e13';ctx.beginPath();ctx.ellipse(ground.x,ground.y,scale*.92,scale*.32,0,0,Math.PI*2);ctx.fill();ctx.restore();
  const pieces=[[.33,.24,.39,.33],[.16,.08,.28,.23],[.65,.10,.25,.25],[.2,.67,.25,.28],[.6,.68,.25,.25]];
- const blastPose=animationPose(u,(u.deathTime??t-DESTRUCTION.end)+DESTRUCTION.blast);
+ const pace=destructionPace(u),blastPose=animationPose(u,(u.deathTime??t-DESTRUCTION.end*pace)+DESTRUCTION.blast*pace);
  for(let i=0;i<pieces.length;i++){
   const r=pieces[i],seed=(u.index+1)*1.73+i*2.399,range=scale*(i===0?.16:.5+(i%3)*.2),end={x:ground.x+Math.cos(seed)*range,y:ground.y+Math.sin(seed)*range*.32};
   const start=mechSourcePoint(u,r[0]+r[2]/2,r[1]+r[3]/2,blastPose),ease=1-(1-q)**2;
@@ -3335,7 +3356,7 @@ function animationPose(u,t,visual=activeWardenVisual(u)){
  const motion=weaponMotion(attack?.kind??u.weapon);
  if(!strikeKind&&!reducedMotion)for(const beat of profile.beats)recoil+=dampedImpulse(age-beat,motion==='missile'?32:42,motion==='rail'?12:18);
  const impactAge=t-(u.hitTime??-100),impact=!reducedMotion?dampedImpulse(impactAge,28,11):0;
- const deathAge=u.alive?-1:t-(u.deathTime??t-DESTRUCTION.end),death=u.alive||u.downReason==='pilot'?0:reducedMotion?1:clamp01(deathAge/DESTRUCTION.end);
+ const deathAge=u.alive?-1:destructionAge(u,t),death=u.alive||u.downReason==='pilot'?0:reducedMotion?1:clamp01(deathAge/DESTRUCTION.end);
  const kneel=u.alive?0:reducedMotion?1:smoothRange(.04,DESTRUCTION.kneelEnd,deathAge);
  const explosion=u.alive||u.downReason==='pilot'?0:reducedMotion?1:smoothRange(DESTRUCTION.blast-.02,DESTRUCTION.blast+.15,deathAge);
  const landAge=t-(u.landTime??-100),land=!reducedMotion&&landAge>=0&&landAge<.4?Math.sin(landAge*30)*Math.exp(-landAge*15):0;
@@ -3376,14 +3397,14 @@ function deformMechVertex(u,x,y,pose){
  if(u.hitPart==='legs')py+=pose.impact*.035*leg*Math.sin(Math.PI*clamp01((y-rig.hip)/(1-rig.hip)));
  return pose.death>0?deformDestructionVertex(u,x,y,{x:px,y:py},pose,leg,right):{x:px,y:py};
 }
-function drawMeshTriangle(im,source,dest,renderWidth=im.naturalWidth||im.width,renderHeight=im.naturalHeight||im.height){
+function drawMeshTriangle(im,source,dest,renderWidth=im.naturalWidth||im.width,renderHeight=im.naturalHeight||im.height,g=ctx){
  const [a,b,c]=source,[p,q,r]=dest,sx=b.x-a.x,sy=b.y-a.y,tx=c.x-a.x,ty=c.y-a.y,det=sx*ty-tx*sy;
  if(Math.abs(det)<1e-8)return;
  const ax=((q.x-p.x)*ty-(r.x-p.x)*sy)/det,bx=((q.y-p.y)*ty-(r.y-p.y)*sy)/det;
  const cx=(sx*(r.x-p.x)-tx*(q.x-p.x))/det,dx=(sx*(r.y-p.y)-tx*(q.y-p.y))/det;
  const center={x:(p.x+q.x+r.x)/3,y:(p.y+q.y+r.y)/3};
- ctx.save();ctx.beginPath();for(let i=0;i<3;i++){const v=dest[i],vx=v.x-center.x,vy=v.y-center.y,len=Math.hypot(vx,vy)||1;const x=v.x+vx/len*.24,y=v.y+vy/len*.24;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath();ctx.clip();
- ctx.transform(ax,bx,cx,dx,p.x-ax*a.x-cx*a.y,p.y-bx*a.x-dx*a.y);ctx.drawImage(im,0,0,renderWidth,renderHeight);ctx.restore();
+ g.save();g.beginPath();for(let i=0;i<3;i++){const v=dest[i],vx=v.x-center.x,vy=v.y-center.y,len=Math.hypot(vx,vy)||1;const x=v.x+vx/len*.24,y=v.y+vy/len*.24;i?g.lineTo(x,y):g.moveTo(x,y)}g.closePath();g.clip();
+ g.transform(ax,bx,cx,dx,p.x-ax*a.x-cx*a.y,p.y-bx*a.x-dx*a.y);g.drawImage(im,0,0,renderWidth,renderHeight);g.restore();
 }
 function drawArticulatedMech(im,u,w,h,pose,upperTexture=null){
  const upperActive=pose.aim>.001||Math.abs(pose.recoil)>.008||pose.death>0,columns=pose.baseOnly?(u.alive?(pose.walk>.001?(w>210?9:6):3):6):upperActive?(w>210?13:10):(w>210?9:6),rows=pose.baseOnly?(u.alive?(pose.walk>.001?(w>210?13:10):10):14):upperActive?(w>210?18:15):(w>210?13:10),iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height;
@@ -3752,11 +3773,52 @@ function bulwarkBaked(u,pose,atlas){
  const heading=headingIndex(pose.heading),view=atlas.directions[heading],arm=foundryArmVariant(u);
  const image=motionImage({key:view.variants[arm]}),loaded=imageReady(image);
  const idle=motionImage(atlas),idleReady=imageReady(idle);
- const frame=loaded?bulwarkArtFrame(u,pose,atlas):atlas.idle;
- return {surface:loaded?image:idleReady?idle:artImages[legacyChassis[u.frame]],
+ const frame=loaded&&u.alive?bulwarkArtFrame(u,pose,atlas):atlas.idle;
+ return stagedFoundryDeath(u,pose,atlas,{surface:loaded?image:idleReady?idle:artImages[legacyChassis[u.frame]],
   cell:loaded?atlas.cell:idleReady?atlas.fallbackCell:0,
   index:loaded?atlas.layouts[arm][frame]:heading*4+arm,anchors:view.frames[frame],
-  flip:false,baked:true,primary:true,secondary:true,shield:true};
+  flip:false,baked:true,primary:true,secondary:true,shield:true},view.frames[frame]);
+}
+function authoredFoundryDeath(u,pose,atlas){
+ const destruction=atlas?.destruction;
+ if(u.alive||u.deathFallback||!destruction)return null;
+ const view=destruction.directions?.[headingIndex(pose.heading)]??destruction;
+ const image=motionImage(view);
+ if(!imageReady(image))return null;
+ const clip=destruction.clips[u.downReason==='pilot'?'pilot':'body'];
+ const q=reducedMotion?1:clamp01(pose.deathAge/clip.duration);
+ const index=clip.start+Math.round(q*(clip.count-1)),span=destruction.span||1;
+ const flip=!destruction.directions&&unitFacing(u)>0;
+ const anchors=mapFoundryAnchors(view.frames[index],flip,([x,y])=>[.5+(x-.5)*span,.5+(y-.5)*span]);
+ const surface=destruction.paint===false?image:foundryPaint(image,view.key,u.paint,u.trim,atlas.paintBlend);
+ return {surface,cell:destruction.cell??atlas.cell,index,anchors,flip,span,destruction,baked:true,primary:true,secondary:true};
+}
+// Keep the soles planted as the knees give way, then tip the upper mass over the hips.
+function stagedFoundryDeath(u,pose,atlas,render,frame){
+ if(u.alive)return render;
+ const cockpit=u.downReason==='pilot',age=reducedMotion?DESTRUCTION.end:Math.min(pose.deathAge,DESTRUCTION.end);
+ const ground=(Array.isArray(atlas?.ground)?atlas.ground[1]:atlas?.ground)??.84;
+ const hip=frame.body[1]+(ground-frame.body[1])*.43,center=frame.legs?.[0]??frame.body[0];
+ const side=(frame.muzzle?.[0]??frame.gripR?.[0]??.28)<frame.body[0]?-1:1;
+ const buckle=smoothRange(.07,cockpit?.82:DESTRUCTION.kneelEnd,age);
+ const fall=cockpit?0:smoothRange(.44,DESTRUCTION.fallEnd,age);
+ const flinch=(1-smoothRange(.09,.29,age))*smoothRange(0,.09,age);
+ const impactAge=Math.max(0,age-DESTRUCTION.fallEnd);
+ const bounce=fall*Math.sin(impactAge*20)*Math.exp(-impactAge*10)*.035;
+ const shift=side*(.03*buckle+.065*fall-.028*flinch);
+ const drop=(ground-hip)*((cockpit?.35:.44)*buckle+.37*fall)+bounce;
+ const angle=side*(.18*buckle+.95*fall-.13*flinch),c=Math.cos(angle),s=Math.sin(angle);
+ const collapse=([x,y])=>{
+  const dx=x-center,dy=y-hip;
+  const mix=1-smoothRange(hip-.045,hip+.09,y),leg=smoothRange(hip,ground,y);
+  const bend=side*Math.sin(leg*Math.PI)*(.04*buckle+.035*fall);
+  return [
+   mix*(center+shift+dx*c-dy*s)+(1-mix)*(x+(1-leg)*shift+bend),
+   mix*(hip+drop+(dx*s+dy*c)*(1-.31*fall))+(1-mix)*(y+drop*(1-leg))
+  ];
+ };
+ return {...render,collapse,settled:age>=DESTRUCTION.end?(cockpit?'pilot':'body'):null,
+  anchors:mapFoundryAnchors(frame,render.flip,collapse)};
 }
 function foundryRender(u,t,liveOnly=false){
  const model=foundryModel(u.frame);
@@ -3765,12 +3827,17 @@ function foundryRender(u,t,liveOnly=false){
  const pose=animationPose(u,poseTime);
  pose.heading=displayedHeading(u);pose.cinematic=u.headingOverride!==undefined;pose.reducedMotion=reducedMotion;
  const atlas=window.IRON_VOW_FOUNDRY_ART?.[model];
+ const death=authoredFoundryDeath(u,pose,atlas);
+ if(death)return death;
  if(atlas?.directions)return bulwarkBaked(u,pose,atlas);
  const reaver=u.frame===REAVER_FRAME;
  const live=atlas?.primary||u.frame===AERO_FRAME?null:window.IronVowFoundry?.draw(u,poseTime,pose,battle,model,FRAMES[u.frame]?.rig);
  if(live)return {...live,strikeProgress:pose.strikeProgress};
  if(liveOnly&&!reaver&&u.frame!==ASHIGARU_FRAME)return null;
- if(bastionRig(u))return {surface:artImages['bastion-bst04'],cell:0,anchors:{body:[.50,.46],pilot:[.50,.29],right:[.31,.59],left:[.70,.59],legs:[.50,.72],muzzle:[.20,.53],leadFoot:[.43,.84]},flip:false,baked:true,primary:true};
+ if(bastionRig(u)){
+  const anchors={body:[.50,.46],pilot:[.50,.29],right:[.31,.59],left:[.70,.59],legs:[.50,.72],muzzle:[.20,.53],leadFoot:[.43,.84]};
+  return stagedFoundryDeath(u,pose,atlas,{surface:artImages['bastion-bst04'],cell:0,anchors,flip:false,baked:true,primary:true},anchors);
+ }
  if(!atlas||atlas.frames.length<19)return null;
  const strike=u.alive&&u.hp.left>0?atlas.strikes?.[pose.strikeKind]:null;
  const strikeImage=strike&&motionImage(strike);
@@ -3778,34 +3845,62 @@ function foundryRender(u,t,liveOnly=false){
   const level=reducedMotion?(Number.isFinite(u.attack.fireAt)?.70:0):pose.strikeProgress;
   const index=strike.levels.findIndex((value,i)=>i===strike.levels.length-1||level<=(value+strike.levels[i+1])/2);
   const flip=unitFacing(u)>0,frame=strike.frames[index];
-  const anchors=flip?mirrorFoundryAnchors(frame):frame;
+  const anchors=flip?mapFoundryAnchors(frame,flip):frame;
   return {surface:strikeImage,cell:atlas.cell,index,anchors,flip,baked:true,primary:false,secondary:true,ortho:atlas.ortho,
    strikeProgress:pose.strikeProgress};
  }
  const variantIndex=foundryArmVariant(u);
  const variant=reaver?REAVER_ATLASES[2*Number(u.hp.right>0)+Number(u.hp.left>0)]:atlas.variants?.[variantIndex];
- const destruction=!u.alive&&atlas.destruction&&imageReady(motionImage(atlas.destruction))?atlas.destruction:null;
- const clip=destruction?.clips[u.downReason==='pilot'?'pilot':'body'];
- const sprite=destruction||(variant?{key:variant}:u.hp.right<=0&&atlas.unarmedKey?{key:atlas.unarmedKey}:atlas);
+ const sprite=variant?{key:variant}:u.hp.right<=0&&atlas.unarmedKey?{key:atlas.unarmedKey}:atlas;
  const image=motionImage(sprite);
- const progress=reducedMotion||!Number.isFinite(u.deathTime)?1:clip?clamp01(pose.deathAge/clip.duration):0;
- const index=clip?clip.start+Math.round(progress*(clip.count-1)):
+ const index=!u.alive?atlas.bare??atlas.idle??16:
   u.frame===ASHIGARU_FRAME?ashigaruArtFrame(u,pose,atlas):
-  u.frame===VANGUARD_FRAME?vanguardArtFrame(u,pose,atlas):!u.alive?u.downReason==='pilot'?17:18:
+  u.frame===VANGUARD_FRAME?vanguardArtFrame(u,pose,atlas):
   pose.strikeKind&&pose.primePhase!=='step'?13+Math.min(2,Math.floor(pose.strikeProgress*3)):
   Math.abs(pose.recoil)>.05?12:pose.aim>.35?11:
   pose.primeProgress>0?8+Math.min(2,Math.floor(pose.primeProgress*3)):
   u.motion&&!u.motion.jumpjet&&!reducedMotion?Math.floor(pose.cycle*8)%8:16;
- const flip=unitFacing(u)>0,span=destruction?.span||1,frame=(destruction||atlas).frames[index];
- const anchors=flip||destruction?Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p))
-  .map(([k,[x,y]])=>[k,[.5+(x-.5)*span*(flip?-1:1),.5+(y-.5)*span]])):frame;
+ const flip=unitFacing(u)>0,frame=atlas.frames[index];
+ const anchors=flip?mapFoundryAnchors(frame,flip):frame;
  const loaded=imageReady(image),key=loaded?sprite.key:legacyChassis[u.frame],base=loaded?image:artImages[key];
  const surface=loaded?foundryPaint(base,key,u.paint,u.trim,atlas.paintBlend):base;
- return {surface,cell:loaded?atlas.cell:0,index:atlas.layouts?.[variantIndex]?.[index]??index,anchors,flip,span,destruction,baked:true,
-  primary:atlas.primary===true,secondary:reaver||atlas.secondary===true,shield:atlas.shield===true,strikeProgress:pose.strikeProgress,ortho:atlas.ortho};
+ return stagedFoundryDeath(u,pose,atlas,{surface,cell:loaded?atlas.cell:0,index:atlas.layouts?.[variantIndex]?.[index]??index,anchors,flip,baked:true,
+  primary:atlas.primary===true,secondary:reaver||atlas.secondary===true,shield:atlas.shield===true,strikeProgress:pose.strikeProgress,ortho:atlas.ortho},frame);
 }
-function mirrorFoundryAnchors(frame){
- return Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([key,[x,y]])=>[key,[1-x,y]]));
+function mapFoundryAnchors(frame,flip,transform=p=>p){
+ return Object.fromEntries(Object.entries(frame).filter(([,p])=>Array.isArray(p)).map(([key,p])=>{
+  const [x,y]=transform(p);return [key,[flip?1-x:x,y]];
+ }));
+}
+const settledFoundryArt=new WeakMap();
+function drawFoundryCollapse(render,w,h){
+ if(!render.settled){paintFoundryCollapse(render,w,h,ctx);return}
+ let frames=settledFoundryArt.get(render.surface);
+ if(!frames){frames=new Map();settledFoundryArt.set(render.surface,frames)}
+ const key=[render.cell,render.index,render.settled].join('/');
+ let surface=frames.get(key);
+ if(!surface){
+  surface=renderSurface(450,450);
+  const g=surface.getContext('2d');
+  g.translate(225,75);paintFoundryCollapse(render,300,300,g);
+  frames.set(key,surface);
+ }
+ ctx.drawImage(surface,-.75*w,-.25*h,1.5*w,1.5*h);
+}
+function paintFoundryCollapse(render,w,h,g){
+ const {surface,cell,index,collapse}=render;
+ const iw=surface.naturalWidth||surface.width,ih=surface.naturalHeight||surface.height;
+ const sx=cell?index%4*cell:0,sy=cell?Math.floor(index/4)*cell:0;
+ const sw=cell||iw,sh=cell||ih,columns=2,rows=9,source=[],dest=[];
+ for(let row=0;row<=rows;row++)for(let col=0;col<=columns;col++){
+  const x=col/columns,y=row/rows,[dx,dy]=collapse([x,y]);
+  source.push({x:sx+x*sw,y:sy+y*sh});dest.push({x:(dx-.5)*w,y:dy*h});
+ }
+ for(let row=0;row<rows;row++)for(let col=0;col<columns;col++){
+  const a=row*(columns+1)+col,b=a+1,c=a+columns+1,d=c+1;
+  drawMeshTriangle(surface,[source[a],source[b],source[d]],[dest[a],dest[b],dest[d]],iw,ih,g);
+  drawMeshTriangle(surface,[source[a],source[d],source[c]],[dest[a],dest[d],dest[c]],iw,ih,g);
+ }
 }
 function ashigaruArtFrame(u,pose,atlas){
  if(!u.alive)return u.downReason==='pilot'?atlas.pilotDown:atlas.wreck;
@@ -3853,7 +3948,7 @@ function drawUnitBody(u,t,close){
  const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
  const foundry=live||foundryRender(u,t);
  if(foundry){
-  const chest=foundry.destruction?spritePoint(b,foundry.anchors.body):null;
+  const chest=!u.alive?spritePoint(b,foundry.anchors.body):null;
   const fall=chest&&u.downReason!=='pilot'?(reducedMotion?1:smoothRange(DESTRUCTION.kneelEnd,DESTRUCTION.fallEnd,pose.deathAge)):0;
   ctx.save();ctx.fillStyle='#050c12ac';ctx.beginPath();
   ctx.ellipse(p.x+((chest?.x??p.x)-p.x)*fall,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64+fall*.36),scale*.22,0,0,Math.PI*2);ctx.fill();
@@ -3861,7 +3956,8 @@ function drawUnitBody(u,t,close){
   if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
    const paint=()=>{
     ctx.save();ctx.translate(b.x+b.w/2,b.y);if(foundry.flip)ctx.scale(-1,1);
-    if(foundry.cell){
+    if(foundry.collapse)drawFoundryCollapse(foundry,b.w,b.h);
+    else if(foundry.cell){
      const {cell,index,span=1}=foundry;
      ctx.drawImage(foundry.surface,index%4*cell,Math.floor(index/4)*cell,cell,cell,-b.w*span/2,(1-span)*b.h/2,b.w*span,b.h*span);
     }else ctx.drawImage(foundry.surface,-b.w/2,0,b.w,b.h);
@@ -3879,7 +3975,7 @@ function drawUnitBody(u,t,close){
    if(activeShield(u)&&!foundry.shield)drawWeaponModule(ctx,shieldMount(u,foundry.anchors,b,facing,8));
    ctx.restore();
   }
-  if(!u.alive&&u.downReason!=='pilot'&&(!foundry.destruction||pose.deathAge>=DESTRUCTION.kneelEnd))
+  if(!u.alive&&u.downReason!=='pilot'&&pose.deathAge>=DESTRUCTION.kneelEnd)
    drawMechSmoke(u,t,true,chest);
   if(u.alive&&u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
   if(u.alive&&!close)drawUnitReadout(u,(u.frame===ASHIGARU_FRAME?2.0:foundryModel(u.frame)===5?2.12:2.35)+jumpjetHeight(u,t));
@@ -3894,7 +3990,7 @@ function drawUnitBody(u,t,close){
  const articulated=!reducedMotion&&(pose.walk>.001||pose.primeProgress>0||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||pose.aim>.001||(!u.alive&&pose.explosion<1));
  const paint=()=>{
   ctx.save();ctx.translate(b.x+b.w/2,b.y+b.h);if(pose.flip)ctx.scale(-1,1);
-  if(!u.alive){const root=u.downReason==='pilot'?{x:0,y:pose.kneel*.075,angle:pose.kneel*.12,scale:1-pose.kneel*.1}:destructionRoot(u,pose);ctx.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
+  if(!u.alive){const root=destructionRoot(u,pose);ctx.globalAlpha=u.downReason==='pilot'?.65:1-pose.explosion;ctx.translate(root.x*b.w,root.y*b.h);ctx.rotate(root.angle);ctx.scale(root.scale,root.scale)}
   if(baked?.frame){const {cell,columns}=baked.atlas,index=baked.frame.index;ctx.drawImage(im,index%columns*cell,Math.floor(index/columns)*cell,cell,cell,-b.w/2,-b.h,b.w,b.h)}
   else if(articulated&&!visual&&rigidParts[u.frame]){const cache=rigidParts[u.frame],bodyPose={...pose,baseOnly:true};drawArticulatedMech(im,u,b.w,b.h,bodyPose,cache.base);drawRigidUpper(u,b.w,b.h,pose)}
   else if(articulated&&!visual?.modular&&!visual?.native&&foundryModel(u.frame)==null)drawArticulatedMech(im,u,b.w,b.h,{...remaining,baseOnly:true});
@@ -4018,8 +4114,9 @@ function drawAttackEffect(e,t){
   }
  }
 }
-function drawDetonation(e,t){
- const p=resolveAttachment(e.anchor),phase=1-e.t,radius=scale*(e.big?1.55:.56),size=radius*(.35+phase*.9);
+function drawDetonation(e,t,subject){
+ const anchor=subject&&Number.isFinite(e.at)?(e.closeAnchor??=freezeAttachment(subject,'body',e.at)):e.anchor;
+ const p=resolveAttachment(anchor),phase=1-e.t,radius=scale*(e.big?1.55:.56),size=radius*(.35+phase*.9);
  ctx.save();ctx.globalAlpha=Math.min(1,e.t*2);const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,size);
  g.addColorStop(0,'#fff8d8');g.addColorStop(.13,'#ffe7a1');g.addColorStop(.42,'#f39b4dcc');g.addColorStop(.74,'#b94f2890');g.addColorStop(1,'#2a211e00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,size,0,Math.PI*2);ctx.fill();
  if(e.big){for(let i=0;i<6;i++){const angle=i*2.399+e.seed,spread=radius*(.12+phase*.4),x=p.x+Math.cos(angle)*spread,y=p.y+Math.sin(angle)*spread*.6-phase*radius*.45,r=radius*(.16+phase*.29);ctx.globalAlpha=e.t*.5;const fire=ctx.createRadialGradient(x,y,0,x,y,r);fire.addColorStop(0,phase<.45?'#ffce78':'#c98349');fire.addColorStop(.45,phase<.45?'#e97c36cc':'#61524acc');fire.addColorStop(1,'#332b2500');ctx.fillStyle=fire;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}}
@@ -4034,11 +4131,11 @@ function drawDetonation(e,t){
 function drawEffects(t,subject=null,plantOnly=false){for(const e of effects){
  if(plantOnly){
   if(!e.attackPlant||e.actor!==subject.id)continue;
- }else if(subject&&(e.x!==subject.x||e.z!==subject.z||!['boom','detonation'].includes(e.type)))continue;
+ }else if(subject&&(e.x!==subject.x||e.z!==subject.z||!e.deathImpact&&!['boom','detonation'].includes(e.type)))continue;
  const phase=1-e.t;if(e.type==='shot'){drawAttackEffect(e,t);
  }else if(e.type==='boom'){
   const target=subject||battle.units.find(u=>u.id===e.target),p=e.shieldImpact&&!subject?resolveAttachment(e.shieldImpact):target?mechAttachmentPoint(target,e.shieldImpact?'shield':e.part||'body',t):project(e.x,1.1,e.z),radius=scale*(e.big?1.1:.5);ctx.save();ctx.globalAlpha=e.t;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,radius*(.3+phase));g.addColorStop(0,'#fff8dc');g.addColorStop(.22,'#ffda8f');g.addColorStop(.5,'#f2873c99');g.addColorStop(1,'#b54c1200');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.3+phase),0,Math.PI*2);ctx.fill();for(let i=0;i<(e.big?22:13);i++){const angle=i*2.399,v=(.25+(i%5)*.19)*phase*radius*2;ctx.strokeStyle=i%2?'#ffba6c':'#fff2c6';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(p.x+Math.cos(angle)*v*.65,p.y+Math.sin(angle)*v*.65+phase*phase*scale*.5);ctx.lineTo(p.x+Math.cos(angle)*v,p.y+Math.sin(angle)*v+phase*phase*scale*.5);ctx.stroke()}ctx.restore();
- }else if(e.type==='detonation'){drawDetonation(e,t);
+ }else if(e.type==='detonation'){drawDetonation(e,t,subject);
  }else if(e.type==='step'){
   const actor=e.attackPlant&&(subject||battle.units.find(u=>u.id===e.actor));
   const p=actor?mechAttachmentPoint(actor,'leadFoot',t):project(e.x,0,e.z),mass=e.mass||1;

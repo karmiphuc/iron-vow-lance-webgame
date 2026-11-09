@@ -66,7 +66,11 @@ function fit(m,armory,id,side){
 }
 function frame(u,t,pose){
  if(pose.previewFrame!=null)return pose.previewFrame;
- if(!u.alive)return u.downReason==='pilot'?95:97;
+ if(!u.alive){
+  const age=pose.reducedMotion?2:pose.deathAge;
+  const q=clamp((age-.04)/(u.downReason==='pilot'?.79:.52),0,1);
+  return 57+40*q*q*(3-2*q);
+ }
  const braceAge=t-(u.braceTime??-100);
  if(u.motion&&pose.phase>0&&!pose.reducedMotion)return 1+48*clamp(pose.phase,0,1);
  if(u.attack){
@@ -105,8 +109,9 @@ function animate(m,u,t,pose,armory){
  if(u.motion)m.root.position.z=0; // Board travel already translates the unit.
  m.cont.rotation.y=pose.heading??0;
  if(!u.alive){
-  const fall=clamp((pose.deathAge||0)*1.5,0,1);
-  m.cont.rotation.z=fall*(u.downReason==='pilot'?.19:.53);
+  const age=pose.reducedMotion?2:pose.deathAge,cockpit=u.downReason==='pilot';
+  const q=clamp((age-(cockpit?.15:.43))/(cockpit?.70:.51),0,1);
+  m.cont.rotation.z=q*q*(3-2*q)*(cockpit?.19:1.08);
  }else m.cont.rotation.z=0;
  if(m.weaponId!==u.weapon&&armory){
   m.weaponId=u.weapon;
