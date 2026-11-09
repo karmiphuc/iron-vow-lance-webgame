@@ -33,7 +33,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
  await ready('decodedArt.size===Object.keys(artImages).length');
  const tab=group=>click('[data-armory-class="'+group+'"]');
  const listed=new Set();
- for(const [group,count] of Object.entries({assault:7,strike:7,melee:8})){
+ for(const [group,count] of Object.entries({assault:8,strike:8,melee:8})){
   tab(group);
   const cards=[...document.querySelectorAll('[data-weapon-card]')];
   assert.equal(cards.length,count);
@@ -44,7 +44,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
    listed.add(id);
   }
  }
- assert.equal(listed.size,22);
+ assert.equal(listed.size,24);
  click('[data-paint="#577eac"]');await ready("decoded.has('assets/warden-chassis-left-paint.webp')");
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).units[0].paint"),'#577eac');
  assert.ok(run("paintedImages.has('warden-chassis-left#577eac')"));
@@ -109,5 +109,5 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
   })`));
   run('battlefield(clock)');
  }
- console.log('PASS: all six planted attack atlases, 22 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
+ console.log('PASS: all six planted attack atlases, 24 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -17,7 +17,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   assert.equal(await page.locator('[data-armory-class="assault"]').evaluate(node=>node===document.activeElement),true);
  }
  const seen=[];
- for(const [group,count] of Object.entries({assault:7,strike:7,melee:8})){
+ for(const [group,count] of Object.entries({assault:8,strike:8,melee:8})){
   await tab(group);
   assert.equal(await page.locator('[data-armory-class="'+group+'"]').getAttribute('aria-pressed'),'true');
   const cards=page.locator('[data-weapon-card]');
@@ -40,7 +40,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   }
   assert.ok(await page.locator('#ui .page').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
  }
- assert.equal(new Set(seen).size,22);
+ assert.equal(new Set(seen).size,24);
  if(mobile)await page.setViewportSize({width:390,height:844});
  await tab('strike');
  assert.equal(await card('obelisk').locator('[data-equip]').isDisabled(),true);
@@ -82,6 +82,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
    const isMelee=weapon(id).melee,rig=new THREE.Group(),w=arsenal.mount(scene,id,rig);
    const end=isMelee?w.tip:w.muzzle;
    const before=point(end),grip=point(w.grip),old=w.pivot&&[w.pivot.position.z,w.pivot.rotation.z];
+   const bore=w.model.worldToLocal(before.clone());
    arsenal.animate(w,{weaponKick:.7,weaponSpin:.4,strikeProgress:.7});rig.updateMatrixWorld(true);
    const moved=w.pivot&&[w.pivot.position.z,w.pivot.rotation.z].some((value,i)=>Math.abs(value-old[i])>1e-5);
    const shown=window.IronVowFoundry.previewBastion({weapon:isMelee?'sidewinder':id,melee:isMelee?id:'pike'},0,
@@ -94,13 +95,18 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
    const stroke=w.motion?.kind==='strike'?point(end).distanceTo(before):null;
    return {id,clear:before.distanceTo(grip)>.3,locked:point(w.grip).distanceTo(grip)<1e-6,moved,stroke,amount:w.motion?.amount,
     aligned:socketAxis>.999&&foundryAxis<-.999,strikeAdvance,
-    fitted:equipped.mount.visible&&point(equipped.grip).distanceTo(point(contact))<1e-6};
+    fitted:equipped.mount.visible&&point(equipped.grip).distanceTo(point(contact))<1e-6,
+    bore:[bore.y,bore.z]};
   });
  });
- assert.equal(rigs.length,12);
+ assert.equal(rigs.length,14);
  assert.ok(rigs.filter(r=>r.moved).length>=6);
  for(const rig of rigs)assert.ok(rig.clear&&rig.locked&&rig.fitted&&rig.aligned&&(rig.strikeAdvance==null||rig.strikeAdvance>.35),JSON.stringify(rig));
  for(const rig of rigs.filter(r=>r.stroke!=null))assert.ok(Math.abs(rig.stroke-Math.abs(rig.amount))<1e-5,rig.id+' tip travels with its moving piece');
+ for(const id of ['rivet','parallax']){
+  const rig=rigs.find(r=>r.id===id);
+  assert.ok(rig.moved&&rig.bore[0]<-.5&&rig.bore[1]>2.9,id+' muzzle sits below the fist and recoils');
+ }
  if(process.env.IRON_VOW_ARMORY_PROOF&&!mobile){
   const capture=await page.evaluate(()=>{
    const plate=document.createElement('canvas');
@@ -137,6 +143,17 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  });
  for(const mount of baked)assert.ok(mount.active&&mount.grip<1e-6&&mount.stroke>2,JSON.stringify(mount));
  await checkCerberusSalvo(page,mobile,tap);
+ await page.evaluate(()=>{battle=null;page='workshop';save.credits=30000;save.rep=119;render()});
+ for(const [id,group,rep,price] of [['rivet','assault',120,'8,600'],['parallax','strike',180,'13,500']]){
+  await tab(group);
+  const button=card(id).locator('[data-equip]');
+  assert.equal(await button.isDisabled(),true);
+  assert.equal(await button.innerText(),'UNLOCKS AT '+rep+' REP');
+  await page.evaluate(rep=>{save.rep=rep;render()},rep);
+  assert.equal(await button.innerText(),'BUY & EQUIP · '+price+' CR');
+  await equip(id);
+  assert.equal(await button.innerText(),'EQUIPPED');
+ }
 };
 
 async function checkCerberusSalvo(page,mobile,tap){

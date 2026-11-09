@@ -60,7 +60,7 @@ function init(){
   if(arsenal&&!armoryRequested){
    armoryRequested=true;
    const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
-   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb'),url('rig-bench/shields.glb'))
+   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=undercarry'),url('rig-bench/shields.glb'))
     .then(scene=>{armory=scene;if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);

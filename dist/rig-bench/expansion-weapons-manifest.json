@@ -54,6 +54,14 @@
     "anchor-hammer": {
       "triangles": 2396,
       "meshes": 8
+    },
+    "rivet": {
+      "triangles": 3344,
+      "meshes": 11
+    },
+    "parallax": {
+      "triangles": 1380,
+      "meshes": 8
     }
   },
   "mechanics": {
@@ -116,6 +124,26 @@
         1
       ],
       "travel": 0.18
+    },
+    "rivet": {
+      "node": "rivet.barrel_sled",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": -0.095
+    },
+    "parallax": {
+      "node": "parallax.pulse_bore",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": -0.073
     }
   }
 }

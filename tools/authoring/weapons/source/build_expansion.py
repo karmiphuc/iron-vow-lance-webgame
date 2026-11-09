@@ -1,6 +1,7 @@
 """Original Iron Vow expansion weapons; no external meshes or textures.
 
 blender -b --disable-autoexec -t 6 --python-exit-code 1 -P tools/authoring/weapons/source/build_expansion.py
+Append -- --undercarry-only to rebake just the two under-carry sprite sets.
 GLTF coordinates: metres, Y up, +Z forward, grip at root origin.
 Rigid mechanical rigs use named object pivots, not deforming skin weights.
 Original designs informed by the chunky military proportions of Front Mission 3;
@@ -249,6 +250,16 @@ def saddle(g,mat='frame',wide=.30):
     empty(g.name+'.contact',(0,0,0),g)
 
 
+def overhead_grip(g, mat, width):
+    # Crossbar at the fist socket, with short load-bearing posts down to the receiver.
+    cyl(g,'grip_crossbar',.09,width*2,(0,0,0),'black','x')
+    for side in [-1,1]:
+        panel(g,'grip_yoke',[(.075,-.16),(.085,.10),(-.14,.26),(-.42,.28),
+              (-.42,-.33),(-.20,-.27)],.075,side*width,mat)
+        ring(g,'grip_pin',.09,.03,.025,(side*(width+.043),0,0),'steel','x',8)
+    empty(g.name+'.contact',(0,0,0),g)
+
+
 def vents(g,width,y,z,length=.7,n=5):
     for sign in [-1,1]:
         for k in range(n):
@@ -469,6 +480,52 @@ for side in [-1,1]:
     cyl(g,'head_lock',.11,.04,(side*.46,.27,1.70),'steel','x')
 hazard(g,.43,.36,1.74,3)
 
+# RIVET: low slung, belt-fed machine gun with an armored feed can and open barrel cage.
+g=weapon('rivet',muzzle=(0,-.62,2.975))
+overhead_grip(g,'sand',.24)
+hull(g,'steel_receiver',[(-.80,.23,-.87,-.44,.055),(-.54,.34,-.94,-.32,.07),
+     (.77,.34,-.94,-.32,.07),(1.11,.255,-.83,-.42,.055)],'frame')
+shell(g,[(-.85,-.63),(-.50,-.73),(-.39,-.50),(-.43,.69),(-.64,.97),(-.84,.69)],.33,'sand')
+fasteners(g,.363,[(-.54,-.48),(-.77,.62)])
+box(g,'feed_can',(.34,.60,1.04),(-.435,-.94,-.12),'olive',.07)
+box(g,'feed_can_lid',(.38,.12,1.09),(-.435,-.67,-.12),'sand',.032)
+for z in [-.47,-.23,.01,.25]:
+    box(g,'feed_can_stamping',(.033,.36,.055),(-.62,-.94,z),'frame',.009)
+    cyl(g,'exposed_brass_link',.039,.16,(-.37,-.67,z),'amber','x')
+box(g,'latch',(.16,.16,.13),(-.62,-.77,.31),'steel')
+service_marks(g,.365,-.60,.34)
+for z in [1.06,1.32,1.59,1.86,2.13]:
+    ring(g,'perforated_jacket_hoop',.259,.184,.115,(0,-.62,z),'sand',n=8)
+for x in [-.203,.203]:
+    for y in [-.72,-.52]:
+        box(g,'jacket_rail',(.075,.07,1.22),(x,y,1.59),'warmsteel',.015)
+p=pivot(g,'barrel_sled',(0,-.62,1.06),'translate',-.095)
+cyl(p,'heavy_barrel',.109,1.68,(0,0,.88),'steel')
+ring(p,'compensator',.171,.094,.31,(0,0,1.75),'frame',n=8)
+ring(p,'bore_lip',.171,.094,.025,(0,0,1.9025),'edge',n=8)
+
+# PARALLAX: faceted accelerator spine, recessed cyan rail and an electronic sight.
+g=weapon('parallax',muzzle=(0,-.59,4.145))
+overhead_grip(g,'navy',.21)
+hull(g,'capacitor_receiver',[(-.87,.20,-.79,-.43,.045),(-.54,.32,-.90,-.31,.065),
+     (.58,.30,-.88,-.34,.065),(1.29,.20,-.76,-.42,.045)],'navy')
+for side in [-1,1]:
+    panel(g,'floating_ceramic_cover',[(-.45,-.76),(-.33,-.45),(-.37,.57),(-.54,1.24),
+          (-.72,.84),(-.83,-.48)],.068,side*.283,'plate',.025)
+    panel(g,'sight_glass',[(-.31,.41),(-.27,.50),(-.32,.86),(-.38,.65)],.046,side*.185,'cyan')
+    panel(g,'capacitor_port',[(-.81,-.39),(-.74,-.46),(-.73,.52),(-.78,.67)],.023,side*.291,'cyan')
+    panel(g,'accelerator_prong',[(-.50,1.02),(-.39,1.29),(-.43,2.85),(-.53,3.93),
+          (-.66,4.06),(-.77,3.64),(-.81,1.22)],.115,side*.215,'navy')
+    panel(g,'machined_rail_inlay',[(-.51,1.43),(-.49,2.82),(-.57,3.70),
+          (-.62,3.44),(-.61,1.53)],.026,side*.278,'steel',.006)
+    box(g,'rail_emitter',(.034,.045,1.56),(side*.284,-.646,2.30),'cyan',.005)
+for z in [1.40,2.86,3.84]:
+    ring(g,'accelerator_collar',.235,.145,.087,(0,-.59,z),'navy',n=6)
+p=pivot(g,'pulse_bore',(0,-.59,1.19),'translate',-.073)
+cyl(p,'accelerator_spine',.093,2.77,(0,0,1.37),'warmsteel')
+ring(p,'emitter_seal',.128,.084,.29,(0,0,2.81),'frame',n=8)
+ring(p,'pulse_aperture',.127,.08,.018,(0,0,2.946),'cyan',n=8)
+
 # Move markers with their driven assemblies while preserving the authored pose.
 bpy.context.view_layer.update()
 for name, data in mechanics.items():
@@ -529,7 +586,7 @@ manifest={'authoring':'Original procedural geometry; no third-party assets','uni
           'references':['https://db.hfsplay.fr/files/2019/08/06/Front_Mission_3_USA_ueYRtDe.pdf',
                         'https://frontmissionremake.com/front-mission-3/'],
           'weapons':stats,'mechanics':mechanics}
-(BENCH/'expansion-weapons-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+(BENCH/'expansion-weapons-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',newline='\n')
 
 # Match the existing weapon atlas cameras and pixel-space attachment convention.
 scene=bpy.context.scene
@@ -549,10 +606,16 @@ scene.render.resolution_x=scene.render.resolution_y=SIZE;scene.render.resolution
 scene.render.film_transparent=True;scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGBA'
 scene.view_settings.view_transform='AgX'
 visuals={}
+if '--undercarry-only' in sys.argv:
+    previous=(DIST/'armory-visuals.js').read_text().splitlines()[1]
+    visuals=json.loads(previous.removeprefix('window.IRON_VOW_EXPANSION_ART=').removesuffix(';'))
+    bake_names=('rivet','parallax')
+else:
+    bake_names=roots
 with tempfile.TemporaryDirectory() as tmp:
     for face,delta in [('left',(10.2,4.75,13.15)),('right',(-14,4.75,9.65))]:
         focus=point((0,.1,1.1));camera.location=focus+point(delta);aim(camera,focus)
-        for name,root in roots.items():
+        for name in bake_names:
             for other,assembly in roots.items():
                 for obj in assembly.children_recursive: obj.hide_render=other!=name
             def bake(key):
@@ -578,10 +641,10 @@ with tempfile.TemporaryDirectory() as tmp:
 rigs={name:{'node':data['node'].split('.',1)[1],'amount':data['travel'],
             'kind':'spin' if data['motion']=='rotate' else 'strike' if name in ['pike','anchor-hammer'] else 'recoil'}
       for name,data in mechanics.items()}
-(DIST/'armory-visuals.js').write_text('// Generated by tools/authoring/weapons/source/build_expansion.py.\nwindow.IRON_VOW_EXPANSION_ART='+json.dumps(visuals,separators=(',',':'))+';\nwindow.IRON_VOW_EXPANSION_RIG='+json.dumps(rigs,separators=(',',':'))+';\n')
+(DIST/'armory-visuals.js').write_text('// Generated by tools/authoring/weapons/source/build_expansion.py.\nwindow.IRON_VOW_EXPANSION_ART='+json.dumps(visuals,separators=(',',':'))+';\nwindow.IRON_VOW_EXPANSION_RIG='+json.dumps(rigs,separators=(',',':'))+';\n',newline='\n')
 
 # Art review sheet is a deliverable, not used by the game loader.
-sheet=Image.new('RGB',(1440,1080),(18,27,32));draw=ImageDraw.Draw(sheet)
+sheet=Image.new('RGB',(1440,math.ceil(len(roots)/4)*360),(18,27,32));draw=ImageDraw.Draw(sheet)
 for i,name in enumerate(roots):
     x,y=(i%4)*360,(i//4)*360
     draw.rounded_rectangle((x+8,y+8,x+352,y+352),12,fill=(29,41,47),outline=(67,79,82))
@@ -601,7 +664,7 @@ font=ImageFont.load_default(size=20);small=ImageFont.load_default(size=15)
 before=ROOT.parent/'armory-before'
 if before.exists():
     sheet=Image.new('RGB',(1800,1600),(16,24,30));draw=ImageDraw.Draw(sheet)
-    for i,name in enumerate(roots):
+    for i,name in enumerate(name for name in roots if (before/f'armory-{name}-left.webp').exists()):
         x,y=i%3*600,i//3*400
         draw.rounded_rectangle((x+8,y+8,x+592,y+392),12,fill=(29,40,47),outline=(65,81,85))
         draw.text((x+24,y+19),name.upper(),font=font,fill=(237,187,103))
