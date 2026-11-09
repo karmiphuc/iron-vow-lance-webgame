@@ -3,6 +3,10 @@ const {join}=require('node:path');
 
 module.exports=async function checkInfantryDestruction({page,mobile,origin,tap}){
  await page.emulateMedia({reducedMotion:'no-preference'});
+ let release,requests=0;
+ const coldAtlas=new Promise(resolve=>{release=resolve});
+ const hold=async route=>{requests++;await coldAtlas;await route.continue()};
+ await page.route('**/assets/foundry-6-death*.webp',hold);
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
  for(const [contract,part] of [[0,'body'],[2,'body'],[2,'pilot']]){
@@ -22,7 +26,7 @@ module.exports=async function checkInfantryDestruction({page,mobile,origin,tap})
      const stream=deathTrace.frames[close?'camera':'field'],last=stream.at(-1);
      if(last?.index!==render.index){
       const age=t-u.deathTime;
-      stream.push({age,index:render.index,body:render.anchors.body,loaded:render.cell>0});
+      stream.push({age,index:render.index,body:render.anchors.body,loaded:!!render.destruction&&render.cell>0});
      }
     }
     return window.originalUnitBody(u,t,close);
@@ -43,6 +47,12 @@ module.exports=async function checkInfantryDestruction({page,mobile,origin,tap})
    throw Error('No exposed infantry target');
   });
   await (mobile?page.touchscreen.tap(target.x,target.y):page.mouse.click(target.x,target.y));
+  if(!contract){
+   await page.waitForFunction(()=>battle?.busy);
+   await new Promise(resolve=>setTimeout(resolve,1950));
+   release();
+   assert.ok(requests>0,'first kill exercises the delayed destruction art request');
+  }
   if(process.env.IRON_VOW_DEATH_PROOF){
    for(const [age,label] of [[.14,'hit'],[.50,'buckle'],[.98,'contact'],[1.63,'settle']]){
     await page.waitForFunction(age=>!deathTrace.foe.alive&&clock-deathTrace.foe.deathTime>=age,age);
@@ -61,7 +71,7 @@ module.exports=async function checkInfantryDestruction({page,mobile,origin,tap})
   });
   const frames=mobile?report.frames.field:report.frames.camera;
   assert.ok(frames.length>=6,'lethal hit plays intermediate poses instead of jumping to the corpse: '+JSON.stringify(frames));
-  assert.ok(frames.every(frame=>frame.loaded),'death poses are loaded');
+  assert.ok(frames.every(frame=>frame.loaded),'death poses are loaded from the first rendered frame: '+JSON.stringify(frames.slice(0,3)));
   assert.equal(report.reason,part);
   assert.equal(report.victory,!contract);
   assert.ok(frames[0].body[1]+.10<frames.at(-1).body[1],'torso drops through the sequence');

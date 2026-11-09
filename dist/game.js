@@ -2037,7 +2037,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
  const profile=ATTACK_PROFILES[w.id],power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
+ const targetAtlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(t.frame)];
+ const targetMotion=targetAtlas?.destruction?readyNativeMotion(t,2400):null;
  if(!a.kind&&(FRAMES[a.frame].native||power)&&!reducedMotion)await readyNativeMotion(a);
+ if(targetMotion)await targetMotion;
  const paid=reaction?0:paidAttackAP(a,w),charged=chargedLimbShot(a,w,part,reaction);
  if(!reaction){if(!a.order?.keepMove&&!(charged&&a.training?.breachMove))startAction(a);a.ap-=paid}
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
@@ -2461,7 +2464,10 @@ function preloadNativeMotion(frame,paint,hull){
    if(paint)moduleImage(atlas.unarmedKey+'-paint');
   }
   const images=[motionImage(atlas)];
-  if(atlas.destruction)images.push(attackMotionImage(atlas.destruction,paint||hull?.trim));
+  if(atlas.destruction){
+   images.push(motionImage(atlas.destruction));
+   if(paint||hull?.trim)images.push(moduleImage(atlas.destruction.key+'-paint'));
+  }
   return images;
  }
  const views=prototypes[nativeHullKey(frame,hull)];
@@ -2470,9 +2476,9 @@ function preloadNativeMotion(frame,paint,hull){
   return motionImage(visual.motion);
  }):[];
 }
-async function readyNativeMotion(u){
+async function readyNativeMotion(u,timeout=1400){
  const missing=preloadNativeMotion(u.frame,u.paint,u).filter(im=>!imageReady(im)&&im.decode);
- if(missing.length)await Promise.race([Promise.allSettled(missing.map(im=>im.decode())),delay(1400)]);
+ if(missing.length)await Promise.race([Promise.allSettled(missing.map(im=>im.decode())),delay(timeout)]);
 }
 function attackMotionImage(atlas,paint){
  if(paint)moduleImage(atlas.key+'-paint');
