@@ -36,10 +36,11 @@ const _a=V3(),_b=V3(),_c=V3();
 const MEL={wind:.38,hit:.46,strike:.5,hold:.72,end:1.1};
 const thrustWindup={sx:-.66,sz:-.08,el:-1.35,wr:.36,yaw:-.16,lean:-.08};
 const thrustContact={sx:-1.12,sz:.12,el:-.33,wr:-.10,yaw:.13,lean:.13};
-function meleeKeys(a,thrust){if(a<0||a>MEL.end)return null;
+function meleeKeys(a,thrust,style){if(a<0||a>MEL.end)return null;
   const P0={sx:-.28,sz:-.07,el:-.62,wr:0,yaw:0,lean:0};
-  const P1=thrust?thrustWindup:{sx:-2.55,sz:-.55,el:-1.45,wr:-.3,yaw:-.55,lean:-.12};
-  const P2=thrust?thrustContact:{sx:-.75,sz:.42,el:-.12,wr:.25,yaw:.62,lean:.22};
+  // A chassis may author its own swing (dims.melee); thrust weapons keep the shared pike keys.
+  const P1=thrust?thrustWindup:style?.wind??{sx:-2.55,sz:-.55,el:-1.45,wr:-.3,yaw:-.55,lean:-.12};
+  const P2=thrust?thrustContact:style?.hit??{sx:-.75,sz:.42,el:-.12,wr:.25,yaw:.62,lean:.22};
   let A,B,q;if(a<MEL.wind){A=P0;B=P1;q=smooth(a/MEL.wind);}else if(a<MEL.strike){A=P1;B=P2;q=1-Math.pow(1-(a-MEL.wind)/(MEL.strike-MEL.wind),3);}else if(a<MEL.hold){A=P2;B=P2;q=1;}else{A=P2;B=P0;q=smooth((a-MEL.hold)/(MEL.end-MEL.hold));}
   const o={w:a>MEL.hold?1-q*.999:1};for(const k in P0)o[k]=lerp(A[k],B[k],q);return o;}
 function lungeK(a){if(a<0||a>MEL.end)return 0;if(a<MEL.wind)return -.15*smooth(a/MEL.wind);if(a<MEL.strike)return lerp(-.15,1,smooth((a-MEL.wind)/(MEL.strike-MEL.wind)));if(a<MEL.hold)return 1;return 1-smooth((a-MEL.hold)/(MEL.end-MEL.hold));}
@@ -68,18 +69,26 @@ function poseBehemothBrace(m,artillery){
   body.updateWorldMatrix(true,true);
   const rootQ=body.getWorldQuaternion(new T.Quaternion());
   for(const leg of r.legs){
-    const sign=Math.sign(leg.restX),front=Boolean(leg.kneeShoe),fold=front?(sign>0?left:right):0;
+    const sign=Math.sign(leg.restX),front=Boolean(leg.kneeShoe),drive=front?(sign>0?left:right):0;
+    // The foot stays planted on its IK goal while the hull sinks; only then does the knee drop and the shin tuck.
+    const fold=smooth(clamp((drive-.42)/.58,0,1));
     const hip=body.worldToLocal(leg.hip.getWorldPosition(V3()));
-    const goal=V3(leg.restX,D.ankleH,leg.restZ);
-    const axis=goal.clone().sub(hip),len=clamp(axis.length(),Math.abs(A-B)+.001,A+B-.001);axis.normalize();
-    const pole=V3(sign*.84,.05,front?.91:-.76);pole.addScaledVector(axis,-pole.dot(axis)).normalize();
-    const along=(A*A-B*B+len*len)/(2*len);
-    let up=axis.clone().multiplyScalar(along).addScaledVector(pole,Math.sqrt(Math.max(0,A*A-along*along))).normalize();
-    let down=axis.clone().multiplyScalar(len).addScaledVector(up,-A).normalize();
+    const goal=V3(leg.restX,D.ankleH,leg.restZ),target=goal.clone();
+    const contact=front?V3(sign*kneeContact.x,kneeContact.y,kneeContact.z):null;
     if(fold>0){
-      const contact=V3(sign*kneeContact.x,kneeContact.y,kneeContact.z);
-      up=swingDirection(up,contact.sub(hip).normalize(),fold);
-      down=swingDirection(down,V3(sign*.65,.45,-.62).normalize(),fold);
+      // Two-bone IK toward an ankle target that travels from the planted foot to its folded spot under the hull.
+      // The knee pole turns toward the knee pad, so the solve lands exactly on the kneeling pose at fold 1.
+      target.lerp(contact.clone().addScaledVector(V3(sign*.22,.42,-.88).normalize(),B),fold);
+      target.y+=.35*Math.sin(PI*fold);
+    }
+    const axis=target.clone().sub(hip),len=clamp(axis.length(),Math.abs(A-B)+.001,A+B-.001);axis.normalize();
+    const pole=V3(sign*.84,.05,front?.91:-.76);
+    if(fold>0)pole.lerp(contact.clone().sub(hip).normalize(),fold);
+    pole.addScaledVector(axis,-pole.dot(axis)).normalize();
+    const along=(A*A-B*B+len*len)/(2*len);
+    const up=axis.clone().multiplyScalar(along).addScaledVector(pole,Math.sqrt(Math.max(0,A*A-along*along))).normalize();
+    const down=axis.clone().multiplyScalar(len).addScaledVector(up,-A).normalize();
+    if(fold>0){
       const clearance=D.ankleH+.085*fold+.15*Math.sin(PI*fold);
       const limit=clamp((clearance-hip.y-A*up.y)/B,-.999,.999);
       if(down.y<limit){down.y=0;down.normalize().multiplyScalar(Math.sqrt(1-limit*limit));down.y=limit;}
@@ -130,14 +139,23 @@ function animateMech(m,I,dt,t){
   cont.updateMatrixWorld(true);
   spr(S.comp,80,11,dt);S.comp.x=clamp(S.comp.x,-.4,.12);spr(S.pitch,55,7,dt);spr(S.arm,60,7,dt);spr(S.kx,40,9,dt);spr(S.kz,40,9,dt);
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
-  if(I.moving)m.gait.phase+=dt*I.speed/(2*I.stepLen);
+  // Heavier frames take shorter, quicker steps so a longer planted phase stays within leg reach.
+  const stepLen=(I.stepLen??1.55)*(D.stride??1);
+  if(I.moving)m.gait.phase+=dt*I.speed/(2*stepLen);
   const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
+  // Fraction of each cycle a foot stays planted. Above .5 gives double support; heavy frames keep more feet down.
+  const duty=D.duty??.5;
+  // Pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's.
+  const p=r.pelvis,brace=I.brace;
+  const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
+  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
+  p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   let settling=m.legs.some(L=>L.settle);
   r.legs.forEach((l,i)=>{const L=m.legs[i];const home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ)).clone();let pitch=0;
     if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;}
     else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;L.settle=null;
-      if(ph<.5){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
-      else{if(!L.swing){L.swing=true;L.from.copy(L.planted);}const q=(ph-.5)/.5;L.to.copy(home).addScaledVector(fwd,I.stepLen*.5);L.to.y=home.y;
+      if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
+      else{if(!L.swing){L.swing=true;L.from.copy(L.planted);}const q=(ph-duty)/(1-duty);L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=home.y;
         L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;pitch=q<.3?.45*Math.sin(PI*q/.3):q>.62?-.35*Math.sin(PI*(q-.62)/.38):0;}}
     else{if(L.swing){L.swing=false;L.planted.copy(L.foot);L.planted.y=home.y;}
       if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
@@ -146,10 +164,6 @@ function animateMech(m,I,dt,t){
     const loc=cont.worldToLocal(_b.copy(L.foot));solveLeg(m,l,loc,pitch*w);});
   // kusazuri hinge with the thighs so the skirt never cuts through a moving leg
   if(r.skirts)VC.skirtPose(r.skirts);
-  const p=r.pelvis,brace=I.brace;
-  const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
-  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1)+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
-  p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   m.aim.blend=damp(m.aim.blend,t<m.aim.until&&!dead?1:0,t<m.aim.until?9:2.5,dt);
   let ay=0,el=0;
   if(m.aim.blend>.01){const sp=r.spine.getWorldPosition(_c);const dx=m.aim.point.x-sp.x,dz=m.aim.point.z-sp.z,dy=m.aim.point.y-(sp.y+1.4*sc);const hz=Math.hypot(dx,dz)||1;
@@ -166,9 +180,9 @@ function animateMech(m,I,dt,t){
   aR.wr.rotation.x=-R0*.1;
   const aL=r.arms.L,bl=dead?0:brace;
   aL.sh.rotation.set(lerp(-.2+w*.14*Math.sin(2*PI*g),-1.2,bl)+S.arm.x*.12+(dead?.3*dE:0),0,lerp(.14,-.28,bl));aL.el.rotation.x=lerp(-.75,-1.35,bl)*(dead?1-dE*.7:1);aL.wr.rotation.x=0;
-  if(m.melee&&!dead){const K=meleeKeys(m.melee.age,m.melee.thrust);
+  if(m.melee&&!dead){const K=meleeKeys(m.melee.age,m.melee.thrust,D.melee);
     if(K){const wv=K.w;aL.sh.rotation.x=lerp(aL.sh.rotation.x,K.sx,wv);aL.sh.rotation.z=lerp(aL.sh.rotation.z,-K.sz,wv);aL.el.rotation.x=lerp(aL.el.rotation.x,K.el,wv);aL.wr.rotation.x=lerp(0,K.wr,wv);
-      r.spine.rotation.y-=K.yaw*wv;r.spine.rotation.x+=K.lean*wv;aR.sh.rotation.x=lerp(aR.sh.rotation.x,-.7,wv*.5);}
+      r.spine.rotation.y-=K.yaw*wv;r.spine.rotation.x+=K.lean*wv;aR.sh.rotation.x=lerp(aR.sh.rotation.x,D.melee?.offArm??-.7,wv*.5);}
     else m.melee=null;}
   if(m.shield)m.shield.visible=!I.shieldDead;
   for(const a of [aL,aR]){a.paul.rotation.x=a.sh.rotation.x*.28;a.paul.rotation.z=a.sh.rotation.z*.4;}
