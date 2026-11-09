@@ -30,11 +30,12 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
    seen.push(id);
    const expected=await page.evaluate(id=>{
     const w=weapon(id),training=trainingEffects(selected);
-    return {stats:[String(w.damage),weaponRange(w,training)+(w.melee?' tile':' tiles'),String(weaponAP(w,training))],
-     pierce:w.pierce,cannotCounter:launchesMissiles(w)};
+    return {stats:[String(Math.round(w.damage*(w.burst?1.15:1))),weaponRange(w,training)+(w.melee?' tile':' tiles'),String(weaponAP(w,training))],
+     pierce:w.pierce,cannotCounter:launchesMissiles(w),burst:w.burst,scatter:w.scatter};
    },id);
    assert.deepEqual(await item.locator('dd').allTextContents(),expected.stats);
-   if(expected.pierce)assert.equal(await item.locator('.armory-trait').textContent(),Math.round(expected.pierce*100)+'% ARMOR PIERCE');
+   if(expected.pierce)assert.ok((await item.locator('.armory-trait').textContent()).includes(Math.round(expected.pierce*100)+'% ARMOR PIERCE'));
+   if(expected.burst)assert.ok((await item.locator('.armory-trait').textContent()).includes(expected.burst+(expected.scatter?' PELLETS':' RD BURST')));
    if(expected.cannotCounter)assert.equal(await item.locator('.armory-trait').textContent(),'CANNOT COUNTER');
   }
   assert.ok(await page.locator('#ui .page').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
@@ -59,7 +60,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   for(const skill of ['sighter','ballistics','rangefinder'])if(!learnTraining(1,skill))throw Error('Training fixture failed');
  });
  await tap('[data-select="1"]');await tab('assault');
- assert.deepEqual(await card('trident').locator('dd').allTextContents(),['43','6 tiles','3']);
+ assert.deepEqual(await card('trident').locator('dd').allTextContents(),['49','6 tiles','3']);
  await tap('[data-select="0"]');
  await equip('sidewinder');
  await tab('melee');await equip('pike');

@@ -39,7 +39,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run(`(()=>{target.shield='bulwark-shield';const blocked=partDamage(foe,target,'pilot',weapon('rifle'));target.shield='citadel-shield';return blocked})()`),25);
  assert.equal(run(`partDamage(foe,target,'pilot',weapon('rifle'))`),20);
  await run(`shootAt('pilot')`);
- assert.equal(run('target.hp.left'),left-20);
+ assert.equal(run('target.hp.left'),left-23);
  assert.equal(run('target.hitPart'),'left');
  assert.equal(run('target.ap'),0,'passive block works at zero AP');
  await run(`shootAt('right','missile')`);

@@ -96,7 +96,7 @@ function train(sim,i,ids){
  assert.ok(alternate.run("counterDamage>partDamage(a,foe,'body',unitWeapon(a))"));
  await alternate.run("engage(foe,a,'body',unitWeapon(foe))");
  assert.equal(alternate.run('a.ap'),alternate.run('before'),'trained reaction still costs no AP');
- assert.equal(alternate.run('foe.max.body-foe.hp.body'),alternate.run('counterDamage'));
+ assert.equal(alternate.run('foe.max.body-foe.hp.body'),alternate.run('Math.round(counterDamage*1.15)'));
  assert.equal(alternate.run('a.reacted'),true);
  alternate.run("foe.x=17;foe.z=1;battle.units=battle.units.slice(0,4);a.ap=2");
  await alternate.run('endTurn()');

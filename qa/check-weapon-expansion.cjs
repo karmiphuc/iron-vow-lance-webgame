@@ -24,7 +24,7 @@ const createSimulation=require('./sim-harness.cjs');
    if(w.melee)attacker.melee=w.id;else attacker.weapon=w.id;
    effects=[];await shoot(attacker,foe,'body',w);
    return ATTACK_PROFILES[w.id].melee===w.melee&&attacker.ap===ROUND_AP-w.ap
-    &&hp-foe.hp.body===damage(attacker,foe,w)&&effects.some(e=>e.type==='shot'&&e.kind===w.id);
+    &&hp-foe.hp.body===Math.round(damage(attacker,foe,w)*(w.burst?1.15:1))&&effects.some(e=>e.type==='shot'&&e.kind===w.id);
   })()`),id+' uses its own damage, AP, profile and impact');
  }
  assert.ok(run(`(()=>{
