@@ -62,7 +62,7 @@ function train(sim,i,ids){
   g.x=1;g.z=16;target.x=1;target.z=10;selected=1;action='fire';lockedTarget=target.id;renderBattle()`);
  assert.equal(lance.run("weaponRange(unitWeapon(g),g.training)"),6);
  assert.equal(lance.run("reactionWeapon(g,target).id"),'rifle');
- assert.match(lance.node('#ui').innerHTML,/IN WEAPON RANGE/);
+ assert.match(lance.node('#ui').innerHTML,/IN RANGE/);
  lance.run("target.z=9;renderBattle()");
  assert.equal(lance.run('reactionWeapon(g,target)'),null);
  assert.match(lance.node('#ui').innerHTML,/OUT OF RANGE/);

@@ -17,6 +17,7 @@ module.exports=async function checkAshigaru({page,mobile,origin,tap}){
   const atlas=window.IRON_VOW_ASHIGARU_ART,image=motionImages[atlas.key];
   await image.decode();
   battle.cover.clear();
+  for(let z=7;z<=15;z++)terrainCell(8,z).level=0;
   for(const other of battle.units)if(other!==u&&other!==a){other.alive=false;other.hp.body=0}
   Object.assign(a,{x:8,z:15,vx:8,vz:15});
   Object.assign(u,{x:8,z:7,vx:8,vz:7});

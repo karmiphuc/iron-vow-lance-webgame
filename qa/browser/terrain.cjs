@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkTerrain({page,mobile,origin,tap}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.evaluate(()=>{
   Math.random=()=>.317;
   deploy(3,false,[0]);
@@ -37,9 +38,16 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
 
  await page.evaluate(()=>{
   const u=current(),foe=battle.units.find(v=>v.team==='enemy'&&!v.kind);
-  Object.assign(u,{x:14,z:8,vx:14,vz:8,weapon:'obelisk',training:{range:1}});
-  Object.assign(foe,{x:6,z:10,vx:6,vz:10});
-  battle.units=[u,foe];battle.cover.delete('14,8');battle.cover.delete('6,10');
+  // Keep the ten-tile camera check on a legal direct-fire lane.
+  let lane;
+  for(let x=10;x<=16&&!lane;x++)for(let z=4;z<=15&&!lane;z++){
+   const a={x,z},t={x:x-8,z:z+2};
+   if(!ridgeBlocks(a,t)&&[a,t].every(p=>!battle.cover.has(p.x+','+p.z)))lane=[a,t];
+  }
+  const [a,t]=lane;
+  Object.assign(u,a,{vx:a.x,vz:a.z,weapon:'obelisk',training:{range:1}});
+  Object.assign(foe,t,{vx:t.x,vz:t.z});
+  battle.units=[u,foe];
   action='fire';closeModal();focusBattleCamera(u,true);renderBattle();
   Math.random=()=>0;
   window.terrainQA={foe,hp:foe.hp.body};

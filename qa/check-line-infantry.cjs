@@ -29,7 +29,7 @@ const {play}=require('./check-missions.cjs');
  run('battle=null;deploy(0,false,[0]);closeModal()');
  await run('endTurn()');
  assert.ok(run('battle.log.some(line=>line.startsWith("LINE INFANTRY 1 → WARDEN"))'));
- assert.ok(run('current().hp.body<current().max.body'));
+ assert.ok(run('targetParts(current()).some(part=>current().hp[part]<current().max[part])'));
  const resumed=simulate({...options,storage:new Map(sim.storage)});
  assert.equal(resumed.run('battle.units.find(u=>u.team==="enemy").frame'),frame);
  assert.equal(resumed.run('JSON.stringify(captureSortie())'),run('JSON.stringify(captureSortie())'));

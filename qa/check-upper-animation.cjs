@@ -17,7 +17,7 @@ console.log('PASS: approved feet unchanged; independent arm aim with rigid rifle
 
 (async()=>{
  const shot=create({random:()=>0,reducedMotion:true}),run=shot.run;
- run('deploy(0);closeModal();const foe=battle.units[3]');
+ run('createBattle(0);const foe=battle.units[3]');
  await run('shoot(current(),foe,"left")');
  assert.equal(run('foe.hitPart'),'left');
  assert.ok(run('foe.hp.left<foe.max.left&&foe.hp.left>foe.max.left/2'));

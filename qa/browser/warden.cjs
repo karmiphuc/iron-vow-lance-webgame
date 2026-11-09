@@ -12,7 +12,8 @@ module.exports=async function checkWarden({page,mobile,origin,tap}){
   const clear=(x,z)=>!battle.cover.has(x+','+z)&&!occupied.some(u=>u.x===x&&u.z===z);
   const cells=[];
   for(let x=4;x<battle.size.width-4;x++)for(let z=4;z<battle.size.depth-4;z++){
-   if([0,1,2,3,4].every(i=>clear(x+i*dx,z+i*dz)))cells.push({x,z});
+   if([0,1,2,3,4].every(i=>clear(x+i*dx,z+i*dz))&&
+    !ridgeBlocks({x:x+2*dx,z:z+2*dz},{x:x+4*dx,z:z+4*dz}))cells.push({x,z});
   }
   cells.sort((a,b)=>Math.abs(a.x-7)+Math.abs(a.z-7)-Math.abs(b.x-7)-Math.abs(b.z-7));
   const {x,z}=cells[0];

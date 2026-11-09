@@ -39,7 +39,7 @@ module.exports=async function checkLineInfantry({page,mobile,origin,tap}){
  }
  await page.waitForFunction(()=>battle?.turn===2&&!battle.busy);
  const result=await page.evaluate(()=>({log:battle.log.find(line=>line.startsWith('LINE INFANTRY 1 → WARDEN')),
-  body:current().hp.body,max:current().max.body}));
- assert.ok(result.log&&result.body<result.max);
+  damaged:targetParts(current()).some(part=>current().hp[part]<current().max[part])}));
+ assert.ok(result.log&&result.damaged);
  console.log('PASS Picket hostile phase '+result.log);
 };
