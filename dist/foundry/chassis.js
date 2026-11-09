@@ -139,8 +139,9 @@ function solveLeg(rig,D,leg,t,pitch){
   const vx=_IV.x-leg.hip.position.x,vy=_IV.y-leg.hip.position.y,vz=_IV.z-leg.hip.position.z;
   const roll=Math.atan2(vx,-vy),L=Math.min(Math.hypot(vx,vy,vz),A+Bl-.001),phi=Math.atan2(vz,Math.hypot(vx,vy));
   const al=Math.acos(Math.max(-1,Math.min(1,(A*A+L*L-Bl*Bl)/(2*A*L)))),bend=PI-Math.acos(Math.max(-1,Math.min(1,(A*A+Bl*Bl-L*L)/(2*A*Bl))));
-  if(D.reverse){leg.hip.rotation.set(-(phi-al),0,roll);leg.kn.rotation.set(-bend,0,0);}
-  else{leg.hip.rotation.set(-(phi+al),0,roll);leg.kn.rotation.set(bend,0,0);}
+  if(D.reverse){leg.hip.rotation.set(-(phi-al),0,roll,'ZXY');leg.kn.rotation.set(-bend,0,0);}
+  else{leg.hip.rotation.set(-(phi+al),0,roll,'ZXY');leg.kn.rotation.set(bend,0,0);}
+  // roll (Z) is applied outside pitch (X): the angles above are only exact in ZXY order
   // keep the sole flat on the ground, aligned with its mount's yaw
   _IQ2.copy(_IQ).multiply(leg.hip.quaternion).multiply(leg.kn.quaternion).invert();
   if(hp!==p)_IQ2.multiply(hp.quaternion);
@@ -155,8 +156,11 @@ const DIMS=[
   {py:3.32,spY:.25,neck:[0,.95,.72],shX:1.14,shY:1.1,up:.98,fo:1.0,hipX:.5,legA:1.45,legB:1.72,ankleH:.3,restX:.54,restZ:.04,lift:.9,reverse:true,scale:.98},
   {stance:.86,py:2.68,spY:.36,neck:[0,1.86,.62],shX:1.86,shY:1.5,up:1.0,fo:1.0,hipX:1.04,legA:1.25,legB:1.3,ankleH:.42,restX:.96,restZ:.08,lift:.5,reverse:false,scale:1},
   {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1},
-  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1},
-  {quad:true,py:2.7,spY:.6,neck:[0,1.52716,1.15736],shX:1.86,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.315,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[0,.5,.5,0],sway:.05}
+  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1,duty:.6,stride:.8,walkDrop:.16,
+   // Duelist cut: high guard beside the head, then a diagonal downward stroke that ends at chest height.
+   // The blade sits across the fist, so blade pitch = forearm pitch + 90deg - wrist: guard ~3.2 rad, contact ~1.22 rad.
+   melee:{wind:{sx:-2.3,sz:-.3,el:-.6,wr:1.27,yaw:-.25,lean:-.1},hit:{sx:-1.3,sz:.1,el:-.12,wr:1.77,yaw:.28,lean:.2},offArm:-.3}},
+  {quad:true,py:2.7,spY:.6,neck:[0,1.52716,1.15736],shX:1.86,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.315,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[.25,.75,0,.5],duty:.75,stride:.65,walkDrop:.14,sway:.05}
 ];
 function warden(K,M){
   const {pelvis,spine,neck,arms,legs}=K,{p,s,a,frame,joint,steel}=M,s2=M.s;
@@ -980,7 +984,7 @@ function mergeStatic(root,Bc,anchors){root.updateMatrixWorld(true);const anc=o=>
 const BUILDERS=[warden,kestrel,basilisk,valkyrie,oni,behemoth];
 /* Every chassis is three modules: LEGS (pelvis, hips, legs, gait), CORE (torso, head, back units) and ARMS (pauldrons, arms, hands).
    Dimensions are split the same way, so any legs can carry any core and any arms. */
-const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','sway','scale'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so'];
+const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','duty','stride','walkDrop','sway','scale'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so','melee'];
 function composeDims(l,c,a){const D={};for(const [src,keys] of [[l,LEG_KEYS],[c,CORE_KEYS],[a,ARM_KEYS]])for(const k of keys)if(DIMS[src][k]!==undefined)D[k]=DIMS[src][k];
   // combat stance: biped feet planted wider than the shoulders, toes turned out, limited by what the legs can reach with a bent knee
   if(!D.quad){const vert=D.py+(D.hipY??-.1)-D.ankleH,maxH=Math.sqrt(Math.max(0,(.95*(D.legA+D.legB))**2-vert*vert));D.restX=Math.max(D.restX,Math.min(D.shX*(D.stance??1.1),D.hipX+maxH));D.toe=D.toe??.17;}
