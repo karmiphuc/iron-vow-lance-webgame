@@ -23,7 +23,18 @@ const chassis = {
     deploy: "Both blast shutters swing clear as the launchers elevate and the chassis braces.",
     fire: "The launchers kick left, then right, while the planted legs carry the load.",
   },
+  bulwark: {
+    name: "Bulwark-Aegis", serial: "M02", role: "Hostile melee guard",
+    summary: "The Aegis tower shield covers the left side while the Arc Cleaver sweeps through the target lane. Bench inspection only.",
+    weapon: "Arc Cleaver / Aegis tower shield", legs: "Planted footwork", mechanisms: "30 digit joints",
+    clips: ["Idle", "Strike", "Bash", "Grip"],
+    idle: "The chassis settles into guard with the shield forward and the cleaver held low.",
+    strike: "The lead foot plants before the hips and shoulders carry the cleaver across the target lane.",
+    bash: "The lead leg drives the shield forward, then the chassis settles back into guard.",
+    grip: "The fingers open and close around the equipped handles while the sockets retain both modules.",
+  },
 };
+const standardClips = ["Idle", "Walk", "Deploy", "Fire"];
 const descriptions = {
   Idle: "The optics scan while the chassis shifts its weight over planted feet.",
   Walk: "Alternating steps keep each sole level through contact. Watch the knees and side rams.",
@@ -46,13 +57,15 @@ const vesper = byId("preview-vesper");
 const cameraPresets = { front: 0, threequarter: .50, rear: Math.PI };
 const assets = new Map();
 
-let activeChassis = "gatecrasher";
+const requestedChassis = new URLSearchParams(location.search).get("chassis");
+let activeChassis = Object.hasOwn(chassis, requestedChassis) ? requestedChassis : "gatecrasher";
 let activeClip = "Idle";
 let loadSerial = 0;
 let renderer, scene, camera, loader, model, skeleton, mixer, action;
 let playing = false;
 let showRig = false;
-let azimuth = cameraPresets.threequarter;
+let cameraPreset = "threequarter";
+let azimuth = activeChassis === "bulwark" ? -cameraPresets.threequarter : cameraPresets.threequarter;
 let elevation = .19;
 let distanceScale = 1;
 let orbitPointer = null;
@@ -63,6 +76,18 @@ function setPlaying(value) {
   playButton.setAttribute("aria-label", value ? "Pause motion" : "Play motion");
 }
 
+function supportedClips(id) {
+  return chassis[id].clips || (id === "gatecrasher" ? [...standardClips, "Strike"] : standardClips);
+}
+
+function clipAvailable(id, name) {
+  return supportedClips(id).includes(name) && (id !== "gatecrasher" || name !== "Strike" || cleaver.checked);
+}
+
+function presetAngle(id, preset) {
+  return id === "bulwark" && preset === "threequarter" ? -cameraPresets[preset] : cameraPresets[preset];
+}
+
 function setControls(ready) {
   viewport.classList.toggle("live", ready);
   still.hidden = ready;
@@ -70,8 +95,7 @@ function setControls(ready) {
   for (const button of [...clipButtons, ...cameraButtons, playButton, rigButton]) {
     button.disabled = !ready;
   }
-  const strike = clipButtons.find((button) => button.dataset.clip === "Strike");
-  strike.hidden = activeChassis !== "gatecrasher" || !cleaver.checked;
+  for (const button of clipButtons) button.hidden = !clipAvailable(activeChassis, button.dataset.clip);
   equipment.hidden = activeChassis !== "gatecrasher";
   equipment.disabled = !ready;
   scrubber.disabled = !ready;
@@ -92,7 +116,7 @@ function updateEquipmentPreview() {
 
 function showTrial() {
   const meta = chassis[activeChassis];
-  byId("trial").textContent = descriptions[activeClip] || meta[activeClip.toLowerCase()];
+  byId("trial").textContent = meta[activeClip.toLowerCase()] || descriptions[activeClip];
   for (const button of clipButtons) {
     button.setAttribute("aria-pressed", String(button.dataset.clip === activeClip));
   }
@@ -112,7 +136,7 @@ function setClip(name, autoplay) {
   if (mixer) {
     mixer.stopAllAction();
     action = mixer.clipAction(assets.get(activeChassis).animations.find((clip) => clip.name === name));
-    if (name === "Strike") {
+    if (name === "Strike" || name === "Bash") {
       action.setLoop(THREE.LoopOnce, 1);
       action.clampWhenFinished = true;
     }
@@ -124,7 +148,7 @@ function setClip(name, autoplay) {
 }
 
 function updateCamera() {
-  const height = activeChassis === "cicada" ? 5.3 : 6;
+  const height = activeChassis === "bulwark" ? 6.5 : activeChassis === "cicada" ? 5.3 : 6;
   const aspect = camera.aspect;
   const distance = height * (aspect < 1 ? 2.05 / Math.max(.72, aspect) : 1.83) * distanceScale;
   const target = height * .47;
@@ -245,14 +269,18 @@ function createViewer() {
 async function selectChassis(id) {
   const serial = ++loadSerial;
   const meta = chassis[id];
-  const preferredClip = activeClip;
+  const preferredClip = clipAvailable(id, activeClip) ? activeClip : "Idle";
+  if (id !== activeChassis && (id === "bulwark" || activeChassis === "bulwark")) azimuth = presetAngle(id, cameraPreset);
   activeChassis = id;
+  activeClip = preferredClip;
   setPlaying(false);
   setControls(false);
   byId("geometry").textContent = "—";
   still.src = "./" + id + ".webp";
   still.alt = meta.name + " inspection render";
   for (const key of ["name", "role", "summary", "weapon", "serial"]) byId(key).textContent = meta[key];
+  byId("legs").textContent = meta.legs || "Two-bone IK";
+  byId("mechanisms").textContent = meta.mechanisms || "4 telescoping rams";
   for (const button of chassisButtons) {
     button.setAttribute("aria-pressed", String(button.dataset.chassis === id));
   }
@@ -267,7 +295,7 @@ async function selectChassis(id) {
     if (!asset) {
       asset = await loader.loadAsync("./" + id + ".glb");
       const clipNames = new Set(asset.animations.map((clip) => clip.name));
-      if (!clipButtons.every((button) => (button.dataset.clip === "Strike" && id !== "gatecrasher") || clipNames.has(button.dataset.clip))) {
+      if (!supportedClips(id).every((name) => clipNames.has(name))) {
         throw new Error("Required motion clips are missing");
       }
       assets.set(id, asset);
@@ -306,8 +334,7 @@ async function selectChassis(id) {
     scene.add(skeleton);
     mixer = new THREE.AnimationMixer(model);
     mixer.addEventListener("finished", () => setPlaying(false));
-    const available = preferredClip !== "Strike" || id === "gatecrasher" && cleaver.checked;
-    setClip(available && asset.animations.some((clip) => clip.name === preferredClip) ? preferredClip : "Idle", !reduceMotion.matches);
+    setClip(clipAvailable(id, preferredClip) ? preferredClip : "Idle", !reduceMotion.matches);
     setControls(true);
     updateEquipmentPreview();
     sizeViewport();
@@ -331,7 +358,8 @@ cleaver.addEventListener("change", updateEquipmentPreview);
 vesper.addEventListener("change", updateEquipmentPreview);
 for (const button of cameraButtons) {
   button.addEventListener("click", () => {
-    azimuth = cameraPresets[button.dataset.camera];
+    cameraPreset = button.dataset.camera;
+    azimuth = presetAngle(activeChassis, cameraPreset);
     elevation = .19;
     distanceScale = 1;
     updateCamera();
