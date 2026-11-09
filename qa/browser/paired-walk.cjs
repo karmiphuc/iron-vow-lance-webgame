@@ -14,9 +14,13 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
     heading:headingTo(1,0),face:1,weapon:FRAMES[frame].weapon,melee:FRAMES[frame].melee});
    battle.units.filter(other=>other!==u).forEach((other,i)=>Object.assign(other,{x:17,z:i+1,vx:17,vz:i+1}));
    effects=[];action='move';closeModal();focusBattleCamera(u,true);renderBattle();
-   const steps=[],renders=new Set(),track={u,steps,renders,seam:false};
+   const steps=[],sounds=[],renders=new Set(),track={u,steps,sounds,renders,seam:false};
    if(!window.pairedWalkQA){
-    const push=Array.prototype.push,render=foundryRender,advance=advanceUnitAnimation;
+    const push=Array.prototype.push,render=foundryRender,advance=advanceUnitAnimation,cue=gaitSound;
+    gaitSound=(unit,kind,side)=>{
+     if(unit===window.pairedWalkQA?.u)window.pairedWalkQA.sounds.push([kind,side]);
+     return cue(unit,kind,side);
+    };
     Array.prototype.push=function(...items){
      const watch=window.pairedWalkQA;
      if(this===effects&&watch&&battle.busy)for(const item of items)if(item.type==='step')push.call(watch.steps,[item.x,item.z]);
@@ -48,9 +52,11 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
   if(mobile){await page.touchscreen.tap(x,y);await page.touchscreen.tap(x,y)}
   else await page.mouse.click(x,y);
   await page.waitForFunction(()=>!battle.busy&&current().x===10&&current().z===10);
-  const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,renders:[...pairedWalkQA.renders],seam:pairedWalkQA.seam,
+  const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,sounds:pairedWalkQA.sounds,renders:[...pairedWalkQA.renders],seam:pairedWalkQA.seam,
    ap:current().ap,move:current().moveLeft,walks:current().walkCount,motion:current().motion}));
   assert.deepEqual(result.steps,[[8.5,10],[9,10],[9.5,10],[10,10]],name+' lands two alternating beats per tile');
+  assert.deepEqual(result.sounds,[['lift',1],['land',1],['lift',-1],['land',-1],
+   ['lift',1],['land',1],['lift',-1],['land',-1]],name+' cues both feet in walking order');
   assert.ok(result.seam,name+' keeps its speed through the straight tile seam');
   assert.deepEqual([result.ap,result.move,result.walks,result.motion],[fixture.ap,fixture.move-2,2,null]);
   if(baked.includes(name)){

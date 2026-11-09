@@ -43,6 +43,24 @@ async function salvo(id,miss){
  sim.run("$('#sound').onclick()");
  await sim.flush();
  assert.equal(sim.run('combatSamples.size'),11);
+ assert.equal(sim.run('machinerySamples.size'),8);
+ assert.equal(plays.filter(entry=>entry.cue==='mech-boot').length,1,'unmuting resumes idle without replaying startup');
+ assert.ok(sim.run('machineryVoice.idle.loop'));
+ if(id==='rifle'){
+  sim.run(`const walker=battle.units[0],gaitStart=clock;
+   walker.motion={fromX:walker.x,fromZ:walker.z,toX:walker.x+1,toZ:walker.z,
+    start:clock,duration:1,gaitBase:0,segment:{index:0,length:1,paces:wardenPaces(1,0,true)}};
+   walker.motion.gaitCues=walkSoundMarkers(walker.motion,false,false);`);
+  const first=plays.length;
+  for(let tick=0;tick<=60;tick++)sim.run(`clock=gaitStart+${tick}/60;advanceUnitAnimation(walker,clock,1/60)`);
+  sim.run('walker.motion=null');
+  const gait=plays.slice(first);
+  assert.deepEqual(gait.map(entry=>entry.cue),[
+   'mech-servo','mech-foot-a','mech-vent','mech-servo','mech-foot-b','mech-vent',
+   'mech-servo','mech-foot-a','mech-vent','mech-servo','mech-foot-b','mech-vent'
+  ]);
+  for(let i=1;i<gait.length;i+=3)assert.ok(Math.abs(gait[i+1].at-gait[i].at-.085)<1e-6);
+ }
  const initialHP=sim.run('battle.units[3].hp.body');
  if(id==='rifle'){
   sim.run(`const shooter=current(),target=battle.units[3],w=weapon('rifle');
@@ -79,8 +97,9 @@ async function salvo(id,miss){
   }
   return;
  }
- assert.deepEqual(plays.map(entry=>entry.cue),['pod-arm','rocket-launch','rocket-launch','missile-hit','missile-hit']);
- const [arm,first,second,firstImpact,lastImpact]=plays;
+ const ballistic=plays.filter(entry=>!entry.cue.startsWith('mech-'));
+ assert.deepEqual(ballistic.map(entry=>entry.cue),['pod-arm','rocket-launch','rocket-launch','missile-hit','missile-hit']);
+ const [arm,first,second,firstImpact,lastImpact]=ballistic;
  const near=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-6,`${id} ${actual} != ${expected}`);
  near(first.at-arm.at,.28);
  near(second.at-first.at,sim.run(`ATTACK_PROFILES['${id}'].beats[1]`));
@@ -96,5 +115,5 @@ async function salvo(id,miss){
  await salvo('missile',false);
  await salvo('locust',true);
  await salvo('rifle',false);
- console.log('PASS missile arming, paired ignition and detonation; eight rifle reports with five independently timed hits, part HP changes and three silent misses.');
+ console.log('PASS machinery startup and looping idle across mute, alternating gait cues with timed vents, missile launch and detonation, and eight rifle reports with five independent hits.');
 })().catch(error=>{console.error(error);process.exitCode=1});

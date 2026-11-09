@@ -11,3 +11,23 @@ https://freesound.org/people/qubodup/sounds/50674/
 
 All three recordings are CC0. The Iron Vow cues use edited excerpts and
 original synthesized layers. The edit recipe is tools/render_ballistic_audio.py.
+
+Iron Vow machinery audio
+
+"Servo motor" by Burningmonkey (leg servo)
+https://freesound.org/people/Burningmonkey/sounds/322021/
+"Robotic Arm.aiff" by 4ntony (weapon brace)
+https://freesound.org/people/4ntony/sounds/204801/
+"Battle Mech walks (fast & slow sequence)" by Breviceps (left and right footfalls)
+https://freesound.org/people/Breviceps/sounds/557594/
+"Big robot footstep 004" by AudioPapkin (heavy footfall)
+https://freesound.org/people/AudioPapkin/sounds/813055/
+"Pressure Hiss" by unfa (vent)
+https://freesound.org/people/unfa/sounds/211096/
+"Scary Machine Startup.wav" by TraceyRegina (power-up)
+https://freesound.org/people/TraceyRegina/sounds/647225/
+"Air vent (looped)" by lfyaudio (idle)
+https://freesound.org/people/lfyaudio/sounds/848969/
+
+These recordings are CC0. The edited cues can be rebuilt with
+tools/render_machinery_audio.py using the corresponding Freesound previews.

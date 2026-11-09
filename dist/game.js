@@ -1260,7 +1260,9 @@ function loadCombatSamples(){
  }
 }
 function playCombatSample(cue,at,volume,rate=1,pan=0){
- const buffer=combatSamples.get(COMBAT_CUES[cue]);
+ return playSample(combatSamples.get(COMBAT_CUES[cue]),at,volume,rate,pan);
+}
+function playSample(buffer,at,volume,rate=1,pan=0){
  if(!buffer)return false;
  const source=audio.createBufferSource(),gain=audio.createGain();
  source.buffer=buffer;source.playbackRate.value=rate;gain.gain.value=volume;
@@ -1270,7 +1272,7 @@ function playCombatSample(cue,at,volume,rate=1,pan=0){
   gain.connect(position);position.connect(soundBus);
  }else gain.connect(soundBus);
  source.start(at);
- return true;
+ return source;
 }
 function startAudio(unlock=true){
  if(muted)return;
@@ -1282,7 +1284,7 @@ function startAudio(unlock=true){
    const compressor=audio.createDynamicsCompressor();
    compressor.threshold.value=-9;compressor.knee.value=7;compressor.ratio.value=4;
    soundBus.connect(compressor);compressor.connect(audio.destination);
-   if(typeof fetch==='function')loadCombatSamples();
+   if(typeof fetch==='function'){loadCombatSamples();loadMachinerySamples()}
   }
   if(unlock&&(audio.state==='suspended'||audio.state==='interrupted'))audio.resume().then(syncMusic).catch(()=>{});
   syncMusic();
@@ -1401,6 +1403,61 @@ function sound(type,cueVolume=1,shot=null){
  }catch{}
 }
 const musicBuffers=new Map();
+const MACHINERY_MIX={liftGain:.42,liftRate:.94,stepGain:.86,stepRate:1,ventGain:.32,ventRate:1,
+ bootGain:.77,bootRate:1,idleGain:.11,heavyAt:1.25};
+const machinerySamples=new Map();
+let machineryVoice=null,startedMachinery=null;
+function loadMachinerySamples(){
+ for(const cue of ['servo','arm','foot-a','foot-b','foot-heavy','vent','boot','idle']){
+  fetch(asset('assets/audio/mech-'+cue+'.wav'))
+   .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Machinery audio unavailable')})
+   .then(bytes=>audio.decodeAudioData(bytes))
+   .then(buffer=>{machinerySamples.set(cue,buffer);if(cue==='boot'||cue==='idle')syncMachinery()})
+   .catch(()=>{});
+ }
+}
+function syncMachinery(){
+ if(!audio||!soundBus)return;
+ const sortie=muted||document.hidden||['suspended','interrupted','closed'].includes(audio.state)?null:battle;
+ if(machineryVoice?.sortie===sortie)return;
+ const now=audio.currentTime;
+ if(machineryVoice){
+  const {gain,idle,boot}=machineryVoice;
+  gain.gain.setTargetAtTime(0,now,.04);idle.stop(now+.18);
+  boot?.stop(now+.18);
+  machineryVoice=null;
+ }
+ const idleBuffer=machinerySamples.get('idle'),bootBuffer=machinerySamples.get('boot');
+ if(!sortie||!idleBuffer||!bootBuffer)return;
+ const gain=audio.createGain(),idle=audio.createBufferSource(),mix=MACHINERY_MIX;
+ gain.gain.setValueAtTime(0,now);gain.connect(soundBus);
+ idle.buffer=idleBuffer;idle.loop=true;idle.connect(gain);idle.start(now);
+ let boot;
+ if(startedMachinery!==sortie){
+  const rise=Math.max(.35,(bootBuffer.duration||2.1)/mix.bootRate-.65);
+  gain.gain.setValueAtTime(0,now+rise);
+  boot=playSample(bootBuffer,now+.005,mix.bootGain,mix.bootRate);
+  startedMachinery=sortie;
+  gain.gain.linearRampToValueAtTime(mix.idleGain,now+rise+.9);
+ }else gain.gain.linearRampToValueAtTime(mix.idleGain,now+.35);
+ machineryVoice={sortie,gain,idle,boot};
+}
+function gaitSound(u,kind,side){
+ if(muted||document.hidden)return;
+ const mass=MECH_MOTION[u.frame].mass,mix=MACHINERY_MIX;
+ const weight=Math.min(1.15,.55+mass*.35),pan=side*.13,pitch=Math.min(1.15,1.12/mass**.28);
+ const now=(audio?.currentTime??0)+.005;
+ if(kind==='lift'||kind==='arm'){
+  const arm=kind==='arm';
+  if(!playSample(machinerySamples.get(arm?'arm':'servo'),now,mix.liftGain*weight*(arm?.83:1),mix.liftRate*pitch,pan))
+   sound('hydraulic',mass*(arm?.42:.65));
+  return;
+ }
+ const foot=mass>=mix.heavyAt?'foot-heavy':side<0?'foot-a':'foot-b';
+ if(!playSample(machinerySamples.get(foot),now,mix.stepGain*weight,mix.stepRate*pitch,pan))
+  sound('step',mass);
+ playSample(machinerySamples.get('vent'),now+.085,mix.ventGain*weight,mix.ventRate*pitch,pan);
+}
 let musicRequest=null,musicVoice=null,musicBus=null;
 function musicBuffer(track){
  if(!musicBuffers.has(track)){
@@ -1412,6 +1469,7 @@ function musicBuffer(track){
  return musicBuffers.get(track);
 }
 function syncMusic(){
+ syncMachinery();
  if(!audio||typeof fetch!=='function')return;
  const track=muted||document.hidden?null:battle?'mission':'hangar';
  if(track&&(audio.state==='suspended'||audio.state==='interrupted'))return;
@@ -2313,6 +2371,7 @@ function renderBattle(){
 function braceUnit(u){
  if(u.brace)return;
  u.brace=true;u.braceTime=clock;
+ if(!u.kind)gaitSound(u,'arm',0);
 }
 function repairableLimbs(u){
  if(!u.training?.limbRepair)return [];
@@ -2464,24 +2523,25 @@ async function moveUnit(u,x,z){
    const images=[detail.image,u.paint&&moduleImage(detail.key+'-paint')].filter(image=>image?.decode&&!imageReady(image));
    if(images.length)await Promise.race([Promise.allSettled(images.map(image=>image.decode())),delay(1400)]);
   }
-  const mass=u.kind?1:MECH_MOTION[u.frame].mass;
-  sound(u.kind?(u.kind==='tank'?'track':'rotor'):'hydraulic',mass);
+  const doubleStep=!twoStep&&!grounded&&!paintedGait&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion;
   u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length,segment:segments[i]};
   if(twoStep)u.motion.stepBeats=0;
-  if(grounded&&!reducedMotion){
-   u.motion.contacts=segments[i].paces.filter(pace=>pace.to>segments[i].index&&pace.to<=segments[i].index+1);
+  if(u.kind)sound(u.kind==='tank'?'track':'rotor');
+  else{
+   u.motion.gaitCues=walkSoundMarkers(u.motion,reducedMotion,doubleStep||twoStep);
+   advanceGaitCues(u,0);
   }
-  if(!twoStep&&!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion){
+  if(doubleStep){
    await delay(duration*500);
    effects.push({type:'step',x:(fromX+p.x)/2,z:(fromZ+p.z)/2,t:1,mass:MECH_MOTION[u.frame].mass,side:1});
-   sound('step',mass*.84);
-   sound('hydraulic',mass*.72);
+   advanceGaitCues(u,.5);
    await delay(duration*500);
   }else await delay(duration*1000);
   if(twoStep)twoStepContacts(u,1);
+  advanceGaitCues(u,1);
   u.vx=p.x;u.vz=p.z;u.motion=null;
   if(!twoStep||segments[i].index===segments[i].length-1)u.landTime=clock;
-  if(!twoStep&&!u.kind&&(!grounded||reducedMotion)){effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});sound('step',mass)}
+  if(!twoStep&&!u.kind&&(!grounded||reducedMotion))effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});
   if(!twoStep&&!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||u.frame===HELLBREAKER||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
  }
  u.walkCount=gaitBase+steps.length;
@@ -2533,7 +2593,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,windup,native:native?{...native,clip}:null,
   ...(power?{stage:'pullback'}:{})};
  if(primeDuration&&!sequence?.skipped){
-  sound('hydraulic',MECH_MOTION[a.frame].mass);
+  gaitSound(a,'arm',0);
   const visual=activeWardenVisual(a);
   if(visual)wardenMotionFrame(a,visual,animationPose(a,clock,visual));
  }
@@ -3869,31 +3929,49 @@ function twoStepContacts(u,progress){
  while(m.stepBeats<2&&progress+1e-6>=(m.stepBeats+1)/2){
   const q=++m.stepBeats/2;
   effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,t:1,mass,side:q===.5?1:-1});
-  sound('step',mass*.78);
  }
 }
 
+function walkSoundMarkers(m,reduce,doubleStep){
+ const side=m.stepBeats!=null?1:m.gaitBase%2?1:-1;
+ if(!m.segment?.paces||reduce)return doubleStep?
+  [{at:0,side},{at:.5,side,land:true},{at:.5,side:-side},{at:1,side:-side,land:true}]:
+  [{at:0,side},{at:1,side,land:true}];
+ const {index,paces}=m.segment,markers=[];
+ for(const pace of paces){
+  const side=pace.kind.endsWith('R')?1:-1;
+  if(pace.from>=index&&pace.from<index+1)markers.push({at:pace.from-index,side});
+  if(pace.to>index&&pace.to<=index+1)markers.push({at:pace.to-index,side,land:true,pace});
+ }
+ return markers;
+}
+function advanceGaitCues(u,phase){
+ const m=u.motion;
+ if(!m?.gaitCues?.length)return;
+ const progress=m.segment&&!reducedMotion?fieldStepProgress(phase,m.segment):phase;
+ while(m.gaitCues[0]?.at<=progress+.000001){
+  const marker=m.gaitCues.shift();
+  gaitSound(u,marker.land?'land':'lift',marker.side);
+  if(marker.pace){
+   const data=travelAtlas(u)?.grounded;
+   if(!data)continue;
+   const heading=headingIndex(displayedHeading(u)),span=groundedTravelSpan(u,data);
+   const points=data.points[data.walk[marker.pace.kind]+data.samples-1][heading];
+   const [x,y]=points['foot'+marker.pace.kind.at(-1)],q=marker.at;
+   effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,
+    ox:(x-.5)*span,oy:(y-data.ground)*span,t:1,mass:MECH_MOTION[u.frame].mass});
+  }
+ }
+}
 function advanceUnitAnimation(u,t,dt){
  const m=u.motion;
  if(m){
   const p=clamp01((t-m.start)/m.duration),q=fieldStepProgress(p,m.segment);
   u.vx=m.fromX+(m.toX-m.fromX)*q;u.vz=m.fromZ+(m.toZ-m.fromZ)*q;
   if(m.stepBeats!=null)twoStepContacts(u,q);
+  advanceGaitCues(u,p);
  }
  else{u.vx=u.x;u.vz=u.z}
- if(m?.contacts?.length){
-  const data=travelAtlas(u).grounded,heading=headingIndex(displayedHeading(u));
-  const progress=m.segment.index+fieldStepProgress(clamp01((t-m.start)/m.duration),m.segment);
-  while(m.contacts[0]?.to<=progress+.000001){
-   const pace=m.contacts.shift(),q=pace.to-m.segment.index;
-   const points=data.points[data.walk[pace.kind]+data.samples-1][heading];
-   const [x,y]=points['foot'+pace.kind.at(-1)];
-   const mass=MECH_MOTION[u.frame].mass,span=groundedTravelSpan(u,data);
-   effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,
-    ox:(x-.5)*span,oy:(y-data.ground)*span,t:1,mass});
-   sound('step',mass*.78);
-  }
- }
  updateDestruction(u,t);
  if(u.brace&&upgradedWardenTravel(travelAtlas(u))){
   u.braceBlend=reducedMotion?1:clamp01((t-(u.braceTime??-100))/WARDEN_BRACE_DURATION);
