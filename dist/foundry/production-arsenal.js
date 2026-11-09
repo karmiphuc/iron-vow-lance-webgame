@@ -9,20 +9,40 @@ const expansion=window.IRON_VOW_EXPANSION_ART??{};
 const rigs=window.IRON_VOW_EXPANSION_RIG??{};
 const isExpansion=id=>Object.hasOwn(expansion,id);
 let arsenal;
-function load(source,expansionSource){
+function load(source,expansionSource,shieldSource){
  if(!arsenal){
   const loader=new T.GLTFLoader();
   const read=source=>typeof source==='string'?loader.loadAsync(source):
    new Promise((resolve,reject)=>loader.parse(source,'',resolve,reject));
   arsenal=Promise.all([read(source),expansionSource?read(expansionSource).catch(error=>{
    console.warn('Expanded arsenal using baked weapon art',error);
-  }):null]).then(([{scene},extra])=>{
+  }):null,shieldSource?read(shieldSource).catch(error=>{
+   console.warn('Shield arsenal using baked art',error);
+  }):null]).then(([{scene},extra,shields])=>{
    if(extra)scene.add(extra.scene);
+   if(shields)scene.add(shields.scene);
    scene.traverse(o=>{if(typeof o.userData.name==='string')o.name=o.userData.name});
    return scene;
   });
  }
  return arsenal;
+}
+function mountShield(scene,id,socket){
+ if(!id||!socket)return null;
+ const original=scene.getObjectByName(id);
+ if(!original)return null;
+ const mount=original.clone(true);
+ socket.add(mount);
+ const marker=part=>mount.getObjectByName(id+'.'+part);
+ return {mount,grip:marker('grip'),face:marker('face'),rotation:new T.Quaternion()};
+}
+function poseShield(shield,u,heading){
+ if(!shield)return;
+ shield.mount.visible=u.alive&&u.hp.left>0;
+ // Follow the animated grip, holding the armor face upright as the wrist rotates.
+ shield.mount.parent.getWorldQuaternion(shield.rotation);
+ shield.mount.rotation.set(.09,heading-.17,-.12,'YXZ');
+ shield.mount.quaternion.premultiply(shield.rotation.invert());
 }
 function mount(scene,id,socket){
  const added=isExpansion(id);
@@ -59,5 +79,5 @@ function animate(weapon,{weaponKick=0,weaponSpin=0,strikeProgress=0}={}){
  if(kind==='spin')weapon.pivot.rotation.z=value;
  else weapon.pivot.position.z=value;
 }
-window.IronVowProductionArsenal={load,mount,isExpansion,animate};
+window.IronVowProductionArsenal={load,mount,isExpansion,animate,mountShield,poseShield};
 })();

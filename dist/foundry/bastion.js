@@ -120,6 +120,13 @@ function animate(m,u,t,pose,armory){
   if(m.melee)m.melee.adapter.parent.remove(m.melee.adapter);
   m.melee=fit(m,armory,u.melee,'L');
  }
+ if(m.shieldId!==u.shield&&armory){
+  m.shieldId=u.shield;
+  if(m.shield)m.shield.mount.removeFromParent();
+  m.shield=arsenal.mountShield(armory,u.shield,m.sockets.L);
+  m.shield?.mount.scale.setScalar(.78);
+ }
+ arsenal.poseShield(m.shield,u,pose.heading??0);
  if(m.weapon){
   m.weapon.mount.visible=u.alive&&u.hp.right>0;
   arsenal.animate(m.weapon,pose);
@@ -133,7 +140,7 @@ function animate(m,u,t,pose,armory){
  m.cont.updateMatrixWorld(true);
  return {frame:f,anchors:{...m.anchors,muzzle:u.weapon==='missile'?m.anchors.pod1:m.weapon?.muzzle,
   muzzle2:u.weapon==='missile'?m.anchors.pod2:m.weapon?.muzzle2,meleeTip:m.melee?.tip,
-  gripR:m.sockets.R,gripL:m.sockets.L},primary:m.weapon||u.weapon==='missile',secondary:m.melee};
+  gripR:m.sockets.R,gripL:m.sockets.L,shield:m.shield?.face},primary:m.weapon||u.weapon==='missile',secondary:m.melee,shield:m.shield};
 }
 function dispose(m){
  m.mixer.stopAllAction();

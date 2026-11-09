@@ -409,7 +409,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .armory-mounted b{font-family:Barlow,'Arial Narrow',sans-serif;font-size:19px;line-height:1.05}
 .armory-mounted small{color:var(--muted);font-size:10px}
 .armory-mounted .remove-melee{width:max-content;margin:2px 0 0;padding:5px 9px;min-height:30px;font-size:9px}
-.armory-class-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:13px}
+.armory-class-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:13px}
 .armory-class-tabs button{min-width:0;min-height:51px;padding:7px 4px;display:grid;justify-items:center;align-content:center;gap:3px;background:#1b272e}
 .armory-class-tabs b{font-family:Barlow,'Arial Narrow',sans-serif;font-size:17px;line-height:1.1}
 .armory-class-tabs b span{font:500 10px Inter,sans-serif;color:var(--muted);margin-left:2px}
@@ -436,8 +436,10 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 .armory-card-foot button[aria-pressed="true"]{opacity:1;background:#342c21;color:var(--accent)}
 .armory-card[data-weapon-card="blade"] .weapon-card-art{object-fit:cover}
 .armory-kits>div{min-width:0}
+.armory-shields .remove-melee{margin-top:5px}
+.shield-status{color:#a8d0dc}
 @media(min-width:1160px){
- .workshop-armory>.armory-grid:not(.armory-kits){grid-template-columns:repeat(3,minmax(0,1fr))}
+ .workshop-armory>.armory-grid:not(.armory-kits,.armory-shields){grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(min-width:761px) and (min-height:950px){
  .workshop-refit>.workshop-chassis{position:sticky;top:8px}
@@ -453,5 +455,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 @media(max-width:350px){
  .armory-card{padding:7px}
  .armory-card h3{font-size:18px}
+ .armory-class-tabs b{font-size:14px}
+ .armory-class-tabs b span{margin-left:0}
  .armory-class-tabs small{letter-spacing:0}
 }
