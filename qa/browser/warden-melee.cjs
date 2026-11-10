@@ -3,6 +3,8 @@ const {writeFileSync}=require('node:fs');
 const {join}=require('node:path');
 
 module.exports=async function checkWardenMelee({page,mobile,origin,tap}){
+ // These checks cover the baked field Warden, which remains the fallback for the live rig.
+ await page.addInitScript(()=>{window.IRON_VOW_LIVE_WARDEN=false});
  const weapons=mobile?['piledriver']:['cleaver','breaker','piledriver','blade'];
  for(const weapon of weapons){
   await page.goto(origin,{waitUntil:'domcontentloaded'});
