@@ -4,11 +4,11 @@ const createSimulation=require('./sim-harness.cjs');
 (async()=>{
  const sim=createSimulation({random:()=>0}),{run}=sim;
  const groups={
-  assault:['sidewinder','trident','forge','ember'],
-  strike:['watchman','falcon','cerberus','obelisk'],
+  assault:['sidewinder','trident','forge','ember','rivet'],
+  strike:['watchman','falcon','cerberus','obelisk','parallax'],
   melee:['hatchet','pike','tonfa','anchor-hammer']
  };
- assert.equal(run('WEAPONS.filter(w=>w.motion).length'),12);
+ assert.equal(run('WEAPONS.filter(w=>w.motion).length'),14);
  const legacy=[
   ['rifle',36,5,3,0],['shotgun',60,3,3,1500],['missile',45,7,4,2400],
   ['rail',70,8,5,3600],['hailstorm',49,5,4,2200],['rampart',61,6,5,2900],
@@ -67,5 +67,18 @@ const createSimulation=require('./sim-harness.cjs');
  assert.equal(resumed.run('save.credits'),5450,'owned weapons are charged once');
  assert.ok(resumed.run("save.owned.includes('obelisk')&&save.owned.includes('pike')"));
  assert.equal(resumed.run('JSON.stringify(captureSortie())'),career.run('JSON.stringify(captureSortie())'));
- console.log('PASS 12 new weapons, classifications, firing, armor pierce, rocket cover and counters, and exact save resume.');
+ const veteran=createSimulation();
+ const arm=veteran.run;
+ arm("save.credits=50000;save.rep=119;equipWeapon('rivet');equipWeapon('parallax')");
+ assert.equal(arm('save.credits'),50000);
+ assert.equal(arm("save.owned.includes('rivet')||save.owned.includes('parallax')"),false);
+ arm("save.rep=120;equipWeapon('rivet');selected=1;save.rep=179;equipWeapon('parallax')");
+ assert.equal(arm('save.credits'),41400);
+ assert.equal(arm("save.owned.includes('parallax')"),false);
+ arm("save.rep=180;equipWeapon('parallax');equipWeapon('parallax');deploy(1,false,[0,1]);closeModal()");
+ const late=createSimulation({storage:new Map(veteran.storage)}).run;
+ assert.equal(late('save.credits'),27900);
+ assert.equal(late("battle.units.slice(0,2).map(u=>u.weapon).join(' ')"),'rivet parallax');
+ assert.equal(late('JSON.stringify(captureSortie())'),arm('JSON.stringify(captureSortie())'));
+ console.log('PASS 14 expansion weapons, firing, reputation gates, one-time purchase, and exact save resume.');
 })().catch(error=>{console.error(error);process.exitCode=1});

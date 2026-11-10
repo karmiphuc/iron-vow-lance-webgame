@@ -24,12 +24,14 @@ const checkGatecrasherArmed=require('./browser/gatecrasher-armed.cjs');
 const checkChassisScale=require('./browser/chassis-scale.cjs');
 const checkArmory=require('./browser/armory.cjs');
 const checkLineInfantry=require('./browser/line-infantry.cjs');
+const checkInfantryCarry=require('./browser/infantry-carry.cjs');
 const checkLineElite=require('./browser/line-elite.cjs');
 const checkInfantryDestruction=require('./browser/infantry-destruction.cjs');
 const checkRosterDestruction=require('./browser/roster-destruction.cjs');
 const checkVanguard=require('./browser/vanguard.cjs');
 const checkReaver=require('./browser/reaver.cjs');
 const checkAero=require('./browser/aero.cjs');
+const checkLionTrial=require('./browser/lion-trial.cjs');
 const checkShields=require('./browser/shields.cjs');
 const checkAttackExchange=require('./browser/attack-exchange.cjs');
 const checkVolley=require('./browser/volley.cjs');
@@ -37,6 +39,8 @@ const checkPartMasks=require('./browser/part-masks.cjs');
 const checkTerrain=require('./browser/terrain.cjs');
 const checkRidgeCombat=require('./browser/ridge-combat.cjs');
 const checkMovePreview=require('./browser/move-preview.cjs');
+const checkPairedWalk=require('./browser/paired-walk.cjs');
+const checkMechComputer=require('./browser/mech-computer.cjs');
 const dist=resolve(__dirname,'../dist');
 
 const types={
@@ -74,7 +78,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkMovePreview,checkRidgeCombat,checkTerrain,checkPartMasks,checkVolley,checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryDestruction,checkRosterDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkAshigaru,checkAero,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed,checkChassisScale]){
+async function checkBrowser(origin,scenarios=[checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkPartMasks,checkVolley,checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkInfantryDestruction,checkRosterDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkAshigaru,checkAero,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed,checkChassisScale]){
  const timeout=Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000);
  if(!Number.isFinite(timeout)||timeout<1000||timeout>120000)throw Error('IRON_VOW_QA_TIMEOUT_MS must be between 1000 and 120000.');
  const server=origin?null:await serve();

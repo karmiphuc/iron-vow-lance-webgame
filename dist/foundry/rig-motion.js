@@ -199,7 +199,8 @@ function animateMech(m,I,dt,t){
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
   // Heavier frames take shorter, quicker steps so a longer planted phase stays within leg reach.
   const stepLen=(I.stepLen??1.55)*(D.stride??1);
-  if(I.moving)m.gait.phase+=dt*I.speed/(2*stepLen);
+  if(Number.isFinite(I.cycle))m.gait.phase=I.cycle;
+  else if(I.moving)m.gait.phase+=dt*I.speed/(2*stepLen);
   const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
   // Fraction of each cycle a foot stays planted. Above .5 gives double support; heavy frames keep more feet down.
   const duty=D.duty??.5;

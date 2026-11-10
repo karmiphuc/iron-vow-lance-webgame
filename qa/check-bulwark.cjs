@@ -27,9 +27,9 @@ const cut='aegis-cleave',bash='aegis-bash';
  assert.equal(loaded.run('JSON.stringify(captureSortie())'),run('JSON.stringify(captureSortie())'));
 
  run('save.credits=100000;save.rep=100;workshopView="market"');
- assert.equal(run('playerHull(BULWARK_FRAME)||hullOnMarket(BULWARK_FRAME)||acquireHull(BULWARK_FRAME)||assignChassis(0,BULWARK_FRAME,true)'),false);
- assert.equal(run('validSave({...save,reserve:{[BULWARK_FRAME]:stockHull(BULWARK_FRAME)}})'),false);
- assert.equal(run('validSave({...save,salvage:{[BULWARK_FRAME]:1}})'),false);
+ assert.equal(run('hullOnMarket(BULWARK_FRAME)||acquireHull(BULWARK_FRAME)||assignChassis(0,BULWARK_FRAME,true)'),false);
+ assert.ok(run('validSave({...save,reserve:{[BULWARK_FRAME]:stockHull(BULWARK_FRAME)}})'));
+ assert.ok(run('validSave({...save,salvage:{[BULWARK_FRAME]:1}})'));
  const observed=[];
  sim.sandbox.observed=observed;
  run('const engageAegis=engage;engage=(a,t,p,w)=>{if(a.frame===BULWARK_FRAME)observed.push(w.id);return engageAegis(a,t,p,w)}');

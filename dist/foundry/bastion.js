@@ -72,7 +72,7 @@ function frame(u,t,pose){
   return 57+40*q*q*(3-2*q);
  }
  const braceAge=t-(u.braceTime??-100);
- if(u.motion&&pose.phase>0&&!pose.reducedMotion)return 1+48*clamp(pose.phase,0,1);
+ if(u.motion&&pose.phase>0&&!pose.reducedMotion)return 1+48*clamp(pose.stride??pose.phase,0,1);
  if(u.attack){
   const age=u.attack.fireAt!=null?t-u.attack.fireAt:null;
   if(age==null&&u.brace&&u.hp.legs>0&&!pose.reducedMotion&&braceAge<1.22)
@@ -86,6 +86,12 @@ function frame(u,t,pose){
    return 217+48*(.42+p*.40);
   }
   const progress=clamp(Math.max(pose.aim||0,pose.primeProgress||0, (t-u.attack.start)/.75),0,1);
+  if(u.attack.kind==='parallax'){
+   if(pose.primePhase==='step')return 161+20*pose.primeProgress;
+   if(pose.reducedMotion)return age==null?161:188;
+   const ready=u.brace?181:161;
+   return ready+(188-ready)*(pose.aim||0);
+  }
   if(u.attack.kind==='missile')return age==null?105+10*progress:clamp(116+24*age,116,153);
   if(age==null)return (u.brace?181:161)+(u.brace?6:26)*progress;
   return clamp(188+24*age,188,u.brace?200:209);

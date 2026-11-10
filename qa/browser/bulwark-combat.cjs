@@ -69,7 +69,8 @@ module.exports=async function checkBulwarkCombat({page,mobile,origin,tap}){
   }
   await page.waitForFunction(round=>battle?.turn===round&&!battle.busy,round);
  }
- const result=await page.evaluate(()=>({trace:window.aegisTrace,hp:current().hp.body}));
+ const result=await page.evaluate(()=>({trace:window.aegisTrace,hp:current().hp.body,
+  range:distance(current(),battle.units.find(u=>u.frame===BULWARK_FRAME))}));
  let before=setup.hp;
  for(const kind of ['aegis-cleave','aegis-bash']){
   const stages=result.trace.filter(s=>s.kind===kind);
@@ -86,5 +87,6 @@ module.exports=async function checkBulwarkCombat({page,mobile,origin,tap}){
   before=impact.hp;
  }
  assert.equal(result.hp,before);
+ assert.equal(result.range,2,'Shield Bash pushes after the impact animation');
  console.log('PASS four authored headings, right cleaver and left shield, both powered attacks and hitstop');
 };

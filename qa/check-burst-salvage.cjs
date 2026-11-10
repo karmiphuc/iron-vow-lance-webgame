@@ -50,7 +50,7 @@ const simulate=require('./sim-harness.cjs');
  run("foe.armor=0;foe.hp={body:1,pilot:1,right:1,left:1,legs:1};delete foe.shield;ally.ap=8;const kills=save.kills;const xp=save.units[0].xp");
  await run("shoot(ally,foe,'body',weapon('shotgun'))");
  assert.ok(run('Object.values(foe.hp).every(hp=>hp===0)'));
- assert.equal(run('foe.hitParts.length'),5);
+ assert.equal(run("new Set(effects.filter(e=>e.type==='boom').slice(-12).map(e=>e.part)).size"),5);
  assert.equal(run('foe.downReason'),'body');
  assert.equal(run('save.kills'),run('kills+1'));
  assert.equal(run('save.units[0].xp'),run('xp+35'));
