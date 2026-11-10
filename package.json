@@ -1,0 +1,15 @@
+{
+  "name": "iron-vow-lance-webgame",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Iron Vow tactical mech combat game and complete Sites source export",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node tools/dev-server.cjs",
+    "start": "node tools/dev-server.cjs",
+    "setup:qa": "npm ci --prefix qa",
+    "test": "npm test --prefix qa",
+    "test:browser": "npm run test:browser --prefix qa",
+    "test:release": "npm run test:release --prefix qa"
+  }
+}

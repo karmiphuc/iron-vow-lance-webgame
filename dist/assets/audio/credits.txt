@@ -1,0 +1,33 @@
+Iron Vow ballistic audio
+
+The rifle, rotary, and rail reports use "AR15 rifle shot" by michorvath.
+https://freesound.org/people/michorvath/sounds/427596/
+
+The shotgun and cannon reports use "20 gauge shotgun gunshot" by michorvath.
+https://freesound.org/people/michorvath/sounds/427595/
+
+Plate and shield contacts use "Metal Radiator Hit Bang Impact 96kHz.flac" by qubodup.
+https://freesound.org/people/qubodup/sounds/50674/
+
+All three recordings are CC0. The Iron Vow cues use edited excerpts and
+original synthesized layers. The edit recipe is tools/render_ballistic_audio.py.
+
+Iron Vow machinery audio
+
+"Servo motor" by Burningmonkey (leg servo)
+https://freesound.org/people/Burningmonkey/sounds/322021/
+"Robotic Arm.aiff" by 4ntony (weapon brace)
+https://freesound.org/people/4ntony/sounds/204801/
+"Battle Mech walks (fast & slow sequence)" by Breviceps (left and right footfalls)
+https://freesound.org/people/Breviceps/sounds/557594/
+"Big robot footstep 004" by AudioPapkin (heavy footfall)
+https://freesound.org/people/AudioPapkin/sounds/813055/
+"Pressure Hiss" by unfa (vent)
+https://freesound.org/people/unfa/sounds/211096/
+"Start-up Sound - U.S. Army M1A1 Tank - Gas Turbine Engine" by adr1911 (power-up)
+https://freesound.org/people/adr1911/sounds/542582/
+"Air vent (looped)" by lfyaudio (idle)
+https://freesound.org/people/lfyaudio/sounds/848969/
+
+These recordings are CC0. The edited cues can be rebuilt with
+tools/render_machinery_audio.py using the corresponding Freesound previews.

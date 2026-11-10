@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#121719">
+  <title>IV-03 Strike Review · Iron Vow</title>
+  <link rel="stylesheet" href="../fonts.css">
+  <link rel="stylesheet" href="aero.css">
+  <script defer src="../aero-strikes.js"></script>
+  <script defer src="../foundry/aero-baked.js"></script>
+  <script defer src="aero.js"></script>
+</head>
+<body>
+  <header><a href="./">IRON VOW / RIG BENCH</a><span>HOSTILE SYSTEMS</span></header>
+  <main>
+    <section class="stage" aria-label="Aero motion">
+      <div class="stage-top"><span>IV-03 / BATTLE CAMERA</span><span id="phase">GUARD</span></div>
+      <canvas id="motion" width="600" height="600" aria-label="Aero melee animation"></canvas>
+      <div class="transport">
+        <button id="play" type="button">Play</button>
+        <input id="time" type="range" min="0" max="1000" value="0" aria-label="Scrub strike">
+        <output id="clock" for="time">0.00 s</output>
+      </div>
+    </section>
+    <section class="controls" aria-label="Melee weapons">
+      <p class="eyebrow">IV-03 / RECONNAISSANCE</p>
+      <h1>Aero</h1>
+      <p class="intro">Review the four hostile loadouts used in <em>Ashes of the Relay</em>.</p>
+      <div id="weapons"></div>
+      <p id="detail"></p>
+      <a class="return" href="../">Return to Mercenary Command</a>
+      <p id="status" role="status"></p>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "site_project_id": "appgprj_6aeeef176ee08191afe74f9556b02484",
+  "site_url": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+  "site_version": 97,
+  "source_commit": "82f22a5f10df4d975d96fd197b8e6de32a10c79c",
+  "dist_tree": "4d8baaca1673b6933592447c53640e4506a1a96a",
+  "imported_source_files": 982,
+  "imported_commits": 101,
+  "github_repository": "https://github.com/karmiphuc/iron-vow-lance-webgame",
+  "scope": "Complete tracked Sites main history, playable dist, assets, models, authoring tools, QA, fixtures and documentation. Local dependencies and runtime credentials are excluded."
+}

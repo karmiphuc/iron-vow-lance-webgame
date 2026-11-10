@@ -1,0 +1,149 @@
+{
+  "authoring": "Original procedural geometry; no third-party assets",
+  "units": "metres; Y up; +Z forward; grip origin",
+  "revision": "Wanzer-scale cast housings and seated hand saddles",
+  "references": [
+    "https://db.hfsplay.fr/files/2019/08/06/Front_Mission_3_USA_ueYRtDe.pdf",
+    "https://frontmissionremake.com/front-mission-3/"
+  ],
+  "weapons": {
+    "sidewinder": {
+      "triangles": 3060,
+      "meshes": 7
+    },
+    "trident": {
+      "triangles": 2932,
+      "meshes": 6
+    },
+    "forge": {
+      "triangles": 3004,
+      "meshes": 10
+    },
+    "ember": {
+      "triangles": 4460,
+      "meshes": 9
+    },
+    "watchman": {
+      "triangles": 3596,
+      "meshes": 7
+    },
+    "falcon": {
+      "triangles": 3128,
+      "meshes": 9
+    },
+    "cerberus": {
+      "triangles": 5536,
+      "meshes": 10
+    },
+    "obelisk": {
+      "triangles": 3124,
+      "meshes": 7
+    },
+    "hatchet": {
+      "triangles": 2432,
+      "meshes": 6
+    },
+    "pike": {
+      "triangles": 2884,
+      "meshes": 9
+    },
+    "tonfa": {
+      "triangles": 2156,
+      "meshes": 9
+    },
+    "anchor-hammer": {
+      "triangles": 2396,
+      "meshes": 8
+    },
+    "rivet": {
+      "triangles": 4152,
+      "meshes": 13
+    },
+    "parallax": {
+      "triangles": 1596,
+      "meshes": 9
+    }
+  },
+  "mechanics": {
+    "sidewinder": {
+      "node": "sidewinder.bolt",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": -0.09
+    },
+    "forge": {
+      "node": "forge.recoil",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": -0.19
+    },
+    "ember": {
+      "node": "ember.inductor",
+      "motion": "rotate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": 6.283185307179586
+    },
+    "falcon": {
+      "node": "falcon.recoil",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": -0.16
+    },
+    "pike": {
+      "node": "pike.lance",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": 0.95
+    },
+    "anchor-hammer": {
+      "node": "anchor-hammer.striker",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": 0.18
+    },
+    "rivet": {
+      "node": "rivet.barrel_sled",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": -0.2432
+    },
+    "parallax": {
+      "node": "parallax.pulse_bore",
+      "motion": "translate",
+      "axis": [
+        0,
+        0,
+        1
+      ],
+      "travel": -0.2048
+    }
+  }
+}
