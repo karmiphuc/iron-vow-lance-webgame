@@ -52,7 +52,7 @@ function impact(ctx,{point:p,normal={x:-1,y:-.15},progress=0,kind='rifle',seed=1
 function arc(ctx,{a,b,progress=0,seed=1,scale=42,strength=1}){
  const life=1-clamp(progress);if(life<=0)return;
  const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy);if(length<1)return;
- const nx=-dy/length,ny=dx/length,segments=7,frame=Math.floor(progress*4.2/.045);
+ const nx=-dy/length,ny=dx/length,segments=7,frame=Math.floor(progress*.16/.045);
  const points=[];
  for(let i=0;i<=segments;i++){
   const q=i/segments,offset=(i===0||i===segments?0:(rand(seed,frame*29+i)-.5)*2*Math.sin(PI*q)*Math.min(scale*.18,length*.19)*strength);
