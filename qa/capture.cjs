@@ -1,0 +1,86 @@
+/* Fixed-viewport visual baselines. Operates only on an explicitly supplied server. */
+const fs=require('node:fs');
+const path=require('node:path');
+const {execFileSync}=require('node:child_process');
+const {viewports,presets,setGamePreset}=require('./capture-presets.cjs');
+function options(args){
+ const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
+ for(let i=0;i<args.length;i++){
+  const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}
+  if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
+  result[flag.slice(2)]=args[++i];
+ }
+ if(!/^[a-z0-9-]+$/.test(result.label))throw Error('Use a simple alphanumeric capture label');
+ if(result.preset&&!presets.some(p=>p.id===result.preset))throw Error('Unknown preset: '+result.preset);
+ for(const key of ['origin','reference-game','reference-bench'])if(result[key]){
+  const url=new URL(result[key]);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Use an HTTP(S) URL without credentials');
+ }
+ return result;
+}
+async function capture(config){
+ const selected=presets.filter(p=>!config.preset||p.id===config.preset);
+ const plan={viewports,presets:selected};
+ if(config.plan){console.log(JSON.stringify(plan,null,2));return;}
+ if(!config.origin)throw Error('Supply --origin from your supported preview; this runner never starts a server');
+ if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd:__dirname,encoding:'utf8'}).trim())throw Error('Commit tracked source changes before capturing, so the manifest SHA identifies the source');
+ const {chromium}=require('playwright');
+ const executablePath=process.env.IRON_VOW_CHROME||(['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync));
+ const browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
+ const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
+ const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),
+  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],failures:[]};
+ const jobs=selected.map(preset=>({source:config.label,preset,url:new URL(preset.path??'',config.origin).href}));
+ if(config['reference-game'])for(const preset of selected.filter(p=>p.page||p.contract!==undefined&&!p.weapon))
+  jobs.push({source:'reference-game',preset,url:config['reference-game']});
+ if(config['reference-bench']&&(!config.preset||config.preset==='rig-bench'))
+  jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
+ try{
+  for(const viewport of viewports)for(const job of jobs){
+   const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
+   const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+   page.on('response',response=>{if(response.status()>=400)errors.push(response.status()+' '+response.url());});
+   try{
+    await page.addInitScript(()=>{
+     let seed=101;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+     const frames=new Map();let id=0;
+     window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
+     window.cancelAnimationFrame=key=>frames.delete(key);
+     window.__captureTick=()=>{const queued=[...frames.values()];frames.clear();for(const callback of queued)callback(5000);};
+     const NativeImage=window.Image;window.__captureImages=[];
+     window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.push(image);return image;}});
+    });
+    await page.goto(job.url,{waitUntil:'load',timeout:120000});
+    await page.evaluate(()=>document.fonts.ready);
+    if(!job.preset.path)await page.evaluate(setGamePreset,job.preset);
+    // Render once to request lazy art, then wait for all art and repeat. Fixed game clock.
+    for(let pass=0;pass<4;pass++){
+     await page.evaluate(()=>{if(typeof clock!=='undefined'){clock=5;last=5000-1000/60;}window.__captureTick();});
+     await page.waitForLoadState('networkidle',{timeout:120000});
+     await page.waitForFunction(()=>[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{timeout:120000});
+    }
+    const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
+    if(broken.length)throw Error('Unloaded/broken images: '+broken.length);
+    if(errors.length)throw Error(errors.join('\n'));
+    const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
+    fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
+    await page.screenshot({path:path.join(output,filename),animations:'disabled'});
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename});
+   }catch(error){manifest.failures.push({source:job.source,preset:job.preset.id,viewport,error:error.message});}
+   finally{await context.close();}
+  }
+ }finally{
+  await browser.close();
+  fs.writeFileSync(path.join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+ }
+ const sources=[...new Set(manifest.captures.map(c=>c.source))];
+ const escape=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const rows=viewports.flatMap(v=>selected.map(p=>'<tr><th>'+p.id+'<br>'+v.width+'×'+v.height+'</th>'+sources.map(s=>{
+  const match=manifest.captures.find(c=>c.source===s&&c.preset===p.id&&c.viewport.width===v.width&&c.viewport.height===v.height);
+  return '<td>'+(match?'<a href="'+escape(match.file)+'"><img loading="lazy" width="420" src="'+escape(match.file)+'"></a>':'No matching capture')+'</td>';
+ }).join('')+'</tr>'));
+ fs.writeFileSync(path.join(output,'contact-sheet.html'),'<!doctype html><meta charset="utf-8"><title>Iron Vow captures</title><style>body{background:#111;color:#eee;font:14px system-ui}td,th{padding:8px;vertical-align:top}img{max-width:35vw}</style><h1>Iron Vow captures</h1><p>Source '+escape(manifest.source)+'. Check manifest.json for failures.</p><table><tr><th>Preset</th>'+sources.map(s=>'<th>'+s+'</th>').join('')+'</tr>'+rows.join('')+'</table>');
+ if(manifest.failures.length)throw Error(manifest.failures.length+' captures failed; see manifest.json');
+ console.log('Captured '+manifest.captures.length+' views in '+output);
+}
+if(require.main===module)capture(options(process.argv.slice(2))).catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={options,capture};
