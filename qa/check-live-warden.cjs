@@ -166,10 +166,43 @@ async function main(){
   run('globalThis.wardenReady=true');
   assert.equal(run('foundryRender(ally,clock)?.custom'),'warden','live Warden once ready');
   assert.ok(Math.abs(run('unitBounds(ally).w/scale')-11.2/3.65)<1e-9,'live Warden uses the shared Foundry world scale');
+  run('globalThis.groundedBounds=unitBounds(ally);ally.motion={jumpjet:true,start:clock-.5,duration:1}');
+  assert.ok(run('unitBounds(ally).y<groundedBounds.y'),'a live Warden rises above the ground during a mastered Jumpjet');
+  assert.ok(Math.abs(run('unitBounds(ally).y+unitBounds(ally).h*.84-project(ally.vx,jumpjetHeight(ally,clock),ally.vz).y'))<1e-9,
+   'the live Warden stays registered to its Jumpjet altitude');
+  run('ally.motion=null');
   run('ally.alive=false');
   assert.equal(run('foundryRender(ally,clock)'),null,'a destroyed Warden returns to its baked destruction');
  }
+
+ // 7. A Warden-only scene starts loading the live rig itself, without another Foundry unit warming up the renderer.
+ {
+  let loaded=false,requests=0;
+  class Renderer{
+   constructor(){this.domElement={width:1,height:1,addEventListener(){}};}
+   setSize(w,h){this.domElement.width=w;this.domElement.height=h;}
+   setClearColor(){}
+   dispose(){}
+  }
+  class Environment{
+   fromScene(){return {texture:{dispose(){}}};}
+   dispose(){}
+  }
+  const sandbox={console,THREE:{...T,WebGLRenderer:Renderer,PMREMGenerator:Environment},
+   VowChassis:window.VowChassis,IronVowFoundryRig:R,
+   IronVowProductionArsenal:{load:()=>Promise.resolve({})},
+   IronVowWardenRig:{ready:()=>loaded,load:()=>{requests++;return Promise.resolve().then(()=>{loaded=true});}}};
+  sandbox.window=sandbox;
+  vm.runInNewContext(readFileSync(join(dist,'foundry/renderer.js'),'utf8'),sandbox,{filename:'foundry/renderer.js'});
+  assert.equal(sandbox.IronVowFoundry.wardenReady(),false,'baked Warden remains available while the live rig loads');
+  assert.equal(requests,1,'a Warden starts its own live asset request');
+  await Promise.resolve();
+  assert.equal(sandbox.IronVowFoundry.wardenReady(),true,'the loaded Warden becomes live without drawing another chassis');
+  assert.equal(requests,1,'readiness checks do not request the rig again');
+  sandbox.IRON_VOW_LIVE_WARDEN=false;
+  assert.equal(sandbox.IronVowFoundry.wardenReady(),false,'the baked-Warden opt-out remains available');
+ }
 }
 
-main().then(()=>console.log('PASS live Warden: exact re-rig, planted gait, two-hand carry, clear guards, left-foot firing stance, maul/sweep/thrust, field framing and live/baked routing'))
+main().then(()=>console.log('PASS live Warden: exact re-rig, planted gait, two-hand carry, clear guards, left-foot firing stance, maul/sweep/thrust, field framing, Jumpjet altitude, automatic loading and live/baked routing'))
  .catch(error=>{console.error(error);process.exitCode=1;});

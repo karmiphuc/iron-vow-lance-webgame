@@ -279,6 +279,6 @@ function withFallback(render){
 function liveWardenAllowed(){
  return window.IRON_VOW_LIVE_WARDEN!==false&&!/[?&]bakedwarden\b/.test(window.location?.search||'');
 }
-function wardenReady(){return !failed&&liveWardenAllowed()&&Boolean(window.IronVowWardenRig?.ready())&&init();}
+function wardenReady(){return !failed&&liveWardenAllowed()&&init()&&Boolean(window.IronVowWardenRig?.ready());}
 window.IronVowFoundry={draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
 })();
