@@ -28,7 +28,6 @@ assertion. The default remains parallel device checks with a 15-second wait limi
 | Browser UI | Desktop and phone-size Chromium with touch input, layouts, controls, hold tooltips, default music and mute preference. |
 | Canvas compatibility | Pixel-tested filter detection, filter-disabled spent units and wrecks, transformed crops, silhouette alpha, and hit flashes over persistent part damage. |
 | Live Warden | Actual WebGL loading, desktop and touch movement, continuous tile seams, Jumpjet altitude, reduced-motion behavior, baked fallback, and owned-material/cache cleanup. |
-
 | Warden upgrade | Four distinct high resolution field atlases, a real two-tile move, a right-foot brace, planted recoil and the firing close-up. |
 | Gatecrasher R2 | Workshop purchase, equip and remove, all four loadout routes, and real pointer and touch input for the optional shoulder salvo and cleaver strike. |
 | Armory | 22 classified weapon cards, 12 new attacks and paired sprites, trained stats, purchase and save resume, missile restrictions, desktop and touch browse, and grip, muzzle, tip and pivot checks on the mounted GLB. |

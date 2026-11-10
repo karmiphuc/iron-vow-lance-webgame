@@ -2,7 +2,7 @@
 
 A self-contained, original browser tactical mech game inspired by part-based strategy games such as Front Mission 3. No original game assets are used.
 
-This repository includes the complete Iron Vow Sites project through **Site version 97**, including its source history, game assets, 3D models, authoring tools, tests, and fixtures. Import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). GitHub development can include changes beyond that published snapshot; use the Sites publication workflow to deploy them.
+This repository includes the complete Iron Vow Sites project through **Site version 98**, including its source history, game assets, 3D models, authoring tools, tests, and fixtures. Import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). GitHub development can include changes beyond that published snapshot; use the Sites publication workflow to deploy them.
 
 ## Run locally
 
