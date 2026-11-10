@@ -13,6 +13,7 @@ On a software renderer, set `IRON_VOW_QA_SERIAL=1` and
 `IRON_VOW_QA_TIMEOUT_MS=60000` to give each device suite its own GPU time and allow
 for slower model-bench rendering. These settings preserve every scenario and
 assertion. The default remains parallel device checks with a 15-second wait limit.
+The supported maximum is `IRON_VOW_QA_TIMEOUT_MS=120000` for slower hosted model benches.
 
 | Area | Regression checks |
 | --- | --- |

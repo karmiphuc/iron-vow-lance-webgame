@@ -1,0 +1,42 @@
+{
+  "site_version": 98,
+  "site_url": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+  "source_commit": "853f1e7510dc2ca5940f09575efea737cfe2ea5a",
+  "source_sha256": "7779c563cc47b8b40a6d37f2c1ac5447b529c3793caff4830d7a689335b54e1c",
+  "dist_tree": "a716bb2c2645a813b0ef6f0cb360e41cf6071f54",
+  "github_tag": "sites-v98",
+  "verified_at": "2026-11-10T15:20:04.104Z",
+  "simulation_suites": 45,
+  "local_browser": {
+    "desktop": 38,
+    "touch": 38,
+    "result": "passed"
+  },
+  "live_files_compared": 397,
+  "live_browser": {
+    "desktop": 38,
+    "touch": 38,
+    "result": "passed",
+    "retained_passing_desktop_cases": 29,
+    "cases_completed_on_resume": 47,
+    "resume_guard": "Every source byte matched the completed release gate; all remaining original assertions executed.",
+    "timeout_ms": 120000
+  },
+  "environment": {
+    "browser": "Chromium",
+    "touch": "iPhone 13 emulation",
+    "graphics": "Software WebGL; HD Warden explicitly exercised",
+    "network": "Configured outbound proxy used for Chromium and Playwright route.fetch",
+    "native_safari_tested": false
+  },
+  "notes": [
+    "A transient Aero asset 404 recovered on the standard retry; the asset returned 200 with an exact source checksum.",
+    "Hosted desktop bench checks needed the supported longer timeout."
+  ],
+  "evidence_sha256": {
+    "release-gate-passed.log": "06eefbb89cf0b7d75510cc7adfe34d01536fc563288816f39507373908d9b370",
+    "package-resume.log": "85e65b373cd4812b38eedc65e42e2443cf1a6a9734860bca768cd3314be9ccdc",
+    "live-partial.log": "f5ffc081ff4a32417d87c3758e72cd4e7ab2ded3e28fe30b57058e0352da5861",
+    "live-resume.log": "868928cb42d5cb1f377199449d2459cab7fb3ed902fb4774c06a9fa727232946"
+  }
+}

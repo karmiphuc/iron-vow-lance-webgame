@@ -38,6 +38,8 @@ Run `npm run setup:qa`, then `npm test` for the simulation suites. `npm run test
 
 The same release gate runs through `qa/site-package.cjs` before a Sites publication. `.openai/hosting.json` retains the existing Site identity. GitHub pushes do not automatically deploy the Site; use the Sites source and publication workflow when a deployment is requested.
 
+The latest published source and local/live verification results are recorded in [docs/release-verification.json](docs/release-verification.json).
+
 ## Scope
 
 An original tactical browser game with a persistent mercenary career, recruitable pilots, multiple chassis and weapons, repeatable contracts, and saved sorties. Source is in `dist/`; asset generators and exporters are in `tools/`; regression checks and save fixtures are in `qa/`; design records are in `design/` and `design-qa.md`.
