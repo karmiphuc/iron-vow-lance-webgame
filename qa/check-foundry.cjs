@@ -116,7 +116,8 @@ async function exerciseRigAdapter(){
  assert.equal(run('BASTION_FRAME'),10);
  assert.equal(run('stockHull(BASTION_FRAME).weapon'),'rifle');
  assert.equal(run('FOUNDRY_HOSTILES.frontier.includes(CITADEL_FRAME)'),true);
- assert.equal(run('acquireHull(CITADEL_FRAME)||assignChassis(0,CITADEL_FRAME,true)||validHull(stockHull(CITADEL_FRAME),CITADEL_FRAME)'),false);
+ assert.equal(run('acquireHull(CITADEL_FRAME)||assignChassis(0,CITADEL_FRAME,true)'),false);
+ assert.equal(run('validHull(stockHull(CITADEL_FRAME),CITADEL_FRAME)'),true,'recovered Citadels can be saved');
  run('save.credits=FRAMES[6].cost+1300');
  assert.equal(run('assignChassis(0,6,true)'),true);
  assert.equal(run('save.credits'),1300);

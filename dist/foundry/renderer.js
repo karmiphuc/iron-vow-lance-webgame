@@ -63,7 +63,7 @@ function init(){
    // The live Warden loads beside the arsenal; until it is ready the field keeps the baked Warden.
    if(window.IronVowWardenRig&&liveWardenAllowed())window.IronVowWardenRig.load(url('rig-bench/warden-painted.glb'),url('rig-bench/warden-painted-motion.json'))
     .then(()=>{if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
-   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb'),url('rig-bench/shields.glb'))
+   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),url('rig-bench/shields.glb'))
     .then(scene=>{armory=scene;if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
@@ -127,7 +127,7 @@ function drawBastion(u,t,pose,entry){
  const target=hdRenderer(),size=target.domElement.width;
  if(entry.surface.width!==size)entry.surface.width=entry.surface.height=size;
  const stamp=[bastion.frame(u,t,pose),pose.heading,u.alive,Boolean(armory),u.team,u.weapon,u.melee,u.shield,u.paint,
-  size,pose.strikeKind,pose.strikeProgress,pose.weaponKick,pose.weaponSpin,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
+  size,pose.strikeKind,pose.strikeProgress,pose.weaponKick,pose.weaponSpin,pose.weaponFeed,pose.weaponCharge,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
  if(entry.stamp===stamp)return entry;
  entry.stamp=stamp;
  const {frame,anchors,primary,secondary,shield}=bastion.animate(entry.m,u,t,pose,armory);
@@ -169,7 +169,7 @@ function draw(u,t,pose,scope,model,custom){
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
- const stamp=[pose.heading,Boolean(armory),u.alive,u.shield,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.weaponKick,pose.weaponSpin,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
+ const stamp=[pose.heading,Boolean(armory),u.alive,u.shield,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.weaponKick,pose.weaponSpin,pose.weaponFeed,pose.weaponCharge,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
  if(entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){
@@ -180,18 +180,22 @@ function draw(u,t,pose,scope,model,custom){
  if(!u.alive&&u.downReason!=='pilot'&&pose.explosion>=.65&&!m.wrecked){wreckMech(m);m.wrecked=true}
  const face=pose.heading??facing*Math.PI/4, aim=pose.aim;
  m.yaw=face;
- const step=pose.phase>0&&u.motion;
+ const paired=u.motion?.stepBeats!=null;
+ const step=paired||pose.phase>0&&u.motion;
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;
  const melee=Boolean(pose.strikeKind), meleeAge=pose.strikeProgress<=.7
   ?pose.strikeProgress/.7*MEL.hit:MEL.hit+(pose.strikeProgress-.7)/.3*(MEL.end-MEL.hit);
  const lunge=melee?lungeK(meleeAge)*1.25:0;
  const travel=step?(pose.phase-.5)*1.8:0;
- const pos=V3(Math.sin(face)*(lunge+travel),0,Math.cos(face)*(lunge+travel));
+ const pos=paired?V3((u.vx-u.vz)*1.8*Math.SQRT1_2,0,(u.vx+u.vz)*1.8*Math.SQRT1_2):
+  V3(Math.sin(face)*(lunge+travel),0,Math.cos(face)*(lunge+travel));
+ if(paired&&!m.wasMoving)m.init=false;
  if(!step&&m.wasMoving){
-  for(const L of m.legs){L.swing=false;L.settle=null;L.planted.sub(m.cont.position);L.foot.copy(L.planted)}
+  for(const L of m.legs){L.swing=false;L.settle=null;L.planted.sub(m.travelRoot??m.cont.position);L.foot.copy(L.planted)}
  }
  m.wasMoving=Boolean(step);
+ m.travelRoot=paired?pos:null;
  m.aim.until=aim>.01?t+.01:-1;m.aim.blend=aim;
  // Aim at chest height of a like-sized target: level for every rig, including the larger live Warden.
  m.aim.point.set(Math.sin(face)*20,4*(m.scale||1),Math.cos(face)*20);
@@ -203,7 +207,7 @@ function draw(u,t,pose,scope,model,custom){
  // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
  m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
  m.primaryWeapon=entry.primary&&u.hp.right>0?entry.primary:null;
- animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:1.55,brace:pose.brace,
+ animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
  if(custom==='warden')window.IronVowWardenRig.afterAnimate(m);
@@ -275,6 +279,6 @@ function withFallback(render){
 function liveWardenAllowed(){
  return window.IRON_VOW_LIVE_WARDEN!==false&&!/[?&]bakedwarden\b/.test(window.location?.search||'');
 }
-function wardenReady(){return !failed&&liveWardenAllowed()&&Boolean(window.IronVowWardenRig?.ready())&&init();}
+function wardenReady(){return !failed&&liveWardenAllowed()&&init()&&Boolean(window.IronVowWardenRig?.ready());}
 window.IronVowFoundry={draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
 })();

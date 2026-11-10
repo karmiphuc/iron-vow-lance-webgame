@@ -273,7 +273,7 @@ function createViewer() {
     scene = new T.Scene();
     scene.fog = new T.FogExp2(0x20282c, .045);
     camera = new T.PerspectiveCamera(38, 1, .1, 70);
-    loader = new T.GLTFLoader();
+    loader = new T.GLTFLoader().setMeshoptDecoder(window.MeshoptDecoder);
     setupStudio(T);
     new ResizeObserver(sizeViewport).observe(viewport);
     const clock = new T.Clock();

@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "day": 1,
+  "credits": 4500,
+  "rep": 0,
+  "wins": 0,
+  "kills": 35,
+  "owned": [
+    "rifle",
+    "missile"
+  ],
+  "units": [
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "missile",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    }
+  ],
+  "history": [],
+  "mechMastery": {
+    "rook": {
+      "kills": {
+        "0": 25,
+        "1": 5,
+        "19": 5
+      },
+      "slots": {
+        "0": [
+          1,
+          19
+        ]
+      }
+    }
+  },
+  "sortie": {
+    "version": 7,
+    "contract": "picket",
+    "legacy": false,
+    "stockHostiles": false,
+    "slots": [
+      0
+    ],
+    "turn": 1,
+    "selected": 0,
+    "action": "move",
+    "part": "body",
+    "enemyPending": false,
+    "picketLineInfantry": true,
+    "terrainSeed": 0,
+    "mechComputers": true,
+    "units": [
+      {
+        "x": 1,
+        "z": 17,
+        "face": -1,
+        "heading": -0.7853981633974483,
+        "moveLeft": 5,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 160,
+          "pilot": 70,
+          "right": 92,
+          "left": 92,
+          "legs": 110
+        },
+        "ap": 6,
+        "brace": false,
+        "skill": false,
+        "boost": false,
+        "jumpjetUsed": true,
+        "mechState": {
+          "moved": 1
+        }
+      },
+      {
+        "x": 6,
+        "z": 10,
+        "face": -1,
+        "heading": -0.7853981633974483,
+        "moveLeft": 5,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 151,
+          "pilot": 70,
+          "right": 87,
+          "left": 87,
+          "legs": 98
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      }
+    ]
+  }
+}
