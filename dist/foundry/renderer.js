@@ -6,7 +6,7 @@ const T=THREE, VC=window.VowChassis, PI=Math.PI;
 const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemothBrace,setPartState,wreckMech,mountPoints}=window.IronVowFoundryRig;
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-let renderer, scene, camera, failed=false, bastionRenderer, bastionEnvironment, bastionHDFailed=false;
+let renderer, scene, camera, failed=false, bastionRenderer, bastionEnvironment, bastionHDFailed=false,softwareRenderer=false;
 const combat=new Map();
 const arsenal=window.IronVowProductionArsenal,bastion=window.IronVowBastion;
 let bastionPreview;
@@ -50,6 +50,10 @@ function init(){
  try{
   renderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power',preserveDrawingBuffer:true});
   configure(renderer,pixels);
+  try{
+   const gl=renderer.getContext?.(),info=gl?.getExtension?.('WEBGL_debug_renderer_info');
+   softwareRenderer=Boolean(info&&/swiftshader|llvmpipe|softpipe|software/i.test(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
+  }catch{}
   renderer.domElement.addEventListener('webglcontextlost',()=>disable(),{once:true});
   scene=new T.Scene();
   for(const [color,x,y,z] of studioLights){
@@ -87,10 +91,13 @@ function setCamera(elevation,azimuth=0){
 }
 function disposeRig(m){
  if(m.mixer){bastion.dispose(m);return}
- const unique=new Set([m.build.visorMat,m.build.stackMat]);
+ const unique=new Set([m.build.visorMat,m.build.stackMat,...(m.build.ownedMaterials||[])]);
+ if(m.live==='warden')for(const entries of Object.values(m.build.parts))
+  for(const entry of entries)unique.add(entry.m.material);
  // The kit caches shared geometries. Merged per-rig buffers are uniquely owned.
  m.body.traverse(o=>{if(o.userData.foundryMerged)o.geometry.dispose()});
- unique.forEach(material=>material.dispose());
+ if(m.live==='warden')VC.releaseOwnedMaterials(unique);
+ else unique.forEach(material=>material.dispose());
 }
 function makeSurface(){
  const surface=document.createElement('canvas');surface.width=surface.height=pixels;return surface;
@@ -181,7 +188,7 @@ function draw(u,t,pose,scope,model,custom){
  const face=pose.heading??facing*Math.PI/4, aim=pose.aim;
  m.yaw=face;
  const paired=u.motion?.stepBeats!=null;
- const step=paired||pose.phase>0&&u.motion;
+ const step=!pose.reducedMotion&&(paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;
  const melee=Boolean(pose.strikeKind), meleeAge=pose.strikeProgress<=.7
@@ -277,8 +284,9 @@ function withFallback(render){
 }
 // The live Warden is on unless a page or test opts out (window.IRON_VOW_LIVE_WARDEN=false or ?bakedwarden).
 function liveWardenAllowed(){
- return window.IRON_VOW_LIVE_WARDEN!==false&&!/[?&]bakedwarden\b/.test(window.location?.search||'');
+ return window.IRON_VOW_LIVE_WARDEN!==false&&(!softwareRenderer||window.IRON_VOW_LIVE_WARDEN===true)&&
+  !/[?&]bakedwarden\b/.test(window.location?.search||'');
 }
-function wardenReady(){return !failed&&liveWardenAllowed()&&init()&&Boolean(window.IronVowWardenRig?.ready());}
+function wardenReady(){return !failed&&liveWardenAllowed()&&init()&&liveWardenAllowed()&&Boolean(window.IronVowWardenRig?.ready());}
 window.IronVowFoundry={draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
 })();

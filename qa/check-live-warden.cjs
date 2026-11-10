@@ -171,6 +171,10 @@ async function main(){
   assert.ok(Math.abs(run('unitBounds(ally).y+unitBounds(ally).h*.84-project(ally.vx,jumpjetHeight(ally,clock),ally.vz).y'))<1e-9,
    'the live Warden stays registered to its Jumpjet altitude');
   run('ally.motion=null');
+  run('battle.lionTrial=true;ally.lionTrial=true;window.IRON_VOW_LION_ART={ground:.84}');
+  assert.equal(run('liveWarden(ally)'),false,'the isolated Lion trial keeps its dedicated renderer');
+  assert.ok(Math.abs(run('unitBounds(ally).w/scale')-3.45)<1e-9,'the Lion trial retains its authored framing');
+  run('battle.lionTrial=false;ally.lionTrial=false');
   run('ally.alive=false');
   assert.equal(run('foundryRender(ally,clock)'),null,'a destroyed Warden returns to its baked destruction');
  }
@@ -201,6 +205,20 @@ async function main(){
   assert.equal(requests,1,'readiness checks do not request the rig again');
   sandbox.IRON_VOW_LIVE_WARDEN=false;
   assert.equal(sandbox.IronVowFoundry.wardenReady(),false,'the baked-Warden opt-out remains available');
+  for(const force of [false,true]){
+   let ready=false,requests=0;
+   class SoftwareRenderer extends Renderer{
+    getContext(){return {getExtension:()=>({UNMASKED_RENDERER_WEBGL:1}),getParameter:()=> 'ANGLE SwiftShader'}}
+   }
+   const software={...sandbox,IRON_VOW_LIVE_WARDEN:force?true:undefined,
+    THREE:{...sandbox.THREE,WebGLRenderer:SoftwareRenderer},
+    IronVowWardenRig:{ready:()=>ready,load:()=>{requests++;return Promise.resolve().then(()=>{ready=true});}}};
+   software.window=software;
+   vm.runInNewContext(readFileSync(join(dist,'foundry/renderer.js'),'utf8'),software,{filename:'foundry/renderer.js'});
+   software.IronVowFoundry.wardenReady();await Promise.resolve();
+   assert.equal(requests,force?1:0,'software rendering avoids the HD model unless explicitly forced');
+   assert.equal(software.IronVowFoundry.wardenReady(),force,'software fallback and explicit live inspection both work');
+  }
  }
 }
 

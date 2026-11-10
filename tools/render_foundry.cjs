@@ -122,7 +122,7 @@ const production=await arsenal.load(glb.buffer.slice(glb.byteOffset,glb.byteOffs
 const cam=camera(.46),visuals=[];
 const bakedFile=assetDir+'/../foundry/baked.js';
 const existing={};
-if(only!==null)new Function('window',fs.readFileSync(bakedFile,'utf8'))(existing);
+if(fs.existsSync(bakedFile))new Function('window',fs.readFileSync(bakedFile,'utf8'))(existing);
 for(const [model,[weapon,melee]] of defaults.entries()){
  if(only!==null&&model!==only)continue;
  const m=buildRig(model,'ally');
@@ -165,13 +165,14 @@ for(const [model,[weapon,melee]] of defaults.entries()){
  for(let i=0;i<8;i++){
   pose(motion,face);
   const {rig,dims}=motion;
+  const duty=dims.duty??.5,reach=.82*(dims.stride??1);
+  rig.pelvis.position.y-=.09+.10*Math.cos(i/8*Math.PI*4);
   for(const [j,leg] of rig.legs.entries()){
    const phase=(i/8+(leg.phase??j*.5))%1;
-   const z=(phase<.5?.82-3.28*phase:-.82+3.28*(phase-.5));
-   const y=phase<.5?0:Math.sin(Math.PI*(phase-.5)*2)*dims.lift*.68;
+   const z=phase<duty?reach-2*reach*phase/duty:-reach+2*reach*(phase-duty)/(1-duty);
+   const y=phase<duty?0:Math.sin(Math.PI*(phase-duty)/(1-duty))*dims.lift*.68;
    window.VowChassis.solveLeg(rig,dims,leg,V3(leg.restX,dims.ankleH+y,leg.restZ+z));
   }
-  rig.pelvis.position.y-=.09+.10*Math.cos(i/8*Math.PI*4);
   push('walk');
  }
  for(let i=1;i<=3;i++){
@@ -234,6 +235,8 @@ for(const [side,direction] of [['left',-1],['right',1]]){
  weaponViews[side]={key,grip:point(grip),axis:point(weapon.base),tip:point(weapon.tip),pixelsPerMetre:size/5.2*3.2};
  weapon.model.remove(grip);
 }
-fs.writeFileSync(bakedFile,'window.IRON_VOW_FOUNDRY_ART='+JSON.stringify(visuals)+';\nwindow.IRON_VOW_RAIJIN_ART='+JSON.stringify(weaponViews)+';\n');
+const all=existing.IRON_VOW_FOUNDRY_ART||[];
+visuals.forEach((atlas,index)=>all[index]=atlas);
+fs.writeFileSync(bakedFile,'window.IRON_VOW_FOUNDRY_ART='+JSON.stringify(all)+';\nwindow.IRON_VOW_RAIJIN_ART='+JSON.stringify(weaponViews)+';\n');
 }
 render().catch(error=>{console.error(error);process.exitCode=1});

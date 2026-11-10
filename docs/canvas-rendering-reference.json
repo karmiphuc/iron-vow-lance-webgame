@@ -1,0 +1,32 @@
+{
+  "references": [
+    {
+      "file": "1-Iron-Vow-v81-game.js",
+      "sha256": "7e5b16f0297aaa0c0ff2027a9e94f6140e7922ae0eee7b0df47efe17ae4edf24"
+    },
+    {
+      "file": "2-v77-to-v81.diff",
+      "sha256": "debfc5b4b3ca456fadf9d2087df4b5f15dabcf40b6a512d812ae0d99c655e702"
+    }
+  ],
+  "ported": [
+    "pixel-based canvas-filter detection",
+    "offscreen brightness/saturation fallback",
+    "spent-unit and vehicle-wreck toning",
+    "persistent scorch beneath hit flashes"
+  ],
+  "preserved": [
+    "later explicit subsystem masks and multihit flashes",
+    "current health readouts",
+    "v97 gameplay, saves, audio, arsenal and compressed models",
+    "merged live Warden and Foundry motion changes"
+  ],
+  "release_repairs": [
+    "continuous Warden movement and safe loading handoff",
+    "owned-material and damage-cache cleanup",
+    "regenerated six base Foundry fallbacks and directional views",
+    "preserved expanded chassis metadata during full rebakes",
+    "isolated Lion trial keeps its dedicated renderer",
+    "software-WebGL fallback preserves combat frame rate; explicit live QA remains enabled"
+  ]
+}

@@ -155,11 +155,14 @@ function foundryPose(m,row){
  m.aim.blend=row===7?1:0;m.aim.until=row===7?1:-1;m.aim.point.set(0,4,20);
  animateMech(m,{pos:V3(),face:0,heading:0,noPlant:true,alive:true,brace:0},1/60,0);
  if(row>0&&row<=6){
+  const duty=D.duty??.5,reach=.82*(D.stride??1);
+  r.pelvis.position.y-=.08+.08*Math.cos(phase*4*Math.PI);
   for(const [i,leg] of r.legs.entries()){
    const q=(phase+(leg.phase??i*.5))%1;
-   window.VowChassis.solveLeg(r,D,leg,V3(leg.restX,D.ankleH+(q<.5?0:Math.sin((q-.5)*2*Math.PI)*D.lift),leg.restZ+(q<.5?.82-3.28*q:-.82+3.28*(q-.5))));
+   const lift=q<duty?0:Math.sin((q-duty)/(1-duty)*Math.PI)*D.lift;
+   const travel=q<duty?reach-2*reach*q/duty:-reach+2*reach*(q-duty)/(1-duty);
+   window.VowChassis.solveLeg(r,D,leg,V3(leg.restX,D.ankleH+lift,leg.restZ+travel));
   }
-  r.pelvis.position.y-=.08+.08*Math.cos(phase*4*Math.PI);
  }
  m.cont.updateMatrixWorld(true);
  const refs={...mountPoints(m),body:r.spine,pilot:r.neck,left:r.arms.L.el,right:r.arms.R.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an};

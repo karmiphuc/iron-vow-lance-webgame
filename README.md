@@ -32,6 +32,8 @@ Contract rewards fund weapons, chassis, upgrades, and repairs. Pilot experience 
 
 ## Verification
 
+The canvas renderer detects filter support on pixels and uses offscreen compositing when filters are ignored, including Safari-style contexts. Spent units, wrecks, damage shading and hit flashes preserve the sprite silhouette and the current subsystem masks. Live Warden movement uses continuous paired strides; its per-rig materials and cached damage variants are released after combat. Software WebGL uses the baked Warden to keep combat responsive. Foundry fallback and directional art is rebuilt from the corrected rigs.
+
 Run `npm run setup:qa`, then `npm test` for the simulation suites. `npm run test:browser` checks desktop and touch behavior; `npm run test:release` runs the complete release gate. Browser checks require Chromium as described in [Release checks](qa/README.md). QA dependencies are development-only.
 
 The same release gate runs through `qa/site-package.cjs` before a Sites publication. `.openai/hosting.json` retains the existing Site identity. GitHub pushes do not automatically deploy the Site; use the Sites source and publication workflow when a deployment is requested.

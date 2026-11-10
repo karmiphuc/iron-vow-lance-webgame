@@ -26,6 +26,9 @@ assertion. The default remains parallel device checks with a 15-second wait limi
 | Crew Cabins | Three expansion tiers, active roster caps, hired portrait decoding, relief training, crew and hull identity, duplicate pilot prevention, auxiliary compatibility and exact mid-sortie reload. |
 | Saves | Published v31 and v32 fixtures, current checkpoints, interrupted enemy phases, corrupt checkpoints and duplicate payout checks. |
 | Browser UI | Desktop and phone-size Chromium with touch input, layouts, controls, hold tooltips, default music and mute preference. |
+| Canvas compatibility | Pixel-tested filter detection, filter-disabled spent units and wrecks, transformed crops, silhouette alpha, and hit flashes over persistent part damage. |
+| Live Warden | Actual WebGL loading, desktop and touch movement, continuous tile seams, Jumpjet altitude, reduced-motion behavior, baked fallback, and owned-material/cache cleanup. |
+
 | Warden upgrade | Four distinct high resolution field atlases, a real two-tile move, a right-foot brace, planted recoil and the firing close-up. |
 | Gatecrasher R2 | Workshop purchase, equip and remove, all four loadout routes, and real pointer and touch input for the optional shoulder salvo and cleaver strike. |
 | Armory | 22 classified weapon cards, 12 new attacks and paired sprites, trained stats, purchase and save resume, missile restrictions, desktop and touch browse, and grip, muzzle, tip and pivot checks on the mounted GLB. |
@@ -34,6 +37,8 @@ assertion. The default remains parallel device checks with a 15-second wait limi
 | LI-02 Elite | Iron Corridor AI fire, separate paint channels in both weapon states, heavier armor, acquisition exclusion and pre-Elite checkpoint recovery. |
 | Infantry destruction | Lethal body and cockpit shots, staged falls on the field and in the attack camera, timed detonation, and settled wrecks after resume. |
 | IV-03 Aero | Premium purchase and assignment, Jumpjet landing and checkpoint recovery, passive dodge, four Rig Bench replays and live Relay strikes. |
+
+The live-Warden browser scenario explicitly enables the HD rig so it is still exercised on software WebGL. Ordinary software-rendered sessions use the baked Warden to preserve combat frame rate; the rest of the scenarios retain their existing animation assertions.
 
 `npm test --prefix qa` runs the simulation suites. New `qa/check-*.cjs` files are picked up automatically. `npm run test:browser --prefix qa` runs the local browser suite. Browser failures save a screenshot in the temporary directory. Set `IRON_VOW_QA_OUTPUT` when running the simulation alone to request native canvas captures in a separate folder.
 

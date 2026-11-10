@@ -2493,8 +2493,8 @@ async function moveUnit(u,x,z){
  u.moveLeft=freeMovement(u)-free;
  if(u.mechState?.valkyrieStep){delete u.mechState.valkyrieStep;u.moveLeft=0}
  if(steps.length>free){startAction(u);u.extraStep=true;u.ap-=EXTRA_MOVE_AP}
- const grounded=travelAtlas(u)?.grounded;
- const twoStep=!grounded&&!u.kind&&u.frame>3&&!reducedMotion;
+ const liveStride=liveWarden(u),grounded=liveStride?null:travelAtlas(u)?.grounded;
+ const twoStep=!u.kind&&!reducedMotion&&(liveStride||!grounded&&u.frame>3);
  if(!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion)await readyNativeMotion(u);
  const walk=twoStep&&foundryWalk(u);
  if(walk){
@@ -2503,7 +2503,7 @@ async function moveUnit(u,x,z){
  }
  const travel=preloadTravel(u);
  if(travel&&!imageReady(travel)&&travel.decode)await Promise.race([travel.decode().catch(()=>{}),delay(900)]);
- const paintedGait=upgradedWardenTravel(travelAtlas(u));
+ const paintedGait=!liveStride&&upgradedWardenTravel(travelAtlas(u));
  const duration=reducedMotion?.12:grounded?1.40:paintedGait?1.06:u.kind?VEHICLES[u.kind].step:
   twoStep?.22+1.3*MECH_MOTION[u.frame].step:MECH_MOTION[u.frame].step,gaitBase=u.walkCount||0;
  const segments=[];
@@ -4265,6 +4265,33 @@ function travelMount(view,u,id,progress=0,t=clock){
 const PART_TINTS=[['body',.35],['pilot',.20],['right',.24],['left',.24],['legs',.32]];
 const TINT_DEBUG=/[?&]tintdebug(?:[=&]|$)/.test(window.location?.search??'')?
  {body:'#4f8fd8',pilot:'#f2d24b',right:'#e0573f',left:'#5ec27a',legs:'#b06ad9'}:null;
+// Does this browser really apply canvas filters? (Safari/iOS: no, unless a flag is on.) Tested on pixels, once.
+const FILTER_OK=(()=>{try{const c=renderSurface(1,1),g=c?.getContext('2d');if(!g||!('filter' in g))return false;
+ g.filter='brightness(0)';g.fillStyle='#fff';g.fillRect(0,0,1,1);return g.getImageData(0,0,1,1).data[0]<128}catch(e){return false}})();
+let toneDepth=0;
+/* Paint with brightness/saturation applied. Uses ctx.filter where it works; elsewhere paints into an offscreen
+   layer covering `box` (user space), tones it with blend modes and composites it back. */
+function drawToned(box,brightness,saturate,paint){
+ if(FILTER_OK){ctx.save();try{ctx.filter=`brightness(${brightness}) saturate(${saturate})`;paint()}finally{ctx.restore()}return}
+ if(typeof ctx.getTransform!=='function'){paint();return}
+ const main=ctx,m=main.getTransform();let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+ for(const [x,y] of[[box.x,box.y],[box.x+box.w,box.y],[box.x,box.y+box.h],[box.x+box.w,box.y+box.h]]){
+  const X=m.a*x+m.c*y+m.e,Y=m.b*x+m.d*y+m.f;x0=Math.min(x0,X);y0=Math.min(y0,Y);x1=Math.max(x1,X);y1=Math.max(y1,Y)}
+ x0=Math.max(0,Math.floor(x0));y0=Math.max(0,Math.floor(y0));x1=Math.min(main.canvas.width,Math.ceil(x1));y1=Math.min(main.canvas.height,Math.ceil(y1));
+ const w=x1-x0,h=y1-y0;if(w<2||h<2)return;
+ const A=tintLayer('tone'+toneDepth,w,h);if(!A){paint();return}
+ const ga=A.getContext('2d');
+ ga.imageSmoothingEnabled=main.imageSmoothingEnabled;if(main.imageSmoothingQuality)ga.imageSmoothingQuality=main.imageSmoothingQuality;
+ ga.setTransform(1,0,0,1,0,0);ga.globalAlpha=1;ga.globalCompositeOperation='source-over';ga.clearRect(0,0,w,h);
+ ga.save();ga.setTransform(m.a,m.b,m.c,m.d,m.e-x0,m.f-y0);ga.globalAlpha=main.globalAlpha;
+ toneDepth++;ctx=ga;try{paint()}finally{ctx=main;toneDepth--;ga.restore()}
+ // source-atop keeps the painted alpha: a grey wash lowers saturation, black at (1-brightness) is exactly brightness()
+ ga.setTransform(1,0,0,1,0,0);ga.globalCompositeOperation='source-atop';
+ ga.globalAlpha=Math.max(0,Math.min(1,(1-saturate)*.5));ga.fillStyle='#484848';ga.fillRect(0,0,w,h);
+ ga.globalAlpha=Math.max(0,Math.min(1,1-brightness));ga.fillStyle='#000';ga.fillRect(0,0,w,h);
+ main.save();main.setTransform(1,0,0,1,0,0);main.globalAlpha=1;main.globalCompositeOperation='source-over';main.drawImage(A,0,0,w,h,x0,y0,w,h);main.restore();
+}
+
 const partTintLayers={},partTintCells=new Map();
 function partTintKey(key,declared){
  return declared??window.IRON_VOW_PART_MASKS?.[key];
@@ -4333,7 +4360,8 @@ function drawPartTints(u,t,paint,anchor,scorch=true,mask=null){
  const jobs=[];
  for(const [part] of PART_TINTS)if(u.max[part]){
   const health=clamp01(u.hp[part]/u.max[part]),flash=hits?.includes(part);
-  if(TINT_DEBUG||flash||(scorch&&health<.5))jobs.push({part,health,flash});
+  if(TINT_DEBUG||(scorch&&health<.5))jobs.push({part,health,flash:false});
+  if(!TINT_DEBUG&&flash)jobs.push({part,health,flash:true});
  }
  if(!jobs.length||typeof ctx.getTransform!=='function')return;
  const m=ctx.getTransform();
@@ -4352,8 +4380,8 @@ function drawPartTints(u,t,paint,anchor,scorch=true,mask=null){
  const pad=exact?2:unit;
  const x=Math.max(0,Math.floor(Math.min(...points.map(p=>p.x))-pad));
  const y=Math.max(0,Math.floor(Math.min(...points.map(p=>p.y))-pad));
- const w=Math.min(canvas.width,Math.ceil(Math.max(...points.map(p=>p.x))+pad))-x;
- const h=Math.min(canvas.height,Math.ceil(Math.max(...points.map(p=>p.y))+pad))-y;
+ const w=Math.min(ctx.canvas.width,Math.ceil(Math.max(...points.map(p=>p.x))+pad))-x;
+ const h=Math.min(ctx.canvas.height,Math.ceil(Math.max(...points.map(p=>p.y))+pad))-y;
  if(w<4||h<4)return;
  const sprite=tintLayer('sprite',w,h),layer=tintLayer('part',w,h),regionLayer=exact?tintLayer('region',w,h):null;
  if(!sprite||!layer||(exact&&!regionLayer))return;
@@ -4463,13 +4491,18 @@ function drawVehicle(u,t,close=false){
  ctx.beginPath();ctx.ellipse(p.x,p.y,scale*(altitude?.78:.66),scale*(altitude?.24:.23),0,0,Math.PI*2);ctx.fill();
  if(imageReady(image)){
   if(!u.alive&&!wreckReady){
-   ctx.filter='brightness(.60) saturate(.42)';
-   if(altitude&&!reducedMotion&&!vehicleWreckVisible(u,t)){
-    const x=bounds.x+bounds.w*.5,y=bounds.y+bounds.h*.65;
-    ctx.translate(x,y);ctx.rotate(unitFacing(u)*.36*smoothRange(0,spec.wreckAt,vehicleDeathAge(u,t)));ctx.translate(-x,-y);
-   }
-  }
-  ctx.drawImage(image,bounds.x,bounds.y,bounds.w,bounds.h);
+   const pad=Math.max(bounds.w,bounds.h)*.45;
+   drawToned({x:bounds.x-pad,y:bounds.y-pad,w:bounds.w+pad*2,h:bounds.h+pad*2},.60,.42,()=>{
+    ctx.save();
+    try{
+     if(altitude&&!reducedMotion&&!vehicleWreckVisible(u,t)){
+      const x=bounds.x+bounds.w*.5,y=bounds.y+bounds.h*.65;
+      ctx.translate(x,y);ctx.rotate(unitFacing(u)*.36*smoothRange(0,spec.wreckAt,vehicleDeathAge(u,t)));ctx.translate(-x,-y);
+     }
+     ctx.drawImage(image,bounds.x,bounds.y,bounds.w,bounds.h);
+    }finally{ctx.restore()}
+   });
+  }else ctx.drawImage(image,bounds.x,bounds.y,bounds.w,bounds.h);
  }
  ctx.restore();
  if(!u.alive||u.hp.body/u.max.body<.35)drawMechSmoke(u,t,!u.alive);
@@ -4663,7 +4696,8 @@ function stagedFoundryDeath(u,pose,atlas,render,frame){
 // The painted Warden draws live on the Foundry rig while it stands; its baked art covers loading, no WebGL and death.
 const LIVE_WARDEN_SIZE=11.2/3.65;
 function liveWarden(u){
- return Boolean(u&&!u.kind&&u.frame===0&&u.alive&&window.IronVowFoundry?.wardenReady?.());
+ return Boolean(u&&!u.kind&&!u.lionTrial&&!battle?.lionTrial&&u.frame===0&&u.alive&&
+  (reducedMotion||!u.motion||u.motion.stepBeats!=null||u.motion.jumpjet)&&window.IronVowFoundry?.wardenReady?.());
 }
 function lionMotionImages(id){
  const strike=window.IRON_VOW_LION_ART?.strikes[id];
@@ -4815,9 +4849,8 @@ function ashigaruArtFrame(u,pose,atlas){
 function drawUnit(u,t,close=false){
  const inactive=!TINT_DEBUG&&spent(u)&&!u.attack&&!u.motion&&!u.turning;
  if(!inactive){drawUnitBody(u,t,close);if(u.frame===BULWARK_FRAME)drawBulwarkCharge(u,t);return}
- ctx.save();
- try{ctx.filter='brightness(.37) saturate(.42)';drawUnitBody(u,t,close)}
- finally{ctx.restore()}
+ const g=project(u.vx,0,u.vz);
+ drawToned({x:g.x-scale*2.2,y:g.y-scale*4,w:scale*4.4,h:scale*5.1},.37,.42,()=>drawUnitBody(u,t,close));
 }
 function drawJumpjetExhaust(u,t){
  const lift=jumpjetHeight(u,t);

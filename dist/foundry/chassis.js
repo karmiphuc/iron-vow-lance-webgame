@@ -81,6 +81,14 @@ function paint(hex,rough=.58,metal=.34){const k='p'+hex+rough;if(matCache.has(k)
 function hazardMat(rep){const k='hz'+rep;if(matCache.has(k))return matCache.get(k);const t=hazardTex.clone();t.needsUpdate=true;t.repeat.set(rep,1);const m=MS({map:t,roughness:.62,metalness:.2});matCache.set(k,m);return m;}
 function damagedOf(m){const k='dmg'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;d.color=m.color.clone().multiplyScalar(.62);d.roughness=.85;matCache.set(k,d);return d;}
 function wreckOf(m){const k='wr'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;d.color=C(0x2a2622);d.roughness=.95;d.metalness=.2;if(d.emissive)d.emissive.setHex(0);matCache.set(k,d);return d;}
+function releaseOwnedMaterials(owned){
+ const all=new Set(owned);
+ for(const material of owned)for(const prefix of ['dmg','wr']){
+  const key=prefix+material.uuid,variant=matCache.get(key);
+  if(variant){all.add(variant);matCache.delete(key);}
+ }
+ for(const material of all)material.dispose();
+}
 
 /* ---------- geometry kit ---------- */
 const gc=new Map();
@@ -1080,5 +1088,5 @@ function weapon(id,team,mp){
   return o;
 }
 
-window.VowChassis={skirtPose,composeDims,solveLeg,build,weapon,DIMS,PAL,damagedOf,wreckOf,SH};
+window.VowChassis={skirtPose,composeDims,solveLeg,build,weapon,DIMS,PAL,damagedOf,wreckOf,releaseOwnedMaterials,SH};
 })();

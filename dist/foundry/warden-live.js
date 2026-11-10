@@ -180,7 +180,8 @@ function build(team,paint,options={}){
  if(!options.keepBind)for(const s of ['L','R']){const a=arms[s];a.sh.rotation.set(0,0,0);a.el.rotation.set(0,0,0);a.wr.rotation.set(0,0,0);}
 
  const rig={pelvis,spine,neck,arms,legs,pistons:[],spinners:[],skirts:null};
- const b={root,rig,dims:D,parts,kits:[],mods:{core:'warden',legs:'warden',arms:'warden'},visorMat,stackMat,shield:null,pal:null};
+ const b={root,rig,dims:D,parts,kits:[],mods:{core:'warden',legs:'warden',arms:'warden'},visorMat,stackMat,
+  ownedMaterials:[...materials.values(),stackMat],shield:null,pal:null};
  const m={cont,body:root,rig,dims:D,build:b,frame:'warden',team,yaw:0,scale:k,gait:{phase:0,w:0},
   legs:legs.map(()=>({planted:V3(),from:V3(),to:V3(),swing:false,settle:null,foot:V3()})),
   s:{comp:{x:0,v:0},pitch:{x:0,v:0},roll:{x:0,v:0},arm:{x:0,v:0},kx:{x:0,v:0},kz:{x:0,v:0}},
