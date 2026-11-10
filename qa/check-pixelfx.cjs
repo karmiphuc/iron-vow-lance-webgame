@@ -13,7 +13,10 @@ const args={point:{x:140,y:100},normal:{x:-1,y:-.15},progress:.32,kind:'rifle',s
 const one=run(ctx=>fx.impact(ctx,args)),two=run(ctx=>fx.impact(ctx,args));
 assert.deepEqual(one,two,'Sparks must be deterministic at a given timestamp');
 assert.ok(one.some(call=>call[0]==='lineTo'),'Impact should include actual metal streaks');
-assert.ok(one.some(call=>call[0]==='gradient'),'Impact should have a short contact flash');
+// The flash lasts 140 ms; .32 of a 440 ms impact is already 140.8 ms.
+const flash=run(ctx=>fx.impact(ctx,{...args,progress:.2}));
+assert.ok(flash.some(call=>call[0]==='gradient'),'Early impact should have a short contact flash');
+assert.ok(!one.some(call=>call[0]==='gradient'),'Contact flash must clear after 140 ms');
 const ends=one.filter(call=>call[0]==='lineTo');
 assert.ok(ends.filter(call=>call[1]<args.point.x).length>ends.length*.58,'Most ricochets should favor the impact normal');
 for(const kind of ['rifle','shotgun','rail','missile','blade']){
