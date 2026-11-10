@@ -139,7 +139,8 @@ function shoulderRifle(m,arm,weight,recoil,F){
   const r=m.rig,D=m.dims,spine=r.spine;
   m.cont.updateMatrixWorld(true);
   const toSpine=spine.getWorldQuaternion(new T.Quaternion()).invert();
-  const shoulder=arm.sh.getWorldPosition(V3()),L=D.fo+(D.so||.26);
+  // World-space solve: segment lengths scale with the rig.
+  const shoulder=arm.sh.getWorldPosition(V3()),L=(D.fo+(D.so||.26))*m.scale;
   // Recoil drives the grip down and back along the stock, never straight into the head.
   const grip=spine.localToWorld(V3(F.grip[0],D.shY+F.grip[1]-recoil*.18,(D.shZ||0)+F.grip[2]-recoil*.16));
   const line=m.aim.point.clone().sub(grip).normalize();
@@ -277,6 +278,8 @@ function animateMech(m,I,dt,t){
     else m.melee=null;}
   if(m.shield)m.shield.visible=!I.shieldDead;
   for(const a of [aL,aR]){a.paul.rotation.x=a.sh.rotation.x*.28;a.paul.rotation.z=a.sh.rotation.z*.4;}
+  // A shouldered rifle lifts the gun-side pauldron clear of the stock (dims.carry.fire.padLift).
+  if(F&&fs>0){aR.paul.rotation.x-=(F.padLift||0)*fs;aR.paul.rotation.z+=(F.padRoll||0)*fs;}
 
   if(!dead)for(const sp of r.spinners)sp.rotation.y+=dt*1.1;
   // cockpit lights: flicker after pilot hits or when the pilot is badly hurt, dark when down

@@ -1,6 +1,8 @@
 const assert=require('node:assert/strict');
 
 module.exports=async function checkWarden({page,mobile,origin,tap}){
+ // These checks cover the baked field Warden, which remains the fallback for the live rig.
+ await page.addInitScript(()=>{window.IRON_VOW_LIVE_WARDEN=false});
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.emulateMedia({reducedMotion:'no-preference'});

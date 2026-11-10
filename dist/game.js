@@ -3311,6 +3311,10 @@ function jumpjetHeight(u,t){
  return 1.35*Math.sin(progress*Math.PI);
 }
 function unitBounds(u,visual=activeWardenVisual(u)){
+ if(liveWarden(u)){
+  const p=project(u.vx,jumpjetHeight(u,clock),u.vz),size=scale*LIVE_WARDEN_SIZE;
+  return{x:p.x-size*.5,y:p.y-size*.84,w:size,h:size};
+ }
  const p=project(u.vx,jumpjetHeight(u,clock),u.vz),size=scale*MECH_SIZE[u.frame]*(visual?.scale??1),model=foundryModel(u.frame);
  if(u.lionTrial&&window.IRON_VOW_LION_ART){
   const {ground}=window.IRON_VOW_LION_ART,span=scale*3.45;
@@ -4656,6 +4660,11 @@ function stagedFoundryDeath(u,pose,atlas,render,frame){
  return {...render,collapse,settled:age>=DESTRUCTION.end?(cockpit?'pilot':'body'):null,
   anchors:mapFoundryAnchors(frame,render.flip,collapse)};
 }
+// The painted Warden draws live on the Foundry rig while it stands; its baked art covers loading, no WebGL and death.
+const LIVE_WARDEN_SIZE=11.2/3.65;
+function liveWarden(u){
+ return Boolean(u&&!u.kind&&u.frame===0&&u.alive&&window.IronVowFoundry?.wardenReady?.());
+}
 function lionMotionImages(id){
  const strike=window.IRON_VOW_LION_ART?.strikes[id];
  return strike?Object.values(strike).map(motionImage):[];
@@ -4681,7 +4690,13 @@ function lionBaked(u,t){
 function foundryRender(u,t,liveOnly=false){
  if(u.lionTrial)return lionBaked(u,hitstopTime(u,t));
  const model=foundryModel(u.frame);
- if(model==null)return null;
+ if(model==null){
+  if(!liveWarden(u))return null;
+  const poseTime=hitstopTime(u,t),pose=animationPose(u,poseTime);
+  pose.heading=displayedHeading(u);pose.cinematic=u.headingOverride!==undefined;pose.reducedMotion=reducedMotion;
+  const live=window.IronVowFoundry.draw(u,poseTime,pose,battle,'warden','warden');
+  return live?{...live,strikeProgress:pose.strikeProgress}:null;
+ }
  const poseTime=hitstopTime(u,t);
  const pose=animationPose(u,poseTime);
  pose.heading=displayedHeading(u);pose.cinematic=u.headingOverride!==undefined;pose.reducedMotion=reducedMotion;
