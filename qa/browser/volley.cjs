@@ -12,15 +12,17 @@ module.exports=async function checkVolley({page,mobile,origin,tap}){
   const dx=[2,-2].find(step=>onBoard(ally.x+step,ally.z)&&!battle.cover.has((ally.x+step)+','+ally.z));
   foe.x=foe.vx=ally.x+dx;foe.z=foe.vz=ally.z;foe.reacted=true;
   lockedTarget=foe.id;focusBattleCamera(ally,true);renderBattle();
-  window.volleyQA={ally,foe,before:{...foe.hp},ap:ally.ap,budget:attackBudget(ally,foe,'body',weapon('shotgun'))};
+  window.volleyQA={ally,foe,before:{...foe.hp},ap:ally.ap,budget:attackBudget(ally,foe,'body',weapon('shotgun')),contacts:[]};
   const paint=drawAttackPartHP;
   drawAttackPartHP=(sequence,pane,subject,t)=>{
-   if(subject!==foe||sequence.phase!=='result'||volleyQA.flash)return paint(sequence,pane,subject,t);
+   if(subject!==foe||!sequence.contact||sequence.phase==='result')return paint(sequence,pane,subject,t);
    const edges=[],stroke=ctx.strokeRect;
    ctx.strokeRect=function(...args){edges.push(this.strokeStyle);return stroke.apply(this,args)};
    try{
     const result=paint(sequence,pane,subject,t);
-    if(edges.includes('#ffe1a2'))volleyQA.flash=edges;
+    const {index,part}=sequence.contact;
+    if(edges.includes('#ffe1a2')&&volleyQA.contacts.at(-1)?.index!==index)
+     volleyQA.contacts.push({index,part,edges,hp:{...subject.hp}});
     return result;
    }finally{ctx.strokeRect=stroke}
   };
@@ -38,13 +40,18 @@ module.exports=async function checkVolley({page,mobile,origin,tap}){
   throw Error('No exposed target');
  });
  await (mobile?page.touchscreen.tap(point.x,point.y):page.mouse.click(point.x,point.y));
- await page.waitForFunction(()=>volleyQA.flash&&!battle.busy);
+ await page.waitForFunction(()=>!battle.busy);
  const result=await page.evaluate(()=>{
-  const {ally,foe,before,ap,budget,flash}=volleyQA;
+  const {ally,foe,before,ap,budget,contacts}=volleyQA;
   return {loss:Object.fromEntries(Object.keys(before).map(part=>[part,before[part]-foe.hp[part]])),
-   cost:ap-ally.ap,budget,flash,log:battle.log.at(-1)};
+   cost:ap-ally.ap,budget,contacts,before,log:battle.log.at(-1)};
  });
- assert.deepEqual(result.flash,Array(5).fill('#ffe1a2'),'all five hit parts flash in the same exchange');
+ assert.ok(result.contacts.length>=2,'the camera shows contacts on separate frames before the result');
+ assert.ok(result.contacts.every(contact=>contact.edges.filter(edge=>edge==='#ffe1a2').length===1),
+  'each contact highlights just its subsystem');
+ assert.ok(result.contacts.some(contact=>Object.entries(contact.hp).some(([part,hp])=>hp<result.before[part])&&
+  Object.entries(contact.hp).some(([part,hp])=>hp===result.before[part]-result.loss[part])),
+  'part HP changes on contact while the burst is playing');
  assert.equal(result.cost,3);
  assert.ok(Object.values(result.loss).every(damage=>damage>0));
  assert.equal(Object.values(result.loss).reduce((a,b)=>a+b),result.budget);

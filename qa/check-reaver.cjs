@@ -10,10 +10,10 @@ assert.equal(run('foundryModel(REAVER_FRAME)'),9);
 assert.equal(run('FRAMES[REAVER_FRAME].role'),'MEDIUM+');
 run('save.credits=100000;save.rep=100;workshopView="market"');
 assert.equal(run('chassisAssignments(0).includes("REAVER")||hullOnMarket(REAVER_FRAME)||acquireHull(REAVER_FRAME)||assignChassis(0,REAVER_FRAME,true)'),false);
-assert.equal(run('validSave({...save,reserve:{[REAVER_FRAME]:stockHull(REAVER_FRAME)}})'),false);
-assert.equal(run('validSave({...save,salvage:{[REAVER_FRAME]:1}})'),false);
+assert.ok(run('validSave({...save,reserve:{[REAVER_FRAME]:stockHull(REAVER_FRAME)}})'));
+assert.ok(run('validSave({...save,salvage:{[REAVER_FRAME]:1}})'));
 run('save.salvage={[REAVER_FRAME]:1};workshopView="salvage"');
-assert.equal(run('chassisAssignments(0).includes("REAVER")||acquireHull(REAVER_FRAME,true)||recycleHullBody(REAVER_FRAME)'),false);
+assert.ok(run('chassisAssignments(0).includes("REAVER")&&acquireHull(REAVER_FRAME,true)&&assignChassis(0,REAVER_FRAME)'));
 run('save=fresh()');
 for(const slots of [[0],[0,1],[0,1,2]])for(let i=0;i<4;i++){
  run(`createBattle(${i},false,false,${JSON.stringify(slots)})`);

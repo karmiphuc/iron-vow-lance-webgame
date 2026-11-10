@@ -1,6 +1,7 @@
 """Original Iron Vow expansion weapons; no external meshes or textures.
 
 blender -b --disable-autoexec -t 6 --python-exit-code 1 -P tools/authoring/weapons/source/build_expansion.py
+Append -- --undercarry-only to rebake just the two under-carry sprite sets.
 GLTF coordinates: metres, Y up, +Z forward, grip at root origin.
 Rigid mechanical rigs use named object pivots, not deforming skin weights.
 Original designs informed by the chunky military proportions of Front Mission 3;
@@ -59,6 +60,7 @@ M = {
     'black': material('rubber', (.025, .03, .028), .1, .77),
     'amber': material('ochre', (.48, .23, .07), .45, .5),
     'cyan': material('ion', (.07, .66, .81), .5, .25, .9),
+    'charge': material('charge', (.035, .47, .65), .5, .25, .20),
     'heat': material('heat', (1, .24, .045), .4, .3, .8),
     'oxide': material('red_oxide', (.18,.12,.09), .60,.45),
     'navy': material('blue_slate', (.095,.125,.135), .65,.44),
@@ -246,6 +248,16 @@ def saddle(g,mat='frame',wide=.30):
     for sign in [-1,1]:panel(g,'hand_saddle',poly,.09,sign*wide,mat)
     box(g,'palm_bridge',(wide*2+.09,.11,.26),(0,-.29,-.12),mat)
     box(g,'front_lock',(wide*2+.06,.12,.17),(0,.23,.37),'steel')
+    empty(g.name+'.contact',(0,0,0),g)
+
+
+def overhead_grip(g, mat, width):
+    # Crossbar at the fist socket, with short load-bearing posts down to the receiver.
+    cyl(g,'grip_crossbar',.09,width*2,(0,0,0),'black','x')
+    for side in [-1,1]:
+        panel(g,'grip_yoke',[(.075,-.16),(.085,.10),(-.14,.26),(-.42,.28),
+              (-.42,-.33),(-.20,-.27)],.075,side*width,mat)
+        ring(g,'grip_pin',.09,.03,.025,(side*(width+.043),0,0),'steel','x',8)
     empty(g.name+'.contact',(0,0,0),g)
 
 
@@ -469,6 +481,91 @@ for side in [-1,1]:
     cyl(g,'head_lock',.11,.04,(side*.46,.27,1.70),'steel','x')
 hazard(g,.43,.36,1.74,3)
 
+# RIVET: low slung, belt-fed machine gun with an armored feed can and open barrel cage.
+g=weapon('rivet',muzzle=(0,-.62,4.124))
+overhead_grip(g,'sand',.24)
+hull(g,'steel_receiver',[(-.80,.23,-.87,-.44,.055),(-.54,.34,-.94,-.32,.07),
+     (.77,.34,-.94,-.32,.07),(1.11,.255,-.83,-.42,.055)],'frame')
+shell(g,[(-.85,-.63),(-.50,-.73),(-.39,-.50),(-.43,.69),(-.64,.97),(-.84,.69)],.33,'sand')
+fasteners(g,.363,[(-.54,-.48),(-.77,.62)])
+box(g,'feed_can',(.34,.60,1.04),(-.435,-.94,-.12),'olive',.07)
+box(g,'feed_can_lid',(.38,.12,1.09),(-.435,-.67,-.12),'sand',.032)
+for z in [-.47,-.23,.01,.25]:
+    box(g,'feed_can_stamping',(.033,.36,.055),(-.62,-.94,z),'frame',.009)
+box(g,'latch',(.16,.16,.13),(-.62,-.77,.31),'steel')
+box(g,'feed_entry',(.22,.16,.36),(-.55,-.37,.42),'warmsteel',.022)
+box(g,'feed_chamber',(.27,.20,.36),(.27,-.33,.42),'sand',.027)
+belt=empty('rivet.belt',parent=g)
+for i in range(6):
+    x=-.58+.14*i
+    cyl(belt,'belt_round',.058,.29,(x,-.288,.43),'amber')
+    box(belt,'belt_clip',(.088,.10,.11),(x,-.28,.42),'frame',.013)
+    box(belt,'belt_link',(.157,.047,.10),(x,-.326,.42),'steel',.009)
+service_marks(g,.365,-.60,.34)
+for z in [1.06,1.32,1.59,1.86,2.13]:
+    ring(g,'perforated_jacket_hoop',.259,.184,.115,(0,-.62,1.06+(z-1.06)*1.6),'sand',n=8)
+for x in [-.203,.203]:
+    for y in [-.72,-.52]:
+        box(g,'jacket_rail',(.075,.07,1.952),(x,y,1.908),'warmsteel',.015)
+p=pivot(g,'barrel_sled',(0,-.62,1.06),'translate',-.19)
+cyl(p,'heavy_barrel',.109,2.688,(0,0,1.408),'steel')
+ring(p,'compensator',.171,.094,.40,(0,0,2.852),'frame',n=8)
+ring(p,'bore_lip',.171,.094,.025,(0,0,3.0515),'edge',n=8)
+
+# PARALLAX: faceted accelerator spine, recessed cyan rail and an electronic sight.
+g=weapon('parallax',muzzle=(0,-.59,5.918))
+overhead_grip(g,'navy',.21)
+hull(g,'capacitor_receiver',[(-.87,.20,-.79,-.43,.045),(-.54,.32,-.90,-.31,.065),
+     (.58,.30,-.88,-.34,.065),(1.29,.20,-.76,-.42,.045)],'navy')
+hull(g,'rising_forearm_stock',[(-2.16,.12,.13,.40,.027),(-2.03,.18,.09,.42,.035),
+     (-1.80,.18,-.03,.30,.035),(-1.32,.17,-.31,-.11,.035),(-.68,.26,-.77,-.43,.047)],'navy')
+hull(g,'forearm_saddle',[(-2.12,.105,.38,.511,.018),(-2.03,.165,.36,.474,.019),
+     (-1.90,.165,.29,.388,.019),(-1.73,.11,.21,.319,.019)],'black')
+empty('parallax.stockContact',(0,.388,-1.90),g)
+for side in [-1,1]:
+    panel(g,'saddle_lip',[(.19,-2.13),(.32,-2.06),(.25,-1.75),(.12,-1.67)],.05,side*.185,'steel',.010)
+
+def accelerator_z(z):
+    return 1.19+(z-1.19)*1.6 if z>1.19 else z
+
+for side in [-1,1]:
+    panel(g,'floating_ceramic_cover',[(-.45,-.76),(-.33,-.45),(-.37,.57),(-.54,1.24),
+          (-.72,.84),(-.83,-.48)],.068,side*.283,'plate',.025)
+    panel(g,'sight_glass',[(-.31,.41),(-.27,.50),(-.32,.86),(-.38,.65)],.046,side*.185,'cyan')
+    panel(g,'capacitor_port',[(-.81,-.39),(-.74,-.46),(-.73,.52),(-.78,.67)],.023,side*.291,'charge')
+    panel(g,'accelerator_prong',[(y,accelerator_z(z)) for y,z in [(-.50,1.02),(-.39,1.29),
+          (-.43,2.85),(-.53,3.93),(-.66,4.06),(-.77,3.64),(-.81,1.22)]],.115,side*.215,'navy')
+    panel(g,'machined_rail_inlay',[(y,accelerator_z(z)) for y,z in [(-.51,1.43),
+          (-.49,2.82),(-.57,3.70),(-.62,3.44),(-.61,1.53)]],.026,side*.278,'steel',.006)
+    box(g,'rail_emitter',(.038,.053,2.496),(side*.284,-.646,accelerator_z(2.30)),'charge',.006)
+for z in [1.40,2.86,3.84]:
+    ring(g,'accelerator_collar',.235,.145,.087,(0,-.59,accelerator_z(z)),'navy',n=6)
+p=pivot(g,'pulse_bore',(0,-.59,1.19),'translate',-.16)
+cyl(p,'accelerator_spine',.093,4.432,(0,0,2.192),'warmsteel')
+ring(p,'emitter_seal',.128,.084,.41,(0,0,4.52),'frame',n=8)
+ring(p,'pulse_aperture',.127,.08,.024,(0,0,4.716),'charge',n=8)
+
+# Enlarge the ordnance around the hand, leaving the grip and Parallax stock seated.
+HEAVY_WIDTH, HEAVY_DEPTH, HEAVY_LENGTH = 1.48, 1.37, 1.28
+heavy_scale=Vector((HEAVY_WIDTH,HEAVY_LENGTH,HEAVY_DEPTH))
+for name in ('rivet','parallax'):
+    root=roots[name]
+    for obj in root.children_recursive:
+        if obj in (markers[name]['grip'],markers[name]['axis']):
+            continue
+        if any(part in obj.name for part in ('grip_crossbar','grip_pin','rising_forearm_stock',
+                                             'forearm_saddle','saddle_lip','stockContact')):
+            continue
+        if 'grip_yoke' in obj.name:
+            for vertex in obj.data.vertices:
+                if vertex.co.z<-.13:vertex.co.z=-.13+(vertex.co.z+.13)*HEAVY_DEPTH
+            continue
+        obj.location=Vector(v*s for v,s in zip(obj.location,heavy_scale))
+        if obj.type=='MESH':
+            for vertex in obj.data.vertices:
+                vertex.co=Vector(v*s for v,s in zip(vertex.co,heavy_scale))
+    mechanics[name]['travel']*=HEAVY_LENGTH
+
 # Move markers with their driven assemblies while preserving the authored pose.
 bpy.context.view_layer.update()
 for name, data in mechanics.items():
@@ -479,7 +576,7 @@ for name, data in mechanics.items():
         marker.matrix_world = world
 
 # Consolidate only within rigid pivots/materials, retaining mechanical hierarchy.
-for parent in list(roots.values())+[bpy.data.objects[v['node']] for v in mechanics.values()]:
+for parent in [*roots.values(),belt,*[bpy.data.objects[v['node']] for v in mechanics.values()]]:
     groups = defaultdict(list)
     for obj in parent.children:
         if obj.type == 'MESH': groups[obj.data.materials[0].name].append(obj)
@@ -529,7 +626,7 @@ manifest={'authoring':'Original procedural geometry; no third-party assets','uni
           'references':['https://db.hfsplay.fr/files/2019/08/06/Front_Mission_3_USA_ueYRtDe.pdf',
                         'https://frontmissionremake.com/front-mission-3/'],
           'weapons':stats,'mechanics':mechanics}
-(BENCH/'expansion-weapons-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+(BENCH/'expansion-weapons-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',newline='\n')
 
 # Match the existing weapon atlas cameras and pixel-space attachment convention.
 scene=bpy.context.scene
@@ -549,10 +646,18 @@ scene.render.resolution_x=scene.render.resolution_y=SIZE;scene.render.resolution
 scene.render.film_transparent=True;scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGBA'
 scene.view_settings.view_transform='AgX'
 visuals={}
+if '--undercarry-only' in sys.argv:
+    previous=(DIST/'armory-visuals.js').read_text().splitlines()[1]
+    visuals=json.loads(previous.removeprefix('window.IRON_VOW_EXPANSION_ART=').removesuffix(';'))
+    bake_names=('rivet','parallax')
+else:
+    bake_names=roots
 with tempfile.TemporaryDirectory() as tmp:
     for face,delta in [('left',(10.2,4.75,13.15)),('right',(-14,4.75,9.65))]:
-        focus=point((0,.1,1.1));camera.location=focus+point(delta);aim(camera,focus)
-        for name,root in roots.items():
+        for name in bake_names:
+            focus=point((0,-.1,2.65) if name=='parallax' else (0,-.1,2.05) if name=='rivet' else (0,.1,1.1))
+            camera.location=focus+point(delta);aim(camera,focus)
+            camdata.ortho_scale=10.8 if name=='parallax' else 7.6 if name=='rivet' else 6.4
             for other,assembly in roots.items():
                 for obj in assembly.children_recursive: obj.hide_render=other!=name
             def bake(key):
@@ -564,7 +669,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 def xy(marker):
                     p=world_to_camera_view(scene,camera,marker.matrix_world.translation)
                     return [round(p.x*SIZE-bounds[0],2),round((1-p.y)*SIZE-bounds[1],2)]
-                return {'key':key,**{role:xy(obj) for role,obj in markers[name].items()},'pixelsPerMetre':SIZE/6.4}
+                return {'key':key,**{role:xy(obj) for role,obj in markers[name].items()},'pixelsPerMetre':round(SIZE/camdata.ortho_scale,5)}
             key='armory-'+name+'-'+face
             slot=bake(key)
             if name in ['pike','anchor-hammer']:
@@ -574,14 +679,37 @@ with tempfile.TemporaryDirectory() as tmp:
                 slot['impact']=bake(key+'-impact')
                 moving.matrix_basis=rest
                 bpy.context.view_layer.update()
+            if name=='rivet':
+                moving=bpy.data.objects[mechanics[name]['node']]
+                rest=moving.location.copy()
+                moving.location+=point((0,0,mechanics[name]['travel']))
+                belt.location=point((.035*HEAVY_WIDTH,0,0))
+                slot['kick']=bake(key+'-kick')
+                moving.location=rest
+                belt.location=point((.10*HEAVY_WIDTH,0,0))
+                slot['feed']=bake(key+'-feed')
+                belt.location=point((0,0,0))
+            if name=='parallax':
+                glow=M['charge'].node_tree.nodes.get('Principled BSDF').inputs['Emission Strength']
+                glow.default_value=1.7
+                slot['charge']=bake(key+'-charge')
+                glow.default_value=6.0
+                slot['charged']=bake(key+'-charged')
+                moving=bpy.data.objects[mechanics[name]['node']]
+                rest=moving.location.copy()
+                moving.location+=point((0,0,mechanics[name]['travel']))
+                slot['kick']=bake(key+'-kick')
+                moving.location=rest
+                glow.default_value=.20
             visuals.setdefault(name,{})[face]=slot
 rigs={name:{'node':data['node'].split('.',1)[1],'amount':data['travel'],
             'kind':'spin' if data['motion']=='rotate' else 'strike' if name in ['pike','anchor-hammer'] else 'recoil'}
       for name,data in mechanics.items()}
-(DIST/'armory-visuals.js').write_text('// Generated by tools/authoring/weapons/source/build_expansion.py.\nwindow.IRON_VOW_EXPANSION_ART='+json.dumps(visuals,separators=(',',':'))+';\nwindow.IRON_VOW_EXPANSION_RIG='+json.dumps(rigs,separators=(',',':'))+';\n')
+rigs['rivet']['feedTravel']=.14*HEAVY_WIDTH
+(DIST/'armory-visuals.js').write_text('// Generated by tools/authoring/weapons/source/build_expansion.py.\nwindow.IRON_VOW_EXPANSION_ART='+json.dumps(visuals,separators=(',',':'))+';\nwindow.IRON_VOW_EXPANSION_RIG='+json.dumps(rigs,separators=(',',':'))+';\n',newline='\n')
 
 # Art review sheet is a deliverable, not used by the game loader.
-sheet=Image.new('RGB',(1440,1080),(18,27,32));draw=ImageDraw.Draw(sheet)
+sheet=Image.new('RGB',(1440,math.ceil(len(roots)/4)*360),(18,27,32));draw=ImageDraw.Draw(sheet)
 for i,name in enumerate(roots):
     x,y=(i%4)*360,(i//4)*360
     draw.rounded_rectangle((x+8,y+8,x+352,y+352),12,fill=(29,41,47),outline=(67,79,82))
@@ -601,7 +729,7 @@ font=ImageFont.load_default(size=20);small=ImageFont.load_default(size=15)
 before=ROOT.parent/'armory-before'
 if before.exists():
     sheet=Image.new('RGB',(1800,1600),(16,24,30));draw=ImageDraw.Draw(sheet)
-    for i,name in enumerate(roots):
+    for i,name in enumerate(name for name in roots if (before/f'armory-{name}-left.webp').exists()):
         x,y=i%3*600,i//3*400
         draw.rounded_rectangle((x+8,y+8,x+592,y+392),12,fill=(29,40,47),outline=(65,81,85))
         draw.text((x+24,y+19),name.upper(),font=font,fill=(237,187,103))

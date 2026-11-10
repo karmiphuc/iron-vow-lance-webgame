@@ -17,7 +17,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   assert.equal(await page.locator('[data-armory-class="assault"]').evaluate(node=>node===document.activeElement),true);
  }
  const seen=[];
- for(const [group,count] of Object.entries({assault:7,strike:7,melee:8})){
+ for(const [group,count] of Object.entries({assault:8,strike:8,melee:8})){
   await tab(group);
   assert.equal(await page.locator('[data-armory-class="'+group+'"]').getAttribute('aria-pressed'),'true');
   const cards=page.locator('[data-weapon-card]');
@@ -40,7 +40,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   }
   assert.ok(await page.locator('#ui .page').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
  }
- assert.equal(new Set(seen).size,22);
+ assert.equal(new Set(seen).size,24);
  if(mobile)await page.setViewportSize({width:390,height:844});
  await tab('strike');
  assert.equal(await card('obelisk').locator('[data-equip]').isDisabled(),true);
@@ -82,6 +82,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
    const isMelee=weapon(id).melee,rig=new THREE.Group(),w=arsenal.mount(scene,id,rig);
    const end=isMelee?w.tip:w.muzzle;
    const before=point(end),grip=point(w.grip),old=w.pivot&&[w.pivot.position.z,w.pivot.rotation.z];
+   const bore=w.model.worldToLocal(before.clone());
    arsenal.animate(w,{weaponKick:.7,weaponSpin:.4,strikeProgress:.7});rig.updateMatrixWorld(true);
    const moved=w.pivot&&[w.pivot.position.z,w.pivot.rotation.z].some((value,i)=>Math.abs(value-old[i])>1e-5);
    const shown=window.IronVowFoundry.previewBastion({weapon:isMelee?'sidewinder':id,melee:isMelee?id:'pike'},0,
@@ -94,13 +95,62 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
    const stroke=w.motion?.kind==='strike'?point(end).distanceTo(before):null;
    return {id,clear:before.distanceTo(grip)>.3,locked:point(w.grip).distanceTo(grip)<1e-6,moved,stroke,amount:w.motion?.amount,
     aligned:socketAxis>.999&&foundryAxis<-.999,strikeAdvance,
-    fitted:equipped.mount.visible&&point(equipped.grip).distanceTo(point(contact))<1e-6};
+    fitted:equipped.mount.visible&&point(equipped.grip).distanceTo(point(contact))<1e-6,
+    bore:[bore.y,bore.z]};
   });
  });
- assert.equal(rigs.length,12);
+ assert.equal(rigs.length,14);
  assert.ok(rigs.filter(r=>r.moved).length>=6);
  for(const rig of rigs)assert.ok(rig.clear&&rig.locked&&rig.fitted&&rig.aligned&&(rig.strikeAdvance==null||rig.strikeAdvance>.35),JSON.stringify(rig));
  for(const rig of rigs.filter(r=>r.stroke!=null))assert.ok(Math.abs(rig.stroke-Math.abs(rig.amount))<1e-5,rig.id+' tip travels with its moving piece');
+ for(const [id,reach] of [['rivet',5.27872],['parallax',7.57504]]){
+  const rig=rigs.find(r=>r.id===id);
+  assert.ok(rig.moved&&rig.bore[0]<-.5&&Math.abs(rig.bore[1]-reach)<1e-4,id+' extended muzzle sits below the fist and recoils');
+ }
+ await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.waitForFunction(()=>!reducedMotion);
+ const firing=await page.evaluate(async()=>{
+  const point=node=>node.getWorldPosition(new THREE.Vector3());
+  const show=(id,pose)=>window.IronVowFoundry.previewBastion({weapon:id},0,188,pose).primary;
+  const rivet={weapon:'rivet',attack:{kind:'rivet',fireAt:1}};
+  const beats=attackProfile(rivet,'rivet').beats;
+  const kicks=beats.map(beat=>firingPose(rivet,1+beat+.005));
+  const feeds=beats.map(beat=>firingPose(rivet,1+beat+.053));
+  const first=show('rivet',kicks[0]),muzzle=point(first.muzzle),grip=point(first.grip),belt=first.belt.position.x;
+  const second=show('rivet',feeds[0]);
+  const feedMoves=second.belt.position.x>belt+.05&&point(second.muzzle).distanceTo(muzzle)>.05&&point(second.grip).distanceTo(grip)<1e-6;
+  const parallax={weapon:'parallax',attack:{kind:'parallax',start:0,primeDuration:0,windup:.72,fireAt:null}};
+  const winding=[.02,.36,.68].map(t=>firingPose(parallax,t));
+  const glow=winding.map(pose=>show('parallax',pose).chargeMaterials[0].emissiveIntensity);
+  parallax.attack.fireAt=.72;
+  const pulse=firingPose(parallax,.73);
+  const shown=window.IronVowFoundry.previewBastion({weapon:'parallax'},0,188,pulse);
+  const firing=shown.primary,fixed=point(firing.grip).distanceTo(point(shown.m.sockets.R))<1e-6;
+  const saddle=firing.model.getObjectByName('parallax.stockContact')??firing.model.getObjectByName('parallaxstockContact');
+  const forearm=shown.m.body.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Batch Forearm.R'));
+  const pad=point(saddle),up=new THREE.Vector3(0,1,0).transformDirection(firing.model.matrixWorld);
+  const ray=new THREE.Raycaster(pad.clone().addScaledVector(up,-.25),up);
+  const contact=ray.intersectObject(forearm,true)[0]?.distance-.25;
+  const heldFrame=window.IronVowBastion.frame({alive:true,weapon:'parallax',attack:{kind:'parallax',fireAt:1}},1.12,{aim:1});
+  const baked=[];
+  for(const [id,poses] of [['rivet',[kicks[0],feeds[0]]],['parallax',[...winding,pulse]]])for(const face of [-1,1]){
+   const slot=window.IRON_VOW_EXPANSION_ART[id][face===1?'right':'left'];
+   await Promise.all(Object.values(slot).filter(part=>part?.key).map(part=>moduleImage(part.key).decode()));
+   const body=wardenVisual(0,'rifle',face),bounds={x:0,y:0,w:640,h:640};
+   const mounts=poses.map(pose=>weaponMount(body,body,bounds,id,face,0,pose));
+   baked.push({id,frames:new Set(mounts.map(m=>m.asset.key)).size,grip:mounts.every(m=>m.grip.x===mounts[0].grip.x&&m.grip.y===mounts[0].grip.y)});
+  }
+  return {rounds:beats.length,allKick:kicks.every(p=>p.weaponSprite==='kick'),allFeed:feeds.every(p=>p.weaponSprite==='feed'),
+   feedMoves,glow,fixed,contact,heldFrame,pulses:attackProfile(parallax,'parallax').beats.length,baked};
+ });
+ assert.equal(firing.rounds,12);
+ assert.ok(firing.allKick&&firing.allFeed&&firing.feedMoves);
+ assert.ok(firing.glow[2]>firing.glow[1]&&firing.glow[1]>firing.glow[0]&&firing.fixed);
+ assert.equal(firing.heldFrame,188,'Parallax holds the forearm brace through release');
+ assert.ok(firing.contact>=0&&firing.contact<.025,'saddle seats just beneath the forearm with no penetration: '+firing.contact);
+ assert.equal(firing.pulses,1);
+ for(const pose of firing.baked)assert.ok(pose.grip&&pose.frames===(pose.id==='rivet'?2:4));
+ await page.emulateMedia({reducedMotion:'reduce'});
  if(process.env.IRON_VOW_ARMORY_PROOF&&!mobile){
   const capture=await page.evaluate(()=>{
    const plate=document.createElement('canvas');
@@ -137,6 +187,17 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  });
  for(const mount of baked)assert.ok(mount.active&&mount.grip<1e-6&&mount.stroke>2,JSON.stringify(mount));
  await checkCerberusSalvo(page,mobile,tap);
+ await page.evaluate(()=>{battle=null;page='workshop';save.credits=30000;save.rep=119;render()});
+ for(const [id,group,rep,price] of [['rivet','assault',120,'8,600'],['parallax','strike',180,'13,500']]){
+  await tab(group);
+  const button=card(id).locator('[data-equip]');
+  assert.equal(await button.isDisabled(),true);
+  assert.equal(await button.innerText(),'UNLOCKS AT '+rep+' REP');
+  await page.evaluate(rep=>{save.rep=rep;render()},rep);
+  assert.equal(await button.innerText(),'BUY & EQUIP · '+price+' CR');
+  await equip(id);
+  assert.equal(await button.innerText(),'EQUIPPED');
+ }
 };
 
 async function checkCerberusSalvo(page,mobile,tap){

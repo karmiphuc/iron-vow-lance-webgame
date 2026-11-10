@@ -96,7 +96,7 @@ const create=require('./sim-harness.cjs');
  assert.equal(live.run('save.kills'),1);
  assert.equal(live.run('save.units[0].xp'),20);
  assert.equal(live.run('current().ap'),3);
- assert.equal(live.run("effects.filter(e=>e.type==='boom').length"),1);
+ assert.equal(live.run("effects.filter(e=>e.type==='boom'||e.type==='shot').length"),0,'skipping resolves damage without leftover shots');
 
  const exchanges=create({random:()=>0});
  exchanges.run(`createBattle(0,false,false,[0]);battle.busy=true;const ally=current(),foe=battle.units[1];

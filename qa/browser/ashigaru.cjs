@@ -25,12 +25,11 @@ module.exports=async function checkAshigaru({page,mobile,origin,tap}){
   const trace=()=>{
    const rendered=foundryRender(u,clock),attack=u.attack;
    if(u.motion){
-    const half=u.motion.gaitBase%2;
-    window.ashTrace.walk.push({frame:rendered.index,step:u.motion.duration,half});
-    // Sample the actual moving unit across each half's full timeline. A slow
-    // browser may display fewer frames during the 290 ms tile traversal.
-    if(!window.ashTrace.walkTimeline[half])window.ashTrace.walkTimeline[half]=Array.from({length:12},(_,i)=>
-     foundryRender(u,u.motion.start+u.motion.duration*(i+.5)/12).index);
+    const tile=u.motion.gaitBase;
+    window.ashTrace.walk.push({frame:rendered.index,step:u.motion.duration,tile});
+    // Sample more often than the eased travel clock advances an atlas cell.
+    if(!window.ashTrace.walkTimeline[tile])window.ashTrace.walkTimeline[tile]=Array.from({length:96},(_,i)=>
+     foundryRender(u,u.motion.start+u.motion.duration*i/96).index);
    }
    if(attack&&activeCinematic?.actor===u){
     const clip=atlas.attacks[weapon(attack.kind).scout];
@@ -62,9 +61,9 @@ module.exports=async function checkAshigaru({page,mobile,origin,tap}){
   await page.waitForFunction(round=>battle?.turn===round&&!battle.busy,round);
  }
  const trace=await page.evaluate(()=>window.ashTrace);
- assert.deepEqual([...new Set(trace.walk.map(f=>f.half))].sort(),[0,1],'both quickstep halves are played');
- assert.equal(new Set(Object.values(trace.walkTimeline).flat()).size,24,'all quickstep poses render across the two halves');
- assert.ok(trace.walk.every(f=>f.step===.29),'scout tile traversal takes 290 ms');
+ assert.ok(new Set(trace.walk.map(f=>f.tile)).size>=2,'quickstep continues across adjacent tiles');
+ assert.ok(Object.values(trace.walkTimeline).every(frames=>new Set(frames).size===24),'each tile plays both halves of the quickstep');
+ assert.ok(trace.walk.every(f=>Math.round(f.step*1000)===597),'each scout tile gives the two steps 597 ms');
  for(const [id,range,reach] of [['needle-carbine',3,.07],['flechette-scattergun',2,.04],['signal-knife',1,.11]]){
   const clip=trace.attacks.filter(f=>f.id===id);
   assert.ok(clip.some(f=>!f.fired)&&clip.some(f=>f.fired&&!f.hit)&&clip.some(f=>f.hit));

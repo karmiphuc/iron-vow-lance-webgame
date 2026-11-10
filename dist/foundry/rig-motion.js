@@ -130,7 +130,8 @@ function animateMech(m,I,dt,t){
   cont.updateMatrixWorld(true);
   spr(S.comp,80,11,dt);S.comp.x=clamp(S.comp.x,-.4,.12);spr(S.pitch,55,7,dt);spr(S.arm,60,7,dt);spr(S.kx,40,9,dt);spr(S.kz,40,9,dt);
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
-  if(I.moving)m.gait.phase+=dt*I.speed/(2*I.stepLen);
+  if(Number.isFinite(I.cycle))m.gait.phase=I.cycle;
+  else if(I.moving)m.gait.phase+=dt*I.speed/(2*I.stepLen);
   const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
   let settling=m.legs.some(L=>L.settle);
   r.legs.forEach((l,i)=>{const L=m.legs[i];const home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ)).clone();let pitch=0;
