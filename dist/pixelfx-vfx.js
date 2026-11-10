@@ -17,7 +17,7 @@ function impact(ctx,{point:p,normal={x:-1,y:-.15},progress=0,kind='rifle',seed=1
  const missile=kind==='missile',rail=kind==='rail'||kind==='parallax',pellet=kind==='shotgun',melee=['cleaver','blade','breaker','piledriver','maul','strike'].includes(kind);
  const nx0=normal.x??-1,ny0=normal.y??0,len=Math.hypot(nx0,ny0)||1,nx=nx0/len,ny=ny0/len,tx=-ny,ty=nx;
  const core=rail?'#edffff':'#fff4d6',hot=rail?'#a6eaff':'#ffc17d';
- const mobile=ctx.canvas?.width<760,count=mobile?(missile?17:pellet?12:rail?11:8):(missile?28:pellet?20:rail?16:13);
+ const mobile=(ctx.canvas?.clientWidth||ctx.canvas?.width||960)<760,count=mobile?(missile?17:pellet?12:rail?11:8):(missile?28:pellet?20:rail?16:13);
  ctx.save();ctx.lineCap='round';
  if(age<.14){
   const q=1-age/.14,r=scale*(missile?.72:pellet?.48:rail?.43:.34)*(.35+.65*(1-q));
