@@ -1,0 +1,6 @@
+{"kind":"rifle","traces":[{"n":13,"speed":9,"cone":0.55},{"n":13,"speed":9,"cone":0.55},{"n":13,"speed":9,"cone":0.55}]}
+{"kind":"shotgun","traces":[{"n":20,"speed":7,"cone":0.95}]}
+{"kind":"missile","traces":[]}
+{"kind":"rail","traces":[{"n":16,"speed":15,"cone":0.38}]}
+{"kind":"blade","traces":[{"n":18,"speed":7,"cone":0.7}]}
+{"pageErrors":[]}

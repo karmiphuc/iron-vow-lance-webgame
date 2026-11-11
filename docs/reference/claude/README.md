@@ -49,6 +49,24 @@ Search the file for the quoted name.
 
 The War-mode anomaly checks are `const CHECKS=` and `function checkUnit` / `function checkWorld`. The headless API is `window.__bench` (`runSoak`, `inject`, `step`, `runUntil`, `eventLog`, `report`).
 
+## Directional impacts and electrical faults (3D version of PR #4)
+
+`rig-bench.html` adds the two ideas from PR #4 to the 3D effects. **Port these in Phase 2; do not port the 2D canvas version.**
+
+| Piece | Search for | What it does |
+| --- | --- | --- |
+| Impact profiles | `const IMPACT=` / `function impact` | A white-hot flash, a coloured glow and a point light, then a spark spray thrown **back out of the hit toward the shooter**. Also molten blobs, plus armour chips and smoke on heavy hits. Profiles: rifle 13 sparks, shotgun 20 wide, missile 28 wide with chips, rail 16 fast and narrow in blue-white, blade 18. `BT.lowFx` (on for touch devices) spawns about 60% as many sparks. |
+| Spark spray | `f.spray=` | A cone-shaped directional burst in the shared spark pool. The first 30% are fast white-hot streaks. Sparks are sized to read at battle-camera distance: about 15 cm × 1 m for hot streaks, 10 cm × 0.6 m for the rest. At the base 5 × 38 cm size they were invisible beyond close range. |
+| Arcs | `f.arc=` and the `arcs` loop in `f.update` | A 7-segment jagged bolt between two points: a white core inside a blue halo, re-jittered every 45 ms, with random flicker. Drawn with `depthTest:false` so armour doesn't hide it. Pooled; no allocation per arc. |
+| Fault driver | `function faultFX` / `function surfacePoint` | **Critical** (body under 24%, weapon arm or legs destroyed): one arc every 1.35–1.75 s between part pairs. **Collapse:** arcs on fixed beats (0.07–1.75 s), then a **ground slam** at 0.95 s (`function groundSlam`: one rolling dust wall, translucent air shockwave, smoke, scraping sparks, shake). `surfacePoint` pushes the internal part anchors out to the hull so the arcs sit on the armour. Off under reduced motion. Input: `bodyRatio` on `animateMech`. |
+| Hooks | `droneHit`, `applyDamage` (War), `meleeUpdate` | Every landed round and every blade contact calls `impact()` with the direction back to the attacker. |
+| Dust and air shockwave | `f.dustwave` / `f.airwave` | These replace the flat additive `f.ring` that read as a halo, for footfalls, the collapse ground slam and big explosions. `f.dustwave` is a **single** dust wall: soft puffs launched outward from the contact point, slowed by drag so they roll out and settle. `f.airwave` is a clear expanding hemisphere drawn only at its rim (a fresnel shader), so the air shock is translucent, not a white band. Footfalls use dust only. Rail muzzle rings keep `f.ring` because they're energy, not dust. |
+| Spark floor | `BT.floor` | Sparks bounce at the actual ground height (the bench pad sits 0.35 m up). In the game, use the terrain height under the hit. |
+
+Local verification and [captures](../../../design/reference-vfx/pr8/manifest.json) are committed, including a [profile contact sheet](../../../design/reference-vfx/pr8/contact-sheet.png) and the raw [seeded comparison](../../../design/reference-vfx/pr8/seeded-comparison.json). `node qa/reference-vfx.cjs --out <directory>` checks the actual Fire hooks for all five profiles, desktop/touch particle counts, natural critical/collapse arcs, the 0.95-second slam and reduced motion. The review fixed a missing missile hook: the prior PR head produced no directional missile spray; it now produces three profile bursts per salvo.
+
+To compare simulation outcomes, supply `--baseline <previous-rig-bench.html>`; `--soak-only` repeats only that comparison. Three battles at seed 4242 matched at 10,915 ticks, two ally wins and one enemy win, including all 77 pre-existing correctness anomalies. Raw host-timing `frameSpike` counts (3 before, 2 after) are retained separately from deterministic equality. No page/console errors occurred in the browser checks. These are software-WebGL results; iPad hardware performance and the future shared-scene zero-anomaly gate remain unverified.
+
 ## Fixed in this copy
 
 Minification had swallowed two statements behind `//` comments. They are restored on their own lines here:
