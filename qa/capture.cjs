@@ -9,7 +9,7 @@ const fetchPublicAsset=promisify(execFile),referenceAssets=new Map();
 function options(args){
  const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
  for(let i=0;i<args.length;i++){
-  const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}if(flag==='--details'){result.details=true;continue;}
+  const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}if(flag==='--details'){result.details=true;continue;}if(flag==='--resume'){result.resume=true;continue;}
   if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset','--asset-delay-ms'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
   result[flag.slice(2)]=args[++i];
  }
@@ -31,8 +31,12 @@ async function capture(config){
  const executablePath=process.env.IRON_VOW_CHROME||(!fs.existsSync(chromium.executablePath())&&['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync))||undefined;
  const browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
- const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),asset_delay_ms:Number(config['asset-delay-ms']||0),
+ const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
   environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],retries:[],failures:[]};
+ const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
+ if(previous&&previous.source!==manifest.source)throw Error('Resume requires the same committed source');
+ if(previous){const digest=createHash('sha256').update(JSON.stringify(previous)).digest('hex');fs.writeFileSync(path.join(output,'prior-'+digest+'.json'),JSON.stringify(previous,null,2)+'\n');manifest.previous_manifest='prior-'+digest+'.json';}
+ const documentHashes=new Map();
  const jobs=selected.map(preset=>({source:config.label,preset,url:new URL(preset.path??'',config.origin).href}));
  if(config['reference-game'])for(const preset of selected.filter(p=>p.page||p.contract!==undefined&&!p.weapon))
   jobs.push({source:'reference-game',preset,url:config['reference-game']});
@@ -40,6 +44,12 @@ async function capture(config){
   jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
  try{
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
+   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
+   if(retained&&fs.existsSync(path.join(output,retained.file))){
+    if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
+    if(retained.document_sha256!==documentHashes.get(job.url))throw Error('Served document changed since the retained capture');
+    manifest.captures.push({...retained,retained:true});console.log('REUSE '+retained.file);break;
+   }
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -48,7 +58,10 @@ async function capture(config){
    page.on('requestfailed',request=>errors.push('Request failed: '+request.url().slice(0,180)));
    try{
     if(job.source.startsWith('reference-')){
-     await context.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',route=>route.fulfill({path:path.resolve(__dirname,'../dist/rig-bench/vendor/three.min.js'),contentType:'text/javascript'}));
+     const vendor=fs.readFileSync(path.resolve(__dirname,'../dist/rig-bench/vendor/three.min.js'),'utf8');
+     const shim='\n;(()=>{const Native=THREE.WebGLRenderer;THREE.WebGLRenderer=new Proxy(Native,{construct(Type,args){const renderer=new Type(...args),render=renderer.render;renderer.render=function(...args){if(!window.__captureAdvanceOnly)return render.apply(this,args);};return renderer;}});})();';
+     await context.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',route=>route.fulfill({body:vendor+shim,contentType:'text/javascript'}));
+     manifest.reference_advance_policy='All 30 Hz CPU animation updates execute. Intermediate WebGL draws during unrecorded static time advances are omitted; the final frame renders normally. Motion filmstrips use their separate unmodified render path.';
      await context.route(/^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com)\//,async route=>{
       const url=route.request().url();
       try{
@@ -111,7 +124,7 @@ async function capture(config){
      clock=5;last=5000-1000/60;window.__captureTick();
     });
     if(job.preset.advanceSeconds){
-     await page.evaluate(seconds=>{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);},job.preset.advanceSeconds);
+     await page.evaluate(seconds=>{window.__captureAdvanceOnly=true;try{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);}finally{window.__captureAdvanceOnly=false;}},job.preset.advanceSeconds);
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
      await page.evaluate(seconds=>window.__captureTick(5000+(Math.ceil(seconds*30)+1)*1000/30),job.preset.advanceSeconds);
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
