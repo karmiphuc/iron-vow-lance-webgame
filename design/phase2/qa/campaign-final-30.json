@@ -1,0 +1,1027 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "source": {
+    "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+    "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+  },
+  "policy": "4 disjoint formal shards. Each includes all sixteen real-state negative controls and immutable application/checker guards. Campaign assignments and actual commanded weapons are reported separately; all-weapon landed-contact evidence is in action-evidence-manifest.json. No device performance claim.",
+  "shards": [
+    {
+      "report": "campaign-final-shard-00-07.json",
+      "sha256": "ff93789c7ac5f0e9e488df4d6b70e48fb0b12a3ca62aeef394392f25f8e12596",
+      "source": {
+        "commit": "b802d8599af4f9aefb526f962370b5e282d5ea58",
+        "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+        "distDirty": false,
+        "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+      },
+      "seeds": [
+        4242,
+        4243,
+        4244,
+        4245,
+        4246,
+        4247,
+        4248,
+        4249
+      ],
+      "negativeControls": [
+        "nan",
+        "footGround",
+        "footSlide",
+        "bounds",
+        "overlap",
+        "stuck",
+        "ikReach",
+        "aimOff",
+        "weaponMount",
+        "muzzleFar",
+        "noDamage",
+        "deadPartDamage",
+        "hpRange",
+        "wreckActs",
+        "partVisual",
+        "popSwap"
+      ]
+    },
+    {
+      "report": "campaign-final-shard-08-15.json",
+      "sha256": "b91c364267806834b7dc06dda30f040d468bfc4ec90900f9bb8bbec21cbe49b7",
+      "source": {
+        "commit": "b802d8599af4f9aefb526f962370b5e282d5ea58",
+        "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+        "distDirty": false,
+        "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+      },
+      "seeds": [
+        4250,
+        4251,
+        4252,
+        4253,
+        4254,
+        4255,
+        4256,
+        4257
+      ],
+      "negativeControls": [
+        "nan",
+        "footGround",
+        "footSlide",
+        "bounds",
+        "overlap",
+        "stuck",
+        "ikReach",
+        "aimOff",
+        "weaponMount",
+        "muzzleFar",
+        "noDamage",
+        "deadPartDamage",
+        "hpRange",
+        "wreckActs",
+        "partVisual",
+        "popSwap"
+      ]
+    },
+    {
+      "report": "campaign-final-shard-16-22.json",
+      "sha256": "da3a63b0bcb20c272ad95f4d2b4c4ab713e8f4abb93949ec5c4bd57691c4b873",
+      "source": {
+        "commit": "02ef40a07fc91b82f97c86859586489f272b8165",
+        "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+        "distDirty": false,
+        "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+      },
+      "seeds": [
+        4258,
+        4259,
+        4260,
+        4261,
+        4262,
+        4263,
+        4264
+      ],
+      "negativeControls": [
+        "nan",
+        "footGround",
+        "footSlide",
+        "bounds",
+        "overlap",
+        "stuck",
+        "ikReach",
+        "aimOff",
+        "weaponMount",
+        "muzzleFar",
+        "noDamage",
+        "deadPartDamage",
+        "hpRange",
+        "wreckActs",
+        "partVisual",
+        "popSwap"
+      ]
+    },
+    {
+      "report": "campaign-final-shard-23-29.json",
+      "sha256": "885486776c1adfe6040f9518cf7670eea26419005f2ca30dbed3b36e691450e2",
+      "source": {
+        "commit": "02ef40a07fc91b82f97c86859586489f272b8165",
+        "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+        "distDirty": false,
+        "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+      },
+      "seeds": [
+        4265,
+        4266,
+        4267,
+        4268,
+        4269,
+        4270,
+        4271
+      ],
+      "negativeControls": [
+        "nan",
+        "footGround",
+        "footSlide",
+        "bounds",
+        "overlap",
+        "stuck",
+        "ikReach",
+        "aimOff",
+        "weaponMount",
+        "muzzleFar",
+        "noDamage",
+        "deadPartDamage",
+        "hpRange",
+        "wreckActs",
+        "partVisual",
+        "popSwap"
+      ]
+    }
+  ],
+  "seeds": [
+    4242,
+    4243,
+    4244,
+    4245,
+    4246,
+    4247,
+    4248,
+    4249,
+    4250,
+    4251,
+    4252,
+    4253,
+    4254,
+    4255,
+    4256,
+    4257,
+    4258,
+    4259,
+    4260,
+    4261,
+    4262,
+    4263,
+    4264,
+    4265,
+    4266,
+    4267,
+    4268,
+    4269,
+    4270,
+    4271
+  ],
+  "battleCount": 30,
+  "ticks": 123420,
+  "rasterOmitted": 10700810,
+  "frames": [
+    0,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    12
+  ],
+  "assignedWeapons": [
+    "anchor-hammer",
+    "blade",
+    "breaker",
+    "cerberus",
+    "cleaver",
+    "ember",
+    "falcon",
+    "forge",
+    "hailstorm",
+    "hatchet",
+    "missile",
+    "obelisk",
+    "parallax",
+    "pike",
+    "piledriver",
+    "rail",
+    "rampart",
+    "rifle",
+    "rivet",
+    "shotgun",
+    "sidewinder",
+    "tonfa",
+    "trident",
+    "watchman"
+  ],
+  "commandedWeapons": [
+    "cerberus",
+    "cleaver",
+    "ember",
+    "falcon",
+    "forge",
+    "hailstorm",
+    "missile",
+    "obelisk",
+    "parallax",
+    "rail",
+    "rampart",
+    "rifle",
+    "rivet",
+    "shotgun",
+    "sidewinder",
+    "tonfa",
+    "trident",
+    "watchman"
+  ],
+  "combatCounts": {
+    "launch": 4238,
+    "impact": 4371,
+    "arrival": 130
+  },
+  "maximumLaunchAimError": 2.580956827951785e-8,
+  "aimClearance": {
+    "calls": 3296,
+    "infeasibleCount": 1,
+    "minimumTravel": -0.45174629328549454,
+    "minimumDiscriminant": 26.797852989803083
+  },
+  "anomalies": [],
+  "errors": [],
+  "battles": [
+    {
+      "seed": 4242,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "assignedWeapons": [
+        "rifle",
+        "shotgun",
+        "missile"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "shotgun",
+        "missile"
+      ],
+      "ticks": 2343,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4243,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "assignedWeapons": [
+        "rail",
+        "hailstorm",
+        "rampart"
+      ],
+      "commandedWeapons": [
+        "rail",
+        "hailstorm",
+        "rampart"
+      ],
+      "ticks": 5313,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4244,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "assignedWeapons": [
+        "breaker",
+        "missile",
+        "piledriver"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "missile"
+      ],
+      "ticks": 7293,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4245,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "assignedWeapons": [
+        "blade",
+        "sidewinder",
+        "trident"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "sidewinder",
+        "trident"
+      ],
+      "ticks": 5343,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4246,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "assignedWeapons": [
+        "forge",
+        "ember",
+        "watchman"
+      ],
+      "commandedWeapons": [
+        "forge",
+        "ember",
+        "watchman"
+      ],
+      "ticks": 2703,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4247,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "assignedWeapons": [
+        "missile",
+        "cerberus",
+        "obelisk"
+      ],
+      "commandedWeapons": [
+        "missile",
+        "cerberus",
+        "obelisk"
+      ],
+      "ticks": 4023,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4248,
+      "frames": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "assignedWeapons": [
+        "rivet",
+        "parallax",
+        "hatchet"
+      ],
+      "commandedWeapons": [
+        "rivet",
+        "parallax",
+        "rifle"
+      ],
+      "ticks": 5223,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": true,
+        "pay": 5990
+      }
+    },
+    {
+      "seed": 4249,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "assignedWeapons": [
+        "pike",
+        "tonfa",
+        "missile"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "missile",
+        "tonfa"
+      ],
+      "ticks": 3873,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4250,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "assignedWeapons": [
+        "shotgun",
+        "missile",
+        "rail"
+      ],
+      "commandedWeapons": [
+        "shotgun",
+        "missile",
+        "rail"
+      ],
+      "ticks": 1833,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4251,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "assignedWeapons": [
+        "hailstorm",
+        "rampart",
+        "breaker"
+      ],
+      "commandedWeapons": [
+        "hailstorm",
+        "rampart",
+        "rifle"
+      ],
+      "ticks": 4893,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4252,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "assignedWeapons": [
+        "cleaver",
+        "missile",
+        "blade"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "missile",
+        "cleaver"
+      ],
+      "ticks": 5463,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4253,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "assignedWeapons": [
+        "sidewinder",
+        "trident",
+        "forge"
+      ],
+      "commandedWeapons": [
+        "sidewinder",
+        "trident",
+        "forge"
+      ],
+      "ticks": 4653,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4254,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "assignedWeapons": [
+        "ember",
+        "watchman",
+        "falcon"
+      ],
+      "commandedWeapons": [
+        "ember",
+        "watchman",
+        "falcon"
+      ],
+      "ticks": 1773,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4255,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "assignedWeapons": [
+        "missile",
+        "obelisk",
+        "rivet"
+      ],
+      "commandedWeapons": [
+        "missile",
+        "obelisk",
+        "rivet"
+      ],
+      "ticks": 4233,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4256,
+      "frames": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "assignedWeapons": [
+        "parallax",
+        "hatchet",
+        "pike"
+      ],
+      "commandedWeapons": [
+        "parallax",
+        "rifle"
+      ],
+      "ticks": 4593,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4257,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "assignedWeapons": [
+        "tonfa",
+        "anchor-hammer",
+        "missile"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "missile"
+      ],
+      "ticks": 4113,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4258,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "assignedWeapons": [
+        "missile",
+        "rail",
+        "hailstorm"
+      ],
+      "commandedWeapons": [
+        "missile",
+        "rail",
+        "hailstorm"
+      ],
+      "ticks": 1773,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4259,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "assignedWeapons": [
+        "rampart",
+        "breaker",
+        "cleaver"
+      ],
+      "commandedWeapons": [
+        "rampart",
+        "rifle",
+        "cleaver"
+      ],
+      "ticks": 4953,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4260,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "assignedWeapons": [
+        "piledriver",
+        "missile",
+        "sidewinder"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "missile",
+        "sidewinder"
+      ],
+      "ticks": 5073,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4261,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "assignedWeapons": [
+        "trident",
+        "forge",
+        "ember"
+      ],
+      "commandedWeapons": [
+        "trident",
+        "forge",
+        "ember"
+      ],
+      "ticks": 4563,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4262,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "assignedWeapons": [
+        "watchman",
+        "falcon",
+        "cerberus"
+      ],
+      "commandedWeapons": [
+        "watchman",
+        "falcon",
+        "cerberus"
+      ],
+      "ticks": 1443,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4263,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "assignedWeapons": [
+        "missile",
+        "rivet",
+        "parallax"
+      ],
+      "commandedWeapons": [
+        "missile",
+        "rivet",
+        "parallax"
+      ],
+      "ticks": 4293,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4264,
+      "frames": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "assignedWeapons": [
+        "rivet",
+        "parallax",
+        "hatchet"
+      ],
+      "commandedWeapons": [
+        "rivet",
+        "parallax",
+        "rifle"
+      ],
+      "ticks": 4503,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4265,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "assignedWeapons": [
+        "anchor-hammer",
+        "rifle",
+        "missile"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "missile"
+      ],
+      "ticks": 4353,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4266,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "assignedWeapons": [
+        "rail",
+        "hailstorm",
+        "rampart"
+      ],
+      "commandedWeapons": [
+        "rail",
+        "hailstorm",
+        "rampart"
+      ],
+      "ticks": 1683,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4267,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "assignedWeapons": [
+        "breaker",
+        "cleaver",
+        "piledriver"
+      ],
+      "commandedWeapons": [
+        "rifle"
+      ],
+      "ticks": 6633,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4268,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "assignedWeapons": [
+        "blade",
+        "missile",
+        "trident"
+      ],
+      "commandedWeapons": [
+        "rifle",
+        "missile",
+        "trident"
+      ],
+      "ticks": 5253,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4269,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "assignedWeapons": [
+        "forge",
+        "ember",
+        "watchman"
+      ],
+      "commandedWeapons": [
+        "forge",
+        "ember",
+        "watchman"
+      ],
+      "ticks": 6093,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4270,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "assignedWeapons": [
+        "falcon",
+        "cerberus",
+        "obelisk"
+      ],
+      "commandedWeapons": [
+        "falcon",
+        "cerberus",
+        "obelisk"
+      ],
+      "ticks": 1323,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4271,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "assignedWeapons": [
+        "missile",
+        "parallax",
+        "hatchet"
+      ],
+      "commandedWeapons": [
+        "missile",
+        "parallax",
+        "rifle"
+      ],
+      "ticks": 3813,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    }
+  ]
+}
