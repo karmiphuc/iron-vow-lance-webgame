@@ -11,7 +11,16 @@ assert.equal(validate(g).ok,true);
 // A complete rig outside the default scene cannot be found by the runtime.
 const orphaned=structuredClone(g);
 orphaned.scenes[0].nodes=[meshNode];
-assert(validate(orphaned).errors.includes('node root is not in default scene'));
+assert(validate(orphaned).errors.includes('missing node root'));
+const inactiveDuplicate=structuredClone(g);
+inactiveDuplicate.nodes.unshift({name:'root',extras:{quad:true}});
+for(const node of inactiveDuplicate.nodes) if(node.children) node.children=node.children.map(i=>i+1);
+inactiveDuplicate.scenes[0].nodes=[1];
+inactiveDuplicate.scenes.push({nodes:[0]});
+assert.equal(validate(inactiveDuplicate).ok,true,'inactive scene names must not affect the rig');
+const activeDuplicate=structuredClone(g);
+activeDuplicate.scenes[0].nodes.push(activeDuplicate.nodes.push({name:'root'})-1);
+assert(validate(activeDuplicate).errors.includes('duplicate node root'));
 const siblingMesh=structuredClone(g);
 siblingMesh.nodes[0].children=siblingMesh.nodes[0].children.filter(i=>i!==meshNode);
 siblingMesh.scenes[0].nodes.push(meshNode);
@@ -24,7 +33,9 @@ assert(validate(noMesh).errors.includes('default scene contains no mesh'));
 for(const [parentName,childName] of [['root','pelvis'],['pelvis','spine'],['spine','neck'],['spine','shoulder.L'],['pelvis','hip.R']]) {
   const parent=g.nodes.find(n=>n.name===parentName),child=g.nodes.findIndex(n=>n.name===childName);
   parent.children=parent.children.filter(i=>i!==child);
+  g.scenes[0].nodes.push(child);
   assert(validate(g).errors.some(e=>e===`${childName} is not below ${parentName}`), `${childName} must be attached below ${parentName}`);
+  g.scenes[0].nodes.pop();
   parent.children.push(child);
 }
 

@@ -42,7 +42,7 @@ function validate(g, weapons=[]) {
   const errors=[], notes=[]; const nodes=g.nodes||[], meshes=g.meshes||[];
   const sceneNodes=new Set(), triangles=renderedTriangles(g,sceneNodes);
   if(![...sceneNodes].some(i=>nodes[i].mesh!==undefined)) errors.push('default scene contains no mesh');
-  const byName=new Map(); nodes.forEach((n,i)=>{if(n.name) {if(byName.has(n.name)) errors.push(`duplicate node ${n.name}`); else byName.set(n.name,i);}});
+  const byName=new Map(); for(const i of sceneNodes) {const n=nodes[i]; if(n.name) {if(byName.has(n.name)) errors.push(`duplicate node ${n.name}`); else byName.set(n.name,i);}}
   const root=nodes[byName.get('root')];
   for(const d of dims) if(root?.extras?.[d]===undefined || root.extras[d]===null) errors.push(`root missing dimension ${d}`);
   const common=['root','pelvis','spine','neck',...['L','R'].flatMap(s=>['shoulder','elbow','wrist','socket'].map(x=>`${x}.${s}`))];
@@ -51,7 +51,6 @@ function validate(g, weapons=[]) {
   const arms=['L','R'].map(s=>['shoulder','elbow','wrist','socket'].map(x=>`${x}.${s}`));
   for(const name of [...common,...chains.flat()]) {
     if(!byName.has(name)) errors.push(`missing node ${name}`);
-    else if(!sceneNodes.has(byName.get(name))) errors.push(`node ${name} is not in default scene`);
   }
   function descends(parent, child) {
     const queue=[parent], seen=new Set();
