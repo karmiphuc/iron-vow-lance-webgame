@@ -32,14 +32,14 @@ async function capture(config){
  const browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),asset_delay_ms:Number(config['asset-delay-ms']||0),
-  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],failures:[]};
+  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],retries:[],failures:[]};
  const jobs=selected.map(preset=>({source:config.label,preset,url:new URL(preset.path??'',config.origin).href}));
  if(config['reference-game'])for(const preset of selected.filter(p=>p.page||p.contract!==undefined&&!p.weapon))
   jobs.push({source:'reference-game',preset,url:config['reference-game']});
  if(config['reference-bench']&&(!config.preset||config.preset==='rig-bench'))
   jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
  try{
-  for(const viewport of viewports)for(const job of jobs){
+  for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -71,8 +71,9 @@ async function capture(config){
       window.__capturePending++;this.addEventListener('loadend',()=>window.__capturePending--,{once:true});
       try{return sendNative.apply(this,args);}catch(error){window.__capturePending--;throw error;}
      };
-     const NativeImage=window.Image;window.__captureImages=[];
-     window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.push(image);return image;}});
+     const NativeImage=window.Image;window.__captureImages=new Set();
+     window.__captureActiveImages=()=>{const images=[];for(const ref of window.__captureImages){const image=ref.deref();if(image)images.push(image);else window.__captureImages.delete(ref);}return images;};
+     window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.add(new WeakRef(image));return image;}});
     });
     const response=await page.goto(job.url,{waitUntil:'domcontentloaded',timeout:120000});
     const documentHash=createHash('sha256').update(await response.body()).digest('hex');
@@ -96,7 +97,7 @@ async function capture(config){
     // Render once to request lazy art, then wait for all art and repeat. Fixed game clock.
     for(let pass=0;pass<4;pass++){
      await page.evaluate(()=>{if(typeof clock!=='undefined'){clock=5;last=5000-1000/60;}window.__captureTick();});
-     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
     if(job.preset.path&&job.source!=='reference-bench'){
      await page.waitForFunction(()=>document.body.dataset.rigModel==='painted',null,{polling:50,timeout:120000});
@@ -111,19 +112,20 @@ async function capture(config){
     });
     if(job.preset.advanceSeconds){
      await page.evaluate(seconds=>{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);},job.preset.advanceSeconds);
-     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
      await page.evaluate(seconds=>window.__captureTick(5000+(Math.ceil(seconds*30)+1)*1000/30),job.preset.advanceSeconds);
-     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
-    const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
+    const broken=await page.evaluate(()=>[...window.__captureActiveImages(),...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash});
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,attempt:attempt+1});
     console.log('SAVED '+filename);
-   }catch(error){console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push({source:job.source,preset:job.preset.id,viewport,error:error.message});}
+    break;
+   }catch(error){const failure={source:job.source,preset:job.preset.id,viewport,error:error.message};if(attempt===0){console.error('RETRY '+job.source+' '+job.preset.id+': '+error.message);manifest.retries.push(failure);}else{console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push(failure);}}
    finally{await context.close();}
   }
  }finally{
