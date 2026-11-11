@@ -108,13 +108,11 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  if(mobile)await tap('#target-toggle');
  await tap('[data-part="legs"]');
  if(mobile)await page.locator('#close-target').waitFor({state:'hidden'});
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  const target=await page.evaluate(()=>{
-  const foe=battle.units[3],b=travelVisual(foe,clock)?.bounds||unitBounds(foe);
-  for(const dy of [.5,.55,.45,.6,.4,.65,.35])for(const dx of [.5,.55,.45,.6,.4,.65,.35]){
-   const x=Math.round(b.x+b.w*dx),y=Math.round(b.y+b.h*dy);
-   if(document.elementFromPoint(x,y)===canvas&&pick(x,y)===foe)return{x,y};
-  }
-  throw Error('No exposed target');
+  
+  const foe=battle.units[3],p=IronVowScene.projectWorld(IronVowScene.partPoint(foe));
+  if(IronVowScene.pick(p.x,p.y)!==foe)throw Error('Visible target failed its actual raycast');return p;
  });
  await (mobile?page.touchscreen.tap(target.x,target.y):page.mouse.click(target.x,target.y));
  await page.waitForFunction(()=>current().breach===1&&!battle.busy);

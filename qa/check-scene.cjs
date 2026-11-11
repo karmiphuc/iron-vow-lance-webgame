@@ -3,13 +3,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {chromium}=require('playwright');
 const url=process.env.IRON_VOW_URL||'http://127.0.0.1:5176/';
 const count=Number(process.env.IRON_VOW_SCENE_BATTLES||30),out=path.resolve(process.env.IRON_VOW_SCENE_REPORT||'scene-report.json');
+const startIndex=Number(process.env.IRON_VOW_SCENE_START_INDEX||0);
 const live=[0,5,6,7,8,9,10,12];
 (async()=>{
  const tileOverride=process.env.IRON_VOW_SCENE_TILE?Number(process.env.IRON_VOW_SCENE_TILE):null;
  const root=path.resolve(__dirname,'..'),git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
  const source={commit:git('rev-parse','HEAD'),distTree:git('rev-parse','HEAD:dist'),distDirty:Boolean(git('status','--porcelain','--','dist')),checkerSha256:crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex')};
  if(count>=30){assert.equal(source.distDirty,false,'The formal soak requires committed, immutable application source');assert.equal(tileOverride,null,'The formal soak tests the production pitch');}
- const report={schema:1,url,source,clockHz:30,tileOverride,renderPolicy:'First scene rendered normally; subsequent bone soak skips GPU submissions. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],errors:[]};
+ const report={schema:1,url,source,clockHz:30,tileOverride,renderPolicy:'First scene rendered normally; subsequent bone soak skips GPU submissions. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
  const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});
  try{
   const page=await browser.newPage({viewport:{width:1366,height:1024}});
@@ -81,11 +82,50 @@ const live=[0,5,6,7,8,9,10,12];
      if(Math.hypot(u.root[0]-x,u.root[2]-z)<u.radius*.5)fail('overlap',u,{source:'cover',cover});
     }
    };
+   window.__qa.observe=afterFrame;
    const schedule=fn=>setTimeout(()=>{fn(performance.now());if(fn===draw)afterFrame();},1000/30);
    window.requestAnimationFrame=schedule;
    schedule(draw);
   });
-  for(let index=0;index<count;index++){
+  // Validate the observer against real bone/state corruption in separate disposable scenes.
+  // These anomalies are evidence that the checks work, never part of the ordinary campaign result.
+  for(const type of ['nan','footGround','footSlide','bounds','overlap','stuck']){
+   await page.evaluate(()=>{__ironVow.start({seed:4242,frames:[5,8,0]});});await page.clock.runFor(100);
+   const probe=await page.evaluate(type=>{
+    const q=__qa;q.anomalies=[];q.keys.clear();q.feet.clear();q.motion.clear();
+    const u=battle.units.find(u=>u.id==='ally0'),m=IronVowScene.models.get(u.id).entry.m;
+    const shift=(node,delta)=>{const p=node.getWorldPosition(new THREE.Vector3()).add(delta);node.position.copy(node.parent.worldToLocal(p));m.cont.updateMatrixWorld(true);};
+    if(type==='nan'){m.rig.arms.L.so.position.x=NaN;m.cont.updateMatrixWorld(true);}
+    if(type==='footGround'||type==='footSlide'){
+     const leg=m.rig.legs[0],state=m.legs[0];state.swing=false;state.poseLift=false;state.settle=null;
+     q.observe();shift(leg.an,new THREE.Vector3(type==='footSlide'?.6:0,type==='footGround'?.8:0,0));
+    }
+    if(type==='bounds'){u.x=u.vx=battle.size.width+1;}
+    if(type==='overlap'){
+     const other=battle.units.find(v=>v.id==='ally1'),object=IronVowScene.models.get(other.id).object;
+     other.x=other.vx=u.x;other.z=other.vz=u.z;object.position.copy(m.cont.position);object.updateMatrixWorld(true);
+    }
+    if(type==='stuck'){
+     // A five-tile Valkyrie move really lasts longer than the four-second limit.
+     const move=__ironVow.legalMoves(u.id).filter(p=>p.cost>=5).sort((a,b)=>b.cost-a.cost)[0];
+     if(!move)throw Error('No long legal movement fixture');
+     void __ironVow.move(u.id,move.x,move.z);
+     return{type,move,id:u.id,root:m.cont.position.toArray()};
+    }
+    q.observe();return{type,anomalies:q.anomalies};
+   },type);
+   if(type==='stuck'){
+    await page.clock.runFor(34);
+    await page.evaluate(p=>{const object=IronVowScene.models.get(p.id).object,position=object.position,set=position.set.bind(position);window.__qaRestorePosition=()=>{position.set=set;};position.set=()=>set(...p.root);},probe);
+    await page.clock.runFor(4500);
+    probe.anomalies=await page.evaluate(()=>__qa.anomalies);
+    await page.evaluate(()=>__qaRestorePosition());
+    for(let i=0;i<30&&await page.evaluate(()=>__ironVow.pending);i++)await page.clock.runFor(1000);
+   }
+   assert.ok(probe.anomalies.some(a=>a.type===type),'Observer detects injected '+type+' in real bones/state: '+JSON.stringify(probe));
+   report.faultProbes.push(probe);console.log('PASS real-state fault probe '+type);
+  }
+  for(let index=startIndex;index<startIndex+count;index++){
    const seed=4242+index,frames=Array.from({length:3},(_,i)=>live[(index*3+i)%live.length]),contract=index%4;
    await page.evaluate(({seed,frames,contract})=>{
     __qa.ticks=0;__qa.anomalies=[];__qa.keys.clear();__qa.feet.clear();__qa.motion.clear();__qa.frames.clear();__qa.weapons.clear();__qa.commands=[];__qa.commandErrors=[];__qa.circleCandidates=0;
@@ -117,7 +157,7 @@ const live=[0,5,6,7,8,9,10,12];
   assert.equal(git('rev-parse','HEAD:dist'),source.distTree,'Application tree stayed immutable during the run');assert.equal(Boolean(git('status','--porcelain','--','dist')),source.distDirty);
   assert.equal(crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),source.checkerSha256,'Checker stayed immutable during the run');
   assert.deepEqual(report.errors,[],'Browser errors');assert.equal(report.battles.flatMap(b=>b.anomalies).length,0,'Scene anomalies');
-  assert.deepEqual([...new Set(report.battles.flatMap(b=>b.frames))].sort((a,b)=>a-b),live,'Every live frame covered');
+  if(count>=3)assert.deepEqual([...new Set(report.battles.flatMap(b=>b.frames))].sort((a,b)=>a-b),live,'Every live frame covered');
   console.log('PASS '+count+' seeded campaign battles, '+report.battles.reduce((n,b)=>n+b.ticks,0)+' actual-bone ticks');
  }finally{fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

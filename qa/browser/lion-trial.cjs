@@ -22,14 +22,11 @@ module.exports=async function checkLionTrial({page,mobile,origin,tap}){
   await tap(`[data-lion-weapon="${id}"]`);
   await page.waitForFunction(id=>current()?.melee===id&&lionMotionImages(id).every(imageReady),id);
   await tap('#strike');
+  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
   const target=await page.evaluate(()=>{
    window.lionDraws.length=0;
-   const foe=battle.units[1],b=unitBounds(foe);
-   for(const dy of [.5,.55,.45,.6,.4,.65,.35,.73])for(const dx of [.5,.55,.45,.6,.4,.65,.35]){
-    const x=Math.round(b.x+b.w*dx),y=Math.round(b.y+b.h*dy);
-    if(document.elementFromPoint(x,y)===canvas&&pick(x,y)===foe)return{x,y};
-   }
-   throw Error('No exposed practice target');
+   const foe=battle.units[1],p=IronVowScene.projectWorld(IronVowScene.partPoint(foe));
+   if(IronVowScene.pick(p.x,p.y)!==foe)throw Error('Visible target failed its actual raycast');return p;
   });
   await (mobile?page.touchscreen.tap(target.x,target.y):page.mouse.click(target.x,target.y));
   await page.waitForFunction(()=>!battle.busy&&battle.units[1].hp.body<battle.units[1].max.body);

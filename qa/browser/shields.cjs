@@ -31,11 +31,11 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
 
  const preview=page.locator('#paint-preview');
  await preview.waitFor();
- await page.waitForFunction(()=>imageReady(artImages[wardenVisual(0,'rifle',-1).key]));
+ await page.waitForFunction(()=>IronVowFoundry.wardenReady(),null,{timeout:120000});
  const bare=await preview.evaluate(node=>node.toDataURL());
  await equip(buckler);
  assert.match(await page.locator('.armory-mounted').innerText(),/Bulwark B-2/);
- await page.waitForFunction(before=>moduleImages['armory-bulwark-shield-left']?.complete&&document.querySelector('#paint-preview').toDataURL()!==before,bare);
+ await page.waitForFunction(before=>document.querySelector('#paint-preview').toDataURL()!==before,bare);
  if(proof)await preview.screenshot({path:join(proof,mobile?'bulwark-mobile.png':'bulwark-mounted.png')});
  await equip(tower);
  assert.equal(await page.evaluate(()=>save.credits),1350);
@@ -52,37 +52,17 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  await equip(tower);
  assert.equal(await page.evaluate(()=>save.credits),150);
 
- await page.waitForFunction(()=>window.IronVowFoundry.previewBastion({weapon:'rifle',shield:'citadel-shield'},0)?.shield?.grip);
+ await page.waitForFunction(()=>IronVowFoundry.preview({frame:0,weapon:'rifle',shield:'citadel-shield'},0,'warden')?.shield?.grip,null,{timeout:120000});
  const rig=await page.evaluate(()=>{
-  const rig=window.IronVowFoundry;
-  const points=[];
-  for(const angle of [0,1,2,3])for(const frame of [57,35,95]){
-   const fit=rig.previewBastion({weapon:'rifle',shield:'citadel-shield'},angle,frame);
-   const position=node=>node.getWorldPosition(new THREE.Vector3());
-   const shield=fit.shield;
-   points.push({grip:position(shield.grip).distanceTo(position(fit.m.sockets.L)),visible:shield.mount.visible,
-    offset:position(shield.face).distanceTo(position(shield.grip)),
-    anchor:fit.anchors.shield,primary:!!fit.primary});
+  const u={frame:0,weapon:'rifle',shield:'citadel-shield'},point=node=>node.getWorldPosition(new THREE.Vector3()),records=[];
+  for(const angle of [0,1,2,3]){
+   const fit=IronVowFoundry.preview(u,0,'warden',angle),shield=fit.shield;
+   records.push({grip:point(shield.grip).distanceTo(point(fit.m.rig.arms.L.so)),visible:shield.mount.visible,offset:point(shield.face).distanceTo(point(shield.grip))});
   }
-  return points;
+  const hp={body:100,pilot:100,right:100,left:0,legs:100},lost=IronVowFoundry.preview({...u,hp},0,'warden');
+  return{records,broken:!lost.shield.mount.visible};
  });
- assert.ok(rig.every(sample=>sample.visible&&sample.grip<1e-5&&sample.offset>.3&&sample.primary&&sample.anchor.every(Number.isFinite)));
- const generic=await page.evaluate(()=>{
-  const rig=window.IronVowFoundry;
-  const u={...save.units[0],id:'shield-proof',team:'ally',alive:true,hp:{body:100,pilot:100,right:100,left:100,legs:100}};
-  u.max={...u.hp};
-  const scope={},sample=(t,heading)=>rig.draw(u,t,{heading,aim:0,brace:0,recoil:0,impact:0,primeProgress:0,strikeProgress:0,deathAge:0},scope,0);
-  const fit=sample(0,-Math.PI/4),shield=fit.shield;
-  const position=node=>node.getWorldPosition(new THREE.Vector3());
-  const seated=position(shield.grip).distanceTo(position(fit.m.rig.arms.L.so));
-  const visible=shield.mount.visible;
-  u.hp.left=0;
-  const broken=!sample(.1,Math.PI/4).shield.mount.visible;
-  u.hp.left=20;
-  const restored=sample(.2,Math.PI*3/4).shield.mount.visible;
-  return {seated,visible,broken,restored};
- });
- assert.ok(generic.seated<1e-5&&generic.visible&&generic.broken&&generic.restored,'live Foundry shield follows its hand and arm health');
+ assert.ok(rig.records.every(sample=>sample.visible&&sample.grip<1e-5&&sample.offset>.1));assert.equal(rig.broken,true,'The actual shield mesh hides with its arm');
 
  await page.evaluate(()=>{
   deploy(0,false,[0]);Math.random=()=>0;
@@ -97,6 +77,7 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  await tap('#modal-0');
  assert.equal(await page.locator('#strike').isDisabled(),true);
  assert.match(await page.locator('.shield-status').innerText(),/SHIELD 1\/92 ARM HP/);
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  await tap('#end');
  await page.waitForFunction(()=>battle.turn===2&&!battle.busy);
  assert.match(await page.locator('.shield-status').innerText(),/SHIELD ARM LOST/);

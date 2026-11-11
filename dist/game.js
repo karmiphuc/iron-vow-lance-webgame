@@ -3576,68 +3576,8 @@ function hitstopTime(u,t){
  return u.hitstop&&t>=u.hitstop.at&&t<u.hitstop.until?u.hitstop.at:t;
 }
 function mechAttachmentPoint(u,part='muzzle',t=clock){
- if(window.IronVowScene?.isLive(u)&&window.IronVowScene.models.has(u.id))return window.IronVowScene.projectWorld(window.IronVowScene.attachmentPoint(u,part));
- t=hitstopTime(u,t);
- if(part==='meleeTip'&&u.attack?.kind===FREE_HAND_COUNTER.id)part=upgradedWardenTravel(travelAtlas(u))?'gripL':'left';
- if(u.kind)return vehicleAttachment(u,part,t);
- const live=foundryRender(u,t,true),travel=!live&&travelVisual(u,t);
- if(travel){
-  if(part==='shield'){
-   const mount=shieldMount(u,travel.points,travel.bounds,travel.direction,travel.atlas.span);
-   if(mount)return weaponPoint(mount,'face');
-  }
-  if(part==='meleeTip'){
-   if(travel.atlas.grounded?.strike)return spritePoint(travel.bounds,travel.points.meleeTip);
-   const blade=travelMount(travel,u,u.attack?.kind||u.melee,travel.strike?.strikeProgress);
-   return blade?weaponPoint(blade,'tip'):spritePoint(travel.bounds,travel.points.left||travel.points.body);
-  }
-  const mount=part.startsWith('muzzle')&&!(u.frame===2&&u.weapon==='missile')?travelMount(travel,u,u.weapon,0,t):null;
-  if(mount)return weaponPoint(mount,part);
-  return spritePoint(travel.bounds,travel.points[part]||travel.points.muzzle||travel.points.body);
- }
- const foundry=live||foundryRender(u,t);
- if(foundry){
-  const raw=sampledWalkBounds(u,unitBounds(u),foundry);
-  const bounds=u.lionTrial?raw:recoilingBounds(u,raw,t),facing=unitFacing(u),strike=part==='meleeTip';
-  if(part==='shield'&&!foundry.anchors.shield){
-   const mount=shieldMount(u,foundry.anchors,bounds,facing,8);
-   if(mount)return weaponPoint(mount,'face');
-  }
-  if(strike||part.startsWith('muzzle')){
-   const production=Boolean(strike?foundry.secondary:foundry.primary);
-   if(production&&foundry.anchors[part])return spritePoint(bounds,foundry.anchors[part]);
-   const mount=foundryMount(foundry.anchors,bounds,strike?u.melee:u.weapon,facing,foundry.strikeProgress,foundry.ortho,strike?undefined:firingPose(u,t));
-   if(mount)return weaponPoint(mount,strike?'tip':part);
-  }
-  return spritePoint(bounds,foundry.anchors[part]||foundry.anchors.body);
- }
- const visual=activeWardenVisual(u),raw=unitBounds(u,visual),b=visual?.modular||visual?.native?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual),rig=pose.rig;
- const locations={body:[rig.split,.34],pilot:[rig.split,.21],right:[u.frame===1?.38:.30,.46],left:[.81,.39],legs:[rig.split,.79]};
- const baked=wardenMotionFrame(u,visual,pose),frame=baked?.frame||visual;
- if(part==='shield'){
-  const mount=shieldMount(u,frame,b,unitFacing(u),visual?.ortho);
-  if(mount)return weaponPoint(mount,'face');
- }
- if(visual?.native){
-  const p=frame[part]||visual[part]||(part==='pilot'?[frame.body[0],frame.body[1]-.14]:frame.body);
-  if(u.alive)return spritePoint(b,p);
-  const root=destructionRoot(u,pose),q=rotatePoint({x:(p[0]-.5)*root.scale,y:(p[1]-1)*root.scale},[0,0],root.angle);
-  return spritePoint(b,[q.x+.5+root.x,q.y+1+root.y]);
- }
- if(part==='leadFoot'&&!frame?.leadFoot){const p=project(u.vx,0,u.vz);return{x:p.x+unitFacing(u)*scale*.22,y:p.y}}
- if(!visual){const source=part.startsWith('muzzle')?(u.weapon==='missile'?[u.frame===2?(part==='muzzle2'?.76:.36):(part==='muzzle2'?.29:.69),.16]:rig.muzzle):(locations[part]||locations.body);return mechSourcePoint(u,source[0],source[1],pose)}
- if(visual.modular){
-  if(part==='meleeTip'||part.startsWith('muzzle')){
-   const melee=part==='meleeTip',id=melee?(pose.strikeKind||u.melee):u.weapon;
-   if(!melee&&u.frame===2&&id==='missile')return spritePoint(b,part==='muzzle2'?frame.podL:frame.podR);
-   const mount=weaponMount(visual,frame,b,id,unitFacing(u),pose.strikeProgress,melee?undefined:pose);
-   if(mount)return weaponPoint(mount,melee?'tip':part);
-  }
-  return spritePoint(b,frame[part]||visual[part]||(part==='pilot'?[frame.body[0],frame.body[1]-.14]:frame.body));
- }
- const source=frame[part]||visual[part]||locations[part]||visual.body;
- if(baked?.frame&&u.alive)return{x:b.x+(pose.flip?1-source[0]:source[0])*b.w,y:b.y+source[1]*b.h};
- return mechSourcePoint(u,source[0],source[1],{...remainingPose(pose,baked),baseOnly:true,kneel:baked?.frame?0:pose.kneel});
+ if(window.IronVowBillboards?.drawing||!window.IronVowScene)return window.IronVowBillboards.pixelAttachment(u,part,t);
+ return window.IronVowScene.projectWorld(window.IronVowScene.attachmentPoint(u,part,t));
 }
 function freezeAttachment(u,part,t=clock){const p=mechAttachmentPoint(u,part,t),base=project(u.vx,0,u.vz);return{x:u.vx,z:u.vz,ox:(p.x-base.x)/scale,oy:(p.y-base.y)/scale}}
 function shotMuzzle(actor,id,index){
@@ -3662,21 +3602,7 @@ function liveWarden(u){return Boolean(u&&!u.kind&&u.frame===0&&window.IronVowSce
 
 const settledFoundryArt=new WeakMap();
 
-function drawJumpjetExhaust(u,t){
- const lift=jumpjetHeight(u,t);
- if(lift<=0)return;
- const nozzle=project(u.vx,lift+1.47,u.vz);
- const rear=-unitFacing(u);
- const length=scale*(.40+lift*.33);
- for(const offset of [.20,.32]){
-  const x=nozzle.x+rear*scale*offset,y=nozzle.y-offset*scale*.18;
-  const glow=ctx.createLinearGradient(x,y,x+rear*length*.35,y+length);
-  glow.addColorStop(0,'#fff5dc');
-  glow.addColorStop(.28,'#88e4ff');
-  glow.addColorStop(1,'#4c9cfa00');
-  polygon([{x:x-scale*.10,y},{x:x+scale*.10,y},{x:x+rear*length*.35,y:y+length}],glow);
- }
-}
+
 
 function drawPoweredRelease(actor,profile,age,t){
  const {power}=profile;

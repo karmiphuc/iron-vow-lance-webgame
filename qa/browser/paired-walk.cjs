@@ -5,7 +5,8 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
  const baked=['AERO','LINE INFANTRY','LINE INFANTRY ELITE','GRAVEMAW','REAVER','BULWARK-AEGIS','ASHIGARU'];
- for(const name of [...baked,'CICADA','VALKYRIE','ONI','BEHEMOTH','AEGIS','SHRIKE','BASTION','CITADEL']){
+ // Live gait is checked on actual bones by check-scene.cjs; only temporary sheets remain here.
+ for(const name of baked){
   const fixture=await page.evaluate(name=>{
    createBattle(0,false,false,[0]);surveyTerrain(0);battle.cover.clear();
    for(const cell of battle.field.cells)cell.level=0;
@@ -43,6 +44,7 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
    window.pairedWalkQA=track;
    return {ap:u.ap,move:u.moveLeft};
   },name);
+  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
   const {x,y}=await page.evaluate(async()=>{
    await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
    const point=project(10,0,10),element=document.elementFromPoint(point.x,point.y);

@@ -62,8 +62,10 @@ function poseBehemothBrace(m,artillery,I){
   const {body,rig:r,dims:D}=m,p=r.pelvis,A=D.legA,B=D.legB;
   const [hull,left,right]=artillery||[0,0,0];
   if(artillery){
+    const solvedY=p.position.y;
     const kneeY=kneeContact.y-D.hipY+Math.sqrt(A*A-(D.hipX-kneeContact.x)**2-(kneeContact.z-D.hipZ-pelvisShift)**2);
-    p.position.set(0,lerp(D.py,kneeY,hull),pelvisShift*hull);
+    const authoredY=lerp(D.py,kneeY,hull);
+    p.position.set(0,I?.groundAt?Math.min(solvedY,authoredY):authoredY,pelvisShift*hull);
     p.rotation.set(0,0,0);
   }
   body.updateWorldMatrix(true,true);
@@ -194,7 +196,17 @@ function animateMech(m,I,dt,t){
   if(!m.init){m.yaw=I.face;cont.rotation.y=m.yaw;cont.position.set(I.pos.x,I.ground||0,I.pos.z);cont.updateMatrixWorld(true);
     r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));if(I.groundAt&&I.alive)h.y=I.groundAt(h.x,h.z)+D.ankleH*sc;m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
   cont.position.set(I.pos.x+S.kx.x,I.ground||0,I.pos.z+S.kz.x);
-  const targetYaw=I.moving?I.heading:I.face;m.yaw=dampAngle(m.yaw,targetYaw,I.moving?8:4.5,dt);
+  const targetYaw=I.moving?I.heading:I.face,oldYaw=m.yaw;let nextYaw=dampAngle(oldYaw,targetYaw,I.moving?8:4.5,dt);
+  if(I.groundAt&&I.alive&&!I.moving){
+    const supports=r.legs.map((l,i)=>({leg:l,state:m.legs[i]})).filter(({state:L})=>!L.swing&&!L.settle&&!L.poseLift);
+    // Each planted support limits the body's turn until its next real step makes room.
+    if(supports.length){cont.updateMatrixWorld(true);const reach=(D.legA+D.legB-.03)*sc;
+      const limits=supports.map(({leg,state:L})=>{const local=cont.worldToLocal(leg.hip.getWorldPosition(V3())),vertical=Math.max(0,(I.ground||0)+(D.py+(D.hipY||0)-.4)*sc-L.planted.y);return{local,goal:L.planted,horizontal:Math.sqrt(Math.max(0,reach*reach-vertical*vertical))};});
+      const safe=yaw=>{const c=Math.cos(yaw),s=Math.sin(yaw);return limits.every(({local:p,goal,horizontal})=>Math.hypot(cont.position.x+sc*(p.x*c+p.z*s)-goal.x,cont.position.z+sc*(p.z*c-p.x*s)-goal.z)<=horizontal);};
+      if(!safe(nextYaw)){let low=0,high=1;for(let i=0;i<12;i++){const q=(low+high)/2;if(safe(oldYaw+(nextYaw-oldYaw)*q))low=q;else high=q;}nextYaw=oldYaw+(nextYaw-oldYaw)*low;}
+    }
+  }
+  m.yaw=nextYaw;
   const dead=!I.alive,pd=dead&&I.down==='pilot';
   const dE=dead?smooth(clamp((I.deathAge-.05)/(pd?.85:.51),0,1)):0;
   const tip=dead&&!pd?smooth(clamp((I.deathAge-.42)/.52,0,1)):0;
@@ -227,6 +239,7 @@ function animateMech(m,I,dt,t){
   p.rotation.y=F?-F.hips*fs:0;
   cont.updateMatrixWorld(true);
   let settling=m.legs.some(L=>L.settle);
+  const artilleryPreparing=D.quad&&!I.moving&&Boolean(I.artillery||Number.isFinite(I.mortarAge));
   const pitches=[];
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
     const home=cont.localToWorld(_a.set(l.restX-(lead?F.narrow*fs:0),D.ankleH,l.restZ+(F?(lead?F.step:-F.back)*fs:0))).clone();let pitch=0;
@@ -254,7 +267,7 @@ function animateMech(m,I,dt,t){
         else{L.planted.copy(L.foot);L.planted.y=I.groundAt?I.groundAt(L.planted.x,L.planted.z)+D.ankleH*sc:home.y;}}
       if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
         if(q>=1){L.planted.copy(home);L.settle=null;I.onStep&&I.onStep(m,home,i,.45);}}
-      else{if(!dead&&!settling&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}
+      else{if(!dead&&(!settling||artilleryPreparing&&!l.kneeShoe)&&L.planted.distanceTo(home)>.22*sc){L.settle={from:I.groundAt?l.an.getWorldPosition(V3()):L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}
     pitches[i]=pitch*w;});
   if(I.groundAt&&I.alive){
     // Uneven tiles and the first/last half-step can require compression beyond the flat-floor walk bob.
@@ -326,7 +339,11 @@ function animateMech(m,I,dt,t){
   const vm=m.build.visorMat,base=3;
   if(dead)vm.emissiveIntensity=damp(vm.emissiveIntensity,0,6,dt);
   else{let k=1;if(m.flicker>0&&Math.random()<.35)k=.15;else if(I.pilotRatio!==undefined&&I.pilotRatio<.5&&Math.random()<.06)k=.2;vm.emissiveIntensity=base*k;}
-  const special=poseBehemothMortar(m,I.mortarAge),artillery=special||I.artillery;
+  const special=poseBehemothMortar(m,I.mortarAge);let artillery=special||I.artillery;
+  if(I.groundAt&&artillery){
+    if(Math.abs(wrapA(I.face-m.yaw))>.15){m.artilleryDeferred=true;m.artilleryCatchup=0;artillery=null;}
+    else if(m.artilleryDeferred){m.artilleryCatchup=Math.min(1,(m.artilleryCatchup||0)+dt/.35);artillery=artillery.map(v=>v*smooth(m.artilleryCatchup));}
+  }else if(!artillery){m.artilleryDeferred=false;m.artilleryCatchup=0;}
   if(D.quad&&I.alive&&!I.moving&&!I.legsDead&&artillery?.some(Boolean)){
     m.artilleryBrace=Boolean(artillery?.some(Boolean));
     poseBehemothBrace(m,artillery,I);

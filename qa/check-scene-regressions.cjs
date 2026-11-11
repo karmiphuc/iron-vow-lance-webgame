@@ -26,3 +26,19 @@ for(let model=0;model<6;model++){
 }
 for(const result of results){assert.ok(result.worstGround<=.15,'model '+result.model+' planted ankle ground error '+result.worstGround);assert.ok(result.worstSlide<=.3,'model '+result.model+' planted ankle slide '+result.worstSlide);}
 console.log('PASS start/stop/turn world-space bone regression '+JSON.stringify(results));
+// A real campaign can request artillery while the quad is still turning out of its previous stance.
+let artilleryGround=0,artillerySlide=0;
+for(const face of [0,Math.PI/4,Math.PI,-Math.PI/2]){
+ const m=R.buildRig(5,'ally');m.scale=.9;m.cont.scale.setScalar(.9);let t=0;const previous=new Map();
+ const attack={start:.5,primeDuration:.6,returnAt:2.4};
+ for(let i=0;i<240;i++){
+  t+=dt;R.animateMech(m,{pos:R.V3(),ground:0,groundAt:()=>0,face:t<attack.start?Math.PI/2:face,heading:face,moving:false,speed:0,stepLen:1.7,alive:true,brace:0,
+   artillery:t>=attack.start?R.behemothBrace(m,attack,t):null},dt,t);m.cont.updateMatrixWorld(true);
+  m.rig.legs.forEach((leg,k)=>{const L=m.legs[k],p=leg.an.getWorldPosition(R.V3()),planted=!L.swing&&!L.settle&&!L.poseLift;
+   if(planted){artilleryGround=Math.max(artilleryGround,Math.abs(p.y-m.dims.ankleH*m.scale));const old=previous.get(k);if(old)artillerySlide=Math.max(artillerySlide,Math.hypot(p.x-old.x,p.z-old.z));else previous.set(k,p);}else previous.delete(k);
+  });
+ }
+}
+assert.ok(artilleryGround<=.15,'Turning into artillery leaves a planted foot '+artilleryGround+' m off the floor');
+assert.ok(artillerySlide<=.3,'Turning into artillery slides a planted foot '+artillerySlide+' m');
+console.log('PASS artillery turn/brace/return ground='+artilleryGround+' slide='+artillerySlide);

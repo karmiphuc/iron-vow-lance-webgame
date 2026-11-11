@@ -34,7 +34,7 @@
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "in progress in draft PR #18: eight shared rigs and cleanup implemented; overlap/control/capture gates pending",
+      "status": "draft PR #18: approved 6.8 m pitch and brace fix implemented; final verification in progress",
       "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase.",
       "development_suites_passed": 45,
       "development_scene_seeds": [
@@ -42,7 +42,7 @@
         4243,
         4244
       ],
-      "development_scene_findings": "Footprint overlap remains; owner has approved spacing and clearance adjustments to resolve it. The 4.5 m study failed and is not a production change.",
+      "development_scene_findings": "First full 30-battle run: 131459 ticks, one context, zero overlap/NaN/bounds/stuck or browser errors; ten Behemoth rear-foot brace anomalies. Raw failure retained. Targeted support-turn/brace fix and 45 suites pass; immutable rerun and final browser/capture evidence pending.",
       "handoff": "docs/phase1-development.md"
     },
     {

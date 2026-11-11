@@ -17,24 +17,25 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  console.log('shared scene ready: '+(mobile?'touch':'desktop'));
  assert.equal(await page.evaluate(()=>__webglContextCount),1,'One actual WebGL context, including UI previews');
  assert.ok(await page.evaluate(()=>__readBattlePixels())>64,'Actual main framebuffer contains the rendered battlefield');
+ await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);await page.evaluate(()=>IronVowScene.render(clock,1));
  const picks=await page.evaluate(()=>{
   const s=__ironVow.snapshot(),camera=IronVowScene.camera;let tested=0;
   for(let z=0;z<s.size.depth;z++)for(let x=0;x<s.size.width;x++){
    const p=IronVowScene.projectWorld(IronVowScene.world(x,z));if(p.x<0||p.x>innerWidth||p.y<0||p.y>innerHeight||p.z<0||p.z>1)continue;
-   const hit=IronVowScene.screenTile(p.x,p.y);if(hit.x!==x||hit.z!==z)throw Error('Raycast missed tile '+x+','+z+' -> '+JSON.stringify(hit));tested++;
+   const hit=IronVowScene.screenTile(Math.round(p.x),Math.round(p.y));if(hit.x!==x||hit.z!==z)throw Error('Raycast missed visible tile '+x+','+z+' -> '+JSON.stringify(hit));tested++;
   }
   const u=battle.units.find(u=>u.id==='ally0'),p=IronVowScene.projectWorld(IronVowScene.partPoint(u));
   return{tested,unit:IronVowScene.pick(p.x,p.y)?.id};
  });
- assert.ok(picks.tested>=20,'Ground raycasts cover visible plates');assert.equal(picks.unit,'ally0');
- await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);
- await tap('#map-center');await page.waitForFunction(()=>!fieldCamera.overview);
+ assert.ok(picks.tested>=50,'Ground raycasts cover visible overview plates at actual pointer pixel coordinates');assert.equal(picks.unit,'ally0');
+ await tap('#map-center');await page.waitForFunction(()=>!fieldCamera.overview);await page.evaluate(()=>IronVowScene.render(clock,1));
  assert.deepEqual(await page.evaluate(()=>[fieldCamera.x,fieldCamera.z]),await page.evaluate(()=>[current().x,current().z]));
  console.log('raycasts, Overview and centre passed');
  const radar=await page.locator('#map-radar').boundingBox();
- await page.mouse.click(radar.x+radar.width*.75,radar.y+radar.height*.25);
+ const mapX=radar.x+radar.width*.75,mapY=radar.y+radar.height*.25;
+ if(mobile)await page.touchscreen.tap(mapX,mapY);else await page.mouse.click(mapX,mapY);
  const jump=await page.evaluate(()=>({x:fieldCamera.x,z:fieldCamera.z,size:battle.size}));
- assert.ok(Math.abs(jump.x-(jump.size.width*.75-.5))<.2&&Math.abs(jump.z-(jump.size.depth*.25-.5))<.2,'Tactical map jumps to tapped location');
+ assert.ok(Math.abs(jump.x-(jump.size.width*.75-.5))<.2&&Math.abs(jump.z-(jump.size.depth*.25-.5))<.2,'Tactical map jumps to tapped location: '+JSON.stringify({jump,radar,mapX,mapY}));
  await tap('#map-center');
  console.log('map jump, zoom and pan passed');
  const start=await page.evaluate(()=>({x:fieldCamera.x,z:fieldCamera.z,zoom:viewZoom}));
@@ -49,7 +50,8 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  }
  await page.waitForFunction(zoom=>viewZoom>zoom,start.zoom);
  console.log('wheel/pinch zoom passed');
- await page.mouse.move(mobile?150:600,470);await page.mouse.down();await page.mouse.move(mobile?195:655,510,{steps:4});await page.mouse.up();
+ if(mobile){const cdp=await context.newCDPSession(page);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:150,y:410,id:1}]});for(let i=1;i<=4;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:150+i*11,y:410+i*7,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();}
+ else{await page.mouse.move(600,470);await page.mouse.down();await page.mouse.move(655,510,{steps:4});await page.mouse.up();}
  assert.ok(await page.evaluate(({x,z})=>Math.hypot(fieldCamera.x-x,fieldCamera.z-z)>.01,start),'Pointer drag pans through world-space rays');
  await tap('#map-center');
  const move=await page.evaluate(()=>{
@@ -78,6 +80,8 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>Boolean(activeCinematic)),true,'Real attack opens the camera');
  await page.clock.fastForward(34);
  assert.equal(await page.evaluate(()=>IronVowScene.camera.isPerspectiveCamera),true);
+ const shoulder=await page.evaluate(id=>{IronVowScene.render(clock,1);const actor=battle.units.find(u=>u.id===id);return IronVowScene.camera.position.distanceTo(IronVowScene.world(actor.vx,actor.vz));},attack.id);
+ assert.ok(shoulder<12,'The actual camera moves over the attacker shoulder: '+shoulder);
  await page.evaluate(()=>document.querySelector('#skip-shot').click());
  for(let i=0;i<20&&await page.evaluate(()=>__ironVow.pending);i++)await page.clock.fastForward(1000);
  assert.equal(await page.evaluate(()=>__ironVow.pending||Boolean(activeCinematic)),false,'Skip resolves the real exchange');

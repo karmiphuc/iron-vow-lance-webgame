@@ -1,4 +1,4 @@
-/* Procedural chassis render into the Sites battle compositor, using its camera, depth order and UI. */
+/* Live battle rigs and cached UI previews share one WebGL renderer. */
 (function(){
 'use strict';
 if(!window.IronVowFoundryRig)return;
@@ -53,7 +53,7 @@ function init(){
   if(arsenal&&!armoryRequested){
    armoryRequested=true;
    const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
-   // The live Warden loads beside the arsenal; until it is ready the field keeps the baked Warden.
+   // The live Warden and production arsenal load before battle controls are enabled.
    if(window.IronVowWardenRig)window.IronVowWardenRig.load(url('rig-bench/warden-painted.glb'),url('rig-bench/warden-painted-motion.json'))
     .then(()=>{if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
    arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),url('rig-bench/shields.glb'))
@@ -69,7 +69,7 @@ function disable(error){
  clearCombat();
  window.IronVowRenderer.fatal(error||Error('Shared scene rendering failed'));renderer=null;
 
- if(error)console.warn('Foundry switched to baked rendering',error);
+ if(error)console.warn('Shared live rig rendering failed',error);
 }
 function setCamera(elevation,azimuth=0){
  const targetY=3.55;
@@ -188,7 +188,7 @@ function draw(u,t,pose,scope,model,custom){
   const target=V3(lead.restX,m.dims.ankleH+primeLift,lead.restZ+prime*.82);
   VC.solveLeg(m.rig,m.dims,lead,target,-primeLift*.32);
  }
- // The battle tile is already moving on the 2D board. Use the rig's travel only to solve its planted gait.
+ // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
  if(armory&&!entry.armed){
   entry.primary=arsenal.mount(armory,u.weapon,m.rig.arms.R.so);
@@ -211,7 +211,7 @@ function draw(u,t,pose,scope,model,custom){
   else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
  }
  if(entry.secondary){
-  entry.secondary.mount.visible=u.alive&&u.hp.left>0&&(melee||model===4||custom==='warden');
+  entry.secondary.mount.visible=u.alive&&u.hp.left>0;
   if(entry.secondary.spike)entry.secondary.spike.position.z=entry.secondary.spikeRest+(pose.strikeProgress>=.61&&pose.strikeProgress<=.81?.50:0);
   arsenal.animate(entry.secondary,pose);
  }

@@ -20,7 +20,7 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
   focusBattleCamera(u,true);renderBattle();
   window.terrainQA={next};
  });
- await page.waitForFunction(()=>imageReady(moduleImages['theater-tiles']));
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  const move=await page.evaluate(()=>{
   const [x,z]=terrainQA.next,p=project(x,0,z);
   return {x,z,p,under:screenTile(p.x,p.y),close:scale,expected:fieldScale().close};
@@ -53,7 +53,7 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
   Math.random=()=>0;
   window.terrainQA={foe,hp:foe.hp.body};
  });
- await page.waitForFunction(()=>travelVisual(terrainQA.foe,clock)?.grounded);
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  for(let i=0;i<4;i++)await tap('#map-zoom-out');
  const target=await page.evaluate(()=>{
   const u=current(),{foe}=terrainQA;
