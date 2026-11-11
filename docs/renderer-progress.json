@@ -34,28 +34,29 @@
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "draft PR #18: approved 6.8 m pitch and brace fix implemented; final verification in progress",
-      "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase.",
+      "status": "draft PR #18; implementation complete enough for final gates, blocked by execution access during verification",
+      "next": "Recover execution access and local QA changes; finish final browser/simulation/30-battle and full-resolution capture/contact-sheet gates, then merge exact validated head.",
       "development_suites_passed": 45,
       "development_scene_seeds": [
         4242,
         4243,
         4244
       ],
-      "development_scene_findings": "First full 30-battle run: 131459 ticks, one context, zero overlap/NaN/bounds/stuck or browser errors; ten Behemoth rear-foot brace anomalies. Raw failure retained. Targeted support-turn/brace fix and 45 suites pass; immutable rerun and final browser/capture evidence pending.",
-      "handoff": "docs/phase1-development.md"
+      "development_scene_findings": "Seven real-terrain battles / 30051 ticks had zero required anomalies before a QA Citadel barrage-lock loop exhausted the driver budget. Driver corrected. Restarted six fault probes and seed 4242 passed; complete 30-battle result remains pending.",
+      "handoff": "docs/renderer-runtime-handoff-20261111.md"
     },
     {
       "phase": 2,
       "issue": 12,
-      "status": "pending Phase 1",
-      "next": "Port reference animation/effects including final PR #9; map every WEAPONS entry, retain reference timings, add actual scene/anomaly coverage and delete replaced effects."
+      "status": "isolated local preparation; full runtime integration pending Phase 1",
+      "next": "Port reference animation/effects including final PR #9; map every WEAPONS entry, retain reference timings, add actual scene/anomaly coverage and delete replaced effects.",
+      "local_preparation": "Unpushed renderer/phase2 commits c0f99d7, a7507d1, b0eb719; recover workspace. Reference FX factory and all-weapon profiles prepared, missile-arrival regression currently fails; no passing Phase 2 gate."
     },
     {
       "phase": 3,
       "issue": 13,
       "status": "pending Phase 2; asset work may run in parallel",
-      "external_dependency": "Blender MCP on the owner machine and missing external .blend sources. No Blender tools were available in this session. This does not block Phases 0\u20132.",
+      "external_dependency": "Blender MCP on the owner machine and missing external .blend sources. No Blender tools were available in this session. This does not block Phases 0–2.",
       "next": "Gatecrasher first; exact rig v2 contract and <=60k triangles including weapons; integrate every frame and delete temporary adapters/sprites."
     },
     {
@@ -79,5 +80,12 @@
     "4": "closed unmerged",
     "8": "973567c5726a836e827fbe85b3b34675a769fc0b",
     "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a"
+  },
+  "execution_block": {
+    "environment_id": "ccarenv_b64_Y2NhcmVudl8zZWFiMTgzOWRkN2M4MTkxYjMwZTdiYzRhNDA4NDM5NQ",
+    "provider_observation": "running / connected after initial offline observation",
+    "executor_error": "No usable execution environment is available",
+    "desktop": "enabled, state unknown; no desktop JS/viewer tool offered",
+    "handoff": "docs/renderer-runtime-handoff-20261111.md"
   }
 }
