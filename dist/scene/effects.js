@@ -103,7 +103,7 @@ function FX(scene,o){
   const airs=mkPool(o.airs||6,()=>({o:new T.Mesh(airG,airMat()),life:0}));
   const decals=mkPool(o.decals||16,()=>({o:new T.Mesh(decalG,new T.MeshBasicMaterial({map:scorchTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1})),life:0}));
   const misG=new T.Group();
-  const missiles=mkPool(8,()=>{const g=new T.Group();cy(g,.08,.08,.7,MAT.white,0,0,0,PI/2,0,0,8,false);mesh(g,new T.ConeGeometry(.08,.22,8),MAT.amber,0,0,.46,PI/2,0,0,false);const fl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffb050,blending:T.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.z=-.45;fl.scale.setScalar(.7);g.add(fl);return{o:g,a:V3(),b:V3(),c:V3(),life:0,dur:1,trail:0,done:null};});
+  const missiles=mkPool(8,()=>{const g=new T.Group();cy(g,.08,.08,.7,MAT.white,0,0,0,PI/2,0,0,8,false);mesh(g,new T.ConeGeometry(.08,.22,8),MAT.amber,0,0,.46,PI/2,0,0,false);const fl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffb050,blending:T.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.z=-.45;fl.scale.setScalar(.7);g.add(fl);return{o:g,a:V3(),b:V3(),c:V3(),pos:V3(),life:0,dur:1,trail:0,done:null};});
   // [bench] electrical arcs: a jagged chain of stretched additive boxes (an electric-blue core inside a saturated blue glow), re-jittered every 45 ms
   const ARC_N=7,arcMat=c=>new T.MeshBasicMaterial({color:c,blending:T.AdditiveBlending,transparent:true,depthWrite:false,depthTest:true,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}); // [bench] depth-tested so cover/mechs occlude arcs (hull-surface endpoints)
   const arcs=mkPool(o.arcs||8,()=>{const g=new T.Group(),core=[],halo=[];for(let i=0;i<ARC_N;i++){const a=new T.Mesh(streakG,arcMat(0x4fa2ff)),b=new T.Mesh(streakG,arcMat(0x1f5cff));a.renderOrder=b.renderOrder=996;g.add(a,b);core.push(a);halo.push(b);}
@@ -149,7 +149,7 @@ function FX(scene,o){
     for(const s of beams){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=s.life/s.max;s.o.material.opacity=u;s.o.scale.set(s.w*(.4+.6*u),s.w*(.4+.6*u),s.len);}
     for(const s of airs){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max,e=.2+(1-Math.pow(1-u,3))*s.r;s.o.scale.set(e,e*.55,e);s.o.material.uniforms.opacity.value=s.op*Math.pow(1-u,1.6);}
     for(const s of rings){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max;s.o.scale.setScalar(.3+(1-Math.pow(1-u,2))*s.r);s.o.material.opacity=(1-u)*.9;}
-    for(const s of missiles){if(!s.o.visible)continue;s.life+=dt;const q=Math.min(1,s.life/s.dur);const p0=_a.copy(s.a).lerp(s.c,q),p1=_b.copy(s.c).lerp(s.b,q);const pos=p0.lerp(p1,q);s.o.lookAt(pos);s.o.position.copy(pos);
+    for(const s of missiles){if(!s.o.visible)continue;s.life+=dt;const q=Math.min(1,s.life/s.dur);const p0=_a.copy(s.a).lerp(s.c,q),p1=_b.copy(s.c).lerp(s.b,q);const pos=s.pos.copy(p0).lerp(p1,q);s.o.lookAt(pos);s.o.position.copy(pos);
       s.trail-=dt;if(s.trail<=0){s.trail=.025;f.smoke(pos,1,.9,0xb9b2a6,.45,.3,1.1,.05);}if(q>=1){s.o.visible=false;s.done&&s.done(pos.clone());}}
     for(const l of lights)l.intensity*=Math.exp(-dt*11);
   };
