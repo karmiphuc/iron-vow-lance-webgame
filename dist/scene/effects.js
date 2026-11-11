@@ -192,15 +192,15 @@ function explode(p,big,m){const fx=BT.fx;
   if(m){m.s.pitch.v-=big?0:1.2;m.s.comp.v-=big?0:.9;}
 }
 function onStep(m,p,i,amt=1){const fx=BT.fx,heavy=(HEAVY[m.build?.mods?m.build.mods.legs:m.frame]??1)*amt; // [bench] step weight follows the LEGS module (the game never mixes modules)
-  fx.smoke(V3(p.x,.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);{const g=V3(p.x,BT.groundAt?.(p.x,p.z)??BT.floor,p.z);fx.dustwave(g,Math.max(3,Math.round((6+3*heavy)*(BT.lowFx?.5:1))),2.6*heavy,1.05*heavy,0xc0b5a1,.42,1.2,.35);}m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
+  fx.smoke(V3(p.x,(BT.groundAt?.(p.x,p.z)??BT.floor)+.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);{const g=V3(p.x,BT.groundAt?.(p.x,p.z)??BT.floor,p.z);fx.dustwave(g,Math.max(3,Math.round((6+3*heavy)*(BT.lowFx?.5:1))),2.6*heavy,1.05*heavy,0xc0b5a1,.42,1.2,.35);}m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
 
 
-const fx=BT.fx=FX(scene,options.pools||{});
+const before=new Set(scene.children),fx=BT.fx=FX(scene,options.pools||{}),owned=scene.children.filter(node=>!before.has(node));
 return {fx,impact,faultFX,surfacePoint,groundSlam,fireFX,meleeUpdate,explode,onStep,MEL,IMPACT,
  later(delay,fn){pending.push({at:BT.clock+delay,fn});},
  update(t,dt){BT.clock=t;BT.lowFx=Boolean(options.low?.());for(let i=pending.length-1;i>=0;i--)if(t>=pending[i].at){const task=pending.splice(i,1)[0];task.fn();}fx.update(dt);if(!options.reducedMotion?.()){options.shake?.(BT.cam.shake);if(BT.hitstop)options.hitstop?.(BT.hitstop);}BT.hitstop=0;BT.cam.shake*=Math.exp(-dt*8);},
- clear(){pending.length=0;fx.clearDecals();},
- dispose(){pending.length=0;for(const texture of [glowTex,smokeTex,fireTex,scorchTex])texture.dispose();for(const geometry of geoCache.values())geometry.dispose();for(const material of Object.values(MAT))material.dispose();}
+ clear(){pending.length=0;for(const node of owned){if(node.isLight)node.intensity=0;else node.visible=false;}fx.clearDecals();},
+ dispose(){pending.length=0;const geometries=new Set(geoCache.values()),materials=new Set(Object.values(MAT)),textures=new Set([glowTex,smokeTex,fireTex,scorchTex]);for(const node of owned){node.parent?.remove(node);node.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const material of [o.material].flat().filter(Boolean)){materials.add(material);for(const key of ['map','normalMap','roughnessMap','emissiveMap'])if(material[key])textures.add(material[key]);}});}for(const resource of [...textures,...materials,...geometries])resource.dispose();}
 };
 }};
 })(window);
