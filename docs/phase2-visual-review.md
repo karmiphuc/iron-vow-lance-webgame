@@ -1,10 +1,10 @@
 # Phase 2 combat visual evidence
 
-The current checkpoint contains 124 main images across 49 source-scoped cases, plus three natural critical-fault images. The main manifest remains `partial`: touch Parallax and the newly discovered minimum-range Parallax regression require a later frozen source. These artifacts do not claim a final catalog or clearance gate pass.
+The current checkpoint contains 124 main images across 49 source-scoped cases, plus three natural critical-fault images and one actual near-counter frame. The main manifest remains `partial`: touch Parallax and matching-preset captures await a later frozen source. The minimum-range automatic counter has been captured directly during the real replay on the working torso fix; its final frozen-commit link remains pending. These artifacts do not claim a final catalog or clearance gate pass.
 
 Thirteen original nonairborne images retain source `6786df4` / dist tree `76ac81ff753ae6ebbfa45a093f794588cf919764`. The other 111 main images and the three fault images use detached `f68b5df` / dist tree `613bc118b314340e3ab63d5101a27c89a2c98080`, including its airborne ankle fix. Each image and case records its actual source; historical files are never relabeled as a later build. A subsequent campaign identified a separate close-Parallax clearance failure on this source, so its earlier three-tile Parallax fixture is historical evidence within that narrower scope.
 
-Open `design/phase2/combat/contact-sheet.html` for the linked full-resolution files and individual action sequences. The three `contact-*.png` files provide compact contact overviews. `filmstrips/` contains labeled derivative strips. Natural B/C/D dispatch captures have their own manifest and contact sheet under `design/phase2/fault-mix/`.
+Open `design/phase2/combat/contact-sheet.html` for the linked full-resolution files and individual action sequences. The three `contact-*.png` files provide compact contact overviews. `filmstrips/` contains labeled derivative strips. Natural B/C/D dispatch captures have their own manifest and contact sheet under `design/phase2/fault-mix/`. The actual minimum-range counter and its archived working source are under `design/phase2/counter-regression/`.
 
 ## Completed checkpoint coverage
 
@@ -15,8 +15,9 @@ Open `design/phase2/combat/contact-sheet.html` for the linked full-resolution fi
 | Reduced-motion missile, rail and blade | 3 | 12 |
 | Touch-capable 1194×834 rifle, shotgun, missile, rail and blade | 5 | 20 |
 | Natural plasma / crawl / joint dispatch supplement | 1 | 3 |
+| Actual automatic near Parallax counter in seed-4264 replay | 1 | 1 |
 
-The 34-entry row records actual attacks in the declared controlled fixtures; it does not cover the subsequently identified minimum-range Parallax campaign state. Matching Phase 0 static presets and final-source close-Parallax evidence remain pending. No Phase 0 capture is repeated.
+The 34-entry row records actual attacks in the declared controlled fixtures; it does not cover the subsequently identified minimum-range Parallax campaign state. Matching Phase 0 static presets and the final source link for the real-counter frame remain pending. No Phase 0 capture is repeated.
 
 ## Capture policy and verification
 
@@ -26,7 +27,7 @@ Every CPU animation update executes at controlled 30 Hz. Every saved frame uses 
 
 Forty retained main images used an earlier policy that also omitted intermediate render-target draws/readbacks. Their final main-scene frames still render with the real GPU. Battle `registerWeapon` returns before the cached `adapter.image` preview path, and inspected live meshes/contact effects remain valid within that main-scene scope. These forty images do **not** establish UI-preview correctness. Each image retains its original render policy and runner hash; the other 84 main images and all three natural-fault images preserve native render-target work.
 
-All full-resolution screenshots are encoded as lossless WebP, decoded and compared byte for byte in RGBA with the raw PNG before that PNG is discarded. Entries retain raw PNG, WebP and decoded RGBA SHA-256 hashes, dimensions, original equality results and a nonblank sample. Offline verification passed all 127 WebP file hashes and decoded RGBA hashes; see the two `artifact-verification.json` reports. Filmstrips and compact contact sheets are derived review aids.
+All full-resolution screenshots are encoded as lossless WebP, decoded and compared byte for byte in RGBA with the raw PNG before that PNG is discarded. Entries retain raw PNG, WebP and decoded RGBA SHA-256 hashes, dimensions, original equality results and a nonblank sample. Offline verification passed all 128 WebP file hashes and decoded RGBA hashes; see the two `artifact-verification.json` reports. Filmstrips and compact contact sheets are derived review aids.
 
 Software WebGL provides image correctness evidence. None of these measurements establishes native iPad performance. The prior compositor timeout under host oversubscription remains in the retained history and is not classified as a source defect.
 
@@ -37,6 +38,7 @@ Software WebGL provides image correctness evidence. None of these measurements e
 - The Aero jumpjet frame at 400 ms visibly separates the body/feet from the ground ring and shadow. Its temporary sprite adapter casts a broad rectangular shadow; this is an adapter limitation for Phase 3 review.
 - The natural-fault supplement observes the original `fx.arc`, `fx.crawl` and `fx.joint` calls after a real rail hit changes body HP from 180 to 114 while the arm and legs remain disabled. No variant or effect is fabricated. Plasma is visible; crawl and joint effects are subtle or self-occluded by Bastion armor from this azimuth, so the images do not establish that every shader is clearly visible.
 - Body-death aftermath samples record actual death ages approximately 3, 6, 13.8 and 14.2 seconds. Existing particles may linger after the emission cutoff; the images are not an assertion that all smoke disappears exactly at 14 seconds.
+- The actual counter frame is the real enemy-phase event 361, `ally1` Behemoth → `enemy1` Gravemaw, immediately after event 360 Piledriver hit **PILOT** HP 55→19. It uses a 1194×834 DPR-1 Three.js renderer-canvas capture with UI excluded and temporary body output paints restored at the same clock. Launch aim error is approximately 1.49×10⁻⁸ rad and the actual muzzle-to-target distance is 0.05029 m. The original shoulder camera crops the actor: this frame establishes actual context/weapon pose, not complete body, joint or foot placement. Source `scene-rigs.js` bytes are archived with SHA-256 `bb35b754ab1524a847b56887cae0d2888c6106521fe80bca0f077556d7de29c4`; together with the unchanged production files they form working dist tree `622be7c80e0e50b5d5b9cbeeb86b20a62270fee9`. It remains labeled working-fix evidence until the final commit is linked.
 - `mortar-future-presentation` calls the explicitly named presentation hook and records no combat events. It shows the future brace/elevation/muzzle/recoil presentation without inventing a gameplay action or damage rule.
 
 The actual-command fixtures differ from Phase 0's static presets and therefore support no cross-phase pixel-equality claim. The separate matching-preset runner uses the unchanged preset IDs and existing reviewed Phase 0 files.
@@ -52,7 +54,7 @@ IRON_VOW_VISUAL_MIXED_SOURCE=1 IRON_VOW_VISUAL_RESUME=1 \
 IRON_VOW_VISUAL_SKIP_WEAPONS=parallax node qa/capture-phase2.cjs
 ```
 
-After the next freeze, use the new detached snapshot for touch Parallax and the matching-preset supplement. The minimum-range automatic counter will be captured directly inside the mandatory seed-4264 replay, preserving its real state and rule RNG. A restored far player-attack fixture is not a substitute for that counter event. `SIGTERM`/`SIGINT` records a scheduling pause and closes the browser. Resume validates each retained file hash and retains its original source, render policy and runner hash.
+After the next freeze, use the new detached snapshot for touch Parallax and the matching-preset supplement. The minimum-range automatic counter was captured directly inside the mandatory seed-4264 replay, preserving its real state and rule RNG. A restored far player-attack fixture is not a substitute for that counter event. `SIGTERM`/`SIGINT` records a scheduling pause and closes the browser. Resume validates each retained file hash and retains its original source, render policy and runner hash.
 
 Offline verification and contact overview generation require no browser:
 

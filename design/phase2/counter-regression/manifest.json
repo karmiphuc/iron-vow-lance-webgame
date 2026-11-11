@@ -1,0 +1,137 @@
+{
+  "schema": 1,
+  "status": "captured-working-fix",
+  "scope": "Actual automatic near Parallax counter during the real mandatory seed4264 replay; no reconstructed state or RNG. Frozen source link pending; working source bytes archived exactly.",
+  "source": {
+    "commit": "287db825ac2fbd8bdeae06ba8830530d3c4fc581",
+    "distTree": "613bc118b314340e3ab63d5101a27c89a2c98080",
+    "distDirty": true,
+    "checkerSha256": "84e31334734983efc7f958c4253f7115a93d0ebead464c2df6317d6fc59f4b5c"
+  },
+  "working_production_dist_tree": "622be7c80e0e50b5d5b9cbeeb86b20a62270fee9",
+  "working_source": {
+    "file": "source/scene-rigs.js",
+    "sha256": "bb35b754ab1524a847b56887cae0d2888c6106521fe80bca0f077556d7de29c4",
+    "sole_modified_production_file": true,
+    "runtime_confirmation": "Runtime confirmed current production bytes unchanged since bothv2replays/capture."
+  },
+  "seed": 4264,
+  "event": {
+    "sequence": 361,
+    "type": "launch",
+    "time": 146.70000000000115,
+    "archetype": "rail",
+    "expectedOrigin": [
+      -36.95020268034913,
+      4.173048810024753,
+      50.674580443274635
+    ],
+    "actorAlive": true,
+    "aimError": 1.4901161193847656e-8,
+    "mounted": true,
+    "actor": "ally1",
+    "target": "enemy1",
+    "weapon": "parallax",
+    "index": 0,
+    "socket": "muzzle",
+    "origin": [
+      -36.95020268034913,
+      4.173048810024753,
+      50.674580443274635
+    ],
+    "targetPoint": [
+      -36.95496306423834,
+      4.192642502366501,
+      50.62851352453911
+    ],
+    "flight": 0.075
+  },
+  "incoming": {
+    "sequence": 360,
+    "type": "impact",
+    "time": 144.26666666666796,
+    "actor": "enemy1",
+    "target": "ally1",
+    "weapon": "piledriver",
+    "index": 0,
+    "part": "pilot",
+    "shield": false,
+    "point": [
+      -37.363974179336836,
+      4.351213180300196,
+      56.756987652321
+    ],
+    "back": [
+      0.0634342149357735,
+      -0.10976452161185586,
+      -0.9919313737203812
+    ],
+    "planned": 36,
+    "damage": 36,
+    "before": 55,
+    "after": 19,
+    "actorAlive": true
+  },
+  "actor": {
+    "id": "ally1",
+    "frame": 7,
+    "ap": 2,
+    "alive": true,
+    "reacted": true,
+    "hp": {
+      "body": 210,
+      "pilot": 19,
+      "right": 90,
+      "left": 90,
+      "legs": 150
+    }
+  },
+  "target": {
+    "id": "enemy1",
+    "frame": 15,
+    "hp": {
+      "body": 46,
+      "pilot": 55,
+      "right": 88,
+      "left": 88,
+      "legs": 103
+    }
+  },
+  "clock": 146.70000000000115,
+  "phase": "enemy",
+  "turn": 5,
+  "camera": {
+    "position": [
+      -40.66525667772318,
+      6.000000007074037,
+      64.3427212373542
+    ],
+    "quaternion": [
+      -0.08376468619537646,
+      -0.11585613890559852,
+      -0.009805858620555871,
+      0.9896790780658092
+    ],
+    "fov": 30
+  },
+  "viewport": {
+    "width": 1194,
+    "height": 834,
+    "dpr": 1,
+    "pixelWidth": 1194,
+    "pixelHeight": 834
+  },
+  "render_policy": "One real full-resolution Three.js renderer-canvas submission/readback immediately after the real near Parallax counter launch. Temporary body output paints restored and refreshed at the same clock. UI canvas excluded; ordinary advances omit unobserved GPU/output raster. No game HP/AP/rule RNG changes or performance claim.",
+  "capture": {
+    "file": "actual-counter.webp",
+    "width": 1194,
+    "height": 834,
+    "raw_png_sha256": "f877b69c630034bacc429e8b2f4f23e8c0adc16406c2991f664f6e86bee91bef",
+    "webp_sha256": "e5131e5ec1c1fb4bf0fad9f2adfd932a3e61ffc6729fb3c22795fbbab099e882",
+    "rgba_sha256": "3e9890e024f567aebed182ac7dde3365019c925b61a15d93e21bf4c42d65bf8c",
+    "rgba_byte_equality": true
+  },
+  "actual_event_json_sha256": "15bfce3694b60d8c3ddbadfa08458fd32e13c371bd9f4ebd6999a56fc197f2e8",
+  "muzzle_to_target_distance": 0.05028652937061127,
+  "visual_limit": "Original shoulder camera crops actor. Actual frame establishes context/weapon pose, not complete body, joint or foot placement; geometry checks are separate."
+}
