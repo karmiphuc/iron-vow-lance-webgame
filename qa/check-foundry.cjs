@@ -205,11 +205,7 @@ async function exerciseRigAdapter(){
  donor.units[1].mech=3;
  assert.equal(run(`loadCareer(${JSON.stringify(donor)})`),null);
 
- run("battle=null;save.credits=FRAMES[7].cost+12000;assignChassis(1,7,true);createBattle(3);selected=1");
- assert.ok(run(`(()=>{
-  const u=current(),a=mechAttachmentPoint(u,'muzzle'),b=mechAttachmentPoint(u,'muzzle2');
-  return Math.hypot(a.x-b.x,a.y-b.y)>1;
- })()`),'Vesper emitters use the two actual asset sockets');
+ // Physical Vesper geometry and its two muzzle nodes are checked in check-production-weapons.
  await exerciseRigAdapter();
  console.log('PASS: procurement, swap, paint, pilot disable, donor career migration, four campaign rosters, weapon sockets, Foundry atlases and render-target caching and fatal WebGL error reporting.');
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -79,6 +79,7 @@ function mount(scene,id,socket){
   pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0,belt,chargeMaterials};
 }
 function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,strikeProgress=0}={}){
+ if(weapon.spike)weapon.spike.position.z=weapon.spikeRest+(strikeProgress>=.61&&strikeProgress<=.81?.5:0);
  if(weapon.belt)weapon.belt.position.x=weapon.motion.feedTravel*weaponFeed;
  for(const material of weapon.chargeMaterials)material.emissiveIntensity=.2+5.8*weaponCharge;
  if(!weapon.pivot)return;

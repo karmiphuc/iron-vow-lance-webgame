@@ -1,0 +1,9 @@
+{
+  "baselineCommit": "62d1f58f411753370184245fd112f64f514be557",
+  "baselineMotionSha256": "916a21fd09ed4b5aaea6425f666bd021ec02fd4969faa797810497edf713cb00",
+  "baselineChassisSha256": "475d80d029e2a4e0cec4cf4c6a93a415b124d34ea5f2caba03efe36efec136f8",
+  "candidateMotionSha256": "5317019a0dbcaf496653bbf1fdf619f43e89263538f5b7f601c2266c36c8d8de",
+  "candidateChassisSha256": "7fc3a92b61203541842e16bfe3c2481d29f92846546745768c37bbddd8934d42",
+  "checkerSha256": "52cdf45e7c801e90511ead6f7373a012848fdea1d8b862865228bf6c7ad200ea",
+  "scope": "Real production rigs, variable speed, 90-degree corners, stop/restart, 2.6 m lunge, shove and brace on flat and elevated ground; six leg types at 30 Hz. Pure numerical correctness, no GPU/performance claim."
+}

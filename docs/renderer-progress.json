@@ -41,7 +41,7 @@
       "issue": 11,
       "branch": "renderer/phase1",
       "pr": 18,
-      "status": "review-ready after final evidence assembly",
+      "status": "merged in PR #18",
       "evidence": "design/phase1/reviewed-20261111/manifest.json",
       "runtime_dist_tree": "e2494c105158883d1b60b57a0d185d8fc8552189",
       "simulation_suites": 46,
@@ -54,27 +54,45 @@
         "touch"
       ],
       "native_ipad": "untested; owner directed continuation",
-      "next": "Merge the exact validated PR head after evidence assembly and review."
+      "next": "Complete; native metrics remain explicitly untested under owner direction.",
+      "merge_commit": "2426326abfaa3fd8f5785d69eb8ab3b8d2601ea6"
     },
     {
       "phase": 2,
       "issue": 12,
-      "status": "isolated local preparation; full runtime integration pending Phase 1",
-      "next": "Port merged PR19 plasma/crawl/joint FX and PR20 gait, preserving terrain/brace fixes; wire runtime and all weapons, then verify production action/aim/damage coverage.",
-      "local_preparation": "renderer/phase2 commits through 98c1693; pooled missile endpoint regression reproduced then fixed and pure check passed. Runtime integration pending; preparation must be rebased after Phase 1."
+      "status": "complete in PR #21",
+      "next": "Phase 3 actual rig exports require the specified authoring workflow and source files; see draft #22.",
+      "branch": "renderer/phase2",
+      "pr": 21,
+      "runtime_commit": "fa9f835",
+      "runtime_dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+      "campaign_battles": 30,
+      "campaign_actual_bone_ticks": 123420,
+      "campaign_anomalies": 0,
+      "negative_controls_per_shard": 16,
+      "shards": 4,
+      "current_workshop_commanded": 24,
+      "evidence": "design/phase2/qa/campaign-final-30.json",
+      "visual_evidence": "design/phase2/combat/manifest.json",
+      "context_restore": "actual GPU restore/framebuffer/checkpoint passed"
     },
     {
       "phase": 3,
       "issue": 13,
-      "status": "pending Phase 2; asset work may run in parallel",
+      "status": "draft export validation prepared; actual assets blocked by Blender MCP and missing authoring sources",
       "external_dependency": "Blender MCP on the owner machine and missing external .blend sources. No Blender tools were available in this session. This does not block Phases 0\u20132.",
-      "next": "Gatecrasher first; exact rig v2 contract and <=60k triangles including weapons; integrate every frame and delete temporary adapters/sprites."
+      "next": "Obtain required authoring workflow/sources; Gatecrasher first, then real rig-v2 exports <=60k triangles including weapons.",
+      "branch": "renderer/phase3",
+      "pr": 22
     },
     {
       "phase": 4,
       "issue": 14,
-      "status": "pending Phase 3",
-      "next": "Port live hangar, active-seat bays plus reserve row, ambient workers/lights, condition maintenance, projected HTML hotspots; delete the old backdrop renderer."
+      "status": "draft shared-renderer hangar and bounded fixture smoke prepared; production integration awaits Phase 3",
+      "next": "Integrate actual full catalog/save/UI, then validate production interactions and restoration before replacing old hangar.",
+      "branch": "renderer/phase4",
+      "pr": 23,
+      "evidence": "docs/phase4-hangar-preparation.md"
     }
   ],
   "verification_limits": [
@@ -92,6 +110,12 @@
     "8": "973567c5726a836e827fbe85b3b34675a769fc0b",
     "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a",
     "19": "62feebbbcd7d1b3acf9c90e914adca11acf7c0fc",
-    "20": "5770d8cb66f070ba32588bf48fcdd04b7618ff49"
+    "20": "5770d8cb66f070ba32588bf48fcdd04b7618ff49",
+    "18": "2426326abfaa3fd8f5785d69eb8ab3b8d2601ea6"
+  },
+  "coordination": {
+    "implementation_models": "Three GPT-6.1 Terra agents",
+    "qa_review_models": "Three GPT-6.1 Sol Medium agents",
+    "final_campaign": "Four disjoint CPU batches, 8/8/7/7 battles, same immutable runtime/checker; GPU warmups staggered."
   }
 }

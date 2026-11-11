@@ -1,0 +1,4 @@
+PASS 24 close/steep actual GLB emitter aim cases; prior max 2.0694841645043027 rad, current max 1.4901161193847656e-8 rad
+PASS 341 actual biped/quad long-gun cases (rifle, rail, rampart, watchman, falcon, obelisk, rivet, parallax), 149 retracted poses, max 2.1073424255447017e-8 rad; 43 arm-only unreachable synthetic targets classified separately against gameplay
+PASS 423 bounded actual legal endpoints at pitch 7.4 (384 real shield faces), max 2.9802322387695312e-8 rad, planted drift 0; 90 weighted poses, shoulder/spine rates 4.220664924527588/0.6131881714242261
+PASS 31 physical weapon aliases and sockets, geometry-adjacent emitters, real piledriver stroke and Parallax charge

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "scope": "Offline verification of captured files and original lossless-encoding assertions. No new gameplay or final-source clearance claim.",
+  "capture_manifest_status": "complete",
+  "cases": 1,
+  "expected_cases": 1,
+  "images": 3,
+  "webp_file_hashes_verified": true,
+  "decoded_rgba_hashes_verified": true,
+  "original_raw_png_hashes_recorded": true,
+  "source_image_counts": {
+    "f68b5dff18072d19907e14b3cdf2556f5d99c602": 3
+  },
+  "render_policy_image_counts": {
+    "Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded main-canvas GPU draws omitted, with scene/camera matrix updates; render-target draws and readbacks remain native so cached art is populated. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.": 3
+  },
+  "derived_contact_sheets": []
+}
