@@ -49,7 +49,7 @@ async function capture(config){
  if(previous){const digest=createHash('sha256').update(JSON.stringify(previous)).digest('hex');fs.writeFileSync(path.join(output,'prior-'+digest+'.json'),JSON.stringify(previous,null,2)+'\n');manifest.previous_manifest='prior-'+digest+'.json';}
  const documentHashes=new Map();
  const jobs=selected.map(preset=>({source:config.label,preset,url:new URL(preset.path??'',config.origin).href}));
- if(config['reference-game'])for(const preset of selected.filter(p=>p.page||p.contract!==undefined&&!p.weapon))
+ if(config['reference-game'])for(const preset of selected.filter(p=>p.liveFrame===undefined&&(p.page||p.contract!==undefined&&!p.weapon)))
   jobs.push({source:'reference-game',preset,url:config['reference-game']});
  if(config['reference-bench']&&(!config.preset||config.preset==='rig-bench'))
   jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
@@ -155,18 +155,20 @@ async function capture(config){
     }
     const broken=await page.evaluate(()=>[...window.__captureActiveImages(),...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     let webglSample;
-    if(job.preset.path)webglSample=await page.evaluate(()=>{
+    const battleWebgl=await page.evaluate(()=>Boolean(window.IronVowScene&&typeof battle!=='undefined'&&battle&&document.getElementById('world-scene')));
+    if(battleWebgl)await page.evaluate(()=>{if(!IronVowScene.ready)throw Error('Battle capture has pending live rigs or temporary images');});
+    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(()=>{
      // Sample immediately after a real render: non-preserved WebGL buffers can
      // otherwise clear between tasks even when the compositor retains the frame.
      window.__captureTick();
-     const canvas=document.getElementById('c'),gl=window.__captureWebGL.get(canvas);
-     if(!gl||gl.isContextLost())throw Error('Rig Bench WebGL context is unavailable or lost');
+     const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=canvas.id==='c'?'Rig Bench':'Battle';
+     if(!gl||gl.isContextLost())throw Error(name+' WebGL context is unavailable or lost');
      const sample=document.createElement('canvas');sample.width=sample.height=32;
      const g=sample.getContext('2d');g.drawImage(canvas,0,0,32,32);
      const pixels=g.getImageData(0,0,32,32).data;let bright=0;
      for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
-     if(bright<64)throw Error('Rig Bench WebGL canvas is blank: '+bright+'/1024 non-black samples');
-     return {non_black_samples:bright,total_samples:1024,context_lost:false};
+     if(bright<64)throw Error(name+' WebGL canvas is blank: '+bright+'/1024 non-black samples');
+     return {canvas:canvas.id,non_black_samples:bright,total_samples:1024,context_lost:false};
     });
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));

@@ -13,6 +13,7 @@ const presets=[
  {id:'damage-body-destroyed',contract:1,detailPart:'body',detailLevel:2,advanceSeconds:2},
  ...['right','legs'].flatMap(detailPart=>[1,2].map(detailLevel=>({id:'damage-'+detailPart+(detailLevel===1?'-damaged':'-destroyed'),contract:1,detailPart,detailLevel,advanceSeconds:1}))),
  {id:'burning-wreck',contract:1,wreck:true,advanceSeconds:2},
+ ...[0,5,6,7,8,9,10,12].map(liveFrame=>({id:'live-frame-'+liveFrame,contract:1,liveFrame})),
  {id:'rig-bench',path:'rig-bench/'}
 ];
 // Serialized into the page by Playwright. No production test hooks or save-schema edits.
@@ -31,6 +32,7 @@ function setGamePreset(preset){
  }
  page='contracts';createBattle(preset.contract);selected=0;action='move';
  const ally=battle.units.find(u=>u.team==='ally'),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+ if(preset.liveFrame!==undefined){ally.frame=preset.liveFrame;ally.weapon=FRAMES[ally.frame].weapon;ally.melee=FRAMES[ally.frame].melee;}
  if(!ally||!foe)throw Error('Capture fixture requires an ally and a hostile mech');
  if(typeof focusBattleCamera==='function')focusBattleCamera(ally,true);
  if(preset.overview&&typeof fieldCamera!=='undefined')fieldCamera.overview=true;
