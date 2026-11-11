@@ -31,6 +31,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>save.day),4,'a legacy localStorage career still loads before its first transaction');
 
  const other=await context.newPage();
+ other.setDefaultTimeout(Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000));
  try{
   await other.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
   await other.locator('[data-build-facility="office"]').waitFor();
@@ -65,13 +66,13 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   await tap('#modal-0');
   assert.ok((await saved(page)).sortie,'deployment is durably saved before the other tab reloads');
   await reloadCareer(other);
-  await other.locator('#brace').waitFor({state:'attached'});
+  await other.locator('#brace').waitFor();
   await tap('#brace');
   await checkStale(other);
   const sortie=(await saved(page)).sortie;
   assert.equal(sortie.units[0].brace,true);
   await reloadCareer(other);
-  await other.locator('#brace').waitFor({state:'attached'});
+  await other.locator('#brace').waitFor();
   assert.deepEqual(await other.evaluate(()=>JSON.parse(JSON.stringify(captureSortie()))),sortie);
 
   const compete=(tab,amount)=>tab.evaluate(async cost=>{save.credits-=cost;await persist();return careerStale},amount);
@@ -82,7 +83,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   assert.equal((await saved(page)).credits,winning);
   await other.evaluate(career=>localStorage.setItem(CAREER_STORAGE,JSON.stringify(career)),oldCareer);
   await other.reload({waitUntil:'domcontentloaded'});
-  await other.locator('#brace').waitFor({state:'attached'});
+  await other.locator('#brace').waitFor();
   assert.equal(await other.evaluate(()=>save.credits),winning,'the committed checkpoint takes precedence over a legacy tab write');
 
   await other.addInitScript(()=>{
