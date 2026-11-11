@@ -27,7 +27,7 @@ async function capture(config){
  if(!config.origin)throw Error('Supply --origin from your supported preview; this runner never starts a server');
  if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd:__dirname,encoding:'utf8'}).trim())throw Error('Commit tracked source changes before capturing, so the manifest SHA identifies the source');
  const {chromium}=require('playwright');
- const executablePath=process.env.IRON_VOW_CHROME||(['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync));
+ const executablePath=process.env.IRON_VOW_CHROME||(!fs.existsSync(chromium.executablePath())&&['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync))||undefined;
  const browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),
@@ -101,7 +101,7 @@ async function capture(config){
     if(errors.length)throw Error(errors.join('\n'));
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
-    await page.screenshot({path:path.join(output,filename),animations:'disabled'});
+    await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
     manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash});
     console.log('SAVED '+filename);
    }catch(error){console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push({source:job.source,preset:job.preset.id,viewport,error:error.message});}
