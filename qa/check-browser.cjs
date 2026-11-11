@@ -69,6 +69,7 @@ function browserPath(){
 async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
  const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
+ const cpuFlows=new Set(['checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);
  const timeout=Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000);
  if(!Number.isFinite(timeout)||timeout<1000||timeout>120000)throw Error('IRON_VOW_QA_TIMEOUT_MS must be between 1000 and 120000.');
  const server=origin?null:await serve();
@@ -91,6 +92,14 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,c
     ...(process.env.IRON_VOW_SOFTWARE_QA?{deviceScaleFactor:.5}:{}),
     reducedMotion:'reduce'
    });
+   const cpuFlow=Boolean(process.env.IRON_VOW_SOFTWARE_QA&&cpuFlows.has(scenario.name));
+   if(cpuFlow)await context.addInitScript(()=>{
+    // These cases assert UI/rules or temporary 2D sheet data. The separate visual
+    // cases and capture workflow always submit real GPU frames. Keep actual game
+    // commands, source animation, geometry, picking and image decoding untouched.
+    const withoutGPU=fn=>function(...args){const r=IronVowRenderer.get(),render=r.render,read=r.readRenderTargetPixels;r.render=()=>{};r.readRenderTargetPixels=()=>{};try{return fn.apply(this,args);}finally{r.render=render;r.readRenderTargetPixels=read;}};
+    for(const name of ['IronVowScene','IronVowFoundry'])Object.defineProperty(window,name,{configurable:true,set(api){if(name==='IronVowScene'){const render=api.render;let first=true;api.render=function(...args){if(first){first=false;return render.apply(this,args);}return withoutGPU(render).apply(this,args);};}else for(const method of ['preview','previewAnimated'])api[method]=withoutGPU(api[method]);Object.defineProperty(window,name,{value:api,writable:true,configurable:true});}});
+   });
    const page=await context.newPage(),errors=[];
    page.setDefaultTimeout(timeout);
    page.on('pageerror',e=>errors.push(e.message));
@@ -102,7 +111,7 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,c
     console.log('START '+label);
     await scenario({context,page,mobile,origin:url.href,tap});
     assert.deepEqual(errors,[],'browser and asset errors');
-    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'passed'});
+    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'passed',renderPolicy:cpuFlow?'UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.':'Full GPU rendering'});
     console.log('PASS '+label);
     break;
    }catch(error){
