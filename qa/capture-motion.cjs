@@ -26,6 +26,16 @@ async function main(){
    const page=await context.newPage(),errors=[];page.setDefaultTimeout(120000);
    page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
    try{
+    if(config.kind==='bench'&&action==='hit-reaction')await context.route(address.href,async route=>{
+     const response=await route.fetch(),html=await response.text();
+     const marker='const api=window.__bench=window.__bench||{};';assert.ok(html.includes(marker),'Reference War API marker');
+     const hook=`${marker}
+      api.captureHit=()=>{const b=W.units.find(u=>u.team==='ally'),a=W.units.find(u=>u.team==='enemy');
+       for(const u of W.units){u.cd=100;u.fault.hold=2;}select(b);setCam('follow');
+       RB.camGoal({az:-.52,el:.18,dist:20,fov:38,tgt:V3(b.x,2.6,b.z),k:4},true);
+       VA.BT.fx=realFX;applyDamage(b,'body',Math.max(1,Math.round(b.max.body*.05)),a,'rifle');return b.tag;};`;
+     await route.fulfill({response,body:html.replace(marker,hook)});
+    });
     await context.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',r=>r.fulfill({path:path.join(root,'dist/rig-bench/vendor/three.min.js'),contentType:'text/javascript'}));
     await context.route(/^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com)\//,async r=>{
      const url=r.request().url();if(!cache.has(url))cache.set(url,fetchAsset('curl',['-fsS','--max-time','30',url],{encoding:'buffer',maxBuffer:8*1024*1024}).then(r=>r.stdout));
@@ -56,7 +66,7 @@ async function main(){
      closeModal();focusBattleCamera(a,true);viewZoom=1.65;battle.busy=true;renderBattle();window.__actors={a,b};
      const plan=planVolley;planVolley=(...args)=>{const random=Math.random;Math.random=()=>0;try{return plan(...args)}finally{Math.random=random;}};
     },action);
-    else await page.evaluate(action=>{const B=RB.bench;RB.soundOn=false;B.S.weapon=action.startsWith('attack-')?action.slice(7):'rifle';B.rebuild();B.setView('orbit',true);},action);
+    else await page.evaluate(action=>{const B=RB.bench;RB.soundOn=false;B.S.weapon=action.startsWith('attack-')?action.slice(7):'rifle';B.rebuild();B.setView('orbit',true);if(action==='hit-reaction'){__bench.setMode('war');__bench.newBattle(4242);__bench.setRunning(false);}},action);
     await step(1/30);
     await poll(()=>page.evaluate(()=>[...__motionImages,...document.images].every(i=>!i.src||i.complete)),'Action art did not load');
     let start;
@@ -77,7 +87,7 @@ async function main(){
      const begin=action.startsWith('attack-')?start-.1:start;
      while((await page.evaluate(()=>clock))<begin-1/60)await step(Math.min(1/30,begin-(await page.evaluate(()=>clock))));
     }else{
-     await page.evaluate(action=>{const B=RB.bench;if(action==='walk')B.setWalk(true);else if(action==='destruction')B.wreck();else if(action==='hit-reaction'){B.m.s.pitch.v-=1.4;B.m.flicker=1;VowAnim.impact(VowAnim.partPoint(B.m,'body'),new THREE.Vector3(0,.35,1),'rifle');}else B.fire();},action);
+     await page.evaluate(action=>{const B=RB.bench;if(action==='walk')B.setWalk(true);else if(action==='destruction')B.wreck();else if(action==='hit-reaction'){window.__captureHitTag=__bench.captureHit();__bench.setRunning(true);}else B.fire();},action);
      const wait=action==='attack-blade'?.36:action.startsWith('attack-')?0:0;
      await step(wait);start=await page.evaluate(()=>VowAnim.BT.clock);
     }
@@ -90,7 +100,7 @@ async function main(){
      const data=await page.evaluate(({kind,action})=>{
       const out=document.createElement('canvas');out.width=480;out.height=300;const c=out.getContext('2d');
       let meta;
-      if(kind==='bench'){RB.renderFrame();c.drawImage(RB.R.domElement,0,0,480,300);meta={clock:VowAnim.BT.clock,meleeAge:RB.bench.m.melee?.age,deathAge:RB.bench.S.deathAge,fault:RB.bench.m.fault?.beat};}
+      if(kind==='bench'){RB.renderFrame();c.drawImage(RB.R.domElement,0,0,480,300);meta=RB.mode==='war'?{clock:__bench.state.t,subject:__bench.state.units.find(u=>u.tag===window.__captureHitTag)}:{clock:VowAnim.BT.clock,meleeAge:RB.bench.m.melee?.age,deathAge:RB.bench.S.deathAge,fault:RB.bench.m.fault?.beat};}
       else{
        let x=0,y=H*.2,w=W,h=H*.62;
        if(action==='walk'){const p=project(8.5,0,10);x=p.x-320;y=p.y-370;w=640;h=450;}
@@ -104,8 +114,8 @@ async function main(){
      frames.push({...data.meta,png_sha256:sha(bytes)});
     }
     assert.ok(new Set(frames.map(f=>f.png_sha256)).size>=4,'Filmstrip shows distinct frames');assert.deepEqual(errors,[],'Motion page/console errors');
-    const release=frames.find(f=>Number.isFinite(f.fireAt))?.fireAt;
-    if(Number.isFinite(release))for(let i=0;i<frames.length;i++){const x=i%cols*width,y=Math.floor(i/cols)*(height+24);g.fillStyle='#101820';g.fillRect(x,y,width,24);g.fillStyle='#e4e6e8';g.fillText((i+1)+' / '+(frames[i].clock-release).toFixed(3)+' s from fire',x+8,y+17);}
+    const release=action==='destruction'?frames[0].clock:frames.find(f=>Number.isFinite(f.fireAt))?.fireAt;
+    if(Number.isFinite(release))for(let i=0;i<frames.length;i++){const x=i%cols*width,y=Math.floor(i/cols)*(height+24);g.fillStyle='#101820';g.fillRect(x,y,width,24);g.fillStyle='#e4e6e8';g.fillText((i+1)+' / '+(frames[i].clock-release).toFixed(3)+' s from '+(action==='destruction'?'collapse':'fire'),x+8,y+17);}
     const file=config.label+'-'+action+'.png',bytes=strip.toBuffer('image/png');fs.writeFileSync(path.join(output,file),bytes);
     manifest.strips.push({action,file,sha256:sha(bytes),document_sha256:documentHash,frames});console.log('SAVED '+file);
    }catch(error){manifest.failures.push({action,error:error.stack});console.error('FAILED '+action+': '+error.message);}
