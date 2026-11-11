@@ -67,7 +67,7 @@ async function capture(config){
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
-   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64));
+   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64)&&(!job.preset.paint||job.source==='reference-game'||c.paint_view_verified));
    if(retained&&fs.existsSync(path.join(output,retained.file))){
     const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
     if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
@@ -180,13 +180,22 @@ async function capture(config){
     });
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));
+    // The game may rerender the workshop after lazy assets arrive. Scroll only
+    // after that settles so the recorded paint preset contains its controls.
+    let paintViewVerified=false;
+    if(job.preset.paint&&job.source!=='reference-game')paintViewVerified=await page.evaluate(()=>{
+     const panel=document.querySelector('.paint-panel');if(!panel)throw Error('Paint panel missing');
+     panel.scrollIntoView({block:'center',behavior:'instant'});
+     const rect=panel.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight)throw Error('Paint panel outside viewport');
+     return true;
+    });
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
     if(webglSample){
      webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
     }
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(webglSample?{webgl_sample:webglSample}:{})});
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:true}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
     break;
