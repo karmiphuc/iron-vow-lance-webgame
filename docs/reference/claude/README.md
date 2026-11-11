@@ -49,6 +49,21 @@ Search the file for the quoted name.
 
 The War-mode anomaly checks are `const CHECKS=` and `function checkUnit` / `function checkWorld`. The headless API is `window.__bench` (`runSoak`, `inject`, `step`, `runUntil`, `eventLog`, `report`).
 
+## Directional impacts and electrical faults (3D version of PR #4)
+
+`rig-bench.html` adds the two ideas from PR #4 to the 3D effects. **Port these in Phase 2; do not port the 2D canvas version.**
+
+| Piece | Search for | What it does |
+| --- | --- | --- |
+| Impact profiles | `const IMPACT=` / `function impact` | A white-hot flash, a coloured glow and a point light, then a spark spray thrown **back out of the hit toward the shooter**. Also molten blobs, plus armour chips and smoke on heavy hits. Profiles: rifle 13 sparks, shotgun 20 wide, missile 28 wide with chips, rail 16 fast and narrow in blue-white, blade 18. `BT.lowFx` (on for touch devices) spawns about 60% as many sparks. |
+| Spark spray | `f.spray=` | A cone-shaped directional burst in the shared spark pool. The first 30% are fast white-hot streaks. Sparks are sized to read at battle-camera distance: about 15 cm × 1 m for hot streaks, 10 cm × 0.6 m for the rest. At the base 5 × 38 cm size they were invisible beyond close range. |
+| Arcs | `f.arc=` and the `arcs` loop in `f.update` | A 7-segment jagged bolt between two points: a white core inside a blue halo, re-jittered every 45 ms, with random flicker. Drawn with `depthTest:false` so armour doesn't hide it. Pooled; no allocation per arc. |
+| Fault driver | `function faultFX` / `function surfacePoint` | **Critical** (body under 24%, weapon arm or legs destroyed): one arc every 1.35–1.75 s between part pairs. **Collapse:** arcs on fixed beats (0.07–1.75 s), then a **ground slam** at 0.95 s (`function groundSlam`: dust ring, smoke, scraping sparks, shake). `surfacePoint` pushes the internal part anchors out to the hull so the arcs sit on the armour. Off under reduced motion. Input: `bodyRatio` on `animateMech`. |
+| Hooks | `droneHit`, `applyDamage` (War), `meleeUpdate` | Every landed round and every blade contact calls `impact()` with the direction back to the attacker. |
+| Spark floor | `BT.floor` | Sparks bounce at the actual ground height (the bench pad sits 0.35 m up). In the game, use the terrain height under the hit. |
+
+Verified in headless Chrome with frame-stepped captures of each weapon profile, held and natural arcs, and collapse. War mode gave the same anomaly list as the previous bench, and a 3-battle soak (seed 4242) matched it exactly, so effects never touch the seeded simulation. Zero page errors.
+
 ## Fixed in this copy
 
 Minification had swallowed two statements behind `//` comments. They are restored on their own lines here:
