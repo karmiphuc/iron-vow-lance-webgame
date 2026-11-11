@@ -1,6 +1,7 @@
 # Iron Vow repository
 
 - The development repository is `https://github.com/karmiphuc/iron-vow-lance-webgame`. Its `origin` remote is GitHub.
+- After completing each phase, commit that phase's changes and verification evidence, push to GitHub, and verify the remote branch head before reporting the phase complete. Do not wait for later phases or a final merge to back up completed work.
 - `npm run dev` serves the complete game from `dist/` without runtime dependencies or a build step. Optional QA dependencies are installed with `npm run setup:qa`.
 - Owner approval for this work: local Playwright screenshots are approved, including in the hosted environment ([PR #7 approval](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/7#issuecomment-6785288934)).
 - `docs/sites-export.json` records the imported Sites source and version. Preserve `.openai/hosting.json`; it identifies the existing Iron Vow Site.
