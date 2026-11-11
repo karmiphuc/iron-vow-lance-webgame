@@ -1555,7 +1555,7 @@ const MAT={ // [bench] subset of vow3d.js MAT used by FX
   white:MS({color:C(0xd8d3c2),roughness:.6,metalness:.05})};
 const BS=.9,TILE=3.4,STEP=TILE/2; // vow3d.js 237
 const MECH_MOTION_STEP=[.64,.5,.78,.54,.58,.72]; // vow3d.js enable(): seconds per tile step, per frame
-const BT={fx:null,hitstop:0,cam:{shake:0},clock:0,sound:null}; // [bench] stub of the game's BT battle object
+const BT={fx:null,hitstop:0,cam:{shake:0},clock:0,sound:null,floor:0,lowFx:false}; // [bench] stub of the game's BT battle object; floor = ground height for spark bounce, lowFx = fewer particles
 const pending=[]; // vow3d.js 327
 function stepSound(v){BT.sound&&BT.sound('step',v);} // [bench]
 /* vow3d.js 73-171 */
@@ -1656,7 +1656,49 @@ function animateMech(m,I,dt,t){
   else{let k=1;if(m.flicker>0&&Math.random()<.35)k=.15;else if(I.pilotRatio!==undefined&&I.pilotRatio<.5&&Math.random()<.06)k=.2;vm.emissiveIntensity=base*k;}
   cont.updateMatrixWorld(true);
   for(const [a,bb] of r.pistons){bb.getWorldPosition(_a);a.lookAt(_a);a.getWorldPosition(_a);bb.lookAt(_a);}
+  faultFX(m,I,t);
 }
+/* [bench] electrical faults (new, after PR #4's 2D idea): arcs jump between part anchors on a critically damaged mech,
+   and in a fixed beat pattern while it collapses; the collapse ends in a ground slam. In: I.bodyRatio (0..1, optional). */
+const FAULT_PAIRS=[['body','right'],['right','pilot'],['body','left'],['body','legs'],['pilot','body']];
+const FAULT_BEATS=[.07,.25,.45,.67,.87,1.1,1.43,1.75],SLAM_AT=.95;
+function faultFX(m,I,t){const fx=BT.fx;if(!fx||!fx.arc||RM)return;
+  const F=m.fault||(m.fault={next:-1,beat:0,slam:false,pulse:0,seed:(Math.random()*997)|0});
+  const dead=!I.alive,pd=dead&&I.down==='pilot';
+  if(!dead){F.beat=0;F.slam=false;}
+  const critical=!dead&&((I.bodyRatio!==undefined&&I.bodyRatio<.24)||I.armDead||I.legsDead);
+  let fire=false,strength=.67;
+  if(dead&&!pd){const age=I.deathAge||0;
+    while(F.beat<FAULT_BEATS.length&&age>=FAULT_BEATS[F.beat]){F.beat++;if(age-FAULT_BEATS[F.beat-1]<.12){fire=true;strength=.95;}}
+    if(!F.slam&&age>=SLAM_AT){F.slam=true;groundSlam(m);}}
+  else if(critical){const period=1.35+(F.seed%5)*.1;if(F.next<0)F.next=t+period*Math.random();if(t>=F.next){fire=true;F.next=t+period;}}
+  else F.next=-1;
+  if(!fire)return;
+  const pair=FAULT_PAIRS[(F.pulse++ + F.seed)%FAULT_PAIRS.length],a=surfacePoint(m,pair[0]),b=surfacePoint(m,pair[1]);
+  fx.arc(a,b,dead?.18:.24,strength*(m.scale||1));for(const q of [a,b]){fx.glow(q,0x9fe0ff,1.3,.2);fx.sparks(q,5,3,0xbfeaff,.3,.25);}fx.light(a.clone().lerp(b,.5),0x8fd8ff,dead?7:4);}
+// part anchors sit inside the armour: push them out radially from the spine axis to roughly the hull surface
+function surfacePoint(m,part){const p=partPoint(m,part),c=m.rig.spine.getWorldPosition(V3()),d=V3(p.x-c.x,0,p.z-c.z);
+  if(d.lengthSq()<.04)d.set(Math.sin(m.yaw),0,Math.cos(m.yaw));return p.addScaledVector(d.normalize(),.85*(m.scale||1));}
+function groundSlam(m){const fx=BT.fx,p=m.rig.spine.getWorldPosition(V3());const g=V3(p.x,m.cont.position.y,p.z),heavy=HEAVY[m.build.mods?m.build.mods.legs:m.frame];
+  fx.airwave(g,8*heavy,.38,.4);fx.dustwave(g,20,6*heavy,2.4*heavy,0xb8ad99,.62,1.8,.6);fx.smoke(V3(g.x,g.y+.3,g.z),4,2.6*heavy,0x8f877b,.4,.6,1.8,.8);
+  fx.spray(V3(g.x,g.y+.15,g.z),V3(Math.sin(m.yaw),.25,Math.cos(m.yaw)),12,7,1.1,SPARK_HOT,.5);BT.cam.shake=Math.max(BT.cam.shake,.5*heavy);}
+
+/* [bench] directional impacts (new, after PR #4's 2D idea): white-hot flash plus a spark spray thrown back out of the hit
+   along the incoming direction, with a per-weapon profile. back = unit vector from the hit toward the shooter. */
+const SPARK_HOT=[0xfff4d6,0xffc17d,0xffdc9f,0xe98b49],SPARK_RAIL=[0xedffff,0xa6eaff,0x71c9e9,0xdff8ff];
+const IMPACT={
+  rifle:  {n:13,spd:9, cone:.55,flash:1.6,light:5, cols:SPARK_HOT},
+  shotgun:{n:20,spd:7, cone:.95,flash:2.4,light:7, cols:SPARK_HOT,chips:2},
+  missile:{n:28,spd:12,cone:1.15,flash:3.2,light:9, cols:SPARK_HOT,chips:3},
+  rail:   {n:16,spd:15,cone:.38,flash:2.6,light:10,cols:SPARK_RAIL},
+  blade:  {n:18,spd:7, cone:.7, flash:2.0,light:8, cols:SPARK_HOT}};
+function impact(p,back,kind){const fx=BT.fx;if(!fx||!fx.spray)return;const P=IMPACT[kind]||IMPACT.rifle,k=BT.lowFx?.6:1;
+  const rail=P.cols===SPARK_RAIL,d=V3().copy(back).normalize();fx.glow(p,rail?0xdff8ff:0xfff0d0,P.flash,.14);fx.glow(p,rail?0x7fdcff:0xffa75d,P.flash*1.8,.22);fx.light(p,rail?0x9fe6ff:0xffa04a,P.light);
+  fx.spray(p,d,Math.round(P.n*k),P.spd,P.cone,P.cols,.55);
+  // molten blobs: a few glowing sprites thrown along the spray, outliving the flash
+  for(let i=0;i<Math.round(5*k);i++){const v=V3(d.x+rnd(-1,1)*P.cone*.6,d.y+rnd(-.2,.6),d.z+rnd(-1,1)*P.cone*.6).normalize().multiplyScalar(P.spd*rnd(.25,.6));fx.glow(p.clone().addScaledVector(v,.02),i%2?P.cols[1]:P.cols[0],rnd(.35,.6),rnd(.22,.36),v);}
+  if(P.chips){fx.debris(p,P.chips,4);fx.smoke(p,3,1.4,0x8a847a,.4,.6,1.1,.25);}
+  else if(rail)fx.smoke(p,2,1.1,0x9fb3c0,.3,.5,.9,.15);}
 
 /* vow3d.js 173-222 */
 function FX(scene,o){
@@ -1676,19 +1718,43 @@ function FX(scene,o){
   const ringG=new T.RingGeometry(.85,1,64);ringG.rotateX(-PI/2);
   const rings=mkPool(12,()=>({o:new T.Mesh(ringG,new T.MeshBasicMaterial({blending:T.AdditiveBlending,transparent:true,depthWrite:false,side:T.DoubleSide})),life:0}));
   const decalG=new T.PlaneGeometry(1,1);decalG.rotateX(-PI/2);
+  // [bench] air shockwave: an expanding hemisphere that is clear in the middle and only faintly visible at its rim (fresnel),
+  // so it reads as a pressure wave in the air rather than a glowing ring. Dust is a separate, single wall (f.dustwave).
+  const airG=new T.SphereGeometry(1,28,10,0,PI*2,0,PI/2);
+  const airMat=()=>new T.ShaderMaterial({uniforms:{color:{value:new T.Color()},opacity:{value:0}},transparent:true,depthWrite:false,
+    vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 color;uniform float opacity;varying vec3 vN;varying vec3 vV;void main(){float rim=pow(1.0-abs(dot(normalize(vN),normalize(vV))),3.0);gl_FragColor=vec4(color,rim*opacity);}'});
+  const airs=mkPool(o.airs||6,()=>({o:new T.Mesh(airG,airMat()),life:0}));
   const decals=mkPool(o.decals||16,()=>({o:new T.Mesh(decalG,new T.MeshBasicMaterial({map:scorchTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2})),life:0}));
   const misG=new T.Group();
   const missiles=mkPool(8,()=>{const g=new T.Group();cy(g,.08,.08,.7,MAT.white,0,0,0,PI/2,0,0,8,false);mesh(g,new T.ConeGeometry(.08,.22,8),MAT.amber,0,0,.46,PI/2,0,0,false);const fl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffb050,blending:T.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.z=-.45;fl.scale.setScalar(.7);g.add(fl);return{o:g,a:V3(),b:V3(),c:V3(),life:0,dur:1,trail:0,done:null};});
+  // [bench] electrical arcs: a jagged chain of stretched additive boxes (a white core inside a blue glow), re-jittered every 45 ms
+  const ARC_N=7,arcMat=c=>new T.MeshBasicMaterial({color:c,blending:T.AdditiveBlending,transparent:true,depthWrite:false,depthTest:false}); // drawn over the armour, like a glow
+  const arcs=mkPool(o.arcs||8,()=>{const g=new T.Group(),core=[],halo=[];for(let i=0;i<ARC_N;i++){const a=new T.Mesh(streakG,arcMat(0xeaffff)),b=new T.Mesh(streakG,arcMat(0x5fbfff));a.renderOrder=b.renderOrder=996;g.add(a,b);core.push(a);halo.push(b);}
+    return {o:g,core,halo,a:V3(),b:V3(),pts:Array.from({length:ARC_N+1},()=>V3()),life:0,max:1,strength:1,frame:-1};});
+  const _u=V3(),_w=V3(),_d=V3();
   const lights=[];for(let i=0;i<(o.lights||3);i++){const l=new T.PointLight(0xffa040,0,28,2);scene.add(l);lights.push(l);}lights.i=0;
   const col=new T.Color();
+  // [bench] directional spark spray: n sparks thrown along dir inside a cone, colours cycled from cols; the first 30% are fast, long, white-hot
+  f.spray=(p,dir,n,spd,cone,cols,life=.45)=>{_d.copy(dir).normalize();if(Math.abs(_d.y)<.95)_u.set(0,1,0);else _u.set(1,0,0);_u.cross(_d).normalize();_w.copy(_d).cross(_u).normalize();
+    for(let k=0;k<n;k++){const s=sparks.next(),hot=k<n*.3,a=rnd(0,PI*2),r=cone*Math.sqrt(Math.random())*(hot?.6:1);
+      s.o.position.copy(p);s.v.copy(_d).addScaledVector(_u,Math.cos(a)*r).addScaledVector(_w,Math.sin(a)*r).normalize().multiplyScalar(spd*(hot?rnd(1.1,1.6):rnd(.45,1.1)));
+      // sized to read at battle-camera distance: hot streaks ~15 cm thick and ~1 m long, the rest ~10 cm by ~0.6 m (base spark is 5 x 38 cm)
+      s.life=s.max=life*rnd(.6,1.15)*(hot?.85:1);s.o.material.color.setHex(hot?cols[0]:cols[1+(k%(cols.length-1))]);s.o.scale.set(hot?3:2,hot?3:2,hot?2.6:rnd(1.2,1.9));s.o.visible=true;}};
+  f.arc=(a,b,life=.16,strength=1)=>{const s=arcs.next();s.a.copy(a);s.b.copy(b);s.life=s.max=life;s.strength=strength;s.frame=-1;s.o.visible=true;};
   f.light=(p,c,i)=>{const l=lights[lights.i++%lights.length];l.position.copy(p);l.color.setHex(c);l.intensity=i;};
   f.glow=(p,c,size,life,v)=>{const g=glow.next();g.o.position.copy(p);g.o.material.color.setHex(c);g.size=size;g.o.scale.setScalar(size);g.life=g.max=life;g.v.copy(v||_a.set(0,0,0));g.o.visible=true;};
   f.fire=(p,size,life,v,rise)=>{const g=fire.next();g.o.position.copy(p);g.size=size;g.o.scale.setScalar(size*.3);g.life=g.max=life;g.v.copy(v||_a.set(0,rise||1,0));g.o.material.rotation=rnd(0,6);g.o.visible=true;};
   f.smoke=(p,n,size,c,op,rise,life,spread)=>{for(let k=0;k<n;k++){const s=smoke.next();s.o.position.copy(p).add(_a.set(rnd(-1,1)*spread,rnd(0,.3),rnd(-1,1)*spread));s.v.set(rnd(-1,1)*spread*.6,rise*rnd(.6,1.4),rnd(-1,1)*spread*.6);s.life=s.max=life*rnd(.7,1.3);s.size=size*rnd(.7,1.3);s.op=op;s.o.material.color.setHex(c);s.o.material.rotation=rnd(0,6);s.o.visible=true;}};
-  f.sparks=(p,n,spd,c,up=0,life=.5)=>{for(let k=0;k<n;k++){const s=sparks.next();s.o.position.copy(p);s.v.set(rnd(-1,1),rnd(-1,1)+up,rnd(-1,1)).normalize().multiplyScalar(spd*rnd(.35,1.2));s.life=s.max=life*rnd(.5,1.3);s.o.material.color.setHex(c);s.o.visible=true;}};
+  f.sparks=(p,n,spd,c,up=0,life=.5)=>{for(let k=0;k<n;k++){const s=sparks.next();s.o.position.copy(p);s.v.set(rnd(-1,1),rnd(-1,1)+up,rnd(-1,1)).normalize().multiplyScalar(spd*rnd(.35,1.2));s.life=s.max=life*rnd(.5,1.3);s.o.material.color.setHex(c);s.o.scale.set(1,1,1);s.o.visible=true;}}; // [bench] scale reset: spray reuses the pool
   f.debris=(p,n,spd)=>{for(let k=0;k<n;k++){const d=debris.next();d.o.position.copy(p);d.v.set(rnd(-1,1),rnd(.6,1.6),rnd(-1,1)).multiplyScalar(spd*rnd(.5,1));d.w.set(rnd(-9,9),rnd(-9,9),rnd(-9,9));d.life=rnd(1.6,2.6);d.o.scale.setScalar(rnd(.6,1.6));d.o.visible=true;}};
   f.streak=(a,b,c,w,flight,len)=>{const s=streaks.next();s.a.copy(a);s.b.copy(b);s.life=s.max=flight;s.w=w;s.len=len;s.o.material.color.setHex(c);s.o.visible=true;};
   f.beam=(a,b,c,w,life)=>{const s=beams.next();s.o.position.copy(a);s.o.lookAt(b);s.len=a.distanceTo(b);s.w=w;s.o.scale.set(w,w,s.len);s.life=s.max=life;s.o.material.color.setHex(c);s.o.visible=true;};
+  f.airwave=(p,r,life=.4,op=.35,c=0xe8eef2)=>{const s=airs.next();s.o.position.set(p.x,p.y||0,p.z);s.r=r;s.op=op;s.life=s.max=life;s.o.material.uniforms.color.value.setHex(c);s.o.scale.set(.2,.12,.2);s.o.visible=true;};
+  // n soft puffs launched outward along the ground from a small starting ring; drag slows them, so they pile up into a rolling dust wall
+  f.dustwave=(p,n,spd,size,c,op,life,r0=.4)=>{for(let k=0;k<n;k++){const s=smoke.next(),a=k/n*PI*2+rnd(-.25,.25),ca=Math.cos(a),sa=Math.sin(a);
+    s.o.position.set(p.x+ca*r0,(p.y||0)+rnd(.05,.25)*size,p.z+sa*r0);s.v.set(ca*spd*rnd(.75,1.25),rnd(.15,.55)*spd*.25,sa*spd*rnd(.75,1.25));
+    s.life=s.max=life*rnd(.75,1.2);s.size=size*rnd(.75,1.25);s.op=op;s.o.material.color.setHex(c);s.o.material.rotation=rnd(0,6);s.o.visible=true;}};
   f.ring=(p,c,r,life)=>{const s=rings.next();s.o.position.set(p.x,(p.y||0)+.06,p.z);s.r=r;s.life=s.max=life;s.o.material.color.setHex(c);s.o.scale.setScalar(.3);s.o.visible=true;};
   f.scorch=(p,size)=>{const s=decals.next();s.o.position.set(p.x,.035+Math.random()*.01,p.z);s.o.rotation.y=rnd(0,6);s.o.scale.set(size,1,size);s.o.material.opacity=.9;s.o.visible=true;};
   f.missile=(a,b,h,dur,done)=>{const s=missiles.next();s.a.copy(a);s.b.copy(b);s.c.copy(a).lerp(b,.5);s.c.y=Math.max(a.y,b.y)+h;s.life=0;s.dur=dur;s.done=done;s.trail=0;s.o.visible=true;s.o.position.copy(a);};
@@ -1696,16 +1762,22 @@ function FX(scene,o){
     for(const g of glow){if(!g.o.visible)continue;g.life-=dt;if(g.life<=0){g.o.visible=false;continue;}const u=g.life/g.max;g.o.material.opacity=u;g.o.scale.setScalar(g.size*(1.15-.15*u));g.o.position.addScaledVector(g.v,dt);}
     for(const g of fire){if(!g.o.visible)continue;g.life-=dt;if(g.life<=0){g.o.visible=false;continue;}const u=1-g.life/g.max;g.o.material.opacity=1-u;g.o.scale.setScalar(g.size*(.35+u*.9));g.o.position.addScaledVector(g.v,dt);g.v.multiplyScalar(Math.exp(-dt*2));}
     for(const s of smoke){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max;s.o.position.addScaledVector(s.v,dt);s.v.x*=Math.exp(-dt*1.5);s.v.z*=Math.exp(-dt*1.5);s.o.scale.setScalar(s.size*(.45+u*1.6));s.o.material.opacity=s.op*Math.min(1,u*6)*(1-u);}
-    for(const s of sparks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}s.v.y-=18*dt;s.o.position.addScaledVector(s.v,dt);_a.copy(s.o.position).add(s.v);s.o.lookAt(_a);s.o.material.opacity=s.life/s.max;if(s.o.position.y<.03){s.o.position.y=.03;s.v.y*=-.3;s.v.x*=.5;s.v.z*=.5;}}
+    for(const s of sparks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}s.v.y-=18*dt;s.o.position.addScaledVector(s.v,dt);_a.copy(s.o.position).add(s.v);s.o.lookAt(_a);s.o.material.opacity=s.life/s.max;const fl=(BT.floor||0)+.03;if(s.o.position.y<fl){s.o.position.y=fl;s.v.y*=-.3;s.v.x*=.5;s.v.z*=.5;}} // [bench] BT.floor: bounce on the pad, not under it
+    for(const s of arcs){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}
+      const fr=Math.floor((s.max-s.life)/.045);if(fr!==s.frame){s.frame=fr;const len=s.a.distanceTo(s.b);_d.subVectors(s.b,s.a).normalize();if(Math.abs(_d.y)<.95)_u.set(0,1,0);else _u.set(1,0,0);_u.cross(_d).normalize();_w.copy(_d).cross(_u).normalize();
+        const amp=Math.min(.45,len*.22)*s.strength;for(let i=0;i<=ARC_N;i++){const q=i/ARC_N,e=(i===0||i===ARC_N)?0:Math.sin(PI*q)*amp;s.pts[i].copy(s.a).lerp(s.b,q).addScaledVector(_u,rnd(-1,1)*e).addScaledVector(_w,rnd(-1,1)*e);}
+        for(let i=0;i<ARC_N;i++){const p0=s.pts[i],p1=s.pts[i+1],L=Math.max(.02,p0.distanceTo(p1));for(const [m,w] of [[s.core[i],.09],[s.halo[i],.42]]){m.position.copy(p0).lerp(p1,.5);m.lookAt(p1);m.scale.set(w*s.strength,w*s.strength,L);}}}
+      const u=s.life/s.max,flick=Math.random()<.25?.35:1;for(const m of s.core)m.material.opacity=u*flick;for(const m of s.halo)m.material.opacity=u*.45*flick;}
     for(const d of debris){if(!d.o.visible)continue;d.life-=dt;if(d.life<=0){d.o.visible=false;continue;}d.v.y-=18*dt;d.o.position.addScaledVector(d.v,dt);d.o.rotation.x+=d.w.x*dt;d.o.rotation.z+=d.w.z*dt;if(d.o.position.y<.08){d.o.position.y=.08;d.v.y*=-.3;d.v.x*=.55;d.v.z*=.55;d.w.multiplyScalar(.5);}}
     for(const s of streaks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const q=1-s.life/s.max;const head=_a.copy(s.a).lerp(s.b,q),tail=_b.copy(s.a).lerp(s.b,Math.max(0,q-s.len));s.o.position.copy(head).lerp(tail,.5);s.o.lookAt(head);s.o.scale.set(s.w,s.w,Math.max(.05,head.distanceTo(tail)));s.o.material.opacity=1;}
     for(const s of beams){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=s.life/s.max;s.o.material.opacity=u;s.o.scale.set(s.w*(.4+.6*u),s.w*(.4+.6*u),s.len);}
+    for(const s of airs){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max,e=.2+(1-Math.pow(1-u,3))*s.r;s.o.scale.set(e,e*.55,e);s.o.material.uniforms.opacity.value=s.op*Math.pow(1-u,1.6);}
     for(const s of rings){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max;s.o.scale.setScalar(.3+(1-Math.pow(1-u,2))*s.r);s.o.material.opacity=(1-u)*.9;}
     for(const s of missiles){if(!s.o.visible)continue;s.life+=dt;const q=Math.min(1,s.life/s.dur);const p0=_a.copy(s.a).lerp(s.c,q),p1=_b.copy(s.c).lerp(s.b,q);const pos=p0.lerp(p1,q);s.o.lookAt(pos);s.o.position.copy(pos);
       s.trail-=dt;if(s.trail<=0){s.trail=.025;f.smoke(pos,1,.9,0xb9b2a6,.45,.3,1.1,.05);}if(q>=1){s.o.visible=false;s.done&&s.done(pos.clone());}}
     for(const l of lights)l.intensity*=Math.exp(-dt*11);
   };
-  f.clearDecals=()=>decals.forEach(d=>d.o.visible=false);
+  f.clearDecals=()=>{decals.forEach(d=>d.o.visible=false);arcs.forEach(s=>s.o.visible=false);};
   return f;
 }
 
@@ -1733,7 +1805,7 @@ function meleeUpdate(m,t,dt){const M=m.melee;if(!M)return;M.age+=dt;const a=M.ag
   else if(m.wpn.glow)m.wpn.glow.emissiveIntensity=damp(m.wpn.glow.emissiveIntensity,1.6,4,dt);
   M.prev=tip;
   if(!M.hit&&a>=MEL.hit){M.hit=true;const mt=M.target,p=mt.isVector3?tip.clone():partPoint(mt,M.part); // [bench] point target
-fx.sparks(p,40,13,0xffb04a,.4,.6);fx.sparks(p,14,8,0xfff0c0,.3,.4);fx.glow(p,0xffd090,5,.16);fx.light(p,0xff9a40,16);
+impact(p,V3(m.cont.position.x-p.x,.6,m.cont.position.z-p.z),'blade');fx.sparks(p,14,8,0xfff0c0,.3,.4);fx.glow(p,0xffd090,5,.16);fx.light(p,0xff9a40,16); // [bench] directional blade impact
     const tc=mt.isVector3?mt:mt.cont.position,dir=V3(tc.x-m.cont.position.x,0,tc.z-m.cont.position.z).normalize();if(!mt.isVector3){mt.s.kx.v+=dir.x*3.6;mt.s.kz.v+=dir.z*3.6;mt.s.pitch.v-=2;} // [bench] point target
     BT.onMeleeContact&&BT.onMeleeContact(m,p);m.s.comp.v-=1.4;
     BT.hitstop=.085;BT.cam.shake=Math.max(BT.cam.shake,.6);}
@@ -1743,12 +1815,12 @@ function explode(p,big,m){const fx=BT.fx;
   for(let i=0;i<(big?14:6);i++)fx.fire(p.clone().add(V3(rnd(-1,1),rnd(-.5,1),rnd(-1,1)).multiplyScalar(big?1.4:.6)),big?rnd(5,8):rnd(2.4,3.8),rnd(.4,.8),V3(rnd(-1,1),rnd(.5,2),rnd(-1,1)).multiplyScalar(big?2.5:1.4));
   fx.sparks(p,big?60:22,big?16:10,0xffb04a,.5,.7);fx.debris(p,big?14:5,big?9:6);
   fx.smoke(p,big?14:5,big?4.5:2.6,0x3a3632,.65,big?2.2:1.4,big?3.5:2,big?1.4:.6);
-  if(big){fx.ring(V3(p.x,0,p.z),0xff8a3a,9,.7);fx.scorch(p,6.5);BT.cam.shake=Math.max(BT.cam.shake,.9);}
+  if(big){const g=V3(p.x,BT.floor||0,p.z);fx.airwave(g,12,.42,.45,0xf4e6d2);fx.dustwave(g,22,8,2.8,0x8c8274,.65,2.1,.9);fx.scorch(p,6.5);BT.cam.shake=Math.max(BT.cam.shake,.9);}
   else BT.cam.shake=Math.max(BT.cam.shake,.35);
   if(m){m.s.pitch.v-=big?0:1.2;m.s.comp.v-=big?0:.9;}
 }
 function onStep(m,p,i,amt=1){const fx=BT.fx,heavy=HEAVY[m.build.mods?m.build.mods.legs:m.frame]*amt; // [bench] step weight follows the LEGS module (the game never mixes modules)
-  fx.smoke(V3(p.x,.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);fx.ring(V3(p.x,0,p.z),0xb9ad98,1.6*heavy,.55);m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
+  fx.smoke(V3(p.x,.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);{const g=V3(p.x,BT.floor||0,p.z);fx.dustwave(g,Math.round(6+3*heavy),2.6*heavy,1.05*heavy,0xc0b5a1,.42,1.2,.35);}m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
 
 /* [bench] exports */
 function processPending(t){for(let i=pending.length-1;i>=0;i--)if(t>=pending[i].at){const f=pending[i].fn;pending.splice(i,1);f();}}
@@ -1759,7 +1831,7 @@ function battleCam(W2,H2,viewZoom=1,tiles=10){const mob=W2<760,fov=mob?40:30;
   const span=tiles*TILE*(mob?1.2:1.42*1.06),fitW=span/(2*Math.tan(hf/2)),fitH=tiles*TILE*(mob?.9:1.15)/(2*Math.tan(fov*PI/360));
   return {fov,az:mob?0:PI/4,el:mob?.8:.66,dist:Math.max(fitW,fitH)/viewZoom,tgt:V3(0,0,mob?.6:1),offY:mob?.06:.04,mob};}
 window.VowAnim={BT,MEL,BS,TILE,STEP,MECH_MOTION_STEP,FH,OH,HEAVY,PARTS,makeMech,setWeapon,setKits,setPartState,wreckMech,animateMech,meleeKeys,lungeK,
-  later:(d,fn)=>pending.push({at:BT.clock+d,fn}),FX,fireFX,meleeUpdate,explode,onStep,partStateOf,partPoint,processPending,clearPending,battleCam,glowTex,smokeTex,fireTex,scorchTex,
+  later:(d,fn)=>pending.push({at:BT.clock+d,fn}),FX,fireFX,meleeUpdate,explode,onStep,impact,IMPACT,partStateOf,partPoint,processPending,clearPending,battleCam,glowTex,smokeTex,fireTex,scorchTex,
   util:{clamp,lerp,damp,smooth,smoother,wrapA,dampAngle,spr,C,V3}};
 })();
 
@@ -1954,6 +2026,7 @@ const sndGate={};
 RB.sfx=function(type,v){if(!live())return;const now=performance.now();if(RB.sndBudget){const k=type;if(sndGate[k]&&now-sndGate[k]<RB.sndBudget)return;sndGate[k]=now;}try{(SND[type]||SND.click)(v);}catch(e){}};
 RB.setSound=v=>{RB.soundOn=v;try{localStorage.setItem('ironvow.sound',v?'on':'off');}catch(e){}if(v)RB.ensureAudio();else if(actx&&actx.state==='running')actx.suspend();};
 VA.BT.sound=(k,v)=>RB.sfx(k,v);
+VA.BT.lowFx=RB.coarse; // [bench] touch devices (iPad) spawn ~60% of the impact sparks
 
 /* ---------- orbit camera with presets ---------- */
 RB.cam={az:-.75,el:.16,dist:17,tgt:V3(0,3.4,0),fov:45,goal:null,shake:0,blend:8,user:false};
@@ -2103,7 +2176,8 @@ for(const [x,z] of [[.85,.85],[-.85,.85],[.85,-.85],[-.85,-.85]]){RB.box(drone,.
 const dS={knock:V3(),flash:0,hits:0};
 function updateDrone(dt,t){const base=V3(-1+4.2*Math.sin(t*.31),5.6+.7*Math.sin(t*.9),15+1.6*Math.sin(t*.47));dS.knock.multiplyScalar(Math.exp(-dt*3));drone.position.copy(base).add(dS.knock);
   drone.rotation.set(Math.sin(t*.47)*.12+dS.knock.z*.2,t*.2,Math.cos(t*.31)*.15-dS.knock.x*.2);rotors.forEach(r=>r.rotation.y+=dt*40);dS.flash=Math.max(0,dS.flash-dt*6);droneMat.emissiveIntensity=dS.flash*1.4;}
-function droneHit(power){dS.flash=1;dS.hits++;dS.knock.add(V3(0,0,power));}
+function droneHit(power,kind){dS.flash=1;dS.hits++;dS.knock.add(V3(0,0,power));
+  if(kind&&m){const p=drone.position.clone(),mz=m.wpn.muzzle.getWorldPosition(V3());VA.impact(p.add(V3(0,0,-.55)),mz.sub(p).setY(.4),kind);}} // [bench] every landed round, including missiles, uses its directional impact profile
 // aim-sweep reticle
 const ret=new T.Mesh(new T.RingGeometry(.32,.4,24),new T.MeshBasicMaterial({color:VA.util.C(0x5fd4c4),transparent:true,opacity:.85,depthTest:false,side:T.DoubleSide}));ret.renderOrder=990;ret.visible=false;scene.add(ret);
 
@@ -2115,7 +2189,7 @@ function fire(){if(!m||!alive()||S.lineup)return;RB.ensureAudio();
   if(m.firing&&clock<m.firing)return;
   const tp=drone.position.clone();m.aim.point.copy(tp);m.aim.until=clock+1.6;m.firing=clock+.9;
   VA.later(.07,()=>{if(!m)return;VA.fireFX(m,drone.position.clone(),S.weapon,'body');RB.sfx(S.weapon);});
-  (FLIGHT[S.weapon]||[.1]).forEach(d=>VA.later(.07+d,()=>droneHit(S.weapon==='rail'?2.4:.3)));
+  (FLIGHT[S.weapon]||[.1]).forEach(d=>VA.later(.07+d,()=>droneHit(S.weapon==='rail'?2.4:.3,S.weapon)));
   setStatus();}
 function strike(){if(!m||!alive()||S.lineup||m.melee)return;RB.ensureAudio();
   const tp=V3(vpos.x,3,vpos.z+5);strikeTarget.copy(tp);
@@ -2272,7 +2346,7 @@ B.renderMetrics=()=>renderMetrics();
 /* ---------- per-frame ---------- */
 const onStep=(mm,p,i,amt)=>{const q=p.clone();q.x-=vpos.x;q.z-=vpos.z;VA.onStep(mm,q,i,amt);};
 B.update=function(rdt){let dt=rdt;const BT=VA.BT;if(BT.hitstop>0){BT.hitstop-=rdt;dt*=.06;}
-  clock+=dt;BT.clock=clock;BT.fx=fx;const t=clock;
+  clock+=dt;BT.clock=clock;BT.fx=fx;BT.floor=S.board||S.lineup?0:RB.PAD;const t=clock;
   updateDrone(dt,t);
   if(S.lineup){line.forEach(q=>{G.position.set(0,0,0);VA.animateMech(q,{pos:V3(q.lx,0,q.lz||0),moving:false,speed:0,stepLen:VA.STEP,heading:0,face:0,brace:0,alive:true,noPlant:true,ground:0},dt,t);q.cont.rotation.y=0;});}
   else if(m){
@@ -2285,7 +2359,7 @@ B.update=function(rdt){let dt=rdt;const BT=VA.BT;if(BT.hitstop>0){BT.hitstop-=rd
     const dead=S.parts.body>=2||S.parts.pilot>=2;if(dead)S.deathAge+=dt;
     const down=S.parts.body>=2?'body':S.parts.pilot>=2?'pilot':null;
     VA.animateMech(m,{pos,moving:S.walking,speed,stepLen:VA.STEP,heading:0,face:0,brace:0,alive:!dead,deathAge:S.deathAge,down,pilotRatio:S.parts.pilot?(S.parts.pilot===1?.4:0):1,
-      armDead:S.parts.right>=2,legsDead:S.parts.legs>=2,shieldDead:S.parts.left>=2,ground:S.board?0:RB.PAD,onStep},dt,t);
+      armDead:S.parts.right>=2,legsDead:S.parts.legs>=2,shieldDead:S.parts.left>=2,ground:S.board?0:RB.PAD,onStep,bodyRatio:[1,.2,0][S.parts.body]},dt,t);
     if(dead&&S.deathAge>(down==='pilot'?.2:1)&&!m.wrecked){m.wrecked=true;if(down!=='pilot'){VA.wreckMech(m);fx.scorch(V3(0,RB.PAD,0),5);}else m.build.stackMat.emissiveIntensity=0;}
     // shift back onto the belt and scroll the belt texture by the same distance
     G.position.set(-vpos.x,0,-vpos.z);G.updateMatrixWorld(true);
@@ -2350,7 +2424,7 @@ function disposeScene(){if(!scene)return;
     for(const mt of ms){for(const k of ['map','emissiveMap','normalMap','roughnessMap'])if(mt[k]&&!seen.has(mt[k])){seen.add(mt[k]);mt[k].dispose();}if(!seen.has(mt)){seen.add(mt);mt.dispose();}}});
   scene.traverse(o=>{if(o.isLight&&o.shadow&&o.shadow.map){o.shadow.map.dispose();o.shadow.map=null;}});   // shadow map render target
   if(scene.environment){const rt=scene.environment._rt;scene.environment.dispose();if(rt)rt.dispose();}scene=null;realFX=null;WR.scene=null;}
-const NULLFX=(()=>{const n=()=>{};return {light:n,glow:n,fire:n,smoke:n,sparks:n,debris:n,streak:n,beam:n,ring:n,scorch:n,missile:n,update:n,clearDecals:n};})();
+const NULLFX=(()=>{const n=()=>{};return {light:n,glow:n,fire:n,smoke:n,sparks:n,debris:n,streak:n,beam:n,ring:n,scorch:n,missile:n,spray:n,arc:n,airwave:n,dustwave:n,update:n,clearDecals:n};})();
 const WR=RB.war={scene:null};
 
 /* ---------- seeded PRNG (mulberry32): every sim decision draws from W.rng ---------- */
@@ -2512,7 +2586,7 @@ function applyDamage(b,part,dmg,a,kind,o={}){
   log('hit',a,b,{part,dmg,left:b.hp[part],redir});
   // visuals: the game's hit reaction (vow3d battle3D) + event-driven part state
   const m=b.m,am=a&&a.m;if(am){const dir=V3(b.x-a.x,0,b.z-a.z).normalize();m.s.kx.v+=dir.x*2.2;m.s.kz.v+=dir.z*2.2;}m.s.pitch.v-=1.4;if(part==='legs')m.s.comp.v-=1.6;if(part==='right')m.s.arm.v+=2;
-  const fx=VA.BT.fx;fx.sparks(VA.partPoint(m,part),14,9,0xffc070,.4,.5);if(part==='pilot'){m.flicker=1;fx.sparks(VA.partPoint(m,'pilot'),18,6,0x9fe8ff,.6,.6);}
+  const fx=VA.BT.fx;{const hp0=VA.partPoint(m,part);VA.impact(hp0,am?V3(a.x-b.x,.35,a.z-b.z):V3(0,1,0),VA.IMPACT[kind]?kind:'rifle');}if(part==='pilot'){m.flicker=1;fx.sparks(VA.partPoint(m,'pilot'),18,6,0x9fe8ff,.6,.6);}
   if(kind==='missile')VA.explode(VA.partPoint(m,part),false,m);
   const st=VA.partStateOf(b,part);if(VA.setPartState(m,part,st)&&st===2&&part!=='body'){const pp=VA.partPoint(m,part);fx.debris(pp,part==='pilot'?3:6,7);fx.sparks(pp,26,9,0xffb04a,.5,.6);fx.smoke(pp,4,1.8,0x45403a,.5,1.2,2,.4);}
   if(before>0&&b.hp[part]<=0&&part!=='body'&&part!=='pilot')log('part',a,b,{part});
@@ -2581,7 +2655,7 @@ function actOrder(){const f=W.tick&1?'enemy':'ally';return W.units.filter(u=>u.t
 function tick(){
   const t0=performance.now();
   let dt=DT;if(W.hitstop>0){W.hitstop-=DT;dt*=.06;}
-  W.tick++;W.t+=dt;VA.BT.clock=W.t;VA.BT.fx=W.visual&&!soak?realFX:NULLFX;VA.BT.hitstop=0;
+  W.tick++;W.t+=dt;VA.BT.clock=W.t;VA.BT.floor=0;VA.BT.fx=W.visual&&!soak?realFX:NULLFX;VA.BT.hitstop=0;
   // scheduled rounds land
   if(W.shots.length){const due=W.shots.filter(s=>s.at<=W.t);if(due.length){W.shots=W.shots.filter(s=>s.at>W.t);for(const s of due)resolveShot(s);}}
   const ord=actOrder();
@@ -2615,7 +2689,7 @@ function animate(u,dt){const m=u.m;let pos=V3(u.x,0,u.z);
   // like the game (battle3D passes TILE / step duration), the gait cadence runs at the legs' nominal speed while the body eases in and out
   const vnom=u.vmax*(u.hp.legs<=0?0:u.hp.legs/u.max.legs<.5?.6:1);
   VA.animateMech(m,{pos,moving:u.alive&&u.moving,speed:vnom,stepLen:VA.STEP,heading:u.heading??u.yaw,face:u.face,brace:0,alive:u.alive,deathAge,down:u.down,pilotRatio:u.hp.pilot/u.max.pilot,
-    armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,shieldDead:u.hp.left<=0,ground:0,onStep},dt,W.t);
+    armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,shieldDead:u.hp.left<=0,ground:0,onStep,bodyRatio:u.hp.body/u.max.body},dt,W.t);
   VA.meleeUpdate(m,W.t,dt);
   if(!u.alive&&deathAge>(u.down==='pilot'?.2:1)&&!m.wrecked){m.wrecked=true;if(u.down!=='pilot'){VA.wreckMech(m);VA.BT.fx.scorch(pos,5);}else m.build.stackMat.emissiveIntensity=0;}
   // smoke for damaged units (visual only; vow3d battle3D)
