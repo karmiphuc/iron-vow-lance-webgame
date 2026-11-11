@@ -3,10 +3,11 @@ const simulate=require('./sim-harness.cjs');
 
 const sim=simulate();
 const {run}=sim;
-assert.ok(run(`FRAMES.every((frame,index)=>!playerHull(index)||
+assert.ok(run(`FRAMES.every((frame,index)=>!playerHull(index)||index===SHOGUN_FRAME||
  Number.isInteger(frame.cost)&&frame.cost>=50000&&frame.cost<=400000)`));
 assert.equal(run('Math.min(...FRAMES.filter((_,i)=>hullOnMarket(i)).map(f=>f.cost))'),50000);
-assert.equal(run('Math.max(...FRAMES.filter((_,i)=>hullOnMarket(i)).map(f=>f.cost))'),400000);
+assert.equal(run('Math.max(...FRAMES.filter((_,i)=>hullOnMarket(i)).map(f=>f.cost))'),500000);
+assert.equal(run('FRAMES[SHOGUN_FRAME].cost'),500000);
 assert.deepEqual(JSON.parse(run('JSON.stringify([FRAMES[3].cost,FRAMES[4].cost])')),[350000,300000]);
 assert.ok(run('!acquireHull(3)&&!acquireHull(4)&&!assignChassis(0,3)&&!assignChassis(0,4)'));
 assert.equal(run('save.credits'),4500,'a rejected purchase leaves the account intact');

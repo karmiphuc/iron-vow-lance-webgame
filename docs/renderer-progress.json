@@ -15,6 +15,12 @@
       "source": "Reply to the spacing/stride design question",
       "instruction": "Allow spacing and clearance adjustments",
       "effect": "May adapt visual tile pitch and stride clearance to prevent overlaps on legal campaign paths; retain gameplay rules and action timings."
+    },
+    {
+      "date": "2026-11-11",
+      "source": "Direct Phase 2 instruction",
+      "instruction": "For Phase 2, do pay attn to the PR 20 and ur existing bugs. Trust Claude's work highly, and reliable",
+      "effect": "Use PR20 corrected gait as baseline; give Claude author evidence substantial weight and focus on integration and known defects."
     }
   ],
   "phases": [
@@ -34,22 +40,23 @@
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "draft PR #18: approved 6.8 m pitch and brace fix implemented; final verification in progress",
-      "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase.",
+      "status": "draft PR #18; execution restored, final gates in progress",
+      "next": "Finish main/SHOGUN reconciliation and final immutable browser/simulation/30-battle/capture gates, then merge exact validated head.",
       "development_suites_passed": 45,
       "development_scene_seeds": [
         4242,
         4243,
         4244
       ],
-      "development_scene_findings": "First full 30-battle run: 131459 ticks, one context, zero overlap/NaN/bounds/stuck or browser errors; ten Behemoth rear-foot brace anomalies. Raw failure retained. Targeted support-turn/brace fix and 45 suites pass; immutable rerun and final browser/capture evidence pending.",
-      "handoff": "docs/phase1-development.md"
+      "development_scene_findings": "Seven real-terrain battles / 30051 ticks had zero required anomalies before a QA Citadel barrage-lock loop exhausted the driver budget. Driver corrected. Restarted six fault probes and seed 4242 passed; complete 30-battle result remains pending.",
+      "handoff": "docs/renderer-runtime-handoff-20261111.md"
     },
     {
       "phase": 2,
       "issue": 12,
-      "status": "pending Phase 1",
-      "next": "Port reference animation/effects including final PR #9; map every WEAPONS entry, retain reference timings, add actual scene/anomaly coverage and delete replaced effects."
+      "status": "isolated local preparation; full runtime integration pending Phase 1",
+      "next": "Port merged PR19 plasma/crawl/joint FX and PR20 gait, preserving terrain/brace fixes; wire runtime and all weapons, then verify production action/aim/damage coverage.",
+      "local_preparation": "renderer/phase2 commits through 98c1693; pooled missile endpoint regression reproduced then fixed and pure check passed. Runtime integration pending; preparation must be rebased after Phase 1."
     },
     {
       "phase": 3,
@@ -71,13 +78,15 @@
     "Blender/source requirements require resolution before Phase 3 can be completed."
   ],
   "site": {
-    "published_version": 98,
+    "published_version": "refresh required; last observed 98 before concurrent owner imports",
     "deployment_made_in_this_work": false,
     "source_sync_pending": true
   },
   "pr_outcomes": {
     "4": "closed unmerged",
     "8": "973567c5726a836e827fbe85b3b34675a769fc0b",
-    "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a"
+    "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a",
+    "19": "62feebbbcd7d1b3acf9c90e914adca11acf7c0fc",
+    "20": "5770d8cb66f070ba32588bf48fcdd04b7618ff49"
   }
 }

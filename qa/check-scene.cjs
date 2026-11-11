@@ -10,7 +10,7 @@ const live=[0,5,6,7,8,9,10,12];
  const root=path.resolve(__dirname,'..'),git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
  const source={commit:git('rev-parse','HEAD'),distTree:git('rev-parse','HEAD:dist'),distDirty:Boolean(git('status','--porcelain','--','dist')),checkerSha256:crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex')};
  if(count>=30){assert.equal(source.distDirty,false,'The formal soak requires committed, immutable application source');assert.equal(tileOverride,null,'The formal soak tests the production pitch');}
- const report={schema:1,url,source,clockHz:30,tileOverride,renderPolicy:'First scene rendered at 0.5 DPR for software-GL correctness; subsequent bone soak skips GPU submissions. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
+ const report={schema:1,url,source,clockHz:30,tileOverride,renderPolicy:'First scene rendered at 0.5 DPR for software-GL correctness; subsequent bone soak skips unobserved GPU submissions and render-target readbacks. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
  const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});
  try{
   const page=await browser.newPage({viewport:{width:1366,height:1024},deviceScaleFactor:.5});
@@ -31,14 +31,14 @@ const live=[0,5,6,7,8,9,10,12];
   for(const frames of [[0,5,6],[7,8,9],[10,12,0]]){
    await page.evaluate(frames=>__ironVow.start({seed:4242,frames}),frames);
    await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
-   await page.evaluate(()=>{IronVowRenderer.get().render=()=>{};});
+   await page.evaluate(()=>{IronVowRenderer.get().render=()=>{};IronVowRenderer.get().readRenderTargetPixels=()=>{};});
   }
   assert.equal(await page.evaluate(()=>__sceneWebglContexts),1,'One actual WebGL context across all eight frames and previews');
   await page.evaluate(()=>__qaStopNativeFrames());
   const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
   await page.evaluate(()=>{
    // No mock bones or animation inputs. Only discard the unobserved GPU submission in this CPU correctness run.
-   const renderer=IronVowRenderer.get();renderer.render=()=>{};
+   const renderer=IronVowRenderer.get();renderer.render=()=>{};renderer.readRenderTargetPixels=()=>{};
    window.__qa={ticks:0,anomalies:[],keys:new Set(),feet:new Map(),motion:new Map(),frames:new Set(),weapons:new Set(),commands:[],commandErrors:[],circleCandidates:0};
    const hull=points=>{
     const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]),p=[...points].sort((a,b)=>a[0]-b[0]||a[1]-b[1]),lower=[],upper=[];
@@ -54,12 +54,12 @@ const live=[0,5,6,7,8,9,10,12];
     }return true;
    };
    const afterFrame=()=>{
-    const s=__ironVow.snapshot(),q=__qa;q.ticks++;
+    const s=__ironVow.snapshot(),q=__qa;q.ticks++;const lower=s.size&&IronVowScene.world(-.5,-.5),upper=s.size&&IronVowScene.world(s.size.width-.5,s.size.depth-.5);
     const fail=(type,u,detail)=>{const key=type+'|'+u.id;if(q.keys.has(key))return;q.keys.add(key);q.anomalies.push({type,unit:u.id,frame:u.frame,time:s.time,detail});};
     for(const u of s.units.filter(u=>u.live)){
      q.frames.add(u.frame);
      if(!u.finite||![u.vx,u.vz,...(u.root||[]),...(u.matrix||[])].every(Number.isFinite))fail('nan',u,'non-finite unit or bone matrix');
-     if(u.vx<-.5||u.vz<-.5||u.vx>s.size.width-.5||u.vz>s.size.depth-.5)fail('bounds',u,[u.vx,u.vz]);
+     if(u.vx<-.5||u.vz<-.5||u.vx>s.size.width-.5||u.vz>s.size.depth-.5||u.root[0]<lower.x||u.root[0]>upper.x||u.root[2]<lower.z||u.root[2]>upper.z)fail('bounds',u,{logical:[u.vx,u.vz],root:u.root});
      if(u.alive)for(const f of u.feet){
       const key=u.id+'/'+f.side,planted=!f.swing&&!f.settle,previous=q.feet.get(key),error=f.ankle[1]-f.ground-f.ankleHeight;
       if(planted&&Math.abs(error)>.15)fail('footGround',u,{side:f.side,error,ankle:f.ankle,goal:f.target,moving:u.moving,attacking:u.attacking});
@@ -101,7 +101,7 @@ const live=[0,5,6,7,8,9,10,12];
      const leg=m.rig.legs[0],state=m.legs[0];state.swing=false;state.poseLift=false;state.settle=null;
      q.observe();shift(leg.an,new THREE.Vector3(type==='footSlide'?.6:0,type==='footGround'?.8:0,0));
     }
-    if(type==='bounds'){u.x=u.vx=battle.size.width+1;}
+    if(type==='bounds'){m.cont.position.x=IronVowScene.world(battle.size.width+1,u.z).x;m.cont.updateMatrixWorld(true);}
     if(type==='overlap'){
      const other=battle.units.find(v=>v.id==='ally1'),object=IronVowScene.models.get(other.id).object;
      other.x=other.vx=u.x;other.z=other.vz=u.z;object.position.copy(m.cont.position);object.updateMatrixWorld(true);
@@ -145,12 +145,13 @@ const live=[0,5,6,7,8,9,10,12];
     if(s.turn!==turn){turn=s.turn;used.clear();}
     const ally=s.units.find(u=>u.team==='ally'&&u.alive&&!used.has(u.id));
     if(!ally){await page.evaluate(()=>{void __ironVow.endTurn().catch(e=>__qa.commandErrors.push(String(e)));});await page.clock.runFor(1000);continue;}
-    const choices=await page.evaluate(id=>__ironVow.choices(id),ally.id),attack=choices.attacks.sort((a,b)=>a.hp-b.hp)[0],move=choices.moves.sort((a,b)=>a.score-b.score)[0];
+    const choices=await page.evaluate(id=>{const u=battle.units.find(u=>u.id===id),choices=__ironVow.choices(id);choices.attacks=choices.attacks.filter(a=>!['BARRAGE NEXT ROUND','FIRE AT MARKER'].includes(barrageStatus(u,battle.units.find(t=>t.id===a.target),weapon(a.weapon))));return choices;},ally.id),attack=choices.attacks.sort((a,b)=>a.hp-b.hp)[0],move=choices.moves.sort((a,b)=>a.score-b.score)[0];
     if(attack){await page.evaluate(({id,attack})=>{__qa.commands.push({type:'attack',id,...attack});__qa.weapons.add(attack.weapon);void __ironVow.attack(id,attack.target,attack.part,attack.mode).catch(e=>__qa.commandErrors.push(String(e)));},{id:ally.id,attack});}
     else if(move&&move.score<choices.currentScore){await page.evaluate(({id,move})=>{__qa.commands.push({type:'move',id,...move});void __ironVow.move(id,move.x,move.z).catch(e=>__qa.commandErrors.push(String(e)));},{id:ally.id,move});}
     else{used.add(ally.id);continue;}
     await page.clock.runFor(1000);
    }
+   if(!done)report.incompleteBattle=await page.evaluate(meta=>({...meta,snapshot:__ironVow.snapshot(),ticks:__qa.ticks,anomalies:__qa.anomalies,commands:__qa.commands,commandErrors:__qa.commandErrors}),{seed,frames,contract,terrainSeed});
    assert.ok(done,'Decision limit exceeded');
    const result=await page.evaluate(()=>({terrainSeed:battle?.terrainSeed??save.sortie?.terrainSeed,ticks:__qa.ticks,anomalies:__qa.anomalies,frames:[...__qa.frames],weapons:[...__qa.weapons],commands:__qa.commands,commandErrors:__qa.commandErrors,circleCandidates:__qa.circleCandidates,result:__ironVow.snapshot().result}));
    report.battles.push({seed,frames,contract,...result,terrainSeed});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');

@@ -245,8 +245,8 @@ table.m td:first-child{color:var(--muted)}
       <div class="btnrow"><button class="btn" id="btnRandMix">Randomise mix</button><button class="btn" id="btnUnmix">Pure chassis</button></div>
     </div>
     <div><h3>Upgrade kit</h3><div class="btnrow" id="kitRow"></div></div>
-    <div><h3>Leg IK · kit bug preview</h3><div class="btnrow"><button class="btn" data-ik="0" aria-pressed="true">As shipped</button><button class="btn" data-ik="1" aria-pressed="false">Fix preview</button></div>
-      <p class="note" style="margin-top:6px">VowChassis.solveLeg sets the hip with Euler order XYZ, so planted feet miss their IK target by 5–9 cm at rest and up to ~0.6 m on quad legs. The preview flips the hip order to ZXY on the built bones. Not in the game.</p></div>
+    <div><h3>Leg IK · hip order</h3><div class="btnrow"><button class="btn" data-ik="1" aria-pressed="true">Game (ZXY)</button><button class="btn" data-ik="0" aria-pressed="false">Old bug (XYZ)</button></div>
+      <p class="note" style="margin-top:6px">The game's <code>VowChassis.solveLeg</code> sets the hip in Euler order ZXY (fixed in PR #1), so planted feet land exactly on their IK target. <b>Old bug</b> brings back the earlier XYZ order, which missed by 5–9 cm at rest and up to ~0.6 m on quad legs, for comparison.</p></div>
     <p class="note">Legs own pelvis, hips, gait and leg HP. Core owns torso, head, back units and body HP. Arms own pauldrons, arms, hands and arm HP. Stats for mixed builds are bench-only stand-ins; the game has none yet.</p>
   </div>
 </section>
@@ -295,7 +295,7 @@ table.m td:first-child{color:var(--muted)}
 <section class="sheet right wide" id="shSoak" hidden aria-label="Soak test">
   <div class="sh-head"><h2>Soak test</h2><button class="sh-x" data-close aria-label="Close">×</button></div>
   <div class="sh-body">
-    <div class="btnrow"><span class="wlabel">LEG IK</span><button class="btn" data-ik="0" aria-pressed="true">As shipped</button><button class="btn" data-ik="1" aria-pressed="false">Fix preview</button></div>
+    <div class="btnrow"><span class="wlabel">LEG IK</span><button class="btn" data-ik="1" aria-pressed="true">Game (ZXY)</button><button class="btn" data-ik="0" aria-pressed="false">Old bug (XYZ)</button></div>
     <div class="btnrow"><button class="btn" id="soak10">Run 10</button><button class="btn" id="soak50">Run 50</button><button class="btn warn" id="soakStop" hidden>Stop</button></div>
     <div class="prog" aria-hidden="true"><i id="soakBar"></i></div>
     <p class="note" id="soakNote">Runs battles back to back at max speed with rendering throttled. Seeds follow from the seed box.</p>
@@ -621,11 +621,11 @@ function solveLeg(rig,D,leg,t,pitch){
 
 /* ======================= WARDEN: assault brawler ======================= */
 const DIMS=[
-  {stance:.92,py:3.2,spY:.32,neck:[0,2.12,.42],shX:1.5,shY:1.78,up:1.1,fo:1.1,hipX:.84,legA:1.5,legB:1.55,ankleH:.36,restX:.74,restZ:.1,lift:.7,reverse:false,scale:1},
-  {py:3.32,spY:.25,neck:[0,.95,.72],shX:1.14,shY:1.1,up:.98,fo:1.0,hipX:.5,legA:1.45,legB:1.72,ankleH:.3,restX:.54,restZ:.04,lift:.9,reverse:true,scale:.98},
+  {stance:.92,py:3.2,spY:.32,neck:[0,2.12,.42],shX:1.5,shY:1.78,up:1.1,fo:1.1,hipX:.84,legA:1.5,legB:1.55,ankleH:.36,restX:.74,restZ:.1,lift:.7,reverse:false,scale:1,walkDrop:.1},
+  {py:3.32,spY:.25,neck:[0,.95,.72],shX:1.14,shY:1.1,up:.98,fo:1.0,hipX:.5,legA:1.45,legB:1.72,ankleH:.3,restX:.54,restZ:.04,lift:.9,reverse:true,scale:.98,walkDrop:.16},
   {stance:.86,py:2.68,spY:.36,neck:[0,1.86,.62],shX:1.86,shY:1.5,up:1.0,fo:1.0,hipX:1.04,legA:1.25,legB:1.3,ankleH:.42,restX:.96,restZ:.08,lift:.5,reverse:false,scale:1},
-  {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1},
-  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1},
+  {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1,walkDrop:.1},
+  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1,walkDrop:.22},
   {quad:true,py:2.7,spY:.6,neck:[0,1.98,.36],shX:1.3,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.32,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[0,.5,.5,0],sway:.05}
 ];
 function warden(K,M){
@@ -1421,7 +1421,7 @@ function mergeStatic(root,Bc,anchors){root.updateMatrixWorld(true);const anc=o=>
 const BUILDERS=[warden,kestrel,basilisk,valkyrie,oni,behemoth];
 /* Every chassis is three modules: LEGS (pelvis, hips, legs, gait), CORE (torso, head, back units) and ARMS (pauldrons, arms, hands).
    Dimensions are split the same way, so any legs can carry any core and any arms. */
-const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','sway','scale'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so'];
+const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','sway','scale','walkDrop'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so'];
 function composeDims(l,c,a){const D={};for(const [src,keys] of [[l,LEG_KEYS],[c,CORE_KEYS],[a,ARM_KEYS]])for(const k of keys)if(DIMS[src][k]!==undefined)D[k]=DIMS[src][k];
   // combat stance: biped feet planted wider than the shoulders, toes turned out, limited by what the legs can reach with a bent knee
   if(!D.quad){const vert=D.py+(D.hipY??-.1)-D.ankleH,maxH=Math.sqrt(Math.max(0,(.95*(D.legA+D.legB))**2-vert*vert));D.restX=Math.max(D.restX,Math.min(D.shX*(D.stance??1.1),D.hipX+maxH));D.toe=D.toe??.17;}
@@ -1540,6 +1540,10 @@ const glowTex=tex(64,64,g=>{const r=g.createRadialGradient(32,32,0,32,32,32);r.a
 const smokeTex=tex(128,128,g=>{for(let i=0;i<14;i++){const x=64+rnd(-22,22),y=64+rnd(-22,22),rr=rnd(22,40),r=g.createRadialGradient(x,y,0,x,y,rr);r.addColorStop(0,'rgba(255,255,255,.35)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,128,128);}});
 const fireTex=tex(64,64,g=>{const r=g.createRadialGradient(32,36,0,32,32,32);r.addColorStop(0,'rgba(255,250,220,1)');r.addColorStop(.25,'rgba(255,200,90,.95)');r.addColorStop(.55,'rgba(240,90,20,.55)');r.addColorStop(1,'rgba(120,20,0,0)');g.fillStyle=r;g.fillRect(0,0,64,64);});
 const scorchTex=tex(128,128,g=>{const r=g.createRadialGradient(64,64,0,64,64,64);r.addColorStop(0,'rgba(8,6,5,.85)');r.addColorStop(.5,'rgba(15,12,10,.55)');r.addColorStop(1,'rgba(20,15,10,0)');g.fillStyle=r;g.fillRect(0,0,128,128);for(let i=0;i<40;i++){g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=rnd(1,3);g.beginPath();g.moveTo(64,64);const a=rnd(0,7),l=rnd(20,60);g.lineTo(64+Math.cos(a)*l,64+Math.sin(a)*l);g.stroke();}});
+// [bench] plasma ribbon cross-section, created once and shared by every arc ribbon: pale blue-white core, saturated blue falloff, transparent edges
+const plasmaTex=tex(64,4,g=>{const gr=g.createLinearGradient(0,0,64,0),mid=a=>'rgba(40,110,255,'+a+')';
+  gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.42,mid(.55));gr.addColorStop(.5,'rgba(170,215,255,1)');gr.addColorStop(.58,mid(.55));gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,4);});
+plasmaTex.anisotropy=1;
 /* vow3d.js 44-51 */
 const geoCache=new Map();
 function bevelGeo(w,h,d,s0){const key=[w,h,d,s0].map(v=>(v||0).toFixed(3)).join('|');if(geoCache.has(key))return geoCache.get(key);
@@ -1595,6 +1599,18 @@ function meleeKeys(a){if(a<0||a>MEL.end)return null;
   const o={w:a>MEL.hold?1-q*.999:1};for(const k in P0)o[k]=lerp(A[k],B[k],q);return o;}
 function lungeK(a){if(a<0||a>MEL.end)return 0;if(a<MEL.wind)return -.15*smooth(a/MEL.wind);if(a<MEL.strike)return lerp(-.15,1,smooth((a-MEL.wind)/(MEL.strike-MEL.wind)));if(a<MEL.hold)return 1;return 1-smooth((a-MEL.hold)/(MEL.end-MEL.hold));}
 function liftArc(q){return q<.42?1-Math.pow(1-q/.42,3):1-Math.pow((q-.42)/.58,3);}
+/* [walk fix] a foothold on the floor no further than lim from the hip: keeps its height and slides toward the hip's ground point */
+function onFloorWithin(p,hip,lim){const dy=p.y-hip.y,hx=p.x-hip.x,hz=p.z-hip.z,hd=Math.hypot(hx,hz),mx=Math.sqrt(Math.max(0,lim*lim-dy*dy));
+  if(hd<=mx||hd<1e-6)return p;const k=mx/hd;p.x=hip.x+hx*k;p.z=hip.z+hz*k;return p;}
+/* [walk fix] gait start: the cycle phase that keeps every planted foot inside half a stride for the rest of its stance,
+   preferring swings that start early. Planted feet stay where they are; only the cycle's starting point is chosen. */
+function startPhase(m,cont,D,stepLen,dir){let best=m.gait.phase,bc=1e9;
+  for(let k=0;k<32;k++){const g=k/32;let c=0;
+    m.rig.legs.forEach((l,i)=>{const ph=((g+(l.phase??i*.5))%1+1)%1,L=m.legs[i],home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ));
+      if(ph<.5){const off=(L.planted.x-home.x)*dir.x+(L.planted.z-home.z)*dir.z,end=off-(.5-ph)*2*stepLen;c+=Math.max(0,-end-stepLen*.5)*10+Math.max(0,off-stepLen*.5)*10;}
+      else c+=(ph-.5);});
+    if(c<bc-1e-9){bc=c;best=g;}}
+  return best;}
 /* in: {pos,moving,speed,stepLen,heading,face,brace,alive,deathAge,down,pilotRatio,armDead,legsDead,shieldDead,ground,onStep,noPlant} */
 function animateMech(m,I,dt,t){
   const r=m.rig,cont=m.cont,S=m.s,sc=m.scale,D=m.dims;
@@ -1607,26 +1623,49 @@ function animateMech(m,I,dt,t){
   cont.updateMatrixWorld(true);
   spr(S.comp,80,11,dt);S.comp.x=clamp(S.comp.x,-.4,.12);spr(S.pitch,55,7,dt);spr(S.arm,60,7,dt);spr(S.kx,40,9,dt);spr(S.kz,40,9,dt);
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
+  // [walk fix] root velocity from the root's frame-to-frame motion (walking, melee lunge, knockback), so footholds go where the hips are heading
+  const vel=m.vel||(m.vel=V3());if(m.lastPos&&dt>0){_c.set(cont.position.x-m.lastPos.x,0,cont.position.z-m.lastPos.z).divideScalar(dt);vel.lerp(_c,1-Math.exp(-dt*20));}
+  (m.lastPos||(m.lastPos=V3())).copy(cont.position);
+  const fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw)),vs=Math.hypot(vel.x,vel.z),dir=vs>.3?V3(vel.x/vs,0,vel.z/vs):fwd;
+  // [walk fix] gait start: begin the cycle where every planted foot can stay down for the rest of its stance (no foot left a full stride behind)
+  if(I.moving&&!dead&&!m.gait.on)m.gait.phase=startPhase(m,cont,D,I.stepLen,dir);
+  m.gait.on=I.moving&&!dead;
   if(I.moving)m.gait.phase+=dt*I.speed/(2*I.stepLen);
-  const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
+  const g=m.gait.phase;
+  // [walk fix] pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's
+  const p=r.pelvis,brace=I.brace;
+  const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
+  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
+  p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
+  cont.updateMatrixWorld(true);
+  const reach=(D.legA+D.legB)*sc;
   let settling=m.legs.some(L=>L.settle);
   r.legs.forEach((l,i)=>{const L=m.legs[i];const home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ)).clone();let pitch=0;
+    const hip=l.hip.getWorldPosition(V3());
+    // [walk fix] a planted foot the hips have pulled near the end of the leg's reach steps at once (catch-up step) instead of being dragged
+    const ph0=((g+(l.phase??i*.5))%1+1)%1,lifting=I.moving&&!dead&&ph0>=.5;   // this foot's regular swing starts this frame anyway
+    const strained=!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
+    if(strained){L.settle={from:L.planted.clone(),t:0,dur:.26};settling=true;}
     if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;}
-    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;L.settle=null;
-      if(ph<.5){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
-      else{if(!L.swing){L.swing=true;L.from.copy(L.planted);}const q=(ph-.5)/.5;L.to.copy(home).addScaledVector(fwd,I.stepLen*.5);L.to.y=home.y;
-        L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;pitch=q<.3?.45*Math.sin(PI*q/.3):q>.62?-.35*Math.sin(PI*(q-.62)/.38):0;}}
-    else{if(L.swing){L.swing=false;L.planted.copy(L.foot);L.planted.y=home.y;}
-      if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
-        if(q>=1){L.planted.copy(home);L.settle=null;I.onStep&&I.onStep(m,home,i,.45);}}
+    else if(L.settle&&(!dead||pd)){// catch-up or settle step toward where home will be when the foot lands (also while a downed pilot's mech kneels)
+      L.settle.t+=dt/(L.settle.dur||.42);const q=Math.min(1,L.settle.t),land=home.clone().addScaledVector(vel,(1-q)*(L.settle.dur||.42));
+      if(I.moving)land.addScaledVector(dir,I.stepLen*.25);land.y=home.y;
+      L.foot.lerpVectors(L.settle.from,land,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
+      if(q>=1){L.foot.y=home.y;L.planted.copy(onFloorWithin(L.foot,hip,reach*.985));L.foot.copy(L.planted);L.settle=null;L.swing=false;I.onStep&&I.onStep(m,L.planted,i,.45);}}
+    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;
+      if(ph<.5){if(L.swing){L.swing=false;L.planted.copy(onFloorWithin(L.to,hip,reach*.985));I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
+      else{const q=(ph-.5)/.5;if(!L.swing){L.swing=true;L.from.copy(L.planted);L.q0=q;}
+        // [walk fix] a swing that starts late (gait start) runs its whole path in the time left, so the foot never jumps
+        const qq=L.q0<.98?clamp((q-L.q0)/(1-L.q0),0,1):1;L.to.copy(home).addScaledVector(dir,I.stepLen*.5);L.to.y=home.y;
+        L.foot.lerpVectors(L.from,L.to,smoother(qq));L.foot.y+=liftArc(qq)*D.lift*sc;pitch=qq<.3?.45*Math.sin(PI*qq/.3):qq>.62?-.35*Math.sin(PI*(qq-.62)/.38):0;}}
+    else{// [walk fix] a foot in the air when the walk stops finishes as a settle step instead of snapping down mid-stride
+      if(L.swing){L.swing=false;L.settle={from:L.foot.clone(),t:0,dur:.3};settling=true;L.foot.copy(L.foot);}
       else{if(!dead&&!settling&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}
+    // [walk fix] a foot in the air never aims past the leg's reach
+    if(L.swing||L.settle){const d=hip.distanceTo(L.foot);if(d>reach*.99)L.foot.sub(hip).multiplyScalar(reach*.99/d).add(hip);}
     const loc=cont.worldToLocal(_b.copy(L.foot));solveLeg(m,l,loc,pitch*w);});
   // kusazuri hinge with the thighs so the skirt never cuts through a moving leg
   if(r.skirts)VC.skirtPose(r.skirts);
-  const p=r.pelvis,brace=I.brace;
-  const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
-  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1)+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
-  p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   m.aim.blend=damp(m.aim.blend,t<m.aim.until&&!dead?1:0,t<m.aim.until?9:2.5,dt);
   let ay=0,el=0;
   if(m.aim.blend>.01){const sp=r.spine.getWorldPosition(_c);const dx=m.aim.point.x-sp.x,dz=m.aim.point.z-sp.z,dy=m.aim.point.y-(sp.y+1.4*sc);const hz=Math.hypot(dx,dz)||1;
@@ -1660,6 +1699,7 @@ function animateMech(m,I,dt,t){
 }
 /* [bench] electrical faults (new, after PR #4's 2D idea): arcs jump between part anchors on a critically damaged mech,
    and in a fixed beat pattern while it collapses; the collapse ends in a ground slam. In: I.bodyRatio (0..1, optional). */
+const JOINT_PARTS=['right','left','legs'],_jd=V3(); // joint-short sites: elbows and knees (_jd = scratch outward direction)
 const FAULT_PAIRS=[['body','right'],['right','pilot'],['body','left'],['body','legs'],['pilot','body']];
 const FAULT_BEATS=[.07,.25,.45,.67,.87,1.1,1.43,1.75],SLAM_AT=.95;
 function faultFX(m,I,t){const fx=BT.fx;if(!fx||!fx.arc||fx.isNull||RM)return; // [bench] isNull: soak stub
@@ -1667,15 +1707,22 @@ function faultFX(m,I,t){const fx=BT.fx;if(!fx||!fx.arc||fx.isNull||RM)return; //
   const dead=!I.alive,pd=dead&&I.down==='pilot';
   if(!dead){F.beat=0;F.slam=false;}
   const critical=!dead&&((I.bodyRatio!==undefined&&I.bodyRatio<.24)||I.armDead||I.legsDead);
-  let fire=false,strength=.67;
+  let fire=false,strength=.67,bi=-1; // bi: index of the collapse beat that fires (-1 while merely critical)
   if(dead&&!pd){const age=I.deathAge||0;
-    while(F.beat<FAULT_BEATS.length&&age>=FAULT_BEATS[F.beat]){F.beat++;if(age-FAULT_BEATS[F.beat-1]<.12){fire=true;strength=.95;}}
+    while(F.beat<FAULT_BEATS.length&&age>=FAULT_BEATS[F.beat]){F.beat++;if(age-FAULT_BEATS[F.beat-1]<.12){fire=true;strength=.95;bi=F.beat-1;}}
     if(!F.slam&&age>=SLAM_AT){F.slam=true;groundSlam(m);}}
   else if(critical){const period=1.35+(F.seed%5)*.1;if(F.next<0)F.next=t+period*Math.random();if(t>=F.next){fire=true;F.next=t+period;}}
   else F.next=-1;
   if(!fire)return;
-  const pair=FAULT_PAIRS[(F.pulse++ + F.seed)%FAULT_PAIRS.length],a=surfacePoint(m,pair[0]),b=surfacePoint(m,pair[1]);
-  fx.arc(a,b,dead?.18:.24,strength*(m.scale||1));for(const q of [a,b]){fx.glow(q,0x4f9fff,1.5,.22);fx.sparks(q,Math.max(2,Math.round(5*(BT.lowFx?.6:1))),3,0x8fc8ff,.3,.25);}fx.light(a.clone().lerp(b,.5),0x4f9fff,dead?7:4);}
+  // [bench] variant mix (visual only, Math.random, never the sim RNG): critical = B plasma 60 / C spark crawl 25 / D joint short 15;
+  // collapse = mostly B, C/D on some beats, but the first and the last two beats are always B at full strength
+  const rv=Math.random(),dying=bi>=0,forceB=dying&&(bi===0||bi>=FAULT_BEATS.length-2);
+  const kind=forceB?'B':dying?(rv<.7?'B':rv<.85?'C':'D'):(rv<.6?'B':rv<.85?'C':'D'),sc=strength*(m.scale||1),pi=F.pulse++ + F.seed;
+  if(kind==='D'){const part=JOINT_PARTS[pi%JOINT_PARTS.length],j=surfacePoint(m,part);m.rig.spine.getWorldPosition(_jd);_jd.set(j.x-_jd.x,0,j.z-_jd.z);
+    if(_jd.lengthSq()<.04)_jd.set(Math.sin(m.yaw),0,Math.cos(m.yaw));_jd.normalize();_jd.y=.35;fx.joint(j,_jd,sc);return;}
+  const pair=FAULT_PAIRS[pi%FAULT_PAIRS.length],a=surfacePoint(m,pair[0]),b=surfacePoint(m,pair[1]);
+  if(kind==='C'){fx.crawl(a,b,sc);return;}
+  fx.arc(a,b,dead?.18:.24,sc);for(const q of [a,b])fx.sparks(q,Math.max(2,Math.round(4*(BT.lowFx?.6:1))),3,0x8fc8ff,.3,.25);fx.light(a.clone().lerp(b,.5),0x4f9fff,dead?7:4);}
 // part anchors sit inside the armour: push them out radially from the spine axis to roughly the hull surface
 function surfacePoint(m,part){const p=partPoint(m,part),c=m.rig.spine.getWorldPosition(V3()),d=V3(p.x-c.x,0,p.z-c.z);
   if(d.lengthSq()<.04)d.set(Math.sin(m.yaw),0,Math.cos(m.yaw));return p.addScaledVector(d.normalize(),.85*(m.scale||1));}
@@ -1728,25 +1775,50 @@ function FX(scene,o){
   const decals=mkPool(o.decals||16,()=>({o:new T.Mesh(decalG,new T.MeshBasicMaterial({map:scorchTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2})),life:0}));
   const misG=new T.Group();
   const missiles=mkPool(8,()=>{const g=new T.Group();cy(g,.08,.08,.7,MAT.white,0,0,0,PI/2,0,0,8,false);mesh(g,new T.ConeGeometry(.08,.22,8),MAT.amber,0,0,.46,PI/2,0,0,false);const fl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffb050,blending:T.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.z=-.45;fl.scale.setScalar(.7);g.add(fl);return{o:g,a:V3(),b:V3(),c:V3(),life:0,dur:1,trail:0,done:null};});
-  // [bench] electrical arcs: a jagged chain of stretched additive boxes (an electric-blue core inside a saturated blue glow), re-jittered every 45 ms
-  const ARC_N=7,arcMat=c=>new T.MeshBasicMaterial({color:c,blending:T.AdditiveBlending,transparent:true,depthWrite:false,depthTest:true,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}); // [bench] depth-tested so cover/mechs occlude arcs (hull-surface endpoints)
-  const arcs=mkPool(o.arcs||8,()=>{const g=new T.Group(),core=[],halo=[];for(let i=0;i<ARC_N;i++){const a=new T.Mesh(streakG,arcMat(0x4fa2ff)),b=new T.Mesh(streakG,arcMat(0x1f5cff));a.renderOrder=b.renderOrder=996;g.add(a,b);core.push(a);halo.push(b);}
-    return {o:g,core,halo,a:V3(),b:V3(),pts:Array.from({length:ARC_N+1},()=>V3()),life:0,max:1,strength:1,frame:-1};});
-  const _u=V3(),_w=V3(),_d=V3();
+  // [bench] electrical arcs, "plasma tendril": two soft camera-facing ribbons (a wide one and a thin one) along smooth wavering paths,
+  // blue-white band texture, additive. Each pooled slot owns two preallocated ribbon meshes (fixed-size BufferGeometry); nothing is
+  // allocated per fire or per frame. The camera comes from o.cam. Depth-tested with a units-only bias so cover and mechs still occlude arcs.
+  const ARC_P=24,cam=o.cam||null;
+  const arcMat=()=>new T.MeshBasicMaterial({map:plasmaTex,blending:T.AdditiveBlending,transparent:true,depthWrite:false,depthTest:true,side:T.DoubleSide,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1});
+  const mkRibbon=()=>{const g=new T.BufferGeometry(),pos=new Float32Array(ARC_P*2*3),uv=new Float32Array(ARC_P*2*2),idx=[];
+    for(let i=0;i<ARC_P;i++){uv.set([0,i/(ARC_P-1),1,i/(ARC_P-1)],i*4);if(i<ARC_P-1){const k=i*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}}
+    g.setAttribute('position',new T.BufferAttribute(pos,3));g.setAttribute('uv',new T.BufferAttribute(uv,2));g.setIndex(idx);
+    const m=new T.Mesh(g,arcMat());m.frustumCulled=false;m.renderOrder=996;return {m,pts:Array.from({length:ARC_P},()=>V3())};};
+  const arcs=mkPool(o.arcs||8,()=>{const g=new T.Group(),rb=[mkRibbon(),mkRibbon()];g.add(rb[0].m,rb[1].m);
+    return {o:g,rb,a:V3(),b:V3(),life:0,max:1,strength:1,frame:-1};});
+  const ARC_SPEC=[{amp:.35,w0:.16,w1:.12},{amp:.28,w0:.08,w1:.06}]; // approved look: wide + thin ribbon
+  const _u=V3(),_w=V3(),_d=V3(),_t=V3(),_v=V3(),_s=V3();
   const lights=[];for(let i=0;i<(o.lights||3);i++){const l=new T.PointLight(0xffa040,0,28,2);scene.add(l);lights.push(l);}lights.i=0;
   const col=new T.Color();
+  const CRAWL_N=11,crawlQ=Array.from({length:CRAWL_N*4},()=>({p:V3(),t:0,i:0,k:1,on:false}));crawlQ.i=0; // pooled crawl points (4 crawls in flight)
+  const JOINT_COLS=[0x8fc4ff,0x5f9fff,0x4f8fff,0x7fb8ff,0x5f9fff,0x4f8fff,0x8fc4ff,0xffb070]; // mostly blue-white, one rare warm spark
   // [bench] directional spark spray: n sparks thrown along dir inside a cone, colours cycled from cols; the first 30% are fast, long, white-hot
-  f.spray=(p,dir,n,spd,cone,cols,life=.45)=>{_d.copy(dir).normalize();if(Math.abs(_d.y)<.95)_u.set(0,1,0);else _u.set(1,0,0);_u.cross(_d).normalize();_w.copy(_d).cross(_u).normalize();
+  f.spray=(p,dir,n,spd,cone,cols,life=.45,sz=1)=>{_d.copy(dir).normalize();if(Math.abs(_d.y)<.95)_u.set(0,1,0);else _u.set(1,0,0);_u.cross(_d).normalize();_w.copy(_d).cross(_u).normalize();
     for(let k=0;k<n;k++){const s=sparks.next(),hot=k<n*.3,a=rnd(0,PI*2),r=cone*Math.sqrt(Math.random())*(hot?.6:1);
       s.o.position.copy(p);s.v.copy(_d).addScaledVector(_u,Math.cos(a)*r).addScaledVector(_w,Math.sin(a)*r).normalize().multiplyScalar(spd*(hot?rnd(1.1,1.6):rnd(.45,1.1)));
       // sized to read at battle-camera distance: hot streaks ~15 cm thick and ~1 m long, the rest ~10 cm by ~0.6 m (base spark is 5 x 38 cm)
-      s.life=s.max=life*rnd(.6,1.15)*(hot?.85:1);s.o.material.color.setHex(hot?cols[0]:cols[1+(k%(cols.length-1))]);s.o.scale.set(hot?3:2,hot?3:2,hot?2.6:rnd(1.2,1.9));s.o.visible=true;}};
-  f.arc=(a,b,life=.16,strength=1)=>{const s=arcs.next();s.a.copy(a);s.b.copy(b);s.life=s.max=life;s.strength=strength;s.frame=-1;s.o.visible=true;};
+      s.life=s.max=life*rnd(.6,1.15)*(hot?.85:1);s.o.material.color.setHex(hot?cols[0]:cols[1+(k%(cols.length-1))]);s.o.scale.set((hot?3:2)*sz,(hot?3:2)*sz,(hot?2.6:rnd(1.2,1.9))*sz);s.o.visible=true;}};
+  // plasma arc between a and b (signature unchanged; glowSize is optional: 0 = no endpoint glows). Single ribbon on BT.lowFx.
+  f.arc=(a,b,life=.16,strength=1,glowSize=1.6)=>{const s=arcs.next();s.a.copy(a);s.b.copy(b);s.life=s.max=life;s.strength=strength;s.frame=-1;s.rb[1].m.visible=!BT.lowFx;s.o.visible=true;
+    if(glowSize>0){f.glow(a,0x4f8fff,glowSize,.22);f.glow(b,0x4f8fff,glowSize,.22);}};
+  // spark crawl: sparks and small glows walk along a jagged path from a to b over ~0.15-0.25 s, so current seems to creep across the hull
+  f.crawl=(a,b,strength=1)=>{const n=CRAWL_N,dur=rnd(.15,.25),len=a.distanceTo(b),amp=Math.min(.4,len*.09);
+    _d.subVectors(b,a).normalize();if(Math.abs(_d.y)<.95)_u.set(0,1,0);else _u.set(1,0,0);_u.cross(_d).normalize();_w.copy(_d).cross(_u).normalize();
+    for(let i=0;i<n;i++){const q=i/(n-1),e=(i===0||i===n-1)?0:amp*(.5+.5*Math.sin(PI*q)),c=crawlQ[crawlQ.i++%crawlQ.length];
+      c.p.copy(a).lerp(b,q).addScaledVector(_u,rnd(-1,1)*e).addScaledVector(_w,rnd(-1,1)*e).addScaledVector(_d,rnd(-.5,.5)*e);
+      c.t=q*dur+rnd(0,.02);c.i=i;c.k=strength;c.on=true;}
+    f.light(_t.copy(a).lerp(b,.5),0x5fa0ff,4);};
+  // joint short: a directional burst of thin blue-white streaks, a short plasma flick, a brief small core glow, a blue light and a wisp of smoke
+  f.joint=(p,dir,strength=1)=>{const k=(BT.lowFx?.6:1);_d.copy(dir).normalize();
+    f.spray(p,_d,Math.max(6,Math.round(16*k*Math.min(1,.6+.4*strength))),6,.55,JOINT_COLS,.4,.3); // sz .3: thin streaks that stay separate instead of stacking into a white blob
+    f.glow(p,0x9fd0ff,.45,.08);f.glow(p,0x4f8fff,.9,.18);f.light(p,0x8fc8ff,4);
+    _t.set(rnd(-.3,.3),rnd(.15,.4),rnd(-.3,.3)).addScaledVector(_d,rnd(.45,.8)).add(p);f.arc(p,_t,.1,.7*strength,0);
+    f.smoke(p,1,.7,0x7d8590,.3,.8,1.1,.1);};
   f.light=(p,c,i)=>{const l=lights[lights.i++%lights.length];l.position.copy(p);l.color.setHex(c);l.intensity=i;};
   f.glow=(p,c,size,life,v)=>{const g=glow.next();g.o.position.copy(p);g.o.material.color.setHex(c);g.size=size;g.o.scale.setScalar(size);g.life=g.max=life;g.v.copy(v||_a.set(0,0,0));g.o.visible=true;};
   f.fire=(p,size,life,v,rise)=>{const g=fire.next();g.o.position.copy(p);g.size=size;g.o.scale.setScalar(size*.3);g.life=g.max=life;g.v.copy(v||_a.set(0,rise||1,0));g.o.material.rotation=rnd(0,6);g.o.visible=true;};
   f.smoke=(p,n,size,c,op,rise,life,spread)=>{for(let k=0;k<n;k++){const s=smoke.next();s.o.position.copy(p).add(_a.set(rnd(-1,1)*spread,rnd(0,.3),rnd(-1,1)*spread));s.v.set(rnd(-1,1)*spread*.6,rise*rnd(.6,1.4),rnd(-1,1)*spread*.6);s.life=s.max=life*rnd(.7,1.3);s.size=size*rnd(.7,1.3);s.op=op;s.o.material.color.setHex(c);s.o.material.rotation=rnd(0,6);s.o.visible=true;}};
-  f.sparks=(p,n,spd,c,up=0,life=.5)=>{for(let k=0;k<n;k++){const s=sparks.next();s.o.position.copy(p);s.v.set(rnd(-1,1),rnd(-1,1)+up,rnd(-1,1)).normalize().multiplyScalar(spd*rnd(.35,1.2));s.life=s.max=life*rnd(.5,1.3);s.o.material.color.setHex(c);s.o.scale.set(1,1,1);s.o.visible=true;}}; // [bench] scale reset: spray reuses the pool
+  f.sparks=(p,n,spd,c,up=0,life=.5,sz=1)=>{for(let k=0;k<n;k++){const s=sparks.next();s.o.position.copy(p);s.v.set(rnd(-1,1),rnd(-1,1)+up,rnd(-1,1)).normalize().multiplyScalar(spd*rnd(.35,1.2));s.life=s.max=life*rnd(.5,1.3);s.o.material.color.setHex(c);s.o.scale.set(sz,sz,sz);s.o.visible=true;}}; // [bench] scale reset: spray reuses the pool
   f.debris=(p,n,spd)=>{for(let k=0;k<n;k++){const d=debris.next();d.o.position.copy(p);d.v.set(rnd(-1,1),rnd(.6,1.6),rnd(-1,1)).multiplyScalar(spd*rnd(.5,1));d.w.set(rnd(-9,9),rnd(-9,9),rnd(-9,9));d.life=rnd(1.6,2.6);d.o.scale.setScalar(rnd(.6,1.6));d.o.visible=true;}};
   f.streak=(a,b,c,w,flight,len)=>{const s=streaks.next();s.a.copy(a);s.b.copy(b);s.life=s.max=flight;s.w=w;s.len=len;s.o.material.color.setHex(c);s.o.visible=true;};
   f.beam=(a,b,c,w,life)=>{const s=beams.next();s.o.position.copy(a);s.o.lookAt(b);s.len=a.distanceTo(b);s.w=w;s.o.scale.set(w,w,s.len);s.life=s.max=life;s.o.material.color.setHex(c);s.o.visible=true;};
@@ -1763,11 +1835,20 @@ function FX(scene,o){
     for(const g of fire){if(!g.o.visible)continue;g.life-=dt;if(g.life<=0){g.o.visible=false;continue;}const u=1-g.life/g.max;g.o.material.opacity=1-u;g.o.scale.setScalar(g.size*(.35+u*.9));g.o.position.addScaledVector(g.v,dt);g.v.multiplyScalar(Math.exp(-dt*2));}
     for(const s of smoke){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max;s.o.position.addScaledVector(s.v,dt);s.v.x*=Math.exp(-dt*1.5);s.v.z*=Math.exp(-dt*1.5);s.o.scale.setScalar(s.size*(.45+u*1.6));s.o.material.opacity=s.op*Math.min(1,u*6)*(1-u);}
     for(const s of sparks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}s.v.y-=18*dt;s.o.position.addScaledVector(s.v,dt);_a.copy(s.o.position).add(s.v);s.o.lookAt(_a);s.o.material.opacity=s.life/s.max;const fl=(BT.floor||0)+.03;if(s.o.position.y<fl){s.o.position.y=fl;s.v.y*=-.3;s.v.x*=.5;s.v.z*=.5;}} // [bench] BT.floor: bounce on the pad, not under it
+    for(const c of crawlQ){if(!c.on)continue;c.t-=dt;if(c.t>0)continue;c.on=false;const lo=BT.lowFx?.6:1;
+      f.sparks(c.p,Math.max(2,Math.round(3*lo*c.k)),3,c.i%2?0x6fa8ff:0x4f8fff,.25,.28,.6);f.glow(c.p,c.i%3?0x3f7fff:0x7fb8ff,.5+.3*Math.random(),.22);}
     for(const s of arcs){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}
-      const fr=Math.floor((s.max-s.life)/.045);if(fr!==s.frame){s.frame=fr;const len=s.a.distanceTo(s.b);_d.subVectors(s.b,s.a).normalize();if(Math.abs(_d.y)<.95)_u.set(0,1,0);else _u.set(1,0,0);_u.cross(_d).normalize();_w.copy(_d).cross(_u).normalize();
-        const amp=Math.min(.45,len*.22)*s.strength;for(let i=0;i<=ARC_N;i++){const q=i/ARC_N,e=(i===0||i===ARC_N)?0:Math.sin(PI*q)*amp;s.pts[i].copy(s.a).lerp(s.b,q).addScaledVector(_u,rnd(-1,1)*e).addScaledVector(_w,rnd(-1,1)*e);}
-        for(let i=0;i<ARC_N;i++){const p0=s.pts[i],p1=s.pts[i+1],L=Math.max(.02,p0.distanceTo(p1));for(const [m,w] of [[s.core[i],.07],[s.halo[i],.42]]){m.position.copy(p0).lerp(p1,.5);m.lookAt(p1);m.scale.set(w*s.strength,w*s.strength,L);}}}
-      const u=s.life/s.max,flick=Math.random()<.25?.35:1;for(const m of s.core)m.material.opacity=u*.9*flick;for(const m of s.halo)m.material.opacity=u*.95*flick;}
+      const fr=Math.floor((s.max-s.life)/.045),rejit=fr!==s.frame;s.frame=fr;
+      if(rejit){const len=s.a.distanceTo(s.b);_d.subVectors(s.b,s.a).normalize();_u.set(0,1,0).cross(_d);if(_u.lengthSq()<1e-4)_u.set(1,0,0).cross(_d);_u.normalize();_w.copy(_d).cross(_u).normalize();
+        for(let r=0;r<2;r++){const sp=ARC_SPEC[r],amp=Math.min(sp.amp,len*.12),ph=rnd(0,6),pts=s.rb[r].pts;
+          for(let i=0;i<ARC_P;i++){const q=i/(ARC_P-1),e=Math.sin(PI*q)*amp;pts[i].copy(s.a).lerp(s.b,q).addScaledVector(_u,Math.sin(q*7+ph)*e).addScaledVector(_w,Math.cos(q*5+ph*1.3)*e*.6);}}}
+      const wk=.6+.4*s.strength,u=s.life/s.max,op=Math.min(1,u*2)*(Math.random()<.25?.4:1);
+      for(let r=0;r<2;r++){const rb=s.rb[r];if(!rb.m.visible)continue;rb.m.material.opacity=op;
+        const sp=ARC_SPEC[r],pts=rb.pts,pa=rb.m.geometry.attributes.position;
+        for(let i=0;i<ARC_P;i++){const p0=pts[Math.max(0,i-1)],p1=pts[Math.min(ARC_P-1,i+1)];_t.subVectors(p1,p0).normalize();
+          if(cam)_v.subVectors(cam.position,pts[i]).normalize();else _v.set(0,1,0);_s.crossVectors(_t,_v).normalize();
+          const w=(sp.w0+(sp.w1-sp.w0)*(i/(ARC_P-1)))*wk,P=pts[i];pa.setXYZ(i*2,P.x+_s.x*w,P.y+_s.y*w,P.z+_s.z*w);pa.setXYZ(i*2+1,P.x-_s.x*w,P.y-_s.y*w,P.z-_s.z*w);}
+        pa.needsUpdate=true;}}
     for(const d of debris){if(!d.o.visible)continue;d.life-=dt;if(d.life<=0){d.o.visible=false;continue;}d.v.y-=18*dt;d.o.position.addScaledVector(d.v,dt);d.o.rotation.x+=d.w.x*dt;d.o.rotation.z+=d.w.z*dt;const df=(BT.floor||0)+.08;if(d.o.position.y<df){d.o.position.y=df;d.v.y*=-.3;d.v.x*=.55;d.v.z*=.55;d.w.multiplyScalar(.5);}}
     for(const s of streaks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const q=1-s.life/s.max;const head=_a.copy(s.a).lerp(s.b,q),tail=_b.copy(s.a).lerp(s.b,Math.max(0,q-s.len));s.o.position.copy(head).lerp(tail,.5);s.o.lookAt(head);s.o.scale.set(s.w,s.w,Math.max(.05,head.distanceTo(tail)));s.o.material.opacity=1;}
     for(const s of beams){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=s.life/s.max;s.o.material.opacity=u;s.o.scale.set(s.w*(.4+.6*u),s.w*(.4+.6*u),s.len);}
@@ -1777,7 +1858,7 @@ function FX(scene,o){
       s.trail-=dt;if(s.trail<=0){s.trail=.025;f.smoke(pos,1,.9,0xb9b2a6,.45,.3,1.1,.05);}if(q>=1){s.o.visible=false;s.done&&s.done(pos.clone());}}
     for(const l of lights)l.intensity*=Math.exp(-dt*11);
   };
-  f.clearDecals=()=>{decals.forEach(d=>d.o.visible=false);arcs.forEach(s=>s.o.visible=false);};
+  f.clearDecals=()=>{decals.forEach(d=>d.o.visible=false);arcs.forEach(s=>s.o.visible=false);crawlQ.forEach(c=>c.on=false);};
   return f;
 }
 
@@ -1956,7 +2037,7 @@ RB.buildHangar=function(){
   const board=new T.Mesh(new T.PlaneGeometry(160,160),MS({color:C(0x9aa0a4),map:boardTex,roughness:.92,metalness:.06}));board.rotation.x=-PI/2;board.position.y=.004;board.receiveShadow=true;board.visible=false;s.add(board);
   s.userData.props=props;s.userData.floor=floor;s.userData.board=board;s.userData.boardTex=boardTex;s.userData.bg=s.background.clone();
   s.userData.pad=pad;s.userData.belt=belt;s.userData.treadTex=treadTex;
-  s.userData.fx=VA.FX(s,{lights:3});
+  s.userData.fx=VA.FX(s,{lights:3,cam:camera});
   return s;
 };
 
@@ -1981,7 +2062,7 @@ RB.buildArena=function(half){
   for(let i=-5;i<=5;i++){box(s,6.6,3.2,1.1,wallM,i*7,1.6,-H-9,0,0,0,false);box(s,1.1,3.2,6.6,wallM,H+9,1.6,i*7,0,0,0,false);}
   const grph=MS({color:C(0x24292b),roughness:.45,metalness:.75});const tw=new T.Group();tw.position.set(-H-10,0,-H-8);s.add(tw);
   for(const [x,z] of [[-1,-1],[1,-1],[1,1],[-1,1]]){const m=new T.Mesh(new T.CylinderGeometry(.12,.18,24,6),grph);m.position.set(x*.9,12,z*.9);tw.add(m);}
-  s.userData.half=H;s.userData.fx=VA.FX(s,{lights:4,sparks:260,smoke:320});
+  s.userData.half=H;s.userData.fx=VA.FX(s,{lights:4,sparks:260,smoke:320,cam:camera});
   return s;
 };
 /* cover blocks: concrete jersey barriers, container stacks, sandbag walls (shapes after vow3d buildCover) */
@@ -2070,11 +2151,12 @@ RB.drawReadout=function(ctx,q,name,hp,max,ally,sel){
   if(sel){ctx.strokeStyle='#5fd4c4';ctx.lineWidth=1;ctx.strokeRect(q.x-width/2-5.5,q.y-21.5,width+11,(mob?14:16)+20);}
 };
 
-/* ---------- proposed kit fix preview (OFF = exactly what the game does) ----------
-   VowChassis.solveLeg writes hip.rotation with the default Euler order XYZ, so the roll is applied before the pitch and the
-   analytic two-bone solution misses its target whenever both are non-zero (5-9 cm at rest, up to ~0.6 m on quad legs mid-stride).
-   With order ZXY the same numbers are exact. The bench only flips the order on the built bones when the owner asks to preview it. */
-RB.ikFix=false;
+/* ---------- leg IK hip order ----------
+   VowChassis.solveLeg (this file's copy) writes hip.rotation with the default Euler order XYZ, which applies the roll before the pitch,
+   so the analytic two-bone solution missed its target whenever both were non-zero (5-9 cm at rest, up to ~0.6 m on quad legs mid-stride).
+   With order ZXY the same numbers are exact. The game switched to ZXY in PR #1, so the bench now builds every mech in ZXY by default;
+   setting RB.ikFix=false (the "Old bug (XYZ)" button) brings the old order back for comparison. */
+RB.ikFix=true;   // [walk fix] the game ships ZXY since PR #1; false brings back the old XYZ bug for comparison
 RB.prepMech=m=>{for(const l of m.rig.legs)l.hip.rotation.order=RB.ikFix?'ZXY':'XYZ';return m;};
 /* ---------- mech helpers ---------- */
 RB.mechTop=function(m){const b=new T.Box3();m.body.updateMatrixWorld(true);b.setFromObject(m.body);return b.max.y;};
@@ -2339,7 +2421,7 @@ function renderMetrics(){const el=$('metricsT');if($('shMetrics').hidden)return;
 <tr><td>Draw calls · whole frame incl. shadows</td><td>${info.calls}</td></tr>
 <tr><td>Height · kit units</td><td>${fmt(r.height,2)}<br><small>${fmt(r.height*BS,2)} m in battle (×0.9)</small></td></tr>
 <tr><td>Pose</td><td>${S.walking||m.melee||S.aim?'live (moving)':'standing'}</td></tr>
-<tr><td>Leg IK · ${RB.ikFix?'<b style="color:#5fd4c4">FIX PREVIEW (ZXY)</b>':'AS SHIPPED (XYZ)'}<br><small>ankle → IK target, live · teal ring = target, orange dot = ankle</small></td><td>${ikErrors().map(e=>`${e.side} ${e.cm.toFixed(1)} cm`).join('<br>')}</td></tr>`;}
+<tr><td>Leg IK · ${RB.ikFix?'GAME (ZXY)':'<b style="color:#e0803c">OLD BUG (XYZ)</b>'}<br><small>ankle → IK target, live · teal ring = target, orange dot = ankle</small></td><td>${ikErrors().map(e=>`${e.side} ${e.cm.toFixed(1)} cm`).join('<br>')}</td></tr>`;}
 B.measure=()=>m?RB.measure(m):null;
 B.renderMetrics=()=>renderMetrics();
 
@@ -2424,7 +2506,7 @@ function disposeScene(){if(!scene)return;
     for(const mt of ms){for(const k of ['map','emissiveMap','normalMap','roughnessMap'])if(mt[k]&&!seen.has(mt[k])){seen.add(mt[k]);mt[k].dispose();}if(!seen.has(mt)){seen.add(mt);mt.dispose();}}});
   scene.traverse(o=>{if(o.isLight&&o.shadow&&o.shadow.map){o.shadow.map.dispose();o.shadow.map=null;}});   // shadow map render target
   if(scene.environment){const rt=scene.environment._rt;scene.environment.dispose();if(rt)rt.dispose();}scene=null;realFX=null;WR.scene=null;}
-const NULLFX=(()=>{const n=()=>{};return {isNull:true,light:n,glow:n,fire:n,smoke:n,sparks:n,debris:n,streak:n,beam:n,ring:n,scorch:n,missile:n,spray:n,arc:n,airwave:n,dustwave:n,update:n,clearDecals:n};})();
+const NULLFX=(()=>{const n=()=>{};return {isNull:true,light:n,glow:n,fire:n,smoke:n,sparks:n,debris:n,streak:n,beam:n,ring:n,scorch:n,missile:n,spray:n,arc:n,crawl:n,joint:n,airwave:n,dustwave:n,update:n,clearDecals:n};})();
 const WR=RB.war={scene:null};
 
 /* ---------- seeded PRNG (mulberry32): every sim decision draws from W.rng ---------- */
@@ -2596,6 +2678,9 @@ function kill(b,a,how){b.alive=false;b.down=how;b.deathT=W.t;b.deathPos={x:b.x,z
 
 /* ---------- AI ---------- */
 function chooseTarget(u){let best=null,bs=1e9;for(const e of W.units){if(!e.alive||e.team===u.team)continue;const s=dist(u,e)*(.6+.4*e.hp.body/e.max.body)+W.rng()*3;if(s<bs){bs=s;best=e;}}return best;}
+/* [walk fix] blade reach from the footprints' edges: 4.9 m between centres for frames up to 2 m across, more for bigger pairs.
+   Centre-to-centre 4.9 m was closer than two large footprints can stand, so a big blade frame could never reach a big target. */
+function meleeReach(u,tg){return Math.max(4.9,u.r+tg.r+.9);}
 function think(u,dt){
   u.wantMove=false;let goal=null,face=null;
   if(u.fault.hold>0){u.fault.hold-=dt;u.desired=null;return;}
@@ -2604,20 +2689,27 @@ function think(u,dt){
   if(!tg||!tg.alive||u.retarget<=0){tg=chooseTarget(u);u.target=tg?tg.id:-1;u.retarget=1.5+W.rng();}
   if(u.fault.goal){goal=u.fault.goal;}
   else if(!tg){u.desired=null;return;}
-  else if(u.hp.right<=0){goal={x:u.x,z:u.team==='ally'?-HALF+3:HALF-3};}   // weapon arm gone: weapon offline, fall back (clamped to the walkable ring below)
-  else{const d=dist(u,tg),w=u.w,des=w.melee?4.1:w.range*.72,minR=w.melee?0:Math.max(6,w.range*.35);
+  else if(u.hp.right<=0){const edge=u.team==='ally'?-HALF+3:HALF-3;goal=Math.abs(u.z-edge)<5?null:{x:u.x,z:edge};}   // weapon arm gone: weapon offline, fall back (clamped to the walkable ring below); [walk fix] hold once near the back line
+  else{const d=dist(u,tg),w=u.w,reachM=meleeReach(u,tg),des=w.melee?reachM-.8:w.range*.72,minR=w.melee?0:Math.max(6,w.range*.35);
     face=Math.atan2(tg.x-u.x,tg.z-u.z);u.face=face;
-    const err=Math.abs(wrapA(face-u.yaw)),inRange=d<=(w.melee?4.9:w.range);
+    const err=Math.abs(wrapA(face-u.yaw)),inRange=d<=(w.melee?reachM:w.range);
     if(inRange&&u.cd<=0&&err<(w.melee?.45:.6)&&u.speed<1.2){attack(u,tg);u.desired=null;return;}
-    if(d>des+1.2)goal={x:tg.x,z:tg.z};else if(d<minR)goal={x:u.x-(tg.x-u.x),z:u.z-(tg.z-u.z)};}   // retreat goal is clamped below, so against a wall it slides along it
-  if(u.detour&&W.t<u.detour.until)goal=u.detour;
+    if(d>des+1.2)goal={x:tg.x,z:tg.z};else if(d<minR)goal=retreatGoal(u,tg,minR);}   // [walk fix] retreat toward open ground, not a point beyond the wall
+  if(goal&&u.hold>W.t)goal=null;   // [walk fix] gave up a blocked move (see move())
+  else if(u.detour&&W.t<u.detour.until)goal=u.detour;
+  else if(goal)goal=navGoal(u,goal);   // [walk fix] round cover and wrecks by grid path when the straight line is blocked
   // goals live inside the walkable ring: a fall-back or retreat goal beyond the wall used to pin the unit against it for ever (the wall push cancelled the seek)
   if(goal){const lim=HALF-u.r-1.5;goal={x:clamp(goal.x,-lim,lim),z:clamp(goal.z,-lim,lim)};if(Math.hypot(goal.x-u.x,goal.z-u.z)<1.2)goal=null;}   // arrived (or cornered): nothing to walk to
   if(!goal){u.desired=null;return;}
   u.wantMove=true;
   // steering: seek + separation + cover avoidance + walls
   let sx=goal.x-u.x,sz=goal.z-u.z;const sl=Math.hypot(sx,sz)||1;sx/=sl;sz/=sl;
-  for(const o of W.units){if(o===u)continue;const dx=u.x-o.x,dz=u.z-o.z,d=Math.hypot(dx,dz)||1e-3,R=u.r+o.r*(o.alive?1:.8)+2.5;if(d<R){const k=(R-d)/R*1.6;sx+=dx/d*k;sz+=dz/d*k;}}
+  // [walk fix] wrecks are fixed obstacles: slide round them as one group toward the goal. Sliding round each wreck on its own
+  // pointed both slides into the gap between two wrecks too narrow to pass, and the unit pushed into them for ever.
+  let wx=0,wz=0,wk=0;
+  for(const o of W.units){if(o===u)continue;const dx=u.x-o.x,dz=u.z-o.z,d=Math.hypot(dx,dz)||1e-3,R=u.r+o.r*(o.alive?1:.8)+2.5;if(d<R){const k=(R-d)/R*1.6;sx+=dx/d*k;sz+=dz/d*k;
+      if(!o.alive){wx+=o.x*k;wz+=o.z*k;wk+=k;}}}
+  if(wk>0){const dx=u.x-wx/wk,dz=u.z-wz/wk,d=Math.hypot(dx,dz)||1e-3,tx=-dz/d,tz=dx/d,sg=(tx*(goal.x-u.x)+tz*(goal.z-u.z))>=0?1:-1,k=Math.min(wk,1.6);sx+=tx*sg*k*.8;sz+=tz*sg*k*.8;}
   for(const c of W.cover){const px=clamp(u.x,c.x-c.w/2,c.x+c.w/2),pz=clamp(u.z,c.z-c.d/2,c.z+c.d/2),dx=u.x-px,dz=u.z-pz,d=Math.hypot(dx,dz)||1e-3,R=u.r+2.2;
     if(d<R){const k=(R-d)/R*2;sx+=dx/d*k;sz+=dz/d*k;// slide round the block: add the tangent that points toward the goal
       const tx=-dz/d,tz=dx/d,sg=(tx*(goal.x-u.x)+tz*(goal.z-u.z))>=0?1:-1;sx+=tx*sg*k*.8;sz+=tz*sg*k*.8;}}
@@ -2625,18 +2717,71 @@ function think(u,dt){
   if(Math.hypot(sx,sz)<.45){const sg=u.n%2?1:-1,gx=(goal.x-u.x)/sl,gz=(goal.z-u.z)/sl;sx+=-gz*sg*.9;sz+=gx*sg*.9;}
   const wall=HALF-u.r-1;if(u.x>wall)sx-=(u.x-wall);if(u.x<-wall)sx-=(u.x+wall);if(u.z>wall)sz-=(u.z-wall);if(u.z<-wall)sz-=(u.z+wall);
   const l=Math.hypot(sx,sz)||1;u.desired={x:sx/l,z:sz/l,arrive:Math.min(1,sl/3)};}
+/* ---------- [walk fix] navigation: a 1 m grid A* round cover, wrecks and the wall, used only when the straight line is blocked ---------- */
+function navBlocked(u,x,z){const lim=HALF-u.r*.6-.3;if(Math.abs(x)>lim||Math.abs(z)>lim)return true;
+  for(const c of W.cover){const px=clamp(x,c.x-c.w/2,c.x+c.w/2),pz=clamp(z,c.z-c.d/2,c.z+c.d/2);if(Math.hypot(x-px,z-pz)<u.r*.75+.25)return true;}
+  for(const o of W.units){if(o===u||(o.id===u.target&&u.w.melee&&u.hp.right>0))continue;if(o.alive&&o.speed>.6)continue;if(Math.hypot(x-o.x,z-o.z)<u.r+o.r*(o.alive?1:.8)+.25)return true;}return false;}   // wrecks, and live units standing still
+function navClear(u,a,b){const d=Math.hypot(b.x-a.x,b.z-a.z),n=Math.max(1,Math.ceil(d/.5));for(let i=1;i<=n;i++){const k=i/n;if(navBlocked(u,a.x+(b.x-a.x)*k,a.z+(b.z-a.z)*k))return false;}return true;}
+function navGoal(u,goal){if(navClear(u,u,goal)){u.nav=null;return goal;}
+  if(u.nav&&W.t-u.nav.t<.6&&Math.hypot(u.nav.gx-goal.x,u.nav.gz-goal.z)<2)return navNext(u,goal);
+  const N=Math.ceil(2*HALF),cell=(x)=>clamp(Math.floor(x+HALF),0,N-1),ctr=(i)=>i-HALF+.5,free=new Uint8Array(N*N);
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++)free[i*N+j]=navBlocked(u,ctr(i),ctr(j))?0:1;
+  const si=cell(u.x),sj=cell(u.z);let gi=cell(goal.x),gj=cell(goal.z);
+  if(!free[gi*N+gj]){let bd=1e9;for(let i=0;i<N;i++)for(let j=0;j<N;j++)if(free[i*N+j]){const dd=(i-gi)**2+(j-gj)**2;if(dd<bd){bd=dd;var bi=i,bj=j;}}if(bd===1e9)return goal;gi=bi;gj=bj;}
+  const G=new Float32Array(N*N).fill(1e9),from=new Int32Array(N*N).fill(-1),open=[si*N+sj],shut=new Uint8Array(N*N);G[si*N+sj]=0;
+  const H=(k)=>{const di=Math.abs((k/N|0)-gi),dj=Math.abs(k%N-gj);return Math.max(di,dj)+.414*Math.min(di,dj);};let found=-1,guard=0;
+  while(open.length&&guard++<4000){let bi2=0;for(let q=1;q<open.length;q++)if(G[open[q]]+H(open[q])<G[open[bi2]]+H(open[bi2]))bi2=q;const k=open[bi2];open.splice(bi2,1);
+    if(shut[k])continue;shut[k]=1;if(k===gi*N+gj){found=k;break;}const ki=k/N|0,kj=k%N;
+    for(let di=-1;di<=1;di++)for(let dj=-1;dj<=1;dj++){if(!di&&!dj)continue;const ni=ki+di,nj=kj+dj;if(ni<0||nj<0||ni>=N||nj>=N)continue;const nk=ni*N+nj;
+      if(shut[nk]||(!free[nk]&&!(ni===si&&nj===sj)))continue;if(di&&dj&&(!free[ki*N+nj]||!free[ni*N+kj]))continue;
+      const g=G[k]+(di&&dj?1.414:1);if(g<G[nk]){G[nk]=g;from[nk]=k;open.push(nk);}}}
+  if(found<0){u.nav=null;return goal;}
+  const pts=[];for(let k=found;k>=0&&k!==si*N+sj;k=from[k])pts.push({x:ctr(k/N|0),z:ctr(k%N)});pts.reverse();
+  u.nav={t:W.t,gx:goal.x,gz:goal.z,pts};return navNext(u,goal);}
+function navNext(u,goal){const P=u.nav.pts;while(P.length>1&&Math.hypot(P[0].x-u.x,P[0].z-u.z)<1.2)P.shift();
+  // aim at the furthest waypoint still in line of sight, at least 2 m out so the "arrived" test does not drop it
+  let pick=P[0];for(let i=P.length-1;i>=0;i--){if(navClear(u,u,P[i])){pick=P[i];break;}}
+  if(!pick)return goal;const dx=pick.x-u.x,dz=pick.z-u.z,d=Math.hypot(dx,dz)||1e-3;return d<2?{x:u.x+dx/d*2,z:u.z+dz/d*2}:pick;}
+/* retreat: the open point 6-10 m away that ends furthest from the target (a mirrored point beyond the wall pinned units to it) */
+function retreatGoal(u,tg,minR){let best=null,bs=-1e9;
+  for(let i=0;i<16;i++){const a=i/16*PI*2,dx=Math.sin(a),dz=Math.cos(a);let run=0;for(let st=.5;st<=10;st+=.5){if(navBlocked(u,u.x+dx*st,u.z+dz*st))break;run=st;}
+    if(run<2)continue;const x=u.x+dx*run,z=u.z+dz*run,sc=Math.hypot(x-tg.x,z-tg.z)+run*.15;if(sc>bs){bs=sc;best={x,z};}}
+  return best||{x:u.x-(tg.x-u.x),z:u.z-(tg.z-u.z)};}
+/* [walk fix] the most open direction from a unit: march each of 16 headings in 0.5 m steps up to 10 m against walls, cover and wrecks,
+   and take the longest clear run (ties go to the heading closer to the unit's goal). Deterministic: no RNG draw. */
+function openDetour(u){let best=null,bl=-1;const gx=u.desired?u.desired.x:0,gz=u.desired?u.desired.z:0,lim=HALF-u.r-1;
+  for(let i=0;i<16;i++){const a=i/16*PI*2,dx=Math.sin(a),dz=Math.cos(a);let run=0;
+    for(let st=.5;st<=10;st+=.5){const x=u.x+dx*st,z=u.z+dz*st;let hit=Math.abs(x)>lim||Math.abs(z)>lim;
+      if(!hit)for(const c of W.cover){const px=clamp(x,c.x-c.w/2,c.x+c.w/2),pz=clamp(z,c.z-c.d/2,c.z+c.d/2);if(Math.hypot(x-px,z-pz)<u.r*.75){hit=true;break;}}
+      if(!hit)for(const o of W.units){if(o===u||o.alive)continue;if(Math.hypot(x-o.x,z-o.z)<u.r+o.r*.8){hit=true;break;}}
+      if(hit)break;run=st;}
+    const score=run+(dx*gx+dz*gz)*.5;if(score>bl){bl=score;best={x:u.x+dx*Math.max(run,1),z:u.z+dz*Math.max(run,1)};}}
+  return {x:best.x,z:best.z,until:W.t+2.5};}
 function move(u,dt){
   if(!u.alive){if(u.speed||u.vx||u.vz)anomaly('wreckActs',u,'wreck has velocity');return;}
   const legsMul=u.hp.legs<=0?0:u.hp.legs/u.max.legs<.5?.6:1,vmax=u.vmax*legsMul;
   // steering is low-passed (a 60-tonne walker does not jink every tick), then the speed eases toward the goal
   let tx=0,tz=0;if(u.desired&&vmax>0){if(!u.sdir)u.sdir={x:u.desired.x,z:u.desired.z};const kk=1-Math.exp(-dt*3);u.sdir.x+=(u.desired.x-u.sdir.x)*kk;u.sdir.z+=(u.desired.z-u.sdir.z)*kk;
     const l=Math.hypot(u.sdir.x,u.sdir.z)||1;tx=u.sdir.x/l*vmax*u.desired.arrive;tz=u.sdir.z/l*vmax*u.desired.arrive;}else u.sdir=null;
+  // [walk fix] against a wreck or a cover block the walk slides along it: the part of the goal velocity that pushes into the obstacle is dropped
+  // (the collision pass cancelled it every tick, so a unit facing a wreck walked on the spot at full speed)
+  if(tx||tz){const into=(nx,nz)=>{const dd=tx*nx+tz*nz;if(dd<0){tx-=dd*nx;tz-=dd*nz;}};
+    for(const o of W.units){if(o===u)continue;const dx=u.x-o.x,dz=u.z-o.z,d=Math.hypot(dx,dz)||1e-3;if(d<u.r+o.r*(o.alive?1:.8)+.3)into(dx/d,dz/d);}   // wrecks and touching units
+    for(const c of W.cover){const px=clamp(u.x,c.x-c.w/2,c.x+c.w/2),pz=clamp(u.z,c.z-c.d/2,c.z+c.d/2),dx=u.x-px,dz=u.z-pz,d=Math.hypot(dx,dz);if(d>1e-4&&d<u.r*.75+.3)into(dx/d,dz/d);}
+    const lim=HALF-u.r*.6-.3;if(u.x>lim)into(-1,0);if(u.x<-lim)into(1,0);if(u.z>lim)into(0,-1);if(u.z<-lim)into(0,1);}   // and the arena wall
   const k=1-Math.exp(-dt*3.2);u.vx+=(tx-u.vx)*k;u.vz+=(tz-u.vz)*k;u.speed=Math.hypot(u.vx,u.vz);if(u.speed<.05&&!u.desired){u.vx=u.vz=0;u.speed=0;}
   if(u.fault.freeze>0){u.fault.freeze-=dt;}else{u.x+=u.vx*dt;u.z+=u.vz*dt;}
   const moving=u.speed>.35,heading=moving?Math.atan2(u.vx,u.vz):u.yaw;u.heading=heading;if(moving&&!u.moving)u.moveStart=W.t;if(!moving&&u.moving)u.stopT=W.t;u.moving=moving;
   u.yaw=dampAngle(u.yaw,moving?heading:u.face,moving?8:4.5,dt);   // same law as animateMech
   // stuck: wants to move, has not moved 1 m in 4 s
   if(u.wantMove&&vmax>0){if(!u.stuck||Math.hypot(u.x-u.stuck.x,u.z-u.stuck.z)>1)u.stuck={x:u.x,z:u.z,t:W.t};
+    // [walk fix] a blocked unit re-plans before it counts as stuck: after 1.2 s without 1 m of progress it detours along the most open
+    // direction; at 2.8 s it gives the move up (an armed unit picks another target, a disarmed one holds). Giving up three times
+    // within 20 s is itself reported as stuck, so a unit that never gets anywhere is still caught.
+    else if(W.t-u.stuck.t>2.8&&!u.stuck.gaveUp){u.stuck.gaveUp=true;u.hold=W.t+(u.hp.right>0?1.5:4);u.retarget=0;u.detour=null;
+      u.giveUps=(u.giveUps||[]).filter(x=>W.t-x<20);u.giveUps.push(W.t);
+      if(u.giveUps.length>=3){anomaly('stuck',u,`repeatedly blocked: gave up ${u.giveUps.length} moves in 20 s`);u.giveUps=[];}}
+    else if(W.t-u.stuck.t>1.2&&!u.stuck.detoured){u.stuck.detoured=true;u.detour=openDetour(u);u.detour.until=W.t+1.4;}
     else if(W.t-u.stuck.t>4){anomaly('stuck',u,`wanted to move for ${(W.t-u.stuck.t).toFixed(1)} s, moved ${Math.hypot(u.x-u.stuck.x,u.z-u.stuck.z).toFixed(2)} m`);
       const a=W.rng()*PI*2;u.detour={x:clamp(u.x+Math.cos(a)*10,-HALF+4,HALF-4),z:clamp(u.z+Math.sin(a)*10,-HALF+4,HALF-4),until:W.t+2.5};u.stuck=null;}}
   else u.stuck=null;}
@@ -2664,7 +2809,7 @@ function tick(){
   collide();
   // melee timeline: contact at MEL.hit (0.46 s), hitstop 0.085 s, recover by MEL.end
   for(const u of ord){const M=u.melee;if(!M)continue;M.age+=dt;const tg=unit(M.target);
-    if(!M.hit&&M.age>=MEL.hit){M.hit=true;if(!tg.alive)log('wasted',u,tg);else if(dist(u,tg)>5.6){log('whiff',u,tg);}
+    if(!M.hit&&M.age>=MEL.hit){M.hit=true;if(!tg.alive)log('wasted',u,tg);else if(dist(u,tg)>meleeReach(u,tg)+.7){log('whiff',u,tg);}
       else if(W.rng()<u.w.acc*(M.part==='pilot'?.73:1)){applyDamage(tg,M.part,Math.round(u.w.dmg*(M.part==='pilot'?.5:1)),u,'blade');W.hitstop=.085;}else log('miss',u,tg);}
     if(M.age>=MEL.end)u.melee=null;}
   applyFaults();
@@ -2684,7 +2829,7 @@ function tick(){
 }
 const onStep=(m,p,i,amt)=>VA.onStep(m,p,i,amt);
 function animate(u,dt){const m=u.m;let pos=V3(u.x,0,u.z);
-  if(m.melee&&m.melee.target&&m.melee.target.cont){const k=VA.lungeK(m.melee.age),tc=m.melee.target.cont.position,dx=tc.x-pos.x,dz=tc.z-pos.z,dd=Math.hypot(dx,dz)||1,L=clamp(dd-2.4,0,2.6);pos.x+=dx/dd*L*k;pos.z+=dz/dd*L*k;}
+  if(m.melee&&m.melee.target&&m.melee.target.cont){const k=VA.lungeK(m.melee.age),tc=m.melee.target.cont.position,dx=tc.x-pos.x,dz=tc.z-pos.z,dd=Math.hypot(dx,dz)||1,to=W.units.find(o=>o.m===m.melee.target),L=clamp(dd-Math.max(2.4,to?(u.r+to.r)*.82:0),0,2.6);pos.x+=dx/dd*L*k;pos.z+=dz/dd*L*k;}
   const deathAge=u.alive?0:W.t-u.deathT;
   // like the game (battle3D passes TILE / step duration), the gait cadence runs at the legs' nominal speed while the body eases in and out
   const vnom=u.vmax*(u.hp.legs<=0?0:u.hp.legs/u.max.legs<.5?.6:1);
@@ -2781,7 +2926,7 @@ function renderUnit(){const b=$('unitBody');if(!b)return;if(!W||!selected){$('un
   b.innerHTML=`<table class="m"><tr><td>Legs</td><td>${n[u.mods.legs]} · ${RB.LEGTYPE(u.mods.legs)}</td></tr><tr><td>Core</td><td>${n[u.mods.core]}</td></tr><tr><td>Arms</td><td>${n[u.mods.arms]}</td></tr><tr><td>Weapon</td><td>${u.w.name}${u.hp.right<=0?' · OFFLINE':''}</td></tr>
   <tr><td>State</td><td>${!u.alive?(u.down==='pilot'?'PILOT DOWN':'WRECKED'):u.melee?'STRIKE':u.firing>W.t?'FIRING':u.moving?'MOVING':'HOLD'}${tg&&u.alive?' → '+tg.tag:''}</td></tr><tr><td>Speed</td><td>${u.speed.toFixed(1)} / ${(u.vmax*(u.hp.legs<=0?0:u.hp.legs/u.max.legs<.5?.6:1)).toFixed(1)} m/s</td></tr><tr><td>Kills · damage dealt</td><td>${u.kills} · ${Math.round(u.dealt)}</td></tr></table>
   <div><h3>Part HP</h3><div class="ubars">${PARTS.map(k=>hpRow(k,u)).join('')}</div></div>
-  <div><h3>Leg IK · ${W.ikFix?'fix preview':'as shipped'} · ankle → target</h3><p class="note">${u.m.rig.legs.map((l,i)=>l.side+' '+(l.an.getWorldPosition(V3()).distanceTo(u.m.legs[i].foot)*100).toFixed(1)+' cm').join(' · ')}</p></div>
+  <div><h3>Leg IK · ${W.ikFix?'game (ZXY)':'old bug (XYZ)'} · ankle → target</h3><p class="note">${u.m.rig.legs.map((l,i)=>l.side+' '+(l.an.getWorldPosition(V3()).distanceTo(u.m.legs[i].foot)*100).toFixed(1)+' cm').join(' · ')}</p></div>
   <div><h3>Anomalies on this unit</h3>${W.anoms.filter(a=>a.uid===u.id).map(a=>`<div class="note">· ${a.label} @ ${a.t}s</div>`).join('')||'<p class="empty">none</p>'}</div>
   <div class="btnrow"><button class="btn" id="uFollow">Follow</button><button class="btn" id="uDeselect">Deselect</button></div>`;
   $('uFollow').onclick=()=>setCam('follow');$('uDeselect').onclick=()=>{select(null);};}
@@ -2811,7 +2956,7 @@ $('anomList').onclick=e=>{const f=e.target.closest('.fchip');if(f){anomFilter=f.
   const b=e.target.closest('[data-i]');if(!b||!W)return;const a=W.anoms[+b.dataset.i];setRunning(false);if(a.uid>=0){select(unit(a.uid));setCam('follow');}};
 function updateBadge(){const n=W?W.anoms.length:0,b=$('anomBadge');b.textContent=n;b.classList.toggle('zero',!n);}
 function feed(e){const el=$('feed');const d=document.createElement('div');d.className=e.b&&e.b[0]==='A'?'a':'e';d.textContent=`${e.b} ${e.how==='pilot'?'PILOT DOWN':'DESTROYED'}${e.a?' · '+e.a:''}`;el.prepend(d);while(el.children.length>4)el.lastChild.remove();setTimeout(()=>{d.style.opacity='0';setTimeout(()=>d.remove(),500);},6000);}
-function report(){if(!W)return '';const L=[];L.push(`IRON VOW RIG BENCH · WAR ANOMALY REPORT`);L.push(`seed ${W.seed} · ${W.mixed?'mixed':'pure'} builds · leg IK ${W.ikFix?'FIX PREVIEW (hip order ZXY, not in game)':'as shipped (hip order XYZ)'} · tick ${W.tick} · ${W.t.toFixed(1)} s · ${W.over?'ended: '+W.winner:'in progress'}`);L.push('');L.push('UNITS');
+function report(){if(!W)return '';const L=[];L.push(`IRON VOW RIG BENCH · WAR ANOMALY REPORT`);L.push(`seed ${W.seed} · ${W.mixed?'mixed':'pure'} builds · leg IK ${W.ikFix?'game (hip order ZXY)':'OLD BUG (hip order XYZ)'} · tick ${W.tick} · ${W.t.toFixed(1)} s · ${W.over?'ended: '+W.winner:'in progress'}`);L.push('');L.push('UNITS');
   for(const u of W.units)L.push(`  ${u.tag.padEnd(3)} ${u.team.padEnd(5)} ${RB.buildStr(u.mods,u.wid).padEnd(34)} body ${Math.round(u.hp.body)}/${u.max.body} pilot ${Math.round(u.hp.pilot)}/${u.max.pilot} W ${Math.round(u.hp.right)} L ${Math.round(u.hp.left)} legs ${Math.round(u.hp.legs)} ${u.alive?'':'['+u.down+' down]'}`);
   L.push('');L.push(`ANOMALIES (${W.anoms.length})`);for(const a of W.anoms)L.push(`  tick ${a.tick} t=${a.t}s · ${a.type} · ${a.unit} ${a.build} · ${a.detail}`);if(!W.anoms.length)L.push('  none');return L.join('\n');}
 WR.report=report;
@@ -2896,7 +3041,7 @@ function renderSoak(res){const n=RB.NAMES.map(x=>x.slice(0,4)),wid=RB.WEAPONS.ma
   <h3>Coverage · core chassis × weapon (unit count)</h3><table class="soakt cov"><tr><th></th>${wid.map(w=>`<th>${w}</th>`).join('')}</tr>${n.map((c,i)=>`<tr><th class="l">${c}</th>${wid.map(w=>{const v=res.chassisWeapon[i+'|'+w]||0;return `<td class="${v?'h':'z'}">${v}</td>`;}).join('')}</tr>`).join('')}</table>
   <h3>Coverage · legs (rows) × core (cols), cell = arms seen</h3><table class="soakt cov"><tr><th></th>${n.map(c=>`<th>${c}</th>`).join('')}</tr>${n.map((c,l)=>`<tr><th class="l">${c}</th>${n.map((_,co)=>{const arms=[0,1,2,3,4,5].filter(a=>res.combos[l+'-'+co+'-'+a]);return `<td class="${arms.length?'h':'z'}">${arms.length?arms.map(a=>LET[a]).join(''):'·'}</td>`;}).join('')}</tr>`).join('')}</table>
   <h3>Coverage · legs module × weapon (unit count)</h3><table class="soakt cov"><tr><th></th>${wid.map(w=>`<th>${w}</th>`).join('')}</tr>${n.map((c,i)=>`<tr><th class="l">${c}</th>${wid.map(w=>{const v=res.legsWeapon[i+'|'+w]||0;return `<td class="${v?'h':'z'}">${v}</td>`;}).join('')}</tr>`).join('')}</table>
-  <p class="note">Uncovered core × weapon: ${miss(res.chassisWeapon)} · uncovered legs × weapon: ${miss(res.legsWeapon)}. Full core × weapon after battle ${res.firstFull.chassisWeapon??'—'}, full legs × weapon after battle ${res.firstFull.legsWeapon??'—'}. Leg IK: ${res.ikFix?'fix preview':'as shipped'}.</p>
+  <p class="note">Uncovered core × weapon: ${miss(res.chassisWeapon)} · uncovered legs × weapon: ${miss(res.legsWeapon)}. Full core × weapon after battle ${res.firstFull.chassisWeapon??'—'}, full legs × weapon after battle ${res.firstFull.legsWeapon??'—'}. Leg IK: ${res.ikFix?'game (ZXY)':'old bug (XYZ)'}.</p>
   <p class="note">${Object.keys(res.combos).length} of 216 legs × core × arms combinations seen. Arms letters: W Warden · K Kestrel · S baSilisk · V Valkyrie · O Oni · H beHemoth.</p>`;
   $('soakOut').innerHTML=h;}
 const LET=['W','K','S','V','O','H'];
@@ -2983,7 +3128,7 @@ addEventListener('keydown',e=>{RB.ensureAudio();if(e.target&&(e.target.tagName==
   else{if(k===' '){e.preventDefault();$('wRun').click();}else if(k==='.')$('wStep').click();else if(k==='n')$('wNew').click();}});
 
 RB.setIkFix=v=>{RB.ikFix=!!v;document.querySelectorAll('[data-ik]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.ik==='1')===RB.ikFix)));
-  if(RB.mode==='bench'){const keep=Object.assign({},B.S.parts);B.rebuild();}RB.toast(RB.ikFix?'LEG IK · FIX PREVIEW (NOT IN GAME)':'LEG IK · AS SHIPPED');if(RB.mode==='war')RB.toast(RB.ikFix?'IK FIX PREVIEW · NEXT BATTLE':'IK AS SHIPPED · NEXT BATTLE');};
+  if(RB.mode==='bench'){const keep=Object.assign({},B.S.parts);B.rebuild();}RB.toast(RB.ikFix?'LEG IK · GAME (ZXY)':'LEG IK · OLD BUG (XYZ)');if(RB.mode==='war')RB.toast(RB.ikFix?'IK GAME (ZXY) · NEXT BATTLE':'IK OLD BUG (XYZ) · NEXT BATTLE');};
 document.querySelectorAll('[data-ik]').forEach(b=>b.onclick=()=>RB.setIkFix(b.dataset.ik==='1'));
 /* ---------- render loop ---------- */
 const ctx=RB.hctx;

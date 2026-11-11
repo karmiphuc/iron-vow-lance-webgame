@@ -1,9 +1,13 @@
 const assert=require('node:assert/strict');
 
 module.exports=async function checkPairedWalk({page,mobile,origin}){
+ await page.addInitScript(()=>{const request=requestAnimationFrame.bind(window),cancel=cancelAnimationFrame.bind(window),pending=new Set();window.requestAnimationFrame=fn=>{const id=request(t=>{pending.delete(id);fn(t);});pending.add(id);return id;};window.__stopPairedFrames=()=>{for(const id of pending)cancel(id);pending.clear();};});
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
+ await page.evaluate(()=>__stopPairedFrames());const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
+ await page.evaluate(()=>{requestAnimationFrame=fn=>setTimeout(()=>fn(performance.now()),1000/30);last=performance.now();requestAnimationFrame(draw);});
+ const ready=async()=>{for(let i=0;i<200;i++){await page.clock.runFor(34);if(await page.evaluate(()=>IronVowScene.ready))return;await new Promise(resolve=>setTimeout(resolve,25));}throw Error('Paired walk art did not load');};
  const baked=['AERO','LINE INFANTRY','LINE INFANTRY ELITE','GRAVEMAW','REAVER','BULWARK-AEGIS','ASHIGARU'];
  // Live gait is checked on actual bones by check-scene.cjs; only temporary sheets remain here.
  for(const name of baked){
@@ -44,16 +48,16 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
    window.pairedWalkQA=track;
    return {ap:u.ap,move:u.moveLeft};
   },name);
-  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+  await ready();await page.evaluate(()=>IronVowScene.render(clock,1));
   const {x,y}=await page.evaluate(async()=>{
-   await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
    const point=project(10,0,10),element=document.elementFromPoint(point.x,point.y);
    if(element!==canvas)throw Error('Walk target is covered by '+element?.id+' '+element?.className);
    return point;
   });
   if(mobile){await page.touchscreen.tap(x,y);await page.touchscreen.tap(x,y)}
   else await page.mouse.click(x,y);
-  await page.waitForFunction(()=>!battle.busy&&current().x===10&&current().z===10);
+  for(let i=0;i<400&&await page.evaluate(()=>battle.busy||current().x!==10||current().z!==10);i++)await page.clock.runFor(34);
+  assert.equal(await page.evaluate(()=>!battle.busy&&current().x===10&&current().z===10),true,name+' completes its real two-tile move');
   const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,sounds:pairedWalkQA.sounds,renders:[...pairedWalkQA.renders],seam:pairedWalkQA.seam,
    ap:current().ap,move:current().moveLeft,walks:current().walkCount,motion:current().motion}));
   assert.deepEqual(result.steps,[[8.5,10],[9,10],[9.5,10],[10,10]],name+' lands two alternating beats per tile');

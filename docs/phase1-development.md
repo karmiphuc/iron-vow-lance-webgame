@@ -4,7 +4,7 @@ PR #18 is a draft. This document records development findings, not final verific
 
 Implemented so far:
 
-- One WebGL owner for the board, live rigs and render-target UI previews. The eight live frame IDs are 0, 5, 6, 7, 8, 9, 10 and 12; the other twelve and vehicles use `dist/scene/billboards.js`.
+- One WebGL owner for the board, live rigs and render-target UI previews. The eight live frame IDs are 0, 5, 6, 7, 8, 9, 10 and 12; the other thirteen and vehicles use `dist/scene/billboards.js`.
 - Shared reference environment/cover helpers, actual terrain elevation, reference ground roughness and lightning, raycast proxies, projected HP, range/reach tiles, path chevrons, mouse pan, wheel/pinch, map and attack-camera integration.
 - Warden and Bastion share a measured-pivot rigid adapter and the kit animator. Bastion's authored stance is only a binding source; its separate runtime clip renderer is deleted. Combat uses the specified 0.9 scale; the old 1.415 Warden image-framing scale stays limited to UI previews.
 - Deleted the replaced 2D board, terrain, cover, attack panes, picking fallback, `drawToned`, filter detection and live-frame travel data. `foundry/renderer.js` was replaced by shared-scene/preview support in `scene-rigs.js`. Twelve-frame data in `foundry/baked.js` and `walk.js` remains until Phase 3.
@@ -43,3 +43,16 @@ Browser maintenance retains campaign, company, armory, shield, training, save an
 
 
 Correction from the observer negative-control work: the previous `__ironVow.start` called `createBattle` directly, omitting `deploy`'s terrain survey. The earlier 30-battle report covers flat constructor fixtures, not full elevated campaign terrain. The test seam now invokes real `deploy`, closes only the onboarding modal, and records/asserts the terrain seed. All formal terrain/clearance results must be rerun. Existing fixed baseline captures remain comparable flat fixtures; new per-live-frame captures survey actual terrain with seed 101.
+
+
+A browser regression exposed stale loading UI on scene changes: if the previous battle was ready and cached assets made the next scene ready on its first draw, `battlefieldReady` could remain true while the newly rendered controls stayed disabled. `renderBattle` now records the loading state it actually displayed, so the next draw observes the transition and enables the controls. The adapter browser case checks the actual End Turn button after each cached-scene replacement, with an isolated old-behavior route for the negative control. The real-terrain run was stopped after seven clean battles (partial raw report retained) to include this source fix in the immutable final gate. No passing 30-battle result is claimed yet.
+
+
+The next terrain run completed seven battles without scene findings, then exhausted the QA driver's decision budget at a Citadel's same-round barrage lock. The driver used `canUseWeapon` but omitted the existing `barrageStatus` restriction, so it repeatedly issued a no-op marked-barrage command. It now respects `BARRAGE NEXT ROUND` / `FIRE AT MARKER`, without changing game rules. A failed incomplete battle will retain commands and a real snapshot for diagnosis. The raw partial report is preserved as `terrain-driver-barrage-limit.json`. The bounds check also reads the actual rendered root, with a real-root-only negative probe. A separate one-seed study omitted unobserved render-target readbacks and reproduced the identical command list, outcome and 1,983 actual-bone ticks; this CPU-soak optimization is now recorded explicitly. The full 30-battle result is still pending.
+
+Current status: execution access failed during final verification. Read [the runtime recovery handoff](renderer-runtime-handoff-20261111.md) for current results, incomplete gates, unpublished local work, source identities and exact recovery paths. Seven real-terrain battles had zero required anomalies before a Citadel barrage-lock QA loop; the driver is corrected, and the restarted 30-battle gate remains incomplete. Bastion, Lion and the temporary adapter passed desktop and touch, including separate negative controls. No merge or Site deployment has been made.
+
+
+Execution access recovered. Continue from the preserved checks and reconcile the newer main/Gatecrasher imports before the final immutable gates. Phase 2 follows the owner's instruction to trust Claude's work highly, using PR #20 as the gait baseline and focusing checks on the actual production port and existing defects.
+
+Main integration preserves the new SHOGUN frame at ID 20, all four breach-loadout variants and the owner’s latest assets/rules. The thirteen temporary frames still use the single billboard adapter; its real image/upload/attachment browser coverage now includes SHOGUN. PRs #19 and #20 merged after focused real Playwright validation: nine seeded War battles had zero correctness anomalies, all six leg fixtures passed, and desktop/touch reference VFX passed. Claude’s separate 150-battle evidence remains accepted as author evidence. Phase 2 must use these final plasma/crawl/joint and gait references while preserving production terrain and brace fixes.

@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict');
 module.exports=async function bastionSharedRig({page,mobile,origin,tap}){
+ await page.addInitScript(()=>{const request=requestAnimationFrame.bind(window),cancel=cancelAnimationFrame.bind(window),pending=new Set();window.requestAnimationFrame=fn=>{const id=request(t=>{pending.delete(id);fn(t);});pending.add(id);return id;};window.__stopBastionFrames=()=>{for(const id of pending)cancel(id);pending.clear();};});
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded',timeout:120000});await page.locator('#nav button').first().waitFor();
  await page.evaluate(()=>{save.credits+=FRAMES[BASTION_FRAME].cost;render();});
@@ -16,7 +17,11 @@ module.exports=async function bastionSharedRig({page,mobile,origin,tap}){
  for(const sample of fittings){assert.ok(sample.left<1e-6&&sample.right<1e-6&&sample.tip,'Production weapons remain on the shared rig sockets');assert.equal(sample.width,640);assert.equal(sample.pistons,14,'Both halves of every native piston are bound');}
  console.log('Bastion fittings checked');
  await page.evaluate(()=>{const render=IronVowFoundry.previewAnimated;window.bastionPoseQA={first:null,changed:false};IronVowFoundry.previewAnimated=(...args)=>{const entry=render(...args);if(entry&&args[1]>.05){const image=entry.surface.toDataURL();bastionPoseQA.first??=image;bastionPoseQA.changed||=image!==bastionPoseQA.first;}return entry;};});
- await tap('#bastion-test-melee');await page.waitForFunction(()=>bastionPoseQA.changed,null,{timeout:120000});
+ await page.evaluate(()=>__stopBastionFrames());const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
+ await page.evaluate(()=>document.querySelector('#bastion-test-melee').click());
+ for(let i=0;i<20&&!await page.evaluate(()=>bastionPoseQA.changed);i++)await page.clock.fastForward(100);
+ assert.equal(await page.evaluate(()=>bastionPoseQA.changed),true,'Test Strike visibly redraws its real render-target image');
+ await page.clock.resume();await page.evaluate(()=>{last=performance.now();requestAnimationFrame(draw);});
  console.log('Bastion Test Strike animated');
  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[10,8,7]}));await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  await page.evaluate(()=>{selected=1;action='fire';renderBattle();});
