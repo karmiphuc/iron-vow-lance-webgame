@@ -1,10 +1,12 @@
 # Visual baseline status
 
-Not captured. Phase 0 is a draft and does not satisfy issue #6's visual gate yet.
+Capture collection is in progress. Phase 0 remains a draft until the complete matrix and device checks satisfy issue #6's visual gate.
 
-The current session has no `cua_repl.js` browser tool. The Sites skill prohibits replacing that missing managed browser path with another preview/browser route. The installed `site-workflow.mjs` source/packaging helper is also absent. No screenshot, contact sheet or native Safari performance evidence is fabricated.
+The owner explicitly approved local Playwright screenshots for this work in [PR #7](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/7#issuecomment-6785288934). AGENTS.md links that approval. Local browser operation is authorized, including in the hosted environment.
 
-Once supported browser QA is available, use `node qa/capture.cjs --plan` to inspect the matrix, then run against the supported preview URL:
+Actual baseline, candidate and reference screenshots have been captured. Hangar, paint, attack and reference Rig Bench images have been inspected. The full matrix is still running; partial output does not establish a complete visual gate. Capture evidence and its source/hash manifest will be committed after collection and review.
+
+Use `node qa/capture.cjs --plan` to inspect the matrix, then run against an explicitly supplied local or hosted preview URL:
 
 ```sh
 node qa/capture.cjs --origin <current-preview-url> --label baseline --out design/baseline \
