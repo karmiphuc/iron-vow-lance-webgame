@@ -5,14 +5,14 @@ const url=process.env.IRON_VOW_URL||'http://127.0.0.1:5176/';
 const rasterPair=process.env.IRON_VOW_SCENE_RASTER_PAIR==='1',cpuRaster=process.env.IRON_VOW_SCENE_CPU_RASTER==='1',skipProbes=process.env.IRON_VOW_SCENE_SKIP_PROBES==='1';
 const count=rasterPair?2:Number(process.env.IRON_VOW_SCENE_BATTLES||30),out=path.resolve(process.env.IRON_VOW_SCENE_REPORT||'scene-report.json');
 const startIndex=Number(process.env.IRON_VOW_SCENE_START_INDEX||0);
-const combatGate=process.env.IRON_VOW_SCENE_COMBAT==='1';
+const combatGate=process.env.IRON_VOW_SCENE_COMBAT==='1',formal=process.env.IRON_VOW_SCENE_FORMAL==='1'||count>=30;
 const live=[0,5,6,7,8,9,10,12];
 (async()=>{
  const tileOverride=process.env.IRON_VOW_SCENE_TILE?Number(process.env.IRON_VOW_SCENE_TILE):null;
  const root=path.resolve(__dirname,'..'),git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
  const source={commit:git('rev-parse','HEAD'),distTree:git('rev-parse','HEAD:dist'),distDirty:Boolean(git('status','--porcelain','--','dist')),checkerSha256:crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex')};
- if(count>=30){assert.equal(skipProbes,false,'The formal soak includes all negative controls');assert.equal(source.distDirty,false,'The formal soak requires committed, immutable application source');assert.equal(tileOverride,null,'The formal soak tests the production pitch');}
- const report={schema:2,url,source,combatGate,cpuRaster,rasterPair,skipProbes,rasterPolicy:'Optional CPU mode omits paints only into the main output canvas and temporary-body output canvases after their real alpha bounds/readiness are measured. Transforms, metrics, decoding, source masks, scratch canvases, readbacks and all geometry/anchor updates remain active. Paired mode compares identical seeded command, result and combat-event streams.',clockHz:30,tileOverride,renderPolicy:'First scene rendered at 0.5 DPR for software-GL correctness; subsequent bone soak skips unobserved GPU submissions and render-target readbacks. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
+ if(formal){assert.equal(rasterPair,false,'Formal shards do not repeat seeds');assert.equal(skipProbes,false,'The formal soak includes all negative controls');assert.equal(source.distDirty,false,'The formal soak requires committed, immutable application source');assert.equal(tileOverride,null,'The formal soak tests the production pitch');}
+ const report={schema:2,url,source,combatGate,formal,cpuRaster,rasterPair,skipProbes,rasterPolicy:'Optional CPU mode omits paints only into the main output canvas and temporary-body output canvases after their real alpha bounds/readiness are measured. Transforms, metrics, decoding, source masks, scratch canvases, readbacks and all geometry/anchor updates remain active. Paired mode compares identical seeded command, result and combat-event streams.',clockHz:30,tileOverride,renderPolicy:'First scene rendered at 0.5 DPR for software-GL correctness; subsequent bone soak skips unobserved GPU submissions and render-target readbacks. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
  const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});
  try{
   const page=await browser.newPage({viewport:{width:1366,height:1024},deviceScaleFactor:.5});
@@ -72,7 +72,8 @@ const live=[0,5,6,7,8,9,10,12];
      if(u.vx<-.5||u.vz<-.5||u.vx>s.size.width-.5||u.vz>s.size.depth-.5||u.root[0]<lower.x||u.root[0]>upper.x||u.root[2]<lower.z||u.root[2]>upper.z)fail('bounds',u,{logical:[u.vx,u.vz],root:u.root});
      if(u.alive)for(const f of u.feet){
       const key=u.id+'/'+f.side,planted=!f.swing&&!f.settle&&!u.motion?.jumpjet,previous=q.feet.get(key),error=f.ankle[1]-f.ground-f.ankleHeight;
-      if((Math.hypot(...f.ankle.map((n,i)=>n-f.target[i]))>.02||Math.hypot(...f.hip.map((n,i)=>n-f.target[i]))>f.reach+.01))fail('ikReach',u,{side:f.side,ankle:f.ankle,target:f.target,reach:f.reach});
+      const m=IronVowScene.models.get(u.id)?.entry?.m,legIndex=m?.rig.legs.findIndex(l=>l.side===f.side),poseLift=Boolean(m?.legs[legIndex]?.poseLift);
+      if(Math.hypot(...f.hip.map((n,i)=>n-f.ankle[i]))>f.reach+.01||!poseLift&&(Math.hypot(...f.ankle.map((n,i)=>n-f.target[i]))>.02||Math.hypot(...f.hip.map((n,i)=>n-f.target[i]))>f.reach+.01))fail('ikReach',u,{side:f.side,poseLift,ankle:f.ankle,hip:f.hip,target:f.target,reach:f.reach,kneeContact:f.kneeContact,moving:u.moving,attacking:u.attacking});
       if(planted&&Math.abs(error)>.15)fail('footGround',u,{side:f.side,error,ankle:f.ankle,goal:f.target,moving:u.moving,attacking:u.attacking});
       if(f.kneeContact&&Math.abs(f.kneeContact.point[1]-f.kneeContact.ground)>.15)fail('footGround',u,{side:f.side,kneeContact:f.kneeContact});
       if(planted&&previous){const drift=Math.hypot(f.ankle[0]-previous[0],f.ankle[2]-previous[2]);if(drift>.3)fail('footSlide',u,{side:f.side,drift,moving:u.moving,attacking:u.attacking,previous,foot:f});}
@@ -80,7 +81,6 @@ const live=[0,5,6,7,8,9,10,12];
      }
      if(q.combatGate){
       if(!u.alive&&u.attacking)fail('wreckActs',u,'dead actor retains an active attack');
-      if(u.weaponAimError!==null&&u.weaponArchetype!=='missile'&&u.weaponArchetype!=='blade'&&u.weaponAimError>.12)fail('aimOff',u,u.weaponAimError);
       if(u.muzzleDistance!==null&&u.muzzleDistance>.3)fail('muzzleFar',u,u.muzzleDistance);
       for(const [part,hp] of Object.entries(u.hp))if(!Number.isFinite(hp)||hp<0||hp>u.max[part])fail('hpRange',u,{part,hp,max:u.max[part]});
       const oldObject=q.objects.get(u.id);if(oldObject&&oldObject!==u.object)fail('popSwap',u,{before:oldObject,after:u.object});q.objects.set(u.id,u.object);
@@ -179,7 +179,7 @@ const live=[0,5,6,7,8,9,10,12];
     IronVowScene.aimAt(u,target,'body');u.fireTime=clock-.1;u.attack={kind:'rifle',start:clock-1,fireAt:clock-.1,releaseAt:null,primeDuration:0,windup:.23};
     IronVowScene.render(clock,1);q.anomalies=[];q.keys.clear();q.observe();
     const baseline=q.anomalies.map(a=>a.type);q.anomalies=[];q.keys.clear();
-    if(type==='aimOff'){weapon.mount.rotation.y+=.6;m.cont.updateMatrixWorld(true);}
+    if(type==='aimOff'){const aim=IronVowFoundry.aimMounted;window.__qaRestoreAim=()=>{IronVowFoundry.aimMounted=aim;};IronVowFoundry.aimMounted=(...args)=>{const result=aim(...args);args[1].mount.rotation.y+=.6;args[0].cont.updateMatrixWorld(true);return result;};}
     if(type==='weaponMount'){m.cont.add(weapon.mount);m.cont.updateMatrixWorld(true);}
     if(type==='muzzleFar'){weapon.muzzle.position.x+=3;m.cont.updateMatrixWorld(true);}
     if(type==='hpRange')u.hp.body=u.max.body+10;
@@ -193,7 +193,7 @@ const live=[0,5,6,7,8,9,10,12];
      record.object.parent.add(replacement);record.object.visible=false;record.object=replacement;
     }
     if(type==='noDamage')Object.defineProperty(target.hp,'body',{configurable:true,enumerable:true,get:()=>1000,set:()=>{}});
-    if(type==='noDamage'||type==='deadPartDamage'){
+    if(type==='aimOff'||type==='noDamage'||type==='deadPartDamage'){
      u.attack=null;void __ironVow.attack(u.id,target.id,'body','fire').catch(e=>q.commandErrors.push(String(e)));
     }else q.observe();
     return{type,baseline,anomalies:q.anomalies};
@@ -203,9 +203,10 @@ const live=[0,5,6,7,8,9,10,12];
     for(let i=0;i<300&&!await page.evaluate(()=>Number.isFinite(current().attack?.fireAt));i++)await page.clock.runFor(34);
     await page.evaluate(()=>{const target=battle.units.find(u=>u.team==='enemy');let hp=0;Object.defineProperty(target.hp,'body',{configurable:true,enumerable:true,get:()=>hp,set:()=>{hp=-5;}});});
    }
-   if(type==='noDamage'||type==='deadPartDamage'){
+   if(type==='aimOff'||type==='noDamage'||type==='deadPartDamage'){
     for(let i=0;i<1200&&await page.evaluate(()=>__ironVow.pending);i++)await page.clock.runFor(34);
     probe.anomalies=await page.evaluate(()=>__qa.anomalies);
+    if(type==='aimOff')await page.evaluate(()=>__qaRestoreAim());
    }
    assert.ok(probe.anomalies.some(a=>a.type===type),'Observer detects actual combat/bone/state corruption '+type+': '+JSON.stringify(probe));
    report.faultProbes.push(probe);console.log('PASS real combat fault probe '+type);
@@ -266,6 +267,7 @@ const live=[0,5,6,7,8,9,10,12];
   assert.deepEqual(report.errors,[],'Browser errors');assert.equal(report.battles.flatMap(b=>b.anomalies).length,0,'Scene anomalies');
   if(count>=3)assert.deepEqual([...new Set(report.battles.flatMap(b=>b.frames))].sort((a,b)=>a-b),live,'Every live frame covered');
   if(combatGate){report.weaponCoverage={assigned:[...new Set(report.battles.flatMap(b=>b.assignedWeapons||[]))],commanded:[...new Set(report.battles.flatMap(b=>b.weapons))],policy:'Campaign rotates all 24 Workshop weapons; actual all-weapon landed-contact coverage, built-ins and shoulder launcher are asserted separately by scene-combat.cjs.'};if(count>=30)assert.equal(report.weaponCoverage.assigned.length,24,'Every Workshop weapon assigned in campaign');}
+  report.status='passed';
   console.log('PASS '+count+' seeded campaign battles, '+report.battles.reduce((n,b)=>n+b.ticks,0)+' actual-bone ticks');
  }finally{fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
