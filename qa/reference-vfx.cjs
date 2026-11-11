@@ -100,13 +100,13 @@ async function main(){
      }
      return samples;
     });
-    assert.ok(arcPixels[0].bluePixels>100,'exposed electrical arc is visibly blue');
-    assert.equal(arcPixels[1].bluePixels,0,'opaque foreground cover hides the electrical arc');
-    assert.ok(arcPixels[2].bluePixels>100,'the same arc remains visible in front of cover');
     for(const {state,bluePixels,png} of arcPixels){
      evidence.checks.push({device:touch?'touch':'desktop',arcVisibility:state,bluePixels});
      if(config.out){fs.mkdirSync(config.out,{recursive:true});const file=(touch?'touch':'desktop')+'-arc-'+state+'.png';fs.writeFileSync(path.join(config.out,file),Buffer.from(png,'base64'));evidence.captures.push({file,sha256:createHash('sha256').update(fs.readFileSync(path.join(config.out,file))).digest('hex')});}
     }
+    assert.ok(arcPixels[0].bluePixels>100,'exposed electrical arc is visibly blue');
+    assert.equal(arcPixels[1].bluePixels,0,'opaque foreground cover hides the electrical arc');
+    assert.ok(arcPixels[2].bluePixels>100,'the same arc remains visible in front of cover');
     await page.evaluate(()=>{
      const B=RB.bench;B.rebuild();B.setPart('body',1);let fired=false;const original=B.fx.arc;
      B.fx.arc=(...args)=>{fired=true;return original(...args);};
@@ -151,8 +151,12 @@ async function main(){
    assert.deepEqual(correctness(runs[1]),correctness(runs[0]),'seeded outcomes and existing correctness anomalies match the previous reference');
    evidence.soak={seed:4242,battles:3,baseline:runs[0],current:runs[1],timingNote:'All raw anomalies are retained. frameSpike depends on host scheduling and is excluded from deterministic equality; no performance claim'};
   }
-  if(config.out){fs.mkdirSync(config.out,{recursive:true});fs.writeFileSync(path.join(config.out,'manifest.json'),JSON.stringify(evidence,null,2)+'\n');}
+  evidence.status='passed';
   console.log(config.soakOnly?'PASS 3-battle reference seeded comparison':'PASS reference VFX: all five real hit hooks, touch particle counts, natural critical/collapse arcs, ground slam, reduced motion'+(baseline?', 3-battle seeded comparison':''));
- }finally{await browser?.close();await new Promise(done=>server.close(done));}
+ }finally{
+  evidence.status??='incomplete';
+  if(config.out){fs.mkdirSync(config.out,{recursive:true});fs.writeFileSync(path.join(config.out,'manifest.json'),JSON.stringify(evidence,null,2)+'\n');}
+  await browser?.close();await new Promise(done=>server.close(done));
+ }
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

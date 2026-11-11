@@ -1728,8 +1728,8 @@ function FX(scene,o){
   const decals=mkPool(o.decals||16,()=>({o:new T.Mesh(decalG,new T.MeshBasicMaterial({map:scorchTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2})),life:0}));
   const misG=new T.Group();
   const missiles=mkPool(8,()=>{const g=new T.Group();cy(g,.08,.08,.7,MAT.white,0,0,0,PI/2,0,0,8,false);mesh(g,new T.ConeGeometry(.08,.22,8),MAT.amber,0,0,.46,PI/2,0,0,false);const fl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffb050,blending:T.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.z=-.45;fl.scale.setScalar(.7);g.add(fl);return{o:g,a:V3(),b:V3(),c:V3(),life:0,dur:1,trail:0,done:null};});
-  // [bench] electrical arcs: a jagged chain of stretched additive boxes (a white core inside a blue glow), re-jittered every 45 ms
-  const ARC_N=7,arcMat=c=>new T.MeshBasicMaterial({color:c,blending:T.AdditiveBlending,transparent:true,depthWrite:false,depthTest:true,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8}); // [bench] depth-tested so cover/mechs occlude arcs (hull-surface endpoints)
+  // [bench] electrical arcs: a jagged chain of stretched additive boxes (an electric-blue core inside a saturated blue glow), re-jittered every 45 ms
+  const ARC_N=7,arcMat=c=>new T.MeshBasicMaterial({color:c,blending:T.AdditiveBlending,transparent:true,depthWrite:false,depthTest:true,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}); // [bench] depth-tested so cover/mechs occlude arcs (hull-surface endpoints)
   const arcs=mkPool(o.arcs||8,()=>{const g=new T.Group(),core=[],halo=[];for(let i=0;i<ARC_N;i++){const a=new T.Mesh(streakG,arcMat(0x4fa2ff)),b=new T.Mesh(streakG,arcMat(0x1f5cff));a.renderOrder=b.renderOrder=996;g.add(a,b);core.push(a);halo.push(b);}
     return {o:g,core,halo,a:V3(),b:V3(),pts:Array.from({length:ARC_N+1},()=>V3()),life:0,max:1,strength:1,frame:-1};});
   const _u=V3(),_w=V3(),_d=V3();
