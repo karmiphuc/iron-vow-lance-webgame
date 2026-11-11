@@ -64,17 +64,33 @@ async function capture(config){
   fs.writeFileSync(temp,JSON.stringify(manifest,null,2)+'\n');
   fs.renameSync(temp,path.join(output,'manifest.json'));
  };
+ // Rebuild the retention cache from all checkpoint manifests before the next
+ // checkpoint. An interrupted resume may not yet have visited valid later jobs.
+ if(previous){
+  const history=[previous,...fs.readdirSync(output).filter(f=>/^prior-.*\.json$/.test(f)).map(f=>JSON.parse(fs.readFileSync(path.join(output,f),'utf8')))];
+  const object=(sha,file)=>execFileSync('git',['rev-parse',sha+':'+file],{cwd:sourceRoot,encoding:'utf8'}).trim();
+  const validSources=new Map(),fileHashes=new Map(),seen=new Set();
+  for(const m of history)for(const c of m.captures||[]){
+   const job=jobs.find(j=>j.source===c.source&&j.preset.id===c.preset);
+   if(!job||!viewports.some(v=>v.width===c.viewport.width&&v.height===c.viewport.height)||job.preset.path&&c.webgl_sample?.screenshot_non_black_samples<64||job.preset.paint&&job.source!=='reference-game'&&c.paint_view_verified!==2||job.preset.id==='selected-move'&&job.source!=='reference-game'&&c.selected_move_view_verified!==5)continue;
+   const key=[c.source,c.preset,c.viewport.width,c.viewport.height].join('/');if(seen.has(key))continue;
+   const source=c.source_commit||m.source;if(!source)continue;
+   if(!validSources.has(source))validSources.set(source,object(source,'dist')===manifest.dist_tree&&object(source,'qa/capture-presets.cjs')===object(manifest.source,'qa/capture-presets.cjs'));
+   if(!validSources.get(source))continue;
+   const file=path.join(output,c.file);if(!fs.existsSync(file)||!c.png_sha256)continue;
+   if(!fileHashes.has(file))fileHashes.set(file,createHash('sha256').update(fs.readFileSync(file)).digest('hex'));
+   if(fileHashes.get(file)!==c.png_sha256)continue;
+   if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
+   if(c.document_sha256!==documentHashes.get(job.url))continue;
+   manifest.captures.push({...c,retained:true,source_commit:source,runner_sha256:c.runner_sha256||m.runner_sha256});seen.add(key);
+  }
+  checkpoint();console.log('RECOVERED '+manifest.captures.length+' verified retained captures from checkpoint history');
+ }
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
-   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64)&&(!job.preset.paint||job.source==='reference-game'||c.paint_view_verified===2)&&(job.preset.id!=='selected-move'||job.source==='reference-game'||c.selected_move_view_verified===5));
-   if(retained&&fs.existsSync(path.join(output,retained.file))){
-    const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
-    if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
-    if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
-    if(retained.document_sha256!==documentHashes.get(job.url))throw Error('Served document changed since the retained capture');
-    manifest.captures.push({...retained,png_sha256:pngHash,retained:true,source_commit:retained.source_commit||previous.source,runner_sha256:retained.runner_sha256||previous.runner_sha256});checkpoint();console.log('REUSE '+retained.file);break;
-   }
+   const retained=manifest.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
+   if(retained){console.log('REUSE '+retained.file);break;}
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -210,6 +226,7 @@ async function capture(config){
     if(webglSample){
      webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
     }
+    manifest.captures=manifest.captures.filter(c=>!(c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height));
     manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:2}:{}),...(selectedMoveViewVerified?{selected_move_view_verified:5,selected_move_camera:'Overview control; actual paid path hovered'}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
