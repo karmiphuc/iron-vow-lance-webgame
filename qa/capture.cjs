@@ -32,7 +32,7 @@ async function checkSavedWebgl(file){
  return bright;
 }
 async function capture(config){
- const selected=[...presets,...(config.phase1||config.preset?.startsWith('live-frame-')?phase1Presets:[])].filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
+ const selected=[...(config.phase1||config.preset?.startsWith('live-frame-')?phase1Presets:[]),...presets].filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
  const plan={viewports,presets:selected};
  if(config.plan){console.log(JSON.stringify(plan,null,2));return;}
  if(!config.origin)throw Error('Supply --origin from your supported preview; this runner never starts a server');

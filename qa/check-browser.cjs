@@ -68,6 +68,7 @@ function browserPath(){
 
 async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
+ const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
  const timeout=Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000);
  if(!Number.isFinite(timeout)||timeout<1000||timeout>120000)throw Error('IRON_VOW_QA_TIMEOUT_MS must be between 1000 and 120000.');
  const server=origin?null:await serve();
@@ -80,7 +81,7 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,c
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   // Short animation stages can be missed by software-rendered CI frames. Retry in
   // fresh storage/contexts without relaxing any assertion; persistent failures fail.
-  async function checkDevice(mobile){for(const scenario of scenarios){for(let attempt=0;attempt<3;attempt++){
+  async function checkDevice(mobile){for(const scenario of scenarios){for(let attempt=0;attempt<attempts;attempt++){
    const label=(mobile?'mobile touch':'desktop')+' '+scenario.name;
    const context=await browser.newContext({
     ...(mobile?{...devices['iPhone 13'],deviceScaleFactor:1}:{viewport:{width:1440,height:1000}}),
@@ -105,7 +106,7 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,c
     console.error(label+' failed: '+error.stack);
     const capture=join(mkdtempSync(join(tmpdir(),'iron-vow-qa-')),'failure.png');
     try{await page.screenshot({path:capture,timeout:3000});console.error('Browser failure screenshot '+capture)}catch{}
-    if(attempt<2)console.error('RETRY '+label+' ('+(attempt+1)+'/2): '+error.message);
+    if(attempt<attempts-1)console.error('RETRY '+label+' ('+(attempt+1)+'/'+(attempts-1)+'): '+error.message);
     else throw Error(label+' failed: '+error.message,{cause:error});
    }finally{await context.close()}
   }}}
