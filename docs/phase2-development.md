@@ -44,3 +44,6 @@ The current catalog contains {'Workshop': 24, 'built-in': 9, 'shoulder': 1}, rat
 | `vesper-shoulder` | shoulder | rifle | contact / special action | special action path |
 
 Outstanding integration: per-round real 3D origin/aim and terrain direction impacts; shield interception; all weapon and built-in mappings with actual production sockets; reference melee/rail/rifle timeline and documented compatibility decisions; per-part reactions and plate detachment; 14-second burning wreck smoke; jumpjet/mortar; dynamic reduced motion; migrate floating text only and delete replaced 2D effects/weapon compositing; all nine Phase 2 scene checks and actual-weapon campaigns. Rebase on the final Phase 1 merge before opening or merging the Phase 2 PR.
+
+
+`weapon-fx.js` now declares all 34 catalog profiles plus free-hand and mortar. The base rifle/missile and common melee visual timelines use the reference numbers; other profiles retain their individual existing beats as the integration starting point. Built-in physical weapon aliases and socket choices are explicit. The mapping is not yet connected to action resolution, and these declarations alone do not satisfy the weapon or timing gates.
