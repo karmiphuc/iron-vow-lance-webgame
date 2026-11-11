@@ -1,0 +1,34 @@
+{
+ "critical_events_in_order": [
+  "arc",
+  "arc",
+  "crawl",
+  "arc",
+  "arc",
+  "crawl",
+  "joint",
+  "crawl",
+  "crawl"
+ ],
+ "collapse_events_in_order": [
+  "arc",
+  "joint",
+  "arc",
+  "arc",
+  "arc",
+  "joint",
+  "arc",
+  "arc"
+ ],
+ "screenshots": [
+  "e-natural-01-arc",
+  "e-natural-02-arc",
+  "e-natural-03-crawl",
+  "e-natural-04-arc",
+  "e-natural-05-arc",
+  "e-natural-06-crawl",
+  "e-natural-07-joint",
+  "e-natural-08-crawl",
+  "e-natural-09-crawl"
+ ]
+}
