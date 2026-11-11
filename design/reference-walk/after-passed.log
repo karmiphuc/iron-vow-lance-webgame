@@ -1,0 +1,10 @@
+START 50-battle War soak, seed 4242
+  50 battles, 188180 ticks, winners {"enemy":26,"ally":24}, anomalies {"frameSpike":1}
+START 50-battle War soak, seed 77
+  50 battles, 187426 ticks, winners {"ally":26,"enemy":24}, anomalies {}
+START 50-battle War soak, seed 90210
+  50 battles, 197634 ticks, winners {"enemy":31,"ally":18,"timeout":1}, anomalies {}
+Bench walk (max ankle → IK target, cm): {"WARDEN":{"maxAnkleErrorCm":0},"KESTREL":{"maxAnkleErrorCm":0},"BASILISK":{"maxAnkleErrorCm":0},"VALKYRIE":{"maxAnkleErrorCm":0},"ONI":{"maxAnkleErrorCm":0},"BEHEMOTH":{"maxAnkleErrorCm":0}}
+Game-style tile walk: {"WARDEN":{"maxPlantedSlideCm":0,"maxAnkleErrorCm":0,"maxOverReachCm":0},"KESTREL":{"maxPlantedSlideCm":0,"maxAnkleErrorCm":0,"maxOverReachCm":0},"BASILISK":{"maxPlantedSlideCm":0,"maxAnkleErrorCm":0,"maxOverReachCm":0},"VALKYRIE":{"maxPlantedSlideCm":0,"maxAnkleErrorCm":0,"maxOverReachCm":0},"ONI":{"maxPlantedSlideCm":0,"maxAnkleErrorCm":0,"maxOverReachCm":0},"BEHEMOTH":{"maxPlantedSlideCm":0,"maxAnkleErrorCm":0,"maxOverReachCm":0}}
+PASS reference walk: 150 War battles with zero correctness anomalies, bench walk and game-style tile walk on all six leg types
+exit=0

@@ -569,8 +569,9 @@ function solveLeg(rig,D,leg,t,pitch){
   const vx=_IV.x-leg.hip.position.x,vy=_IV.y-leg.hip.position.y,vz=_IV.z-leg.hip.position.z;
   const roll=Math.atan2(vx,-vy),L=Math.min(Math.hypot(vx,vy,vz),A+Bl-.001),phi=Math.atan2(vz,Math.hypot(vx,vy));
   const al=Math.acos(Math.max(-1,Math.min(1,(A*A+L*L-Bl*Bl)/(2*A*L)))),bend=PI-Math.acos(Math.max(-1,Math.min(1,(A*A+Bl*Bl-L*L)/(2*A*Bl))));
-  if(D.reverse){leg.hip.rotation.set(-(phi-al),0,roll);leg.kn.rotation.set(-bend,0,0);}
-  else{leg.hip.rotation.set(-(phi+al),0,roll);leg.kn.rotation.set(bend,0,0);}
+  // [walk fix] Euler order ZXY: roll applied outside pitch, so the analytic solution is exact (as dist/foundry/chassis.js since PR #1)
+  if(D.reverse){leg.hip.rotation.set(-(phi-al),0,roll,'ZXY');leg.kn.rotation.set(-bend,0,0);}
+  else{leg.hip.rotation.set(-(phi+al),0,roll,'ZXY');leg.kn.rotation.set(bend,0,0);}
   // keep the sole flat on the ground, aligned with its mount's yaw
   _IQ2.copy(_IQ).multiply(leg.hip.quaternion).multiply(leg.kn.quaternion).invert();
   if(hp!==p)_IQ2.multiply(hp.quaternion);
@@ -581,11 +582,11 @@ function solveLeg(rig,D,leg,t,pitch){
 
 /* ======================= WARDEN: assault brawler ======================= */
 const DIMS=[
-  {stance:.92,py:3.2,spY:.32,neck:[0,2.12,.42],shX:1.5,shY:1.78,up:1.1,fo:1.1,hipX:.84,legA:1.5,legB:1.55,ankleH:.36,restX:.74,restZ:.1,lift:.7,reverse:false,scale:1},
-  {py:3.32,spY:.25,neck:[0,.95,.72],shX:1.14,shY:1.1,up:.98,fo:1.0,hipX:.5,legA:1.45,legB:1.72,ankleH:.3,restX:.54,restZ:.04,lift:.9,reverse:true,scale:.98},
+  {stance:.92,py:3.2,spY:.32,neck:[0,2.12,.42],shX:1.5,shY:1.78,up:1.1,fo:1.1,hipX:.84,legA:1.5,legB:1.55,ankleH:.36,restX:.74,restZ:.1,lift:.7,reverse:false,scale:1,walkDrop:.1},
+  {py:3.32,spY:.25,neck:[0,.95,.72],shX:1.14,shY:1.1,up:.98,fo:1.0,hipX:.5,legA:1.45,legB:1.72,ankleH:.3,restX:.54,restZ:.04,lift:.9,reverse:true,scale:.98,walkDrop:.16},
   {stance:.86,py:2.68,spY:.36,neck:[0,1.86,.62],shX:1.86,shY:1.5,up:1.0,fo:1.0,hipX:1.04,legA:1.25,legB:1.3,ankleH:.42,restX:.96,restZ:.08,lift:.5,reverse:false,scale:1},
-  {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1},
-  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1},
+  {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1,walkDrop:.1},
+  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1,walkDrop:.22},
   {quad:true,py:2.7,spY:.6,neck:[0,1.98,.36],shX:1.3,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.32,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[0,.5,.5,0],sway:.05}
 ];
 function warden(K,M){
@@ -1381,7 +1382,7 @@ function mergeStatic(root,Bc,anchors){root.updateMatrixWorld(true);const anc=o=>
 const BUILDERS=[warden,kestrel,basilisk,valkyrie,oni,behemoth];
 /* Every chassis is three modules: LEGS (pelvis, hips, legs, gait), CORE (torso, head, back units) and ARMS (pauldrons, arms, hands).
    Dimensions are split the same way, so any legs can carry any core and any arms. */
-const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','sway','scale'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so'];
+const LEG_KEYS=['stance','py','spY','hipX','hipY','hipZ','legA','legB','ankleH','restX','restZ','lift','reverse','quad','reach','phases','sway','scale','walkDrop'],CORE_KEYS=['neck','shX','shY','shZ'],ARM_KEYS=['up','fo','so'];
 function composeDims(l,c,a){const D={};for(const [src,keys] of [[l,LEG_KEYS],[c,CORE_KEYS],[a,ARM_KEYS]])for(const k of keys)if(DIMS[src][k]!==undefined)D[k]=DIMS[src][k];
   // combat stance: biped feet planted wider than the shoulders, toes turned out, limited by what the legs can reach with a bent knee
   if(!D.quad){const vert=D.py+(D.hipY??-.1)-D.ankleH,maxH=Math.sqrt(Math.max(0,(.95*(D.legA+D.legB))**2-vert*vert));D.restX=Math.max(D.restX,Math.min(D.shX*(D.stance??1.1),D.hipX+maxH));D.toe=D.toe??.17;}
@@ -1579,6 +1580,18 @@ function meleeKeys(a){if(a<0||a>MEL.end)return null;
   const o={w:a>MEL.hold?1-q*.999:1};for(const k in P0)o[k]=lerp(A[k],B[k],q);return o;}
 function lungeK(a){if(a<0||a>MEL.end)return 0;if(a<MEL.wind)return -.15*smooth(a/MEL.wind);if(a<MEL.strike)return lerp(-.15,1,smooth((a-MEL.wind)/(MEL.strike-MEL.wind)));if(a<MEL.hold)return 1;return 1-smooth((a-MEL.hold)/(MEL.end-MEL.hold));}
 function liftArc(q){return q<.42?1-Math.pow(1-q/.42,3):1-Math.pow((q-.42)/.58,3);}
+/* [walk fix] a foothold on the floor no further than lim from the hip: keeps its height and slides toward the hip's ground point */
+function onFloorWithin(p,hip,lim){const dy=p.y-hip.y,hx=p.x-hip.x,hz=p.z-hip.z,hd=Math.hypot(hx,hz),mx=Math.sqrt(Math.max(0,lim*lim-dy*dy));
+  if(hd<=mx||hd<1e-6)return p;const k=mx/hd;p.x=hip.x+hx*k;p.z=hip.z+hz*k;return p;}
+/* [walk fix] gait start: the cycle phase that keeps every planted foot inside half a stride for the rest of its stance,
+   preferring swings that start early. Planted feet stay where they are; only the cycle's starting point is chosen. */
+function startPhase(m,cont,D,stepLen,dir){let best=m.gait.phase,bc=1e9;
+  for(let k=0;k<32;k++){const g=k/32;let c=0;
+    m.rig.legs.forEach((l,i)=>{const ph=((g+(l.phase??i*.5))%1+1)%1,L=m.legs[i],home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ));
+      if(ph<.5){const off=(L.planted.x-home.x)*dir.x+(L.planted.z-home.z)*dir.z,end=off-(.5-ph)*2*stepLen;c+=Math.max(0,-end-stepLen*.5)*10+Math.max(0,off-stepLen*.5)*10;}
+      else c+=(ph-.5);});
+    if(c<bc-1e-9){bc=c;best=g;}}
+  return best;}
 /* in: {pos,moving,speed,stepLen,heading,face,brace,alive,deathAge,down,pilotRatio,armDead,legsDead,shieldDead,ground,onStep,noPlant} */
 function animateMech(m,I,dt,t){
   const r=m.rig,cont=m.cont,S=m.s,sc=m.scale,D=m.dims;
@@ -1591,26 +1604,49 @@ function animateMech(m,I,dt,t){
   cont.updateMatrixWorld(true);
   spr(S.comp,80,11,dt);S.comp.x=clamp(S.comp.x,-.4,.12);spr(S.pitch,55,7,dt);spr(S.arm,60,7,dt);spr(S.kx,40,9,dt);spr(S.kz,40,9,dt);
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
+  // [walk fix] root velocity from the root's frame-to-frame motion (walking, melee lunge, knockback), so footholds go where the hips are heading
+  const vel=m.vel||(m.vel=V3());if(m.lastPos&&dt>0){_c.set(cont.position.x-m.lastPos.x,0,cont.position.z-m.lastPos.z).divideScalar(dt);vel.lerp(_c,1-Math.exp(-dt*20));}
+  (m.lastPos||(m.lastPos=V3())).copy(cont.position);
+  const fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw)),vs=Math.hypot(vel.x,vel.z),dir=vs>.3?V3(vel.x/vs,0,vel.z/vs):fwd;
+  // [walk fix] gait start: begin the cycle where every planted foot can stay down for the rest of its stance (no foot left a full stride behind)
+  if(I.moving&&!dead&&!m.gait.on)m.gait.phase=startPhase(m,cont,D,I.stepLen,dir);
+  m.gait.on=I.moving&&!dead;
   if(I.moving)m.gait.phase+=dt*I.speed/(2*I.stepLen);
-  const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
+  const g=m.gait.phase;
+  // [walk fix] pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's
+  const p=r.pelvis,brace=I.brace;
+  const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
+  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
+  p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
+  cont.updateMatrixWorld(true);
+  const reach=(D.legA+D.legB)*sc;
   let settling=m.legs.some(L=>L.settle);
   r.legs.forEach((l,i)=>{const L=m.legs[i];const home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ)).clone();let pitch=0;
+    const hip=l.hip.getWorldPosition(V3());
+    // [walk fix] a planted foot the hips have pulled near the end of the leg's reach steps at once (catch-up step) instead of being dragged
+    const ph0=((g+(l.phase??i*.5))%1+1)%1,lifting=I.moving&&!dead&&ph0>=.5;   // this foot's regular swing starts this frame anyway
+    const strained=!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
+    if(strained){L.settle={from:L.planted.clone(),t:0,dur:.26};settling=true;}
     if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;}
-    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;L.settle=null;
-      if(ph<.5){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
-      else{if(!L.swing){L.swing=true;L.from.copy(L.planted);}const q=(ph-.5)/.5;L.to.copy(home).addScaledVector(fwd,I.stepLen*.5);L.to.y=home.y;
-        L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;pitch=q<.3?.45*Math.sin(PI*q/.3):q>.62?-.35*Math.sin(PI*(q-.62)/.38):0;}}
-    else{if(L.swing){L.swing=false;L.planted.copy(L.foot);L.planted.y=home.y;}
-      if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
-        if(q>=1){L.planted.copy(home);L.settle=null;I.onStep&&I.onStep(m,home,i,.45);}}
+    else if(L.settle&&(!dead||pd)){// catch-up or settle step toward where home will be when the foot lands (also while a downed pilot's mech kneels)
+      L.settle.t+=dt/(L.settle.dur||.42);const q=Math.min(1,L.settle.t),land=home.clone().addScaledVector(vel,(1-q)*(L.settle.dur||.42));
+      if(I.moving)land.addScaledVector(dir,I.stepLen*.25);land.y=home.y;
+      L.foot.lerpVectors(L.settle.from,land,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
+      if(q>=1){L.foot.y=home.y;L.planted.copy(onFloorWithin(L.foot,hip,reach*.985));L.foot.copy(L.planted);L.settle=null;L.swing=false;I.onStep&&I.onStep(m,L.planted,i,.45);}}
+    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;
+      if(ph<.5){if(L.swing){L.swing=false;L.planted.copy(onFloorWithin(L.to,hip,reach*.985));I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
+      else{const q=(ph-.5)/.5;if(!L.swing){L.swing=true;L.from.copy(L.planted);L.q0=q;}
+        // [walk fix] a swing that starts late (gait start) runs its whole path in the time left, so the foot never jumps
+        const qq=L.q0<.98?clamp((q-L.q0)/(1-L.q0),0,1):1;L.to.copy(home).addScaledVector(dir,I.stepLen*.5);L.to.y=home.y;
+        L.foot.lerpVectors(L.from,L.to,smoother(qq));L.foot.y+=liftArc(qq)*D.lift*sc;pitch=qq<.3?.45*Math.sin(PI*qq/.3):qq>.62?-.35*Math.sin(PI*(qq-.62)/.38):0;}}
+    else{// [walk fix] a foot in the air when the walk stops finishes as a settle step instead of snapping down mid-stride
+      if(L.swing){L.swing=false;L.settle={from:L.foot.clone(),t:0,dur:.3};settling=true;L.foot.copy(L.foot);}
       else{if(!dead&&!settling&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}
+    // [walk fix] a foot in the air never aims past the leg's reach
+    if(L.swing||L.settle){const d=hip.distanceTo(L.foot);if(d>reach*.99)L.foot.sub(hip).multiplyScalar(reach*.99/d).add(hip);}
     const loc=cont.worldToLocal(_b.copy(L.foot));solveLeg(m,l,loc,pitch*w);});
   // kusazuri hinge with the thighs so the skirt never cuts through a moving leg
   if(r.skirts)VC.skirtPose(r.skirts);
-  const p=r.pelvis,brace=I.brace;
-  const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
-  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1)+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
-  p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   m.aim.blend=damp(m.aim.blend,t<m.aim.until&&!dead?1:0,t<m.aim.until?9:2.5,dt);
   let ay=0,el=0;
   if(m.aim.blend>.01){const sp=r.spine.getWorldPosition(_c);const dx=m.aim.point.x-sp.x,dz=m.aim.point.z-sp.z,dy=m.aim.point.y-(sp.y+1.4*sc);const hz=Math.hypot(dx,dz)||1;
