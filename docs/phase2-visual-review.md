@@ -52,7 +52,7 @@ IRON_VOW_VISUAL_MIXED_SOURCE=1 IRON_VOW_VISUAL_RESUME=1 \
 IRON_VOW_VISUAL_SKIP_WEAPONS=parallax node qa/capture-phase2.cjs
 ```
 
-After the next freeze, use the new detached snapshot for touch Parallax, the actual captured seed-4264 preattack fixture, and the matching-preset supplement. `SIGTERM`/`SIGINT` records a scheduling pause and closes the browser. Resume validates each retained file hash and retains its original source, render policy and runner hash.
+After the next freeze, use the new detached snapshot for touch Parallax and the matching-preset supplement. The minimum-range automatic counter will be captured directly inside the mandatory seed-4264 replay, preserving its real state and rule RNG. A restored far player-attack fixture is not a substitute for that counter event. `SIGTERM`/`SIGINT` records a scheduling pause and closes the browser. Resume validates each retained file hash and retains its original source, render policy and runner hash.
 
 Offline verification and contact overview generation require no browser:
 
