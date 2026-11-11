@@ -1,0 +1,43 @@
+{
+  "scope": "Focused development fixture smoke; Chromium SwiftShader only. QA-only draw shim skips unseen settling draws but preserves CPU camera/rig updates; asserted/captured frames use real rendering. No full campaign, 48-case matrix, or native GPU performance claim.",
+  "url": "http://127.0.0.1:5198/scene/hangar-fixture.html",
+  "revision": "a11ddcca4620c9cf75116a398290fe54e6fdca57",
+  "sourceHashes": {
+    "dist/scene/hangar.js": "819192f676f4193fc51fea4d1a2971e07eb129ce",
+    "dist/scene/hangar-catalog.js": "7aab1e984214cc4bebfc3347346df6388eadc6dc",
+    "dist/scene/hangar-fixture.js": "4b2a79f130af2dcea6918dafa1ca1c1e2f1a893e",
+    "dist/scene/hangar-fixture.html": "e420f012c8e24a5e4f38d94b259c77c065c9d6bb",
+    "dist/shared-renderer.js": "f07e5d28d3a743f4822cd473a4278d9711c1c184"
+  },
+  "checks": [
+    "Initial roster has three active and five reserve units.",
+    "Physical mouse click selected active 2 and moved the focus camera.",
+    "Overview exposes all five reserves; physical touch opened Workshop for reserve 5.",
+    "Facility hotspot is visible, within viewport, and accepts physical pointer targeting.",
+    "Real fourth-seat button produced four active/four reserve units; touch selected fourth unit 3.",
+    "Actual WEBGL_lose_context loss/restore increased generation, preserved roster/selection/camera, and redrew nonblank framebuffer.",
+    "Disposal releases observed GPU resources, clears records, and is idempotent."
+  ],
+  "errors": [],
+  "beforeLossPixels": {
+    "width": 960,
+    "height": 670,
+    "lit": 6558,
+    "colors": 766,
+    "error": 0
+  },
+  "afterRestorePixels": {
+    "width": 960,
+    "height": 670,
+    "lit": 6555,
+    "colors": 764,
+    "error": 0
+  },
+  "disposal": {
+    "observedResources": 1164,
+    "disposed": 489,
+    "duplicateDisposals": 0,
+    "records": 0
+  },
+  "result": "PASS"
+}

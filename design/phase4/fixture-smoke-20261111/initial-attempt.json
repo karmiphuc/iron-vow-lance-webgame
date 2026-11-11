@@ -1,0 +1,22 @@
+{
+  "scope": "Focused development fixture smoke; Chromium SwiftShader only. No full campaign, 48-case matrix, or native GPU performance claim.",
+  "url": "http://127.0.0.1:5198/scene/hangar-fixture.html",
+  "revision": "efe9876675ec3ab62893ad6d06ae7b981790818d",
+  "sourceHashes": {
+    "dist/scene/hangar.js": "b359e35ed3124f44507c191d8a0faf3aceefe2be",
+    "dist/scene/hangar-catalog.js": "93d5690be2a64aa8205ce2202001589cd48c1a35",
+    "dist/scene/hangar-fixture.js": "4b2a79f130af2dcea6918dafa1ca1c1e2f1a893e",
+    "dist/scene/hangar-fixture.html": "e420f012c8e24a5e4f38d94b259c77c065c9d6bb",
+    "dist/shared-renderer.js": "f07e5d28d3a743f4822cd473a4278d9711c1c184"
+  },
+  "checks": [
+    "Initial roster has three active and five reserve units.",
+    "Physical mouse click selected active 2 and moved the focus camera.",
+    "Overview exposes all five reserves; physical touch opened Workshop for reserve 5.",
+    "Facility hotspot is visible, within viewport, and accepts physical pointer targeting.",
+    "Real fourth-seat button produced four active/four reserve units; touch selected fourth unit 3."
+  ],
+  "errors": [],
+  "result": "FAIL",
+  "failure": "page.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n    at /workspace/iron-vow-phase4/qa/hangar-fixture-smoke.cjs:85:16"
+}
