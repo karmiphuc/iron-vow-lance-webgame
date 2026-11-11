@@ -1,0 +1,10 @@
+AssertionError [ERR_ASSERTION]: a forced interruption must preserve a checkpoint manifest
+    at main (/workspace/iron-vow-phase0/qa/capture-recovery.cjs:27:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}

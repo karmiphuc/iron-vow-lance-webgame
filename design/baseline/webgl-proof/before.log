@@ -1,0 +1,10 @@
+AssertionError [ERR_ASSERTION]: a blank real WebGL viewport must fail capture
+    at /workspace/iron-vow-phase0/qa/capture-blank.cjs:19:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 0,
+  expected: 0,
+  operator: 'notStrictEqual',
+  diff: 'simple'
+}

@@ -1,0 +1,15 @@
+REJECTED observed blank baseline despite visible HTML controls
+ACCEPTED recovered positive control: 1019
+VALID baseline/1366x1024/rig-bench.png: 1023/1024 viewport samples
+VALID baseline/1194x834/rig-bench.png: 1020/1024 viewport samples
+VALID baseline/1376x1032/rig-bench.png: 1023/1024 viewport samples
+VALID baseline/1210x834/rig-bench.png: 1019/1024 viewport samples
+VALID phase0/1366x1024/rig-bench.png: 1023/1024 viewport samples
+VALID reference-bench/1366x1024/rig-bench.png: 995/1024 viewport samples
+VALID phase0/1194x834/rig-bench.png: 1020/1024 viewport samples
+VALID reference-bench/1194x834/rig-bench.png: 1002/1024 viewport samples
+VALID phase0/1376x1032/rig-bench.png: 1023/1024 viewport samples
+VALID reference-bench/1376x1032/rig-bench.png: 992/1024 viewport samples
+VALID phase0/1210x834/rig-bench.png: 1019/1024 viewport samples
+VALID reference-bench/1210x834/rig-bench.png: 997/1024 viewport samples
+PASS observed blank-image regression, positive control, and all 12 saved baseline/candidate/reference bench images
