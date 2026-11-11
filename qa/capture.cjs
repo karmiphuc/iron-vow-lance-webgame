@@ -104,6 +104,8 @@ async function capture(config){
     if(job.preset.advanceSeconds){
      await page.evaluate(seconds=>{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);},job.preset.advanceSeconds);
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+     await page.evaluate(seconds=>window.__captureTick(5000+(Math.ceil(seconds*30)+1)*1000/30),job.preset.advanceSeconds);
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
     const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
