@@ -1,0 +1,10 @@
+START desktop checkCareerTabs
+PASS desktop checkCareerTabs
+START desktop checkDutyRoster
+PASS desktop checkDutyRoster
+START desktop bastionSharedRig
+Bastion bought and assigned
+Bastion shared preview ready
+Bastion fittings checked
+Bastion Test Strike animated
+PASS desktop bastionSharedRig

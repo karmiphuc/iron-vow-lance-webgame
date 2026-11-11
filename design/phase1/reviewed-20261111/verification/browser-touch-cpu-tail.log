@@ -1,0 +1,11 @@
+START mobile touch checkCampaign
+PASS campaign UI, touch tooltip, reserve reload, Workshop, Wiki, variable seats and new skills
+PASS mobile touch checkCampaign
+START mobile touch checkShip
+PASS mobile touch checkShip
+START mobile touch checkHangar
+PASS mobile touch checkHangar
+START mobile touch checkCareerTabs
+PASS mobile touch checkCareerTabs
+START mobile touch checkDutyRoster
+PASS mobile touch checkDutyRoster

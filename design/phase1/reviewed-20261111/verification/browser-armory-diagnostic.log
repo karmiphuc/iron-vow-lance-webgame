@@ -1,0 +1,18 @@
+START mobile touch checkArmory
+CERBERUS_TARGET_BEFORE_TAP {"p":{"x":317.4076029400998,"y":335.4986530106159,"z":0.9963274252993926},"element":"map-radar","canvas":false,"innerWidth":390,"innerHeight":844}
+mobile touch checkArmory failed: page.evaluate: Target page, context or browser has been closed
+    at checkCerberusSalvo (/workspace/iron-vow-phase1/qa/browser/armory.cjs:129:153)
+    at async checkArmory (/workspace/iron-vow-phase1/qa/browser/armory.cjs:85:2)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34)
+Error: mobile touch checkArmory failed: page.evaluate: Target page, context or browser has been closed
+    at checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:133:16)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34) {
+  [cause]: page.evaluate: Target page, context or browser has been closed
+      at checkCerberusSalvo (/workspace/iron-vow-phase1/qa/browser/armory.cjs:129:153)
+      at async checkArmory (/workspace/iron-vow-phase1/qa/browser/armory.cjs:85:2)
+      at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+      at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34) {
+    log: []
+  }
+}

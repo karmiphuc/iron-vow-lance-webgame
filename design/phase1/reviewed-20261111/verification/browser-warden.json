@@ -1,0 +1,32 @@
+{
+  "started": "2026-11-11T12:43:01.969Z",
+  "commit": "f40c2ada7e71690d3ce6cbd904d85c097096f5cb",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "50f9e8bf97dd556364aa3139ec3a9c10dfe161a99020106367b1293b2890f386",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkWardenRigBench",
+      "sha256": "7a8d5ad73e2ff3d75359ca96c5ffaae6563ef52fddf4af5f0a83a6fd81f29ac0"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkWardenRigBench",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Bench input/animation/socket correctness; one real painted-rig frame submitted, unobserved main-canvas draws omitted while matrices update."
+    },
+    {
+      "name": "checkWardenRigBench",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Bench input/animation/socket correctness; one real painted-rig frame submitted, unobserved main-canvas draws omitted while matrices update."
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-11T12:43:34.072Z"
+}

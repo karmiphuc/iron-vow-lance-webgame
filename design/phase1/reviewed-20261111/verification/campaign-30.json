@@ -1,0 +1,7931 @@
+{
+  "schema": 1,
+  "url": "http://127.0.0.1:5173/",
+  "source": {
+    "commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+    "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+    "distDirty": false,
+    "checkerSha256": "bbf495ec15a207c6b46429716339a79a79f6000169009f7cafd86b97c685cbd4"
+  },
+  "clockHz": 30,
+  "tileOverride": null,
+  "renderPolicy": "First scene rendered at 0.5 DPR for software-GL correctness; subsequent bone soak skips unobserved GPU submissions and render-target readbacks. No performance claim.",
+  "overlapPolicy": "Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.",
+  "battles": [
+    {
+      "seed": 4242,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "contract": 0,
+      "terrainSeed": 2348084964,
+      "ticks": 1983,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 24
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 16,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 28
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 121
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 89
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 61
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 20
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4243,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "contract": 1,
+      "terrainSeed": 77049379,
+      "ticks": 5133,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 28
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 1,
+          "score": 88.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 17,
+          "cost": 7,
+          "score": 3.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 120
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 93
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 70
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 34
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 2
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 7,
+          "z": 17,
+          "cost": 1,
+          "score": 200.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 7,
+          "z": 15,
+          "cost": 5,
+          "score": 202.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 13,
+          "cost": 5,
+          "score": 182.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 13,
+          "z": 16,
+          "cost": 7,
+          "score": 63.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 11,
+          "z": 14,
+          "cost": 5,
+          "score": 22.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 10,
+          "z": 11,
+          "cost": 6,
+          "score": 3
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 134
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 101
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 76
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 34
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 14,
+          "z": 12,
+          "cost": 5,
+          "score": 156.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 15,
+          "z": 10,
+          "cost": 6,
+          "score": 91
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 16,
+          "z": 12,
+          "cost": 7,
+          "score": 43.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 15,
+          "z": 12,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 171
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 146
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 125
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 98
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 42
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4244,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "contract": 2,
+      "terrainSeed": 3387556809,
+      "ticks": 5883,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 41
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 6
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 210
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 188
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 162
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 136
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 106
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 71
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 36
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 16
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 154.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 9,
+          "z": 18,
+          "cost": 5,
+          "score": 82.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 13,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 190
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 153
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 5,
+          "z": 16,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 177
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 149
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 127
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 111
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 33
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 66
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 44
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 32
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4245,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "contract": 3,
+      "terrainSeed": 2748269787,
+      "ticks": 4353,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 18
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 17
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 248
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 222
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 201
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 182
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 149
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 149
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 126
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 101
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 77
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 35
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4246,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "contract": 0,
+      "terrainSeed": 1759463897,
+      "ticks": 1893,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 25
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 128
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 101
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 69
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 28
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4247,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "contract": 1,
+      "terrainSeed": 3594849259,
+      "ticks": 5073,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 28
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 1
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 43
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 17,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 6,
+          "z": 16,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 128
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 92
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 60
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 33
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 8,
+          "z": 17,
+          "cost": 2,
+          "score": 181
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 11,
+          "z": 16,
+          "cost": 5,
+          "score": 178.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 9,
+          "z": 16,
+          "cost": 6,
+          "score": 223
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 13,
+          "z": 15,
+          "cost": 7,
+          "score": 43.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 127
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 118
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 10,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 94
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 70
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 11,
+          "z": 16,
+          "cost": 1,
+          "score": 308.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 15,
+          "cost": 6,
+          "score": 143
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 13,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 180
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 151
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 93
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 68
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4248,
+      "frames": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "contract": 2,
+      "terrainSeed": 1241177973,
+      "ticks": 5703,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 37
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 17,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 5,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 210
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 187
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 165
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 143
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 124
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 89
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 54
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 28
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 17,
+          "cost": 1,
+          "score": 154.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 5,
+          "z": 14,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 190
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 153
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 5,
+          "z": 16,
+          "cost": 3,
+          "score": 1.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 197
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 185
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 17,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 161
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 145
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 33
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 111
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 95
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4249,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "contract": 3,
+      "terrainSeed": 3934360121,
+      "ticks": 3843,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 14
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 21
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 230
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 205
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 197
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 169
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 148
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 123
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 102
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 77
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 63
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4250,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "contract": 0,
+      "terrainSeed": 4021499127,
+      "ticks": 1983,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 52
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 17
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 28
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 22.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 142
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 119
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 41
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4251,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "contract": 1,
+      "terrainSeed": 1743024221,
+      "ticks": 6183,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 28
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 17,
+          "cost": 7,
+          "score": 3.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 160
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 5,
+          "z": 16,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 115
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 97
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 79
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 52
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 18
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 18
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 9,
+          "z": 15,
+          "cost": 5,
+          "score": 162.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 12,
+          "z": 18,
+          "cost": 6,
+          "score": 163
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 13,
+          "z": 17,
+          "cost": 7,
+          "score": 83.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 134
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 105
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 67
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 48
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 14,
+          "z": 15,
+          "cost": 5,
+          "score": 222.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 16,
+          "cost": 6,
+          "score": 201
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 16,
+          "z": 12,
+          "cost": 5,
+          "score": 112.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 13,
+          "cost": 3,
+          "score": 133.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 16,
+          "z": 11,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 180
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 170
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 14,
+          "z": 9,
+          "cost": 6,
+          "score": 3
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 149
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 120
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 93
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 81
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 56
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 35
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4252,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "contract": 2,
+      "terrainSeed": 3692882064,
+      "ticks": 6783,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 37
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 88.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 210
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 195
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 176
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 165
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 146
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 111
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 76
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 46
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 25
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 6
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 13,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 190
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 153
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 12,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 41
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 15,
+          "cost": 5,
+          "score": 24.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 6
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 116
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 56
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 15,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 143
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 111
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 32
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 74
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 74
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 46
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4253,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "contract": 3,
+      "terrainSeed": 2112171690,
+      "ticks": 4593,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 14
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 17
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 248
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 234
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 213
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 202
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 169
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 136
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 122
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 97
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 93
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 75
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 42
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 42
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 21
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4254,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "contract": 0,
+      "terrainSeed": 1974673458,
+      "ticks": 1893,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 57
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 22
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 20.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 8
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 119
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 87
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 50
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 9
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4255,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "contract": 1,
+      "terrainSeed": 2019590468,
+      "ticks": 5463,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 32
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 17,
+          "cost": 7,
+          "score": 3.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 115
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 88
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 52
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 25
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 1,
+          "score": 308.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 13,
+          "z": 17,
+          "cost": 7,
+          "score": 83.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 8,
+          "z": 16,
+          "cost": 5,
+          "score": 68.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 12,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 134
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 108
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 89
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 47
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 9,
+          "z": 16,
+          "cost": 1,
+          "score": 352.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 16,
+          "cost": 6,
+          "score": 201
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 14,
+          "z": 16,
+          "cost": 5,
+          "score": 244.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 12,
+          "cost": 6,
+          "score": 113
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 15,
+          "z": 12,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 167
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 148
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 131
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 121
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 96
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 71
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 42
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4256,
+      "frames": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "contract": 2,
+      "terrainSeed": 4155350132,
+      "ticks": 6813,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 37
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 210
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 187
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 168
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 142
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 112
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 77
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 77
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 23
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 4
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 13,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 190
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 153
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 14,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 116
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 99
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 16,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 37
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 6
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 69
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 8,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 197
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 175
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 19
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 11
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4257,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "contract": 3,
+      "terrainSeed": 3410022799,
+      "ticks": 4113,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 51
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 18
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 21
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 230
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 216
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 205
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 191
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 177
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 156
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 135
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 124
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 124
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 110
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 92
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4258,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "contract": 0,
+      "terrainSeed": 2084936043,
+      "ticks": 1983,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 52
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 27
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 7
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 16,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 132
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 100
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 41
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4259,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "contract": 1,
+      "terrainSeed": 4116916855,
+      "ticks": 5913,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 28
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 1,
+          "score": 88.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 5,
+          "z": 16,
+          "cost": 7,
+          "score": 3.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 115
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 83
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 56
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 38
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 20
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 16,
+          "cost": 1,
+          "score": 200.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 6,
+          "z": 14,
+          "cost": 5,
+          "score": 202.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 12,
+          "z": 18,
+          "cost": 6,
+          "score": 163
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 13,
+          "z": 16,
+          "cost": 7,
+          "score": 63.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 10,
+          "z": 14,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 134
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 118
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 13,
+          "z": 17,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 98
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 74
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 26
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 11,
+          "z": 14,
+          "cost": 1,
+          "score": 220.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 14,
+          "cost": 6,
+          "score": 123
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 14,
+          "z": 12,
+          "cost": 5,
+          "score": 22.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 13,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 180
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 149
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 15,
+          "z": 12,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 114
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 89
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 21
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4260,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "contract": 2,
+      "terrainSeed": 1546380506,
+      "ticks": 6393,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 41
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 10
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 8
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 210
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 188
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 169
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 147
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 112
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 77
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 29
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 7
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 13,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 190
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 153
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 12,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 143
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 116
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 14,
+          "cost": 4,
+          "score": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 33
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 5,
+          "z": 14,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 197
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 173
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 84
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 88
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4261,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "contract": 3,
+      "terrainSeed": 4138851531,
+      "ticks": 4683,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 14
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 17
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 248
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 227
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 208
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 183
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 183
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 150
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 124
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 100
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 78
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 53
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 53
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 20
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 216
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 196
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4262,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "contract": 0,
+      "terrainSeed": 2861885478,
+      "ticks": 2253,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 55
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 15
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 121
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 98
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 68
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 27
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 27
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 9
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4263,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "contract": 1,
+      "terrainSeed": 1880153167,
+      "ticks": 5283,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 32
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 1,
+          "score": 88.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 17,
+          "cost": 7,
+          "score": 3.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 120
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 88
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 56
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 15
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 15
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 15
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 4,
+          "z": 16,
+          "cost": 1,
+          "score": 330.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 9,
+          "z": 15,
+          "cost": 6,
+          "score": 163
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 12,
+          "z": 16,
+          "cost": 7,
+          "score": 83.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 9,
+          "z": 16,
+          "cost": 5,
+          "score": 22.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 134
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 106
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 26
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 14,
+          "z": 16,
+          "cost": 5,
+          "score": 244.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 16,
+          "z": 14,
+          "cost": 4,
+          "score": 122
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 16,
+          "z": 13,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 180
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 155
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4264,
+      "frames": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "contract": 2,
+      "terrainSeed": 383816388,
+      "ticks": 6603,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 37
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 2
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 210
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 191
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 167
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 144
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 121
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 86
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 86
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 62
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 28
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 13
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 16,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 4,
+          "z": 15,
+          "cost": 3,
+          "score": 1.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 197
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 173
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 3,
+          "score": 1.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 147
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 123
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 107
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 70
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 70
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 52
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 38
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 46
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4265,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "contract": 3,
+      "terrainSeed": 64035182,
+      "ticks": 4083,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 14
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 17,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 5,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 26
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 248
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 227
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 206
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 206
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 188
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 170
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 145
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 117
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 84
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 84
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 44
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4266,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "contract": 0,
+      "terrainSeed": 4186617061,
+      "ticks": 2193,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 47
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 22
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 28
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 140
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 117
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 89
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 48
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 7
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4267,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "contract": 1,
+      "terrainSeed": 2126861607,
+      "ticks": 6093,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 32
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 1,
+          "score": 88.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 17,
+          "cost": 7,
+          "score": 3.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 155
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 130
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 103
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 57
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 17
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 7,
+          "z": 15,
+          "cost": 5,
+          "score": 202.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 12,
+          "z": 18,
+          "cost": 6,
+          "score": 201
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 12,
+          "z": 16,
+          "cost": 7,
+          "score": 83.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 9,
+          "z": 15,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 134
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 113
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 11,
+          "z": 17,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 85
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 52
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 13,
+          "z": 14,
+          "cost": 5,
+          "score": 222.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 16,
+          "cost": 6,
+          "score": 201
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 16,
+          "z": 12,
+          "cost": 5,
+          "score": 112.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 15,
+          "z": 11,
+          "cost": 6,
+          "score": 113
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 16,
+          "z": 11,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 180
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 167
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 15,
+          "z": 10,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 153
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 132
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 96
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 78
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 61
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 40
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 19
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": true,
+        "pay": 4210
+      }
+    },
+    {
+      "seed": 4268,
+      "frames": [
+        10,
+        12,
+        0,
+        9
+      ],
+      "contract": 2,
+      "terrainSeed": 577587770,
+      "ticks": 4503,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 72
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 37
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 6
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 8
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 210
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 191
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 165
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 146
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 131
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 131
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 96
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 81
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 70
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 63
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 46
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 46
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 11
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 15,
+          "cost": 1,
+          "score": 20.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 14,
+          "cost": 5,
+          "score": 22.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 143
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 116
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "The iron corridor",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4269,
+      "frames": [
+        5,
+        6,
+        7,
+        12
+      ],
+      "contract": 3,
+      "terrainSeed": 182633807,
+      "ticks": 3873,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 80
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 51
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 3,
+          "z": 18,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy5",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 18
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 1,
+          "score": 60.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 17,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 59
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy6",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 17
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 248
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 227
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 209
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 191
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 158
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 125
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 108
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 92
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 71
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 53
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 28
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "No quiet frontier",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    },
+    {
+      "seed": 4270,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "contract": 0,
+      "terrainSeed": 3504814883,
+      "ticks": 2223,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 57
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 4,
+          "z": 18,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 25
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 5,
+          "z": 18,
+          "cost": 1,
+          "score": 20.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 4,
+          "z": 18,
+          "cost": 4,
+          "score": 2
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 24
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 119
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 8
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 92
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 51
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 10
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Picket sweep",
+        "day": 1,
+        "win": true,
+        "pay": 2000
+      }
+    },
+    {
+      "seed": 4271,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "contract": 1,
+      "terrainSeed": 3234232543,
+      "ticks": 5463,
+      "anomalies": [],
+      "weapons": [
+        "rifle",
+        "missile"
+      ],
+      "commands": [
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 2,
+          "z": 16,
+          "cost": 1,
+          "score": 0.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 64
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy3",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 32
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 3,
+          "z": 16,
+          "cost": 1,
+          "score": 40.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 7,
+          "z": 18,
+          "cost": 5,
+          "score": 2.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 43
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy4",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 3
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 6,
+          "z": 18,
+          "cost": 1,
+          "score": 88.5
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 6,
+          "z": 17,
+          "cost": 7,
+          "score": 3.5
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 160
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 115
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 92
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 65
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 38
+        },
+        {
+          "type": "attack",
+          "id": "ally2",
+          "target": "enemy0",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "missile",
+          "hp": 7
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 8,
+          "z": 17,
+          "cost": 2,
+          "score": 181
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 8,
+          "z": 16,
+          "cost": 5,
+          "score": 202.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 12,
+          "z": 18,
+          "cost": 6,
+          "score": 163
+        },
+        {
+          "type": "move",
+          "id": "ally2",
+          "x": 13,
+          "z": 15,
+          "cost": 7,
+          "score": 43.5
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 10,
+          "z": 16,
+          "cost": 2,
+          "score": 1
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 134
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 115
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 12,
+          "z": 15,
+          "cost": 3,
+          "score": 1.5
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 82
+        },
+        {
+          "type": "attack",
+          "id": "ally1",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 54
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy1",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 1
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 11,
+          "z": 16,
+          "cost": 1,
+          "score": 308.5
+        },
+        {
+          "type": "move",
+          "id": "ally1",
+          "x": 16,
+          "z": 13,
+          "cost": 6,
+          "score": 135
+        },
+        {
+          "type": "move",
+          "id": "ally0",
+          "x": 16,
+          "z": 16,
+          "cost": 5,
+          "score": 62.5
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 172
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 151
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 109
+        },
+        {
+          "type": "attack",
+          "id": "ally0",
+          "target": "enemy2",
+          "part": "body",
+          "mode": "fire",
+          "weapon": "rifle",
+          "hp": 84
+        }
+      ],
+      "commandErrors": [],
+      "circleCandidates": 0,
+      "result": {
+        "name": "Ashes of the relay",
+        "day": 1,
+        "win": false,
+        "pay": 0
+      }
+    }
+  ],
+  "faultProbes": [
+    {
+      "type": "nan",
+      "anomalies": [
+        {
+          "type": "nan",
+          "unit": "ally0",
+          "frame": 5,
+          "time": 0.03333333333333394,
+          "detail": "non-finite unit or bone matrix"
+        }
+      ]
+    },
+    {
+      "type": "footGround",
+      "anomalies": [
+        {
+          "type": "footGround",
+          "unit": "ally0",
+          "frame": 5,
+          "time": 0.10000000000000181,
+          "detail": {
+            "side": "L",
+            "error": 0.8000000000000029,
+            "ankle": [
+              -50.928,
+              1.106000000000003,
+              42.86349999999999
+            ],
+            "goal": [
+              -50.928,
+              0.30600000000000005,
+              42.863499999999995
+            ],
+            "moving": false,
+            "attacking": false
+          }
+        }
+      ]
+    },
+    {
+      "type": "footSlide",
+      "anomalies": [
+        {
+          "type": "footSlide",
+          "unit": "ally0",
+          "frame": 5,
+          "time": 0.10000000000000181,
+          "detail": {
+            "side": "L",
+            "drift": 0.5999999999999943,
+            "moving": false,
+            "attacking": false,
+            "previous": [
+              -50.928,
+              0.30600000000000005,
+              42.863499999999995
+            ],
+            "foot": {
+              "side": "L",
+              "ankle": [
+                -50.328,
+                0.3059999999999987,
+                42.86350000000001
+              ],
+              "hip": [
+                -51,
+                2.902711354398601,
+                43.587999999999994
+              ],
+              "reach": 2.8350000000000004,
+              "target": [
+                -50.928,
+                0.30600000000000005,
+                42.863499999999995
+              ],
+              "plant": [
+                -50.928,
+                0.30600000000000005,
+                42.863499999999995
+              ],
+              "swing": false,
+              "settle": false,
+              "ankleHeight": 0.30600000000000005,
+              "ground": 0,
+              "kneeContact": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "bounds",
+      "anomalies": [
+        {
+          "type": "bounds",
+          "unit": "ally0",
+          "frame": 5,
+          "time": 0.10000000000000181,
+          "detail": {
+            "logical": [
+              1,
+              16
+            ],
+            "root": [
+              71.39999999999999,
+              0,
+              44.199999999999996
+            ]
+          }
+        },
+        {
+          "type": "footGround",
+          "unit": "ally0",
+          "frame": 5,
+          "time": 0.10000000000000181,
+          "detail": {
+            "side": "L",
+            "error": 0.17999999999999977,
+            "ankle": [
+              71.472,
+              0.3059999999999998,
+              42.863499999999995
+            ],
+            "goal": [
+              -50.928,
+              0.30600000000000005,
+              42.863499999999995
+            ],
+            "moving": false,
+            "attacking": false
+          }
+        }
+      ]
+    },
+    {
+      "type": "overlap",
+      "anomalies": [
+        {
+          "type": "overlap",
+          "unit": "ally0",
+          "frame": 5,
+          "time": 0.10000000000000181,
+          "detail": {
+            "other": "ally1",
+            "distance": 0,
+            "threshold": 3.1428000000000007,
+            "source": "reference footprint radii"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stuck",
+      "move": {
+        "x": 8,
+        "z": 16,
+        "cost": 7,
+        "steps": [
+          {
+            "x": 2,
+            "z": 16
+          },
+          {
+            "x": 3,
+            "z": 16
+          },
+          {
+            "x": 4,
+            "z": 16
+          },
+          {
+            "x": 5,
+            "z": 16
+          },
+          {
+            "x": 6,
+            "z": 16
+          },
+          {
+            "x": 7,
+            "z": 16
+          },
+          {
+            "x": 8,
+            "z": 16
+          }
+        ]
+      },
+      "id": "ally0",
+      "root": [
+        -51,
+        0,
+        44.199999999999996
+      ],
+      "anomalies": [
+        {
+          "type": "stuck",
+          "unit": "ally0",
+          "frame": 5,
+          "time": 4.133333333333416,
+          "detail": "wanted to move for more than 4 seconds without crossing 1 metre"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "webglContexts": 1
+}

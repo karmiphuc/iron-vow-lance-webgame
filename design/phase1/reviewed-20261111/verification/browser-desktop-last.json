@@ -1,0 +1,47 @@
+{
+  "started": "2026-11-11T13:04:20.146Z",
+  "commit": "e61753327b0caed5194595d53a8e9b956faf7299",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkCareerTabs",
+      "sha256": "52c3ad9fb1482fe5ce8927ee32c2c3fce6cb22c8f0c336e497b0e45a96c96111"
+    },
+    {
+      "name": "checkDutyRoster",
+      "sha256": "93a7c441df947769c31061dc406497a2a3c1a4595bb04a931190d900fd5fe0b6"
+    },
+    {
+      "name": "bastionSharedRig",
+      "sha256": "935818eab3d37c3392e693f827ee98ea3cbc058b3e08f1e11f4e65234c54744f"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkCareerTabs",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkDutyRoster",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "bastionSharedRig",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-11T13:10:21.035Z"
+}

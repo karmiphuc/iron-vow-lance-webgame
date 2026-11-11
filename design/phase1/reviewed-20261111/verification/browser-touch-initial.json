@@ -1,0 +1,194 @@
+{
+  "started": "2026-11-11T12:52:10.157Z",
+  "commit": "dc58642ee644ed989531c56b0a1ba4b4a963d318",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "sharedScene",
+      "sha256": "9f689350901cda4595f1a829d12c716f02d98ae95126d735e324e8cc867f2a41"
+    },
+    {
+      "name": "livePaint",
+      "sha256": "44858569258c977d1c0d976289352349a9025d20e04212880310ca5edf8fc7f5"
+    },
+    {
+      "name": "temporaryBillboards",
+      "sha256": "252294f472de86d5a3d787294911efee33e16d04a5722d99214e3fa881975b29"
+    },
+    {
+      "name": "checkLionTrial",
+      "sha256": "75854710c3693663e5d346b9cb5ed3ae0a82afe605cc282ff50fe858268e1f90"
+    },
+    {
+      "name": "checkPairedWalk",
+      "sha256": "d4b457770eb478b11298d54f3027700a35fb5e08fb1a99e9e0b90d8063aed675"
+    },
+    {
+      "name": "checkMechComputer",
+      "sha256": "81209aad7e29760b03e93957f36d7ceece1b51857ad7b77f83f9a4c6801f886e"
+    },
+    {
+      "name": "checkMovePreview",
+      "sha256": "77d7be149dba6134b4158d316f8c2aa1247ad075136554691ecc6c0028afab03"
+    },
+    {
+      "name": "checkRidgeCombat",
+      "sha256": "58f466142326ae31f18d459c49835cfb61a7e025956e087018dc616dc41e849f"
+    },
+    {
+      "name": "checkTerrain",
+      "sha256": "fcf41c26470bceb270879ff3c59a5fd602c578a4ef0e73fa943a1672828f9a4f"
+    },
+    {
+      "name": "checkShields",
+      "sha256": "7fef389d222e2cd0b39419d6543a6692c9f7f6059c5d743646b93f2224a5a853"
+    },
+    {
+      "name": "checkLineInfantry",
+      "sha256": "e98fd2cd33eddf447af7b28846915d36c4d8687a36cc2b31d3436e8a339412c2"
+    },
+    {
+      "name": "checkLineElite",
+      "sha256": "22a1b8bf32b53d7d6b56bdc3f74d150d77ac07483ad7a6a330ce29bf185d7b4d"
+    },
+    {
+      "name": "checkInfantryCarry",
+      "sha256": "97fd45f4a5591422c1fcc2e6442a5be6f73d63484d09eb9ca637da3fd26d75b4"
+    },
+    {
+      "name": "checkVanguard",
+      "sha256": "decc63242ad58ae34063131140f61dacafda2501b5373f4b78826e199ad12ad1"
+    },
+    {
+      "name": "checkReaver",
+      "sha256": "4a1c2222d50500968c9a5033aaa02957b863634e0dc17ed15d981f27ecd64664"
+    },
+    {
+      "name": "checkAero",
+      "sha256": "504d441605d5ee0fdfc7ba97b34b137bdf49e47d8d7f97c72aa3a3ed02ab87bf"
+    },
+    {
+      "name": "checkArmory",
+      "sha256": "375da07a9fe0ebba039c9c12fb8cffe0edd945fa86d71d3c4fc77cde940b098b"
+    },
+    {
+      "name": "checkCampaign",
+      "sha256": "5ae937f4a91d79f29ed83a468e9511c856ebb0f71ea3be5746cf1e7d4d8bf751"
+    },
+    {
+      "name": "checkBulwarkBench",
+      "sha256": "0b7d8d3e90ace429a7637c44f94952dc6735e0f1742bf9655727cee4fb5bb936"
+    },
+    {
+      "name": "checkScoutBench",
+      "sha256": "105717aa46394f2495598b0c699ecda72d796419277883dff2cc9f0c4001cee1"
+    },
+    {
+      "name": "checkShip",
+      "sha256": "e108fffa69022b2e384a1b3fe30644b141bf5c027d826fe3e8eb8a1b976b624d"
+    },
+    {
+      "name": "checkHangar",
+      "sha256": "c7e9b0556cb86eb2a64e8ec1af58e607bbfda73dbe5c0ce6cec607a048007224"
+    },
+    {
+      "name": "checkCareerTabs",
+      "sha256": "5637e69a5450300218f049bd8168c5b114a09e9fdb2370b1a4fedd94995d9622"
+    },
+    {
+      "name": "checkDutyRoster",
+      "sha256": "93a7c441df947769c31061dc406497a2a3c1a4595bb04a931190d900fd5fe0b6"
+    },
+    {
+      "name": "bastionSharedRig",
+      "sha256": "935818eab3d37c3392e693f827ee98ea3cbc058b3e08f1e11f4e65234c54744f"
+    }
+  ],
+  "checks": [
+    {
+      "name": "sharedScene",
+      "device": "touch",
+      "attempt": 1,
+      "status": "failed",
+      "error": "locator.tap: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#map-center')\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" id=\"map-center\" title=\"Center on selected unit\" aria-label=\"Center on selected unit\">◎</button>\u001b[22m\n\u001b[2m  - attempting tap action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - performing tap action\u001b[22m\n",
+      "assetErrors": []
+    },
+    {
+      "name": "sharedScene",
+      "device": "touch",
+      "attempt": 2,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "livePaint",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "temporaryBillboards",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkLionTrial",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkPairedWalk",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkMechComputer",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkMovePreview",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkRidgeCombat",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkTerrain",
+      "device": "touch",
+      "attempt": 1,
+      "status": "failed",
+      "error": "range-10 target pick: {\"p\":{\"x\":-1,\"y\":369},\"id\":\"enemy0\",\"range\":10,\"weapon\":10,\"scale\":18.458856649999998,\"picked\":\"enemy0\",\"canvas\":false,\"tile\":{\"x\":2,\"z\":8}}",
+      "assetErrors": []
+    },
+    {
+      "name": "checkTerrain",
+      "device": "touch",
+      "attempt": 2,
+      "status": "failed",
+      "error": "range-10 target pick: {\"p\":{\"x\":-50,\"y\":379},\"id\":\"enemy0\",\"range\":10,\"weapon\":10,\"scale\":18.458856649999998,\"picked\":\"enemy0\",\"canvas\":false,\"tile\":{\"x\":2,\"z\":8}}",
+      "assetErrors": []
+    }
+  ],
+  "status": "incomplete",
+  "ended": "2026-11-11T13:16:21.135Z"
+}
