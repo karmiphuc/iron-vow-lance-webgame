@@ -1,5 +1,38 @@
 const assert=require('node:assert/strict');
 
+async function checkSamuraiWalk({page,mobile,origin}){
+ await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.locator('#nav button').first().waitFor({state:'attached'});
+ await page.emulateMedia({reducedMotion:'no-preference'});
+ const target=await page.evaluate(async()=>{
+  battle=null;save=fresh();save.credits=FRAMES[3].cost+10000;
+  if(!acquireHull(3)||!assignChassis(0,3,true))throw Error('Gatecrasher procurement failed');
+  createBattle(0,false,false,[0]);surveyTerrain(0);battle.cover.clear();
+  for(const cell of battle.field.cells)cell.level=0;
+  const actor=current();
+  Object.assign(actor,{x:8,z:10,vx:8,vz:10,moveLeft:4,heading:headingTo(1,0),face:1});
+  battle.units.filter(u=>u!==actor).forEach((u,i)=>Object.assign(u,{x:17,z:i+1,vx:17,vz:i+1}));
+  action='move';closeModal();focusBattleCamera(actor,true);renderBattle();
+  await Promise.all(FIELD_HEADINGS.map((_,i)=>travelDetail(actor,travelAtlas(actor).grounded,i).image.decode()));
+  const rows=new Map(),previous=draw;
+  window.samuraiWalkQA={rows};
+  draw=time=>{
+   previous(time);
+   if(!actor.motion)return;
+   const view=travelVisual(actor,clock);
+   if(view?.grounded&&view.points.planted)rows.set(view.row,view.source.key);
+  };
+  await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+  return project(10,0,10);
+ });
+ if(mobile){await page.touchscreen.tap(target.x,target.y);await page.touchscreen.tap(target.x,target.y)}
+ else await page.mouse.click(target.x,target.y);
+ await page.waitForFunction(()=>!battle.busy&&current().x===10&&current().z===10);
+ const rows=await page.evaluate(()=>[...samuraiWalkQA.rows]);
+ assert.ok(rows.length>=8,'the battlefield draws multiple planted-foot poses');
+ assert.ok(rows.every(([,key])=>/^grid-travel-gatecrasher-bare-ground-[0-3]$/.test(key)));
+}
+
 module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
  for(const mode of ['missile','strike']){
   await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
@@ -104,6 +137,7 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
   assert.equal(await page.evaluate(()=>JSON.stringify(captureSortie())),result.sortie);
   assert.equal(await page.evaluate(()=>nativeHullKey(current().frame,current())),start.kit);
  }
+ await checkSamuraiWalk({page,mobile,origin});
  if(!mobile){
   await page.goto(new URL('rig-bench/prototypes/',origin).href);
   await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Live 3D'));

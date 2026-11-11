@@ -5351,7 +5351,7 @@ function mechAttackPaneFit(pane,u){
  if(u.lionTrial)return Math.min(heightLimit,(pane.h*.82-45)/2.7);
  // Keep the raised tower shield below the header in compact panes.
  if(u.frame===BULWARK_FRAME)return Math.min(heightLimit,(pane.h*.82-49)/2.48);
- if(u.frame===3&&pane.h<300)return Math.min(heightLimit,(pane.h*.78-48)/2.18);
+ if(u.frame===3&&pane.h<300)return Math.min(heightLimit,(pane.h*.76-48)/2.23);
  return heightLimit;
 }
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
@@ -5410,7 +5410,8 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  const settle=airborne&&!subject.alive?smoothRange(0,VEHICLES.helicopter.wreckAt,vehicleDeathAge(subject,t)):0;
  const painted=upgradedWardenTravel(travelAtlas(subject));
  const breachFloor=subject.frame===3||subject.frame===ASHIGARU_FRAME&&opponent?.frame===3;
- const floor=pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:(compactInfantry||breachFloor)?.78:.82);
+ const breachFloorRatio=pane.h<300?.76:.78;
+ const floor=pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:breachFloor?breachFloorRatio:compactInfantry?.78:.82);
  // Fit both mechs with the same lens so a cutaway preserves their relative size.
  const fit=airborne?(pane.h*.88-49)/2.48:subject.kind?pane.h/2.25:
   Math.min(mechAttackPaneFit(pane,subject),opponent&&!opponent.kind?mechAttackPaneFit(pane,opponent):Infinity);

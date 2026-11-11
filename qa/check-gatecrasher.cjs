@@ -55,7 +55,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare
   assert.equal(art.key,`${prefix}-combat-${face}`);
   assert.equal(art.motion.cell,448);
   assert.notDeepEqual(art.muzzle,art.muzzle2);
-  for(const key of [art.key,art.motion.key])for(const suffix of ['','-paint'])
+  for(const key of [art.key,art.motion.key])for(const suffix of ['','-paint','-parts'])
    assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
  }
  const atlas=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL[${JSON.stringify(model)}])`));
@@ -66,7 +66,8 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare
  assert.equal(gait.detail.cell,384);
  assert.equal(gait.points.length,2+6*gait.samples+(gait.strike?.samples??0));
  for(const [heading,key] of gait.detail.keys.entries()){
-  for(const suffix of ['','-paint'])assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
+  for(const suffix of model==='hellbreaker'?['','-paint']:['','-paint','-parts'])
+   assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
   for(const [kind,start] of Object.entries(gait.walk)){
    const points=gait.points.slice(start,start+gait.samples).map(row=>row[heading]);
    const side=kind.at(-1);
@@ -89,7 +90,10 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare
  assert.deepEqual(new Set(json.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire',...(model==='gatecrasher'?['Strike']:[])]));
  assert.ok(json.nodes.some(node=>node.name===model.toUpperCase()+' / Rig'));
  if(model==='gatecrasher'){
-  assert.ok(json.materials.some(material=>material.name==='HV-09 / badge'),'raised torso badge has its paint role');
+  for(const name of ['Midnight blue ceramic','Slate blue ceramic','Deep blue ceramic','Graphite structure','Black titanium mechanisms'])
+   assert.ok(json.materials.some(material=>material.name===`HV-09 Paint | ${name}`),name);
+  for(const name of ['Continuous hip skirt','Forearm armored sleeve.L','Tapered jet pod.R','Morrow / wrist receiver'])
+   assert.ok(json.nodes.some(node=>node.name===name),name);
   for(const socket of ['Muzzle.Upper','Muzzle.Lower','Hardpoint.L','Cleaver Tip.L','Shoulder Hardpoint.R','Shoulder Muzzle.R','Shoulder Muzzle2.R'])
    assert.ok(json.nodes.some(node=>node.name===socket),socket);
   assert.ok(!json.nodes.some(node=>node.name==='Hardpoint.R'));

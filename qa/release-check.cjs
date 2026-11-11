@@ -30,7 +30,9 @@ async function verifyLive(url){
  const files=readdirSync(dist,{recursive:true}).filter(file=>file===join('assets','theater-tiles.webp')||file.endsWith('-parts.webp')||/-walk(?:-[^\\/]+)?\.webp$/.test(file)||/\.(?:html|js|css)$|(?:^|[\\/])(?:(?:aero-[^\\/]+|lion-[^\\/]+|armory-[^\\/]+|foundry-[6789](?:-[^\\/]+)?|reaver-[^\\/]+|bulwark|scout|ashigaru(?:-combat)?|foundry-1[01]|foundry-1[0-2]-death(?:-[0-3])?|aegis-(?:idle|[0-3]-(?:full|right-down|left-down|disarmed)))\.webp|expansion-weapons\.glb|shields\.glb|bulwark\.glb|scout\.glb)$/.test(file));
  files.push(...readdirSync(join(dist,'assets','audio')).filter(file=>file.endsWith('.wav'))
   .map(file=>join('assets','audio',file)));
- for(const file of files){
+ files.push(...readdirSync(join(dist,'assets')).filter(file=>/^(?:grid-travel-)?gatecrasher.*\.webp$/.test(file))
+  .map(file=>join('assets',file)),join('rig-bench','prototypes','gatecrasher.glb'),join('rig-bench','prototypes','gatecrasher.webp'));
+ for(const file of new Set(files)){
   const asset=new URL(file.replaceAll('\\','/'),base);
   const options={cache:'no-store',signal:AbortSignal.timeout(20000)};
   let response=await fetch(asset,{...options,redirect:'manual'});
@@ -46,7 +48,7 @@ async function verifyLive(url){
   const live=createHash('sha256').update(servedSource(file,Buffer.from(await response.arrayBuffer()))).digest('hex');
   if(local!==live)throw Error('Live asset differs from the checkout: '+file);
  }
- console.log('PASS '+files.length+' live code, combat audio and selected art files match the checkout');
+ console.log('PASS '+new Set(files).size+' live code, combat audio and selected art files match the checkout');
  await checkBrowser(base.href);
 }
 

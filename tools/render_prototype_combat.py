@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 
 import bpy
 from bpy_extras.object_utils import world_to_camera_view
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 from PIL import Image
 
 
@@ -55,19 +55,20 @@ def cleaver_orientation(blade, palm):
     return Matrix((x, y, x.cross(y))).transposed().to_quaternion()
 
 
-def cleaver_pose(rig, phase, reference):
+def cleaver_pose(rig, phase, reference, limit_reach=False):
     shoulder, elbow, wrist = (rig.pose.bones[name] for name in ("Shoulder.L", "Elbow.L", "Wrist.L"))
     shoulder_rest, elbow_rest, wrist_rest = reference
     neutral = wrist_rest.to_quaternion()
     guard = wrist_rest.translation
+    correction = Quaternion(rig.get("cleaver_wrist_correction", (1,0,0,0)))
     # Wrist targets in armature space. The cut runs out from the left flank,
     # through the target lane, then across the front of the chassis.
     keys = (
         (0, guard, neutral, 0, 0, 0),
-        (.31, Vector((2.40, -.40, 3.68)), cleaver_orientation((.67,.23,.70),(.12,-.98,.18)), .29, -.04, 0),
-        (.49, Vector((1.83,-1.72,3.66)), cleaver_orientation((-.31,-.94,-.13),(.67,-.20,-.74)), -.37, .12, .20),
-        (.63, Vector((1.07,-1.66,3.22)), cleaver_orientation((-.77,-.53,-.35),(.51,-.36,-.78)), -.46, .08, .15),
-        (.78, Vector((1.69,-1.05,3.07)), cleaver_orientation((.16,-.35,-.92),(.16,-.96,.15)), -.18, .04, .07),
+        (.31, Vector((2.40, -.40, 3.68)), cleaver_orientation((.67,.23,.70),(.12,-.98,.18)) @ correction, .29, -.04, 0),
+        (.49, Vector((1.83,-1.72,3.66)), cleaver_orientation((-.31,-.94,-.13),(.67,-.20,-.74)) @ correction, -.37, .12, .20),
+        (.63, Vector((1.07,-1.66,3.22)), cleaver_orientation((-.77,-.53,-.35),(.51,-.36,-.78)) @ correction, -.46, .08, .15),
+        (.78, Vector((1.69,-1.05,3.07)), cleaver_orientation((.16,-.35,-.92),(.16,-.96,.15)) @ correction, -.18, .04, .07),
         (1, guard, neutral, 0, 0, 0),
     )
     for a,b in zip(keys,keys[1:]):
@@ -91,6 +92,10 @@ def cleaver_pose(rig, phase, reference):
     arm = elbow_rest.translation-shoulder_rest.translation
     forearm = wrist_rest.translation-elbow_rest.translation
     upper, lower = arm.length, forearm.length
+    if limit_reach and distance > upper+lower-.012:
+        target = head + delta.normalized()*(upper+lower-.012)
+        delta = target-head
+        distance = delta.length
     assert abs(upper-lower) < distance < upper+lower-.005, (phase,distance,upper+lower)
     direction = delta.normalized()
     pole = (arm-direction*arm.dot(direction)).normalized()
@@ -105,7 +110,7 @@ def cleaver_pose(rig, phase, reference):
     assert (wrist.head-target).length < .001, (phase,wrist.head[:],target[:])
 
 
-def add_strike_track(scene, rig, heavy):
+def add_strike_track(scene, rig, heavy, limit_reach=False):
     anim = rig.animation_data
     if anim.nla_tracks.get("Strike"):
         return
@@ -125,7 +130,7 @@ def add_strike_track(scene, rig, heavy):
         for bone in controls:
             bone.location, bone.rotation_euler = baseline[bone.name]
         if armed:
-            cleaver_pose(rig, step / 30, reference)
+            cleaver_pose(rig, step / 30, reference, limit_reach)
             for name in ("Shoulder.L","Elbow.L","Wrist.L"):
                 bone = rig.pose.bones[name]
                 if name in previous:
