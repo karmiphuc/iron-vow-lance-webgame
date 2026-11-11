@@ -43,7 +43,7 @@ async function capture(config){
  let browser;
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim(),runner_source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
-  dist_tree:execFileSync('git',['rev-parse','HEAD:dist'],{cwd:sourceRoot,encoding:'utf8'}).trim(),candidate_advance_policy:'All CPU animation and matrix updates execute. Unrecorded main-canvas warmup and advance GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.',non_visual_fetch_policy:'Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.',environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
+  dist_tree:execFileSync('git',['rev-parse','HEAD:dist'],{cwd:sourceRoot,encoding:'utf8'}).trim(),candidate_advance_policy:'All 30 Hz CPU animation updates and matrix updates execute. Intermediate unrecorded main-canvas GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.',non_visual_fetch_policy:'Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.',environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
  const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
  if(previous&&previous.source!==manifest.source){
   const object=(sha,file)=>execFileSync('git',['rev-parse',sha+':'+file],{cwd:sourceRoot,encoding:'utf8'}).trim();
@@ -99,7 +99,6 @@ async function capture(config){
     await page.addInitScript(()=>{
      // Static captures advance every CPU animation frame; submit the final full-resolution board frame.
      Object.defineProperty(window,'IronVowRenderer',{configurable:true,set(api){const get=api.get;api.get=function(){const renderer=get();if(!renderer.__captureAdvanceWrapped){renderer.__captureAdvanceWrapped=true;const render=renderer.render;renderer.render=function(scene,camera){if(window.__captureAdvanceOnly&&this.getRenderTarget()===null){scene.updateMatrixWorld();camera.updateMatrixWorld();return;}return render.apply(this,arguments);};}return renderer;};Object.defineProperty(window,'IronVowRenderer',{value:api,configurable:true});}});
-     window.__captureAdvanceOnly=true;
      let seed=101;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
      const frames=new Map();let id=0;
      window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
@@ -155,12 +154,11 @@ async function capture(config){
      clock=5;last=5000-1000/60;window.__captureTick();
     });
     if(job.preset.advanceSeconds){
-     await page.evaluate(seconds=>{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);},job.preset.advanceSeconds);
+     await page.evaluate(seconds=>{window.__captureAdvanceOnly=true;try{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);}finally{window.__captureAdvanceOnly=false;}},job.preset.advanceSeconds);
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
      await page.evaluate(seconds=>window.__captureTick(5000+(Math.ceil(seconds*30)+1)*1000/30),job.preset.advanceSeconds);
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
-    await page.evaluate(()=>{window.__captureAdvanceOnly=false;});
     const broken=await page.evaluate(()=>[...window.__captureActiveImages(),...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     let webglSample;
     const battleWebgl=await page.evaluate(()=>Boolean(window.IronVowScene&&typeof battle!=='undefined'&&battle&&document.getElementById('world-scene')));
