@@ -13,9 +13,9 @@ const presets=[
  {id:'damage-body-destroyed',contract:1,detailPart:'body',detailLevel:2,advanceSeconds:2},
  ...['right','legs'].flatMap(detailPart=>[1,2].map(detailLevel=>({id:'damage-'+detailPart+(detailLevel===1?'-damaged':'-destroyed'),contract:1,detailPart,detailLevel,advanceSeconds:1}))),
  {id:'burning-wreck',contract:1,wreck:true,advanceSeconds:2},
- ...[0,5,6,7,8,9,10,12].map(liveFrame=>({id:'live-frame-'+liveFrame,contract:1,liveFrame})),
  {id:'rig-bench',path:'rig-bench/'}
 ];
+const phase1Presets=[0,5,6,7,8,9,10,12].map(liveFrame=>({id:'live-frame-'+liveFrame,contract:1,liveFrame}));
 // Serialized into the page by Playwright. No production test hooks or save-schema edits.
 function setGamePreset(preset){
  save=fresh();battle=null;selected=preset.selected??0;effects=[];clock=5;last=5000-1000/60;
@@ -66,4 +66,4 @@ function setGamePreset(preset){
  }
  render();
 }
-module.exports={viewports,presets,setGamePreset};
+module.exports={viewports,presets,phase1Presets,setGamePreset};

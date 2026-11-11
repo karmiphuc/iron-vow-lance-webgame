@@ -4,17 +4,17 @@ const path=require('node:path');
 const {createHash}=require('node:crypto');
 const {execFile,execFileSync}=require('node:child_process');
 const {promisify}=require('node:util');
-const {viewports,presets,setGamePreset}=require('./capture-presets.cjs');
+const {viewports,presets,phase1Presets,setGamePreset}=require('./capture-presets.cjs');
 const fetchPublicAsset=promisify(execFile),referenceAssets=new Map();
 function options(args){
  const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
  for(let i=0;i<args.length;i++){
-  const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}if(flag==='--details'){result.details=true;continue;}if(flag==='--resume'){result.resume=true;continue;}
+  const flag=args[i];if(flag==='--phase1'){result.phase1=true;continue;}if(flag==='--plan'){result.plan=true;continue;}if(flag==='--details'){result.details=true;continue;}if(flag==='--resume'){result.resume=true;continue;}
   if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset','--asset-delay-ms','--source-root'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
   result[flag.slice(2)]=args[++i];
  }
  if(!/^[a-z0-9-]+$/.test(result.label))throw Error('Use a simple alphanumeric capture label');
- if(result.preset&&!presets.some(p=>p.id===result.preset))throw Error('Unknown preset: '+result.preset);
+ if(result.preset&&![...presets,...phase1Presets].some(p=>p.id===result.preset))throw Error('Unknown preset: '+result.preset);
  if(result['asset-delay-ms']!==undefined&&(!Number.isInteger(Number(result['asset-delay-ms']))||Number(result['asset-delay-ms'])<0||Number(result['asset-delay-ms'])>5000))throw Error('Use an asset delay between 0 and 5000 ms');
  for(const key of ['origin','reference-game','reference-bench'])if(result[key]){
   const url=new URL(result[key]);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Use an HTTP(S) URL without credentials');
@@ -32,7 +32,7 @@ async function checkSavedWebgl(file){
  return bright;
 }
 async function capture(config){
- const selected=presets.filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
+ const selected=[...presets,...(config.phase1||config.preset?.startsWith('live-frame-')?phase1Presets:[])].filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
  const plan={viewports,presets:selected};
  if(config.plan){console.log(JSON.stringify(plan,null,2));return;}
  if(!config.origin)throw Error('Supply --origin from your supported preview; this runner never starts a server');

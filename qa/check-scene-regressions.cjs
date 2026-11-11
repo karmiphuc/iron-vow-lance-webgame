@@ -27,7 +27,7 @@ for(let model=0;model<6;model++){
 for(const result of results){assert.ok(result.worstGround<=.15,'model '+result.model+' planted ankle ground error '+result.worstGround);assert.ok(result.worstSlide<=.3,'model '+result.model+' planted ankle slide '+result.worstSlide);}
 console.log('PASS start/stop/turn world-space bone regression '+JSON.stringify(results));
 // A real campaign can request artillery while the quad is still turning out of its previous stance.
-let artilleryGround=0,artillerySlide=0;
+let artilleryGround=0,artillerySlide=0;const turnResults=[];
 for(const face of [0,Math.PI/4,Math.PI,-Math.PI/2]){
  const m=R.buildRig(5,'ally');m.scale=.9;m.cont.scale.setScalar(.9);let t=0;const previous=new Map();
  const attack={start:.5,primeDuration:.6,returnAt:2.4};
@@ -38,7 +38,8 @@ for(const face of [0,Math.PI/4,Math.PI,-Math.PI/2]){
    if(planted){artilleryGround=Math.max(artilleryGround,Math.abs(p.y-m.dims.ankleH*m.scale));const old=previous.get(k);if(old)artillerySlide=Math.max(artillerySlide,Math.hypot(p.x-old.x,p.z-old.z));else previous.set(k,p);}else previous.delete(k);
   });
  }
+ const yawError=Math.abs(Math.atan2(Math.sin(m.yaw-face),Math.cos(m.yaw-face)));turnResults.push({face,yaw:m.yaw,yawError});assert.ok(yawError<.08,'Supported turn reaches its actual requested heading: '+JSON.stringify(turnResults.at(-1)));
 }
 assert.ok(artilleryGround<=.15,'Turning into artillery leaves a planted foot '+artilleryGround+' m off the floor');
 assert.ok(artillerySlide<=.3,'Turning into artillery slides a planted foot '+artillerySlide+' m');
-console.log('PASS artillery turn/brace/return ground='+artilleryGround+' slide='+artillerySlide);
+console.log('PASS artillery turn/brace/return ground='+artilleryGround+' slide='+artillerySlide+' turns='+JSON.stringify(turnResults));

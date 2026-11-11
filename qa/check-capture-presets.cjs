@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {viewports,presets,setGamePreset}=require('./capture-presets.cjs');
+const {viewports,presets,phase1Presets,setGamePreset}=require('./capture-presets.cjs');
 const {options}=require('./capture.cjs');
 const createSimulation=require('./sim-harness.cjs');
 assert.deepEqual(viewports.map(v=>[v.width,v.height]),[[1366,1024],[1194,834],[1376,1032],[1210,834]]);
@@ -8,7 +8,7 @@ assert.throws(()=>options(['--preset','missing']),/Unknown preset/);
 assert.throws(()=>options(['--origin','https://user:secret@example.com']),/without credentials/);
 assert.throws(()=>options(['--label','../escape']),/alphanumeric/);
 assert.equal(options(['--plan']).plan,true);
-for(const preset of presets.filter(p=>!p.path)){
+for(const preset of [...presets,...phase1Presets].filter(p=>!p.path)){
  const sim=createSimulation({seed:101});
  sim.run('('+setGamePreset.toString()+')('+JSON.stringify(preset)+')');
  assert.equal(sim.run('clock'),5,preset.id+' fixed clock');
