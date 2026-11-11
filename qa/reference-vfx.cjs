@@ -11,11 +11,12 @@ const root=path.resolve(__dirname,'..'),fetchAsset=promisify(execFile),cache=new
 const args=process.argv.slice(2),config={};
 for(let i=0;i<args.length;i+=2){
  if(args[i]==='--soak-only'){config.soakOnly=true;i--;continue;}
- if(!['--out','--baseline'].includes(args[i])||!args[i+1])throw Error('Usage: node qa/reference-vfx.cjs [--out directory] [--baseline rig-bench.html]');
+ if(!['--out','--baseline'].includes(args[i])||!args[i+1])throw Error('Usage: node qa/reference-vfx.cjs [--out directory] [--baseline rig-bench.html] [--soak-only]');
  config[args[i].slice(2)]=path.resolve(args[i+1]);
 }
 const source=fs.readFileSync(path.join(root,'docs/reference/claude/rig-bench.html'));
 const baseline=config.baseline&&fs.readFileSync(config.baseline);
+if(config.soakOnly&&!baseline)throw Error('--soak-only requires --baseline; no comparison can pass without a baseline');
 const evidence={source_sha256:createHash('sha256').update(source).digest('hex'),environment:'Playwright Chromium; software WebGL; no device performance claim',checks:[],captures:[]};
 async function main(){
  const server=createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(req.url==='/baseline'&&baseline?baseline:source);});
