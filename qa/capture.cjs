@@ -43,9 +43,13 @@ async function capture(config){
  let browser;
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim(),runner_source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
-  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
+  dist_tree:execFileSync('git',['rev-parse','HEAD:dist'],{cwd:sourceRoot,encoding:'utf8'}).trim(),candidate_advance_policy:'All 30 Hz CPU animation updates and matrix updates execute. Intermediate unrecorded main-canvas GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.',non_visual_fetch_policy:'Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.',environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
  const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
- if(previous&&previous.source!==manifest.source)throw Error('Resume requires the same committed source');
+ if(previous&&previous.source!==manifest.source){
+  const object=(sha,file)=>execFileSync('git',['rev-parse',sha+':'+file],{cwd:sourceRoot,encoding:'utf8'}).trim();
+  if(object(previous.source,'dist')!==manifest.dist_tree||object(previous.source,'qa/capture-presets.cjs')!==object(manifest.source,'qa/capture-presets.cjs'))throw Error('Resume requires identical committed application and fixture objects');
+  manifest.retained_source_commit=previous.source;
+ }
  if(previous){const digest=createHash('sha256').update(JSON.stringify(previous)).digest('hex');fs.writeFileSync(path.join(output,'prior-'+digest+'.json'),JSON.stringify(previous,null,2)+'\n');manifest.previous_manifest='prior-'+digest+'.json';}
  const documentHashes=new Map();
  const jobs=selected.map(preset=>({source:config.label,preset,url:new URL(preset.path??'',config.origin).href}));
@@ -69,7 +73,7 @@ async function capture(config){
     if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
     if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
     if(retained.document_sha256!==documentHashes.get(job.url))throw Error('Served document changed since the retained capture');
-    manifest.captures.push({...retained,png_sha256:pngHash,retained:true});checkpoint();console.log('REUSE '+retained.file);break;
+    manifest.captures.push({...retained,png_sha256:pngHash,retained:true,source_commit:retained.source_commit||previous.source,runner_sha256:retained.runner_sha256||previous.runner_sha256});checkpoint();console.log('REUSE '+retained.file);break;
    }
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
@@ -93,6 +97,8 @@ async function capture(config){
      });
     }
     await page.addInitScript(()=>{
+     // Static captures advance every CPU animation frame; submit the final full-resolution board frame.
+     Object.defineProperty(window,'IronVowRenderer',{configurable:true,set(api){const get=api.get;api.get=function(){const renderer=get();if(!renderer.__captureAdvanceWrapped){renderer.__captureAdvanceWrapped=true;const render=renderer.render;renderer.render=function(scene,camera){if(window.__captureAdvanceOnly&&this.getRenderTarget()===null){scene.updateMatrixWorld();camera.updateMatrixWorld();return;}return render.apply(this,arguments);};}return renderer;};Object.defineProperty(window,'IronVowRenderer',{value:api,configurable:true});}});
      let seed=101;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
      const frames=new Map();let id=0;
      window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
@@ -100,7 +106,7 @@ async function capture(config){
      window.__captureTick=(time=5000)=>{const queued=[...frames.values()];frames.clear();for(const callback of queued)callback(time);};
      window.__capturePending=0;
      const fetchNative=window.fetch.bind(window);
-     window.fetch=(...args)=>{window.__capturePending++;return fetchNative(...args).finally(()=>window.__capturePending--);};
+     window.fetch=(...args)=>{const url=String(args[0]?.url||args[0]);if(/(?:^|\/)assets\/audio\//.test(url))return fetchNative(...args);window.__capturePending++;return fetchNative(...args).finally(()=>window.__capturePending--);};
      const sendNative=XMLHttpRequest.prototype.send;
      XMLHttpRequest.prototype.send=function(...args){
       window.__capturePending++;this.addEventListener('loadend',()=>window.__capturePending--,{once:true});
@@ -178,7 +184,7 @@ async function capture(config){
     if(webglSample){
      webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
     }
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(webglSample?{webgl_sample:webglSample}:{})});
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
     break;
