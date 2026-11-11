@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 root.IronVowSceneKit=function(renderer){
-const T=root.THREE,PI=Math.PI,TILE=6.8,C=h=>new T.Color(h).convertSRGBToLinear();
+const T=root.THREE,PI=Math.PI,TILE=7.4,C=h=>new T.Color(h).convertSRGBToLinear();
 let seed=97,width=10,depth=10;
 const rnd=(a,b)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return a+(b-a)*seed/4294967296;};
 const tileW=(x,z)=>new T.Vector3((x-(width-1)/2)*TILE,0,(z-(depth-1)/2)*TILE);

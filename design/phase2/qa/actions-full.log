@@ -1,0 +1,70 @@
+START rifle frame 0
+PASS rifle 8 contacts, 37 HP
+START shotgun frame 5
+PASS shotgun 12 contacts, 64 HP
+START missile frame 6
+PASS missile 2 contacts, 41 HP
+START rail frame 7
+PASS rail 1 contacts, 66 HP
+START hailstorm frame 8
+PASS hailstorm 12 contacts, 52 HP
+START rampart frame 9
+PASS rampart 1 contacts, 57 HP
+START breaker frame 10
+PASS breaker 1 contacts, 62 HP
+START cleaver frame 12
+PASS cleaver 1 contacts, 36 HP
+START piledriver frame 0
+PASS piledriver 1 contacts, 58 HP
+START blade frame 5
+PASS blade 1 contacts, 60 HP
+START sidewinder frame 6
+PASS sidewinder 12 contacts, 24 HP
+START trident frame 7
+PASS trident 8 contacts, 45 HP
+START forge frame 8
+PASS forge 12 contacts, 68 HP
+START ember frame 9
+PASS ember 12 contacts, 56 HP
+START watchman frame 10
+PASS watchman 1 contacts, 43 HP
+START falcon frame 12
+PASS falcon 1 contacts, 53 HP
+START cerberus frame 0
+PASS cerberus 2 contacts, 72 HP
+START obelisk frame 5
+PASS obelisk 1 contacts, 86 HP
+START rivet frame 6
+PASS rivet 12 contacts, 64 HP
+START parallax frame 7
+PASS parallax 1 contacts, 75 HP
+START hatchet frame 8
+PASS hatchet 1 contacts, 43 HP
+START pike frame 9
+PASS pike 1 contacts, 52 HP
+START tonfa frame 10
+PASS tonfa 1 contacts, 28 HP
+START anchor-hammer frame 12
+PASS anchor-hammer 1 contacts, 82 HP
+START morrow frame 0
+PASS morrow 2 contacts, 55 HP
+START locust frame 5
+PASS locust 2 contacts, 43 HP
+START breach-gauntlet frame 6
+PASS breach-gauntlet 1 contacts, 49 HP
+START pulse-bash frame 7
+PASS pulse-bash 1 contacts, 29 HP
+START aegis-cleave frame 8
+PASS aegis-cleave 1 contacts, 34 HP
+START aegis-bash frame 9
+PASS aegis-bash 1 contacts, 36 HP
+START needle-carbine frame 10
+PASS needle-carbine 8 contacts, 22 HP
+START flechette-scattergun frame 12
+PASS flechette-scattergun 12 contacts, 31 HP
+START signal-knife frame 0
+PASS signal-knife 1 contacts, 24 HP
+START vesper-shoulder frame 20
+PASS vesper-shoulder 2 contacts, 41 HP
+PASS real shield interception, pending-command lockout, counter, damage materials, staged wreck and fourteen-second smoke, dynamic reduced motion
+PASS requested catalog weapons: actual commands, beats, mounts, aim, landed contacts and HP

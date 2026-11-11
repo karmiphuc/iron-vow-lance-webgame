@@ -1,0 +1,90 @@
+START mobile touch sharedScene
+shared scene ready: touch
+mobile touch sharedScene failed: locator.tap: Timeout 120000ms exceeded.
+Call log:
+[2m  - waiting for locator('#map-center')[22m
+[2m    - locator resolved to <button type="button" id="map-center" title="Center on selected unit" aria-label="Center on selected unit">◎</button>[22m
+[2m  - attempting tap action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is visible, enabled and stable[22m
+[2m    - scrolling into view if needed[22m
+[2m    - done scrolling[22m
+[2m    - performing tap action[22m
+
+    at tap (/workspace/iron-vow-phase1/qa/check-browser.cjs:118:54)
+    at sharedScene (/workspace/iron-vow-phase1/qa/browser/shared-scene.cjs:31:8)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34)
+RETRY mobile touch sharedScene (1/1): locator.tap: Timeout 120000ms exceeded.
+Call log:
+[2m  - waiting for locator('#map-center')[22m
+[2m    - locator resolved to <button type="button" id="map-center" title="Center on selected unit" aria-label="Center on selected unit">◎</button>[22m
+[2m  - attempting tap action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is visible, enabled and stable[22m
+[2m    - scrolling into view if needed[22m
+[2m    - done scrolling[22m
+[2m    - performing tap action[22m
+
+START mobile touch sharedScene
+shared scene ready: touch
+raycasts, Overview and centre passed
+map jump, zoom and pan passed
+wheel/pinch zoom passed
+legal campaign attack ready
+3D attack camera and Skip passed
+actual context restoration and preserved checkpoint passed
+PASS mobile touch sharedScene
+START mobile touch livePaint
+warming 0,5,6
+warming 10,8,9
+live preview assets ready
+checking live preview 0
+checking live preview 5
+checking live preview 6
+checking live preview 7
+checking live preview 8
+checking live preview 9
+checking live preview 10
+checking live preview 12
+PASS mobile touch livePaint
+START mobile touch temporaryBillboards
+PASS mobile touch temporaryBillboards
+START mobile touch checkLionTrial
+PASS mobile touch checkLionTrial
+START mobile touch checkPairedWalk
+PASS mobile touch checkPairedWalk
+START mobile touch checkMechComputer
+PASS mobile touch checkMechComputer
+START mobile touch checkMovePreview
+PASS mobile touch checkMovePreview
+START mobile touch checkRidgeCombat
+PASS mobile touch checkRidgeCombat
+START mobile touch checkTerrain
+mobile touch checkTerrain failed: AssertionError [ERR_ASSERTION]: range-10 target pick: {"p":{"x":-1,"y":369},"id":"enemy0","range":10,"weapon":10,"scale":18.458856649999998,"picked":"enemy0","canvas":false,"tile":{"x":2,"z":8}}
+    at checkTerrain (/workspace/iron-vow-phase1/qa/browser/terrain.cjs:65:9)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34)
+Browser failure screenshot /tmp/iron-vow-qa-9x8ck3/failure.png
+RETRY mobile touch checkTerrain (1/1): range-10 target pick: {"p":{"x":-1,"y":369},"id":"enemy0","range":10,"weapon":10,"scale":18.458856649999998,"picked":"enemy0","canvas":false,"tile":{"x":2,"z":8}}
+START mobile touch checkTerrain
+mobile touch checkTerrain failed: AssertionError [ERR_ASSERTION]: range-10 target pick: {"p":{"x":-50,"y":379},"id":"enemy0","range":10,"weapon":10,"scale":18.458856649999998,"picked":"enemy0","canvas":false,"tile":{"x":2,"z":8}}
+    at checkTerrain (/workspace/iron-vow-phase1/qa/browser/terrain.cjs:65:9)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34)
+Browser failure screenshot /tmp/iron-vow-qa-qHlwSd/failure.png
+Error: mobile touch checkTerrain failed: range-10 target pick: {"p":{"x":-50,"y":379},"id":"enemy0","range":10,"weapon":10,"scale":18.458856649999998,"picked":"enemy0","canvas":false,"tile":{"x":2,"z":8}}
+    at checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:133:16)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34) {
+  [cause]: AssertionError [ERR_ASSERTION]: range-10 target pick: {"p":{"x":-50,"y":379},"id":"enemy0","range":10,"weapon":10,"scale":18.458856649999998,"picked":"enemy0","canvas":false,"tile":{"x":2,"z":8}}
+      at checkTerrain (/workspace/iron-vow-phase1/qa/browser/terrain.cjs:65:9)
+      at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+      at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+}

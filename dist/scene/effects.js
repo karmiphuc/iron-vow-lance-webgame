@@ -203,26 +203,26 @@ function FX(scene,o){
   return f;
 }
 
-function fireFX(ma,mt,kind,part){
-  const fx=BT.fx,muzzle=ma.wpn.muzzle.getWorldPosition(V3()),tp=mt.isVector3?mt.clone():partPoint(mt,part); // [bench] target may be a point
-  const beat=(d,fn)=>pending.push({at:BT.clock+d,fn}); // [bench] BT.clock
+function fireFX(ma,mt,kind,part,shot){
+  const fx=BT.fx,muzzle=shot?.origin?.clone()||ma.wpn.muzzle.getWorldPosition(V3()),tp=shot?.target?.clone()||(mt.isVector3?mt.clone():partPoint(mt,part)); // [bench] target may be a point
+  const beat=(d,fn)=>shot&&d===0?fn():pending.push({at:(shot?.at??BT.clock)+d,fn}); // production contacts own each beat
   const flash=(p,c,s)=>{fx.glow(p,c,s,.09);fx.light(p,c,6);fx.smoke(p,2,1.2,0x8f8a80,.35,.6,.9,.15);};
-  if(kind==='rifle'){for(let i=0;i<3;i++)beat(i*.085,()=>{const m0=ma.wpn.muzzle.getWorldPosition(V3()),j=tp.clone().add(V3(rnd(-.3,.3),rnd(-.3,.3),rnd(-.3,.3)));fx.streak(m0,j,0xffd27a,.09,.13,.35);flash(m0,0xffc070,2.4);ma.recoil=Math.min(1.6,ma.recoil+.55);ma.s.pitch.v-=.4;
+  if(kind==='rifle'){for(let i=0;i<(shot?1:3);i++)beat(i*.085,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3()),j=tp.clone().add(V3(rnd(-.3,.3),rnd(-.3,.3),rnd(-.3,.3)));fx.streak(m0,shot?tp:j,0xffd27a,.09,shot?.flight||.13,.35);flash(m0,0xffc070,2.4);ma.recoil=Math.min(1.6,ma.recoil+.55);ma.s.pitch.v-=.4;
       if(ma.wpn.eject){const e=ma.wpn.eject.getWorldPosition(V3());fx.sparks(e,2,3,0xd9b45a,.8,.6);}});}
-  else if(kind==='shotgun'){flash(muzzle,0xffc070,4);fx.light(muzzle,0xffa040,10);for(let i=0;i<9;i++){const j=tp.clone().add(V3(rnd(-1,1),rnd(-.7,.9),rnd(-1,1)));fx.streak(muzzle,j,0xffe0a0,.06,.12,.4);}ma.recoil=1.5;ma.s.pitch.v-=1;ma.spin=30;fx.smoke(muzzle,5,1.6,0x9a948a,.4,.5,1.2,.3);}
-  else if(kind==='missile'){for(let i=0;i<3;i++)beat(i*.07,()=>{const m0=ma.wpn.muzzle.getWorldPosition(V3()).add(V3(rnd(-.2,.2),rnd(-.1,.2),0));fx.glow(m0,0xffb050,2,.12);fx.smoke(m0,4,1.4,0xc4bdb0,.5,.8,1.4,.3);
-      fx.missile(m0,tp.clone().add(V3(rnd(-.5,.5),rnd(-.3,.3),rnd(-.5,.5))),rnd(4,6.5),.36-i*.05,null);ma.recoil=Math.min(1.4,ma.recoil+.35);});}
+  else if(kind==='shotgun'){flash(muzzle,0xffc070,4);fx.light(muzzle,0xffa040,10);for(let i=0;i<(shot?.targets?.length||9);i++){const j=tp.clone().add(V3(rnd(-1,1),rnd(-.7,.9),rnd(-1,1)));fx.streak(muzzle,shot?.targets?.[i]||j,0xffe0a0,.06,shot?.flight||.12,.4);}ma.recoil=1.5;ma.s.pitch.v-=1;ma.spin=30;fx.smoke(muzzle,5,1.6,0x9a948a,.4,.5,1.2,.3);}
+  else if(kind==='missile'){for(let i=0;i<(shot?1:3);i++)beat(i*.07,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3()).add(V3(rnd(-.2,.2),rnd(-.1,.2),0));fx.glow(m0,0xffb050,2,.12);fx.smoke(m0,4,1.4,0xc4bdb0,.5,.8,1.4,.3);
+      fx.missile(m0,shot?tp:tp.clone().add(V3(rnd(-.5,.5),rnd(-.3,.3),rnd(-.5,.5))),rnd(4,6.5),shot?.flight||.36-i*.05,shot?.arrival||null);ma.recoil=Math.min(1.4,ma.recoil+.35);});}
   else if(kind==='blade'){ma.melee={age:0,target:mt,part,hit:false,prev:null};if(ma.wpn.glow)ma.wpn.glow.emissiveIntensity=2.4;}
-  else if(kind==='rail'){fx.glow(muzzle,0x9fefff,3,.25);beat(.06,()=>{const m0=ma.wpn.muzzle.getWorldPosition(V3());fx.beam(m0,tp,0x7fdcff,.5,.4);fx.beam(m0,tp,0xffffff,.14,.28);fx.glow(m0,0xb5f8ff,6,.18);fx.light(m0,0x7fe6ff,14);fx.ring(V3(m0.x,0,m0.z),0x7fdcff,5,.5);
+  else if(kind==='rail'){fx.glow(muzzle,0x9fefff,3,.25);beat(.06,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3());fx.beam(m0,tp,0x7fdcff,.5,.4);fx.beam(m0,tp,0xffffff,.14,.28);fx.glow(m0,0xb5f8ff,6,.18);fx.light(m0,0x7fe6ff,14);fx.ring(V3(m0.x,BT.groundAt?.(m0.x,m0.z)??BT.floor,m0.z),0x7fdcff,5,.5);
       ma.recoil=1.8;ma.s.pitch.v-=1.8;ma.s.kx.v-=Math.sin(ma.yaw)*3;ma.s.kz.v-=Math.cos(ma.yaw)*3;for(let i=1;i<8;i++){const p=m0.clone().lerp(tp,i/8);fx.sparks(p,2,2,0x9fefff,.3,.4);}});
     if(ma.wpn.glow){ma.wpn.glow.emissiveIntensity=6;setTimeout(()=>ma.wpn.glow&&(ma.wpn.glow.emissiveIntensity=1.4),500);}}
 }
-function meleeUpdate(m,t,dt){const M=m.melee;if(!M)return;M.age+=dt;const a=M.age,fx=BT.fx;
+function meleeUpdate(m,t,dt){const M=m.melee;if(!M)return;if(!options.contactsExternal)M.age+=dt;const a=M.age,fx=BT.fx;
   const tip=m.wpn.muzzle.getWorldPosition(V3());
   if(a>MEL.wind-.06&&a<MEL.strike+.06){if(M.prev)for(let k=1;k<=4;k++){const p=M.prev.clone().lerp(tip,k/4);fx.glow(p,0xff8a2a,1.5,.26);}if(m.wpn.base){const b=m.wpn.base.getWorldPosition(V3());fx.glow(b.lerp(tip,.55),0xffc070,1.1,.16);}if(m.wpn.glow)m.wpn.glow.emissiveIntensity=5;}
   else if(m.wpn.glow)m.wpn.glow.emissiveIntensity=damp(m.wpn.glow.emissiveIntensity,1.6,4,dt);
   M.prev=tip;
-  if(!M.hit&&a>=MEL.hit){M.hit=true;const mt=M.target,p=mt.isVector3?tip.clone():partPoint(mt,M.part); // [bench] point target
+  if(!options.contactsExternal&&!M.hit&&a>=MEL.hit){M.hit=true;const mt=M.target,p=mt.isVector3?tip.clone():partPoint(mt,M.part); // [bench] point target
 impact(p,V3(m.cont.position.x-p.x,.6,m.cont.position.z-p.z),'blade');fx.sparks(p,14,8,0xfff0c0,.3,.4);fx.glow(p,0xffd090,5,.16);fx.light(p,0xff9a40,16); // [bench] directional blade impact
     const tc=mt.isVector3?mt:mt.cont.position,dir=V3(tc.x-m.cont.position.x,0,tc.z-m.cont.position.z).normalize();if(!mt.isVector3){mt.s.kx.v+=dir.x*3.6;mt.s.kz.v+=dir.z*3.6;mt.s.pitch.v-=2;} // [bench] point target
     BT.onMeleeContact&&BT.onMeleeContact(m,p);m.s.comp.v-=1.4;

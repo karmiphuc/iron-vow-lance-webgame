@@ -122,16 +122,47 @@ function wardenAnchor(point,groundRow){
 }
 
 
-function aimMounted(m,weapon,target,weight){
- if(!weapon?.muzzle||!weapon.axis||weight<=0)return;
- const wrist=m.rig.arms.R.wr,worldQ=new T.Quaternion(),parentQ=new T.Quaternion(),delta=new T.Quaternion();
- // Correct the actual barrel axis after authored carry/fire poses and recoil.
- // Re-evaluate the muzzle after each correction because the wrist also moves it.
+function aimMounted(m,weapon,target,weight,node){
+ if(!weapon?.muzzle||weight<=0)return;
+ const wrist=node||m.rig.arms.R.wr,worldQ=new T.Quaternion(),parentQ=new T.Quaternion(),delta=new T.Quaternion();
+ // A long gun can extend past a nearby target. Pull the articulated arm back
+ // around its shoulder until the target lies beyond the muzzle's pivot radius;
+ // the weapon stays attached to the hand throughout the adjustment.
+ const shoulder=!node&&m.rig?.arms.R.sh;
+ if(shoulder){
+  m.cont.updateMatrixWorld(true);
+  let pivot=wrist.getWorldPosition(V3());const muzzle=weapon.muzzle.getWorldPosition(V3()),radius=muzzle.distanceTo(pivot)+.05;
+  if(pivot.distanceTo(target)<radius){
+   const spine=m.rig.spine,shoulderPoint=shoulder.getWorldPosition(V3()),armLength=pivot.distanceTo(shoulderPoint);
+   if(spine&&shoulderPoint.distanceTo(target)+armLength<radius){
+    const origin=spine.getWorldPosition(V3()),lever=shoulderPoint.clone().sub(origin),away=origin.clone().sub(target);
+    if(lever.lengthSq()>1e-8&&away.lengthSq()>1e-8){
+     const turn=new T.Quaternion().setFromUnitVectors(lever.clone().normalize(),away.normalize()),angle=2*Math.acos(Math.min(1,Math.abs(turn.w))),limit=angle?Math.min(1,.9/angle):0,base=spine.quaternion.clone();
+     const place=f=>{spine.quaternion.copy(base);spine.getWorldQuaternion(worldQ);spine.parent.getWorldQuaternion(parentQ);delta.identity().slerp(turn,f);spine.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));m.cont.updateMatrixWorld(true);return shoulder.getWorldPosition(V3()).distanceTo(target)+armLength;};
+     if(place(limit)>=radius){let low=0,high=limit;for(let i=0;i<16;i++){const mid=(low+high)/2;if(place(mid)>=radius)high=mid;else low=mid;}place(high*Math.min(1,weight));}else place(limit*Math.min(1,weight));
+     pivot=wrist.getWorldPosition(V3());
+    }
+   }
+   const origin=shoulder.getWorldPosition(V3()),arm=pivot.clone().sub(origin),away=origin.clone().sub(target);
+   if(arm.lengthSq()>1e-8&&away.lengthSq()>1e-8){
+    const turn=new T.Quaternion().setFromUnitVectors(arm.clone().normalize(),away.normalize()),base=shoulder.quaternion.clone();
+    const place=f=>{shoulder.quaternion.copy(base);shoulder.getWorldQuaternion(worldQ);shoulder.parent.getWorldQuaternion(parentQ);delta.identity().slerp(turn,f);shoulder.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));m.cont.updateMatrixWorld(true);return wrist.getWorldPosition(V3()).distanceTo(target);};
+    if(place(1)>=radius){let low=0,high=1;for(let i=0;i<16;i++){const mid=(low+high)/2;if(place(mid)>=radius)high=mid;else low=mid;}place(high*Math.min(1,weight));}else place(Math.min(1,weight));
+   }
+  }
+ }
+ // Rotate the whole muzzle offset as well as its axis. Aiming the axis alone
+ // repeatedly can oscillate when the target is close to the end of the gun.
  for(let i=0;i<3;i++){
   m.cont.updateMatrixWorld(true);
-  const muzzle=weapon.muzzle.getWorldPosition(V3()),axis=weapon.axis.getWorldPosition(V3()),line=muzzle.clone().sub(axis).normalize(),desired=target.clone().sub(muzzle).normalize();
-  if(line.lengthSq()<.5||desired.lengthSq()<.5)break;
-  delta.setFromUnitVectors(line,desired);delta.slerp(new T.Quaternion(),1-weight);
+  const pivot=wrist.getWorldPosition(V3()),muzzle=weapon.muzzle.getWorldPosition(V3()),line=weapon.muzzle.getWorldDirection(V3()),offset=muzzle.clone().sub(pivot),desired=target.clone().sub(pivot);
+  const along=offset.dot(line),lateralSq=Math.max(0,offset.lengthSq()-along*along),distanceSq=desired.lengthSq();
+  if(line.lengthSq()<.5||distanceSq<1e-10)break;
+  const travel=Math.sqrt(Math.max(0,distanceSq-lateralSq))-along,reachable=distanceSq>=lateralSq&&travel>=0;
+  const ray=reachable?offset.addScaledVector(line,travel).normalize():line;
+  if(!reachable)desired.sub(offset);
+  if(desired.lengthSq()<1e-10)break;
+  delta.setFromUnitVectors(ray,desired.normalize());delta.slerp(new T.Quaternion(),1-weight);
   wrist.getWorldQuaternion(worldQ);wrist.parent.getWorldQuaternion(parentQ);
   wrist.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));
  }
@@ -166,7 +197,7 @@ function draw(u,t,pose,scope,model,custom){
  const world=pose.world,face=world?.face??pose.heading??facing*Math.PI/4,aim=pose.aim;
  if(!world)m.yaw=face;else{m.scale=.9;m.cont.scale.setScalar(.9);}
  const paired=!world&&u.motion?.stepBeats!=null;
- const step=!pose.reducedMotion&&Boolean(world?u.motion:paired||pose.phase>0&&u.motion);
+ const step=!pose.reducedMotion&&Boolean(world?u.motion&&!world.airborne:paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;
  const melee=Boolean(pose.strikeKind), meleeAge=pose.strikeProgress<=.7
@@ -175,6 +206,7 @@ function draw(u,t,pose,scope,model,custom){
  const travel=step?(pose.phase-.5)*1.8:0;
  const pos=world?V3(world.x,0,world.z):paired?V3((u.vx-u.vz)*1.8*Math.SQRT1_2,0,(u.vx+u.vz)*1.8*Math.SQRT1_2):
   V3(Math.sin(face)*(lunge+travel),0,Math.cos(face)*(lunge+travel));
+ if(world&&melee&&world.lungeLimit){const direction=world.targetRoot.clone().sub(pos).setY(0).normalize();pos.addScaledVector(direction,lungeK(meleeAge)*world.lungeLimit);}
  if(paired&&!m.wasMoving)m.init=false;
  if(!world&&!step&&m.wasMoving){
   for(const L of m.legs){L.swing=false;L.settle=null;L.planted.sub(m.travelRoot??m.cont.position);L.foot.copy(L.planted)}
@@ -184,17 +216,20 @@ function draw(u,t,pose,scope,model,custom){
  m.aim.until=aim>.01?t+.01:-1;m.aim.blend=aim;
  // Aim at chest height of a like-sized target: level for every rig, including the larger live Warden.
  if(world)m.aim.point.copy(world.aim);else m.aim.point.set(Math.sin(face)*20,4*(m.scale||1),Math.cos(face)*20);
- m.recoil=Math.abs(pose.recoil)*.58;
- m.melee=melee?{age:meleeAge,thrust:pose.strikeKind==='pike'}:null;
+ m.recoil=world?Math.max(m.recoil,Math.abs(pose.recoil)*.58):Math.abs(pose.recoil)*.58;
+ if(melee){
+  if(!m.melee||m.melee.action!==u.attack)m.melee={action:u.attack,age:meleeAge,prev:null};
+  m.melee.age=meleeAge;m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
+ }else m.melee=null;
  if(custom==='warden')window.IronVowWardenRig.meleeStyle(m,pose.strikeKind||u.melee);
- m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;
- m.s.arm.x=pose.impact*.75;
+ if(!world){m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;m.s.arm.x=pose.impact*.75;}
+ else if(pose.land>0)m.s.comp.x=Math.min(m.s.comp.x,-pose.land*.23);
  // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
  m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
- m.primaryWeapon=entry.primary&&u.hp.right>0?entry.primary:null;
+ m.primaryWeapon=entry.primary&&u.hp.right>0&&!entry.primarySocket?entry.primary:null;
  animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
-  bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?false:!step,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
+  bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?world.airborne:!step,airborne:world?.airborne,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
  if(custom==='warden')window.IronVowWardenRig.afterAnimate(m);else if(custom==='bastion')bastion.afterAnimate(m);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
@@ -205,7 +240,11 @@ function draw(u,t,pose,scope,model,custom){
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
  if(armory&&!entry.armed){
-  entry.primary=arsenal.mount(armory,window.IronVowWeaponFX?.get(u.weapon).asset??u.weapon,m.rig.arms.R.so);
+  const profile=window.IronVowWeaponFX?.get(u.weapon);
+  if(profile?.socket?.startsWith('shoulder')){
+   const socket=new T.Object3D();socket.name='mount.shoulderR';socket.position.set(m.dims.shX,m.dims.shY+.55,-.25);m.rig.spine.add(socket);entry.primarySocket=socket;
+  }
+  entry.primary=arsenal.mount(armory,profile?.asset??u.weapon,entry.primarySocket||m.rig.arms.R.so);
   entry.secondary=arsenal.mount(armory,u.melee?(window.IronVowWeaponFX?.get(u.melee).asset??u.melee):null,m.rig.arms.L.so);
   entry.armed=true;
   // The Warden carries the production arsenal at its Rig Bench scale.
@@ -218,6 +257,7 @@ function draw(u,t,pose,scope,model,custom){
   if(custom==='warden'||custom==='bastion')entry.shield?.mount.scale.setScalar(.62);
   if(!entry.shield)delete entry.anchors.shield;
  }
+ m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:entry.primary||{};
  arsenal.poseShield(entry.shield,u,face);
  if(entry.primary){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
@@ -226,10 +266,9 @@ function draw(u,t,pose,scope,model,custom){
  }
  if(entry.secondary){
   entry.secondary.mount.visible=u.alive&&u.hp.left>0;
-  if(entry.secondary.spike)entry.secondary.spike.position.z=entry.secondary.spikeRest+(pose.strikeProgress>=.61&&pose.strikeProgress<=.81?.50:0);
   arsenal.animate(entry.secondary,pose);
  }
- if(world&&u.alive&&u.hp.right>0&&!melee&&aim>.01)aimMounted(m,entry.primary,world.aim,Math.min(1,aim));
+ if(world&&u.alive&&u.hp.right>0&&!melee&&aim>.01)aimMounted(m,entry.primary,world.aim,Math.min(1,aim),entry.primarySocket?entry.primary.mount:null);
  m.cont.updateMatrixWorld(true);
  if(!world){
   setCamera(.46);
@@ -274,5 +313,5 @@ function previewAnimated(u,t,pose,model,custom,angle=0){
  const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
  return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
 }
-window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),previewAnimated:withFallback(previewAnimated),entry:id=>combat.get(id+'|field'),clearCombat,wardenReady};
+window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),previewAnimated:withFallback(previewAnimated),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,wardenReady};
 })();

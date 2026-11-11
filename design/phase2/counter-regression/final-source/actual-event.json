@@ -1,0 +1,715 @@
+{
+  "source": {
+    "commit": "02ef40a07fc91b82f97c86859586489f272b8165",
+    "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+    "distDirty": false,
+    "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+  },
+  "seed": 4264,
+  "imageFile": "/workspace/scratch/phase2-final-counter-fa9f835.png",
+  "clock": 144.7333333335005,
+  "turn": 5,
+  "phase": "enemy",
+  "event": {
+    "sequence": 361,
+    "type": "launch",
+    "time": 144.7333333335005,
+    "archetype": "rail",
+    "expectedOrigin": [
+      -40.261633699303665,
+      4.176690300780217,
+      55.20032662311719
+    ],
+    "actorAlive": true,
+    "aimError": 0,
+    "mounted": true,
+    "actor": "ally1",
+    "target": "enemy1",
+    "weapon": "parallax",
+    "index": 0,
+    "socket": "muzzle",
+    "origin": [
+      -40.261633699303665,
+      4.176690300780217,
+      55.20032662311719
+    ],
+    "targetPoint": [
+      -40.267641054581446,
+      4.196875734594668,
+      55.15462316179228
+    ],
+    "flight": 0.075
+  },
+  "incoming": {
+    "sequence": 360,
+    "type": "impact",
+    "time": 142.30000000016523,
+    "actor": "enemy1",
+    "target": "ally1",
+    "weapon": "piledriver",
+    "index": 0,
+    "part": "pilot",
+    "shield": false,
+    "point": [
+      -40.66329155208718,
+      4.313894571712428,
+      61.85706836863438
+    ],
+    "back": [
+      0.0590780740993109,
+      -0.09041262730423562,
+      -0.994150561024165
+    ],
+    "planned": 36,
+    "damage": 36,
+    "before": 55,
+    "after": 19,
+    "actorAlive": true
+  },
+  "units": [
+    {
+      "id": "ally0",
+      "index": 0,
+      "team": "ally",
+      "pilot": 0,
+      "x": 6,
+      "z": 16,
+      "vx": 6,
+      "vz": 16,
+      "frame": 6,
+      "name": "ONI",
+      "weapon": "rivet",
+      "melee": null,
+      "paint": null,
+      "upgrade": 0,
+      "level": 1,
+      "training": {},
+      "armor": 4,
+      "max": {
+        "body": 150,
+        "pilot": 70,
+        "right": 105,
+        "left": 105,
+        "legs": 100
+      },
+      "hp": {
+        "body": 0,
+        "pilot": 70,
+        "right": 105,
+        "left": 105,
+        "legs": 100
+      },
+      "ap": 3,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": false,
+      "moveLeft": 0,
+      "actionPhase": true,
+      "extraStep": true,
+      "heading": 0.7853981633974483,
+      "face": 1,
+      "mechSkills": [],
+      "braceBlend": 0,
+      "attack": null,
+      "fireTime": 118.10000000014176,
+      "mechState": {
+        "fired": true,
+        "moved": 1
+      },
+      "reacted": false,
+      "motion": null,
+      "landTime": 121.23333333347892,
+      "walkCount": 5,
+      "hitTime": 130.16666666682224,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 54,
+      "hitVector": {
+        "x": -0.8944271909999159,
+        "y": 0.4472135954999579
+      },
+      "turning": false,
+      "hitstop": {
+        "at": 130.16666666682224,
+        "until": 130.25166666682225
+      },
+      "downReason": "body",
+      "deathTime": 130.16666666682224,
+      "deathStyle": "kneel",
+      "deathEvents": 15
+    },
+    {
+      "id": "ally1",
+      "index": 1,
+      "team": "ally",
+      "pilot": 1,
+      "x": 3,
+      "z": 18,
+      "vx": 3,
+      "vz": 18,
+      "frame": 7,
+      "name": "BEHEMOTH",
+      "weapon": "parallax",
+      "melee": null,
+      "paint": null,
+      "upgrade": 0,
+      "level": 1,
+      "training": {},
+      "armor": 8,
+      "max": {
+        "body": 210,
+        "pilot": 55,
+        "right": 90,
+        "left": 90,
+        "legs": 150
+      },
+      "hp": {
+        "body": 210,
+        "pilot": 19,
+        "right": 90,
+        "left": 90,
+        "legs": 150
+      },
+      "ap": 2,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": true,
+      "moveLeft": 0,
+      "actionPhase": true,
+      "extraStep": false,
+      "heading": 2.356194490192345,
+      "face": 1,
+      "mechSkills": [],
+      "braceBlend": 0,
+      "turning": false,
+      "attack": {
+        "kind": "parallax",
+        "start": 143.60000000016626,
+        "fireAt": 144.7333333335005,
+        "releaseAt": null,
+        "primeDuration": 0.4,
+        "windup": 0.72,
+        "native": null
+      },
+      "fireTime": 144.7333333335005,
+      "mechState": {
+        "fired": true
+      },
+      "motion": null,
+      "landTime": 10.200000000011912,
+      "walkCount": 1,
+      "reacted": true,
+      "hitstop": {
+        "at": 142.30000000016523,
+        "until": 142.38500000016523
+      },
+      "hitTime": 142.30000000016523,
+      "hitPart": "pilot",
+      "hitParts": [
+        "pilot"
+      ],
+      "hitDamage": 36,
+      "hitVector": {
+        "x": -0.8944271909999159,
+        "y": 0.4472135954999579
+      }
+    },
+    {
+      "id": "ally2",
+      "index": 2,
+      "team": "ally",
+      "pilot": 2,
+      "x": 6,
+      "z": 16,
+      "vx": 6,
+      "vz": 16,
+      "frame": 8,
+      "name": "AEGIS",
+      "weapon": "rifle",
+      "melee": "hatchet",
+      "paint": null,
+      "upgrade": 0,
+      "level": 1,
+      "training": {},
+      "armor": 5,
+      "max": {
+        "body": 165,
+        "pilot": 80,
+        "right": 94,
+        "left": 94,
+        "legs": 108
+      },
+      "hp": {
+        "body": 0,
+        "pilot": 77,
+        "right": 89,
+        "left": 89,
+        "legs": 108
+      },
+      "ap": 1,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": false,
+      "moveLeft": 0,
+      "actionPhase": true,
+      "extraStep": true,
+      "heading": 2.356194490192345,
+      "face": 1,
+      "mechSkills": [],
+      "braceBlend": 0,
+      "mechState": {
+        "fired": true,
+        "moved": 1
+      },
+      "turning": false,
+      "motion": null,
+      "landTime": 100.13333333345314,
+      "walkCount": 8,
+      "hitTime": 108.50000000013003,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 1,
+      "hitVector": {
+        "x": -0.8944271909999159,
+        "y": 0.4472135954999579
+      },
+      "reacted": false,
+      "attack": null,
+      "fireTime": 95.0333333334469,
+      "downReason": "body",
+      "deathTime": 108.50000000013003,
+      "deathStyle": "kneel",
+      "deathEvents": 15
+    },
+    {
+      "id": "enemy0",
+      "index": 0,
+      "team": "enemy",
+      "x": 5,
+      "z": 14,
+      "vx": 5,
+      "vz": 14,
+      "frame": 14,
+      "name": "LINE INFANTRY ELITE 1",
+      "weapon": "rifle",
+      "melee": null,
+      "paint": "#626a6d",
+      "trim": {
+        "s": "#373c3e"
+      },
+      "upgrade": 1,
+      "level": 2,
+      "armor": 10,
+      "max": {
+        "body": 210,
+        "pilot": 70,
+        "right": 104,
+        "left": 104,
+        "legs": 112
+      },
+      "hp": {
+        "body": 0,
+        "pilot": 65,
+        "right": 96,
+        "left": 99,
+        "legs": 108
+      },
+      "ap": 1,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": false,
+      "face": -1,
+      "moveLeft": 0,
+      "actionPhase": true,
+      "extraStep": true,
+      "heading": -2.356194490192345,
+      "mechSkills": [],
+      "braceBlend": 0,
+      "mechState": {
+        "moved": 5,
+        "fired": true
+      },
+      "turning": false,
+      "motion": null,
+      "landTime": 21.76666666669179,
+      "walkCount": 5,
+      "attack": null,
+      "fireTime": 45.433333333386294,
+      "hitTime": 57.86666666673482,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 0,
+      "hitVector": {
+        "x": 0.8944271909999159,
+        "y": -0.4472135954999579
+      },
+      "reacted": false,
+      "downReason": "body",
+      "deathTime": 57.86666666673482,
+      "deathStyle": "kneel",
+      "deathEvents": 15,
+      "deathFallback": false
+    },
+    {
+      "id": "enemy1",
+      "index": 1,
+      "team": "enemy",
+      "x": 3,
+      "z": 17,
+      "vx": 3,
+      "vz": 17,
+      "frame": 15,
+      "name": "GRAVEMAW 2",
+      "weapon": "hailstorm",
+      "melee": "piledriver",
+      "paint": null,
+      "trim": null,
+      "upgrade": 1,
+      "level": 2,
+      "armor": 8,
+      "max": {
+        "body": 190,
+        "pilot": 55,
+        "right": 88,
+        "left": 88,
+        "legs": 103
+      },
+      "hp": {
+        "body": 46,
+        "pilot": 55,
+        "right": 88,
+        "left": 88,
+        "legs": 103
+      },
+      "ap": 4,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": true,
+      "face": -1,
+      "moveLeft": 0,
+      "actionPhase": true,
+      "extraStep": true,
+      "heading": -0.7853981633974483,
+      "mechSkills": [],
+      "braceBlend": 0,
+      "mechState": {
+        "moved": 5
+      },
+      "motion": null,
+      "landTime": 141.0000000001642,
+      "walkCount": 24,
+      "reacted": false,
+      "turning": false,
+      "attack": null,
+      "fireTime": 142.13333333349843,
+      "hitTime": 134.6000000001591,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 72,
+      "hitVector": {
+        "x": 1,
+        "y": 0
+      },
+      "hitstop": {
+        "at": 142.30000000016523,
+        "until": 142.38500000016523
+      }
+    },
+    {
+      "id": "enemy2",
+      "index": 2,
+      "team": "enemy",
+      "x": 9,
+      "z": 15,
+      "vx": 9,
+      "vz": 15,
+      "frame": 16,
+      "name": "REAVER 3",
+      "weapon": "rifle",
+      "melee": null,
+      "paint": null,
+      "trim": null,
+      "upgrade": 1,
+      "level": 2,
+      "armor": 8,
+      "max": {
+        "body": 197,
+        "pilot": 80,
+        "right": 98,
+        "left": 98,
+        "legs": 114
+      },
+      "hp": {
+        "body": 0,
+        "pilot": 75,
+        "right": 98,
+        "left": 94,
+        "legs": 110
+      },
+      "ap": 2,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": false,
+      "face": -1,
+      "moveLeft": 0,
+      "actionPhase": true,
+      "extraStep": false,
+      "heading": -2.356194490192345,
+      "mechSkills": [],
+      "braceBlend": 0,
+      "mechState": {
+        "fired": true
+      },
+      "motion": null,
+      "landTime": 39.40000000004559,
+      "walkCount": 6,
+      "reacted": false,
+      "attack": null,
+      "fireTime": 83.3333333334326,
+      "hitTime": 95.76666666678113,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 0,
+      "hitVector": {
+        "x": 0.9950371902099892,
+        "y": 0.09950371902099892
+      },
+      "downReason": "body",
+      "deathTime": 95.86666666678126,
+      "deathStyle": "kneel",
+      "deathEvents": 15,
+      "deathFallback": false
+    },
+    {
+      "id": "enemy3",
+      "index": 3,
+      "team": "enemy",
+      "x": 4,
+      "z": 4,
+      "vx": 4,
+      "vz": 4,
+      "frame": 9,
+      "name": "RAZOR 4",
+      "weapon": "shotgun",
+      "melee": null,
+      "paint": "#383b3e",
+      "trim": {
+        "s": "#56634b"
+      },
+      "upgrade": 1,
+      "level": 2,
+      "armor": 4,
+      "max": {
+        "body": 143,
+        "pilot": 70,
+        "right": 76,
+        "left": 76,
+        "legs": 103
+      },
+      "hp": {
+        "body": 143,
+        "pilot": 70,
+        "right": 76,
+        "left": 76,
+        "legs": 103
+      },
+      "ap": 8,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": true,
+      "face": -1,
+      "moveLeft": 6,
+      "actionPhase": false,
+      "extraStep": false,
+      "heading": -0.7853981633974483,
+      "mechSkills": [],
+      "braceBlend": 0,
+      "reacted": false
+    },
+    {
+      "id": "enemy4",
+      "index": 4,
+      "kind": "tank",
+      "team": "enemy",
+      "x": 4,
+      "z": 14,
+      "vx": 4,
+      "vz": 14,
+      "name": "JAVELIN TANK 5",
+      "weapon": "rampart",
+      "level": 1,
+      "armor": 6,
+      "hp": {
+        "body": 0
+      },
+      "max": {
+        "body": 72
+      },
+      "ap": 8,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": false,
+      "face": -1,
+      "moveLeft": 4,
+      "actionPhase": false,
+      "extraStep": false,
+      "heading": -2.356194490192345,
+      "braceBlend": 0,
+      "hitTime": 4.966666666672461,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 0,
+      "hitVector": {
+        "x": 0.9950371902099892,
+        "y": 0.09950371902099892
+      },
+      "downReason": "body",
+      "deathTime": 4.966666666672461,
+      "deathStyle": "vehicle",
+      "deathEvents": 1,
+      "attack": null,
+      "reacted": false
+    },
+    {
+      "id": "enemy5",
+      "index": 5,
+      "kind": "helicopter",
+      "team": "enemy",
+      "x": 11,
+      "z": 17,
+      "vx": 11,
+      "vz": 17,
+      "name": "KITE GUNSHIP 6",
+      "weapon": "rifle",
+      "level": 1,
+      "armor": 2,
+      "hp": {
+        "body": 0
+      },
+      "max": {
+        "body": 51
+      },
+      "ap": 8,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": false,
+      "face": -1,
+      "moveLeft": 6,
+      "actionPhase": false,
+      "extraStep": false,
+      "heading": -2.356194490192345,
+      "braceBlend": 0,
+      "hitTime": 7.700000000008989,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 51,
+      "hitVector": {
+        "x": 0.9284766908852592,
+        "y": 0.37139067635410367
+      },
+      "downReason": "body",
+      "deathTime": 7.700000000008989,
+      "deathStyle": "vehicle",
+      "deathEvents": 1,
+      "attack": null,
+      "reacted": false
+    },
+    {
+      "id": "enemy6",
+      "index": 6,
+      "kind": "tank",
+      "team": "enemy",
+      "x": 5,
+      "z": 14,
+      "vx": 5,
+      "vz": 14,
+      "name": "JAVELIN TANK 7",
+      "weapon": "rampart",
+      "level": 1,
+      "armor": 6,
+      "hp": {
+        "body": 0
+      },
+      "max": {
+        "body": 72
+      },
+      "ap": 3,
+      "brace": false,
+      "skill": false,
+      "boost": false,
+      "alive": false,
+      "face": -1,
+      "moveLeft": 0,
+      "actionPhase": true,
+      "extraStep": true,
+      "heading": -0.7853981633974483,
+      "braceBlend": 0,
+      "reacted": false,
+      "turning": false,
+      "motion": null,
+      "landTime": 111.40000000013357,
+      "walkCount": 10,
+      "attack": null,
+      "fireTime": 112.23333333346793,
+      "hitTime": 118.96666666680949,
+      "hitPart": "body",
+      "hitParts": [
+        "body"
+      ],
+      "hitDamage": 0,
+      "hitVector": {
+        "x": 0.8944271909999159,
+        "y": -0.4472135954999579
+      },
+      "downReason": "body",
+      "deathTime": 118.96666666680949,
+      "deathStyle": "vehicle",
+      "deathEvents": 1
+    }
+  ],
+  "camera": {
+    "position": [
+      -43.96386585419345,
+      6.000000007074037,
+      69.4427564616586
+    ],
+    "quaternion": [
+      -0.08082361249116848,
+      -0.11134832845218044,
+      -0.009086370414653528,
+      0.9904476418708211
+    ],
+    "fov": 30
+  },
+  "viewport": {
+    "width": 1194,
+    "height": 834,
+    "dpr": 1,
+    "pixelWidth": 1194,
+    "pixelHeight": 834
+  },
+  "renderPolicy": "One real full-resolution Three.js renderer-canvas submission/readback immediately after the real near Parallax counter launch. Temporary body output paints restored and refreshed at the same clock. UI canvas excluded; ordinary advances omit unobserved GPU/output raster. No game HP/AP/rule RNG changes or performance claim."
+}

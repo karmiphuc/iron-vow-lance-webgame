@@ -1,0 +1,86 @@
+{
+  "started": "2026-11-11T12:45:44.827Z",
+  "commit": "dc58642ee644ed989531c56b0a1ba4b4a963d318",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkBulwarkBench",
+      "sha256": "0b7d8d3e90ace429a7637c44f94952dc6735e0f1742bf9655727cee4fb5bb936"
+    },
+    {
+      "name": "checkScoutBench",
+      "sha256": "105717aa46394f2495598b0c699ecda72d796419277883dff2cc9f0c4001cee1"
+    },
+    {
+      "name": "checkShip",
+      "sha256": "e108fffa69022b2e384a1b3fe30644b141bf5c027d826fe3e8eb8a1b976b624d"
+    },
+    {
+      "name": "checkHangar",
+      "sha256": "c7e9b0556cb86eb2a64e8ec1af58e607bbfda73dbe5c0ce6cec607a048007224"
+    },
+    {
+      "name": "checkCareerTabs",
+      "sha256": "5637e69a5450300218f049bd8168c5b114a09e9fdb2370b1a4fedd94995d9622"
+    },
+    {
+      "name": "checkDutyRoster",
+      "sha256": "93a7c441df947769c31061dc406497a2a3c1a4595bb04a931190d900fd5fe0b6"
+    },
+    {
+      "name": "bastionSharedRig",
+      "sha256": "935818eab3d37c3392e693f827ee98ea3cbc058b3e08f1e11f4e65234c54744f"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkBulwarkBench",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Bench input/animation/socket correctness; one real ready-rig frame per page submitted, unobserved main-canvas draws omitted while matrices update."
+    },
+    {
+      "name": "checkScoutBench",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Bench input/animation/socket correctness; one real ready-rig frame per page submitted, unobserved main-canvas draws omitted while matrices update."
+    },
+    {
+      "name": "checkShip",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkHangar",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkCareerTabs",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#brace') to be visible\u001b[22m\n",
+      "assetErrors": []
+    },
+    {
+      "name": "checkCareerTabs",
+      "device": "desktop",
+      "attempt": 2,
+      "status": "failed",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#brace') to be visible\u001b[22m\n",
+      "assetErrors": []
+    }
+  ],
+  "status": "incomplete",
+  "ended": "2026-11-11T12:52:07.132Z"
+}

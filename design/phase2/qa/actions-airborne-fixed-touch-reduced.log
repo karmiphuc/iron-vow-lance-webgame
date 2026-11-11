@@ -1,0 +1,12 @@
+START rifle frame 0
+PASS rifle 8 contacts, 37 HP
+START missile frame 6
+PASS missile 2 contacts, 41 HP
+START rail frame 7
+PASS rail 1 contacts, 66 HP
+START cleaver frame 12
+PASS cleaver 1 contacts, 36 HP
+START vesper-shoulder frame 20
+PASS vesper-shoulder 2 contacts, 41 HP
+PASS real shield interception, pending-command lockout, counter, damage materials, staged wreck and fourteen-second smoke, dynamic reduced motion
+PASS requested catalog weapons: actual commands, beats, mounts, aim, landed contacts and HP

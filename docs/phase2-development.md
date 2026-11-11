@@ -1,58 +1,21 @@
-# Phase 2 development handoff
+# Phase 2 integration status
 
-Preparation on an isolated branch while Phase 1 verification completes. Nothing here is merged, connected to the main runtime, or claimed verified.
+The production runtime is frozen at `fa9f835` (`dist` tree `edac44e5b054d0e507a409ee039b4400b6420788`). It uses the merged Claude PR #19 plasma/crawl/joint effects and PR #20 corrected gait. The gait was also backported into Phase 1 as the prerequisite fix for actual campaign shove drift. Terrain-aware pelvis/support/brace handling and authored carry/fire/melee data remain in the common animator. Integration fixes make airborne jumpjet feet follow the raised chassis and settle onto terrain, and solve close-range barrel alignment geometrically using the muzzle's offset from the wrist.
 
-`dist/scene/effects.js` ports the final PR #9 reference's actual FX pools, arcing missiles, trails, beams, directional impact profiles, electrical arcs/faults, ground slam, explosion and footfall helpers into a factory owned by the shared battle scene. There is no additional renderer. Terrain sampling replaces the reference bench's constant spark/debris floor and scorch plane. Decals use factor 0 / units −1 and arcs retain the final depth-tested PR #9 correction. Visual random numbers are isolated from game rule draws. Integration and meaningful GPU/action tests remain outstanding.
+`scene/combat.js` connects the actual game firing beats and HP contacts to `fireFX`, `meleeUpdate`, directional impacts, fault effects, staged explosions, footfalls, jumpjet and 14-second wreck smoke. Missile arrival uses a position owned by each pooled missile, fixing the reproduced scratch-vector alias. Aim uses the actual mounted barrel direction and each firing trajectory. The future Behemoth mortar has a presentation cue with no damage rule added.
 
-The current catalog contains {'Workshop': 24, 'built-in': 9, 'shoulder': 1}, rather than the issue's older 22-Workshop count. Every current entry is listed below. A free-hand counter and Behemoth mortar also need explicit coverage. These are the *existing logical attack profiles*, for preserving rule behavior while the reference visual timelines are integrated; they are not final Phase 2 timings or a claim that the old profiles meet the reference. Special action paths still require their dedicated profile lookup.
+`scene/adapter-weapons.js` mounts real arsenal meshes for temporary billboard bodies. Unit UI images use the same geometry through the shared render target. The old separate weapon sprite compositor, recoil/stride bounds helpers and 2D combat FX are removed; floating text remains an overlay. Native weapons already embedded in temporary hull art remain part of that body art until Phase 3 replaces the hulls.
 
-| Weapon | Source | Reference archetype | Existing beats (s) | Existing raise / travel / recover (s) |
-| --- | --- | --- | --- | --- |
-| `rifle` | Workshop | rifle | 0, 0.105, 0.21, 0.315, 0.42, 0.525, 0.63, 0.735 | 0.23 / 0.1 / 0.34 |
-| `shotgun` | Workshop | shotgun | 0 | 0.28 / 0.12 / 0.43 |
-| `missile` | Workshop | missile | 0, 0.17 | 0.35 / 0.42 / 0.39 |
-| `rail` | Workshop | rail | 0 | 0.39 / 0.075 / 0.47 |
-| `hailstorm` | Workshop | rifle | 0, 0.082, 0.164, 0.246, 0.328, 0.41, 0.492, 0.574, 0.656, 0.738, 0.82, 0.902 | 0.36 / 0.09 / 0.39 |
-| `rampart` | Workshop | shotgun | 0 | 0.31 / 0.13 / 0.48 |
-| `breaker` | Workshop | blade | 0 | 0.47 / 0.19 / 0.51 |
-| `cleaver` | Workshop | blade | 0 | 0.21 / 0.16 / 0.3 |
-| `piledriver` | Workshop | blade | 0 | 0.32 / 0.18 / 0.39 |
-| `blade` | Workshop | blade | 0 | 0.38 / 0.08 / 0.55 |
-| `sidewinder` | Workshop | rifle | 0, 0.082, 0.164, 0.246, 0.328, 0.41, 0.492, 0.574, 0.656, 0.738, 0.82, 0.902 | 0.23 / 0.1 / 0.34 |
-| `trident` | Workshop | rifle | 0, 0.105, 0.21, 0.315, 0.42, 0.525, 0.63, 0.735 | 0.23 / 0.1 / 0.34 |
-| `forge` | Workshop | shotgun | 0 | 0.31 / 0.13 / 0.48 |
-| `ember` | Workshop | rail | 0 | 0.39 / 0.075 / 0.47 |
-| `watchman` | Workshop | shotgun | 0 | 0.31 / 0.13 / 0.48 |
-| `falcon` | Workshop | shotgun | 0 | 0.31 / 0.13 / 0.48 |
-| `cerberus` | Workshop | missile | 0, 0.17 | 0.35 / 0.42 / 0.39 |
-| `obelisk` | Workshop | rail | 0 | 0.39 / 0.075 / 0.47 |
-| `rivet` | Workshop | rifle | 0, 0.072, 0.144, 0.216, 0.288, 0.36, 0.432, 0.504, 0.576, 0.648, 0.72, 0.792 | 0.28 / 0.095 / 0.38 |
-| `parallax` | Workshop | rail | 0 | 0.72 / 0.075 / 0.56 |
-| `hatchet` | Workshop | blade | 0 | 0.21 / 0.16 / 0.3 |
-| `pike` | Workshop | blade | 0 | 0.32 / 0.18 / 0.39 |
-| `tonfa` | Workshop | blade | 0 | 0.21 / 0.16 / 0.3 |
-| `anchor-hammer` | Workshop | blade | 0 | 0.47 / 0.19 / 0.51 |
-| `morrow` | built-in | shotgun | 0, 0.298667 | 0.784 / 0.14 / 0.48 |
-| `locust` | built-in | missile | 0, 0.298667 | 0.784 / 0.46 / 0.39 |
-| `breach-gauntlet` | built-in | blade | 0 | 0.357 / 0.21 / 0.41 |
-| `pulse-bash` | built-in | blade | 0 | 0.357 / 0.21 / 0.33 |
-| `aegis-cleave` | built-in | blade | 0 | 1.08 / 0.29 / 0.7 |
-| `aegis-bash` | built-in | blade | 0 | 1.12 / 0.29 / 0.7 |
-| `needle-carbine` | built-in | rifle | 0, 0.105, 0.21, 0.315, 0.42, 0.525, 0.63, 0.735 | 0.291667 / 0.095 / 0.36 |
-| `flechette-scattergun` | built-in | shotgun | 0 | 0.125 / 0.08 / 0.26 |
-| `signal-knife` | built-in | blade | 0 | 0.35 / 0.12 / 0.42 |
-| `vesper-shoulder` | shoulder | missile | contact / special action | special action path |
+The actual launch-event gate exposed a close-range aiming bug in the production port: rotating the wrist moves the muzzle, so repeated axis corrections could oscillate. The direct geometric solution passed 24 close/steep cases with actual GLB/socket geometry (old maximum error 2.069 radians, corrected maximum 1.49e-8). The exact failing campaign seed 4243 then passed 5,312 actual-bone ticks with zero anomalies and maximum launch error 2.11e-8 radians; its commands, outcome, ordered effects and HP signatures matched the failing run. Earlier observer corrections separately distinguish intentional folded-leg poses from walking targets and firing events from recovery frames.
 
-Outstanding integration: per-round real 3D origin/aim and terrain direction impacts; shield interception; all weapon and built-in mappings with actual production sockets; reference melee/rail/rifle timeline and documented compatibility decisions; per-part reactions and plate detachment; 14-second burning wreck smoke; jumpjet/mortar; dynamic reduced motion; migrate floating text only and delete replaced 2D effects/weapon compositing; all nine Phase 2 scene checks and actual-weapon campaigns. Rebase on the final Phase 1 merge before opening or merging the Phase 2 PR.
+The campaign then exposed an automatic close Parallax counter after a Piledriver pilot hit in seed 4264. Its target lay inside the long barrel's wrist radius. Connected spine and shoulder rotation now provide clearance without moving the hand grip, changing joint lengths or translating planted feet; retraction follows the aim weight continuously. Under the owner's existing spacing/clearance authorization, horizontal pitch increases from Phase 1's 6.8 m to 7.4 m (+8.8%). Chassis scale stays 0.9, vertical terrain scale stays 3.4 m, and gameplay rules/action timers stay unchanged. The smaller 7.2 m study still failed a legal shield interception. The 7.4 m candidate passed 423 tested legal part/miss/shield endpoints with maximum error 2.98e-8 radians and zero planted-ankle drift, plus 90 weighted pose checks. Conservative armor-box corners and incompatible loadouts are not treated as legal launch targets.
 
+The [weapon mapping](phase2-weapon-mapping.md) covers all 34 current catalog entries (24 Workshop, nine built-ins, one shoulder item), plus the free-hand and future mortar presentation paths. It explains compatibility timing: game rules retain logical rounds, AP, damage, audio and action profiles. The common melee pose keys map onto those actions, with the required 0.085-second hitstop. Reduced motion retains 3D and actual aim while dropping shake, zoom and hitstop.
 
-`weapon-fx.js` now declares all 34 catalog profiles plus free-hand and mortar. The base rifle/missile and common melee visual timelines use the reference numbers; other profiles retain their individual existing beats as the integration starting point. Built-in physical weapon aliases and socket choices are explicit. The mapping is not yet connected to action resolution, and these declarations alone do not satisfy the weapon or timing gates.
+Development evidence includes 48 passing simulation suites; real GLB geometry/socket, piledriver and Parallax checks; all 34 real action fixtures; a focused campaign with zero anomalies; and all 16 real state/bone/combat negative controls. The variable-speed/corner/stop/lunge/shove/brace test reproduced up to 0.54 m drift/reach error against the old production pair and passes all six leg types on flat and elevated terrain with the corrected gait. Raw before/after logs and source fingerprints are in `design/phase2/development/`.
 
+All 34 catalog actions passed in both full-motion and touch/reduced-motion runs on `6786df4`. On the airborne-fixed `9af2015` tree, five representative archetypes in both modes and the strengthened special-path checks passed, including actual airborne ankle clearance and grounded landing. All 48 simulation suites passed on `f68b5df`; the later conditional clearance change has its targeted actual-geometry/pose checks. Those reports retain their original source identities. The final committed-runtime campaign passed 30 unique battles / 123,420 actual-bone ticks with zero anomalies, all eight rigs and all 16 intentional fault controls in each of four batches. It commanded 18 Workshop IDs; a targeted six-melee follow-up supplies the remaining six, so all 24 Workshop entries executed on the final tree. The existing special checks and a focused actual GPU context-loss/restoration, framebuffer redraw and checkpoint comparison also passed. Final Parallax/matching-preset captures use `fa9f835`; visual review records their exact scope. Historical visuals retain their own source and render-policy scope. See [QA usage](../qa/README.md) and the [requirements review](phase2-requirements-review.md). Phase 1 is merged in #18; no Site deployment has been made.
 
-Owner direction for Phase 2: pay attention to PR #20 and the existing defects, and trust Claude's work highly as reliable. Use PR #20's corrected gait as the reference baseline and give its recorded evidence substantial weight. Focus new verification on the production port, existing terrain/brace regressions and identified integration bugs. The old preparation must be reconciled with PR #19's plasma/crawl/joint effects and PR #20's gait before integration; preserve real production rules and action timers.
+Owner direction: “For Phase 2, do pay attn to the PR 20 and ur existing bugs. Trust Claude's work highly, and reliable.” Claude's 150-battle reference evidence is accepted as author evidence; the focused real Playwright rerun passed nine seeded reference battles, all six walk fixtures and desktop/touch VFX. New checks focus on the production port and concrete regressions.
 
-The numerical FX regression reproduced a missile-arrival scratch-vector alias inherited from the reference: smoke emission overwrote the scratch flight position before the arrival callback. The fix adds one position vector per pooled missile and uses it through trail emission, preserving the endpoint without per-frame vector allocation. The fix still needs full real-action integration coverage.
-
-PRs #19 and #20 are merged on main. The prepared FX factory now uses the approved plasma ribbons, random crawl and joint-short mix, with the production terrain floors, camera ownership, exact disposal and per-missile endpoint fix retained. The real Three.js pool regression passes on that combined code. The gait now ports #20’s actual root velocity, reachable swings/landings, catch-up and settling, with per-chassis duty/stride/carry/fire data and the height-aware pelvis/support/brace safeguards retained. The existing real production rig suite passes: zero measured planted-foot slide for all six leg types, three planted Behemoth feet per walk frame, artillery fold and Oni carry/fire checks. Terrain stop/lunge integration and all Phase 2 runtime/action gates remain pending.
-
-Runtime integration has started in `scene/combat.js`, owned by the existing scene. Logical firing beats launch real pooled tracers/beams/missiles at current socket positions; landed logical contacts invoke directional impact profiles at the targeted part or intercepting shield. Current shared-scene destruction cues, terrain footfalls, 14-second wreck emission, jumpjet exhaust, critical/collapse fault mix and melee trails are connected. The first real browser action completed an eight-round rifle volley and counter with 16 actual contact hooks and no browser errors. This is development evidence, not the final action or campaign gate. The 2D `drawEffects` body now retains floating text only; unused old draw functions and the temporary-adapter weapon composition still need cleanup. Reduced motion retains actual aim while dropping the existing shake/camera/hitstop. All 46 simulation suites passed at the first runtime integration. Full aim, every-weapon, terrain/brace, staged destruction, reduced-motion and popSwap validation remains outstanding.
+Final reports: [campaign](../design/phase2/qa/campaign-final-30.json), [current weapon coverage](../design/phase2/qa/current-weapon-coverage.json), [actual context restoration](../design/phase2/qa/context-restore.json).

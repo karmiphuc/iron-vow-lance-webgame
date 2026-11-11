@@ -1,5 +1,5 @@
-/* Explicit Phase 2 visual profiles. Damage/AP/save behavior stays in game.js.
- * Runtime integration and per-profile action validation are still pending.
+/* Phase 2 visual profiles. Beats and pellet counts describe the reference
+ * effects; production firing uses the existing game.js action timeline.
  */
 (function(root){
 'use strict';

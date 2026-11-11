@@ -2585,7 +2585,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const targetAtlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(t.frame)];
- const targetMotion=targetAtlas?.destruction?readyNativeMotion(t,2400):null;
+ const targetMotion=!window.IronVowScene?.isLive(t)&&targetAtlas?.destruction?readyNativeMotion(t,2400):null;
  if(aeroStrike||!a.kind&&(FRAMES[a.frame].native||power)&&!reducedMotion)await readyNativeMotion(a);
  if(lionStrike){
   const missing=lionMotionImages(w.id).filter(image=>!imageReady(image)&&image.decode);
@@ -2703,7 +2703,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(!event.hit)continue;
   const before=t.hp[event.part];
   t.hp[event.part]=Math.max(0,before-event.amount);
-  event.damage=before-t.hp[event.part];
+  event.before=before;event.after=t.hp[event.part];event.damage=before-t.hp[event.part];
   if(!sequence?.skipped)window.IronVowScene?.combat?.landed(a,t,w,event,guard);
   d+=event.amount;lost+=event.damage;
   const broken=before>0&&t.hp[event.part]===0;
@@ -3310,10 +3310,10 @@ function drawWorkshopPreview(){
  const bounds={x:0,y:0,w:size,h:size};
  g.drawImage(visual.modular||visual.native?paintedSprite(image,visual.key,u.paint):image,0,0,size,size);
  if(visual.modular){
-  if(!(frame===2&&u.weapon==='missile'))drawWeaponModule(g,weaponMount(visual,visual,bounds,u.weapon,-1));
-  if(u.melee)drawWeaponModule(g,weaponMount(visual,visual,bounds,u.melee,-1));
+  if(!(frame===2&&u.weapon==='missile'))drawMountedPreview(g,weaponMount(visual,visual,bounds,u.weapon,-1));
+  if(u.melee)drawMountedPreview(g,weaponMount(visual,visual,bounds,u.melee,-1));
  }
- drawWeaponModule(g,shieldMount(u,visual,bounds,-1,visual.ortho));
+ drawMountedPreview(g,shieldMount(u,visual,bounds,-1,visual.ortho));
 }
 function refreshArmory(focus){
  const top=$('#ui .page')?.scrollTop||0;
@@ -3603,14 +3603,6 @@ function shotMuzzle(actor,id,index){
  return shoulder?(alternate?'shoulderMuzzle2':'shoulderMuzzle'):(alternate?'muzzle2':'muzzle');
 }
 function resolveAttachment(a){const p=project(a.x,0,a.z);return{x:p.x+a.ox*scale,y:p.y+a.oy*scale}}
-function drawMechSmoke(u,t,destroyed=false,anchor=null){
- const age=t-(u.deathTime??t-20);if(destroyed&&age>9)return;
- const p=anchor||(destroyed?project(u.vx,.35,u.vz):mechAttachmentPoint(u,u.hp.right===0?'right':'body',t));
- ctx.save();const count=destroyed?6:3;
- for(let i=0;i<count;i++){const v=(t*.38+i/count)%1,fade=destroyed?Math.exp(-Math.max(0,age)*.22):1;ctx.globalAlpha=(1-v)*fade*(destroyed?.3:.18);ctx.fillStyle=destroyed?'#a9a8a0':'#aebbc4';ctx.beginPath();ctx.arc(p.x+Math.sin(i*3+t*.7)*scale*(.07+v*.14),p.y-v*scale*(destroyed?1.2:.8),scale*(.045+v*.16),0,Math.PI*2);ctx.fill()}
- ctx.restore();
-}
-
 // Keep the soles planted as the knees give way, then tip the upper mass over the hips.
 
 // The painted Warden draws live on the Foundry rig while it stands; its baked art covers loading, no WebGL and death.
@@ -3620,91 +3612,6 @@ function liveWarden(u){return Boolean(u&&!u.kind&&u.frame===0&&window.IronVowSce
 const settledFoundryArt=new WeakMap();
 
 
-
-function drawPoweredRelease(actor,profile,age,t){
- const {power}=profile;
- if(reducedMotion||age<0||age>profile.travel)return;
- const q=clamp01(age/profile.travel),strength=Math.sin(Math.PI*q);
- const p=mechAttachmentPoint(actor,power.clip==='bash'?power.anchor:'bladeTip',t);
- ctx.save();ctx.globalAlpha=strength*.9;ctx.lineCap='round';
- ctx.strokeStyle=power.color;ctx.shadowColor=power.color;ctx.shadowBlur=14;
- ctx.lineWidth=Math.max(2,scale*.07*strength);
- ctx.beginPath();
- if(power.clip==='bash'){
-  const atlas=window.IRON_VOW_FOUNDRY_ART[foundryModel(actor.frame)];
-  const [dx,dy]=atlas.directions[headingIndex(displayedHeading(actor))].forward;
-  const reach=scale*(.09+.58*q)/Math.hypot(dx,dy);
-  ctx.ellipse(p.x+dx*reach,p.y+dy*reach,scale*(.14+.23*q),scale*(.21+.50*q),Math.atan2(dy,dx),-Math.PI*.45,Math.PI*.55);
- }else{
-  const a=mechAttachmentPoint(actor,'bladeTip',t-.085),b=mechAttachmentPoint(actor,'bladeTip',t-.043);
-  ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(b.x,b.y,p.x,p.y);
- }
- ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#fff1d4';ctx.lineWidth=1.3;ctx.stroke();ctx.restore();
-}
-function drawAttackEffect(e,t){
- const actor=battle.units.find(u=>u.id===e.actor),profile=attackProfile(actor,e.kind),age=t-e.born;
- const kind=profile.effect||e.kind,plasma=e.kind==='ember';
- const endpoint=e.impact?resolveAttachment(e.impact):project(e.tx,1.3,e.tz);
- if(profile.melee){
-  if(!actor||age>profile.travel)return;
-  if(profile.power){drawPoweredRelease(actor,profile,age,t);return}
-  const tip=mechAttachmentPoint(actor,'meleeTip',t),previous=mechAttachmentPoint(actor,'meleeTip',t-.06);
-  const strength=Math.sin(Math.PI*clamp01(age/profile.travel)),heated=kind==='cleaver'&&e.kind!=='hatchet'&&e.kind!=='tonfa';
-  ctx.save();ctx.lineCap='round';ctx.globalAlpha=strength*.8;
-  ctx.shadowBlur=12;ctx.shadowColor=heated?'#ff632b':'#ffc585';
-  ctx.strokeStyle=heated?'#ffb27a':'#e8d8ba';ctx.lineWidth=kind==='breaker'?4:2;
-  ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(tip.x,tip.y);ctx.stroke();ctx.restore();
-  return;
- }
- for(let i=0;i<profile.beats.length;i++){
-  const since=age-profile.beats[i];if(since<0||since>.65)continue;
-  const scatter=kind==='shotgun'&&e.projectiles;
-  const impact=kind!=='shotgun'&&e.projectiles?.[i]?resolveAttachment(e.projectiles[i]):endpoint;
-  if(!e.origins[i])e.origins[i]=actor?freezeAttachment(actor,shotMuzzle(actor,e.kind,i),e.born+profile.beats[i]):{x:e.x,z:e.z,ox:0,oy:-1.4};
-  const a=resolveAttachment(e.origins[i]),p=since/profile.travel;
-  ctx.save();ctx.lineCap='round';
-  if(p<=1||scatter&&since<=e.contacts.at(-1).travel){
-   if(kind==='missile'){
-    const x=a.x+(impact.x-a.x)*p,y=a.y+(impact.y-a.y)*p-Math.sin(p*Math.PI)*scale*1.25;
-    ctx.strokeStyle='#e1d2b34d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo((a.x+impact.x)/2,Math.min(a.y,impact.y)-scale*1.25,x,y);ctx.stroke();
-    ctx.fillStyle='#fff0bb';ctx.shadowColor='#ffb765';ctx.shadowBlur=16;ctx.beginPath();ctx.arc(x,y,Math.max(2,scale*.055),0,Math.PI*2);ctx.fill();
-    for(let j=1;j<=4;j++){const q=Math.max(0,p-j*.045),sx=a.x+(impact.x-a.x)*q,sy=a.y+(impact.y-a.y)*q-Math.sin(q*Math.PI)*scale*1.25;ctx.globalAlpha=(1-j/5)*.25;ctx.fillStyle='#c1b8a5';ctx.beginPath();ctx.arc(sx,sy,scale*(.025+j*.015),0,Math.PI*2);ctx.fill()}
-   }else if(kind==='rail'){
-    ctx.globalAlpha=1-p*.65;ctx.shadowColor='#b3e9f4';ctx.shadowBlur=16;ctx.strokeStyle='#8ec7dc';ctx.lineWidth=5*(1-p*.7);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(impact.x,impact.y);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#f5ffff';ctx.lineWidth=1.5;ctx.stroke();
-   }else{
-    for(let pellet=0;pellet<(scatter?scatter.length:1);pellet++){
-     const end=scatter?resolveAttachment(scatter[pellet]):impact;
-     const progress=scatter?since/e.contacts[pellet].travel:p;
-     if(progress>1)continue;
-     const x=a.x+(end.x-a.x)*progress,y=a.y+(end.y-a.y)*progress;
-     ctx.strokeStyle=plasma?'#ffa064':pellet%2?'#fff0c4':'#e9b971';ctx.lineWidth=scatter?1.4:2;ctx.shadowColor=plasma?'#f88547':'#eab36b';ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(x-(end.x-a.x)*.10,y-(end.y-a.y)*.10);ctx.lineTo(x,y);ctx.stroke();
-    }
-   }
-  }
-  if(since<.055&&!reducedMotion){
-   ctx.globalAlpha=1-since/.055;ctx.shadowColor='#f6bf72';ctx.shadowBlur=20;ctx.fillStyle='#fff0c5';ctx.beginPath();ctx.arc(a.x,a.y,scale*(kind==='shotgun'?.20:kind==='rampart'?.16:.11),0,Math.PI*2);ctx.fill();
-   const angle=Math.atan2(impact.y-a.y,impact.x-a.x);ctx.translate(a.x,a.y);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(0,-scale*.07);ctx.lineTo(scale*.33,0);ctx.lineTo(0,scale*.07);ctx.fill();
-  }
-  ctx.restore();
-  if(!plasma&&['rifle','shotgun','hailstorm','rampart'].includes(kind)&&since<.55&&!reducedMotion){
-   const feed=e.kind==='rivet'&&actor?resolveAttachment(e.feed??=freezeAttachment(actor,'gripR',e.born)):a;
-   ctx.save();const x=feed.x+scale*.45*since,y=feed.y-scale*.7*since+scale*1.4*since*since;ctx.translate(x,y);ctx.rotate(since*19+i);ctx.globalAlpha=1-since/.55;ctx.fillStyle='#d8b982';ctx.fillRect(-2,-.8,4,1.6);ctx.restore();
-  }
- }
-}
-function drawDetonation(e,t,subject){
- const anchor=subject&&Number.isFinite(e.at)?(e.closeAnchor??=freezeAttachment(subject,'body',e.at)):e.anchor;
- const p=resolveAttachment(anchor),phase=1-e.t,radius=scale*(e.big?1.55:.56),size=radius*(.35+phase*.9);
- ctx.save();ctx.globalAlpha=Math.min(1,e.t*2);const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,size);
- g.addColorStop(0,'#fff8d8');g.addColorStop(.13,'#ffe7a1');g.addColorStop(.42,'#f39b4dcc');g.addColorStop(.74,'#b94f2890');g.addColorStop(1,'#2a211e00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,size,0,Math.PI*2);ctx.fill();
- if(e.big){for(let i=0;i<6;i++){const angle=i*2.399+e.seed,spread=radius*(.12+phase*.4),x=p.x+Math.cos(angle)*spread,y=p.y+Math.sin(angle)*spread*.6-phase*radius*.45,r=radius*(.16+phase*.29);ctx.globalAlpha=e.t*.5;const fire=ctx.createRadialGradient(x,y,0,x,y,r);fire.addColorStop(0,phase<.45?'#ffce78':'#c98349');fire.addColorStop(.45,phase<.45?'#e97c36cc':'#61524acc');fire.addColorStop(1,'#332b2500');ctx.fillStyle=fire;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}}
- for(let i=0;i<(e.big?30:12);i++){
-  const angle=i*2.399+e.seed*.3,v=radius*(.4+(i%7)*.14)*phase*2.3,x=p.x+Math.cos(angle)*v,y=p.y+Math.sin(angle)*v+phase*phase*scale*.7;
-  ctx.strokeStyle=i%3?'#ffc778':'#fff3d0';ctx.lineWidth=i%3?1.1:1.8;ctx.beginPath();ctx.moveTo(x-Math.cos(angle)*scale*.08,y-Math.sin(angle)*scale*.08);ctx.lineTo(x,y);ctx.stroke();
- }
- if(e.big){const ground=project(e.x,0,e.z);ctx.globalAlpha=e.t*.7;ctx.strokeStyle='#e8c294';ctx.lineWidth=2*e.t;ctx.beginPath();ctx.ellipse(ground.x,ground.y,scale*(.4+phase*2.5),scale*(.13+phase*.8),0,0,Math.PI*2);ctx.stroke()}
- ctx.restore();
-}
 
 function drawEffects(t){for(const e of effects){
  if(e.type!=='text'&&e.type!=='heal')continue;
@@ -4094,7 +4001,13 @@ window.__ironVow=(()=>{
   if(pending)throw Error('Finish the current game operation before starting another battle');
   skipAttackCamera();closeModal();seed=options.seed??0;ruleRandom=rng(seed);save=fresh();battle=null;effects=[];clock=0;selected=0;page='contracts';
   for(const [i,frame] of (options.frames||[]).entries()){if(!FRAMES[frame]||!save.units[i])throw Error('Invalid scene fixture frame');save.units[i].frame=frame;}
-  deploy(options.contract??1);closeModal();return snapshot();
+  deploy(options.contract??1);closeModal();
+  if(options.weapons)for(const [i,id] of options.weapons.entries()){
+   const u=battle.units.find(u=>u.team==='ally'&&u.index===i),w=WEAPONS.find(w=>w.id===id&&!w.builtIn&&!w.shoulder);
+   if(!u||!w)throw Error('Invalid campaign weapon fixture');if(!save.owned.includes(id))save.owned.push(id);
+   const saved=save.units[i];if(w.melee){u.melee=saved.melee=id;u.weapon=saved.weapon='rifle';delete u.shield;delete saved.shield;}else u.weapon=saved.weapon=id;
+  }
+  return snapshot();
  }
  function snapshot(){
   return {seed,time:clock,terrainSeed:battle?.terrainSeed,busy:Boolean(battle?.busy),pending:Boolean(pending),phase:battle?.phase,turn:battle?.turn,size:battle?.size,result:!battle?save.history.at(-1):null,ready:window.IronVowScene.ready,renderer:window.IronVowRenderer.metrics(),covers:window.IronVowScene.covers,
@@ -4104,8 +4017,14 @@ window.__ironVow=(()=>{
      const box=new THREE.Box3().setFromObject(leg.an);if(!box.isEmpty())for(const x of [box.min.x,box.max.x])for(const z of [box.min.z,box.max.z])footprint.push([x,z]);
      feet.push({side:leg.side,ankle:p.toArray(),hip:leg.hip.getWorldPosition(new THREE.Vector3()).toArray(),reach:(m.dims.legA+m.dims.legB)*m.scale,target:state.foot.toArray(),plant:state.planted.toArray(),swing:state.swing||state.poseLift,settle:Boolean(state.settle),ankleHeight:m.dims.ankleH*m.scale,ground:window.IronVowScene.groundAt(p.x,p.z),kneeContact:contact?{point:contact.toArray(),ground:window.IronVowScene.groundAt(contact.x,contact.z)}:null});}
     let finite=true;m?.cont.traverse(o=>{if(!o.matrixWorld.elements.every(Number.isFinite))finite=false;});
+    const partVisual=m?Object.fromEntries(Object.entries(m.partState).map(([part,state])=>{const detachable=m.build.parts[part].filter(e=>e.detach);return[part,{state,detachable:detachable.length,visible:detachable.filter(e=>e.m.visible).length}];})):null;
+    const primary=record?.entry?.primary;
+    const muzzle=primary?.muzzle?.getWorldPosition(new THREE.Vector3()),barrel=primary?.muzzle?.getWorldDirection(new THREE.Vector3());
+    const firing=Boolean(u.alive&&u.hp.right>0&&Number.isFinite(u.attack?.fireAt)&&m?.aim.blend>.95);
+    const weaponAimError=firing&&muzzle&&barrel?barrel.angleTo(m.aim.point.clone().sub(muzzle)):null;
+    const muzzleDistance=firing&&muzzle?new THREE.Box3().setFromObject(primary.model).distanceToPoint(muzzle):null;
     const D=m?.dims,radius=D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*m.scale:1;
-    return {id:u.id,frame:u.frame,kind:u.kind,team:u.team,alive:u.alive,hp:{...u.hp},max:{...u.max},ap:u.ap,x:u.x,z:u.z,vx:u.vx,vz:u.vz,moving:Boolean(u.motion),attacking:Boolean(u.attack),motion:u.motion?{fromX:u.motion.fromX,fromZ:u.motion.fromZ,toX:u.motion.toX,toZ:u.motion.toZ,start:u.motion.start,duration:u.motion.duration}:null,live:window.IronVowScene.isLive(u),object:record?.object?.uuid,root:record?.object?.position.toArray(),matrix:m?.cont.matrixWorld.toArray(),finite,radius,footprint,feet};
+    return {id:u.id,frame:u.frame,weapon:u.weapon,melee:u.melee,partVisual,weaponAimError,muzzleDistance,weaponArchetype:primary?window.IronVowWeaponFX.get(u.weapon).archetype:null,weaponMounted:primary?primary.mount.parent===(record.entry.primarySocket||m.rig.arms.R.so):false,armed:record?.entry?.armed,primaryAsset:primary?.id,kind:u.kind,team:u.team,alive:u.alive,hp:{...u.hp},max:{...u.max},ap:u.ap,x:u.x,z:u.z,vx:u.vx,vz:u.vz,moving:Boolean(u.motion),attacking:Boolean(u.attack),motion:u.motion?{fromX:u.motion.fromX,fromZ:u.motion.fromZ,toX:u.motion.toX,toZ:u.motion.toZ,start:u.motion.start,duration:u.motion.duration}:null,live:window.IronVowScene.isLive(u),object:record?.object?.uuid,root:record?.object?.position.toArray(),matrix:m?.cont.matrixWorld.toArray(),finite,radius,footprint,feet};
    })};
  }
  return {start,snapshot,

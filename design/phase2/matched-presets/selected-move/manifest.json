@@ -1,0 +1,66 @@
+{
+  "label": "phase2",
+  "source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+  "runner_source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+  "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+  "asset_delay_ms": 0,
+  "dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+  "candidate_advance_policy": "All 30 Hz CPU animation updates and matrix updates execute. Intermediate unrecorded main-canvas GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.",
+  "non_visual_fetch_policy": "Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.",
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "webgl_capture_policy": "QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.",
+  "captures": [
+    {
+      "source": "phase2",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase2/1366x1024/selected-move.webp",
+      "source_commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1023,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "raw_png_sha256": "f0ab5f0f709be83f14730ca33f3c97701ff05a3b65864856c1029a607c48b7ee",
+      "webp_sha256": "a0739c0db28b448b6c97af52b058d697487e4870dde228143ba0a9126ccabb89",
+      "rgba_sha256": "6492317a4c031df8c92f07a3104ba8668d6d72980a473db1f01fa7528736ff83",
+      "rgba_byte_equality": true
+    },
+    {
+      "source": "phase2",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase2/1194x834/selected-move.webp",
+      "source_commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "raw_png_sha256": "770f09a9f146bf6f745a13c37a7a7906e67e50e51c6e7b6003287a51a512d240",
+      "webp_sha256": "4eb506f0d0c3cc133abb02ac5c839eaa287b3f746c8293748c9559ed83667237",
+      "rgba_sha256": "1df0252a16330aa8f697b5781154902f6f5df17741a452ca4966f6517d04cdc0",
+      "rgba_byte_equality": true
+    }
+  ],
+  "retries": [],
+  "failures": [],
+  "expected_capture_count": 2,
+  "status": "complete"
+}

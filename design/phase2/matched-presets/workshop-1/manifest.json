@@ -1,0 +1,52 @@
+{
+  "label": "phase2",
+  "source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+  "runner_source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+  "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+  "asset_delay_ms": 0,
+  "dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+  "candidate_advance_policy": "All 30 Hz CPU animation updates and matrix updates execute. Intermediate unrecorded main-canvas GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.",
+  "non_visual_fetch_policy": "Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.",
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "webgl_capture_policy": "QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.",
+  "captures": [
+    {
+      "source": "phase2",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase2/1366x1024/workshop-1.webp",
+      "source_commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "attempt": 1,
+      "raw_png_sha256": "dc8a243937bf8f4f60212bec976705a7b743a30fcd29fe87648a2560585a524d",
+      "webp_sha256": "4114e1363c2be9d873aac6bd0eb1fd72beb39ac8ab647e3fb942d27196aa1c6c",
+      "rgba_sha256": "3c1221f9cba10941635443f96219dc64197472642d3c0ace838efb0cd30f9d0e",
+      "rgba_byte_equality": true
+    },
+    {
+      "source": "phase2",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase2/1194x834/workshop-1.webp",
+      "source_commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "attempt": 1,
+      "raw_png_sha256": "f7e27b97105ce67a501bd7b190d8ac07dd3ec979b5a60ac2afc754d2bda169c3",
+      "webp_sha256": "12f37afe9974e4e4439abb6e6b1c84310fd609342c6057215d6ecfd849c9202c",
+      "rgba_sha256": "3e585fe46a41c65d304cc16d894c9475af52c3fae48032d96793ce63f52ab0b3",
+      "rgba_byte_equality": true
+    }
+  ],
+  "retries": [],
+  "failures": [],
+  "expected_capture_count": 2,
+  "status": "complete"
+}

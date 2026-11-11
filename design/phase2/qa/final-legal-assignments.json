@@ -1,0 +1,421 @@
+{
+  "policy": "Fixed Citadel retains factory missile; floor(index/8) catalog phase; regression index22 retains original weapons.",
+  "assignedWeapons": [
+    "anchor-hammer",
+    "blade",
+    "breaker",
+    "cerberus",
+    "cleaver",
+    "ember",
+    "falcon",
+    "forge",
+    "hailstorm",
+    "hatchet",
+    "missile",
+    "obelisk",
+    "parallax",
+    "pike",
+    "piledriver",
+    "rail",
+    "rampart",
+    "rifle",
+    "rivet",
+    "shotgun",
+    "sidewinder",
+    "tonfa",
+    "trident",
+    "watchman"
+  ],
+  "rows": [
+    {
+      "seed": 4242,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "weapons": [
+        "rifle",
+        "shotgun",
+        "missile"
+      ]
+    },
+    {
+      "seed": 4243,
+      "frames": [
+        7,
+        8,
+        9
+      ],
+      "weapons": [
+        "rail",
+        "hailstorm",
+        "rampart"
+      ]
+    },
+    {
+      "seed": 4244,
+      "frames": [
+        10,
+        12,
+        0
+      ],
+      "weapons": [
+        "breaker",
+        "missile",
+        "piledriver"
+      ]
+    },
+    {
+      "seed": 4245,
+      "frames": [
+        5,
+        6,
+        7
+      ],
+      "weapons": [
+        "blade",
+        "sidewinder",
+        "trident"
+      ]
+    },
+    {
+      "seed": 4246,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "weapons": [
+        "forge",
+        "ember",
+        "watchman"
+      ]
+    },
+    {
+      "seed": 4247,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "weapons": [
+        "missile",
+        "cerberus",
+        "obelisk"
+      ]
+    },
+    {
+      "seed": 4248,
+      "frames": [
+        6,
+        7,
+        8
+      ],
+      "weapons": [
+        "rivet",
+        "parallax",
+        "hatchet"
+      ]
+    },
+    {
+      "seed": 4249,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "weapons": [
+        "pike",
+        "tonfa",
+        "missile"
+      ]
+    },
+    {
+      "seed": 4250,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "weapons": [
+        "shotgun",
+        "missile",
+        "rail"
+      ]
+    },
+    {
+      "seed": 4251,
+      "frames": [
+        7,
+        8,
+        9
+      ],
+      "weapons": [
+        "hailstorm",
+        "rampart",
+        "breaker"
+      ]
+    },
+    {
+      "seed": 4252,
+      "frames": [
+        10,
+        12,
+        0
+      ],
+      "weapons": [
+        "cleaver",
+        "missile",
+        "blade"
+      ]
+    },
+    {
+      "seed": 4253,
+      "frames": [
+        5,
+        6,
+        7
+      ],
+      "weapons": [
+        "sidewinder",
+        "trident",
+        "forge"
+      ]
+    },
+    {
+      "seed": 4254,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "weapons": [
+        "ember",
+        "watchman",
+        "falcon"
+      ]
+    },
+    {
+      "seed": 4255,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "weapons": [
+        "missile",
+        "obelisk",
+        "rivet"
+      ]
+    },
+    {
+      "seed": 4256,
+      "frames": [
+        6,
+        7,
+        8
+      ],
+      "weapons": [
+        "parallax",
+        "hatchet",
+        "pike"
+      ]
+    },
+    {
+      "seed": 4257,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "weapons": [
+        "tonfa",
+        "anchor-hammer",
+        "missile"
+      ]
+    },
+    {
+      "seed": 4258,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "weapons": [
+        "missile",
+        "rail",
+        "hailstorm"
+      ]
+    },
+    {
+      "seed": 4259,
+      "frames": [
+        7,
+        8,
+        9
+      ],
+      "weapons": [
+        "rampart",
+        "breaker",
+        "cleaver"
+      ]
+    },
+    {
+      "seed": 4260,
+      "frames": [
+        10,
+        12,
+        0
+      ],
+      "weapons": [
+        "piledriver",
+        "missile",
+        "sidewinder"
+      ]
+    },
+    {
+      "seed": 4261,
+      "frames": [
+        5,
+        6,
+        7
+      ],
+      "weapons": [
+        "trident",
+        "forge",
+        "ember"
+      ]
+    },
+    {
+      "seed": 4262,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "weapons": [
+        "watchman",
+        "falcon",
+        "cerberus"
+      ]
+    },
+    {
+      "seed": 4263,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "weapons": [
+        "missile",
+        "rivet",
+        "parallax"
+      ]
+    },
+    {
+      "seed": 4264,
+      "frames": [
+        6,
+        7,
+        8
+      ],
+      "weapons": [
+        "rivet",
+        "parallax",
+        "hatchet"
+      ]
+    },
+    {
+      "seed": 4265,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "weapons": [
+        "anchor-hammer",
+        "rifle",
+        "missile"
+      ]
+    },
+    {
+      "seed": 4266,
+      "frames": [
+        0,
+        5,
+        6
+      ],
+      "weapons": [
+        "rail",
+        "hailstorm",
+        "rampart"
+      ]
+    },
+    {
+      "seed": 4267,
+      "frames": [
+        7,
+        8,
+        9
+      ],
+      "weapons": [
+        "breaker",
+        "cleaver",
+        "piledriver"
+      ]
+    },
+    {
+      "seed": 4268,
+      "frames": [
+        10,
+        12,
+        0
+      ],
+      "weapons": [
+        "blade",
+        "missile",
+        "trident"
+      ]
+    },
+    {
+      "seed": 4269,
+      "frames": [
+        5,
+        6,
+        7
+      ],
+      "weapons": [
+        "forge",
+        "ember",
+        "watchman"
+      ]
+    },
+    {
+      "seed": 4270,
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "weapons": [
+        "falcon",
+        "cerberus",
+        "obelisk"
+      ]
+    },
+    {
+      "seed": 4271,
+      "frames": [
+        12,
+        0,
+        5
+      ],
+      "weapons": [
+        "missile",
+        "parallax",
+        "hatchet"
+      ]
+    }
+  ]
+}

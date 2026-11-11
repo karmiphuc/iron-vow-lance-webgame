@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 const T=root.THREE,cache=new Map(),SIZE=512,SCALE=96;
-let drawing=false,revision=0,requested=null;
+let drawing=false,revision=0,requested=null,requestedWeapons=null;
 function get(u,t){
  if(root.IronVowScene.isLive(u))throw Error('Live frames cannot enter the billboard adapter');
  let entry=cache.get(u.id);
@@ -14,25 +14,32 @@ function get(u,t){
  }
  const poseTime=hitstopTime(u,t),recent=(time,seconds)=>Number.isFinite(time)&&t>=time&&t-time<seconds;
  const animated=u.motion||u.attack||u.kind==='helicopter'&&u.alive||recent(u.hitTime,.9)||recent(u.fireTime,.8)||recent(u.braceTime,1.22)||!u.alive&&recent(u.deathTime,10);
- const stamp=JSON.stringify([revision,u.frame,u.kind,u.paint,u.trim,u.weapon,u.melee,u.shield,u.hp,u.alive,u.heading,u.attack,animated?Math.floor(poseTime*24):null]);
+ const stamp=JSON.stringify([revision,root.IronVowAdapterWeapons?.version,u.frame,u.kind,u.paint,u.trim,u.weapon,u.melee,u.shield,u.hp,u.alive,u.heading,u.attack,animated?Math.floor(poseTime*24):null]);
  if(stamp!==entry.stamp){
-  const saved={ctx,origin,scale};drawing=true;requested=new Set();
+  const saved={ctx,origin,scale};drawing=true;requested=new Set();requestedWeapons=[];
   try{
    ctx=entry.canvas.getContext('2d');ctx.clearRect(0,0,SIZE,SIZE);scale=SCALE;
    origin={x:SIZE/2-(u.vx-u.vz)*SCALE*.866,y:SIZE*.84-(u.vx+u.vz)*SCALE*.42+terrainHeight(u.vx,u.vz)*SCALE};
    drawUnitBody(u,poseTime,false);
-   entry.previousAnchors=entry.anchors;entry.anchors={};entry.time=poseTime;
-   for(const part of ['body','pilot','right','left','legs','muzzle','muzzle2','shield','meleeTip','leadFoot','gripL','gripR','shoulderMuzzle','shoulderMuzzle2','mortarMuzzle'])entry.anchors[part]=billboardPixelAttachment(u,part,poseTime);
+   entry.weaponRequests=requestedWeapons;entry.strideOffset=foundryRender(u,poseTime)?.strideOffset||0;entry.previousAnchors=entry.anchors;entry.anchors={};entry.time=poseTime;
+   for(const part of ['body','pilot','right','left','legs','muzzle','muzzle2','shield','meleeTip','leadFoot','gripL','gripR','axisL','axisR','shoulderMuzzle','shoulderMuzzle2','mortarMuzzle'])entry.anchors[part]=billboardPixelAttachment(u,part,poseTime);
    entry.texture.needsUpdate=true;entry.stamp=stamp;entry.images=[...requested];
    if(!entry.bounds&&entry.images.every(imageReady)){
     const pixels=ctx.getImageData(0,0,SIZE,SIZE).data,bounds={minX:SIZE,minY:SIZE,maxX:0,maxY:0};
     for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++)if(pixels[(y*SIZE+x)*4+3]>35){bounds.minX=Math.min(bounds.minX,x);bounds.maxX=Math.max(bounds.maxX,x);bounds.minY=Math.min(bounds.minY,y);bounds.maxY=Math.max(bounds.maxY,y);}
     if(bounds.minX<bounds.maxX)entry.bounds=bounds;
    }
-  }finally{ctx=saved.ctx;origin=saved.origin;scale=saved.scale;drawing=false;requested=null;}
+  }finally{ctx=saved.ctx;origin=saved.origin;scale=saved.scale;drawing=false;requested=null;requestedWeapons=null;}
  }
  entry.sprite.material.color.setHex(!u.alive?0x777777:u.team==='ally'&&spent(u)?0xa0a0a0:0xffffff);
  entry.sprite.position.copy(root.IronVowScene.world(u.vx,u.vz));
+ const camera=root.IronVowScene.camera;
+ if(camera&&!reducedMotion&&u.alive){
+  const right=new T.Vector3(1,0,0).applyQuaternion(camera.quaternion),up=new T.Vector3(0,1,0).applyQuaternion(camera.quaternion);
+  if(FRAMES[u.frame]?.native&&u.attack?.primeDuration){const q=animationPose(u,poseTime,activeWardenVisual(u)).primeProgress,progress=q*q*(3-2*q);entry.sprite.position.addScaledVector(right,unitFacing(u)*.19*3.4*progress).addScaledVector(up,.025*3.4*progress);}
+  const age=poseTime-(u.hitTime??-2);if(u.hitVector&&age>=0&&age<.55){const kick=(1-Math.exp(-age*90))*Math.exp(-age*10)*Math.cos(age*16)*3.4*.26;entry.sprite.position.addScaledVector(right,kick*u.hitVector.x).addScaledVector(up,-kick*u.hitVector.y*.55);}
+  if(entry.strideOffset&&u.motion){const q=entry.strideOffset,dx=(u.motion.toX-u.motion.fromX)*q,dz=(u.motion.toZ-u.motion.fromZ)*q;entry.sprite.position.addScaledVector(right,(dx-dz)*.866*3.4).addScaledVector(up,-(dx+dz)*.42*3.4);}
+ }
  return entry.sprite;
 }
 function canvasPoint(entry,p,camera){
@@ -50,7 +57,7 @@ function bounds(id,camera){
  return new T.Box3().setFromPoints([canvasPoint(entry,{x:b.minX,y:b.minY},camera),canvasPoint(entry,{x:b.minX,y:b.maxY},camera),canvasPoint(entry,{x:b.maxX,y:b.minY},camera),canvasPoint(entry,{x:b.maxX,y:b.maxY},camera)]);
 }
 function clear(){for(const entry of cache.values()){entry.sprite.parent?.remove(entry.sprite);entry.texture.dispose();entry.sprite.material.dispose();}cache.clear();}
-root.IronVowBillboards={get,clear,bounds,worldAttachment,pixelAttachment:(...args)=>billboardPixelAttachment(...args),preview:(...args)=>billboardPreview(...args),invalidate(){revision++;},track(image){requested?.add(image);return image;},ready(id){const entry=cache.get(id);return Boolean(entry&&entry.images?.every(imageReady));},get drawing(){return drawing;}};
+root.IronVowBillboards={get,clear,bounds,worldAttachment,canvasWorldPoint:(id,p,camera)=>canvasPoint(cache.get(id),p,camera),weaponRequests:id=>cache.get(id)?.weaponRequests||[],registerWeapon(mount){if(drawing&&mount)requestedWeapons?.push(mount);return drawing;},pixelAttachment:(...args)=>billboardPixelAttachment(...args),preview:(...args)=>billboardPreview(...args),invalidate(){revision++;},track(image){requested?.add(image);return image;},ready(id){const entry=cache.get(id);return Boolean(entry&&entry.images?.every(imageReady));},get drawing(){return drawing;}};
 })(window);
 
 // All remaining sheet, mask and raster deformation helpers are temporary Phase 3 dependencies.
@@ -63,12 +70,12 @@ function billboardPreview(canvas,u,model,angle){
  const rendered=foundryPaint(base,key,u.paint,u.trim);
  const bounds={x:0,y:0,w:size,h:size},shield=view&&shieldMount(u,view,bounds,view.direction,view.ortho);
  g.clearRect(0,0,size,size);
- if(view?.direction>0)drawWeaponModule(g,shield);
+ if(view?.direction>0)drawMountedPreview(g,shield);
  g.drawImage(rendered,0,0,size,size);
  if(view){
-  drawWeaponModule(g,foundryMount(view,bounds,u.weapon,view.direction,0,view.ortho));
-  drawWeaponModule(g,foundryMount(view,bounds,u.melee,view.direction,0,view.ortho));
-  if(view.direction<0)drawWeaponModule(g,shield);
+  drawMountedPreview(g,unitWeaponPlacement(view,bounds,u.weapon,view.direction,0,view.ortho));
+  drawMountedPreview(g,unitWeaponPlacement(view,bounds,u.melee,view.direction,0,view.ortho));
+  if(view.direction<0)drawMountedPreview(g,shield);
  }
 }
 
@@ -453,20 +460,13 @@ function spritePoint(bounds,point=[.5,.36]){
 }
 
 function weaponMount(visual,frame,bounds,id,direction,strike=0,firing){
- const side=direction===1?'right':'left';
- const slot=id==='blade'?window.IRON_VOW_RAIJIN_ART?.[side]||arsenal.weapons?.cleaver?.[side]:arsenal.weapons?.[id]?.[side];
- if(!slot)return;
- const impact=slot.impact&&moduleImage(slot.impact.key);
- const striking=strike>=.61&&strike<=.81;
- const shot=slot[firing?.weaponSprite];
- const asset=striking?(imageReady(impact)?slot.impact:slot.extended??slot):
-  shot&&imageReady(moduleImage(shot.key))?shot:slot;
+ const asset=window.IronVowAdapterWeapons?.layout(id,direction);if(!asset)return;
  const isMelee=weapon(id).melee;
  const grip=spritePoint(bounds,isMelee?frame.gripL:frame.gripR);
  const forearm=weaponMotion(id)==='piledriver'||id==='tonfa';
  const axis=spritePoint(bounds,isMelee?(forearm?frame.ramL||frame.axisL:frame.axisL):frame.axisR);
  const angle=Math.atan2(axis.y-grip.y,axis.x-grip.x)-Math.atan2(asset.axis[1]-asset.grip[1],asset.axis[0]-asset.grip[0]);
- return {asset,grip,angle,scale:bounds.w/visual.ortho/asset.pixelsPerMetre};
+ return {id,slot:isMelee?'secondary':'primary',asset,grip,angle,scale:bounds.w/visual.ortho/asset.pixelsPerMetre};
 }
 
 function weaponPoint(mount,part){
@@ -475,24 +475,23 @@ function weaponPoint(mount,part){
  return {x:grip.x+x*Math.cos(angle)-y*Math.sin(angle),y:grip.y+x*Math.sin(angle)+y*Math.cos(angle)};
 }
 
-function drawWeaponModule(g,mount){
- if(!mount)return;
- const {asset,grip,angle,scale:ratio}=mount,image=moduleImage(asset.key);
- if(!imageReady(image))return;
+function drawMountedPreview(g,mount){
+ if(!mount)return;if(window.IronVowBillboards.registerWeapon(mount))return;
+ const {asset,grip,angle,scale:ratio}=mount,image=window.IronVowAdapterWeapons.image(asset);
  g.save();g.translate(grip.x,grip.y);g.rotate(angle);g.scale(ratio,ratio);
  g.drawImage(image,-asset.grip[0],-asset.grip[1]);g.restore();
 }
 
 function shieldMount(u,points,bounds,direction,span){
- const asset=window.IRON_VOW_SHIELD_ART?.[u.shield]?.[direction>0?'right':'left'];
+ const asset=u.shield&&window.IronVowAdapterWeapons?.layout(u.shield,direction,true);
  if(!asset)return null;
  const grip=spritePoint(bounds,points?.gripL||points?.left||[direction>0?.28:.72,.63]);
- return {asset,grip,angle:direction*.10,scale:bounds.w/(span||8)/asset.pixelsPerMetre};
+ return {id:u.shield,slot:'shield',asset,grip,angle:direction*.10,scale:bounds.w/(span||8)/asset.pixelsPerMetre};
 }
 
 function shieldBehind(heading){return Math.sin(heading)>0}
 
-function foundryMount(anchors,bounds,id,direction,progress=0,ortho=8,firing){
+function unitWeaponPlacement(anchors,bounds,id,direction,progress=0,ortho=8,firing){
  if(!id||!anchors?.gripR||!anchors?.gripL)return null;
  // Raijin was rendered in the Foundry's own model scale. Other weapons share the Site arsenal scale.
  return weaponMount({ortho:id==='blade'?ortho*1.4/3.2:ortho},anchors,bounds,id,direction,progress,firing);
@@ -609,20 +608,6 @@ function drawArticulatedMech(im,u,w,h,pose,upperTexture=null,g=ctx){
  }
 }
 
-function recoilingBounds(u,b,t){
- if(reducedMotion||!u.alive||(u.brace&&u.hp.legs>0&&upgradedWardenTravel(travelAtlas(u))))return b;
- if(FRAMES[u.frame]?.native&&u.attack?.primeDuration){
-  const pose=animationPose(u,t,activeWardenVisual(u)),q=pose.primeProgress;
-  const progress=q*q*(3-2*q);
-  b={...b,x:b.x+unitFacing(u)*scale*.19*progress,y:b.y-scale*.025*progress};
- }
- if(!u.hitVector)return b;
- const age=t-(u.hitTime??-2);
- if(age<0||age>.55)return b;
- const kick=(1-Math.exp(-age*90))*Math.exp(-age*10)*Math.cos(age*16)*scale*.26;
- return{...b,x:b.x+kick*u.hitVector.x,y:b.y+kick*u.hitVector.y*.55};
-}
-
 function vehicleKey(u,wreck=false){return (wreck?'wreck-':'hostile-')+u.kind+'-'+(unitFacing(u)>0?'right':'left')}
 
 function vehicleBounds(u,t){
@@ -631,7 +616,7 @@ function vehicleBounds(u,t){
  const bob=lift>0&&!reducedMotion&&u.alive?Math.sin(t*6+u.index)*.045:0;
  const p=project(u.vx,lift+bob,u.vz),size=scale*3.9192;
  const recoil=reducedMotion||!u.alive?0:dampedImpulse(t-(u.fireTime??-100),36,15)*unitFacing(u)*scale*.11;
- return recoilingBounds(u,{x:p.x-size*.5-recoil,y:p.y-size*.72,w:size,h:size},t);
+ return {x:p.x-size*.5-recoil,y:p.y-size*.72,w:size,h:size};
 }
 
 function vehicleAttachment(u,part,t){
@@ -703,7 +688,7 @@ function travelVisual(u,t){
    row=data.strike.first+frame;
   }
   const p=project(x,0,z),size=scale*groundedTravelSpan(u,data);
-  const bounds=recoilingBounds(u,{x:p.x-size*.5,y:p.y-size*data.ground,w:size,h:size},t);
+  const bounds={x:p.x-size*.5,y:p.y-size*data.ground,w:size,h:size};
   const source={key:detail.key,cell,x:row%columns,y:Math.floor(row/columns),idleX:0};
   const strike=u.attack&&ATTACK_PROFILES[u.attack.kind].melee?animationPose(u,t):null;
   return {atlas,image:detail.image,source,bounds,row,heading,points:data.points[row][heading],direction,strike,grounded:true};
@@ -765,13 +750,13 @@ function travelVisual(u,t){
   const ground=project(u.vx,0,u.vz),size=scale*atlas.span/3.65;
   const stride=revised?0:scale*(prime*.15+(strike?.strikeProgress?Math.sin(strike.strikeProgress*Math.PI)*.22:0));
   bounds={x:ground.x-size*.5+Math.sin(angle)*stride,y:ground.y-size*atlas.ground+Math.cos(angle)*stride*.44,w:size,h:size};
-  bounds=recoilingBounds(u,bounds,t);
+
  }
  return {atlas,image,source,bounds,row,heading,points,direction,strike,strikeFrame};
 }
 
 function travelMount(view,u,id,progress=0,t=clock){
- const mount=foundryMount(view.points,view.bounds,id,view.direction,progress,
+ const mount=unitWeaponPlacement(view.points,view.bounds,id,view.direction,progress,
   foundryModel(u.frame)!=null?view.atlas.span/1.4:view.atlas.span,id===u.weapon?firingPose(u,t):undefined);
  if(mount&&view.strike&&id===u.attack.kind&&!upgradedWardenTravel(view.atlas))mount.angle+=view.direction*(.9-1.85*smoothRange(.36,.78,progress));
  return mount;
@@ -954,9 +939,9 @@ function drawTravel(u,t,view){
  const farShield=shieldBehind(FIELD_HEADINGS[heading]);
  const melee=!atlas.grounded?.strike&&u.hp.left>0&&(view.strike||(foundry&&u.melee&&foundryModel(u.frame)===4&&!u.attack))?
   travelMount(view,u,view.strike?u.attack.kind:u.melee,view.strike?.strikeProgress):null;
- if(behind&&u.hp.right>0)drawWeaponModule(ctx,travelMount(view,u,u.weapon,0,t));
- if(behind&&melee)drawWeaponModule(ctx,melee);
- if(farShield)drawWeaponModule(ctx,shield);
+ if(behind&&u.hp.right>0)drawMountedPreview(ctx,travelMount(view,u,u.weapon,0,t));
+ if(behind&&melee)drawMountedPreview(ctx,melee);
+ if(farShield)drawMountedPreview(ctx,shield);
  const paint=()=>ctx.drawImage(body,source.x*cell,source.y*cell,cell,cell,bounds.x,bounds.y,bounds.w,bounds.h);
  const mask=partTintSource(source.key,image,bounds,(g,part)=>g.drawImage(part,bounds.x,bounds.y,bounds.w,bounds.h),
   cell,source.x*cell,source.y*cell,source.key===atlas.key?atlas.partMask:undefined);
@@ -964,12 +949,11 @@ function drawTravel(u,t,view){
  drawPartTints(u,t,paint,part=>view.points[part]&&spritePoint(bounds,view.points[part]),true,mask);
  ctx.restore();
  if(!behind&&!u.kind&&u.hp.right>0&&!(u.frame===2&&u.weapon==='missile')){
-  drawWeaponModule(ctx,travelMount(view,u,u.weapon,0,t));
+  drawMountedPreview(ctx,travelMount(view,u,u.weapon,0,t));
  }
- if(!behind&&melee)drawWeaponModule(ctx,melee);
- if(!farShield)drawWeaponModule(ctx,shield);
+ if(!behind&&melee)drawMountedPreview(ctx,melee);
+ if(!farShield)drawMountedPreview(ctx,shield);
  if(!u.kind&&u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
- if(u.hp.body/u.max.body<.4)drawMechSmoke(u,t);
  drawUnitReadout(u,u.kind?1.5+VEHICLES[u.kind].altitude:2.30);
 }
 
@@ -997,7 +981,6 @@ function drawVehicle(u,t,close=false){
   }else ctx.drawImage(image,bounds.x,bounds.y,bounds.w,bounds.h);
  }
  ctx.restore();
- if(!u.alive||u.hp.body/u.max.body<.35)drawMechSmoke(u,t,!u.alive);
  if(!close&&u.alive)drawUnitReadout(u,1.5+altitude);
 }
 
@@ -1177,14 +1160,6 @@ function mapFoundryAnchors(frame,flip,transform=p=>p){
  }));
 }
 
-function sampledWalkBounds(u,bounds,walk){
- if(!walk?.strideOffset)return bounds;
- const m=u.motion,q=walk.strideOffset;
- const center=project(u.vx,0,u.vz);
- const sampled=project(u.vx+(m.toX-m.fromX)*q,0,u.vz+(m.toZ-m.fromZ)*q);
- return {...bounds,x:bounds.x+sampled.x-center.x,y:bounds.y+sampled.y-center.y};
-}
-
 function drawFoundryCollapse(render,w,h,g=ctx){
  if(!render.settled){paintFoundryCollapse(render,w,h,g);return}
  let frames=settledFoundryArt.get(render.surface);
@@ -1240,7 +1215,7 @@ function drawUnitBody(u,t,close){
  if(travel){drawTravel(u,t,travel);return}
  if(u.kind){drawVehicle(u,t,close);return}
  const foundry=live||foundryRender(u,t);
- const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=sampledWalkBounds(u,unitBounds(u,visual),foundry),b=!u.lionTrial&&(visual?.modular||visual?.native||foundryModel(u.frame)!=null)?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual);
+ const visual=activeWardenVisual(u),p=project(u.vx,0,u.vz),raw=unitBounds(u,visual),b=raw,pose=animationPose(u,t,visual);
  const key=visual?.key||legacyChassis[u.frame],original=artImages[key];
  // Fallback sprites without four views are flipped to match the current facing.
  const facing=unitFacing(u),farShield=shieldBehind(facing*Math.PI/4);
@@ -1249,9 +1224,9 @@ function drawUnitBody(u,t,close){
   const fall=chest&&u.downReason!=='pilot'?(reducedMotion?1:smoothRange(DESTRUCTION.kneelEnd,DESTRUCTION.fallEnd,pose.deathAge)):0;
   ctx.save();ctx.fillStyle='#050c12ac';ctx.beginPath();
   ctx.ellipse(p.x+((chest?.x??p.x)-p.x)*fall,p.y+scale*.025,scale*(foundryModel(u.frame)===5?.92:.64+fall*.36),scale*.22,0,0,Math.PI*2);ctx.fill();
-  drawJumpjetExhaust(u,t);
+
   const shield=activeShield(u)&&!foundry.shield&&shieldMount(u,foundry.anchors,b,facing,foundry.ortho||8);
-  if(farShield)drawWeaponModule(ctx,shield);
+  if(farShield)drawMountedPreview(ctx,shield);
   if(foundry.surface&&(!foundry.baked||imageReady(foundry.surface)||typeof foundry.surface.getContext==='function')){
    const {cell,index,span=1}=foundry;
    const sx=cell?index%4*cell:0,sy=cell?Math.floor(index/4)*cell:0;
@@ -1272,13 +1247,11 @@ function drawUnitBody(u,t,close){
   ctx.restore();
   if(u.alive){
    ctx.save();
-   if(u.hp.right>0&&!foundry.primary)drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.weapon,facing,0,foundry.ortho,pose));
-   if(u.hp.left>0&&!foundry.secondary&&(pose.strikeKind||(foundryModel(u.frame)===4&&pose.aim<.2)))drawWeaponModule(ctx,foundryMount(foundry.anchors,b,u.melee,facing,foundry.strikeProgress));
-   if(!farShield)drawWeaponModule(ctx,shield);
+   if(u.hp.right>0&&!foundry.primary)drawMountedPreview(ctx,unitWeaponPlacement(foundry.anchors,b,u.weapon,facing,0,foundry.ortho,pose));
+   if(u.hp.left>0&&!foundry.secondary&&(pose.strikeKind||(foundryModel(u.frame)===4&&pose.aim<.2)))drawMountedPreview(ctx,unitWeaponPlacement(foundry.anchors,b,u.melee,facing,foundry.strikeProgress));
+   if(!farShield)drawMountedPreview(ctx,shield);
    ctx.restore();
   }
-  if(!u.alive&&u.downReason!=='pilot'&&pose.deathAge>=DESTRUCTION.kneelEnd)
-   drawMechSmoke(u,t,true,chest);
   if(u.alive&&u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
   if(u.alive&&!close)drawUnitReadout(u,(u.frame===ASHIGARU_FRAME?2.0:foundryModel(u.frame)===5?2.12:2.35)+jumpjetHeight(u,t));
   return;
@@ -1287,10 +1260,10 @@ function drawUnitBody(u,t,close){
  const body=baked?.frame?baked.image:original,bodyKey=baked?.frame?baked.atlas.key:key;
  const im=visual?.modular||visual?.native?paintedSprite(body,bodyKey,u.paint):body;
  ctx.save();ctx.fillStyle=u.alive?'#050c12aa':'#090e13c9';ctx.beginPath();ctx.ellipse(p.x,p.y+scale*.025,scale*(.67+pose.brace*.05),scale*.22,0,0,Math.PI*2);ctx.fill();ctx.restore();if(!imageReady(original))return;
- if(!u.alive&&pose.explosion>=1){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true);return}
+ if(!u.alive&&pose.explosion>=1){drawDestructionDebris(u,t,pose);return}
  ctx.save();
  const shield=activeShield(u)&&shieldMount(u,baked?.frame||visual,b,facing,visual?.ortho);
- if(farShield)drawWeaponModule(ctx,shield);
+ if(farShield)drawMountedPreview(ctx,shield);
  const articulated=!reducedMotion&&(pose.walk>.001||pose.primeProgress>0||Math.abs(pose.recoil)>.008||Math.abs(pose.impact)>.008||pose.brace>.008||pose.aim>.001||(!u.alive&&pose.explosion<1));
  const sheet=baked?.frame?baked.atlas:null,cell=sheet?.cell??0,index=baked?.frame?.index;
  const sx=cell?index%sheet.columns*cell:0,sy=cell?Math.floor(index/sheet.columns)*cell:0;
@@ -1317,22 +1290,21 @@ function drawUnitBody(u,t,close){
  paint();
  drawPartTints(u,t,paint,part=>mechAttachmentPoint(u,part,t),true,mask);
  ctx.restore();
- if(!u.alive){if(u.downReason!=='pilot'){drawDestructionDebris(u,t,pose);drawMechSmoke(u,t,true)}return}
+ if(!u.alive){if(u.downReason!=='pilot'){drawDestructionDebris(u,t,pose);}return}
  if(visual?.modular){
   const frame=baked?.frame||visual,face=unitFacing(u);
-  if(u.hp.right>0&&!(u.frame===2&&u.weapon==='missile'))drawWeaponModule(ctx,weaponMount(visual,frame,b,u.weapon,face,0,pose));
+  if(u.hp.right>0&&!(u.frame===2&&u.weapon==='missile'))drawMountedPreview(ctx,weaponMount(visual,frame,b,u.weapon,face,0,pose));
   if(u.hp.left>0&&u.melee&&(pose.strikeKind||(action==='strike'&&current()===u))){
-   drawWeaponModule(ctx,weaponMount(visual,frame,b,pose.strikeKind||u.melee,face,pose.strikeProgress));
+   drawMountedPreview(ctx,weaponMount(visual,frame,b,pose.strikeKind||u.melee,face,pose.strikeProgress));
   }
  }
- if(!farShield)drawWeaponModule(ctx,shield);
+ if(!farShield)drawMountedPreview(ctx,shield);
  if(u.attack&&!pose.strikeKind&&weaponMotion(u.weapon)==='rail'&&!Number.isFinite(u.attack.fireAt)&&!reducedMotion){
   const muzzle=mechAttachmentPoint(u,'muzzle',t),plasma=u.weapon==='ember';
   ctx.save();ctx.globalAlpha=pose.aim*.8;ctx.fillStyle=plasma?'#ffdfb0':'#b1e7ed';ctx.shadowColor=plasma?'#f88547':'#8ac8e5';
   ctx.shadowBlur=15;ctx.beginPath();ctx.arc(muzzle.x,muzzle.y,scale*(.025+pose.aim*.065),0,Math.PI*2);ctx.fill();ctx.restore();
  }
  if(u.brace){ctx.strokeStyle='#8fc6d29c';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*.8,scale*.28,0,0,Math.PI*2);ctx.stroke()}
- if(u.hp.body/u.max.body<.4||u.hp.right===0)drawMechSmoke(u,t);
  if(!close)drawUnitReadout(u);
 }
 
@@ -1372,8 +1344,8 @@ function billboardPixelAttachment(u,part='muzzle',t=clock){
  }
  const foundry=live||foundryRender(u,t);
  if(foundry){
-  const raw=sampledWalkBounds(u,unitBounds(u),foundry);
-  const bounds=u.lionTrial?raw:recoilingBounds(u,raw,t),facing=unitFacing(u),strike=part==='meleeTip';
+  const raw=unitBounds(u);
+  const bounds=raw,facing=unitFacing(u),strike=part==='meleeTip';
   if(part==='shield'&&!foundry.anchors.shield){
    const mount=shieldMount(u,foundry.anchors,bounds,facing,8);
    if(mount)return weaponPoint(mount,'face');
@@ -1381,12 +1353,12 @@ function billboardPixelAttachment(u,part='muzzle',t=clock){
   if(strike||part.startsWith('muzzle')){
    const production=Boolean(strike?foundry.secondary:foundry.primary);
    if(production&&foundry.anchors[part])return spritePoint(bounds,foundry.anchors[part]);
-   const mount=foundryMount(foundry.anchors,bounds,strike?u.melee:u.weapon,facing,foundry.strikeProgress,foundry.ortho,strike?undefined:firingPose(u,t));
+   const mount=unitWeaponPlacement(foundry.anchors,bounds,strike?u.melee:u.weapon,facing,foundry.strikeProgress,foundry.ortho,strike?undefined:firingPose(u,t));
    if(mount)return weaponPoint(mount,strike?'tip':part);
   }
   return spritePoint(bounds,foundry.anchors[part]||foundry.anchors.body);
  }
- const visual=activeWardenVisual(u),raw=unitBounds(u,visual),b=visual?.modular||visual?.native?recoilingBounds(u,raw,t):raw,pose=animationPose(u,t,visual),rig=pose.rig;
+ const visual=activeWardenVisual(u),raw=unitBounds(u,visual),b=raw,pose=animationPose(u,t,visual),rig=pose.rig;
  const locations={body:[rig.split,.34],pilot:[rig.split,.21],right:[u.frame===1?.38:.30,.46],left:[.81,.39],legs:[rig.split,.79]};
  const baked=wardenMotionFrame(u,visual,pose),frame=baked?.frame||visual;
  if(part==='shield'){
@@ -1413,20 +1385,4 @@ function billboardPixelAttachment(u,part='muzzle',t=clock){
  const source=frame[part]||visual[part]||locations[part]||visual.body;
  if(baked?.frame&&u.alive)return{x:b.x+(pose.flip?1-source[0]:source[0])*b.w,y:b.y+source[1]*b.h};
  return mechSourcePoint(u,source[0],source[1],{...remainingPose(pose,baked),baseOnly:true,kneel:baked?.frame?0:pose.kneel});
-}
-
-function drawJumpjetExhaust(u,t){
- const lift=jumpjetHeight(u,t);
- if(lift<=0)return;
- const nozzle=project(u.vx,lift+1.47,u.vz);
- const rear=-unitFacing(u);
- const length=scale*(.40+lift*.33);
- for(const offset of [.20,.32]){
-  const x=nozzle.x+rear*scale*offset,y=nozzle.y-offset*scale*.18;
-  const glow=ctx.createLinearGradient(x,y,x+rear*length*.35,y+length);
-  glow.addColorStop(0,'#fff5dc');
-  glow.addColorStop(.28,'#88e4ff');
-  glow.addColorStop(1,'#4c9cfa00');
-  polygon([{x:x-scale*.10,y},{x:x+scale*.10,y},{x:x+rear*length*.35,y:y+length}],glow);
- }
 }

@@ -1,0 +1,25 @@
+{
+  "started": "2026-11-11T15:04:02.572Z",
+  "commit": "fb1bf4b5e1b2394582ae31b78d9d0835a3934aeb",
+  "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "sharedScene",
+      "sha256": "9f689350901cda4595f1a829d12c716f02d98ae95126d735e324e8cc867f2a41"
+    }
+  ],
+  "checks": [
+    {
+      "name": "sharedScene",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-11T15:06:49.595Z"
+}
