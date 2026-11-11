@@ -1,0 +1,5 @@
+START late-art 1366x1024 attack-shotgun
+BROKEN IMAGE URLS ["http://127.0.0.1:5173/assets/warden-chassis-left-parts.webp"]
+FAILED late-art attack-shotgun: Unloaded/broken images: 1
+Error: 1 captures failed; see manifest.json
+    at Object.capture (/workspace/iron-vow-phase0/qa/capture.cjs:121:36)
