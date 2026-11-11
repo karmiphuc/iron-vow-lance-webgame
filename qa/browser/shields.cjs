@@ -46,6 +46,7 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  await equip(tower);
  await page.reload({waitUntil:'domcontentloaded'});
  assert.match(await page.locator('.armory-mounted').innerText(),/Citadel T-6/);
+ console.log('Shield reload state',JSON.stringify(await page.evaluate(()=>({page,selected,frame:pilotFrame(selected),classTabs:[...document.querySelectorAll('[data-armory-class]')].map(n=>n.dataset.armoryClass),url:location.href,modal:!document.querySelector('#modal').hidden}))));
  await tap(tab);
  await tap('#remove-shield');
  assert.match(await page.locator('.armory-mounted').innerText(),/Free hand/);
