@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "status": "targeted geometry passed; final campaign reported separately",
+  "before": {
+    "commit": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+    "distTree": "613bc118b314340e3ab63d5101a27c89a2c98080"
+  },
+  "after": {
+    "commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+    "distTree": "edac44e5b054d0e507a409ee039b4400b6420788"
+  },
+  "realBeforeFailure": {
+    "seed": 4264,
+    "rawReport": "/workspace/scratch/phase2-analytic-before-clearance-shard-15-29.json",
+    "rawSha256": "19e58b7880aaa9f20adc0016b32de7b2e606c7ecdf98b397e76ad2441caa778e",
+    "events": [
+      {
+        "type": "aimOff",
+        "unit": "ally1",
+        "frame": 7,
+        "time": 144.76666666652196,
+        "detail": {
+          "sequence": 361,
+          "type": "launch",
+          "time": 144.7333333331887,
+          "archetype": "rail",
+          "expectedOrigin": [
+            -30.321181862403492,
+            1.4464845737861605,
+            52.19884604906521
+          ],
+          "actorAlive": true,
+          "aimError": 2.2918124386294125,
+          "mounted": true,
+          "actor": "ally1",
+          "target": "enemy1",
+          "weapon": "parallax",
+          "index": 0,
+          "socket": "muzzle",
+          "origin": [
+            -30.321181862403492,
+            1.4464845737861605,
+            52.19884604906521
+          ],
+          "targetPoint": [
+            -36.95495915039662,
+            4.192639393086397,
+            50.62849584123237
+          ],
+          "flight": 0.075
+        }
+      }
+    ],
+    "actualInitialPivotDiagnostics": {
+      "calls": 150,
+      "infeasibleCount": 1,
+      "minimumDiscriminant": 31.77359776783576,
+      "minimumTravel": -1.2304088972323397,
+      "samples": [
+        {
+          "time": 144.7333333331887,
+          "actor": "ally1",
+          "physicalAsset": "parallax",
+          "discriminant": 31.77359776783576,
+          "travel": -1.2304088972323397,
+          "pivot": [
+            -35.97582677106156,
+            2.5924636448123537,
+            55.993525913192514
+          ],
+          "muzzle": [
+            -42.38372372760948,
+            4.543382157351965,
+            54.31404804875071
+          ],
+          "axis": [
+            -0.9146162208792074,
+            0.36353481960214556,
+            -0.17697345405871637
+          ],
+          "target": [
+            -36.95495915039662,
+            4.192639393086397,
+            50.62849584123237
+          ]
+        }
+      ]
+    }
+  },
+  "change": "Connected aim-weighted torso and shoulder rotation retracts long weapons while preserving their hand mount, arm joint lengths and planted feet. Production world pitch is 7.4m, selected after real Citadel shield-face endpoints still failed at 7.2m. Grid gameplay/AP/HP/RNG rules are unchanged.",
+  "geometry": {
+    "command": "node qa/check-production-weapons.cjs",
+    "committedSourceLog": "production-fa9f835.log",
+    "physicalAliases": 31,
+    "reachableOffsetRegressionCases": 24,
+    "priorDirectionOnlyMaximumRadians": 2.0694841645043027,
+    "actualBipedQuadLongWeaponCases": 341,
+    "negativeTravelRetractedPoses": 149,
+    "armOnlySyntheticCasesClassifiedSeparately": 43,
+    "legalRecordedPartMissCases": 39,
+    "realShieldFaceCases": 384,
+    "actualEndpointMaximumRadians": 2.9802322387695312e-08,
+    "plantedAnkleMaximumDrift": 0,
+    "weightedPoseCases": 90,
+    "torsoActiveProgressionFixtures": 2,
+    "maximumShoulderRatePerWeight": 4.220664924527588,
+    "maximumSpineRatePerWeight": 0.6131881714242261,
+    "legalPairings": "Recorded kit2 fixed-Citadel actor/incorrect target loadouts removed. Shields use legal Aegis kit0/Oni kit4 with no melee; Parallax actors use Shrike kit1/Behemoth kit5. Plain kit2 is not treated as a custom-weapon Bastion; the actual rigid Bastion has its own .62 weapon/shield scale."
+  },
+  "endpointPolicy": "Only actual source part/attachment endpoints, real miss offsets, and real mounted/posed shield faces gate aim. Conservative armor-box corners remain diagnostic, not independent legal shot targets. All actual launch thresholds stay at 0.12rad.",
+  "sourceScope": "The historical all34 full/touch action evidence remains on 6786df4; all48 pure suites remain on f68b5df. The narrow actual-geometry/arm/endpoint progression gate above passed on committed fa9f835 without a pitch override. Exact integrated 4243/4264 replays passed the held torso working fix at6.8; the final campaign and bounded actual-counter GPU capture validate committed7.4 separately.",
+  "qaCheckerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724",
+  "geometryCheckerSha256": "72c8418dc3aca3098bccb935df048cfe607f261536b6ad13fb09f37e5fa34de3"
+}

@@ -12,10 +12,10 @@ const live=[0,5,6,7,8,9,10,12];
  const root=path.resolve(__dirname,'..'),git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
  const source={commit:git('rev-parse','HEAD'),distTree:git('rev-parse','HEAD:dist'),distDirty:Boolean(git('status','--porcelain','--','dist')),checkerSha256:crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex')};
  if(formal){assert.equal(rasterPair,false,'Formal shards do not repeat seeds');assert.equal(skipProbes,false,'The formal soak includes all negative controls');assert.equal(source.distDirty,false,'The formal soak requires committed, immutable application source');assert.equal(tileOverride,null,'The formal soak tests the production pitch');}
- const report={schema:2,url,source,combatGate,formal,cpuRaster,rasterPair,skipProbes,rasterPolicy:'Optional CPU mode omits paints only into the main output canvas and temporary-body output canvases after their real alpha bounds/readiness are measured. Transforms, metrics, decoding, source masks, scratch canvases, readbacks and all geometry/anchor updates remain active. Paired mode compares identical seeded command, result and combat-event streams.',clockHz:30,tileOverride,renderPolicy:'First scene rendered at 0.5 DPR for software-GL correctness; subsequent bone soak skips unobserved GPU submissions and render-target readbacks. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
+ const report={schema:2,url,source,combatGate,formal,cpuRaster,rasterPair,skipProbes,rasterPolicy:'Optional CPU mode omits paints only into the main output canvas and temporary-body output canvases after their real alpha bounds/readiness are measured. Transforms, metrics, decoding, source masks, scratch canvases, readbacks and all geometry/anchor updates remain active. Paired mode compares identical seeded command, result and combat-event streams.',clockHz:30,tileOverride,renderPolicy:'First scene rendered at the declared page DPR (0.5 normally; 1 for the bounded counter capture); subsequent bone soak skips unobserved GPU submissions and render-target readbacks. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
  const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});
  try{
-  const page=await browser.newPage({viewport:{width:1366,height:1024},deviceScaleFactor:.5});
+  const captureMode=Boolean(process.env.IRON_VOW_SCENE_COUNTER_CAPTURE),page=await browser.newPage({viewport:captureMode?{width:1194,height:834}:{width:1366,height:1024},deviceScaleFactor:captureMode?1:.5});
   if(tileOverride)await page.route(/\/(scene\/battle|scene\/environment)\.js/,async route=>{
    const response=await route.fetch(),source=await response.text();assert.ok(/TILE=3\.4/.test(source),'Candidate tile override must match the reference pitch');
    await route.fulfill({response,body:source.replace('TILE=3.4','TILE='+tileOverride)});
@@ -33,7 +33,7 @@ const live=[0,5,6,7,8,9,10,12];
   for(const frames of [[0,5,6],[7,8,9],[10,12,0]]){
    await page.evaluate(frames=>__ironVow.start({seed:4242,frames}),frames);
    await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
-   await page.evaluate(()=>{IronVowRenderer.get().render=()=>{};IronVowRenderer.get().readRenderTargetPixels=()=>{};});
+   await page.evaluate(()=>{const r=IronVowRenderer.get();window.__qaActualRender??=r.render;window.__qaActualRead??=r.readRenderTargetPixels;r.render=()=>{};r.readRenderTargetPixels=()=>{};});
   }
   assert.equal(await page.evaluate(()=>__sceneWebglContexts),1,'One actual WebGL context across all eight frames and previews');
   await page.evaluate(()=>__qaStopNativeFrames());
@@ -225,7 +225,7 @@ const live=[0,5,6,7,8,9,10,12];
   }
   for(let index=startIndex;index<startIndex+count;index++){
    const wallStart=Date.now(),caseIndex=rasterPair?startIndex:index,seed=4242+caseIndex,frames=Array.from({length:3},(_,i)=>live[(caseIndex*3+i)%live.length]),contract=caseIndex%4;
-   const weapons=combatGate?await page.evaluate(index=>{const catalog=WEAPONS.filter(w=>!w.builtIn&&!w.shoulder);return Array.from({length:3},(_,i)=>catalog[(index*3+i)%catalog.length].id);},caseIndex):null;
+   const weapons=combatGate?await page.evaluate(({index,frames})=>{const catalog=WEAPONS.filter(w=>!w.builtIn&&!w.shoulder),phase=index===22?0:Math.floor(index/8);return frames.map((frame,i)=>FRAMES[frame].fixedWeapons?FRAMES[frame].weapon:catalog[(index*3+i+phase)%catalog.length].id);},{index:caseIndex,frames}):null;
    if(rasterPair&&index===startIndex){
     await page.evaluate(options=>__ironVow.start(options),{seed,frames,contract,weapons});await page.clock.runFor(100);
     const deadline=Date.now()+120000;while(!await page.evaluate(()=>IronVowScene.ready)){assert.ok(Date.now()<deadline,'Exact paired scenario warmed');await page.clock.runFor(34);await new Promise(r=>setTimeout(r,20));}
@@ -243,6 +243,22 @@ const live=[0,5,6,7,8,9,10,12];
     assert.ok(Date.now()<readyDeadline,'Battle assets did not become ready within 120 seconds');
     await page.clock.runFor(34);await new Promise(resolve=>setTimeout(resolve,20));
    }
+   if(captureMode&&seed===4264)await page.evaluate(()=>{
+    __qa.counterCapture=null;const combat=IronVowScene.combat,launch=combat.launch;
+    combat.launch=function(a,t,w,...rest){const result=launch.call(this,a,t,w,...rest),event=combat.history.at(-1);
+     if(!__qa.counterCapture&&a.id==='ally1'&&t.id==='enemy1'&&w.id==='parallax'&&battle.phase==='enemy'&&distance(a,t)<=1&&event?.type==='launch'){
+      const r=IronVowRenderer.get(),oldRender=r.render,oldRead=r.readRenderTargetPixels,dpr=r.getPixelRatio(),target=r.getRenderTarget(),restores=[];
+      const contexts=[ctx,...[...IronVowScene.models.values()].map(v=>v.object?.material?.map?.image).filter(c=>c instanceof HTMLCanvasElement).map(c=>c.getContext('2d'))];
+      try{
+       for(const c of contexts)for(const name of ['drawImage','fill','stroke','fillRect','strokeRect','clearRect','fillText','strokeText','putImageData']){restores.push([c,name,c[name]]);c[name]=CanvasRenderingContext2D.prototype[name];}
+       r.render=__qaActualRender;r.readRenderTargetPixels=__qaActualRead;IronVowBillboards.invalidate();for(const u of battle.units)if(!IronVowScene.isLive(u))IronVowBillboards.get(u,clock);
+       r.setPixelRatio(1);r.setSize(innerWidth,innerHeight,false);r.setRenderTarget(null);r.clear();r.render(IronVowScene.scene,IronVowScene.camera);
+       __qa.counterCapture={clock,turn:battle.turn,phase:battle.phase,event:{...event},incoming:combat.history.filter(e=>e.type==='impact'&&e.actor==='enemy1'&&e.target==='ally1'&&e.time<=event.time).at(-1),units:JSON.parse(JSON.stringify(battle.units)),camera:{position:IronVowScene.camera.position.toArray(),quaternion:IronVowScene.camera.quaternion.toArray(),fov:IronVowScene.camera.fov},viewport:{width:innerWidth,height:innerHeight,dpr:1,pixelWidth:r.domElement.width,pixelHeight:r.domElement.height},renderPolicy:'One real full-resolution Three.js renderer-canvas submission/readback immediately after the real near Parallax counter launch. Temporary body output paints restored and refreshed at the same clock. UI canvas excluded; ordinary advances omit unobserved GPU/output raster. No game HP/AP/rule RNG changes or performance claim.',png:r.domElement.toDataURL('image/png')};
+      }finally{for(const [c,name,method]of restores)c[name]=method;r.render=oldRender;r.readRenderTargetPixels=oldRead;r.setPixelRatio(dpr);r.setSize(innerWidth,innerHeight,false);r.setRenderTarget(target);}
+     }
+     return result;
+    };
+   });
    const terrainSeed=await page.evaluate(()=>battle.terrainSeed);assert.ok(Number.isInteger(terrainSeed),'Seeded terrain is present');
    let done=false,turn=0,used=new Set(),boneSamples=[];const bones=s=>s.units.filter(u=>u.live).map(u=>({id:u.id,root:u.root,matrix:u.matrix,feet:u.feet.map(f=>f.ankle)}));
    for(let decision=0;decision<1000;decision++){
@@ -264,6 +280,7 @@ const live=[0,5,6,7,8,9,10,12];
    if(!done)report.incompleteBattle=await page.evaluate(meta=>({...meta,snapshot:__ironVow.snapshot(),ticks:__qa.ticks,anomalies:__qa.anomalies,commands:__qa.commands,commandErrors:__qa.commandErrors}),{seed,frames,contract,terrainSeed});
    assert.ok(done,'Decision limit exceeded');
    const result=await page.evaluate(()=>({terrainSeed:battle?.terrainSeed??save.sortie?.terrainSeed,ticks:__qa.ticks,anomalies:__qa.anomalies,frames:[...__qa.frames],weapons:[...__qa.weapons],commands:__qa.commands,commandErrors:__qa.commandErrors,circleCandidates:__qa.circleCandidates,combatCounts:__qa.combatCounts,rasterOmitted:__qa.rasterOmitted,rasterContexts:__qa.rasterContexts,combatTrace:__qa.combatTrace,maximumLaunchAimError:__qa.maximumLaunchAimError,aimClearance:__qa.aimClearance,result:__ironVow.snapshot().result}));
+   if(captureMode&&seed===4264){const capture=await page.evaluate(()=>__qa.counterCapture);assert.ok(capture,'Real near Parallax counter was captured');const imageFile=path.resolve(process.env.IRON_VOW_SCENE_COUNTER_CAPTURE+'.png'),metadataFile=path.resolve(process.env.IRON_VOW_SCENE_COUNTER_CAPTURE+'.json');fs.writeFileSync(imageFile,Buffer.from(capture.png.split(',')[1],'base64'));delete capture.png;fs.writeFileSync(metadataFile,JSON.stringify({source,seed,imageFile,...capture},null,2)+'\n');}
    report.battles.push({seed,frames,contract,assignedWeapons:weapons,...result,...(rasterPair?{boneSamples}:{}),terrainSeed,wallMilliseconds:Date.now()-wallStart});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
    console.log(JSON.stringify({seed,frames,ticks:result.ticks,result:result.result?.win,anomalies:result.anomalies,errors:result.commandErrors}));
    assert.deepEqual(result.commandErrors,[]);assert.ok(result.ticks>0,'No animation ticks checked');
@@ -278,7 +295,7 @@ const live=[0,5,6,7,8,9,10,12];
   assert.equal(crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),source.checkerSha256,'Checker stayed immutable during the run');
   assert.deepEqual(report.errors,[],'Browser errors');assert.equal(report.battles.flatMap(b=>b.anomalies).length,0,'Scene anomalies');
   if(count>=3)assert.deepEqual([...new Set(report.battles.flatMap(b=>b.frames))].sort((a,b)=>a-b),live,'Every live frame covered');
-  if(combatGate){report.weaponCoverage={assigned:[...new Set(report.battles.flatMap(b=>b.assignedWeapons||[]))],commanded:[...new Set(report.battles.flatMap(b=>b.weapons))],policy:'Campaign rotates all 24 Workshop weapons; actual all-weapon landed-contact coverage, built-ins and shoulder launcher are asserted separately by scene-combat.cjs.'};if(count>=30)assert.equal(report.weaponCoverage.assigned.length,24,'Every Workshop weapon assigned in campaign');}
+  if(combatGate){report.weaponCoverage={assigned:[...new Set(report.battles.flatMap(b=>b.assignedWeapons||[]))],commanded:[...new Set(report.battles.flatMap(b=>b.weapons))],policy:'Campaign rotates all 24 Workshop weapons with floor(index/8) phase; fixed Citadel retains factory missile. Index22 preserves original regression weapons. Actual all-weapon landed-contact coverage, built-ins and shoulder launcher are asserted separately by scene-combat.cjs.'};if(count>=30)assert.equal(report.weaponCoverage.assigned.length,24,'Every Workshop weapon assigned in campaign');}
   report.status='passed';
   console.log('PASS '+count+' seeded campaign battles, '+report.battles.reduce((n,b)=>n+b.ticks,0)+' actual-bone ticks');
  }finally{fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');await browser.close();}

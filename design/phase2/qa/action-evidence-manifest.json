@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sourceScope": "All 34 catalog entries passed full motion and touch/reduced on tree76ac81ff (6786df4). Tree06b72b8f (9af2015) then corrected airborne feet and landing settle; five representative commands plus strengthened special fixtures passed both modes there. Tree613bc118 (f68b5df) subsequently corrected close/steep actual firing aim, with before/after proof in aim-regression-manifest.json and committed-source formal campaign evidence recorded separately. Historical catalog reports retain their exact sources; they are not represented as an all-weapon rerun on later trees.",
+  "sourceScope": "All 34 catalog entries passed full motion and touch/reduced on tree76ac81ff (6786df4). Tree06b72b8f (9af2015) then corrected airborne feet and landing settle; five representative commands plus strengthened special fixtures passed both modes there. Tree613bc118 (f68b5df) subsequently corrected close/steep actual firing aim, with before/after proof in aim-regression-manifest.json and committed-source formal campaign evidence recorded separately. Historical catalog reports retain their exact sources; they are not represented as an all-weapon rerun on later trees. Final connected-clearance/pitch7.4 source is fa9f835 (treeedac44e5); targeted physical/endpoint proof is in clearance-evidence-manifest.json. Earlier reports are not relabelled as this source.",
   "reports": [
     {
       "report": "actions-airborne-fixed-full.json",
