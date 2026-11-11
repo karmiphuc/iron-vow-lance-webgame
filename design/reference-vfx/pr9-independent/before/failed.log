@@ -1,0 +1,12 @@
+AssertionError [ERR_ASSERTION]: opaque foreground cover hides the electrical arc
+
+196 !== 0
+
+    at main (/workspace/iron-vow-pr9/qa/reference-vfx.cjs:108:12) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 196,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

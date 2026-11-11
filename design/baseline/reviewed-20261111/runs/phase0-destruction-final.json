@@ -1,0 +1,213 @@
+{
+  "kind": "game",
+  "label": "phase0",
+  "source": "96b4629216607fee6ee87580e2bd85ece8542d90",
+  "runner_sha256": "1cd0c9cf1b4e83362005f111b1f6bfc15f162a58d4f3accc48015fbc1bc235b0",
+  "environment": "Chromium software WebGL. Fixed 30 Hz frames and controlled real timers; no performance claim.",
+  "strips": [
+    {
+      "action": "destruction",
+      "file": "phase0-destruction.png",
+      "sha256": "9f80963b55458937f515db502dcb6a376938353735165ca6858e2c7ef6894432",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+      "frames": [
+        {
+          "clock": 1.8770000000000013,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "shot",
+            "boom",
+            "boom",
+            "text"
+          ],
+          "png_sha256": "53221cb008d3f2166b8f5b76ea6967849e4f39752be56279b9022b2d37a4624a"
+        },
+        {
+          "clock": 2.0400000000000014,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "boom",
+            "text"
+          ],
+          "png_sha256": "85ec5105205d1bb62259e1ab12bc93972b8d77d1be1b61551ea585c8e5c52e3d"
+        },
+        {
+          "clock": 2.2030000000000007,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "text"
+          ],
+          "png_sha256": "4f635d781e7669e5eed1e67615c74ff829f455a9948e9c2255665550ba68d6f5"
+        },
+        {
+          "clock": 2.366,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "text"
+          ],
+          "png_sha256": "2c6dd4ddf91bd94b837e0dc1d63e8525bf6d1dea5ada538c4077ed44622e6668"
+        },
+        {
+          "clock": 2.5289999999999995,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "step",
+            "detonation"
+          ],
+          "png_sha256": "169ee09d4e1918722a0bbf536e04d11a8b0e235f39259e0e03ead09304418446"
+        },
+        {
+          "clock": 2.691999999999999,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "step",
+            "detonation"
+          ],
+          "png_sha256": "291542b2e3af9fe2f317db073434d579277bddab73dc1bb4a588bf40a1577328"
+        },
+        {
+          "clock": 2.854999999999998,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "step",
+            "detonation"
+          ],
+          "png_sha256": "a944ff7d6ee5fd6ec970abeda01b30f35e56de758eee6a21586d4e006f5875a2"
+        },
+        {
+          "clock": 3.0179999999999976,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "detonation",
+            "detonation"
+          ],
+          "png_sha256": "fe90001e988048e2972004309df8f61654d5e51f68cd56ecc59b378b14c8aa95"
+        },
+        {
+          "clock": 3.180999999999997,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "detonation",
+            "detonation",
+            "detonation"
+          ],
+          "png_sha256": "7bc118bc77d145c38d75e09f8add793b86810a59528fcd92f76df5a7c011ffd5"
+        },
+        {
+          "clock": 3.3439999999999963,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "detonation",
+            "detonation"
+          ],
+          "png_sha256": "585abbe9d50e884fa8e3c17fcc225e1a8798c57729ecbb0bae6ce8359f4b2704"
+        },
+        {
+          "clock": 3.5069999999999957,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "detonation",
+            "detonation"
+          ],
+          "png_sha256": "dc83beac278efad90785a210a75df84db30fca980efb6b53714c440e8c3e6cec"
+        },
+        {
+          "clock": 3.669999999999995,
+          "fireAt": 0.9930000000000007,
+          "phase": "result",
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "detonation",
+            "detonation"
+          ],
+          "png_sha256": "a8240ffcd24b07d42b5cfdfc4aa8518e484d8428cdde8a78dc006dfdb2a6c294"
+        },
+        {
+          "clock": 3.8329999999999944,
+          "fireAt": 0.9930000000000007,
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [
+            "detonation"
+          ],
+          "png_sha256": "4df8ad6fbf494d5cae3bab99119382b665f29d1fac93b2a8a7e7ba442b37be4a"
+        },
+        {
+          "clock": 3.995999999999994,
+          "fireAt": 0.9930000000000007,
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [],
+          "png_sha256": "a4a805a8564efa12cf4753a9e63caf5bc4fbe9c38f8cffb311e89bf4b17c0484"
+        },
+        {
+          "clock": 4.158999999999994,
+          "fireAt": 0.9930000000000007,
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [],
+          "png_sha256": "5a1f777f1a4bd30111d53126e0aee0026a4916892ae3110982f65d07962d2a29"
+        },
+        {
+          "clock": 4.321999999999993,
+          "fireAt": 0.9930000000000007,
+          "hp": 0,
+          "alive": false,
+          "motion": null,
+          "effects": [],
+          "png_sha256": "bfee9fffde7e363dfd0935e39574666d834924b4fdbe6c189dcea8259fad614b"
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

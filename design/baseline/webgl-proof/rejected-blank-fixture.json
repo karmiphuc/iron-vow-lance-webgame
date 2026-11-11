@@ -1,0 +1,88 @@
+{
+  "label": "blank-proof",
+  "source": "efb4cd2d48d655f746dc9893d21bbccd52404fdc",
+  "runner_source": "efb4cd2d48d655f746dc9893d21bbccd52404fdc",
+  "runner_sha256": "b264b109286f89827f8455504f8609c863893d71c45b9c47bb24abb537df0ffc",
+  "asset_delay_ms": 0,
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "webgl_capture_policy": "QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.",
+  "captures": [],
+  "retries": [
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    },
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    },
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    },
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    }
+  ],
+  "failures": [
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    },
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    },
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    },
+    {
+      "source": "blank-proof",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "error": "page.evaluate: Error: Rig Bench WebGL canvas is blank: 0/1024 non-black samples\n    at eval (eval at evaluate (:311:30), <anonymous>:11:25)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+    }
+  ],
+  "expected_capture_count": 4,
+  "status": "incomplete"
+}

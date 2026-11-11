@@ -1,0 +1,449 @@
+{
+  "label": "phase0",
+  "source": "fac45d1cd688af15cc35dca23707c77cd136f12e",
+  "asset_delay_ms": 0,
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "captures": [
+    {
+      "source": "phase0",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/paint-primary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/paint-secondary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/paint-accent.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damage-healthy.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damage-body-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damage-right-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damage-right-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damage-legs-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damage-legs-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/paint-primary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/paint-secondary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/paint-accent.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damage-healthy.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damage-body-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damage-right-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damage-right-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damage-legs-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damage-legs-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/paint-primary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/paint-secondary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/paint-accent.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damage-healthy.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damage-body-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damage-right-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damage-right-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damage-legs-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damage-legs-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/paint-primary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/paint-secondary.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/paint-accent.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damage-healthy.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damage-body-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damage-right-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damage-right-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damage-legs-damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damage-legs-destroyed.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    }
+  ],
+  "failures": []
+}

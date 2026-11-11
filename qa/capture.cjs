@@ -21,6 +21,16 @@ function options(args){
  }
  return result;
 }
+async function checkSavedWebgl(file){
+ const {createCanvas,loadImage}=require('@napi-rs/canvas');
+ const image=await loadImage(file),sample=createCanvas(32,32),g=sample.getContext('2d');
+ // Exclude the HTML controls, which remain visible when the WebGL canvas is black.
+ g.drawImage(image,image.width*.4,image.height*.22,image.width*.5,image.height*.5,0,0,32,32);
+ const pixels=g.getImageData(0,0,32,32).data;let bright=0;
+ for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
+ if(bright<64)throw Error('Rig Bench final PNG is blank: '+bright+'/1024 non-black viewport samples');
+ return bright;
+}
 async function capture(config){
  const selected=presets.filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
  const plan={viewports,presets:selected};
@@ -33,7 +43,7 @@ async function capture(config){
  let browser;
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim(),runner_source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
-  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],retries:[],failures:[]};
+  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
  const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
  if(previous&&previous.source!==manifest.source)throw Error('Resume requires the same committed source');
  if(previous){const digest=createHash('sha256').update(JSON.stringify(previous)).digest('hex');fs.writeFileSync(path.join(output,'prior-'+digest+'.json'),JSON.stringify(previous,null,2)+'\n');manifest.previous_manifest='prior-'+digest+'.json';}
@@ -53,7 +63,7 @@ async function capture(config){
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
-   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
+   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64));
    if(retained&&fs.existsSync(path.join(output,retained.file))){
     const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
     if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
@@ -64,6 +74,7 @@ async function capture(config){
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+   page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
    if(config['asset-delay-ms'])await context.route(/-parts\.webp(?:\?|$)/,async route=>{await new Promise(done=>setTimeout(done,Number(config['asset-delay-ms'])));await route.continue();});
    page.on('response',response=>{if(response.status()>=400)errors.push(response.status()+' '+response.url());});
    page.on('requestfailed',request=>errors.push('Request failed: '+request.url().slice(0,180)));
@@ -96,6 +107,8 @@ async function capture(config){
       try{return sendNative.apply(this,args);}catch(error){window.__capturePending--;throw error;}
      };
      const NativeImage=window.Image;window.__captureImages=new Set();
+     const getContext=HTMLCanvasElement.prototype.getContext;window.__captureWebGL=new WeakMap();
+     HTMLCanvasElement.prototype.getContext=function(...args){const webgl=/^(webgl2?|experimental-webgl)$/.test(args[0]);if(webgl)args[1]={...args[1],preserveDrawingBuffer:true};const context=getContext.apply(this,args);if(context&&webgl)window.__captureWebGL.set(this,context);return context;};
      window.__captureActiveImages=()=>{const images=[];for(const ref of window.__captureImages){const image=ref.deref();if(image)images.push(image);else window.__captureImages.delete(ref);}return images;};
      window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.add(new WeakRef(image));return image;}});
     });
@@ -141,12 +154,29 @@ async function capture(config){
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
     const broken=await page.evaluate(()=>[...window.__captureActiveImages(),...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
+    let webglSample;
+    if(job.preset.path)webglSample=await page.evaluate(()=>{
+     // Sample immediately after a real render: non-preserved WebGL buffers can
+     // otherwise clear between tasks even when the compositor retains the frame.
+     window.__captureTick();
+     const canvas=document.getElementById('c'),gl=window.__captureWebGL.get(canvas);
+     if(!gl||gl.isContextLost())throw Error('Rig Bench WebGL context is unavailable or lost');
+     const sample=document.createElement('canvas');sample.width=sample.height=32;
+     const g=sample.getContext('2d');g.drawImage(canvas,0,0,32,32);
+     const pixels=g.getImageData(0,0,32,32).data;let bright=0;
+     for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
+     if(bright<64)throw Error('Rig Bench WebGL canvas is blank: '+bright+'/1024 non-black samples');
+     return {non_black_samples:bright,total_samples:1024,context_lost:false};
+    });
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1});
+    if(webglSample){
+     webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
+    }
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
     break;
@@ -168,4 +198,4 @@ async function capture(config){
  console.log('Captured '+manifest.captures.length+' views in '+output);
 }
 if(require.main===module)capture(options(process.argv.slice(2))).catch(error=>{console.error(error);process.exitCode=1;});
-module.exports={options,capture};
+module.exports={options,capture,checkSavedWebgl};

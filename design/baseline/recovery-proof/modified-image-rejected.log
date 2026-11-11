@@ -1,0 +1,2 @@
+Error: Retained screenshot hash mismatch: recovery/1366x1024/contracts.png
+    at capture (/workspace/iron-vow-phase0/qa/capture.cjs:69:65)

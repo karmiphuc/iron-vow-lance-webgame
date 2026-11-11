@@ -1,0 +1,186 @@
+{
+  "label": "baseline",
+  "source": "853f1e7510dc2ca5940f09575efea737cfe2ea5a",
+  "asset_delay_ms": 0,
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "captures": [
+    {
+      "source": "baseline",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/paint-primary.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/paint-secondary.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/paint-accent.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/damaged.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/damage-healthy.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/damage-body-destroyed.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/damage-right-damaged.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/damage-right-destroyed.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/damage-legs-damaged.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/damage-legs-destroyed.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "baseline",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "baseline/1366x1024/burning-wreck.png",
+      "document_sha256": "e1cce011b41e61dabc1c6edb2a6320c3f4d37e735a7ccdc00d1596d08171a008"
+    },
+    {
+      "source": "reference-game",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "reference-game/1366x1024/paint-primary.png",
+      "document_sha256": "9559b21e26c61b4a60499105fcbe70a0dace1187789adc24a58887d697967308"
+    },
+    {
+      "source": "reference-game",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "reference-game/1366x1024/paint-secondary.png",
+      "document_sha256": "9559b21e26c61b4a60499105fcbe70a0dace1187789adc24a58887d697967308"
+    },
+    {
+      "source": "reference-game",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "reference-game/1366x1024/paint-accent.png",
+      "document_sha256": "9559b21e26c61b4a60499105fcbe70a0dace1187789adc24a58887d697967308"
+    }
+  ],
+  "failures": [
+    {
+      "source": "reference-game",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "error": "page.waitForFunction: Timeout 120000ms exceeded."
+    },
+    {
+      "source": "reference-game",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "error": "page.goto: Timeout 120000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:5174/mercenary-command.html\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "source": "reference-game",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "error": "page.waitForFunction: Timeout 120000ms exceeded."
+    },
+    {
+      "source": "reference-game",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "error": "page.goto: Restarting incomplete captures with bounded retries and live image references\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:5174/mercenary-command.html\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "status": "passed",
+  "interrupted_after": 1,
+  "resumed_count": 4,
+  "modified_png_rejected": true,
+  "runner": "/workspace/iron-vow-phase0/qa/capture.cjs"
+}
