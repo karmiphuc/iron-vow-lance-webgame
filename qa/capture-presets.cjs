@@ -18,7 +18,9 @@ function setGamePreset(preset){
  if(preset.page){
   page=preset.page;
   if(preset.paint){save.units[selected].paint='#708657';save.units[selected].trim={s:'#373b38',a:'#c19960'};}
-  render();return;
+  render();
+  if(preset.paint)document.querySelector('.paint-panel')?.scrollIntoView?.({block:'center',behavior:'instant'});
+  return;
  }
  page='contracts';createBattle(preset.contract);selected=0;action='move';
  const ally=battle.units.find(u=>u.team==='ally'),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind);

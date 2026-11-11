@@ -30,7 +30,7 @@ module.exports=async function checkBulwarkBench({page,origin,tap}){
  await page.locator('body[data-rig-model=painted]').waitFor();
  await tap('.prototype-links a[href$="chassis=bulwark"]');
  await page.waitForFunction(()=>document.querySelector('#status').textContent==='Live 3D · Rig online');
- assert.equal(await page.locator('#name').textContent(),'Bulwark-Aegis');
+ assert.equal(await page.evaluate(()=>document.getElementById('name').textContent),'Bulwark-Aegis');
  assert.equal(await page.locator('[data-chassis="bulwark"]').getAttribute('aria-pressed'),'true');
  assert.equal(await page.locator('[data-clip="Fire"]').isVisible(),false);
  assert.equal(await page.locator('#equipment-preview').isVisible(),false);
@@ -67,7 +67,7 @@ module.exports=async function checkBulwarkBench({page,origin,tap}){
  assert.equal(await page.locator('#rig').getAttribute('aria-pressed'),'true');
  await tap('[data-chassis="gatecrasher"]');
  await page.waitForFunction(()=>document.querySelector('#status').textContent==='Live 3D · Rig online');
- assert.equal(await page.locator('#name').textContent(),'Gatecrasher');
+ assert.equal(await page.evaluate(()=>document.getElementById('name').textContent),'Gatecrasher');
  assert.equal(await page.locator('[data-clip="Grip"]').isVisible(),false);
  assert.equal(await page.locator('[data-clip="Strike"]').isVisible(),false);
  await tap('#preview-cleaver');
