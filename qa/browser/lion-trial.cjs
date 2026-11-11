@@ -21,8 +21,8 @@ module.exports=async function checkLionTrial({page,mobile,origin,tap}){
  for(const id of ['cleaver','hatchet','breaker']){
   await tap(`[data-lion-weapon="${id}"]`);
   await page.waitForFunction(id=>current()?.melee===id&&lionMotionImages(id).every(imageReady),id);
-  await tap('#strike');
   await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+  await tap('#strike');
   const target=await page.evaluate(()=>{
    window.lionDraws.length=0;
    const foe=battle.units[1],p=IronVowScene.projectWorld(IronVowScene.partPoint(foe));

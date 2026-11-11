@@ -43,3 +43,6 @@ Browser maintenance retains campaign, company, armory, shield, training, save an
 
 
 Correction from the observer negative-control work: the previous `__ironVow.start` called `createBattle` directly, omitting `deploy`'s terrain survey. The earlier 30-battle report covers flat constructor fixtures, not full elevated campaign terrain. The test seam now invokes real `deploy`, closes only the onboarding modal, and records/asserts the terrain seed. All formal terrain/clearance results must be rerun. Existing fixed baseline captures remain comparable flat fixtures; new per-live-frame captures survey actual terrain with seed 101.
+
+
+A browser regression exposed stale loading UI on scene changes: if the previous battle was ready and cached assets made the next scene ready on its first draw, `battlefieldReady` could remain true while the newly rendered controls stayed disabled. `renderBattle` now records the loading state it actually displayed, so the next draw observes the transition and enables the controls. The adapter browser case checks the actual End Turn button after each cached-scene replacement, with an isolated old-behavior route for the negative control. The real-terrain run was stopped after seven clean battles (partial raw report retained) to include this source fix in the immutable final gate. No passing 30-battle result is claimed yet.

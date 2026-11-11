@@ -96,6 +96,7 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,c
    });
    const tap=selector=>mobile?page.locator(selector).tap():page.locator(selector).click();
    try{
+    console.log('START '+label);
     await scenario({context,page,mobile,origin:url.href,tap});
     assert.deepEqual(errors,[],'browser and asset errors');
     console.log('PASS '+label);
