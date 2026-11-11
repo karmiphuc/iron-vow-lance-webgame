@@ -1,0 +1,90 @@
+START 3-battle War soak, seed 4242
+  3 battles, 10915 ticks, winners {"enemy":1,"ally":2}, anomalies {"footGround":29,"footSlide":19,"ikReach":28,"stuck":1}
+  footGround · seed 4242 · E3 L:BEH C:BAS A:KES · rail · leg RF planted ankle -0.16 m from ground height · during walking
+  footSlide · seed 4242 · E3 L:BEH C:BAS A:KES · rail · leg RF planted foot slid 0.30 m · during walking
+  footGround · seed 4242 · A4 BEHEMOTH · rifle · leg RF planted ankle -0.16 m from ground height · during walking
+  footSlide · seed 4242 · A4 BEHEMOTH · rifle · leg LF planted foot slid 0.30 m · during walking
+  ikReach · seed 4242 · E2 L:KES C:WAR A:KES · shotgun · leg L target 0.04 m beyond reach (2.89 > 2.85) · during walking
+  ikReach · seed 4242 · E3 L:BEH C:BAS A:KES · rail · leg RF target 0.03 m beyond reach (3.14 > 3.11) · during stopping
+  ikReach · seed 4242 · E1 WARDEN · rifle · leg R target 0.04 m beyond reach (2.78 > 2.75) · during gait start
+  footGround · seed 4242 · E1 WARDEN · rifle · leg R planted ankle +0.16 m from ground height · during gait start
+  ikReach · seed 4242 · E5 L:VAL C:KES A:BAS · missile · leg L target 0.04 m beyond reach (2.88 > 2.84) · during gait start
+  ikReach · seed 4242 · E4 L:WAR C:VAL A:KES · rail · leg R target 0.04 m beyond reach (2.78 > 2.75) · during gait start
+  ikReach · seed 4242 · A2 L:ONI C:BAS A:BAS · missile · leg L target 0.03 m beyond reach (2.69 > 2.66) · during gait start
+  footGround · seed 4242 · E5 L:VAL C:KES A:BAS · missile · leg R planted ankle +0.16 m from ground height · during stopping
+  footSlide · seed 4242 · A2 L:ONI C:BAS A:BAS · missile · leg R planted foot slid 0.32 m · during walking
+  footGround · seed 4242 · A2 L:ONI C:BAS A:BAS · missile · leg R planted ankle +0.17 m from ground height · during walking
+  footGround · seed 4242 · E4 L:WAR C:VAL A:KES · rail · leg L planted ankle +0.29 m from ground height · during gait start
+  ikReach · seed 4242 · A3 L:BAS C:ONI A:ONI · blade · leg R target 0.05 m beyond reach (2.35 > 2.29) · during melee lunge
+  footGround · seed 4242 · A3 L:BAS C:ONI A:ONI · blade · leg L planted ankle +0.18 m from ground height · during melee lunge
+  footSlide · seed 4242 · A3 L:BAS C:ONI A:ONI · blade · leg R planted foot slid 0.31 m · during melee lunge
+  footGround · seed 4242 · E2 L:KES C:WAR A:KES · shotgun · leg L planted ankle -0.17 m from ground height · during walking
+  footSlide · seed 4242 · E1 WARDEN · rifle · leg R planted foot slid 0.30 m · during gait start
+  ikReach · seed 4242 · A1 L:BAS C:KES A:BAS · shotgun · leg L target 0.03 m beyond reach (2.33 > 2.29) · during turning
+  footGround · seed 4242 · A1 L:BAS C:KES A:BAS · shotgun · leg L planted ankle +0.16 m from ground height · during turning
+  footSlide · seed 4242 · A1 L:BAS C:KES A:BAS · shotgun · leg R planted foot slid 0.31 m · during stopping
+  ikReach · seed 12161 · E3 L:KES C:ONI A:ONI · rail · leg R target 0.04 m beyond reach (2.89 > 2.85) · during walking
+  ikReach · seed 12161 · A3 L:BAS C:BEH A:BAS · rail · leg R target 0.03 m beyond reach (2.33 > 2.29) · during stopping
+  ikReach · seed 12161 · A5 L:KES C:KES A:BAS · rifle · leg L target 0.03 m beyond reach (2.89 > 2.85) · during gait start
+  footGround · seed 12161 · A5 L:KES C:KES A:BAS · rifle · leg L planted ankle +0.16 m from ground height · during gait start
+  ikReach · seed 12161 · A2 L:BEH C:VAL A:BEH · missile · leg RF target 0.04 m beyond reach (3.15 > 3.11) · during gait start
+  footSlide · seed 12161 · A2 L:BEH C:VAL A:BEH · missile · leg LB planted foot slid 0.36 m · during gait start
+  footGround · seed 12161 · A2 L:BEH C:VAL A:BEH · missile · leg RF planted ankle +0.22 m from ground height · during gait start
+  ikReach · seed 12161 · E2 L:WAR C:ONI A:ONI · missile · leg L target 0.08 m beyond reach (2.83 > 2.75) · during gait start
+  footGround · seed 12161 · E2 L:WAR C:ONI A:ONI · missile · leg L planted ankle +0.18 m from ground height · during gait start
+  ikReach · seed 12161 · A4 L:ONI C:VAL A:VAL · shotgun · leg R target 0.06 m beyond reach (2.72 > 2.66) · during walking
+  ikReach · seed 12161 · A1 L:VAL C:BAS A:BAS · shotgun · leg L target 0.29 m beyond reach (3.12 > 2.84) · during gait start
+  footGround · seed 12161 · A1 L:VAL C:BAS A:BAS · shotgun · leg L planted ankle +0.22 m from ground height · during gait start
+  footGround · seed 12161 · A3 L:BAS C:BEH A:BAS · rail · leg L planted ankle +0.16 m from ground height · during gait start
+  ikReach · seed 12161 · E1 L:ONI C:WAR A:BAS · blade · leg R target 0.03 m beyond reach (2.69 > 2.66) · during melee lunge
+  footGround · seed 12161 · E1 L:ONI C:WAR A:BAS · blade · leg L planted ankle +0.15 m from ground height · during stopping
+  footSlide · seed 12161 · E1 L:ONI C:WAR A:BAS · blade · leg L planted foot slid 0.31 m · during melee lunge
+  ikReach · seed 12161 · E4 L:VAL C:BEH A:ONI · blade · leg R target 0.05 m beyond reach (2.89 > 2.84) · during gait start
+  footGround · seed 12161 · E4 L:VAL C:BEH A:ONI · blade · leg R planted ankle +0.16 m from ground height · during gait start
+  footSlide · seed 12161 · E2 L:WAR C:ONI A:ONI · missile · leg R planted foot slid 0.31 m · during gait start
+  footGround · seed 12161 · E3 L:KES C:ONI A:ONI · rail · leg L planted ankle -0.18 m from ground height · during standing
+  ikReach · seed 12161 · E5 BASILISK · rifle · leg R target 0.06 m beyond reach (2.35 > 2.29) · during standing
+  footGround · seed 12161 · A4 L:ONI C:VAL A:VAL · shotgun · leg R planted ankle +0.15 m from ground height · during stopping
+  footGround · seed 12161 · E5 BASILISK · rifle · leg R planted ankle +0.16 m from ground height · during standing
+  footSlide · seed 12161 · A5 L:KES C:KES A:BAS · rifle · leg L planted foot slid 0.31 m · during gait start
+  footSlide · seed 12161 · E5 BASILISK · rifle · leg R planted foot slid 0.31 m · during gait start
+  stuck · seed 12161 · A2 L:BEH C:VAL A:BEH · missile · wanted to move for 4.0 s, moved 0.32 m
+  footGround · seed 20080 · E5 L:BEH C:ONI A:VAL · shotgun · leg LF planted ankle -0.16 m from ground height · during gait start
+  footSlide · seed 20080 · E5 L:BEH C:ONI A:VAL · shotgun · leg LF planted foot slid 0.32 m · during gait start
+  footGround · seed 20080 · A5 L:BEH C:KES A:BEH · blade · leg RF planted ankle -0.17 m from ground height · during walking
+  footSlide · seed 20080 · A5 L:BEH C:KES A:BEH · blade · leg RF planted foot slid 0.33 m · during walking
+  ikReach · seed 20080 · A1 L:WAR C:BEH A:BEH · shotgun · leg R target 0.03 m beyond reach (2.78 > 2.75) · during gait start
+  ikReach · seed 20080 · E1 L:VAL C:WAR A:WAR · rail · leg R target 0.07 m beyond reach (2.90 > 2.84) · during gait start
+  footGround · seed 20080 · E1 L:VAL C:WAR A:WAR · rail · leg R planted ankle +0.19 m from ground height · during gait start
+  footGround · seed 20080 · A1 L:WAR C:BEH A:BEH · shotgun · leg R planted ankle +0.17 m from ground height · during gait start
+  footSlide · seed 20080 · E1 L:VAL C:WAR A:WAR · rail · leg R planted foot slid 0.30 m · during gait start
+  ikReach · seed 20080 · E5 L:BEH C:ONI A:VAL · shotgun · leg RF target 0.10 m beyond reach (3.20 > 3.11) · during gait start
+  ikReach · seed 20080 · E4 L:WAR C:BAS A:WAR · blade · leg R target 0.23 m beyond reach (2.98 > 2.75) · during melee lunge
+  footGround · seed 20080 · E4 L:WAR C:BAS A:WAR · blade · leg R planted ankle +0.20 m from ground height · during melee lunge
+  footSlide · seed 20080 · E4 L:WAR C:BAS A:WAR · blade · leg R planted foot slid 0.36 m · during melee lunge
+  ikReach · seed 20080 · A2 L:BAS C:WAR A:WAR · missile · leg R target 0.08 m beyond reach (2.37 > 2.29) · during gait start
+  footGround · seed 20080 · A2 L:BAS C:WAR A:WAR · missile · leg R planted ankle +0.17 m from ground height · during gait start
+  footSlide · seed 20080 · A1 L:WAR C:BEH A:BEH · shotgun · leg L planted foot slid 0.31 m · during gait start
+  ikReach · seed 20080 · E2 L:ONI C:KES A:KES · rail · leg L target 0.06 m beyond reach (2.72 > 2.66) · during gait start
+  footGround · seed 20080 · E2 L:ONI C:KES A:KES · rail · leg L planted ankle +0.15 m from ground height · during gait start
+  ikReach · seed 20080 · E3 L:KES C:BEH A:VAL · missile · leg R target 0.04 m beyond reach (2.89 > 2.85) · during standing
+  ikReach · seed 20080 · A3 L:VAL C:VAL A:BAS · rifle · leg R target 0.05 m beyond reach (2.89 > 2.84) · during stopping
+  footGround · seed 20080 · A3 L:VAL C:VAL A:BAS · rifle · leg R planted ankle +0.16 m from ground height · during stopping
+  ikReach · seed 20080 · A5 L:BEH C:KES A:BEH · blade · leg LF target 0.09 m beyond reach (3.19 > 3.11) · during turning
+  ikReach · seed 20080 · A4 L:ONI C:ONI A:KES · rifle · leg R target 0.04 m beyond reach (2.69 > 2.66) · during stopping
+  footGround · seed 20080 · E3 L:KES C:BEH A:VAL · missile · leg R planted ankle +0.15 m from ground height · during stopping
+  footGround · seed 20080 · A4 L:ONI C:ONI A:KES · rifle · leg L planted ankle +0.16 m from ground height · during turning
+  footSlide · seed 20080 · A4 L:ONI C:ONI A:KES · rifle · leg L planted foot slid 0.30 m · during turning
+  footSlide · seed 20080 · A2 L:BAS C:WAR A:WAR · missile · leg L planted foot slid 0.31 m · during gait start
+  footSlide · seed 20080 · E2 L:ONI C:KES A:KES · rail · leg R planted foot slid 0.31 m · during stopping
+Bench walk (max ankle → IK target, cm): {"WARDEN":{"maxAnkleErrorCm":26.8},"KESTREL":{"maxAnkleErrorCm":41.1},"BASILISK":{"maxAnkleErrorCm":29.1},"VALKYRIE":{"maxAnkleErrorCm":37},"ONI":{"maxAnkleErrorCm":45.3},"BEHEMOTH":{"maxAnkleErrorCm":52.4}}
+Game-style tile walk: {"WARDEN":{"maxPlantedSlideCm":78.29,"maxAnkleErrorCm":98.55,"maxOverReachCm":94.87},"KESTREL":{"maxPlantedSlideCm":75.25,"maxAnkleErrorCm":97.54,"maxOverReachCm":94.63},"BASILISK":{"maxPlantedSlideCm":143.34,"maxAnkleErrorCm":167.15,"maxOverReachCm":151.94},"VALKYRIE":{"maxPlantedSlideCm":88.09,"maxAnkleErrorCm":104.09,"maxOverReachCm":97.91},"ONI":{"maxPlantedSlideCm":122.61,"maxAnkleErrorCm":136,"maxOverReachCm":130.02},"BEHEMOTH":{"maxPlantedSlideCm":230.76,"maxAnkleErrorCm":273.4,"maxOverReachCm":245.52}}
+AssertionError [ERR_ASSERTION]: WARDEN: bench walk ankle leaves its IK target by 26.8 cm
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+exit=1

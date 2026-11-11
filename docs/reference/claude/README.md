@@ -65,7 +65,39 @@ The War-mode anomaly checks are `const CHECKS=` and `function checkUnit` / `func
 
 Local verification and [captures](../../../design/reference-vfx/pr8/manifest.json) are committed, including a [profile contact sheet](../../../design/reference-vfx/pr8/contact-sheet.png) and the raw [seeded comparison](../../../design/reference-vfx/pr8/seeded-comparison.json). `node qa/reference-vfx.cjs --out <directory>` checks the actual Fire hooks for all five profiles, desktop/touch particle counts, natural critical/collapse arcs, the 0.95-second slam and reduced motion. The review fixed a missing missile hook: the prior PR head produced no directional missile spray; it now produces three profile bursts per salvo.
 
-To compare simulation outcomes, supply `--baseline <previous-rig-bench.html>`; `--soak-only` repeats only that comparison. Three battles at seed 4242 matched at 10,915 ticks, two ally wins and one enemy win, including all 77 pre-existing correctness anomalies. Raw host-timing `frameSpike` counts (3 before, 2 after) are retained separately from deterministic equality. No page/console errors occurred in the browser checks. These are software-WebGL results; iPad hardware performance and the future shared-scene zero-anomaly gate remain unverified.
+To compare simulation outcomes, supply `--baseline <previous-rig-bench.html>`; `--soak-only` repeats only that comparison. Use it for effects-only changes. The walk fix below changes movement on purpose, so outcomes no longer match the earlier copies; `qa/reference-walk.cjs` covers it instead. Raw host-timing `frameSpike` counts (3 before, 2 after) are retained separately from deterministic equality. No page/console errors occurred in the browser checks. These are software-WebGL results; iPad hardware performance and the future shared-scene zero-anomaly gate remain unverified.
+
+## Walk and IK fix (port this gait in Phase 2)
+
+Before this fix, three seeded War battles at seed 4242 logged 77 correctness anomalies: 29 `footGround`, 19 `footSlide`, 28 `ikReach` and one `stuck`. Frame by frame, planted feet slid or left the floor in about 4,000 frames. **Both reference files now use the gait below, with identical code.** Port the gait from either file, not from an older copy. Every change is marked `[walk fix]` in the source.
+
+| Piece | Search for | What it does |
+| --- | --- | --- |
+| Hip order | `RB.ikFix=true` (Rig Bench), `'ZXY'` in `solveLeg` (Mercenary Command) | Legs solve with Euler order ZXY, as `dist/foundry/chassis.js` has since PR #1. The old XYZ order missed IK targets by 5–9 cm at rest and up to about 0.6 m on quad legs. The Rig Bench keeps an **Old bug (XYZ)** button for comparison. |
+| Pelvis first | `pose the pelvis before solving the legs` | The legs solve against this frame's hips, not last frame's. |
+| Walking crouch | `walkDrop` in `DIMS` and `LEG_KEYS` | The pelvis lowers while walking: Warden 0.10, Kestrel 0.16, Valkyrie 0.10, Oni 0.22. Basilisk and Behemoth need none. Without it, a normal stride pulled most legs past thigh + shin. The game has the same key. |
+| Gait start | `function startPhase` | When a walk begins, the cycle starts where every planted foot can stay down for the rest of its stance. A late-starting swing (`L.q0`) runs its whole arc in the time left, so the foot never jumps. |
+| Footholds | `const vel=m.vel` / `dir` | Feet land along the root's actual velocity (walking, lunge, knockback), not the lagging body yaw. |
+| Catch-up step | `const strained=` | A planted foot that the hips pull to the edge of reach steps at once (0.26 s) toward where the hips will be. It is not dragged. While walking, this fires on about 4% of steps. It also handles blade lunges and shoves. |
+| Reachable targets | `function onFloorWithin` and the in-flight clamp | A foot in the air never aims past the leg's reach. A landing spot is pulled toward the hip along the floor until it is reachable. |
+| Stopping | `finishes as a settle step` | A foot in the air when the walk stops finishes as a settle step. It no longer snaps to the floor mid-stride. |
+
+Rig Bench War AI fixes, bench-only. They go away when Phase 6 runs War on the game rules.
+
+- **Sliding against obstacles.** Units slide along wrecks, cover and the wall instead of walking on the spot into them. Wrecks are rounded as one group.
+- **Paths.** A 1 m grid A* (`function navGoal`) routes around wrecks, cover and stationary units when the straight line is blocked.
+- **Retreat.** Retreat goals pick open ground (`function retreatGoal`).
+- **Disarmed units.** A unit whose weapon arm is gone holds once it is near its back line.
+- **Blade reach.** Blade reach is measured from the edges of the two footprints (`function meleeReach`). Centre to centre, 4.9 m was closer than two large frames can stand.
+- **Blocked units.** A blocked unit detours after 1.2 s along the most open direction (`function openDetour`). At 2.8 s it gives up the move. The 4 s `stuck` check is unchanged, and giving up three moves in 20 s is also reported as `stuck`.
+
+**Check:** `node qa/reference-walk.cjs` checks three things:
+
+- **War soak.** 150 seeded War battles (3 × 50 at seeds 4242, 77 and 90210) must show zero correctness anomalies.
+- **Bench walk.** Each of the six leg types walks and stops in Bench mode, and its ankles must stay on their IK targets.
+- **Game-style walk.** Game-style tile paths run through `VowAnim.animateMech`: 90° corners at game speed, a stop, a restart and a blade lunge. Planted feet must not slide or leave their targets.
+
+The earlier copy fails the check; the current one passes. Evidence is in [`design/reference-walk/`](../../../design/reference-walk/).
 
 ## Fixed in this copy
 

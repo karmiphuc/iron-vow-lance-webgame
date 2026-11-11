@@ -1,0 +1,133 @@
+{
+  "source_sha256": "b7bd5f74ffa45a10812cb5592058a2e60922eecb96f17feaebf92f9b5c0a7828",
+  "environment": "Playwright Chromium; software WebGL; no device performance claim",
+  "checks": [
+    {
+      "device": "desktop",
+      "kind": "rifle",
+      "bursts": 3,
+      "particlesPerBurst": 13
+    },
+    {
+      "device": "desktop",
+      "kind": "shotgun",
+      "bursts": 1,
+      "particlesPerBurst": 20
+    },
+    {
+      "device": "desktop",
+      "kind": "missile",
+      "bursts": 3,
+      "particlesPerBurst": 28
+    },
+    {
+      "device": "desktop",
+      "kind": "rail",
+      "bursts": 1,
+      "particlesPerBurst": 16
+    },
+    {
+      "device": "desktop",
+      "kind": "blade",
+      "bursts": 1,
+      "particlesPerBurst": 18
+    },
+    {
+      "device": "desktop",
+      "arcVisibility": "exposed",
+      "bluePixels": 4489
+    },
+    {
+      "device": "desktop",
+      "arcVisibility": "behind-cover",
+      "bluePixels": 0
+    },
+    {
+      "device": "desktop",
+      "arcVisibility": "in-front-of-cover",
+      "bluePixels": 4400
+    },
+    {
+      "device": "desktop",
+      "naturalCriticalArcs": 6,
+      "collapse": {
+        "before": {
+          "arc": 5,
+          "airwave": 1,
+          "dustwave": 1
+        },
+        "after": {
+          "arc": 5,
+          "airwave": 2,
+          "dustwave": 2
+        }
+      }
+    },
+    {
+      "device": "touch",
+      "kind": "rifle",
+      "bursts": 3,
+      "particlesPerBurst": 8
+    },
+    {
+      "device": "touch",
+      "kind": "shotgun",
+      "bursts": 1,
+      "particlesPerBurst": 12
+    },
+    {
+      "device": "touch",
+      "kind": "missile",
+      "bursts": 3,
+      "particlesPerBurst": 17
+    },
+    {
+      "device": "touch",
+      "kind": "rail",
+      "bursts": 1,
+      "particlesPerBurst": 10
+    },
+    {
+      "device": "touch",
+      "kind": "blade",
+      "bursts": 1,
+      "particlesPerBurst": 11
+    },
+    {
+      "device": "touch",
+      "arcVisibility": "exposed",
+      "bluePixels": 3804
+    },
+    {
+      "device": "touch",
+      "arcVisibility": "behind-cover",
+      "bluePixels": 0
+    },
+    {
+      "device": "touch",
+      "arcVisibility": "in-front-of-cover",
+      "bluePixels": 2195
+    },
+    {
+      "device": "touch",
+      "naturalCriticalArcs": 6,
+      "collapse": {
+        "before": {
+          "arc": 5,
+          "airwave": 1,
+          "dustwave": 1
+        },
+        "after": {
+          "arc": 5,
+          "airwave": 2,
+          "dustwave": 2
+        }
+      }
+    },
+    {
+      "reducedMotion": true,
+      "arcs": 0
+    }
+  ],
+  "status": "passed"
+}
