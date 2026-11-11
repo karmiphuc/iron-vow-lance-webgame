@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "scope": "Offline verification of captured files and original lossless-encoding assertions. No new gameplay or final-source clearance claim.",
+  "capture_manifest_status": "partial",
+  "cases": 49,
+  "expected_cases": 50,
+  "images": 124,
+  "webp_file_hashes_verified": true,
+  "decoded_rgba_hashes_verified": true,
+  "original_raw_png_hashes_recorded": true,
+  "source_image_counts": {
+    "6786df4d7736418289bc1b0cf21d23fac9ba350f": 13,
+    "f68b5dff18072d19907e14b3cdf2556f5d99c602": 111
+  },
+  "render_policy_image_counts": {
+    "Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded GPU draws/readbacks omitted, with scene/camera matrix updates. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.": 40,
+    "Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded main-canvas GPU draws omitted, with scene/camera matrix updates; render-target draws and readbacks remain native so cached art is populated. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.": 84
+  },
+  "derived_contact_sheets": [
+    {
+      "file": "contact-1366-no-preference.png",
+      "contacts": 34,
+      "viewport_width": 1366,
+      "motion": "no-preference"
+    },
+    {
+      "file": "contact-1366-reduce.png",
+      "contacts": 3,
+      "viewport_width": 1366,
+      "motion": "reduce"
+    },
+    {
+      "file": "contact-1194-no-preference.png",
+      "contacts": 5,
+      "viewport_width": 1194,
+      "motion": "no-preference"
+    }
+  ]
+}
