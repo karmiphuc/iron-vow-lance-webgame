@@ -3,11 +3,22 @@
 const chassis = {
   gatecrasher: {
     name: "Gatecrasher", serial: "HV-09", role: "Heavy assault",
+    optionalEquipment: true,
     summary: "The Morrow twin cannon is standard. Preview the optional Arc Cleaver and Vesper pod, available in the Workshop.",
     weapon: "Morrow AC-2",
     deploy: "The hips settle, the cannon arm rises, and the articulated gripper tightens.",
     fire: "The cannon carriage slides twice while the hips and shoulders absorb the recoil.",
     strike: "The torso coils, drives the cleaver through the target lane, and returns to guard with both feet planted.",
+  },
+  shogun: {
+    name: "Shogun", serial: "HV-12", role: "Flagship assault",
+    optionalEquipment: true,
+    summary: "Layered armor and a planted stride. Preview the standard Morrow cannon, Arc Cleaver, and Vesper pod.",
+    weapon: "Morrow AC-2",
+    walk: "Watch the planted soles, short weight transfer, and restrained shoulder swing.",
+    deploy: "The hips settle and the Morrow cannon rises into its firing stance.",
+    fire: "The twin cannon recoils through the wrist receiver and shoulder.",
+    strike: "The extended forearm drives the cleaver through the target lane before returning to guard.",
   },
   hellbreaker: {
     name: "Hellbreaker", serial: "HV-09X", role: "Hostile breach",
@@ -94,11 +105,11 @@ function setPlaying(value) {
 }
 
 function supportedClips(id) {
-  return chassis[id].clips || (id === "gatecrasher" ? [...standardClips, "Strike"] : standardClips);
+  return chassis[id].clips || (chassis[id].optionalEquipment ? [...standardClips, "Strike"] : standardClips);
 }
 
 function clipAvailable(id, name) {
-  return supportedClips(id).includes(name) && (id !== "gatecrasher" || name !== "Strike" || cleaver.checked);
+  return supportedClips(id).includes(name) && (!chassis[id].optionalEquipment || name !== "Strike" || cleaver.checked);
 }
 
 function presetAngle(id, preset) {
@@ -120,13 +131,13 @@ function setControls(ready) {
   }
   byId("fire").textContent = activeChassis === "scout" ? "Carbine" : "Fire";
   byId("strike").textContent = activeChassis === "scout" ? "Knife" : "Strike";
-  equipment.hidden = activeChassis !== "gatecrasher";
+  equipment.hidden = !chassis[activeChassis].optionalEquipment;
   equipment.disabled = !ready;
   scrubber.disabled = !ready;
 }
 
 function updateEquipmentPreview() {
-  if (activeChassis !== "gatecrasher" || !model || !mixer) return;
+  if (!chassis[activeChassis].optionalEquipment || !model || !mixer) return;
   model.traverse(node => {
     const name = node.name.replace(/[^a-z0-9]/gi, "");
     if (name === "HardpointL") node.visible = cleaver.checked;

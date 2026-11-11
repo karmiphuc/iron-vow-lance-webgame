@@ -57,8 +57,10 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('selected'),0);
 
  const keys=run('Object.keys(window.IRON_VOW_TRAVEL)');
- assert.equal(keys.length,10);
+ assert.equal(keys.length,14);
  assert.ok(!keys.some(key=>key==='warden'||/^foundry-[0-5]$/.test(key)),'Live-frame travel data is deleted');
+ assert.deepEqual(Array.from(keys.filter(key=>key.startsWith('shogun'))).sort(),
+  ['shogun','shogun-bare','shogun-cleaver','shogun-vesper']);
  for(const key of keys){
   const visual=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL['${key}'])`));
   assert.equal(visual.points[0].length,4);

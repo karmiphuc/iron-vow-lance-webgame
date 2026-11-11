@@ -1,3 +1,5 @@
+> Resumed: execution is available again. PRs #19 and #20 merged (62feebb / 5770d8c) after real Playwright walk and VFX checks; the walk contact sheet is now inspected. The Phase 2 pooled missile alias was fixed in 98c1693 and its pure regression passes. Main integration preserves SHOGUN at frame ID 20 (thirteen temporary frames). The outage notes below are historical; final Phase 1 gates are still in progress.
+
 # Renderer runtime handoff — 2026-11-11
 
 PR #18 remains a draft. Phase 1 needs its complete final gates before merge. The selected execution environment became unavailable during the checks and full capture batch. The Cloud Environment API later reported the instance running/connected, while `exec_command` still rejected calls with “No usable execution environment is available.” No complete 30-battle result or final contact sheet is claimed.

@@ -4,7 +4,7 @@ PR #18 is a draft. This document records development findings, not final verific
 
 Implemented so far:
 
-- One WebGL owner for the board, live rigs and render-target UI previews. The eight live frame IDs are 0, 5, 6, 7, 8, 9, 10 and 12; the other twelve and vehicles use `dist/scene/billboards.js`.
+- One WebGL owner for the board, live rigs and render-target UI previews. The eight live frame IDs are 0, 5, 6, 7, 8, 9, 10 and 12; the other thirteen and vehicles use `dist/scene/billboards.js`.
 - Shared reference environment/cover helpers, actual terrain elevation, reference ground roughness and lightning, raycast proxies, projected HP, range/reach tiles, path chevrons, mouse pan, wheel/pinch, map and attack-camera integration.
 - Warden and Bastion share a measured-pivot rigid adapter and the kit animator. Bastion's authored stance is only a binding source; its separate runtime clip renderer is deleted. Combat uses the specified 0.9 scale; the old 1.415 Warden image-framing scale stays limited to UI previews.
 - Deleted the replaced 2D board, terrain, cover, attack panes, picking fallback, `drawToned`, filter detection and live-frame travel data. `foundry/renderer.js` was replaced by shared-scene/preview support in `scene-rigs.js`. Twelve-frame data in `foundry/baked.js` and `walk.js` remains until Phase 3.
@@ -54,3 +54,5 @@ Current status: execution access failed during final verification. Read [the run
 
 
 Execution access recovered. Continue from the preserved checks and reconcile the newer main/Gatecrasher imports before the final immutable gates. Phase 2 follows the owner's instruction to trust Claude's work highly, using PR #20 as the gait baseline and focusing checks on the actual production port and existing defects.
+
+Main integration preserves the new SHOGUN frame at ID 20, all four breach-loadout variants and the owner’s latest assets/rules. The thirteen temporary frames still use the single billboard adapter; its real image/upload/attachment browser coverage now includes SHOGUN. PRs #19 and #20 merged after focused real Playwright validation: nine seeded War battles had zero correctness anomalies, all six leg fixtures passed, and desktop/touch reference VFX passed. Claude’s separate 150-battle evidence remains accepted as author evidence. Phase 2 must use these final plasma/crawl/joint and gait references while preserving production terrain and brace fixes.

@@ -15,6 +15,12 @@
       "source": "Reply to the spacing/stride design question",
       "instruction": "Allow spacing and clearance adjustments",
       "effect": "May adapt visual tile pitch and stride clearance to prevent overlaps on legal campaign paths; retain gameplay rules and action timings."
+    },
+    {
+      "date": "2026-11-11",
+      "source": "Direct Phase 2 instruction",
+      "instruction": "For Phase 2, do pay attn to the PR 20 and ur existing bugs. Trust Claude's work highly, and reliable",
+      "effect": "Use PR20 corrected gait as baseline; give Claude author evidence substantial weight and focus on integration and known defects."
     }
   ],
   "phases": [
@@ -34,8 +40,8 @@
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "draft PR #18; implementation complete enough for final gates, blocked by execution access during verification",
-      "next": "Recover execution access and local QA changes; finish final browser/simulation/30-battle and full-resolution capture/contact-sheet gates, then merge exact validated head.",
+      "status": "draft PR #18; execution restored, final gates in progress",
+      "next": "Finish main/SHOGUN reconciliation and final immutable browser/simulation/30-battle/capture gates, then merge exact validated head.",
       "development_suites_passed": 45,
       "development_scene_seeds": [
         4242,
@@ -49,14 +55,14 @@
       "phase": 2,
       "issue": 12,
       "status": "isolated local preparation; full runtime integration pending Phase 1",
-      "next": "Port reference animation/effects including final PR #9; map every WEAPONS entry, retain reference timings, add actual scene/anomaly coverage and delete replaced effects.",
-      "local_preparation": "Unpushed renderer/phase2 commits c0f99d7, a7507d1, b0eb719; recover workspace. Reference FX factory and all-weapon profiles prepared, missile-arrival regression currently fails; no passing Phase 2 gate."
+      "next": "Port merged PR19 plasma/crawl/joint FX and PR20 gait, preserving terrain/brace fixes; wire runtime and all weapons, then verify production action/aim/damage coverage.",
+      "local_preparation": "renderer/phase2 commits through 98c1693; pooled missile endpoint regression reproduced then fixed and pure check passed. Runtime integration pending; preparation must be rebased after Phase 1."
     },
     {
       "phase": 3,
       "issue": 13,
       "status": "pending Phase 2; asset work may run in parallel",
-      "external_dependency": "Blender MCP on the owner machine and missing external .blend sources. No Blender tools were available in this session. This does not block Phases 0–2.",
+      "external_dependency": "Blender MCP on the owner machine and missing external .blend sources. No Blender tools were available in this session. This does not block Phases 0\u20132.",
       "next": "Gatecrasher first; exact rig v2 contract and <=60k triangles including weapons; integrate every frame and delete temporary adapters/sprites."
     },
     {
@@ -72,20 +78,15 @@
     "Blender/source requirements require resolution before Phase 3 can be completed."
   ],
   "site": {
-    "published_version": 98,
+    "published_version": "refresh required; last observed 98 before concurrent owner imports",
     "deployment_made_in_this_work": false,
     "source_sync_pending": true
   },
   "pr_outcomes": {
     "4": "closed unmerged",
     "8": "973567c5726a836e827fbe85b3b34675a769fc0b",
-    "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a"
-  },
-  "execution_block": {
-    "environment_id": "ccarenv_b64_Y2NhcmVudl8zZWFiMTgzOWRkN2M4MTkxYjMwZTdiYzRhNDA4NDM5NQ",
-    "provider_observation": "running / connected after initial offline observation",
-    "executor_error": "No usable execution environment is available",
-    "desktop": "enabled, state unknown; no desktop JS/viewer tool offered",
-    "handoff": "docs/renderer-runtime-handoff-20261111.md"
+    "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a",
+    "19": "62feebbbcd7d1b3acf9c90e914adca11acf7c0fc",
+    "20": "5770d8cb66f070ba32588bf48fcdd04b7618ff49"
   }
 }

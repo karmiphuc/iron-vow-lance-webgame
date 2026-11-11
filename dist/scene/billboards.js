@@ -708,7 +708,7 @@ function travelVisual(u,t){
   const strike=u.attack&&ATTACK_PROFILES[u.attack.kind].melee?animationPose(u,t):null;
   return {atlas,image:detail.image,source,bounds,row,heading,points:data.points[row][heading],direction,strike,grounded:true};
  }
- if(u.frame===3)return null;
+ if(breachLoadout(u.frame))return null;
  const gait=u.motion?(u.motion.stepBeats!=null?fieldStepProgress(phase,u.motion.segment):
   FRAMES[u.frame]?.native?phase:((u.motion.gaitBase+phase)/2)%1):0;
  const prime=u.attack?.primeDuration?clamp01((t-u.attack.start)/u.attack.primeDuration):0;
