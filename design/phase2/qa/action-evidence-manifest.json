@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sourceScope": "All 34 catalog entries passed full motion and touch/reduced on tree76ac81ff (6786df4). Tree06b72b8f (9af2015) then corrected airborne feet and landing settle; five representative commands plus strengthened special fixtures passed both modes there. Tree613bc118 (f68b5df) subsequently corrected close/steep actual firing aim, with before/after proof in aim-regression-manifest.json and committed-source formal campaign evidence recorded separately. Historical catalog reports retain their exact sources; they are not represented as an all-weapon rerun on later trees. Final connected-clearance/pitch7.4 source is fa9f835 (treeedac44e5); targeted physical/endpoint proof is in clearance-evidence-manifest.json. Earlier reports are not relabelled as this source.",
+  "sourceScope": "All 34 catalog entries passed full motion and touch/reduced on tree76ac81ff (6786df4). Tree06b72b8f (9af2015) then corrected airborne feet and landing settle; five representative commands plus strengthened special fixtures passed both modes there. Tree613bc118 (f68b5df) subsequently corrected close/steep actual firing aim, with before/after proof in aim-regression-manifest.json and committed-source formal campaign evidence recorded separately. Historical catalog reports retain their exact sources; they are not represented as an all-weapon rerun on later trees. Final connected-clearance/pitch7.4 source is fa9f835 (treeedac44e5); targeted physical/endpoint proof is in clearance-evidence-manifest.json. Earlier reports are not relabelled as this source. Final edac44e5 campaign commands 18 IDs; actions-final-melee-six.json executes the remaining six, giving all 24 Workshop IDs on the final runtime. Existing special checks and actual GPU context restoration also pass on this tree.",
   "reports": [
     {
       "report": "actions-airborne-fixed-full.json",
@@ -139,6 +139,27 @@
       ],
       "landedContacts": 137,
       "jumpjetGate": "Historical root-lift-only assertion; ankle issue later detected and fixed"
+    },
+    {
+      "report": "actions-final-melee-six.json",
+      "source": {
+        "commit": "1119a2c7d5058362297005097b386934ea8dbaba",
+        "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+        "distDirty": false,
+        "checkerSha256": "835d6d51b2f872ae8bab882cbec968910120aa4ae66f40243da7052536d1e7b1"
+      },
+      "mode": "full",
+      "status": "passed",
+      "weapons": [
+        "breaker",
+        "piledriver",
+        "blade",
+        "hatchet",
+        "pike",
+        "anchor-hammer"
+      ],
+      "landedContacts": 6,
+      "scope": "Six melee entries not selected by campaign AI; actual final-source commands and existing special checks."
     }
   ]
 }

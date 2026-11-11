@@ -1,0 +1,9 @@
+START desktop sharedScene
+shared scene ready: desktop
+raycasts, Overview and centre passed
+map jump, zoom and pan passed
+wheel/pinch zoom passed
+legal campaign attack ready
+3D attack camera and Skip passed
+actual context restoration and preserved checkpoint passed
+PASS desktop sharedScene
