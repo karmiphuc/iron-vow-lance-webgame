@@ -1,0 +1,36 @@
+{
+  "started": "2026-11-11T13:16:38.287Z",
+  "commit": "e61753327b0caed5194595d53a8e9b956faf7299",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkShields",
+      "sha256": "7fef389d222e2cd0b39419d6543a6692c9f7f6059c5d743646b93f2224a5a853"
+    },
+    {
+      "name": "bastionSharedRig",
+      "sha256": "935818eab3d37c3392e693f827ee98ea3cbc058b3e08f1e11f4e65234c54744f"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkShields",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "bastionSharedRig",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-11T13:20:49.236Z"
+}

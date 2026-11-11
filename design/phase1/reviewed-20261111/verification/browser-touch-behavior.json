@@ -1,0 +1,139 @@
+{
+  "started": "2026-11-11T13:21:49.431Z",
+  "commit": "955497b542afaaf9edcdef8e8305b6779a4b32a7",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkTerrain",
+      "sha256": "da19c1415ba7c6b5be577d821ee52ec065e471ca2d2e5c70824c38822f27a954"
+    },
+    {
+      "name": "checkLineInfantry",
+      "sha256": "e98fd2cd33eddf447af7b28846915d36c4d8687a36cc2b31d3436e8a339412c2"
+    },
+    {
+      "name": "checkLineElite",
+      "sha256": "22a1b8bf32b53d7d6b56bdc3f74d150d77ac07483ad7a6a330ce29bf185d7b4d"
+    },
+    {
+      "name": "checkInfantryCarry",
+      "sha256": "97fd45f4a5591422c1fcc2e6442a5be6f73d63484d09eb9ca637da3fd26d75b4"
+    },
+    {
+      "name": "checkVanguard",
+      "sha256": "decc63242ad58ae34063131140f61dacafda2501b5373f4b78826e199ad12ad1"
+    },
+    {
+      "name": "checkReaver",
+      "sha256": "4a1c2222d50500968c9a5033aaa02957b863634e0dc17ed15d981f27ecd64664"
+    },
+    {
+      "name": "checkAero",
+      "sha256": "504d441605d5ee0fdfc7ba97b34b137bdf49e47d8d7f97c72aa3a3ed02ab87bf"
+    },
+    {
+      "name": "checkArmory",
+      "sha256": "375da07a9fe0ebba039c9c12fb8cffe0edd945fa86d71d3c4fc77cde940b098b"
+    },
+    {
+      "name": "checkCampaign",
+      "sha256": "5ae937f4a91d79f29ed83a468e9511c856ebb0f71ea3be5746cf1e7d4d8bf751"
+    },
+    {
+      "name": "checkBulwarkBench",
+      "sha256": "0b7d8d3e90ace429a7637c44f94952dc6735e0f1742bf9655727cee4fb5bb936"
+    },
+    {
+      "name": "checkScoutBench",
+      "sha256": "105717aa46394f2495598b0c699ecda72d796419277883dff2cc9f0c4001cee1"
+    },
+    {
+      "name": "checkShip",
+      "sha256": "e108fffa69022b2e384a1b3fe30644b141bf5c027d826fe3e8eb8a1b976b624d"
+    },
+    {
+      "name": "checkHangar",
+      "sha256": "c7e9b0556cb86eb2a64e8ec1af58e607bbfda73dbe5c0ce6cec607a048007224"
+    },
+    {
+      "name": "checkCareerTabs",
+      "sha256": "52c3ad9fb1482fe5ce8927ee32c2c3fce6cb22c8f0c336e497b0e45a96c96111"
+    },
+    {
+      "name": "checkDutyRoster",
+      "sha256": "93a7c441df947769c31061dc406497a2a3c1a4595bb04a931190d900fd5fe0b6"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkTerrain",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkLineInfantry",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkLineElite",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkInfantryCarry",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkVanguard",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkReaver",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkAero",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkArmory",
+      "device": "touch",
+      "attempt": 1,
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 120000ms exceeded.",
+      "assetErrors": []
+    },
+    {
+      "name": "checkArmory",
+      "device": "touch",
+      "attempt": 2,
+      "status": "failed",
+      "error": "page.waitForFunction: Timeout 120000ms exceeded.",
+      "assetErrors": []
+    }
+  ],
+  "status": "incomplete",
+  "ended": "2026-11-11T13:36:37.342Z"
+}

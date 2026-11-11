@@ -43,7 +43,7 @@ async function capture(config){
  let browser;
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim(),runner_source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
-  dist_tree:execFileSync('git',['rev-parse','HEAD:dist'],{cwd:sourceRoot,encoding:'utf8'}).trim(),candidate_advance_policy:'All 30 Hz CPU animation updates and matrix updates execute. Intermediate unrecorded main-canvas GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.',non_visual_fetch_policy:'Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.',environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
+  dist_tree:execFileSync('git',['rev-parse','HEAD:dist'],{cwd:sourceRoot,encoding:'utf8'}).trim(),candidate_advance_policy:'All CPU animation and matrix updates execute. Unrecorded main-canvas warmup and advance GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.',non_visual_fetch_policy:'Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.',environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
  const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
  if(previous&&previous.source!==manifest.source){
   const object=(sha,file)=>execFileSync('git',['rev-parse',sha+':'+file],{cwd:sourceRoot,encoding:'utf8'}).trim();
@@ -64,17 +64,33 @@ async function capture(config){
   fs.writeFileSync(temp,JSON.stringify(manifest,null,2)+'\n');
   fs.renameSync(temp,path.join(output,'manifest.json'));
  };
+ // Rebuild the retention cache from all checkpoint manifests before the next
+ // checkpoint. An interrupted resume may not yet have visited valid later jobs.
+ if(previous){
+  const history=[previous,...fs.readdirSync(output).filter(f=>/^prior-.*\.json$/.test(f)).map(f=>JSON.parse(fs.readFileSync(path.join(output,f),'utf8')))];
+  const object=(sha,file)=>execFileSync('git',['rev-parse',sha+':'+file],{cwd:sourceRoot,encoding:'utf8'}).trim();
+  const validSources=new Map(),fileHashes=new Map(),seen=new Set();
+  for(const m of history)for(const c of m.captures||[]){
+   const job=jobs.find(j=>j.source===c.source&&j.preset.id===c.preset);
+   if(!job||!viewports.some(v=>v.width===c.viewport.width&&v.height===c.viewport.height)||job.preset.path&&c.webgl_sample?.screenshot_non_black_samples<64||job.preset.paint&&job.source!=='reference-game'&&c.paint_view_verified!==2||job.preset.id==='selected-move'&&job.source!=='reference-game'&&c.selected_move_view_verified!==5)continue;
+   const key=[c.source,c.preset,c.viewport.width,c.viewport.height].join('/');if(seen.has(key))continue;
+   const source=c.source_commit||m.source;if(!source)continue;
+   if(!validSources.has(source))validSources.set(source,object(source,'dist')===manifest.dist_tree&&object(source,'qa/capture-presets.cjs')===object(manifest.source,'qa/capture-presets.cjs'));
+   if(!validSources.get(source))continue;
+   const file=path.join(output,c.file);if(!fs.existsSync(file)||!c.png_sha256)continue;
+   if(!fileHashes.has(file))fileHashes.set(file,createHash('sha256').update(fs.readFileSync(file)).digest('hex'));
+   if(fileHashes.get(file)!==c.png_sha256)continue;
+   if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
+   if(c.document_sha256!==documentHashes.get(job.url))continue;
+   manifest.captures.push({...c,retained:true,source_commit:source,runner_sha256:c.runner_sha256||m.runner_sha256});seen.add(key);
+  }
+  checkpoint();console.log('RECOVERED '+manifest.captures.length+' verified retained captures from checkpoint history');
+ }
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
-   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64));
-   if(retained&&fs.existsSync(path.join(output,retained.file))){
-    const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
-    if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
-    if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
-    if(retained.document_sha256!==documentHashes.get(job.url))throw Error('Served document changed since the retained capture');
-    manifest.captures.push({...retained,png_sha256:pngHash,retained:true,source_commit:retained.source_commit||previous.source,runner_sha256:retained.runner_sha256||previous.runner_sha256});checkpoint();console.log('REUSE '+retained.file);break;
-   }
+   const retained=manifest.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
+   if(retained){console.log('REUSE '+retained.file);break;}
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -99,6 +115,7 @@ async function capture(config){
     await page.addInitScript(()=>{
      // Static captures advance every CPU animation frame; submit the final full-resolution board frame.
      Object.defineProperty(window,'IronVowRenderer',{configurable:true,set(api){const get=api.get;api.get=function(){const renderer=get();if(!renderer.__captureAdvanceWrapped){renderer.__captureAdvanceWrapped=true;const render=renderer.render;renderer.render=function(scene,camera){if(window.__captureAdvanceOnly&&this.getRenderTarget()===null){scene.updateMatrixWorld();camera.updateMatrixWorld();return;}return render.apply(this,arguments);};}return renderer;};Object.defineProperty(window,'IronVowRenderer',{value:api,configurable:true});}});
+     window.__captureAdvanceOnly=true;
      let seed=101;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
      const frames=new Map();let id=0;
      window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
@@ -154,19 +171,46 @@ async function capture(config){
      clock=5;last=5000-1000/60;window.__captureTick();
     });
     if(job.preset.advanceSeconds){
-     await page.evaluate(seconds=>{window.__captureAdvanceOnly=true;try{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);}finally{window.__captureAdvanceOnly=false;}},job.preset.advanceSeconds);
+     await page.evaluate(seconds=>{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);},job.preset.advanceSeconds);
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
      await page.evaluate(seconds=>window.__captureTick(5000+(Math.ceil(seconds*30)+1)*1000/30),job.preset.advanceSeconds);
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
+    await page.evaluate(()=>{window.__captureAdvanceOnly=false;});
     const broken=await page.evaluate(()=>[...window.__captureActiveImages(),...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     let webglSample;
     const battleWebgl=await page.evaluate(()=>Boolean(window.IronVowScene&&typeof battle!=='undefined'&&battle&&document.getElementById('world-scene')));
     if(battleWebgl)await page.evaluate(()=>{if(!IronVowScene.ready)throw Error('Battle capture has pending live rigs or temporary images');});
-    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(()=>{
+    if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
+    if(errors.length)throw Error(errors.join('\n'));
+    let selectedMoveViewVerified=false;
+    if(job.preset.id==='selected-move'&&job.source!=='reference-game'){
+     await page.locator('#map-overview').click();
+     await page.evaluate(()=>{window.__captureAdvanceOnly=true;try{for(let i=1;i<=30;i++)window.__captureTick(5000+i*1000/30);}finally{window.__captureAdvanceOnly=false;}window.__captureTick(6033);});
+     const target=await page.evaluate(()=>{
+      const u=current(),free=freeMovement(u);
+      return __ironVow.legalMoves(u.id).filter(m=>m.cost>free).map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-180&&m.p.y>180&&m.p.y<innerHeight-180&&document.elementFromPoint(m.p.x,m.p.y)===canvas&&IronVowScene.screenTile(m.p.x,m.p.y)?.x===m.x&&IronVowScene.screenTile(m.p.x,m.p.y)?.z===m.z);
+     });
+     if(!target)throw Error('No visible paid-move tile for capture');
+     await page.mouse.move(target.p.x,target.p.y);await page.evaluate(()=>window.__captureTick(6066));
+     selectedMoveViewVerified=await page.evaluate(()=>{const info=IronVowScene.overlayInfo();return info.triangles>0&&info.path.some(p=>p.color===0xcc9b49)});
+     if(!selectedMoveViewVerified)throw Error('Paid-move path overlay did not render');
+    }
+    // The game may rerender the workshop after lazy assets arrive. Scroll only
+    // after that settles so the recorded paint preset contains its controls.
+    let paintViewVerified=false;
+    if(job.preset.paint&&job.source!=='reference-game')paintViewVerified=await page.evaluate(()=>{
+     const panel=document.querySelector('.paint-panel');if(!panel)throw Error('Paint panel missing');
+     panel.scrollIntoView({block:'center',behavior:'instant'});
+     const rect=panel.getBoundingClientRect(),header=document.querySelector('header')?.getBoundingClientRect();
+     const controls=[...panel.querySelectorAll('.paint-swatch, #custom-paint, [data-trim]')];
+     if(!controls.length||rect.top<(header?.bottom||0)||rect.bottom>innerHeight||controls.some(node=>{const r=node.getBoundingClientRect();return r.top<(header?.bottom||0)||r.bottom>innerHeight||r.left<0||r.right>innerWidth;}))throw Error('Paint panel controls do not fit the viewport');
+     return true;
+    });
+    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(isMove=>{
      // Sample immediately after a real render: non-preserved WebGL buffers can
      // otherwise clear between tasks even when the compositor retains the frame.
-     window.__captureTick();
+     window.__captureTick(isMove?6100:5000);
      const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=canvas.id==='c'?'Rig Bench':'Battle';
      if(!gl||gl.isContextLost())throw Error(name+' WebGL context is unavailable or lost');
      const sample=document.createElement('canvas');sample.width=sample.height=32;
@@ -175,16 +219,15 @@ async function capture(config){
      for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
      if(bright<64)throw Error(name+' WebGL canvas is blank: '+bright+'/1024 non-black samples');
      return {canvas:canvas.id,non_black_samples:bright,total_samples:1024,context_lost:false};
-    });
-    if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
-    if(errors.length)throw Error(errors.join('\n'));
+    },job.preset.id==='selected-move');
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
     if(webglSample){
      webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
     }
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(webglSample?{webgl_sample:webglSample}:{})});
+    manifest.captures=manifest.captures.filter(c=>!(c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height));
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:2}:{}),...(selectedMoveViewVerified?{selected_move_view_verified:5,selected_move_camera:'Overview control; actual paid path hovered'}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
     break;

@@ -40,16 +40,21 @@
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "draft PR #18; execution restored, final gates in progress",
-      "next": "Finish main/SHOGUN reconciliation and final immutable browser/simulation/30-battle/capture gates, then merge exact validated head.",
-      "development_suites_passed": 45,
-      "development_scene_seeds": [
-        4242,
-        4243,
-        4244
+      "pr": 18,
+      "status": "review-ready after final evidence assembly",
+      "evidence": "design/phase1/reviewed-20261111/manifest.json",
+      "runtime_dist_tree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+      "simulation_suites": 46,
+      "campaign_battles": 30,
+      "campaign_actual_bone_ticks": 133230,
+      "campaign_anomalies": 0,
+      "browser_scenarios_per_device": 26,
+      "browser_devices": [
+        "desktop",
+        "touch"
       ],
-      "development_scene_findings": "Seven real-terrain battles / 30051 ticks had zero required anomalies before a QA Citadel barrage-lock loop exhausted the driver budget. Driver corrected. Restarted six fault probes and seed 4242 passed; complete 30-battle result remains pending.",
-      "handoff": "docs/renderer-runtime-handoff-20261111.md"
+      "native_ipad": "untested; owner directed continuation",
+      "next": "Merge the exact validated PR head after evidence assembly and review."
     },
     {
       "phase": 2,
