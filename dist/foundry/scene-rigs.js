@@ -7,11 +7,12 @@ const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemoth
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer, scene, camera, failed=false, bastionRenderer, bastionEnvironment, bastionHDFailed=false,softwareRenderer=false;
-const combat=new Map();
+const combat=new Map(),previews=new Map();
+let previewTarget;
 const arsenal=window.IronVowProductionArsenal,bastion=window.IronVowBastion;
 let bastionPreview;
 let armory,armoryRequested=false;
-const clearCombat=()=>{for(const entry of combat.values())disposeRig(entry.m);combat.clear()};
+const clearCombat=()=>{for(const entry of combat.values()){entry.m.cont.removeFromParent();disposeRig(entry.m);}combat.clear()};
 let combatScope;
 const studioLights=[[0xffe6bf,-5,7,5],[0x9fc9e0,6,5,-5]];
 function configure(target,size){
@@ -34,7 +35,7 @@ function studioEnvironment(target){
 }
 function hdRenderer(){
  if(!init())return null;
- renderer.setPixelRatio(1);configure(renderer,640);return renderer;
+ return renderer;
 }
 function init(){
  if(renderer||failed)return Boolean(renderer);
@@ -91,21 +92,22 @@ function disposeRig(m){
  else unique.forEach(material=>material.dispose());
 }
 function makeSurface(){
- const surface=document.createElement('canvas');surface.width=surface.height=pixels;return surface;
+ const surface=document.createElement('canvas');surface.width=surface.height=640;return surface;
 }
 function paintRig(m,surface,target=renderer,groundRow=ground){
- const size=surface.width,center=V3().project(camera),offsetY=size*(groundRow-(.5-center.y*.5));
- target.setSize(size,size,false);
- const environment=scene.environment;
- if(target===bastionRenderer)scene.environment=bastionEnvironment;
+ const size=surface.width,center=V3().project(camera),offsetY=Math.round(size*(groundRow-(.5-center.y*.5)));
+ if(!previewTarget){previewTarget=new T.WebGLRenderTarget(size,size);previewTarget.texture.encoding=T.sRGBEncoding;}
+ if(previewTarget.width!==size)previewTarget.setSize(size,size);
+ const pixels=new Uint8Array(size*size*4),previous=target.getRenderTarget(),parent=m.cont.parent;
  scene.add(m.cont);
  try{
-  target.render(scene,camera);
+  target.setRenderTarget(previewTarget);target.render(scene,camera);
   window.IronVowPerformance?.recordRender(target.info);
-  const g=surface.getContext('2d');
-  g.clearRect(0,0,size,size);
-  g.drawImage(target.domElement,0,offsetY,size,size);
- }finally{scene.remove(m.cont);scene.environment=environment}
+  target.readRenderTargetPixels(previewTarget,0,0,size,size,pixels);
+  const g=surface.getContext('2d'),image=g.createImageData(size,size);
+  for(let y=0;y<size;y++)image.data.set(pixels.subarray((size-1-y)*size*4,(size-y)*size*4),y*size*4);
+  g.clearRect(0,0,size,size);g.putImageData(image,0,offsetY);
+ }finally{target.setRenderTarget(previous);scene.remove(m.cont);if(parent)parent.add(m.cont);}
 }
 function projectedAnchor(point){
  const p=point.project(camera);
@@ -124,16 +126,18 @@ function wardenAnchor(point,groundRow){
  }finally{camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}
 }
 function drawBastion(u,t,pose,entry){
- const target=hdRenderer(),size=target.domElement.width;
+ const target=hdRenderer(),size=640;
  if(entry.surface.width!==size)entry.surface.width=entry.surface.height=size;
  const stamp=[bastion.frame(u,t,pose),pose.heading,u.alive,Boolean(armory),u.team,u.weapon,u.melee,u.shield,u.paint,
   size,pose.strikeKind,pose.strikeProgress,pose.weaponKick,pose.weaponSpin,pose.weaponFeed,pose.weaponCharge,u.trim?.s,u.trim?.a,...parts.map(p=>u.hp[p]),u.alive?0:pose.deathAge].join('/');
- if(entry.stamp===stamp)return entry;
+ if(!pose.world&&entry.stamp===stamp)return entry;
  entry.stamp=stamp;
  const {frame,anchors,primary,secondary,shield}=bastion.animate(entry.m,u,t,pose,armory);
  entry.frame=frame;entry.primary=primary;entry.secondary=secondary;entry.shield=shield;
- setCamera(.46);
- paintRig(entry.m,entry.surface,target);
+ if(pose.world){
+  entry.m.cont.position.set(pose.world.x,pose.world.y,pose.world.z);
+  entry.m.cont.scale.setScalar(.9);entry.m.cont.rotation.y=pose.world.face;
+ }else{setCamera(.46);paintRig(entry.m,entry.surface,target);}
  for(const [key,o] of Object.entries(anchors))if(o)entry.anchors[key]=anchor(o);else delete entry.anchors[key];
  return entry;
 }
@@ -150,19 +154,19 @@ function previewBastion(u,angle,previewFrame,previewPose){
 }
 function draw(u,t,pose,scope,model,custom){
  if(!init())return null;
- if(combatScope!==scope){
-  clearCombat();combatScope=scope;
- }
- const facing=u.face??(u.team==='enemy'?1:-1), key=u.id+(pose.cinematic?'|shot|'+facing:'|field');
- let entry=combat.get(key);
+ if(!pose.preview&&combatScope!==scope){clearCombat();combatScope=scope;}
+ const cache=pose.preview?previews:combat;
+
+ const facing=u.face??(u.team==='enemy'?1:-1),key=pose.preview?u.id:u.id+(pose.cinematic?'|shot|'+facing:'|field');
+ let entry=cache.get(key);
  if(custom==='bastion'&&bastion){
-  if(!entry){const m=bastion.build();if(!m)return null;entry={m,surface:makeSurface(),anchors:{}};combat.set(key,entry)}
+  if(!entry){const m=bastion.build();if(!m)return null;entry={m,surface:makeSurface(),anchors:{}};cache.set(key,entry)}
   return drawBastion(u,t,pose,entry);
  }
  if(!entry){
   const m=custom==='warden'?window.IronVowWardenRig?.build(u.team,u.paint):buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
   if(!m)return null;
-  entry={m,surface:makeSurface(),stamp:null,anchors:{}};combat.set(key,entry);
+  entry={m,surface:makeSurface(),stamp:null,anchors:{}};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
@@ -170,7 +174,7 @@ function draw(u,t,pose,scope,model,custom){
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
  const stamp=[pose.heading,Boolean(armory),u.alive,u.shield,pose.death,pose.kneel,pose.impact,pose.cycle,pose.aim,pose.brace,pose.recoil,pose.weaponKick,pose.weaponSpin,pose.weaponFeed,pose.weaponCharge,pose.primePhase,pose.primeProgress,pose.strikeProgress,pose.strikeKind,Boolean(u.motion),artillery,mortarAge,...parts.map(p=>u.hp[p])].join('/');
- if(entry.stamp===stamp)return entry;
+ if(!pose.world&&entry.stamp===stamp)return entry;
  entry.time=t;entry.stamp=stamp;entry.previousAnchors={...entry.anchors};
  for(const part of parts){
   if(!u.max[part])continue;
@@ -178,27 +182,27 @@ function draw(u,t,pose,scope,model,custom){
   setPartState(m,part,hp<=0?2:hp<u.max[part]/2?1:0);
  }
  if(!u.alive&&u.downReason!=='pilot'&&pose.explosion>=.65&&!m.wrecked){wreckMech(m);m.wrecked=true}
- const face=pose.heading??facing*Math.PI/4, aim=pose.aim;
- m.yaw=face;
- const paired=u.motion?.stepBeats!=null;
- const step=!pose.reducedMotion&&(paired||pose.phase>0&&u.motion);
+ const world=pose.world,face=world?.face??pose.heading??facing*Math.PI/4,aim=pose.aim;
+ if(!world)m.yaw=face;else{m.scale=.9;m.cont.scale.setScalar(.9);}
+ const paired=!world&&u.motion?.stepBeats!=null;
+ const step=!pose.reducedMotion&&Boolean(world?u.motion:paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;
  const melee=Boolean(pose.strikeKind), meleeAge=pose.strikeProgress<=.7
   ?pose.strikeProgress/.7*MEL.hit:MEL.hit+(pose.strikeProgress-.7)/.3*(MEL.end-MEL.hit);
  const lunge=melee?lungeK(meleeAge)*1.25:0;
  const travel=step?(pose.phase-.5)*1.8:0;
- const pos=paired?V3((u.vx-u.vz)*1.8*Math.SQRT1_2,0,(u.vx+u.vz)*1.8*Math.SQRT1_2):
+ const pos=world?V3(world.x,0,world.z):paired?V3((u.vx-u.vz)*1.8*Math.SQRT1_2,0,(u.vx+u.vz)*1.8*Math.SQRT1_2):
   V3(Math.sin(face)*(lunge+travel),0,Math.cos(face)*(lunge+travel));
  if(paired&&!m.wasMoving)m.init=false;
- if(!step&&m.wasMoving){
+ if(!world&&!step&&m.wasMoving){
   for(const L of m.legs){L.swing=false;L.settle=null;L.planted.sub(m.travelRoot??m.cont.position);L.foot.copy(L.planted)}
  }
  m.wasMoving=Boolean(step);
  m.travelRoot=paired?pos:null;
  m.aim.until=aim>.01?t+.01:-1;m.aim.blend=aim;
  // Aim at chest height of a like-sized target: level for every rig, including the larger live Warden.
- m.aim.point.set(Math.sin(face)*20,4*(m.scale||1),Math.cos(face)*20);
+ if(world)m.aim.point.copy(world.aim);else m.aim.point.set(Math.sin(face)*20,4*(m.scale||1),Math.cos(face)*20);
  m.recoil=Math.abs(pose.recoil)*.58;
  m.melee=melee?{age:meleeAge,thrust:pose.strikeKind==='pike'}:null;
  if(custom==='warden')window.IronVowWardenRig.meleeStyle(m,pose.strikeKind||u.melee);
@@ -207,9 +211,9 @@ function draw(u,t,pose,scope,model,custom){
  // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
  m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
  m.primaryWeapon=entry.primary&&u.hp.right>0?entry.primary:null;
- animateMech(m,{pos,face,heading:face,moving:Boolean(step),speed:2.6,stepLen:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
+ animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
-  armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:!step,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
+  armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?false:!step,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
  if(custom==='warden')window.IronVowWardenRig.afterAnimate(m);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
@@ -218,7 +222,7 @@ function draw(u,t,pose,scope,model,custom){
   VC.solveLeg(m.rig,m.dims,lead,target,-primeLift*.32);
  }
  // The battle tile is already moving on the 2D board. Use the rig's travel only to solve its planted gait.
- if(step)m.cont.position.set(0,0,0);
+ if(!world&&step)m.cont.position.set(0,0,0);
  if(armory&&!entry.armed){
   entry.primary=arsenal.mount(armory,u.weapon,m.rig.arms.R.so);
   entry.secondary=arsenal.mount(armory,u.melee,m.rig.arms.L.so);
@@ -245,17 +249,13 @@ function draw(u,t,pose,scope,model,custom){
   arsenal.animate(entry.secondary,pose);
  }
  m.cont.updateMatrixWorld(true);
- setCamera(.46);
- // The Warden renders on the HD target into a frame WARDEN_SPAN times taller, so overhead swings stay inside the
- // surface; the field draws it with the same span and its anchors are mapped back into the unit's bounds.
- const tall=custom==='warden',target=tall?hdRenderer()||renderer:renderer,groundRow=tall?(ground-(1-WARDEN_SPAN)/2)/WARDEN_SPAN:ground;
- if(tall){
-  const size=target.domElement.width;
-  if(entry.surface.width!==size)entry.surface.width=entry.surface.height=size;
-  camera.left=camera.bottom=-worldSpan*WARDEN_SPAN/2;camera.right=camera.top=worldSpan*WARDEN_SPAN/2;camera.updateProjectionMatrix();
+ if(!world){
+  setCamera(.46);
+  const tall=custom==='warden',target=renderer,groundRow=tall?(ground-(1-WARDEN_SPAN)/2)/WARDEN_SPAN:ground;
+  if(tall){camera.left=camera.bottom=-worldSpan*WARDEN_SPAN/2;camera.right=camera.top=worldSpan*WARDEN_SPAN/2;camera.updateProjectionMatrix();}
+  try{paintRig(m,entry.surface,target,groundRow);}finally{camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}
  }
- try{paintRig(m,entry.surface,target,groundRow);}
- finally{if(tall){camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}}
+ const tall=custom==='warden',groundRow=tall?(ground-(1-WARDEN_SPAN)/2)/WARDEN_SPAN:ground;
  entry.span=tall?WARDEN_SPAN:undefined;
  const r=m.rig,mounts=mountPoints(m),primary=entry.primary,secondary=entry.secondary;
  for(const [name,object] of Object.entries({...mounts,body:r.spine,pilot:r.neck,
@@ -279,5 +279,15 @@ function withFallback(render){
 function liveWardenAllowed(){return true;}
 function wardenReady(){return !failed&&liveWardenAllowed()&&init()&&liveWardenAllowed()&&Boolean(window.IronVowWardenRig?.ready());}
 function metrics(){return window.IronVowRenderer.metrics();}
-window.IronVowFoundry={metrics,draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
+function preview(u,model,custom,angle=0){
+ const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
+ const key=JSON.stringify([u.frame,u.paint,u.trim,u.weapon,u.melee,u.shield,u.upgrade,hp,angle]);
+ if(previews.has(key))return previews.get(key);
+ const unit={...u,id:key,index:u.index||0,team:u.team||'ally',alive:true,hp,max};
+ const pose={preview:true,heading:[-.68,.68,2.46,-2.46][angle]||-.68,reducedMotion:true,phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0};
+ const entry=draw(unit,0,pose,null,model,custom);
+ if(entry){entry.url=entry.surface.toDataURL('image/png');if(previews.size>16){const [first,value]=previews.entries().next().value;disposeRig(value.m);previews.delete(first);}}
+ return entry;
+}
+window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),entry:id=>combat.get(id+'|field'),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
 })();

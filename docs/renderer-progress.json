@@ -16,18 +16,19 @@
       "phase": 0,
       "issue": 10,
       "pr": 7,
-      "status": "software verification complete; reviewed evidence ready for merge",
+      "status": "merged in PR #7",
       "evidence": "design/baseline/reviewed-20261111/manifest.json",
       "stills": 312,
       "filmstrips": 26,
       "simulation_suites": 47,
-      "native_ipad": "untested; owner directed continuation"
+      "native_ipad": "untested; owner directed continuation",
+      "merge_commit": "bfc45fbd055c897ec04f88d1a8408b9e31be5b41"
     },
     {
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "implementation started; not merge-ready",
+      "status": "in progress: shared scene prototype; full phase checks pending",
       "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase."
     },
     {

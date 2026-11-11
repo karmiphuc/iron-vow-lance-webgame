@@ -2550,6 +2550,7 @@ async function moveUnit(u,x,z){
  u.walkCount=gaitBase+steps.length;
 }
 async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
+ window.IronVowScene?.aimAt(a,t,part);
  if(t.kind)part='body';
  if(attackObstruction(a,t,w))return;
  const ownsCamera=sequence===undefined&&!reaction;
@@ -3020,7 +3021,7 @@ function terrainHeight(x,z){
  return TERRAIN_RISE*((1-fz)*((1-fx)*height(ax,az)+fx*height(ax+1,az))+
   fz*((1-fx)*height(ax,az+1)+fx*height(ax+1,az+1)));
 }
-function projectPlane(x,y,z){return{x:origin.x+(x-z)*scale*.866,y:origin.y+(x+z)*scale*.42-y*scale}}
+function projectPlane(x,y,z){if(battle&&window.IronVowScene&&!window.IronVowBillboards?.drawing)return window.IronVowScene.project(x,y,z);return{x:origin.x+(x-z)*scale*.866,y:origin.y+(x+z)*scale*.42-y*scale}}
 function project(x,y,z){return projectPlane(x,y+terrainHeight(x,z),z)}
 function polygon(points,fill,stroke,width=.7){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke()}}
 function tileCorners(x,z,y){return [projectPlane(x-.5,y,z-.5),projectPlane(x+.5,y,z-.5),projectPlane(x+.5,y,z+.5),projectPlane(x-.5,y,z+.5)]}
@@ -5150,6 +5151,7 @@ function bindTacticalMap(){
  };
 }
 function panField(dx,dy){
+ if(window.IronVowScene){window.IronVowScene.pan(dx,dy);hover=moveTap=null;return;}
  const horizontal=dx/(scale*.866),vertical=dy/(scale*.42),{width,depth}=battle.size;
  fieldCamera.x=Math.max(-.5,Math.min(width-.5,fieldCamera.x-(horizontal+vertical)/2));
  fieldCamera.z=Math.max(-.5,Math.min(depth-.5,fieldCamera.z-(vertical-horizontal)/2));
@@ -5254,52 +5256,15 @@ function drawMovePreview(spot,shots){
  ctx.restore();
 }
 function battlefield(t){
- const push=activeCinematic?smoothRange(0,.22,t-activeCinematic.start):0;
- setFieldProjection(push);
+ setFieldProjection();for(const unit of battle.units)advanceUnitAnimation(unit,t,frameDt);
+ window.IronVowScene.render(t,frameDt);
  const u=current(),reachable=u&&battle.phase==='player'&&!battle.busy&&action==='move'?paths(u):null;
- const moveTile=reachable&&!targetPanelOpen&&$('#modal').hidden?(moveTap??hover):null;
- const moveCost=moveTile&&reachable.get(moveTile.x+','+moveTile.z);
- const preview=moveCost>0?previewMoveShots(u,moveTile,moveCost):null;
- showMovePreview(preview?moveTile:null,preview);
- const jumpMode=u&&battle.phase==='player'&&!battle.busy&&action==='jumpjet';
- const targetingWeapon=u&&!spent(u)&&battle.phase==='player'&&!battle.busy&&action!=='move'&&!jumpMode?selectedWeapon(u):null;
- const targetingRange=targetingWeapon?weaponRange(targetingWeapon,u.training):0;
- ctx.save();if(!reducedMotion&&shake>.15){ctx.translate(Math.sin(t*110)*shake,Math.cos(t*93)*shake*.5)}
- drawTerrain(battle.field,(x,z)=>{
-  const key=x+','+z;
-  if(jumpMode&&jumpjetLanding(u,x,z))tile(x,z,'#619fcb44','#90dcff',.009,1.05);
-  if(reachable?.get(key)>0){
-   const paid=reachable.get(key)>freeMovement(u);
-   tile(x,z,paid?'#cc9b492b':'#77b4c533',paid?'#e3b875ce':'#9ccdda80',.008,paid?1.15:.7);
-   if(inCover({x,z}))drawCoverMarker(x,z);
-  }
-  if(targetingWeapon&&!battle.cover.has(key)){
-   const range=distance(u,{x,z});
-   if(range>0&&range<=targetingRange&&!attackObstruction(u,{x,z},targetingWeapon))targetingTile(x,z,hover?.x===x&&hover?.z===z);
-  }else if(!preview&&!battle.busy&&!jumpMode&&hover?.x===x&&hover?.z===z)tile(x,z,'#e7be6e3c','#eac07e',.016);
- });
- for(const unit of battle.units){advanceUnitAnimation(unit,t,frameDt);if(unit.team==='ally'&&unit.alive&&!spent(unit))tile(unit.vx,unit.vz,selected===unit.index?'#e6b76a2d':'#a0c6d018',selected===unit.index?'#e6b76a':'#83b0c080',.02);else if(unit.alive&&unit.id===lockedTarget&&!battle.busy&&!preview){
-  if(targetingWeapon&&!attackObstruction(u,unit,targetingWeapon)&&distance(u,unit)<=combatRange(u,unit,targetingWeapon))targetingTile(unit.vx,unit.vz,true);
-  else tile(unit.vx,unit.vz,'#d8877330','#d89279',.02,1.35);
- }}
- if(preview)drawMovePreview(moveTile,preview.shots);
- for(const unit of battle.units){
-  const lock=unit.mechState?.lock;
-  if(!unit.alive||!lock)continue;
-  tile(lock.x,lock.z,'#d8904433','#ffc381',.035,2);
-  const p=project(lock.x,0,lock.z);
-  ctx.fillStyle='#fff0cc';ctx.font='700 10px Inter,Arial,sans-serif';ctx.textAlign='center';
-  ctx.fillText('BARRAGE',p.x,p.y+9);
- }
- const entities=[...Array.from(battle.cover,key=>{const[x,z]=key.split(',').map(Number);return{x,z,type:'cover',model:battle.field.cover[key]}}),...battle.units.map(u=>({x:u.vx,z:u.vz,type:'unit',u}))].sort((a,b)=>(a.x+a.z-(a.u&&!a.u.alive?2:0))-(b.x+b.z-(b.u&&!b.u.alive?2:0)));
- for(const e of entities){
-  const p=project(e.x,0,e.z);
-  if(p.x<-scale*2||p.x>W+scale*2||p.y<-scale||p.y>H+scale*4)continue;
-  if(e.type==='cover')drawCover(e.x,e.z,e.model);
-  else drawUnit(e.u,t);
- }
- drawEffects(t);ctx.restore();fieldAtmosphere(t,battle.field);
- if(['warden','kestrel','basilisk','concrete','barricade'].some(k=>!imageReady(artImages[k]))){ctx.font='11px Inter,Arial,sans-serif';ctx.fillStyle='#e7d5b5';ctx.textAlign='center';ctx.fillText('PREPARING BATTLEFIELD ART…',W/2,H*.6)}
+ const moveTile=reachable&&!targetPanelOpen&&$('#modal').hidden?(moveTap??hover):null,cost=moveTile&&reachable.get(moveTile.x+','+moveTile.z);
+ const preview=cost>0?previewMoveShots(u,moveTile,cost):null;showMovePreview(preview?moveTile:null,preview);
+ for(const unit of battle.units)if(unit.alive)drawUnitReadout(unit,(unit.kind?1.2:2.35)+jumpjetHeight(unit,t));
+ if(reachable)for(const [key,cost] of reachable)if(cost>0){const [x,z]=key.split(',').map(Number);if(inCover({x,z}))drawCoverMarker(x,z);}
+ if(cost>0){const p=project(moveTile.x,.15,moveTile.z);ctx.fillStyle='#0b141ddd';ctx.fillRect(p.x-28,p.y-26,56,18);ctx.fillStyle='#bfe4ee';ctx.font='600 11px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(cost+' AP',p.x,p.y-13);}
+ drawEffects(t);
 }
 function drawCinematicFire(sequence,actor,pane,t){
  const profile=attackProfile(sequence.actor,sequence.w.id),age=t-(sequence.fireAt??-100);
@@ -5453,24 +5418,11 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  ctx.strokeRect(pane.x+.5,pane.y+.5,pane.w-1,pane.h-1);
 }
 function drawAttackCamera(t){
- const sequence=activeCinematic;
- const stacked=W<640&&H>W,margin=stacked?12:Math.max(18,W*.095),gap=stacked?6:8;
- const width=W-2*margin,height=stacked?H*.69:Math.min(H*.61,width*.42);
- const y=Math.max(stacked?88:50,(H-height)*.51);
- const panes=stacked?
-  [{x:margin,y,w:width,h:(height-gap)/2},{x:margin,y:y+(height+gap)/2,w:width,h:(height-gap)/2}]:
-  [{x:margin,y,w:(width-gap)/2,h:height},{x:margin+(width+gap)/2,y,w:(width-gap)/2,h:height}];
- ctx.save();
- ctx.globalAlpha=smoothRange(.07,.29,t-sequence.start);
- ctx.fillStyle='#060d15de';ctx.fillRect(0,0,W,H);
- if(sequence.reaction){
-  drawAttackPane(sequence,panes[0],sequence.target,false,t);
-  drawAttackPane(sequence,panes[1],sequence.actor,true,t);
- }else{
-  drawAttackPane(sequence,panes[0],sequence.actor,true,t);
-  drawAttackPane(sequence,panes[1],sequence.target,false,t);
- }
- ctx.restore();
+ const sequence=activeCinematic;if(!sequence)return;
+ ctx.save();ctx.fillStyle='#101820e8';ctx.fillRect(24,H-116,Math.min(W-48,720),44);
+ ctx.fillStyle='#e9bf7d';ctx.textAlign='left';ctx.font='700 12px Inter,Arial,sans-serif';
+ ctx.fillText(sequence.actor.name+' / '+sequence.w.name,38,H-98);
+ ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';ctx.fillText(sequence.target.name+' · '+(sequence.result||sequence.part.toUpperCase()),38,H-81);ctx.restore();
 }
 let canvasMode=null,lastHangarPaint=-Infinity;
 function draw(ts){
@@ -5480,7 +5432,7 @@ function draw(ts){
  const repaint=mode==='battle'||mode!==canvasMode||(mode==='hangar'&&ts-lastHangarPaint>=32);
  if(repaint){
   ctx.setTransform(DPR,0,0,DPR,0,0);
-  background();
+  if(battle)ctx.clearRect(0,0,W,H);else{window.IronVowRenderer?.show(false);background();}
   if(battle){battlefield(clock);if(activeCinematic)drawAttackCamera(clock)}
   else if(mode==='hangar'){hangar(clock);lastHangarPaint=ts}
   canvasMode=mode;
@@ -5489,6 +5441,7 @@ function draw(ts){
 }
 canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();zoomField(e.deltaY<0?1.12:1/1.12)},{passive:false});
 function screenTile(clientX,clientY){
+ if(window.IronVowScene)return window.IronVowScene.screenTile(clientX,clientY);
  const sx=(clientX-origin.x)/(scale*.866),sy=(clientY-origin.y)/(scale*.42);
  const flat={x:Math.round((sx+sy)/2),z:Math.round((sy-sx)/2)};
  if(!battle.field.cells)return flat;
@@ -5524,6 +5477,7 @@ function bastionContains(u,x,y){
  return data[(Math.floor(py*height)*width+Math.floor(px*width))*4+3]>35;
 }
 function pick(clientX,clientY){
+ if(window.IronVowScene)return window.IronVowScene.pick(clientX,clientY);
  const units=battle.units.filter(u=>u.alive&&(u.team!=='ally'||!spent(u))).sort((a,b)=>(b.vx+b.vz)-(a.vx+a.vz));
  for(const u of units){
  if(!u.kind&&bastionRig(u)){if(bastionContains(u,clientX,clientY))return u;continue}
