@@ -1,6 +1,6 @@
 # Phase 2 combat visual evidence
 
-The first thirteen nonairborne images use detached production source `6786df4` (dist tree `76ac81ff753ae6ebbfa45a093f794588cf919764`). Remaining coverage uses detached source `9af2015` (dist tree `06b72b8f3ed6ed17d9bedc9723639b339d375d49`) served at local port 5179, including the corrected airborne ankle motion. Each case and image records its own source and dist tree; the retained historical images are not relabeled as the newer source. The capture runner is `qa/capture-phase2.cjs`; its SHA-256 and the served document hash are recorded in `design/phase2/combat/manifest.json`. The production tree stays frozen independently of ongoing QA changes.
+The first thirteen nonairborne images use detached production source `6786df4` (dist tree `76ac81ff753ae6ebbfa45a093f794588cf919764`). Remaining coverage uses detached source `f68b5df` (dist tree `613bc118b314340e3ab63d5101a27c89a2c98080`) served at local port 5179, including corrected airborne ankle motion and the close-range geometric barrel alignment fix. Each case and image records its own source and dist tree; the retained historical images are not relabeled as the newer source. The capture runner is `qa/capture-phase2.cjs`; its SHA-256 and the served document hash are recorded in `design/phase2/combat/manifest.json`. The production tree stays frozen independently of ongoing QA changes.
 
 Open `design/phase2/combat/contact-sheet.html` to review actual-command frames. Each linked WebP retains full viewport resolution. The `filmstrips/` directory contains labeled derivative overview strips. Refer to the manifest status and individual case records for completed coverage; an interrupted batch is not a pass.
 
@@ -31,7 +31,7 @@ The action fixtures intentionally differ from Phase 0's static preset fixtures, 
 
 ## Resume commands
 
-Keep the detached `9af2015` source server running on port 5179, and grant the capture job a GPU slot before resuming:
+Keep the detached `f68b5df` source server running on port 5179, and grant the capture job a GPU slot before resuming:
 
 ```sh
 IRON_VOW_URL=http://127.0.0.1:5179/ \
