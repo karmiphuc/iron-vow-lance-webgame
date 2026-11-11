@@ -85,14 +85,14 @@ module.exports=async function checkAero({page,mobile,origin,tap}){
  await page.waitForFunction(()=>battle?.phase==='player'&&current()?.frame===AERO_FRAME&&document.querySelector('#modal').hidden);
  const start=await page.evaluate(()=>{
   battle.field.cover={...battle.field.cover,'2,16':'ridge-rock'};
-  battle.cover.add('2,16');battle.cover.delete('4,16');delete battle.field.cover['4,16'];IronVowScene.clear();
+  battle.cover.add('2,16');battle.cover.delete('4,16');delete battle.field.cover['4,16'];fieldCamera.x=4;fieldCamera.z=16;IronVowScene.clear();
   return {ap:current().ap,move:freeMovement(current())};
  });
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  await tap('#jumpjet');
  const landing=await page.evaluate(()=>{
   IronVowScene.render(clock,1);if(!jumpjetLanding(current(),4,16))throw Error('The jumpjet fixture must have a legal landing');
-  for(const ox of [.06,-.06,0])for(const oz of [.06,-.06,0]){const raw=IronVowScene.projectWorld(IronVowScene.world(4+ox,16+oz)),p={x:Math.round(raw.x),y:Math.round(raw.y)},tile=screenTile(p.x,p.y);if(tile.x===4&&tile.z===16&&document.elementFromPoint(p.x,p.y)===canvas)return p;}
+  for(const ox of [0,-.2,.2,-.4,.4])for(const oz of [0,-.2,.2,-.4,.4]){const raw=IronVowScene.projectWorld(IronVowScene.world(4+ox,16+oz)),p={x:Math.round(raw.x),y:Math.round(raw.y)},tile=screenTile(p.x,p.y);if(tile.x===4&&tile.z===16&&document.elementFromPoint(p.x,p.y)===canvas)return p;}
   throw Error('No exposed raycastable jumpjet landing point');
  });
  if(mobile)await page.touchscreen.tap(landing.x,landing.y);
