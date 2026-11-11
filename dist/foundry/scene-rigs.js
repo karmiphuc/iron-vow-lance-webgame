@@ -125,6 +125,32 @@ function wardenAnchor(point,groundRow){
 function aimMounted(m,weapon,target,weight,node){
  if(!weapon?.muzzle||weight<=0)return;
  const wrist=node||m.rig.arms.R.wr,worldQ=new T.Quaternion(),parentQ=new T.Quaternion(),delta=new T.Quaternion();
+ // A long gun can extend past a nearby target. Pull the articulated arm back
+ // around its shoulder until the target lies beyond the muzzle's pivot radius;
+ // the weapon stays attached to the hand throughout the adjustment.
+ const shoulder=!node&&m.rig?.arms.R.sh;
+ if(shoulder){
+  m.cont.updateMatrixWorld(true);
+  let pivot=wrist.getWorldPosition(V3());const muzzle=weapon.muzzle.getWorldPosition(V3()),radius=muzzle.distanceTo(pivot)+.05;
+  if(pivot.distanceTo(target)<radius){
+   const spine=m.rig.spine,shoulderPoint=shoulder.getWorldPosition(V3()),armLength=pivot.distanceTo(shoulderPoint);
+   if(spine&&shoulderPoint.distanceTo(target)+armLength<radius){
+    const origin=spine.getWorldPosition(V3()),lever=shoulderPoint.clone().sub(origin),away=origin.clone().sub(target);
+    if(lever.lengthSq()>1e-8&&away.lengthSq()>1e-8){
+     const turn=new T.Quaternion().setFromUnitVectors(lever.clone().normalize(),away.normalize()),angle=2*Math.acos(Math.min(1,Math.abs(turn.w))),limit=angle?Math.min(1,.9/angle):0,base=spine.quaternion.clone();
+     const place=f=>{spine.quaternion.copy(base);spine.getWorldQuaternion(worldQ);spine.parent.getWorldQuaternion(parentQ);delta.identity().slerp(turn,f);spine.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));m.cont.updateMatrixWorld(true);return shoulder.getWorldPosition(V3()).distanceTo(target)+armLength;};
+     if(place(limit)>=radius){let low=0,high=limit;for(let i=0;i<16;i++){const mid=(low+high)/2;if(place(mid)>=radius)high=mid;else low=mid;}place(high*Math.min(1,weight));}else place(limit*Math.min(1,weight));
+     pivot=wrist.getWorldPosition(V3());
+    }
+   }
+   const origin=shoulder.getWorldPosition(V3()),arm=pivot.clone().sub(origin),away=origin.clone().sub(target);
+   if(arm.lengthSq()>1e-8&&away.lengthSq()>1e-8){
+    const turn=new T.Quaternion().setFromUnitVectors(arm.clone().normalize(),away.normalize()),base=shoulder.quaternion.clone();
+    const place=f=>{shoulder.quaternion.copy(base);shoulder.getWorldQuaternion(worldQ);shoulder.parent.getWorldQuaternion(parentQ);delta.identity().slerp(turn,f);shoulder.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));m.cont.updateMatrixWorld(true);return wrist.getWorldPosition(V3()).distanceTo(target);};
+    if(place(1)>=radius){let low=0,high=1;for(let i=0;i<16;i++){const mid=(low+high)/2;if(place(mid)>=radius)high=mid;else low=mid;}place(high*Math.min(1,weight));}else place(Math.min(1,weight));
+   }
+  }
+ }
  // Rotate the whole muzzle offset as well as its axis. Aiming the axis alone
  // repeatedly can oscillate when the target is close to the end of the gun.
  for(let i=0;i<3;i++){

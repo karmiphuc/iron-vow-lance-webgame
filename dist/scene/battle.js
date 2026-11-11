@@ -1,7 +1,7 @@
 /* Shared battle scene. Game state owns rules and movement; this module owns presentation. */
 (function(root){
 'use strict';
-const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=6.8,HEIGHT=3.4;
+const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=7.4,HEIGHT=3.4;
 const LIVE=new Set([0,5,6,7,8,9,10,12]);
 let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let cameraReady=false,lightningAt=4,lightning=0;
