@@ -9,7 +9,7 @@ const fetchPublicAsset=promisify(execFile),referenceAssets=new Map();
 function options(args){
  const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
  for(let i=0;i<args.length;i++){
-  const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}
+  const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}if(flag==='--details'){result.details=true;continue;}
   if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset','--asset-delay-ms'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
   result[flag.slice(2)]=args[++i];
  }
@@ -22,7 +22,7 @@ function options(args){
  return result;
 }
 async function capture(config){
- const selected=presets.filter(p=>!config.preset||p.id===config.preset);
+ const selected=presets.filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
  const plan={viewports,presets:selected};
  if(config.plan){console.log(JSON.stringify(plan,null,2));return;}
  if(!config.origin)throw Error('Supply --origin from your supported preview; this runner never starts a server');
