@@ -14,9 +14,9 @@ assert.equal(sparks.length,13,'Reference rifle spray emits thirteen actual poole
 fx.update(.15);
 for(const spark of sparks){assert.ok(spark.position.x>0,'Every spark flies back toward the shooter');assert.ok(spark.position.y>=groundAt(spark.position.x,spark.position.z)+.029,'Sparks bounce on local elevated terrain');}
 fx.arc(new THREE.Vector3(0,3,0),new THREE.Vector3(3,4,0),.2,1);fx.update(.01);
-const arc=scene.children.find(o=>o.isGroup&&o.visible&&o.children.length===14);
-assert.ok(arc,'One real seven-segment core/halo arc is visible');
-for(const segment of arc.children){assert.equal(segment.material.depthTest,true);assert.equal(segment.material.polygonOffsetFactor,0);assert.equal(segment.material.polygonOffsetUnits,-1);assert.ok(segment.scale.z>0);}
+const arc=scene.children.find(o=>o.isGroup&&o.visible&&o.children.length===2&&o.children.every(c=>c.geometry?.attributes?.position?.count===48));
+assert.ok(arc,'The approved wide and thin plasma ribbons are visible');
+for(const segment of arc.children){assert.equal(segment.material.depthTest,true);assert.equal(segment.material.polygonOffsetFactor,0);assert.equal(segment.material.polygonOffsetUnits,-1);assert.ok(Array.from(segment.geometry.attributes.position.array).every(Number.isFinite));}
 let arrivals=0;
 const endpoint=new THREE.Vector3(3,2.5,4);
 fx.missile(new THREE.Vector3(0,3,0),endpoint,4,.4,at=>{arrivals++;assert.ok(at.distanceTo(endpoint)<1e-8);});
@@ -30,4 +30,4 @@ const catalog=fs.readFileSync(path.join(root,'game.js'),'utf8').split('const WEA
 const ids=[...catalog.matchAll(/\bid:'([^']+)'/g)].map(m=>m[1]);assert.equal(ids.length,34);IronVowWeaponFX.assertCatalog(ids.map(id=>({id})));
 for(const id of ids)assert.ok(['rifle','shotgun','missile','rail','blade'].includes(IronVowWeaponFX.get(id).archetype));
 assert.throws(()=>IronVowWeaponFX.get('unmapped-test-weapon'),/Missing 3D weapon profile/);
-console.log('PASS real reference FX pools, directional spray, elevated spark floor, final arc depth bias, single missile arrival, reusable lights, exact owned-resource disposal and all 34 weapon mappings (GPU/action integration pending)');
+console.log('PASS real reference FX pools, directional spray, elevated spark floor, plasma ribbons with final depth bias, single missile arrival, reusable lights, exact owned-resource disposal and all 34 weapon mappings (GPU/action integration pending)');
