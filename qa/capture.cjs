@@ -21,6 +21,16 @@ function options(args){
  }
  return result;
 }
+async function checkSavedWebgl(file){
+ const {createCanvas,loadImage}=require('@napi-rs/canvas');
+ const image=await loadImage(file),sample=createCanvas(32,32),g=sample.getContext('2d');
+ // Exclude the HTML controls, which remain visible when the WebGL canvas is black.
+ g.drawImage(image,image.width*.4,image.height*.22,image.width*.5,image.height*.5,0,0,32,32);
+ const pixels=g.getImageData(0,0,32,32).data;let bright=0;
+ for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
+ if(bright<64)throw Error('Rig Bench final PNG is blank: '+bright+'/1024 non-black viewport samples');
+ return bright;
+}
 async function capture(config){
  const selected=presets.filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
  const plan={viewports,presets:selected};
@@ -53,7 +63,7 @@ async function capture(config){
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
-   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
+   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64));
    if(retained&&fs.existsSync(path.join(output,retained.file))){
     const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
     if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
@@ -164,15 +174,7 @@ async function capture(config){
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
     if(webglSample){
-     const {createCanvas,loadImage}=require('@napi-rs/canvas');
-     const image=await loadImage(path.join(output,filename)),sample=createCanvas(32,32),g=sample.getContext('2d');
-     // Exclude the HTML header/build panel/dock: a black WebGL canvas can still
-     // produce a colourful full-page PNG because its HTML controls render.
-     g.drawImage(image,image.width*.4,image.height*.22,image.width*.5,image.height*.5,0,0,32,32);
-     const pixels=g.getImageData(0,0,32,32).data;let bright=0;
-     for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
-     if(bright<64)throw Error('Rig Bench final PNG is blank: '+bright+'/1024 non-black viewport samples');
-     webglSample.screenshot_non_black_samples=bright;
+     webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
     }
     manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
@@ -196,4 +198,4 @@ async function capture(config){
  console.log('Captured '+manifest.captures.length+' views in '+output);
 }
 if(require.main===module)capture(options(process.argv.slice(2))).catch(error=>{console.error(error);process.exitCode=1;});
-module.exports={options,capture};
+module.exports={options,capture,checkSavedWebgl};
