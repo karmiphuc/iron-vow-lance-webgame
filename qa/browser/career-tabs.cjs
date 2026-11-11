@@ -63,6 +63,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   await tap('[data-deploy="0"]');
   await tap('#modal-1');
   await tap('#modal-0');
+  assert.ok((await saved(page)).sortie,'deployment is durably saved before the other tab reloads');
   await reloadCareer(other);
   await other.locator('#brace').waitFor();
   await tap('#brace');
