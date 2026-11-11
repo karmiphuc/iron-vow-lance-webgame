@@ -55,6 +55,10 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
  });
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  for(let i=0;i<4;i++)await tap('#map-zoom-out');
+ // A legal range-10 lane can extend outside a narrow phone viewport even at
+ // minimum zoom. Use the actual Overview control to expose both units.
+ await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);
+ await page.evaluate(()=>IronVowScene.render(clock,1));
  const target=await page.evaluate(()=>{
   const u=current(),{foe}=terrainQA;
   const ground=project(foe.x,0,foe.z),p={x:Math.round(ground.x),y:Math.round(ground.y)};
