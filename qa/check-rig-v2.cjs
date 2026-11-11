@@ -12,7 +12,7 @@ function readGLB(file) {
   if(20+length>b.length) throw Error(`${file}: truncated JSON chunk`);
   return JSON.parse(b.subarray(20,20+length).toString('utf8'));
 }
-function renderedTriangles(g) {
+function renderedTriangles(g, sceneNodes = new Set()) {
   const nodes=g.nodes||[], meshes=g.meshes||[], accessors=g.accessors||[];
   const scenes=g.scenes||[];
   if (!scenes.length || !scenes[g.scene??0]) throw Error('Missing default scene');
@@ -20,6 +20,7 @@ function renderedTriangles(g) {
   function visit(i, ancestors) {
     if(!nodes[i]) throw Error(`Invalid node index ${i}`);
     if(ancestors.has(i)) throw Error(`Node cycle at ${i}`);
+    sceneNodes.add(i);
     const n=nodes[i], next=new Set(ancestors).add(i);
     if(n.mesh!==undefined) {
       const mesh=meshes[n.mesh]; if(!mesh) throw Error(`Invalid mesh index ${n.mesh}`);
@@ -39,6 +40,8 @@ function renderedTriangles(g) {
 }
 function validate(g, weapons=[]) {
   const errors=[], notes=[]; const nodes=g.nodes||[], meshes=g.meshes||[];
+  const sceneNodes=new Set(), triangles=renderedTriangles(g,sceneNodes);
+  if(![...sceneNodes].some(i=>nodes[i].mesh!==undefined)) errors.push('default scene contains no mesh');
   const byName=new Map(); nodes.forEach((n,i)=>{if(n.name) {if(byName.has(n.name)) errors.push(`duplicate node ${n.name}`); else byName.set(n.name,i);}});
   const root=nodes[byName.get('root')];
   for(const d of dims) if(root?.extras?.[d]===undefined || root.extras[d]===null) errors.push(`root missing dimension ${d}`);
@@ -46,7 +49,10 @@ function validate(g, weapons=[]) {
   const quad=root?.extras?.quad===true || root?.extras?.quad===1;
   const chains=quad ? ['LF','RF','LB','RB'].map(s=>['mount','hip','knee','ankle'].map(x=>`${x}.${s}`)) : ['L','R'].map(s=>['hip','knee','ankle'].map(x=>`${x}.${s}`));
   const arms=['L','R'].map(s=>['shoulder','elbow','wrist','socket'].map(x=>`${x}.${s}`));
-  for(const name of [...common,...chains.flat()]) if(!byName.has(name)) errors.push(`missing node ${name}`);
+  for(const name of [...common,...chains.flat()]) {
+    if(!byName.has(name)) errors.push(`missing node ${name}`);
+    else if(!sceneNodes.has(byName.get(name))) errors.push(`node ${name} is not in default scene`);
+  }
   function descends(parent, child) {
     const queue=[parent], seen=new Set();
     while(queue.length) {const i=queue.pop(); if(seen.has(i)) continue; seen.add(i); for(const c of nodes[i]?.children||[]) {if(c===child)return true; queue.push(c);} }
@@ -57,7 +63,7 @@ function validate(g, weapons=[]) {
   for(const slot of slots) if(!materials.has(slot)) errors.push(`missing material ${slot}`);
   for(const [i,m] of meshes.entries()) if(!parts.has(m.extras?.part)) errors.push(`mesh ${i} (${m.name||'unnamed'}) missing or invalid extras.part`);
   if(!meshes.some(m=>m.extras?.detach===true)) notes.push('No detachable mesh tagged; review intended blow-off plates.');
-  const triangles=renderedTriangles(g), weaponTriangles=weapons.map(renderedTriangles), total=triangles+weaponTriangles.reduce((a,b)=>a+b,0);
+  const weaponTriangles=weapons.map(weapon=>renderedTriangles(weapon)), total=triangles+weaponTriangles.reduce((a,b)=>a+b,0);
   if(total>60000) errors.push(`triangle budget exceeded: ${total} > 60000`);
   if(!(g.extensionsUsed||[]).includes('EXT_meshopt_compression')) errors.push('missing EXT_meshopt_compression');
   notes.push('Static checks do not certify dimension values, emissive appearance, attachment placement, rig deformation, detach selection, or animation.');

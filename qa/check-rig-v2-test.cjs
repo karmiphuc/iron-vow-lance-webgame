@@ -8,6 +8,18 @@ const pelvis=add('pelvis'),spine=add('spine',pelvis);add('neck',spine);
 for(const s of ['L','R']) {let p=spine;for(const n of ['shoulder','elbow','wrist','socket'])p=add(`${n}.${s}`,p);p=pelvis;for(const n of ['hip','knee','ankle'])p=add(`${n}.${s}`,p);}
 const meshNode=add('geometry');g.nodes[meshNode].mesh=0;
 assert.equal(validate(g).ok,true);
+// A complete rig outside the default scene cannot be found by the runtime.
+const orphaned=structuredClone(g);
+orphaned.scenes[0].nodes=[meshNode];
+assert(validate(orphaned).errors.includes('node root is not in default scene'));
+const siblingMesh=structuredClone(g);
+siblingMesh.nodes[0].children=siblingMesh.nodes[0].children.filter(i=>i!==meshNode);
+siblingMesh.scenes[0].nodes.push(meshNode);
+assert.equal(validate(siblingMesh).ok,true,'scene mesh may be a sibling of the rig');
+const noMesh=structuredClone(g);
+noMesh.nodes[meshNode].mesh=undefined;
+assert(validate(noMesh).errors.includes('default scene contains no mesh'));
+
 // A name-complete skeleton must still connect each major limb to the body.
 for(const [parentName,childName] of [['root','pelvis'],['pelvis','spine'],['spine','neck'],['spine','shoulder.L'],['pelvis','hip.R']]) {
   const parent=g.nodes.find(n=>n.name===parentName),child=g.nodes.findIndex(n=>n.name===childName);
