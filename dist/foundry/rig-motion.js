@@ -58,7 +58,7 @@ function swingDirection(from,to,weight){
   const turn=new T.Quaternion().setFromUnitVectors(from,to);
   return from.clone().applyQuaternion(new T.Quaternion().slerp(turn,weight)).normalize();
 }
-function poseBehemothBrace(m,artillery){
+function poseBehemothBrace(m,artillery,I){
   const {body,rig:r,dims:D}=m,p=r.pelvis,A=D.legA,B=D.legB;
   const [hull,left,right]=artillery||[0,0,0];
   if(artillery){
@@ -68,13 +68,16 @@ function poseBehemothBrace(m,artillery){
   }
   body.updateWorldMatrix(true,true);
   const rootQ=body.getWorldQuaternion(new T.Quaternion());
-  for(const leg of r.legs){
+  for(const [index,leg] of r.legs.entries()){
     const sign=Math.sign(leg.restX),front=Boolean(leg.kneeShoe),drive=front?(sign>0?left:right):0;
     // The foot stays planted on its IK goal while the hull sinks; only then does the knee drop and the shin tuck.
     const fold=smooth(clamp((drive-.42)/.58,0,1));
     const hip=body.worldToLocal(leg.hip.getWorldPosition(V3()));
-    const goal=V3(leg.restX,D.ankleH,leg.restZ),target=goal.clone();
+    const goal=I?.groundAt?body.worldToLocal(m.legs[index].foot.clone()):V3(leg.restX,D.ankleH,leg.restZ),target=goal.clone();
     const contact=front?V3(sign*kneeContact.x,kneeContact.y,kneeContact.z):null;
+    if(contact&&I?.groundAt){const point=body.localToWorld(contact.clone());contact.y+=(I.groundAt(point.x,point.z)-(I.ground||0))/m.scale;}
+    m.legs[index].poseLift=fold>0;
+    m.legs[index].kneeContact=front&&fold>=.999&&hull>=.999;
     if(fold>0){
       // Two-bone IK toward an ankle target that travels from the planted foot to its folded spot under the hull.
       // The knee pole turns toward the knee pad, so the solve lands exactly on the kneeling pose at fold 1.
@@ -182,13 +185,14 @@ function supportGrip(m,arm,weight){
 /* in: {pos,moving,speed,stepLen,heading,face,brace,alive,deathAge,down,pilotRatio,armDead,legsDead,shieldDead,ground,onStep,noPlant} */
 function animateMech(m,I,dt,t){
   const r=m.rig,cont=m.cont,S=m.s,sc=m.scale,D=m.dims;
+  for(const L of m.legs){L.poseLift=false;L.kneeContact=false;}
   if(m.artilleryBrace){
     r.pelvis.position.z=0;
     for(const leg of r.legs)leg.kneeShoe?.quaternion.identity();
     m.artilleryBrace=false;
   }
   if(!m.init){m.yaw=I.face;cont.rotation.y=m.yaw;cont.position.set(I.pos.x,I.ground||0,I.pos.z);cont.updateMatrixWorld(true);
-    r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
+    r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));if(I.groundAt&&I.alive)h.y=I.groundAt(h.x,h.z)+D.ankleH*sc;m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
   cont.position.set(I.pos.x+S.kx.x,I.ground||0,I.pos.z+S.kz.x);
   const targetYaw=I.moving?I.heading:I.face;m.yaw=dampAngle(m.yaw,targetYaw,I.moving?8:4.5,dt);
   const dead=!I.alive,pd=dead&&I.down==='pilot';
@@ -200,6 +204,12 @@ function animateMech(m,I,dt,t){
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
   // Heavier frames take shorter, quicker steps so a longer planted phase stays within leg reach.
   const stepLen=(I.stepLen??1.55)*(D.stride??1);
+  if(I.groundAt&&I.moving&&!m.gait.wasMoving&&!D.quad){
+    // A standing foot starts at mid-stance, not one full stride behind the first landing.
+    m.gait.phase=Math.floor(m.gait.phase)+.25;
+    for(const L of m.legs)L.startSwing=true;
+  }
+  m.gait.wasMoving=I.moving;
   if(Number.isFinite(I.cycle))m.gait.phase=I.cycle;
   else if(I.moving)m.gait.phase+=dt*I.speed/(2*stepLen);
   const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
@@ -215,20 +225,47 @@ function animateMech(m,I,dt,t){
   p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
   p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   p.rotation.y=F?-F.hips*fs:0;
+  cont.updateMatrixWorld(true);
   let settling=m.legs.some(L=>L.settle);
+  const pitches=[];
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
     const home=cont.localToWorld(_a.set(l.restX-(lead?F.narrow*fs:0),D.ankleH,l.restZ+(F?(lead?F.step:-F.back)*fs:0))).clone();let pitch=0;
+    if(I.groundAt&&I.alive)home.y=I.groundAt(home.x,home.z)+D.ankleH*sc;
     if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;
       if(lead&&!dead){L.foot.y+=F.lift*Math.sin(PI*fs)*sc;pitch=.3*Math.sin(PI*fs);}}
-    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;L.settle=null;
-      if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
-      else{if(!L.swing){L.swing=true;L.from.copy(L.planted);}const q=(ph-duty)/(1-duty);L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=home.y;
+    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5)+(L.phaseOffset||0))%1+1)%1;L.settle=null;
+      if(I.groundAt&&!L.swing&&!L.recovery&&ph<duty){
+        // A turn or restart can leave a stance anchor behind the normal cycle. Start a real recovery step
+        // before the hip can outrun it, using the reference swing duration and IK reach margin.
+        const duration=2*stepLen*(1-duty)/Math.max(.01,I.speed),hip=l.hip.getWorldPosition(V3());
+        const forecast=hip.clone().addScaledVector(fwd,I.speed*duration);forecast.y+=I.groundAt(forecast.x,forecast.z)-(I.ground||0);
+        if(forecast.distanceTo(L.planted)>(D.legA+D.legB)*sc-.03){L.recovery={q:0,duration};L.from.copy(L.foot);L.swing=true;}
+      }
+      if(L.recovery){const recovery=L.recovery,q=recovery.q;L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=I.groundAt(L.to.x,L.to.z)+D.ankleH*sc;
+        L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;
+        if(q>=1){L.recovery=null;L.swing=false;L.planted.copy(L.to);L.phaseOffset=-g-(l.phase??i*.5);I.onStep&&I.onStep(m,L.planted,i);}
+        else recovery.q=Math.min(1,q+dt/recovery.duration);
+      }
+      else if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
+      else{if(!L.swing){L.swing=true;L.from.copy(L.foot);L.swingBegin=L.startSwing?ph:duty;L.startSwing=false;}const q=(ph-(L.swingBegin??duty))/(1-(L.swingBegin??duty));L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=I.groundAt?I.groundAt(L.to.x,L.to.z)+D.ankleH*sc:home.y;
         L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;pitch=q<.3?.45*Math.sin(PI*q/.3):q>.62?-.35*Math.sin(PI*(q-.62)/.38):0;}}
-    else{if(L.swing){L.swing=false;L.planted.copy(L.foot);L.planted.y=home.y;}
+    else{L.recovery=null;if(L.swing){L.swing=false;L.planted.copy(L.foot);L.planted.y=I.groundAt?I.groundAt(L.planted.x,L.planted.z)+D.ankleH*sc:home.y;}
       if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
         if(q>=1){L.planted.copy(home);L.settle=null;I.onStep&&I.onStep(m,home,i,.45);}}
       else{if(!dead&&!settling&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}
-    const loc=cont.worldToLocal(_b.copy(L.foot));solveLeg(m,l,loc,pitch*w);});
+    pitches[i]=pitch*w;});
+  if(I.groundAt&&I.alive){
+    // Uneven tiles and the first/last half-step can require compression beyond the flat-floor walk bob.
+    // Lower the pelvis enough for the actual goals; the world-space planted anchors never move.
+    cont.updateMatrixWorld(true);let drop=0;
+    for(let i=0;i<r.legs.length;i++){
+      const hip=r.legs[i].hip.getWorldPosition(V3()),goal=m.legs[i].foot,reach=(D.legA+D.legB-.004)*sc;
+      const horizontal=Math.hypot(hip.x-goal.x,hip.z-goal.z),vertical=Math.sqrt(Math.max(0,reach*reach-horizontal*horizontal));
+      drop=Math.max(drop,(hip.y-goal.y-vertical)/sc);
+    }
+    p.position.y-=Math.max(0,drop);cont.updateMatrixWorld(true);
+  }
+  r.legs.forEach((l,i)=>{const loc=cont.worldToLocal(_b.copy(m.legs[i].foot));solveLeg(m,l,loc,pitches[i]);});
   // kusazuri hinge with the thighs so the skirt never cuts through a moving leg
   if(r.skirts)VC.skirtPose(r.skirts);
   m.aim.blend=damp(m.aim.blend,t<m.aim.until&&!dead?1:0,t<m.aim.until?9:2.5,dt);
@@ -288,9 +325,9 @@ function animateMech(m,I,dt,t){
   if(dead)vm.emissiveIntensity=damp(vm.emissiveIntensity,0,6,dt);
   else{let k=1;if(m.flicker>0&&Math.random()<.35)k=.15;else if(I.pilotRatio!==undefined&&I.pilotRatio<.5&&Math.random()<.06)k=.2;vm.emissiveIntensity=base*k;}
   const special=poseBehemothMortar(m,I.mortarAge),artillery=special||I.artillery;
-  if(D.quad&&I.alive&&!I.moving&&!I.legsDead){
+  if(D.quad&&I.alive&&!I.moving&&!I.legsDead&&artillery?.some(Boolean)){
     m.artilleryBrace=Boolean(artillery?.some(Boolean));
-    poseBehemothBrace(m,m.artilleryBrace?artillery:null);
+    poseBehemothBrace(m,artillery,I);
   }else{
     cont.updateMatrixWorld(true);
     for(const [a,bb] of r.pistons){bb.getWorldPosition(_a);a.lookAt(_a);a.getWorldPosition(_a);bb.lookAt(_a);}

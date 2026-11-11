@@ -47,114 +47,38 @@ function build(){
   anchors:Object.fromEntries([...points.map(k=>[k,name(body,'BastionPart.'+k)]),
     ['leadFoot',name(body,'BastionLeadFoot')],['pod1',name(body,'MissileSocket.01')],['pod2',name(body,'MissileSocket.04')]])};
 }
-function fit(m,armory,id,side){
- if(!armory||!id||id==='missile'&&side==='R')return null;
- const adapter=new T.Group(),added=arsenal.isExpansion(id);
- adapter.scale.setScalar(.62);
- if(!['breaker','cleaver','blade'].includes(id))adapter.rotation.x=-Math.PI/2;
- const socket=side==='L'&&['piledriver','pike','tonfa'].includes(id)?m.sockets.ram:side==='R'&&!added&&id!=='rifle'?m.sockets.gun:m.sockets[side];
- socket.add(adapter);
- const mount=arsenal.mount(added?armory:side==='L'?asset.melee:id==='rifle'?asset.carbine:armory,id,adapter);
- if(!mount){adapter.parent.remove(adapter);return null}
- const grip=id==='rifle'&&side==='R'?mount.model.getObjectByName('BastionGripContact'):mount.grip;
- if(grip&&!added){
-  m.cont.updateMatrixWorld(true);
-  const local=mount.model.worldToLocal(grip.getWorldPosition(new T.Vector3()));
-  mount.model.position.sub(local.multiply(mount.model.scale).applyQuaternion(mount.model.quaternion));
- }
- return {...mount,adapter,grip};
-}
-function frame(u,t,pose){
- if(pose.previewFrame!=null)return pose.previewFrame;
- if(!u.alive){
-  const age=pose.reducedMotion?2:pose.deathAge;
-  const q=clamp((age-.04)/(u.downReason==='pilot'?.79:.52),0,1);
-  return 57+40*q*q*(3-2*q);
- }
- const braceAge=t-(u.braceTime??-100);
- if(u.motion&&pose.phase>0&&!pose.reducedMotion)return 1+48*clamp(pose.stride??pose.phase,0,1);
- if(u.attack){
-  const age=u.attack.fireAt!=null?t-u.attack.fireAt:null;
-  if(age==null&&u.brace&&u.hp.legs>0&&!pose.reducedMotion&&braceAge<1.22)
-   return 57+40*clamp(braceAge/1.22,0,1);
-  if(pose.strikeKind){
-   const p=pose.strikeProgress||0;
-   if(pose.reducedMotion)return u.brace?(p<.7?273:303):(p<.7?217:247);
-   if(u.brace)return 273+48*(p<=.7?p*.9:.63+(p-.7)*(.37/.3));
-   if(pose.primePhase==='step')return 217+48*.42*(pose.primeProgress||0);
-   if(pose.primePhase==='return')return 265-48*.18*(pose.primeProgress||0);
-   return 217+48*(.42+p*.40);
+
+
+
+
+
+// The authored GLB is bound to the same measured-pivot animator as the live Warden.
+// This runtime adapter remains until Phase 3 exports the contract into the GLB itself.
+function buildRuntime(team,paint,trim){
+ const authored=build();if(!authored)return null;
+ authored.mixer.setTime(asset.start+56/24);authored.body.updateMatrixWorld(true);
+ const names={Painted_Warden:'ROOT',Bench_ROOT:'ROOT',Bench_Pelvis:'Pelvis',Bench_Torso:'Chest',Bench_Optics:'Cockpit'};
+ for(const side of ['L','R'])Object.assign(names,{['Bench_Hip_'+side]:'Thigh.'+side,['Bench_Knee_'+side]:'Shin.'+side,['Bench_Foot_'+side]:'Foot.'+side,
+  ['Bench_Pauldron_'+side]:'Pauldron.'+side,['Bench_Shoulder_'+side]:'UpperArm.'+side,['Bench_Elbow_'+side]:'Forearm.'+side,['Bench_Hand_'+side]:'Hand.'+side,['GripContact_'+side]:'BastionGrip.'+side});
+ const extraOwners=rig=>{
+  const owners={},pistons=[],nodes=[];authored.body.traverse(o=>{if(!o.isMesh&&/^Piston.*cylinder/.test(o.name))nodes.push(o);});
+  const bias=(a,b,q)=>{const temp=new T.Object3D();temp.position.copy(a);temp.lookAt(b);return temp.quaternion.invert().multiply(q);};
+  for(const source of nodes){
+   const other=authored.body.getObjectByName(source.name.replace('cylinder','sliding_rod'));if(!other)throw Error('Bastion piston pair missing: '+source.name);
+   const side=/_[L][12]?_/.test(source.name)?'L':'R',leg=rig.legs[side==='L'?0:1],arm=rig.arms[side];
+   const ankle=/ankle/.test(source.name),knee=/knee/.test(source.name),elbow=/elbow/.test(source.name);
+   const boneA=ankle?leg.kn:knee?leg.hip:elbow?arm.sh:rig.pelvis,boneB=ankle?leg.an:knee?leg.kn:elbow?arm.el:rig.spine;
+   const pa=source.getWorldPosition(new T.Vector3()),pb=other.getWorldPosition(new T.Vector3()),qa=source.getWorldQuaternion(new T.Quaternion()),qb=other.getWorldQuaternion(new T.Quaternion());
+   const a=new T.Group(),b=new T.Group();a.position.copy(pa);a.quaternion.copy(qa);b.position.copy(pb);b.quaternion.copy(qb);rig.root.add(a,b);rig.root.updateMatrixWorld(true);boneA.attach(a);boneB.attach(b);
+   owners[source.name]=a;owners[other.name]=b;pistons.push({a,b,biasA:bias(pa,pb,qa),biasB:bias(pb,pa,qb)});
   }
-  const progress=clamp(Math.max(pose.aim||0,pose.primeProgress||0, (t-u.attack.start)/.75),0,1);
-  if(u.attack.kind==='parallax'){
-   if(pose.primePhase==='step')return 161+20*pose.primeProgress;
-   if(pose.reducedMotion)return age==null?161:188;
-   const ready=u.brace?181:161;
-   return ready+(188-ready)*(pose.aim||0);
-  }
-  if(u.attack.kind==='missile')return age==null?105+10*progress:clamp(116+24*age,116,153);
-  if(age==null)return (u.brace?181:161)+(u.brace?6:26)*progress;
-  return clamp(188+24*age,188,u.brace?200:209);
- }
- if(u.brace&&u.hp.legs>0)return pose.reducedMotion?97:57+40*clamp(braceAge/1.22,0,1);
- return 57;
+  return {owners,pistons};
+ };
+ const result=window.IronVowRigidAdapter.build({source:authored.body,id:'bastion',team,paint,trim,names,refModel:2,dims:window.VowChassis.DIMS[2],measuredStance:true,options:{scale:1},extraOwners,
+  materialRole:m=>/bone ceramic|Warm face/.test(m.name)?'p':/Blue charcoal/.test(m.name)?'s':/Safety amber/.test(m.name)?'a':/Lime optics/.test(m.name)?'visor':/White-hot exhaust/.test(m.name)?'stack':null,
+  partOf:name=>/Piston/.test(name||'')?(/ankle|knee/.test(name)?'legs':/elbow/.test(name)?(/_L_/.test(name)?'left':'right'):'body'):null});
+ authored.mixer.stopAllAction();authored.mixer.uncacheRoot(authored.body);for(const {mat} of authored.materials.values())mat.dispose();
+ return result;
 }
-function paint(m,u){
- const overrides={bone:u.paint&&base(u.paint),trim:u.trim?.s&&base(u.trim.s),accent:u.trim?.a&&base(u.trim.a)};
- for(const {mat,original,name,region} of m.materials.values()){
-  const value=/bone ceramic|Warm face/.test(name)?overrides.bone:/Blue charcoal/.test(name)?overrides.trim:/Safety amber/.test(name)?overrides.accent:null;
-  mat.color.copy(value||original);
-  const max=u.max?.[region],hp=u.hp?.[region];
-  if(max&&hp<max*.5)mat.color.multiplyScalar(hp>0?.49:.23);
- }
-}
-function animate(m,u,t,pose,armory){
- const f=frame(u,t,pose);
- m.action.enabled=true;m.action.paused=false;
- m.mixer.setTime(Math.min(asset.clip.duration-1e-6,asset.start+(f-1)/24));
- if(u.motion)m.root.position.z=0; // Board travel already translates the unit.
- m.cont.rotation.y=pose.heading??0;
- if(!u.alive){
-  const age=pose.reducedMotion?2:pose.deathAge,cockpit=u.downReason==='pilot';
-  const q=clamp((age-(cockpit?.15:.43))/(cockpit?.70:.51),0,1);
-  m.cont.rotation.z=q*q*(3-2*q)*(cockpit?.19:1.08);
- }else m.cont.rotation.z=0;
- if(m.weaponId!==u.weapon&&armory){
-  m.weaponId=u.weapon;
-  if(m.weapon)m.weapon.adapter.parent.remove(m.weapon.adapter);
-  m.weapon=fit(m,armory,u.weapon,'R');
- }
- if(m.meleeId!==u.melee&&armory){
-  m.meleeId=u.melee;
-  if(m.melee)m.melee.adapter.parent.remove(m.melee.adapter);
-  m.melee=fit(m,armory,u.melee,'L');
- }
- if(m.shieldId!==u.shield&&armory){
-  m.shieldId=u.shield;
-  if(m.shield)m.shield.mount.removeFromParent();
-  m.shield=arsenal.mountShield(armory,u.shield,m.sockets.L);
-  m.shield?.mount.scale.setScalar(.78);
- }
- arsenal.poseShield(m.shield,u,pose.heading??0);
- if(m.weapon){
-  m.weapon.mount.visible=u.alive&&u.hp.right>0;
-  arsenal.animate(m.weapon,pose);
- }
- if(m.melee){
-  m.melee.mount.visible=u.alive&&u.hp.left>0;
-  if(m.melee.spike){const p=pose.strikeProgress||0;m.melee.spike.position.z=m.melee.spikeRest+(p>=.61&&p<=.81?.50:0)}
-  arsenal.animate(m.melee,pose);
- }
- paint(m,u);
- m.cont.updateMatrixWorld(true);
- return {frame:f,anchors:{...m.anchors,muzzle:u.weapon==='missile'?m.anchors.pod1:m.weapon?.muzzle,
-  muzzle2:u.weapon==='missile'?m.anchors.pod2:m.weapon?.muzzle2,meleeTip:m.melee?.tip,
-  gripR:m.sockets.R,gripL:m.sockets.L,shield:m.shield?.face},primary:m.weapon||u.weapon==='missile',secondary:m.melee,shield:m.shield};
-}
-function dispose(m){
- m.mixer.stopAllAction();
- m.mixer.uncacheRoot(m.body);
- for(const {mat} of m.materials.values())mat.dispose();
-}
-window.IronVowBastion={build,animate,dispose,frame};
+window.IronVowBastion={buildRuntime,afterAnimate:m=>window.IronVowRigidAdapter.afterAnimate(m)};
 })();

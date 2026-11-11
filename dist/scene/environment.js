@@ -7,6 +7,7 @@ let seed=97,width=10,depth=10;
 const rnd=(a,b)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return a+(b-a)*seed/4294967296;};
 const tileW=(x,z)=>new T.Vector3((x-(width-1)/2)*TILE,0,(z-(depth-1)/2)*TILE);
 const pmrem=new T.PMREMGenerator(renderer);
+const envTargets=[];
 function tex(w,h,draw,rep){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new T.CanvasTexture(c);if(rep){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rep[0],rep[1]);}t.anisotropy=4;return t;}
 const srgb=t=>{t.encoding=T.sRGBEncoding;return t;};
 const hazardTex=srgb(tex(64,64,(g,w,h)=>{g.fillStyle='#d6a22c';g.fillRect(0,0,w,h);g.fillStyle='#1c1a16';for(let x=-64;x<=128;x+=32){g.beginPath();g.moveTo(x,0);g.lineTo(x+16,0);g.lineTo(x+16-64,64);g.lineTo(x-64,64);g.closePath();g.fill();}},[1,1]));
@@ -41,7 +42,8 @@ function envFrom(cols,pm=pmrem){const s=new T.Scene();s.background=C(cols[0]);
   const add=(w,h,c,x,y,z,ry)=>{const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:C(c),side:T.DoubleSide}));m.position.set(x,y,z);m.rotation.y=ry||0;s.add(m);};
   add(16,6,cols[1],0,10,-14);add(16,6,cols[2],14,8,0,-PI/2);add(12,4,cols[3],-14,6,4,PI/2);
   const fl=new T.Mesh(new T.PlaneGeometry(50,50),new T.MeshBasicMaterial({color:C(cols[4])}));fl.rotation.x=-PI/2;fl.position.y=-3;s.add(fl);
-  const tx=pm.fromScene(s,.04).texture;return tx;}
+  const target=pm.fromScene(s,.04);envTargets.push(target);
+  s.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});return target.texture;}
 function jersey(p,m,len){const sh=new T.Shape();sh.moveTo(-.55,0);sh.lineTo(.55,0);sh.lineTo(.42,.35);sh.lineTo(.2,.55);sh.lineTo(.2,1.1);sh.lineTo(-.2,1.1);sh.lineTo(-.2,.55);sh.lineTo(-.42,.35);sh.closePath();
   const g=new T.ExtrudeGeometry(sh,{depth:len,bevelEnabled:true,bevelSize:.03,bevelThickness:.03,bevelSegments:1});g.translate(0,0,-len/2);return mesh(p,g,m);}
 const PAL=[ // relay, corridor, frontier
@@ -81,6 +83,13 @@ function buildCover(key){const [x,z]=key.split(',').map(Number),p=tileW(x,z),g=n
   else if(v===1){bx(g,TILE*.82,2.2,TILE*.5,MAT.olive,0,1.1,0);bx(g,TILE*.84,.14,TILE*.52,MAT.amber,0,1.95,0);bx(g,TILE*.82,.6,TILE*.5,MAT.oliveDark,0,2.5,0,0,0,0);for(const s of [-1,1])bx(g,.12,2.1,.12,MAT.graphite,s*TILE*.38,1.1,TILE*.26);const st=new T.Mesh(new T.PlaneGeometry(1.6,.8),MS({map:stencilTex('VOW-07','#4b5334','#d8d2bd',256,128,56),roughness:.8}));st.position.set(0,1.2,TILE*.251);g.add(st);}
   else{const sb=MS({color:C(0x7a6f55),roughness:.95});for(let r=0;r<3;r++)for(let i=0;i<4;i++){const m=mesh(g,new T.SphereGeometry(.5,9,7),sb,(i-1.5)*.78+(r%2)*.39,.3+r*.5,0);m.scale.set(.85,.5,1.35);}bx(g,TILE*.8,2.4,.18,MAT.steel,0,1.2,-.9);}
   g.rotation.y=((x+z)%2)?PI/2:0;g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;}
-return {TILE,PAL,C,MAT,MS,mesh,bx,cy,bevelGeo,tileW,envFrom,buildProps,buildCover,setSize(w,d){width=w;depth=d;},dispose(){pmrem.dispose();}};
+function groundMaterial(P){
+ const rough=tex(256,256,(g,w,h)=>{g.fillStyle='#e0e0e0';g.fillRect(0,0,w,h);for(let i=0;i<26;i++){const x=rnd(0,w),y=rnd(0,h),r=rnd(10,46),gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,`rgba(0,0,0,${P.wet})`);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);}},[6,6]);
+ return MS({color:C(P.ground),map:imgTex('assets/concrete.webp',[14,14]),roughnessMap:rough,roughness:1,metalness:.08,envMapIntensity:.7});
+}
+return {TILE,PAL,C,MAT,MS,mesh,bx,cy,bevelGeo,tileW,envFrom,groundMaterial,imgTex,buildProps,buildCover,random:rnd,setSize(w,d){width=w;depth=d;},dispose(){
+ const seen=new Set();for(const m of Object.values(MAT)){for(const t of [m.map,m.normalMap,m.roughnessMap])if(t&&!seen.has(t)){seen.add(t);t.dispose();}m.dispose();}
+ for(const geo of geoCache.values())geo.dispose();for(const target of envTargets)target.dispose();pmrem.dispose();
+}};
 };
 })(window);

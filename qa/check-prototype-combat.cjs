@@ -13,7 +13,7 @@ const setTimeout = (callback, ms) => {
     const u=current(), visual=activeWardenVisual(u);
     advanceUnitAnimation(u,clock,.031);
     const pose=animationPose(u,clock,visual),frame=wardenMotionFrame(u,visual,pose)?.frame;
-    drawUnit(u,clock);
+    drawUnitBody(u,clock);
     for(const e of effects.filter(e=>e.type==='shot'))drawAttackEffect(e,clock);
     if(activeCinematic)drawAttackCamera(clock);
     return {index:frame?.index,level:frame?.level,clip:u.attack?.native?.clip,walking:!!u.motion,priming:pose.primePhase==='step'&&visual.motion.gait.includes(frame),

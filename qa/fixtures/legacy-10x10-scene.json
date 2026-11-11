@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "day": 1,
+  "credits": 4500,
+  "rep": 0,
+  "wins": 0,
+  "kills": 0,
+  "owned": [
+    "rifle",
+    "missile"
+  ],
+  "units": [
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "missile",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    }
+  ],
+  "history": [],
+  "sortie": {
+    "version": 7,
+    "contract": "relay",
+    "legacy": true,
+    "stockHostiles": true,
+    "slots": [
+      0,
+      1,
+      2
+    ],
+    "turn": 1,
+    "selected": 0,
+    "action": "move",
+    "part": "body",
+    "enemyPending": false,
+    "units": [
+      {
+        "x": 1,
+        "z": 8,
+        "face": 1,
+        "heading": 2.356194490192345,
+        "moveLeft": 4,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 160,
+          "pilot": 70,
+          "right": 92,
+          "left": 92,
+          "legs": 110
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 2,
+        "z": 9,
+        "face": 1,
+        "heading": 2.356194490192345,
+        "moveLeft": 5,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 126,
+          "pilot": 55,
+          "right": 78,
+          "left": 78,
+          "legs": 100
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 0,
+        "z": 9,
+        "face": 1,
+        "heading": 2.356194490192345,
+        "moveLeft": 3,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 180,
+          "pilot": 80,
+          "right": 100,
+          "left": 100,
+          "legs": 90
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 2,
+        "z": 0,
+        "face": -1,
+        "heading": -0.7853981633974483,
+        "moveLeft": 4,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 160,
+          "pilot": 70,
+          "right": 92,
+          "left": 92,
+          "legs": 110
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 5,
+        "z": 0,
+        "face": -1,
+        "heading": -0.7853981633974483,
+        "moveLeft": 5,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 126,
+          "pilot": 55,
+          "right": 78,
+          "left": 78,
+          "legs": 100
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 8,
+        "z": 0,
+        "face": -1,
+        "heading": -0.7853981633974483,
+        "moveLeft": 3,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 180,
+          "pilot": 80,
+          "right": 100,
+          "left": 100,
+          "legs": 90
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 // Live painted Warden: an exact re-rig of the authored GLB on the Foundry skeleton, planted gait, carry and firing
-// poses without armour clipping, three melee families, field framing, and the game's live/baked routing.
+// poses without armour clipping, three melee families and preview framing.
 // Runs the shipped rig code under Node with a stub 2D canvas; no QA packages are required.
 const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
@@ -18,7 +18,7 @@ function context2d(width,height){
 globalThis.window=globalThis;globalThis.self=globalThis;
 globalThis.document={createElement:()=>{const c={width:1,height:1,style:{}};c.getContext=()=>context2d(c.width,c.height);return c;}};
 for(const file of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.js','foundry/production-arsenal.js',
- 'foundry/behemoth-core.js','foundry/chassis.js','foundry/rig-motion.js','foundry/warden-live.js'])
+ 'foundry/behemoth-core.js','foundry/chassis.js','foundry/rig-motion.js','foundry/rigid-adapter.js','foundry/warden-live.js'])
  vm.runInThisContext(readFileSync(join(dist,file),'utf8'),{filename:file});
 const T=THREE,R=window.IronVowFoundryRig,W=window.IronVowWardenRig,A=window.IronVowProductionArsenal,V3=R.V3,dt=1/60;
 const buffer=file=>{const b=readFileSync(join(dist,file));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)};
@@ -155,72 +155,7 @@ async function main(){
   }
  }
 
- // 6. Game routing: a standing Warden draws live once the rig is ready, keeps the baked art otherwise and on death.
- {
-  const {run}=create({foundry:true,travel:true});
-  run('createBattle(0,false,false,[0]);globalThis.ally=battle.units.find(u=>u.team==="ally"&&u.frame===0)');
-  assert.equal(run('Boolean(ally)'),true,'the opening lance fields a Warden');
-  run('window.IronVowFoundry={wardenReady:()=>globalThis.wardenReady,draw:(u,t,pose,scope,model,custom)=>({surface:{},anchors:{body:[.5,.5]},primary:{},secondary:{},custom})}');
-  run('globalThis.wardenReady=false');
-  assert.equal(run('foundryRender(ally,clock)'),null,'baked Warden until the live rig is ready');
-  run('globalThis.wardenReady=true');
-  assert.equal(run('foundryRender(ally,clock)?.custom'),'warden','live Warden once ready');
-  assert.ok(Math.abs(run('unitBounds(ally).w/scale')-11.2/3.65)<1e-9,'live Warden uses the shared Foundry world scale');
-  run('globalThis.groundedBounds=unitBounds(ally);ally.motion={jumpjet:true,start:clock-.5,duration:1}');
-  assert.ok(run('unitBounds(ally).y<groundedBounds.y'),'a live Warden rises above the ground during a mastered Jumpjet');
-  assert.ok(Math.abs(run('unitBounds(ally).y+unitBounds(ally).h*.84-project(ally.vx,jumpjetHeight(ally,clock),ally.vz).y'))<1e-9,
-   'the live Warden stays registered to its Jumpjet altitude');
-  run('ally.motion=null');
-  run('battle.lionTrial=true;ally.lionTrial=true;window.IRON_VOW_LION_ART={ground:.84}');
-  assert.equal(run('liveWarden(ally)'),false,'the isolated Lion trial keeps its dedicated renderer');
-  assert.ok(Math.abs(run('unitBounds(ally).w/scale')-3.45)<1e-9,'the Lion trial retains its authored framing');
-  run('battle.lionTrial=false;ally.lionTrial=false');
-  run('ally.alive=false');
-  assert.equal(run('foundryRender(ally,clock)'),null,'a destroyed Warden returns to its baked destruction');
- }
-
- // 7. A Warden-only scene starts loading the live rig itself, without another Foundry unit warming up the renderer.
- {
-  let loaded=false,requests=0;
-  class Renderer{
-   constructor(){this.domElement={width:1,height:1,addEventListener(){}};}
-   setSize(w,h){this.domElement.width=w;this.domElement.height=h;}
-   setClearColor(){}
-   dispose(){}
-  }
-  class Environment{
-   fromScene(){return {texture:{dispose(){}}};}
-   dispose(){}
-  }
-  const sandbox={console,THREE:{...T,WebGLRenderer:Renderer,PMREMGenerator:Environment},
-   VowChassis:window.VowChassis,IronVowFoundryRig:R,
-   IronVowProductionArsenal:{load:()=>Promise.resolve({})},
-   IronVowWardenRig:{ready:()=>loaded,load:()=>{requests++;return Promise.resolve().then(()=>{loaded=true});}}};
-  sandbox.window=sandbox;
-  vm.runInNewContext(readFileSync(join(dist,'foundry/renderer.js'),'utf8'),sandbox,{filename:'foundry/renderer.js'});
-  assert.equal(sandbox.IronVowFoundry.wardenReady(),false,'baked Warden remains available while the live rig loads');
-  assert.equal(requests,1,'a Warden starts its own live asset request');
-  await Promise.resolve();
-  assert.equal(sandbox.IronVowFoundry.wardenReady(),true,'the loaded Warden becomes live without drawing another chassis');
-  assert.equal(requests,1,'readiness checks do not request the rig again');
-  sandbox.IRON_VOW_LIVE_WARDEN=false;
-  assert.equal(sandbox.IronVowFoundry.wardenReady(),false,'the baked-Warden opt-out remains available');
-  for(const force of [false,true]){
-   let ready=false,requests=0;
-   class SoftwareRenderer extends Renderer{
-    getContext(){return {getExtension:()=>({UNMASKED_RENDERER_WEBGL:1}),getParameter:()=> 'ANGLE SwiftShader'}}
-   }
-   const software={...sandbox,IRON_VOW_LIVE_WARDEN:force?true:undefined,
-    THREE:{...sandbox.THREE,WebGLRenderer:SoftwareRenderer},
-    IronVowWardenRig:{ready:()=>ready,load:()=>{requests++;return Promise.resolve().then(()=>{ready=true});}}};
-   software.window=software;
-   vm.runInNewContext(readFileSync(join(dist,'foundry/renderer.js'),'utf8'),software,{filename:'foundry/renderer.js'});
-   software.IronVowFoundry.wardenReady();await Promise.resolve();
-   assert.equal(requests,force?1:0,'software rendering avoids the HD model unless explicitly forced');
-   assert.equal(software.IronVowFoundry.wardenReady(),force,'software fallback and explicit live inspection both work');
-  }
- }
 }
 
-main().then(()=>console.log('PASS live Warden: exact re-rig, planted gait, two-hand carry, clear guards, left-foot firing stance, maul/sweep/thrust, field framing, Jumpjet altitude, automatic loading and live/baked routing'))
+main().then(()=>console.log('PASS measured rigid adapter: exact GLB binding, planted gait, two-hand carry, clear guards, firing stance, maul/sweep/thrust and preview framing'))
  .catch(error=>{console.error(error);process.exitCode=1;});

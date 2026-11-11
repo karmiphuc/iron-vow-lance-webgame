@@ -1,0 +1,78 @@
+const assert=require('node:assert/strict');
+const legacy=require('../fixtures/legacy-10x10-scene.json');
+module.exports=async function sharedScene({page,context,mobile,origin,tap}){
+ await page.addInitScript(()=>{
+  const get=HTMLCanvasElement.prototype.getContext,contexts=new Set();window.__webglContextCount=0;
+  HTMLCanvasElement.prototype.getContext=function(type,...args){const result=get.call(this,type,...args);if(/webgl/.test(type)&&result){contexts.add(result);window.__webglContextCount=contexts.size;}return result;};
+ });
+ await page.goto(origin,{waitUntil:'domcontentloaded',timeout:120000});
+ await page.waitForFunction(()=>window.__ironVow&&document.querySelector('#nav button'));
+ await page.evaluate(()=>__ironVow.start({seed:4242,frames:[10,8,7]}));
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ assert.equal(await page.evaluate(()=>__webglContextCount),1,'One actual WebGL context, including UI previews');
+ const picks=await page.evaluate(()=>{
+  const s=__ironVow.snapshot(),camera=IronVowScene.camera;let tested=0;
+  for(let z=0;z<s.size.depth;z++)for(let x=0;x<s.size.width;x++){
+   const p=IronVowScene.projectWorld(IronVowScene.world(x,z));if(p.x<0||p.x>innerWidth||p.y<0||p.y>innerHeight||p.z<0||p.z>1)continue;
+   const hit=IronVowScene.screenTile(p.x,p.y);if(hit.x!==x||hit.z!==z)throw Error('Raycast missed tile '+x+','+z+' -> '+JSON.stringify(hit));tested++;
+  }
+  const u=battle.units.find(u=>u.id==='ally0'),p=IronVowScene.projectWorld(IronVowScene.partPoint(u));
+  return{tested,unit:IronVowScene.pick(p.x,p.y)?.id};
+ });
+ assert.ok(picks.tested>=20,'Ground raycasts cover visible plates');assert.equal(picks.unit,'ally0');
+ await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);
+ await tap('#map-center');await page.waitForFunction(()=>!fieldCamera.overview);
+ assert.deepEqual(await page.evaluate(()=>[fieldCamera.x,fieldCamera.z]),await page.evaluate(()=>[current().x,current().z]));
+ const radar=await page.locator('#map-radar').boundingBox();
+ await page.mouse.click(radar.x+radar.width*.75,radar.y+radar.height*.25);
+ const jump=await page.evaluate(()=>({x:fieldCamera.x,z:fieldCamera.z,size:battle.size}));
+ assert.ok(Math.abs(jump.x-(jump.size.width*.75-.5))<.2&&Math.abs(jump.z-(jump.size.depth*.25-.5))<.2,'Tactical map jumps to tapped location');
+ await tap('#map-center');
+ const start=await page.evaluate(()=>({x:fieldCamera.x,z:fieldCamera.z,zoom:viewZoom}));
+ if(mobile){
+  const cdp=await context.newCDPSession(page),x=page.viewportSize().width*.5,y=page.viewportSize().height*.5;
+  const touches=gap=>[{x:x-gap,y,id:1},{x:x+gap,y,id:2}];
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:touches(45)});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:touches(70)});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
+ }else{
+  await page.mouse.move(600,470);await page.mouse.wheel(0,-120);
+ }
+ await page.waitForFunction(zoom=>viewZoom>zoom,start.zoom);
+ await page.mouse.move(mobile?150:600,470);await page.mouse.down();await page.mouse.move(mobile?195:655,510,{steps:4});await page.mouse.up();
+ assert.ok(await page.evaluate(({x,z})=>Math.hypot(fieldCamera.x-x,fieldCamera.z-z)>.01,start),'Pointer drag pans through world-space rays');
+ await tap('#map-center');
+ const move=await page.evaluate(()=>{
+  const u=current(),free=freeMovement(u),moves=__ironVow.legalMoves(u.id).filter(m=>m.cost>free);
+  return moves.map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-280&&m.p.y>230&&m.p.y<innerHeight-180);
+ });
+ if(move&&!mobile){await page.mouse.move(move.p.x,move.p.y);await page.waitForFunction(()=>IronVowScene.overlayInfo().path.length>0);const info=await page.evaluate(()=>IronVowScene.overlayInfo());assert.ok(info.triangles>0&&info.path.some(p=>p.color===0xcc9b49),'Reach and paid-move path render actual amber geometry');assert.equal(info.selected,true);}
+ let attack;
+ for(let attempt=0;attempt<4;attempt++){
+  const decision=await page.evaluate(()=>{
+   for(const u of battle.units.filter(u=>u.team==='ally')){const choice=__ironVow.choices(u.id).attacks.find(a=>a.mode==='fire');if(choice)return{attack:{id:u.id,...choice}};}
+   for(const u of battle.units.filter(u=>u.team==='ally')){const choices=__ironVow.choices(u.id),move=choices.moves.sort((a,b)=>a.score-b.score)[0];if(move&&move.score<choices.currentScore)return{move:{id:u.id,...move}};}
+  });
+  if(decision?.attack){attack=decision.attack;break;}
+  if(!decision?.move)break;
+  await page.evaluate(move=>{void __ironVow.move(move.id,move.x,move.z);},decision.move);
+  await page.waitForFunction(()=>!__ironVow.pending,null,{timeout:120000});
+ }
+ assert.ok(attack,'Real campaign deployment has a legal attack');
+ await page.evaluate(a=>{void __ironVow.attack(a.id,a.target,a.part,a.mode);},attack);
+ await page.waitForFunction(()=>activeCinematic);
+ assert.equal(await page.evaluate(()=>IronVowScene.camera.isPerspectiveCamera),true);
+ await tap('#skip-shot');await page.waitForFunction(()=>!__ironVow.pending&&!activeCinematic,null,{timeout:120000});
+ const before=await page.evaluate(()=>({checkpoint:__ironVow.checkpoint(),generation:IronVowRenderer.generation}));
+ // The extension exercises real GL resource loss; the game state must survive untouched.
+ await page.evaluate(()=>IronVowRenderer.get().getContext().getExtension('WEBGL_lose_context').loseContext());
+ await page.waitForFunction(()=>IronVowRenderer.lost);
+ await page.evaluate(()=>IronVowRenderer.get().getContext().getExtension('WEBGL_lose_context').restoreContext());
+ await page.waitForFunction(()=>!IronVowRenderer.lost&&IronVowScene.ready,null,{timeout:120000});
+ const after=await page.evaluate(()=>({checkpoint:__ironVow.checkpoint(),generation:IronVowRenderer.generation,contexts:__webglContextCount}));
+ assert.deepEqual(after.checkpoint,before.checkpoint,'Context restoration rebuilds presentation from exact game state');assert.equal(after.generation,before.generation+1);assert.equal(after.contexts,1);
+ await page.evaluate(record=>__ironVow.loadCareer(record),legacy);await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ assert.deepEqual(await page.evaluate(()=>__ironVow.snapshot().size),{width:10,depth:10});
+ const restored=await page.evaluate(()=>__ironVow.checkpoint());assert.equal(restored.legacy,true);
+ assert.ok(await page.evaluate(()=>__ironVow.legalMoves(__ironVow.snapshot().units.find(u=>u.team==='ally').id).some(m=>m.cost>0)),'Legacy checkpoint remains playable');
+};

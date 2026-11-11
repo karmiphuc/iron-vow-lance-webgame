@@ -28,8 +28,16 @@
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "in progress: shared scene prototype; full phase checks pending",
-      "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase."
+      "status": "in progress in draft PR #18: eight shared rigs and cleanup implemented; overlap/control/capture gates pending",
+      "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase.",
+      "development_suites_passed": 45,
+      "development_scene_seeds": [
+        4242,
+        4243,
+        4244
+      ],
+      "development_scene_findings": "All three default-pitch battles finished without ground/slide errors; footprint overlaps remain. A 4.5 m study did not clear the gate. Awaiting owner design preference before spacing changes.",
+      "handoff": "docs/phase1-development.md"
     },
     {
       "phase": 2,

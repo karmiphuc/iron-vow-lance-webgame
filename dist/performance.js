@@ -2,15 +2,15 @@
 (function(root){
 'use strict';
 function createSampler(capacity=120){
- let samples=[],previous=null,calls=0,triangles=0,memory={contexts:0,geometries:0,textures:0};
+ let samples=[],previous=null,calls=0,triangles=0,pendingCalls=0,pendingTriangles=0,memory={contexts:0,geometries:0,textures:0};
  return {
-  reset(){samples=[];previous=null;calls=triangles=0;},
+  reset(){samples=[];previous=null;calls=triangles=pendingCalls=pendingTriangles=0;},
   begin(now){
    if(previous!==null&&now>previous){samples.push(now-previous);if(samples.length>capacity)samples.shift();}
-   previous=now;calls=triangles=0;
+   previous=now;
   },
-  record(info){calls+=info.render.calls;triangles+=info.render.triangles;},
-  end(value){memory={...value};},
+  record(info){pendingCalls+=info.render.calls;pendingTriangles+=info.render.triangles;},
+  end(value){calls=pendingCalls;triangles=pendingTriangles;pendingCalls=pendingTriangles=0;memory={...value};},
   report(){
    const ordered=[...samples].sort((a,b)=>a-b),percentile=q=>ordered.length?ordered[Math.ceil(ordered.length*q)-1]:null;
    return {samples:samples.length,fps:samples.length?1000/(samples.reduce((a,b)=>a+b,0)/samples.length):null,
@@ -35,7 +35,7 @@ root.IronVowPerformance={
   const r=sampler.report(),number=n=>n===null?'—':n.toFixed(1);
   panel.textContent=`FPS ${number(r.fps)} · frame ms p50 ${number(r.frameMs.p50)} / p95 ${number(r.frameMs.p95)}\n`+
    `WebGL calls ${r.calls} · triangles ${r.triangles}\nGeometries ${r.geometries} · textures ${r.textures} · contexts ${r.contexts}\n`+
-   'Current compositor: Canvas 2D + offscreen WebGL. Device measurements required.';
+   'Shared WebGL scene + projected UI. Native device measurements untested.';
  },
  snapshot:()=>sampler.report()
 };
