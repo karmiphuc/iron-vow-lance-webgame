@@ -125,13 +125,18 @@ function wardenAnchor(point,groundRow){
 function aimMounted(m,weapon,target,weight,node){
  if(!weapon?.muzzle||weight<=0)return;
  const wrist=node||m.rig.arms.R.wr,worldQ=new T.Quaternion(),parentQ=new T.Quaternion(),delta=new T.Quaternion();
- // Correct the actual barrel axis after authored carry/fire poses and recoil.
- // Re-evaluate the muzzle after each correction because the wrist also moves it.
+ // Rotate the whole muzzle offset as well as its axis. Aiming the axis alone
+ // repeatedly can oscillate when the target is close to the end of the gun.
  for(let i=0;i<3;i++){
   m.cont.updateMatrixWorld(true);
-  const muzzle=weapon.muzzle.getWorldPosition(V3()),line=weapon.muzzle.getWorldDirection(V3()),desired=target.clone().sub(muzzle).normalize();
-  if(line.lengthSq()<.5||desired.lengthSq()<.5)break;
-  delta.setFromUnitVectors(line,desired);delta.slerp(new T.Quaternion(),1-weight);
+  const pivot=wrist.getWorldPosition(V3()),muzzle=weapon.muzzle.getWorldPosition(V3()),line=weapon.muzzle.getWorldDirection(V3()),offset=muzzle.clone().sub(pivot),desired=target.clone().sub(pivot);
+  const along=offset.dot(line),lateralSq=Math.max(0,offset.lengthSq()-along*along),distanceSq=desired.lengthSq();
+  if(line.lengthSq()<.5||distanceSq<1e-10)break;
+  const travel=Math.sqrt(Math.max(0,distanceSq-lateralSq))-along,reachable=distanceSq>=lateralSq&&travel>=0;
+  const ray=reachable?offset.addScaledVector(line,travel).normalize():line;
+  if(!reachable)desired.sub(offset);
+  if(desired.lengthSq()<1e-10)break;
+  delta.setFromUnitVectors(ray,desired.normalize());delta.slerp(new T.Quaternion(),1-weight);
   wrist.getWorldQuaternion(worldQ);wrist.parent.getWorldQuaternion(parentQ);
   wrist.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));
  }
