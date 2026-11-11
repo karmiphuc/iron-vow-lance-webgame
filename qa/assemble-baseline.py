@@ -8,7 +8,7 @@ parser.add_argument('--out',type=Path)
 args=parser.parse_args()
 repo=Path(__file__).resolve().parent.parent
 out=args.out or repo/'design/baseline/reviewed-20261111'
-static_runs=[('baseline-original',(args.runs_root/'iron-vow-baseline-final')),('phase0-original',(args.runs_root/'iron-vow-phase0-final')),('baseline-details',(args.runs_root/'iron-vow-baseline-details')),('phase0-details',(args.runs_root/'iron-vow-phase0-details'))]
+static_runs=[('baseline-original',(args.runs_root/'iron-vow-baseline-final')),('phase0-original',(args.runs_root/'iron-vow-phase0-final')),('baseline-details',(args.runs_root/'iron-vow-baseline-details')),('phase0-details',(args.runs_root/'iron-vow-phase0-details')),('baseline-bench-checked',(args.runs_root/'iron-vow-baseline-bench-checked'))]
 motion_runs=[('phase0-motion',(args.runs_root/'iron-vow-phase0-motion')),('baseline-motion',(args.runs_root/'iron-vow-baseline-motion')),('reference-motion',(args.runs_root/'iron-vow-reference-motion')),('phase0-destruction-final',(args.runs_root/'iron-vow-phase0-destruction-final')),('baseline-destruction-final',(args.runs_root/'iron-vow-baseline-destruction-final')),('reference-hit-final',(args.runs_root/'iron-vow-reference-hit-final'))]
 plan=json.loads(subprocess.check_output(['node','qa/capture.cjs','--plan'],cwd=repo))
 expected=set()
