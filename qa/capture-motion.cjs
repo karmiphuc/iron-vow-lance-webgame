@@ -31,8 +31,8 @@ async function main(){
      const marker='const api=window.__bench=window.__bench||{};';assert.ok(html.includes(marker),'Reference War API marker');
      const hook=`${marker}
       api.captureHit=()=>{const b=W.units.find(u=>u.team==='ally'),a=W.units.find(u=>u.team==='enemy');
-       for(const u of W.units){u.cd=100;u.fault.hold=2;}select(b);setCam('follow');
-       RB.camGoal({az:-.52,el:.18,dist:20,fov:38,tgt:V3(b.x,2.6,b.z),k:4},true);
+       for(const u of W.units){u.cd=100;u.fault.hold=2;u.m.cont.visible=u===b||u===a;}select(b);setCam('follow');
+       RB.camGoal({az:-.52,el:.32,dist:20,fov:38,tgt:V3(b.x,2.4,b.z),k:4},true);RB.cam.goal.mode='follow';camUpdate(0);
        VA.BT.fx=realFX;applyDamage(b,'body',Math.max(1,Math.round(b.max.body*.05)),a,'rifle');return b.tag;};`;
      await route.fulfill({response,body:html.replace(marker,hook)});
     });
@@ -117,7 +117,8 @@ async function main(){
     const release=action==='destruction'?frames[0].clock:frames.find(f=>Number.isFinite(f.fireAt))?.fireAt;
     if(Number.isFinite(release))for(let i=0;i<frames.length;i++){const x=i%cols*width,y=Math.floor(i/cols)*(height+24);g.fillStyle='#101820';g.fillRect(x,y,width,24);g.fillStyle='#e4e6e8';g.fillText((i+1)+' / '+(frames[i].clock-release).toFixed(3)+' s from '+(action==='destruction'?'collapse':'fire'),x+8,y+17);}
     const file=config.label+'-'+action+'.png',bytes=strip.toBuffer('image/png');fs.writeFileSync(path.join(output,file),bytes);
-    manifest.strips.push({action,file,sha256:sha(bytes),document_sha256:documentHash,frames});console.log('SAVED '+file);
+    manifest.strips.push({action,file,sha256:sha(bytes),document_sha256:documentHash,
+     ...(config.kind==='bench'&&action==='hit-reaction'?{instrumentation:'Temporary QA API calls existing War applyDamage. Unrelated actors are held and hidden to isolate the reaction; the reference file is unchanged.'}:{}),frames});console.log('SAVED '+file);
    }catch(error){manifest.failures.push({action,error:error.stack});console.error('FAILED '+action+': '+error.message);}
    finally{await context.close();fs.writeFileSync(path.join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');}
   }
