@@ -8,3 +8,5 @@ Source: `docs/reference/claude/rig-bench.html` at sha256 `8578da6c…` (branch h
 - `collapse-ground-slam.png`: the script's collapse capture.
 
 Local-run note: this sandbox blocks fonts.googleapis.com, so the run used a temporary copy of the script outside the repo that serves an empty stylesheet for font requests. Only label typography in captures is affected; every check is unchanged.
+
+Subsequent independent review found that the initial polygon offset could still pull steep arc faces through an opaque plane. The final correction and rendered-pixel regression (196 leaked pixels before, zero after) are preserved separately in [pr9-independent](../pr9-independent/README.md), including desktop/touch captures, the unmodified runner's font loading, and the full seeded comparison. The captures in this directory predate that correction.
