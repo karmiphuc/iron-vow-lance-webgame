@@ -46,18 +46,26 @@ async function capture(config){
      window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
      window.cancelAnimationFrame=key=>frames.delete(key);
      window.__captureTick=()=>{const queued=[...frames.values()];frames.clear();for(const callback of queued)callback(5000);};
+          window.__capturePending=0;
+     const fetchNative=window.fetch.bind(window);
+     window.fetch=(...args)=>{window.__capturePending++;return fetchNative(...args).finally(()=>window.__capturePending--);};
+     const sendNative=XMLHttpRequest.prototype.send;
+     XMLHttpRequest.prototype.send=function(...args){
+      window.__capturePending++;this.addEventListener('loadend',()=>window.__capturePending--,{once:true});
+      try{return sendNative.apply(this,args);}catch(error){window.__capturePending--;throw error;}
+     };
      const NativeImage=window.Image;window.__captureImages=[];
      window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.push(image);return image;}});
     });
-    await page.goto(job.url,{waitUntil:'load',timeout:120000});
+    await page.goto(job.url,{waitUntil:'domcontentloaded',timeout:120000});
     await page.evaluate(()=>document.fonts.ready);
     if(!job.preset.path)await page.evaluate(setGamePreset,job.preset);
     // Render once to request lazy art, then wait for all art and repeat. Fixed game clock.
     for(let pass=0;pass<4;pass++){
      await page.evaluate(()=>{if(typeof clock!=='undefined'){clock=5;last=5000-1000/60;}window.__captureTick();});
-     await page.waitForLoadState('networkidle',{timeout:120000});
-     await page.waitForFunction(()=>[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
+    if(job.preset.path&&job.source!=='reference-bench')await page.waitForFunction(()=>document.body.dataset.rigModel==='painted',null,{polling:50,timeout:120000});
     const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     if(broken.length)throw Error('Unloaded/broken images: '+broken.length);
     if(errors.length)throw Error(errors.join('\n'));
