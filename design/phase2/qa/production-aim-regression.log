@@ -1,0 +1,2 @@
+PASS 24 close/steep actual GLB emitter aim cases; prior max 2.0694841645043027 rad, current max 1.4901161193847656e-8 rad
+PASS 31 physical weapon aliases and sockets, geometry-adjacent emitters, real piledriver stroke and Parallax charge

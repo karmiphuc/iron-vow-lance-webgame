@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sourceScope": "All 34 catalog entries passed full motion and touch/reduced on dist tree76ac81ff (6786df4). The only production changes to tree06b72b8f (9af2015) are airborne home-foot and landing-settle corrections in rig-motion.js and scene-rigs.js. Five representative real commands plus all strengthened special fixtures passed both modes on that final tree. The older catalog reports retain their exact historical source and are not represented as a final-tree all-weapon rerun.",
+  "sourceScope": "All 34 catalog entries passed full motion and touch/reduced on tree76ac81ff (6786df4). Tree06b72b8f (9af2015) then corrected airborne feet and landing settle; five representative commands plus strengthened special fixtures passed both modes there. Tree613bc118 (f68b5df) subsequently corrected close/steep actual firing aim, with before/after proof in aim-regression-manifest.json and committed-source formal campaign evidence recorded separately. Historical catalog reports retain their exact sources; they are not represented as an all-weapon rerun on later trees.",
   "reports": [
     {
       "report": "actions-airborne-fixed-full.json",

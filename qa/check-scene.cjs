@@ -42,6 +42,17 @@ const live=[0,5,6,7,8,9,10,12];
    // No mock bones or animation inputs. Only discard the unobserved GPU submission in this CPU correctness run.
    const renderer=IronVowRenderer.get();renderer.render=()=>{};renderer.readRenderTargetPixels=()=>{};
    window.__qa={ticks:0,anomalies:[],keys:new Set(),feet:new Map(),motion:new Map(),frames:new Set(),weapons:new Set(),commands:[],commandErrors:[],circleCandidates:0,combatSeen:0,objects:new Map(),combatCounts:{}};
+   // Read real pivot geometry at firing calls, without changing source or manufacturing FX records.
+   const aimMounted=IronVowFoundry.aimMounted;
+   IronVowFoundry.aimMounted=function(m,weapon,target,weight,node){
+    if(weapon?.muzzle&&weight>0&&__qa.aimClearance){
+     m.cont.updateMatrixWorld(true);const pivot=(node||m.rig.arms.R.wr).getWorldPosition(new THREE.Vector3()),muzzle=weapon.muzzle.getWorldPosition(new THREE.Vector3()),line=weapon.muzzle.getWorldDirection(new THREE.Vector3()),offset=muzzle.clone().sub(pivot),desired=target.clone().sub(pivot);
+     const along=offset.dot(line),lateralSq=Math.max(0,offset.lengthSq()-along*along),discriminant=desired.lengthSq()-lateralSq,travel=Math.sqrt(Math.max(0,discriminant))-along,q=__qa.aimClearance;
+     q.calls++;q.minimumDiscriminant=q.minimumDiscriminant===null?discriminant:Math.min(q.minimumDiscriminant,discriminant);q.minimumTravel=q.minimumTravel===null?travel:Math.min(q.minimumTravel,travel);
+     if(discriminant<0||travel<0){q.infeasibleCount++;if(q.samples.length<20){const actor=[...IronVowScene.models].find(([,r])=>r.entry?.m===m)?.[0];q.samples.push({time:clock,actor,physicalAsset:weapon.id,discriminant,travel,pivot:pivot.toArray(),muzzle:muzzle.toArray(),axis:line.toArray(),target:target.toArray()});}}
+    }
+    return aimMounted.call(this,m,weapon,target,weight,node);
+   };
    const hull=points=>{
     const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]),p=[...points].sort((a,b)=>a[0]-b[0]||a[1]-b[1]),lower=[],upper=[];
     for(const point of p){while(lower.length>1&&cross(lower.at(-2),lower.at(-1),point)<=0)lower.pop();lower.push(point);}
@@ -97,6 +108,7 @@ const live=[0,5,6,7,8,9,10,12];
      const u=s.units.find(u=>u.id===e.actor);if(!u?.live)continue;
      if((e.type==='launch'||e.type==='impact')&&!e.actorAlive)fail('wreckActs',u,e);
      if(e.type==='launch'){
+      if(e.archetype!=='missile')q.maximumLaunchAimError=Math.max(q.maximumLaunchAimError||0,e.aimError||0);
       if(!e.mounted)fail('weaponMount',u,e);
       if(e.archetype!=='missile'&&(e.aimError==null||e.aimError>.12))fail('aimOff',u,e);
       if(e.expectedOrigin&&Math.hypot(...e.origin.map((n,i)=>n-e.expectedOrigin[i]))>.3)fail('muzzleFar',u,e);
@@ -220,7 +232,7 @@ const live=[0,5,6,7,8,9,10,12];
    }
    await page.evaluate(({seed,frames,contract,weapons,cpuRaster,rasterPair})=>{
     if(rasterPair){let n=(seed^0xabc123)>>>0;Math.random=()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};clearTimeout(__qaFrameTimer);last=performance.now();requestAnimationFrame(draw);}
-    __qa.cpuRaster=cpuRaster;__qa.rasterOmitted=0;__qa.rasterContexts=0;__qa.ticks=0;__qa.anomalies=[];__qa.keys.clear();__qa.feet.clear();__qa.motion.clear();__qa.frames.clear();__qa.weapons.clear();__qa.commands=[];__qa.commandErrors=[];__qa.circleCandidates=0;__qa.combatSeen=0;__qa.objects.clear();__qa.combatCounts={};__qa.combatTrace=[];__qa.combatGate=Boolean(weapons);
+    __qa.cpuRaster=cpuRaster;__qa.rasterOmitted=0;__qa.rasterContexts=0;__qa.ticks=0;__qa.anomalies=[];__qa.keys.clear();__qa.feet.clear();__qa.motion.clear();__qa.frames.clear();__qa.weapons.clear();__qa.commands=[];__qa.commandErrors=[];__qa.circleCandidates=0;__qa.combatSeen=0;__qa.objects.clear();__qa.combatCounts={};__qa.combatTrace=[];__qa.maximumLaunchAimError=0;__qa.aimClearance={calls:0,infeasibleCount:0,minimumDiscriminant:null,minimumTravel:null,samples:[]};__qa.combatGate=Boolean(weapons);
     __ironVow.start({seed,frames,contract,...(weapons?{weapons}:{})});
    },{seed,frames,contract,weapons,cpuRaster:cpuRaster||rasterPair&&index>startIndex,rasterPair});
    await page.clock.runFor(100);
@@ -251,7 +263,7 @@ const live=[0,5,6,7,8,9,10,12];
    }
    if(!done)report.incompleteBattle=await page.evaluate(meta=>({...meta,snapshot:__ironVow.snapshot(),ticks:__qa.ticks,anomalies:__qa.anomalies,commands:__qa.commands,commandErrors:__qa.commandErrors}),{seed,frames,contract,terrainSeed});
    assert.ok(done,'Decision limit exceeded');
-   const result=await page.evaluate(()=>({terrainSeed:battle?.terrainSeed??save.sortie?.terrainSeed,ticks:__qa.ticks,anomalies:__qa.anomalies,frames:[...__qa.frames],weapons:[...__qa.weapons],commands:__qa.commands,commandErrors:__qa.commandErrors,circleCandidates:__qa.circleCandidates,combatCounts:__qa.combatCounts,rasterOmitted:__qa.rasterOmitted,rasterContexts:__qa.rasterContexts,combatTrace:__qa.combatTrace,result:__ironVow.snapshot().result}));
+   const result=await page.evaluate(()=>({terrainSeed:battle?.terrainSeed??save.sortie?.terrainSeed,ticks:__qa.ticks,anomalies:__qa.anomalies,frames:[...__qa.frames],weapons:[...__qa.weapons],commands:__qa.commands,commandErrors:__qa.commandErrors,circleCandidates:__qa.circleCandidates,combatCounts:__qa.combatCounts,rasterOmitted:__qa.rasterOmitted,rasterContexts:__qa.rasterContexts,combatTrace:__qa.combatTrace,maximumLaunchAimError:__qa.maximumLaunchAimError,aimClearance:__qa.aimClearance,result:__ironVow.snapshot().result}));
    report.battles.push({seed,frames,contract,assignedWeapons:weapons,...result,...(rasterPair?{boneSamples}:{}),terrainSeed,wallMilliseconds:Date.now()-wallStart});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
    console.log(JSON.stringify({seed,frames,ticks:result.ticks,result:result.result?.win,anomalies:result.anomalies,errors:result.commandErrors}));
    assert.deepEqual(result.commandErrors,[]);assert.ok(result.ticks>0,'No animation ticks checked');
