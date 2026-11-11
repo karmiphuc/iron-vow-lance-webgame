@@ -1,0 +1,5 @@
+PASS desktop reference impact hooks, critical arcs and collapse
+PASS touch reference impact hooks, critical arcs and collapse
+START 3-battle soak baseline
+START 3-battle soak current
+PASS reference VFX: all five real hit hooks, touch particle counts, natural critical/collapse arcs, ground slam, reduced motion, 3-battle seeded comparison
