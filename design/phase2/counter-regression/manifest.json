@@ -27,7 +27,7 @@
       50.674580443274635
     ],
     "actorAlive": true,
-    "aimError": 1.4901161193847656e-8,
+    "aimError": 1.4901161193847656e-08,
     "mounted": true,
     "actor": "ally1",
     "target": "enemy1",
@@ -133,5 +133,10 @@
   },
   "actual_event_json_sha256": "15bfce3694b60d8c3ddbadfa08458fd32e13c371bd9f4ebd6999a56fc197f2e8",
   "muzzle_to_target_distance": 0.05028652937061127,
-  "visual_limit": "Original shoulder camera crops actor. Actual frame establishes context/weapon pose, not complete body, joint or foot placement; geometry checks are separate."
+  "visual_limit": "Original shoulder camera crops actor. Actual frame establishes context/weapon pose, not complete body, joint or foot placement; geometry checks are separate.",
+  "checker_archive": {
+    "file": "source/check-scene.cjs",
+    "sha256": "84e31334734983efc7f958c4253f7115a93d0ebead464c2df6317d6fc59f4b5c",
+    "scope": "Exact observer code used for the direct real-counter capture; archived before later checker changes."
+  }
 }
