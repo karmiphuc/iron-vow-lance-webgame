@@ -41,7 +41,7 @@ function create({catalog,onSelect=()=>{},onReserve=()=>{}}){
   function add(unit,p,index,isReserve){
    const group=new T.Group();group.position.set(p.x,0,p.z);dynamic.add(group);
    if(!isReserve){const pad=mesh(group,new T.CylinderGeometry(4.3,4.6,.3,6),metal,0,.15,0);pad.rotation.y=Math.PI/6;const ring=mesh(group,new T.TorusGeometry(4,.07,6,24),glow,0,.32,0);ring.rotation.x=Math.PI/2;}
-   let rig=null;if(unit){rig=catalog.create(unit);if(rig?.object)group.add(rig.object);}
+   let rig=null;if(unit){rig=catalog.create(unit);if(rig?.object){rig.object.position.y=isReserve?0:.3;group.add(rig.object);}}
    if(unit&&unit.condition<.3){const mark=mesh(group,new T.CircleGeometry(2.9,24),scorch,0,.34,0);mark.rotation.x=-Math.PI/2;box(group,.25,7,.25,yellow,-3.4,3.5,-1);box(group,7,.25,.25,yellow,0,7,-1);}
    const hit=mesh(group,new T.BoxGeometry(7,8,5),new T.MeshBasicMaterial({visible:false}),0,4,0);owned.add(hit.material);hit.userData.hangarId=unit?.id;hit.userData.reserve=isReserve;
    records.push({unit,group,rig,hit,index,isReserve});
