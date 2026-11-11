@@ -8,7 +8,7 @@ parser.add_argument('--out',type=Path)
 args=parser.parse_args()
 repo=Path(__file__).resolve().parent.parent
 out=args.out or repo/'design/baseline/reviewed-20261111'
-static_runs=[('baseline-original',(args.runs_root/'iron-vow-baseline-final')),('phase0-original',(args.runs_root/'iron-vow-phase0-final')),('baseline-details',(args.runs_root/'iron-vow-baseline-details')),('phase0-details',(args.runs_root/'iron-vow-phase0-details')),('baseline-bench-checked',(args.runs_root/'iron-vow-baseline-bench-checked')),('phase0-bench-checked',(args.runs_root/'iron-vow-phase0-bench-checked'))]
+static_runs=[('baseline-original',(args.runs_root/'iron-vow-baseline-final')),('phase0-original',(args.runs_root/'iron-vow-phase0-final')),('baseline-details',(args.runs_root/'iron-vow-baseline-details')),('phase0-details',(args.runs_root/'iron-vow-phase0-details')),('baseline-bench-checked',(args.runs_root/'iron-vow-baseline-bench-final')),('phase0-bench-checked',(args.runs_root/'iron-vow-phase0-bench-final'))]
 motion_runs=[('phase0-motion',(args.runs_root/'iron-vow-phase0-motion')),('baseline-motion',(args.runs_root/'iron-vow-baseline-motion')),('reference-motion',(args.runs_root/'iron-vow-reference-motion')),('phase0-destruction-final',(args.runs_root/'iron-vow-phase0-destruction-final')),('baseline-destruction-final',(args.runs_root/'iron-vow-baseline-destruction-final')),('reference-hit-final',(args.runs_root/'iron-vow-reference-hit-final'))]
 plan=json.loads(subprocess.check_output(['node','qa/capture.cjs','--plan'],cwd=repo))
 expected=set()
@@ -46,6 +46,9 @@ for label,root in static_runs:
 def digest(p):return sha256(p.read_bytes()).hexdigest()
 def convert(source,dest):
  dest.parent.mkdir(parents=True,exist_ok=True)
+ prior=cached.get(str(dest.relative_to(out)))
+ if prior and dest.exists() and digest(source)==prior['original_png_sha256'] and digest(dest)==prior['sha256']:
+  return {k:prior[k] for k in ['original_png_sha256','sha256','pixel_sha256','width','height']}
  with Image.open(source) as im:
   rgba=im.convert('RGBA');pixels=rgba.tobytes()
  same=False
@@ -54,6 +57,10 @@ def convert(source,dest):
  if not same:rgba.save(dest,format='WEBP',lossless=True,method=2,exact=True)
  with Image.open(dest) as check:assert check.size==rgba.size and check.convert('RGBA').tobytes()==pixels,'WebP pixels differ: '+str(source)
  return {'original_png_sha256':digest(source),'sha256':digest(dest),'pixel_sha256':sha256(pixels).hexdigest(),'width':rgba.width,'height':rgba.height}
+cached={}
+if (out/'manifest.json').exists():
+ previous=json.loads((out/'manifest.json').read_text())
+ cached={c['file']:c for c in previous.get('captures',[])+previous.get('filmstrips',[])}
 records=[]
 for n,(key,(run,root,c)) in enumerate(sorted(static.items()),1):
  dest=out/Path(c['file']).with_suffix('.webp');checks=convert(root/c['file'],dest)
@@ -99,5 +106,6 @@ report={'status':'complete','still_count':len(records),'filmstrip_count':len(mov
  'limits':['Software WebGL correctness only. iPad Safari/Chrome fps, p95 and context-loss session remain untested.','The reference hit strip exposes existing War applyDamage through a temporary QA API and holds/hides unrelated actors; the reference source file is unchanged.','The current renderer wreck has faint embers after two seconds, not the future Phase 2 14-second burn. This gap is preserved.',
  'This establishes the current renderer baseline; it does not certify the future shared scene, 640px images, planted feet, true aim or zero anomalies.'],
  'captures':records,'filmstrips':movies,'raw_runs':list(raw)}
-(out/'manifest.json').write_text(json.dumps(report,indent=2)+'\n')
+(out/'manifest.json.tmp').write_text(json.dumps(report,indent=2)+'\n')
+(out/'manifest.json.tmp').replace(out/'manifest.json')
 print('Assembled',len(records),'stills and',len(movies),'filmstrips in',out,flush=True)
