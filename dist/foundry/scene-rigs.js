@@ -33,28 +33,19 @@ function studioEnvironment(target){
  return texture;
 }
 function hdRenderer(){
- if(!bastionRenderer&&!bastionHDFailed){
-  try{
-   bastionRenderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:true});
-   configure(bastionRenderer,window.matchMedia?.('(max-width: 760px)').matches?704:896);
-   bastionEnvironment=studioEnvironment(bastionRenderer);
-   bastionRenderer.domElement.addEventListener('webglcontextlost',()=>{
-    bastionHDFailed=true;bastionRenderer=null;
-   },{once:true});
-  }catch(error){bastionHDFailed=true;bastionRenderer?.dispose();bastionRenderer=null;console.warn('Bastion using standard resolution',error)}
- }
- return bastionRenderer||renderer;
+ if(!init())return null;
+ renderer.setPixelRatio(1);configure(renderer,640);return renderer;
 }
 function init(){
  if(renderer||failed)return Boolean(renderer);
  try{
-  renderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power',preserveDrawingBuffer:true});
+  renderer=window.IronVowRenderer.get();
   configure(renderer,pixels);
   try{
    const gl=renderer.getContext?.(),info=gl?.getExtension?.('WEBGL_debug_renderer_info');
    softwareRenderer=Boolean(info&&/swiftshader|llvmpipe|softpipe|software/i.test(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)));
   }catch{}
-  renderer.domElement.addEventListener('webglcontextlost',()=>disable(),{once:true});
+  window.IronVowRenderer.subscribe(({type})=>{if(type==='restored'){clearCombat();bastionPreview=null;scene.environment?.dispose();scene.environment=studioEnvironment(renderer);}});
   scene=new T.Scene();
   for(const [color,x,y,z] of studioLights){
    const light=new T.DirectionalLight(C(color),x<0?2.5:1.7);light.position.set(x,y,z);scene.add(light);
@@ -78,7 +69,7 @@ function disable(error){
  if(failed)return;
  failed=true;
  clearCombat();
- renderer?.dispose();renderer=null;
+ window.IronVowRenderer.fatal(error||Error('Shared scene rendering failed'));renderer=null;
  bastionRenderer?.dispose();bastionRenderer=null;
  bastionEnvironment?.dispose();bastionEnvironment=null;
  if(error)console.warn('Foundry switched to baked rendering',error);
@@ -104,6 +95,7 @@ function makeSurface(){
 }
 function paintRig(m,surface,target=renderer,groundRow=ground){
  const size=surface.width,center=V3().project(camera),offsetY=size*(groundRow-(.5-center.y*.5));
+ target.setSize(size,size,false);
  const environment=scene.environment;
  if(target===bastionRenderer)scene.environment=bastionEnvironment;
  scene.add(m.cont);
@@ -284,16 +276,8 @@ function withFallback(render){
  };
 }
 // The live Warden is on unless a page or test opts out (window.IRON_VOW_LIVE_WARDEN=false or ?bakedwarden).
-function liveWardenAllowed(){
- return window.IRON_VOW_LIVE_WARDEN!==false&&(!softwareRenderer||window.IRON_VOW_LIVE_WARDEN===true)&&
-  !/[?&]bakedwarden\b/.test(window.location?.search||'');
-}
+function liveWardenAllowed(){return true;}
 function wardenReady(){return !failed&&liveWardenAllowed()&&init()&&liveWardenAllowed()&&Boolean(window.IronVowWardenRig?.ready());}
-function metrics(){
- const targets=[renderer,bastionRenderer].filter(Boolean);
- return targets.reduce((sum,target)=>({contexts:sum.contexts+1,
-  geometries:sum.geometries+target.info.memory.geometries,textures:sum.textures+target.info.memory.textures}),
-  {contexts:0,geometries:0,textures:0});
-}
+function metrics(){return window.IronVowRenderer.metrics();}
 window.IronVowFoundry={metrics,draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
 })();
