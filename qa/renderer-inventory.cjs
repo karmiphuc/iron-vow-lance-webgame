@@ -3,6 +3,10 @@ const path=require('node:path');
 const createSimulation=require('./sim-harness.cjs');
 const root=path.resolve(__dirname,'..');
 const dimensions=['py','spY','legA','legB','ankleH','restX','restZ','lift','stance','toe','reverse','quad','reach','phases','sway'];
+const paintSlots=['paint_primary','paint_secondary','paint_accent','visor','stack'];
+const commonBones=['root','pelvis','spine','neck',...['L','R'].flatMap(side=>['shoulder','elbow','wrist','socket'].map(b=>b+'.'+side))];
+const bipedBones=[...commonBones,...['L','R'].flatMap(side=>['hip','knee','ankle'].map(b=>b+'.'+side))];
+const quadBones=[...commonBones,...['LF','RF','LB','RB'].flatMap(side=>['mount','hip','knee','ankle'].map(b=>b+'.'+side))];
 const mapping={
  WARDEN:['rig-bench/warden-painted.glb','rig-bench/warden.glb'],KESTREL:['rig-bench/kestrel.glb'],BASILISK:['rig-bench/basilisk.glb'],
  GATECRASHER:['rig-bench/prototypes/gatecrasher.glb'],CICADA:['rig-bench/prototypes/cicada.glb'],
@@ -23,12 +27,22 @@ function readGLB(file){
   else if(p.mode===5||p.mode===6)triangles+=Math.max(0,count-2);
  }
  const rootNode=nodes.find(n=>n.name==='root');
+ const names=new Set(nodes.map(n=>n.name)),parts=new Set(['body','pilot','right','left','legs']);
+ const coverage=required=>({present:required.filter(n=>names.has(n)),missing:required.filter(n=>!names.has(n))});
+ const contract_v2={scope:Object.values(mapping).some(files=>files.includes(file))?'chassis':'equipment',
+  biped_bones:coverage(bipedBones),quad_bones:coverage(quadBones),
+  paint_materials:{present:paintSlots.filter(n=>materials.includes(n)),missing:paintSlots.filter(n=>!materials.includes(n))},
+  mesh_parts:{tagged:meshes.filter(m=>parts.has(m.extras?.part)).length,total:meshes.length,
+   invalid:meshes.flatMap((m,i)=>m.extras?.part&&!parts.has(m.extras.part)?[{mesh:i,value:m.extras.part}]:[])},
+  detachable_meshes:meshes.filter(m=>m.extras?.detach===true).length,
+  sockets:{right:names.has('socket.R'),left:names.has('socket.L'),extras:[...names].filter(n=>typeof n==='string'&&/^(mount\.|muzzle\.)/.test(n))},
+  note:'Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review.'};
  return {file,bytes:bytes.length,nodes:nodes.length,meshes:meshes.length,unique_mesh_triangles:triangles,
   skins:gltf.skins?.length??0,clips:(gltf.animations??[]).map(a=>a.name??'(unnamed)'),materials,
   node_names:nodes.map(n=>n.name).filter(Boolean),
   nodes_with_part:nodes.filter(n=>n.extras?.part).length,meshes_with_part:meshes.filter(m=>m.extras?.part).length,
   detachable_nodes:nodes.filter(n=>n.extras?.detach===true).length,
-  missing_root_dimensions:dimensions.filter(key=>rootNode?.extras?.[key]===undefined)};
+  missing_root_dimensions:dimensions.filter(key=>rootNode?.extras?.[key]===undefined),contract_v2};
 }
 function inventory(){
  const sim=createSimulation();
@@ -44,4 +58,9 @@ if(require.main===module){
  if(output)fs.writeFileSync(path.resolve(output),JSON.stringify(inventory(),null,2)+'\n');
  else process.stdout.write(JSON.stringify(inventory(),null,2)+'\n');
 }
-module.exports={inventory,readGLB};
+function contractMarkdown(data=inventory()){
+ const bones=c=>c.present.length+'/'+(c.present.length+c.missing.length)+'; missing '+(c.missing.length===c.present.length+c.missing.length?'all':c.missing.join(', ')||'none');
+ const rows=data.glbs.map(g=>{const c=g.contract_v2;return '| `'+g.file+'` | '+c.scope+' | '+(c.scope==='chassis'?bones(c.biped_bones)+'<br>quad: '+bones(c.quad_bones):'Equipment; chassis skeleton not required')+' | '+(c.paint_materials.missing.join(', ')||'none')+' | '+c.mesh_parts.tagged+'/'+c.mesh_parts.total+'; detach meshes/nodes '+c.detachable_meshes+'/'+g.detachable_nodes+' | '+g.missing_root_dimensions.length+'/15 | '+(g.clips.map(n=>'`'+n+'`').join(', ')||'none')+' |';});
+ return '## Rig contract v2 gap table\n\nExact biped names: `'+bipedBones.join('`, `')+'`. Quad legs replace the biped leg list with `mount/hip/knee/ankle.LF/RF/LB/RB`. Both alternatives are audited because every GLB is missing the required `quad` root dimension. Equipment files are listed separately from chassis requirements. Missing paint names use the five exact contract material names. Part coverage counts mesh-level `extras.part`; node-level tags are recorded separately in JSON. Detach counts do not certify which plates should detach. Full present/missing lists, sockets and invalid tags are in `renderer-inventory.json`.\n\n| GLB | Scope | Bones present / required and gaps | Missing paint slots | Mesh part tags; detach | Missing dimensions | Authored clips |\n| --- | --- | --- | --- | --- | --- | --- |\n'+rows.join('\n')+'\n';
+}
+module.exports={inventory,readGLB,contractMarkdown};

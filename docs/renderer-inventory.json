@@ -299,7 +299,89 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ],
+          "missing": []
+        },
+        "quad_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R"
+          ],
+          "missing": [
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 40,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": true,
+          "left": true,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/bastion-bst04.glb",
@@ -573,7 +655,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 67,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/bastion-carbine.glb",
@@ -632,7 +795,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "equipment",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 12,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/bastion-melee.glb",
@@ -717,7 +961,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "equipment",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 32,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/expansion-weapons.glb",
@@ -965,7 +1290,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "equipment",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 119,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/kestrel.glb",
@@ -1083,7 +1489,89 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ],
+          "missing": []
+        },
+        "quad_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R"
+          ],
+          "missing": [
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 40,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": true,
+          "left": true,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/prototypes/bulwark.glb",
@@ -1207,7 +1695,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 3,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/prototypes/cicada.glb",
@@ -1332,7 +1901,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 31,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/prototypes/gatecrasher.glb",
@@ -1516,7 +2166,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 61,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/prototypes/hellbreaker.glb",
@@ -1653,7 +2384,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 37,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/prototypes/scout.glb",
@@ -1781,7 +2593,90 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine"
+          ],
+          "missing": [
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine"
+          ],
+          "missing": [
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 14,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/shields.glb",
@@ -1863,7 +2758,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "equipment",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 34,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/warden-painted.glb",
@@ -1957,7 +2933,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 23,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/warden.glb",
@@ -2074,7 +3131,89 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ],
+          "missing": []
+        },
+        "quad_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R"
+          ],
+          "missing": [
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 39,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": true,
+          "left": true,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     },
     {
       "file": "rig-bench/weapons.glb",
@@ -2232,7 +3371,88 @@
         "reach",
         "phases",
         "sway"
-      ]
+      ],
+      "contract_v2": {
+        "scope": "equipment",
+        "biped_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ]
+        },
+        "quad_bones": {
+          "present": [],
+          "missing": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [],
+          "missing": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ]
+        },
+        "mesh_parts": {
+          "tagged": 0,
+          "total": 82,
+          "invalid": []
+        },
+        "detachable_meshes": 0,
+        "sockets": {
+          "right": false,
+          "left": false,
+          "extras": []
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
     }
   ],
   "optional_chassis": [
