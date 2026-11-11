@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "sourceScope": "All 34 catalog entries passed full motion and touch/reduced on dist tree76ac81ff (6786df4). The only production changes to tree06b72b8f (9af2015) are airborne home-foot and landing-settle corrections in rig-motion.js and scene-rigs.js. Five representative real commands plus all strengthened special fixtures passed both modes on that final tree. The older catalog reports retain their exact historical source and are not represented as a final-tree all-weapon rerun.",
+  "reports": [
+    {
+      "report": "actions-airborne-fixed-full.json",
+      "source": {
+        "commit": "9af2015f8f92ed219c278c48960fb75ef471eb39",
+        "distTree": "06b72b8f3ed6ed17d9bedc9723639b339d375d49",
+        "distDirty": false,
+        "checkerSha256": "835d6d51b2f872ae8bab882cbec968910120aa4ae66f40243da7052536d1e7b1"
+      },
+      "mode": "full",
+      "status": "passed",
+      "weapons": [
+        "rifle",
+        "missile",
+        "rail",
+        "cleaver",
+        "vesper-shoulder"
+      ],
+      "landedContacts": 14,
+      "jumpjetGate": "Actual ankle lift, reachable targets and grounded landing"
+    },
+    {
+      "report": "actions-airborne-fixed-touch-reduced.json",
+      "source": {
+        "commit": "9af2015f8f92ed219c278c48960fb75ef471eb39",
+        "distTree": "06b72b8f3ed6ed17d9bedc9723639b339d375d49",
+        "distDirty": false,
+        "checkerSha256": "835d6d51b2f872ae8bab882cbec968910120aa4ae66f40243da7052536d1e7b1"
+      },
+      "mode": "reduced",
+      "status": "passed",
+      "weapons": [
+        "rifle",
+        "missile",
+        "rail",
+        "cleaver",
+        "vesper-shoulder"
+      ],
+      "landedContacts": 14,
+      "jumpjetGate": "Actual ankle lift, reachable targets and grounded landing"
+    },
+    {
+      "report": "actions-full.json",
+      "source": {
+        "commit": "8aad694cfe11040ce1a7cc4e0384f6a4f8bfbe1d",
+        "distTree": "76ac81ff753ae6ebbfa45a093f794588cf919764",
+        "distDirty": false,
+        "checkerSha256": "8a4473569ca7b72a94756c8e2f09fbe4b276b58e017fdf40766657c6155c2890"
+      },
+      "mode": "full",
+      "status": "passed",
+      "weapons": [
+        "rifle",
+        "shotgun",
+        "missile",
+        "rail",
+        "hailstorm",
+        "rampart",
+        "breaker",
+        "cleaver",
+        "piledriver",
+        "blade",
+        "sidewinder",
+        "trident",
+        "forge",
+        "ember",
+        "watchman",
+        "falcon",
+        "cerberus",
+        "obelisk",
+        "rivet",
+        "parallax",
+        "hatchet",
+        "pike",
+        "tonfa",
+        "anchor-hammer",
+        "morrow",
+        "locust",
+        "breach-gauntlet",
+        "pulse-bash",
+        "aegis-cleave",
+        "aegis-bash",
+        "needle-carbine",
+        "flechette-scattergun",
+        "signal-knife",
+        "vesper-shoulder"
+      ],
+      "landedContacts": 137,
+      "jumpjetGate": "Historical root-lift-only assertion; ankle issue later detected and fixed"
+    },
+    {
+      "report": "actions-touch-reduced.json",
+      "source": {
+        "commit": "272be7d070978e1af8303c6f9135224d49cca9f7",
+        "distTree": "76ac81ff753ae6ebbfa45a093f794588cf919764",
+        "distDirty": false,
+        "checkerSha256": "8a4473569ca7b72a94756c8e2f09fbe4b276b58e017fdf40766657c6155c2890"
+      },
+      "mode": "reduced",
+      "status": "passed",
+      "weapons": [
+        "rifle",
+        "shotgun",
+        "missile",
+        "rail",
+        "hailstorm",
+        "rampart",
+        "breaker",
+        "cleaver",
+        "piledriver",
+        "blade",
+        "sidewinder",
+        "trident",
+        "forge",
+        "ember",
+        "watchman",
+        "falcon",
+        "cerberus",
+        "obelisk",
+        "rivet",
+        "parallax",
+        "hatchet",
+        "pike",
+        "tonfa",
+        "anchor-hammer",
+        "morrow",
+        "locust",
+        "breach-gauntlet",
+        "pulse-bash",
+        "aegis-cleave",
+        "aegis-bash",
+        "needle-carbine",
+        "flechette-scattergun",
+        "signal-knife",
+        "vesper-shoulder"
+      ],
+      "landedContacts": 137,
+      "jumpjetGate": "Historical root-lift-only assertion; ankle issue later detected and fixed"
+    }
+  ]
+}
