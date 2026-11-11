@@ -77,7 +77,7 @@ async function capture(config){
     await page.evaluate(()=>document.fonts.ready);
     if(!job.preset.path){
      if(job.source==='reference-game'&&job.preset.paint){
-      await page.evaluate(()=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';save.units[0].paint={p:'#708657',s:'#373b38',a:'#c19960'};render();});
+      await page.evaluate(()=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';save.units[0].paint={p:'#708657',s:'#373b38',a:'#c19960'};render();document.querySelector('section.paint')?.scrollIntoView({block:'center',behavior:'instant'});});
      }else await page.evaluate(setGamePreset,{...job.preset,...(job.source==='reference-game'&&job.preset.contract!==undefined?{contract:job.preset.contract-1}:{})});
     }
     // Render once to request lazy art, then wait for all art and repeat. Fixed game clock.
