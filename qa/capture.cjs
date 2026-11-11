@@ -10,11 +10,12 @@ function options(args){
  const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
  for(let i=0;i<args.length;i++){
   const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}
-  if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
+  if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset','--asset-delay-ms'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
   result[flag.slice(2)]=args[++i];
  }
  if(!/^[a-z0-9-]+$/.test(result.label))throw Error('Use a simple alphanumeric capture label');
  if(result.preset&&!presets.some(p=>p.id===result.preset))throw Error('Unknown preset: '+result.preset);
+ if(result['asset-delay-ms']!==undefined&&(!Number.isInteger(Number(result['asset-delay-ms']))||Number(result['asset-delay-ms'])<0||Number(result['asset-delay-ms'])>5000))throw Error('Use an asset delay between 0 and 5000 ms');
  for(const key of ['origin','reference-game','reference-bench'])if(result[key]){
   const url=new URL(result[key]);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Use an HTTP(S) URL without credentials');
  }
@@ -30,7 +31,7 @@ async function capture(config){
  const executablePath=process.env.IRON_VOW_CHROME||(!fs.existsSync(chromium.executablePath())&&['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync))||undefined;
  const browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
- const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),
+ const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),asset_delay_ms:Number(config['asset-delay-ms']||0),
   environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],failures:[]};
  const jobs=selected.map(preset=>({source:config.label,preset,url:new URL(preset.path??'',config.origin).href}));
  if(config['reference-game'])for(const preset of selected.filter(p=>p.page||p.contract!==undefined&&!p.weapon))
@@ -42,6 +43,7 @@ async function capture(config){
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+   if(config['asset-delay-ms'])await context.route(/-parts\.webp(?:\?|$)/,async route=>{await new Promise(done=>setTimeout(done,Number(config['asset-delay-ms'])));await route.continue();});
    page.on('response',response=>{if(response.status()>=400)errors.push(response.status()+' '+response.url());});
    page.on('requestfailed',request=>errors.push('Request failed: '+request.url().slice(0,180)));
    try{
@@ -80,6 +82,9 @@ async function capture(config){
       await page.evaluate(()=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';save.units[0].paint={p:'#708657',s:'#373b38',a:'#c19960'};render();document.querySelector('section.paint')?.scrollIntoView({block:'center',behavior:'instant'});});
      }else await page.evaluate(setGamePreset,{...job.preset,...(job.source==='reference-game'&&job.preset.contract!==undefined?{contract:job.preset.contract-1}:{})});
     }
+    // The contact flash requests a part mask lazily. Warm that state before the
+    // final shot, so a slow mask response cannot leave the screenshot incomplete.
+    if(job.preset.weapon)await page.evaluate(()=>{activeCinematic.target.hitTime=5-.06;activeCinematic.target.hitPart='body';});
     // Render once to request lazy art, then wait for all art and repeat. Fixed game clock.
     for(let pass=0;pass<4;pass++){
      await page.evaluate(()=>{if(typeof clock!=='undefined'){clock=5;last=5000-1000/60;}window.__captureTick();});
@@ -97,7 +102,7 @@ async function capture(config){
      clock=5;last=5000-1000/60;window.__captureTick();
     });
     const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
-    if(broken.length)throw Error('Unloaded/broken images: '+broken.length);
+    if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
