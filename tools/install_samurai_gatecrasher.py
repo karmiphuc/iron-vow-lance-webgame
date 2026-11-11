@@ -68,7 +68,13 @@ for key,new in sorted(keys.items()):
         assert color.size==paint.size==parts.size,key
         assert color.getbbox() and paint.convert("L").getextrema()[1]>128,key
         assert all(channel.getextrema()[1]==255 for channel in parts.convert("RGBA").split()),key
-    for source,suffix in zip(files,suffixes):
+        target = assets/(new+".webp")
+        # Keep the large color atlases within the Sites archive limit.
+        if files[0].stat().st_size>750_000:
+            color.save(target,quality=87,alpha_quality=100)
+        else:
+            shutil.copyfile(files[0],target)
+    for source,suffix in zip(files[1:],suffixes[1:]):
         shutil.copyfile(source,assets/(new+suffix+".webp"))
     part_masks[new] = new+"-parts"
 
