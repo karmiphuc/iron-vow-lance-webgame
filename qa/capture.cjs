@@ -1,8 +1,11 @@
 /* Fixed-viewport visual baselines. Operates only on an explicitly supplied server. */
 const fs=require('node:fs');
 const path=require('node:path');
-const {execFileSync}=require('node:child_process');
+const {createHash}=require('node:crypto');
+const {execFile,execFileSync}=require('node:child_process');
+const {promisify}=require('node:util');
 const {viewports,presets,setGamePreset}=require('./capture-presets.cjs');
+const fetchPublicAsset=promisify(execFile),referenceAssets=new Map();
 function options(args){
  const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
  for(let i=0;i<args.length;i++){
@@ -36,17 +39,29 @@ async function capture(config){
   jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
  try{
   for(const viewport of viewports)for(const job of jobs){
+   console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
    page.on('response',response=>{if(response.status()>=400)errors.push(response.status()+' '+response.url());});
+   page.on('requestfailed',request=>errors.push('Request failed: '+request.url().slice(0,180)));
    try{
+    if(job.source.startsWith('reference-')){
+     await context.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',route=>route.fulfill({path:path.resolve(__dirname,'../dist/rig-bench/vendor/three.min.js'),contentType:'text/javascript'}));
+     await context.route(/^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com)\//,async route=>{
+      const url=route.request().url();
+      try{
+       if(!referenceAssets.has(url))referenceAssets.set(url,fetchPublicAsset('curl',['-fsS','--max-time','30',url],{encoding:'buffer',maxBuffer:8*1024*1024}).then(result=>result.stdout));
+       await route.fulfill({body:await referenceAssets.get(url),contentType:new URL(url).hostname==='fonts.googleapis.com'?'text/css':'font/woff2'});
+      }catch{errors.push('Reference font could not be fetched: '+url);await route.abort();}
+     });
+    }
     await page.addInitScript(()=>{
      let seed=101;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
      const frames=new Map();let id=0;
      window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
      window.cancelAnimationFrame=key=>frames.delete(key);
      window.__captureTick=()=>{const queued=[...frames.values()];frames.clear();for(const callback of queued)callback(5000);};
-          window.__capturePending=0;
+     window.__capturePending=0;
      const fetchNative=window.fetch.bind(window);
      window.fetch=(...args)=>{window.__capturePending++;return fetchNative(...args).finally(()=>window.__capturePending--);};
      const sendNative=XMLHttpRequest.prototype.send;
@@ -57,23 +72,39 @@ async function capture(config){
      const NativeImage=window.Image;window.__captureImages=[];
      window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.push(image);return image;}});
     });
-    await page.goto(job.url,{waitUntil:'domcontentloaded',timeout:120000});
+    const response=await page.goto(job.url,{waitUntil:'domcontentloaded',timeout:120000});
+    const documentHash=createHash('sha256').update(await response.body()).digest('hex');
     await page.evaluate(()=>document.fonts.ready);
-    if(!job.preset.path)await page.evaluate(setGamePreset,job.preset);
+    if(!job.preset.path){
+     if(job.source==='reference-game'&&job.preset.paint){
+      await page.evaluate(()=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';save.units[0].paint={p:'#708657',s:'#373b38',a:'#c19960'};render();});
+     }else await page.evaluate(setGamePreset,{...job.preset,...(job.source==='reference-game'&&job.preset.contract!==undefined?{contract:job.preset.contract-1}:{})});
+    }
     // Render once to request lazy art, then wait for all art and repeat. Fixed game clock.
     for(let pass=0;pass<4;pass++){
      await page.evaluate(()=>{if(typeof clock!=='undefined'){clock=5;last=5000-1000/60;}window.__captureTick();});
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
-    if(job.preset.path&&job.source!=='reference-bench')await page.waitForFunction(()=>document.body.dataset.rigModel==='painted',null,{polling:50,timeout:120000});
+    if(job.preset.path&&job.source!=='reference-bench'){
+     await page.waitForFunction(()=>document.body.dataset.rigModel==='painted',null,{polling:50,timeout:120000});
+     await page.evaluate(()=>window.__captureTick());
+    }
+    if(job.preset.weapon)await page.evaluate(()=>{
+     const sequence=activeCinematic,target=sequence.target;
+     target.hitTime=5-.06;target.hitPart='body';
+     effects.push({type:'boom',target:target.id,part:'body',x:target.x,z:target.z,t:.82,
+      light:Boolean(sequence.w.burst),broken:false,fxKind:weaponMotion(sequence.w.id),fxSeed:101,nx:-1,ny:-.2});
+     clock=5;last=5000-1000/60;window.__captureTick();
+    });
     const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     if(broken.length)throw Error('Unloaded/broken images: '+broken.length);
     if(errors.length)throw Error(errors.join('\n'));
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled'});
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename});
-   }catch(error){manifest.failures.push({source:job.source,preset:job.preset.id,viewport,error:error.message});}
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash});
+    console.log('SAVED '+filename);
+   }catch(error){console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push({source:job.source,preset:job.preset.id,viewport,error:error.message});}
    finally{await context.close();}
   }
  }finally{
