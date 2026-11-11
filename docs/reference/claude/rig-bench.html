@@ -1540,10 +1540,6 @@ const glowTex=tex(64,64,g=>{const r=g.createRadialGradient(32,32,0,32,32,32);r.a
 const smokeTex=tex(128,128,g=>{for(let i=0;i<14;i++){const x=64+rnd(-22,22),y=64+rnd(-22,22),rr=rnd(22,40),r=g.createRadialGradient(x,y,0,x,y,rr);r.addColorStop(0,'rgba(255,255,255,.35)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,128,128);}});
 const fireTex=tex(64,64,g=>{const r=g.createRadialGradient(32,36,0,32,32,32);r.addColorStop(0,'rgba(255,250,220,1)');r.addColorStop(.25,'rgba(255,200,90,.95)');r.addColorStop(.55,'rgba(240,90,20,.55)');r.addColorStop(1,'rgba(120,20,0,0)');g.fillStyle=r;g.fillRect(0,0,64,64);});
 const scorchTex=tex(128,128,g=>{const r=g.createRadialGradient(64,64,0,64,64,64);r.addColorStop(0,'rgba(8,6,5,.85)');r.addColorStop(.5,'rgba(15,12,10,.55)');r.addColorStop(1,'rgba(20,15,10,0)');g.fillStyle=r;g.fillRect(0,0,128,128);for(let i=0;i<40;i++){g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=rnd(1,3);g.beginPath();g.moveTo(64,64);const a=rnd(0,7),l=rnd(20,60);g.lineTo(64+Math.cos(a)*l,64+Math.sin(a)*l);g.stroke();}});
-// [bench] shockwave band: a soft ring broken up by dust blotches, so it never reads as a clean halo
-const shockTex=tex(256,256,g=>{const c=128,r=g.createRadialGradient(c,c,0,c,c,c);r.addColorStop(0,'rgba(255,255,255,0)');r.addColorStop(.6,'rgba(255,255,255,0)');r.addColorStop(.82,'rgba(255,255,255,.35)');r.addColorStop(.93,'rgba(255,255,255,.6)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,256,256);
-  g.globalCompositeOperation='destination-out';for(let i=0;i<26;i++){const a=rnd(0,7),d=rnd(96,124),x=c+Math.cos(a)*d,y=c+Math.sin(a)*d,rr=rnd(8,22),q=g.createRadialGradient(x,y,0,x,y,rr);q.addColorStop(0,'rgba(0,0,0,.85)');q.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=q;g.fillRect(x-rr,y-rr,rr*2,rr*2);}
-  g.globalCompositeOperation='source-over';for(let i=0;i<70;i++){const a=rnd(0,7),d=rnd(100,122),x=c+Math.cos(a)*d,y=c+Math.sin(a)*d,rr=rnd(3,9),q=g.createRadialGradient(x,y,0,x,y,rr);q.addColorStop(0,'rgba(255,255,255,.5)');q.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=q;g.fillRect(x-rr,y-rr,rr*2,rr*2);}});
 /* vow3d.js 44-51 */
 const geoCache=new Map();
 function bevelGeo(w,h,d,s0){const key=[w,h,d,s0].map(v=>(v||0).toFixed(3)).join('|');if(geoCache.has(key))return geoCache.get(key);
@@ -1684,7 +1680,7 @@ function faultFX(m,I,t){const fx=BT.fx;if(!fx||!fx.arc||RM)return;
 function surfacePoint(m,part){const p=partPoint(m,part),c=m.rig.spine.getWorldPosition(V3()),d=V3(p.x-c.x,0,p.z-c.z);
   if(d.lengthSq()<.04)d.set(Math.sin(m.yaw),0,Math.cos(m.yaw));return p.addScaledVector(d.normalize(),.85*(m.scale||1));}
 function groundSlam(m){const fx=BT.fx,p=m.rig.spine.getWorldPosition(V3());const g=V3(p.x,m.cont.position.y,p.z),heavy=HEAVY[m.build.mods?m.build.mods.legs:m.frame];
-  fx.shock(g,0xf0ece4,7.5*heavy,.32,.35);fx.shock(g,0xd2c8b6,5*heavy,.85,.75);fx.dustwave(g,24,7.5*heavy,2.7*heavy,0xc6bba7,.78,2,.8);fx.smoke(V3(g.x,g.y+.3,g.z),4,2.6*heavy,0x8f877b,.4,.6,1.8,.8);
+  fx.airwave(g,8*heavy,.38,.4);fx.dustwave(g,20,6*heavy,2.4*heavy,0xb8ad99,.62,1.8,.6);fx.smoke(V3(g.x,g.y+.3,g.z),4,2.6*heavy,0x8f877b,.4,.6,1.8,.8);
   fx.spray(V3(g.x,g.y+.15,g.z),V3(Math.sin(m.yaw),.25,Math.cos(m.yaw)),12,7,1.1,SPARK_HOT,.5);BT.cam.shake=Math.max(BT.cam.shake,.5*heavy);}
 
 /* [bench] directional impacts (new, after PR #4's 2D idea): white-hot flash plus a spark spray thrown back out of the hit
@@ -1722,9 +1718,13 @@ function FX(scene,o){
   const ringG=new T.RingGeometry(.85,1,64);ringG.rotateX(-PI/2);
   const rings=mkPool(12,()=>({o:new T.Mesh(ringG,new T.MeshBasicMaterial({blending:T.AdditiveBlending,transparent:true,depthWrite:false,side:T.DoubleSide})),life:0}));
   const decalG=new T.PlaneGeometry(1,1);decalG.rotateX(-PI/2);
-  // [bench] ground shockwaves (normal blending, not additive) and radial dust walls replace the flat additive ring for impacts on the ground
-  const shockG=new T.PlaneGeometry(2,2);shockG.rotateX(-PI/2);
-  const shocks=mkPool(o.shocks||10,()=>({o:new T.Mesh(shockG,new T.MeshBasicMaterial({map:shockTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3})),life:0}));
+  // [bench] air shockwave: an expanding hemisphere that is clear in the middle and only faintly visible at its rim (fresnel),
+  // so it reads as a pressure wave in the air rather than a glowing ring. Dust is a separate, single wall (f.dustwave).
+  const airG=new T.SphereGeometry(1,28,10,0,PI*2,0,PI/2);
+  const airMat=()=>new T.ShaderMaterial({uniforms:{color:{value:new T.Color()},opacity:{value:0}},transparent:true,depthWrite:false,
+    vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 color;uniform float opacity;varying vec3 vN;varying vec3 vV;void main(){float rim=pow(1.0-abs(dot(normalize(vN),normalize(vV))),3.0);gl_FragColor=vec4(color,rim*opacity);}'});
+  const airs=mkPool(o.airs||6,()=>({o:new T.Mesh(airG,airMat()),life:0}));
   const decals=mkPool(o.decals||16,()=>({o:new T.Mesh(decalG,new T.MeshBasicMaterial({map:scorchTex,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2})),life:0}));
   const misG=new T.Group();
   const missiles=mkPool(8,()=>{const g=new T.Group();cy(g,.08,.08,.7,MAT.white,0,0,0,PI/2,0,0,8,false);mesh(g,new T.ConeGeometry(.08,.22,8),MAT.amber,0,0,.46,PI/2,0,0,false);const fl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffb050,blending:T.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.z=-.45;fl.scale.setScalar(.7);g.add(fl);return{o:g,a:V3(),b:V3(),c:V3(),life:0,dur:1,trail:0,done:null};});
@@ -1750,7 +1750,7 @@ function FX(scene,o){
   f.debris=(p,n,spd)=>{for(let k=0;k<n;k++){const d=debris.next();d.o.position.copy(p);d.v.set(rnd(-1,1),rnd(.6,1.6),rnd(-1,1)).multiplyScalar(spd*rnd(.5,1));d.w.set(rnd(-9,9),rnd(-9,9),rnd(-9,9));d.life=rnd(1.6,2.6);d.o.scale.setScalar(rnd(.6,1.6));d.o.visible=true;}};
   f.streak=(a,b,c,w,flight,len)=>{const s=streaks.next();s.a.copy(a);s.b.copy(b);s.life=s.max=flight;s.w=w;s.len=len;s.o.material.color.setHex(c);s.o.visible=true;};
   f.beam=(a,b,c,w,life)=>{const s=beams.next();s.o.position.copy(a);s.o.lookAt(b);s.len=a.distanceTo(b);s.w=w;s.o.scale.set(w,w,s.len);s.life=s.max=life;s.o.material.color.setHex(c);s.o.visible=true;};
-  f.shock=(p,c,r,life,op)=>{const s=shocks.next();s.o.position.set(p.x,(p.y||0)+.04,p.z);s.o.rotation.y=rnd(0,7);s.r=r;s.op=op;s.life=s.max=life;s.o.material.color.setHex(c);s.o.scale.setScalar(.15);s.o.visible=true;};
+  f.airwave=(p,r,life=.4,op=.35,c=0xe8eef2)=>{const s=airs.next();s.o.position.set(p.x,p.y||0,p.z);s.r=r;s.op=op;s.life=s.max=life;s.o.material.uniforms.color.value.setHex(c);s.o.scale.set(.2,.12,.2);s.o.visible=true;};
   // n soft puffs launched outward along the ground from a small starting ring; drag slows them, so they pile up into a rolling dust wall
   f.dustwave=(p,n,spd,size,c,op,life,r0=.4)=>{for(let k=0;k<n;k++){const s=smoke.next(),a=k/n*PI*2+rnd(-.25,.25),ca=Math.cos(a),sa=Math.sin(a);
     s.o.position.set(p.x+ca*r0,(p.y||0)+rnd(.05,.25)*size,p.z+sa*r0);s.v.set(ca*spd*rnd(.75,1.25),rnd(.15,.55)*spd*.25,sa*spd*rnd(.75,1.25));
@@ -1771,7 +1771,7 @@ function FX(scene,o){
     for(const d of debris){if(!d.o.visible)continue;d.life-=dt;if(d.life<=0){d.o.visible=false;continue;}d.v.y-=18*dt;d.o.position.addScaledVector(d.v,dt);d.o.rotation.x+=d.w.x*dt;d.o.rotation.z+=d.w.z*dt;if(d.o.position.y<.08){d.o.position.y=.08;d.v.y*=-.3;d.v.x*=.55;d.v.z*=.55;d.w.multiplyScalar(.5);}}
     for(const s of streaks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const q=1-s.life/s.max;const head=_a.copy(s.a).lerp(s.b,q),tail=_b.copy(s.a).lerp(s.b,Math.max(0,q-s.len));s.o.position.copy(head).lerp(tail,.5);s.o.lookAt(head);s.o.scale.set(s.w,s.w,Math.max(.05,head.distanceTo(tail)));s.o.material.opacity=1;}
     for(const s of beams){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=s.life/s.max;s.o.material.opacity=u;s.o.scale.set(s.w*(.4+.6*u),s.w*(.4+.6*u),s.len);}
-    for(const s of shocks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max;s.o.scale.setScalar(.15+(1-Math.pow(1-u,3))*s.r);s.o.material.opacity=s.op*Math.pow(1-u,1.4);}
+    for(const s of airs){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max,e=.2+(1-Math.pow(1-u,3))*s.r;s.o.scale.set(e,e*.55,e);s.o.material.uniforms.opacity.value=s.op*Math.pow(1-u,1.6);}
     for(const s of rings){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max;s.o.scale.setScalar(.3+(1-Math.pow(1-u,2))*s.r);s.o.material.opacity=(1-u)*.9;}
     for(const s of missiles){if(!s.o.visible)continue;s.life+=dt;const q=Math.min(1,s.life/s.dur);const p0=_a.copy(s.a).lerp(s.c,q),p1=_b.copy(s.c).lerp(s.b,q);const pos=p0.lerp(p1,q);s.o.lookAt(pos);s.o.position.copy(pos);
       s.trail-=dt;if(s.trail<=0){s.trail=.025;f.smoke(pos,1,.9,0xb9b2a6,.45,.3,1.1,.05);}if(q>=1){s.o.visible=false;s.done&&s.done(pos.clone());}}
@@ -1815,12 +1815,12 @@ function explode(p,big,m){const fx=BT.fx;
   for(let i=0;i<(big?14:6);i++)fx.fire(p.clone().add(V3(rnd(-1,1),rnd(-.5,1),rnd(-1,1)).multiplyScalar(big?1.4:.6)),big?rnd(5,8):rnd(2.4,3.8),rnd(.4,.8),V3(rnd(-1,1),rnd(.5,2),rnd(-1,1)).multiplyScalar(big?2.5:1.4));
   fx.sparks(p,big?60:22,big?16:10,0xffb04a,.5,.7);fx.debris(p,big?14:5,big?9:6);
   fx.smoke(p,big?14:5,big?4.5:2.6,0x3a3632,.65,big?2.2:1.4,big?3.5:2,big?1.4:.6);
-  if(big){const g=V3(p.x,BT.floor||0,p.z);fx.shock(g,0xf2e2c8,11,.32,.35);fx.shock(g,0xb7ab98,7,.9,.65);fx.dustwave(g,26,9,3,0x8c8274,.72,2.2,1);fx.scorch(p,6.5);BT.cam.shake=Math.max(BT.cam.shake,.9);}
+  if(big){const g=V3(p.x,BT.floor||0,p.z);fx.airwave(g,12,.42,.45,0xf4e6d2);fx.dustwave(g,22,8,2.8,0x8c8274,.65,2.1,.9);fx.scorch(p,6.5);BT.cam.shake=Math.max(BT.cam.shake,.9);}
   else BT.cam.shake=Math.max(BT.cam.shake,.35);
   if(m){m.s.pitch.v-=big?0:1.2;m.s.comp.v-=big?0:.9;}
 }
 function onStep(m,p,i,amt=1){const fx=BT.fx,heavy=HEAVY[m.build.mods?m.build.mods.legs:m.frame]*amt; // [bench] step weight follows the LEGS module (the game never mixes modules)
-  fx.smoke(V3(p.x,.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);{const g=V3(p.x,BT.floor||0,p.z);fx.shock(g,0xd2c8b6,1.9*heavy,.5,.45*Math.min(1,heavy));fx.dustwave(g,Math.round(6+3*heavy),2.6*heavy,1.05*heavy,0xc0b5a1,.42,1.2,.35);}m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
+  fx.smoke(V3(p.x,.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);{const g=V3(p.x,BT.floor||0,p.z);fx.dustwave(g,Math.round(6+3*heavy),2.6*heavy,1.05*heavy,0xc0b5a1,.42,1.2,.35);}m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
 
 /* [bench] exports */
 function processPending(t){for(let i=pending.length-1;i>=0;i--)if(t>=pending[i].at){const f=pending[i].fn;pending.splice(i,1);f();}}
@@ -2424,7 +2424,7 @@ function disposeScene(){if(!scene)return;
     for(const mt of ms){for(const k of ['map','emissiveMap','normalMap','roughnessMap'])if(mt[k]&&!seen.has(mt[k])){seen.add(mt[k]);mt[k].dispose();}if(!seen.has(mt)){seen.add(mt);mt.dispose();}}});
   scene.traverse(o=>{if(o.isLight&&o.shadow&&o.shadow.map){o.shadow.map.dispose();o.shadow.map=null;}});   // shadow map render target
   if(scene.environment){const rt=scene.environment._rt;scene.environment.dispose();if(rt)rt.dispose();}scene=null;realFX=null;WR.scene=null;}
-const NULLFX=(()=>{const n=()=>{};return {light:n,glow:n,fire:n,smoke:n,sparks:n,debris:n,streak:n,beam:n,ring:n,scorch:n,missile:n,spray:n,arc:n,shock:n,dustwave:n,update:n,clearDecals:n};})();
+const NULLFX=(()=>{const n=()=>{};return {light:n,glow:n,fire:n,smoke:n,sparks:n,debris:n,streak:n,beam:n,ring:n,scorch:n,missile:n,spray:n,arc:n,airwave:n,dustwave:n,update:n,clearDecals:n};})();
 const WR=RB.war={scene:null};
 
 /* ---------- seeded PRNG (mulberry32): every sim decision draws from W.rng ---------- */
