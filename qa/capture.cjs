@@ -67,7 +67,7 @@ async function capture(config){
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
-   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64)&&(!job.preset.paint||job.source==='reference-game'||c.paint_view_verified===2)&&(job.preset.id!=='selected-move'||job.source==='reference-game'||c.selected_move_view_verified===2));
+   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64)&&(!job.preset.paint||job.source==='reference-game'||c.paint_view_verified===2)&&(job.preset.id!=='selected-move'||job.source==='reference-game'||c.selected_move_view_verified===3));
    if(retained&&fs.existsSync(path.join(output,retained.file))){
     const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
     if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
@@ -169,6 +169,7 @@ async function capture(config){
     if(errors.length)throw Error(errors.join('\n'));
     let selectedMoveViewVerified=false;
     if(job.preset.id==='selected-move'&&job.source!=='reference-game'){
+     await page.locator('#map-overview').click();await page.evaluate(()=>window.__captureTick());
      const target=await page.evaluate(()=>{
       const u=current(),free=freeMovement(u);
       return __ironVow.legalMoves(u.id).filter(m=>m.cost>free).map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-180&&m.p.y>180&&m.p.y<innerHeight-180&&IronVowScene.screenTile(m.p.x,m.p.y)?.x===m.x&&IronVowScene.screenTile(m.p.x,m.p.y)?.z===m.z);
@@ -208,7 +209,7 @@ async function capture(config){
     if(webglSample){
      webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
     }
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:2}:{}),...(selectedMoveViewVerified?{selected_move_view_verified:2}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:2}:{}),...(selectedMoveViewVerified?{selected_move_view_verified:3,selected_move_camera:'Overview control; actual paid path hovered'}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
     break;
