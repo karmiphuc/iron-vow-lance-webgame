@@ -67,7 +67,7 @@ async function capture(config){
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
-   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64)&&(!job.preset.paint||job.source==='reference-game'||c.paint_view_verified));
+   const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height&&(!job.preset.path||c.webgl_sample?.screenshot_non_black_samples>=64)&&(!job.preset.paint||job.source==='reference-game'||c.paint_view_verified)&&(job.preset.id!=='selected-move'||job.source==='reference-game'||c.selected_move_view_verified));
    if(retained&&fs.existsSync(path.join(output,retained.file))){
     const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
     if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
@@ -180,6 +180,17 @@ async function capture(config){
     });
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));
+    let selectedMoveViewVerified=false;
+    if(job.preset.id==='selected-move'&&job.source!=='reference-game'){
+     const target=await page.evaluate(()=>{
+      const u=current(),free=freeMovement(u);
+      return __ironVow.legalMoves(u.id).filter(m=>m.cost>free).map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-180&&m.p.y>180&&m.p.y<innerHeight-180&&IronVowScene.screenTile(m.p.x,m.p.y)?.x===m.x&&IronVowScene.screenTile(m.p.x,m.p.y)?.z===m.z);
+     });
+     if(!target)throw Error('No visible paid-move tile for capture');
+     await page.mouse.move(target.p.x,target.p.y);await page.evaluate(()=>window.__captureTick());
+     selectedMoveViewVerified=await page.evaluate(()=>{const info=IronVowScene.overlayInfo();return info.triangles>0&&info.path.some(p=>p.color===0xcc9b49)});
+     if(!selectedMoveViewVerified)throw Error('Paid-move path overlay did not render');
+    }
     // The game may rerender the workshop after lazy assets arrive. Scroll only
     // after that settles so the recorded paint preset contains its controls.
     let paintViewVerified=false;
@@ -195,7 +206,7 @@ async function capture(config){
     if(webglSample){
      webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
     }
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:true}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:true}:{}),...(selectedMoveViewVerified?{selected_move_view_verified:true}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
     break;
