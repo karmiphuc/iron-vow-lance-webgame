@@ -80,7 +80,15 @@ async function capture(config){
     if(!job.preset.path){
      if(job.source==='reference-game'&&job.preset.paint){
       await page.evaluate(preset=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';const u=save.units[0];u.paint={p:'#708657',s:'#373b38',a:'#c19960'};if(preset.paintChannel){u.frame=3;u.paint[preset.paintChannel]=preset.paintChannel==='p'?'#be5143':preset.paintChannel==='s'?'#5c82b3':'#dfb92f';}render();document.querySelector('section.paint')?.scrollIntoView({block:'center',behavior:'instant'});},job.preset);
-     }else await page.evaluate(setGamePreset,{...job.preset,...(job.source==='reference-game'&&job.preset.contract!==undefined?{contract:job.preset.contract-1}:{})});
+     }else{
+      const fixture={...job.preset};
+      if(job.source==='reference-game'&&fixture.contract!==undefined){
+       const name={1:'Ashes of the relay',2:'The iron corridor',3:'No quiet frontier'}[fixture.contract];
+       fixture.contract=await page.evaluate(name=>CONTRACTS.findIndex(c=>c.name.toLowerCase()===name.toLowerCase()),name);
+       if(fixture.contract<0)throw Error('Reference theater not found: '+name);
+      }
+      await page.evaluate(setGamePreset,fixture);
+     }
     }
     // The contact flash requests a part mask lazily. Warm that state before the
     // final shot, so a slow mask response cannot leave the screenshot incomplete.
