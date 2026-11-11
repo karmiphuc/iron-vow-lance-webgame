@@ -10,10 +10,10 @@ const live=[0,5,6,7,8,9,10,12];
  const root=path.resolve(__dirname,'..'),git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
  const source={commit:git('rev-parse','HEAD'),distTree:git('rev-parse','HEAD:dist'),distDirty:Boolean(git('status','--porcelain','--','dist')),checkerSha256:crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex')};
  if(count>=30){assert.equal(source.distDirty,false,'The formal soak requires committed, immutable application source');assert.equal(tileOverride,null,'The formal soak tests the production pitch');}
- const report={schema:1,url,source,clockHz:30,tileOverride,renderPolicy:'First scene rendered normally; subsequent bone soak skips GPU submissions. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
+ const report={schema:1,url,source,clockHz:30,tileOverride,renderPolicy:'First scene rendered at 0.5 DPR for software-GL correctness; subsequent bone soak skips GPU submissions. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],faultProbes:[],errors:[]};
  const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});
  try{
-  const page=await browser.newPage({viewport:{width:1366,height:1024}});
+  const page=await browser.newPage({viewport:{width:1366,height:1024},deviceScaleFactor:.5});
   if(tileOverride)await page.route(/\/(scene\/battle|scene\/environment)\.js/,async route=>{
    const response=await route.fetch(),source=await response.text();assert.ok(/TILE=3\.4/.test(source),'Candidate tile override must match the reference pitch');
    await route.fulfill({response,body:source.replace('TILE=3.4','TILE='+tileOverride)});
@@ -27,7 +27,7 @@ const live=[0,5,6,7,8,9,10,12];
   });
   page.on('pageerror',e=>report.errors.push(String(e)));
   page.on('console',m=>{if(m.type()==='error')report.errors.push(m.text());});
-  await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000});await page.waitForFunction(()=>window.__ironVow&&document.querySelector('#nav button'));
+  page.setDefaultTimeout(120000);await page.goto(url,{waitUntil:'domcontentloaded',timeout:120000});await page.waitForFunction(()=>window.__ironVow&&document.querySelector('#nav button'));
   for(const frames of [[0,5,6],[7,8,9],[10,12,0]]){
    await page.evaluate(frames=>__ironVow.start({seed:4242,frames}),frames);
    await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
