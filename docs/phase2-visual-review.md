@@ -4,6 +4,12 @@ The formal capture runs against detached production source `6786df4` served at l
 
 Open `design/phase2/combat/contact-sheet.html` to review actual-command frames. Each linked WebP retains full viewport resolution. The `filmstrips/` directory contains labeled derivative overview strips. Refer to the manifest status and individual case records for completed coverage; an interrupted batch is not a pass.
 
+## Current checkpoint
+
+The batch is paused for the shared four-CPU host's GPU scheduling slot. Thirteen full-resolution desktop images are saved across three completed actual-command cases: rifle (four), shotgun (four), and missile (five, including arrival). All thirteen WebP file hashes and decoded RGBA hashes were reverified after the pause. The prior failed manifest is retained: an early compositor screenshot timed out under host oversubscription; that infrastructure failure is not reported as a source defect or a completed visual gate.
+
+The rifle contact and missile sequence were visually inspected. The contact flash is visibly on the target torso; the missile strip shows launch, a traveling missile and smoke, contact and recovery. The production attack camera uses a close foreground shoulder view and crops the actor. These cases retain the existing legacy target sprite while live actor weapon presentation is rendered in 3D. Further archetypes, tablet, reduced-motion, status effects, and matching-preset comparisons remain pending at this checkpoint.
+
 ## Capture policy
 
 The runner invokes actual `__ironVow.attack` commands with the existing AP, timing, roll, contact, and HP rules. It uses deterministic hit rolls, an unobstructed two-actor fixture, and 1000 HP per target part for catalog coverage so an early kill cannot truncate a burst. It records first observed launch, impact and missile arrival frames and representative recovery frames. Part-damage scenarios explicitly adjust initial HP and then use real attacks; target damage and combat events are recorded alongside the image.
