@@ -251,11 +251,13 @@ function animateMech(m,I,dt,t){
   p.rotation.y=F?-F.hips*fs:0;
   cont.updateMatrixWorld(true);
   let settling=m.legs.some(L=>L.settle);
+  if(m.wasAirborne&&!I.airborne){for(const L of m.legs)L.settle={from:L.foot.clone(),t:0,dur:.15};settling=true;}
+  m.wasAirborne=Boolean(I.airborne);
   const artilleryPreparing=D.quad&&!I.moving&&Boolean(I.artillery||Number.isFinite(I.mortarAge));
   const pitches=[];
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
     const home=cont.localToWorld(_a.set(l.restX-(lead?F.narrow*fs:0),D.ankleH,l.restZ+(F?(lead?F.step:-F.back)*fs:0))).clone();let pitch=0;
-    if(I.groundAt&&I.alive)home.y=I.groundAt(home.x,home.z)+D.ankleH*sc;
+    if(I.groundAt&&I.alive&&!I.airborne)home.y=I.groundAt(home.x,home.z)+D.ankleH*sc;
     const hip=l.hip.getWorldPosition(V3()),ph=((g+(l.phase??i*.5)+(L.phaseOffset||0))%1+1)%1;
     const lifting=I.moving&&!dead&&ph>=duty;
     const strained=!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
@@ -281,7 +283,7 @@ function animateMech(m,I,dt,t){
     // PR #20: in-flight goals remain reachable; planted anchors never move under this clamp.
     if(L.swing||L.settle){const d=hip.distanceTo(L.foot);if(d>reach*.99)L.foot.sub(hip).multiplyScalar(reach*.99/d).add(hip);}
     pitches[i]=pitch*w;});
-  if(I.groundAt&&I.alive){
+  if(I.groundAt&&I.alive&&!I.airborne){
     // Uneven tiles and the first/last half-step can require compression beyond the flat-floor walk bob.
     // Lower the pelvis enough for the actual goals; the world-space planted anchors never move.
     cont.updateMatrixWorld(true);let drop=0;
