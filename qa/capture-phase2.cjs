@@ -1,0 +1,72 @@
+/* Phase 2 actual-command visual evidence. GPU is restored for every saved frame. */
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {createHash}=require('node:crypto'),{execFileSync}=require('node:child_process');
+const {chromium}=require('playwright'),{createCanvas,loadImage}=require('@napi-rs/canvas');
+const root=path.resolve(__dirname,'..'),out=path.resolve(process.env.IRON_VOW_VISUAL_OUT||path.join(root,'design/phase2/combat'));
+const url=process.env.IRON_VOW_URL||'http://127.0.0.1:5177/';
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
+const representative=new Set(['rifle','shotgun','missile','rail','blade','parallax']);
+const viewports=[{width:1366,height:1024,touch:false},{width:1194,height:834,touch:true}];
+const sourceRoot=path.resolve(process.env.IRON_VOW_VISUAL_SOURCE_ROOT||root);
+const sourceGit=(...args)=>execFileSync('git',args,{cwd:sourceRoot,encoding:'utf8'}).trim();
+const manifest={source:sourceGit('rev-parse','HEAD'),runner_source:git('rev-parse','HEAD'),runner_sha256:hash(fs.readFileSync(__filename)),url,policy:'Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded GPU draws/readbacks omitted, with scene/camera matrix updates. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.',captures:[],cases:[],errors:[]};
+const checkpoint=()=>fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+async function rgba(file){const im=await loadImage(file),c=createCanvas(im.width,im.height),g=c.getContext('2d');g.drawImage(im,0,0);return {width:im.width,height:im.height,data:Buffer.from(g.getImageData(0,0,im.width,im.height).data)};}
+async function save(page,name,meta){
+ await page.evaluate(()=>{window.__phase2Advance=false;try{IronVowScene.render(clock,0);}finally{window.__phase2Advance=true;}});
+ const png=await page.screenshot({timeout:120000}),file=name+'.webp',dest=path.join(out,file),tmp=dest+'.png';fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(tmp,png);
+ execFileSync('ffmpeg',['-v','error','-threads','1','-i',tmp,'-c:v','libwebp','-lossless','1','-compression_level','6','-y',dest]);
+ const a=await rgba(tmp),b=await rgba(dest);assert.equal(a.width,b.width);assert.equal(a.height,b.height);assert.ok(a.data.equals(b.data),'Lossless RGBA equality: '+file);
+ const c=createCanvas(32,32),g=c.getContext('2d'),im=await loadImage(tmp);g.drawImage(im,im.width*.4,im.height*.22,im.width*.5,im.height*.5,0,0,32,32);const pixels=g.getImageData(0,0,32,32).data;let bright=0;for(let i=0;i<pixels.length;i+=4)if(Math.max(...pixels.slice(i,i+3))>16)bright++;assert.ok(bright>=64,'Nonblank actual GPU image '+file);
+ fs.unlinkSync(tmp);manifest.captures.push({file,...meta,width:a.width,height:a.height,raw_png_sha256:hash(png),webp_sha256:hash(fs.readFileSync(dest)),rgba_sha256:hash(a.data),rgba_byte_equality:true,nonblack_samples:bright});checkpoint();console.log('SAVED '+file);
+}
+async function setup(browser,viewport,motion){
+ const context=await browser.newContext({viewport:{width:viewport.width,height:viewport.height},hasTouch:viewport.touch,deviceScaleFactor:1,reducedMotion:motion,locale:'en-US',timezoneId:'UTC'}),page=await context.newPage();
+ page.on('pageerror',e=>manifest.errors.push(String(e)));
+ await page.addInitScript(()=>{
+  const native=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,opts){return native.call(this,type,/^(webgl2?|experimental-webgl)$/.test(type)?{...opts,preserveDrawingBuffer:true}:opts);};
+  Object.defineProperty(window,'IronVowRenderer',{configurable:true,set(api){const get=api.get;api.get=function(){const r=get();if(!r.__phase2){r.__phase2=true;const render=r.render,read=r.readRenderTargetPixels;r.render=function(s,c){if(!window.__phase2Advance)return render.call(this,s,c);s.updateMatrixWorld();c.updateMatrixWorld();};r.readRenderTargetPixels=function(...args){if(!window.__phase2Advance)return read.apply(this,args);};}return r;};Object.defineProperty(window,'IronVowRenderer',{value:api,configurable:true});}});
+  const request=requestAnimationFrame.bind(window),cancel=cancelAnimationFrame.bind(window),frames=new Set();window.requestAnimationFrame=fn=>{const id=request(t=>{frames.delete(id);fn(t);});frames.add(id);return id;};window.__stopPhase2=()=>{for(const id of frames)cancel(id);frames.clear();};window.__phase2Advance=true;
+ });
+ const response=await page.goto(url,{waitUntil:'domcontentloaded'});const documentHash=hash(await response.body());
+ await page.waitForFunction(()=>window.__ironVow);await page.evaluate(()=>__stopPhase2());const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));await page.evaluate(()=>{requestAnimationFrame=fn=>setTimeout(()=>fn(performance.now()),1000/30);last=performance.now();requestAnimationFrame(draw);});
+ return {context,page,documentHash};
+}
+async function attackCase(page,item,index,viewport,motion,documentHash){
+ const frames=[0,5,6,7,8,9,10,12],frame=item.shoulder?20:frames[index%frames.length];
+ const fixture=await page.evaluate(({item,index,frame})=>{
+  __ironVow.start({seed:4242+index,frames:[frame],contract:0});const a=current(),target=battle.units.find(u=>u.team==='enemy'),w=item.shoulder?weapon('missile'):weapon(item.id);battle.units=[a,target];battle.cover.clear();for(const cell of battle.field.cells)cell.level=0;
+  Object.assign(a,{x:3,z:15,vx:3,vz:15,weapon:item.melee?'rifle':w.id,melee:item.melee?w.id:null,shield:null,brace:false,ap:8});if(item.shoulder)a.shoulder='vesper-shoulder';const x=3+Math.min(3,w.range);Object.assign(target,{x,z:15,vx:x,vz:15});for(const key of Object.keys(target.hp)){target.hp[key]=1000;target.max[key]=1000;}target.counter=true;if(item.scenario){target.frame=10;if(item.scenario==='shield-interception')target.shield='citadel-shield';if(item.scenario==='critical-fault'){target.hp.body=180;target.hp.right=0;target.hp.legs=0;}if(item.scenario==='right-destruction')target.hp.right=1;if(item.scenario==='body-death')target.hp.body=1;if(item.scenario==='pilot-kneel')target.hp.pilot=1;}ruleRandom=()=>0;action=item.shoulder?'missile':item.melee?'strike':'fire';IronVowScene.clear();IronVowScene.render(clock,0);window.__phase2Error=null;return {actor:a.id,target:target.id,mode:action,before:{...target.hp},part:item.scenario==='right-destruction'?'right':item.scenario==='pilot-kneel'?'pilot':'body',frame};
+ },{item,index,frame});
+ const readyBy=Date.now()+120000;while(!await page.evaluate(()=>IronVowScene.ready)){assert.ok(Date.now()<readyBy,'Ready '+item.id);await page.clock.runFor(34);await new Promise(r=>setTimeout(r,20));}
+ const prefix=viewport.width+'x'+viewport.height+'/'+motion+'/'+(item.scenario||item.id),base={weapon:item.scenario||item.id,viewport,motion,document_sha256:documentHash,...fixture};
+ const detailed=representative.has(item.id),seen=new Set();if(detailed)await save(page,prefix+'/00-ready',{...base,phase:'ready'});
+ await page.evaluate(f=>{void __ironVow.attack(f.actor,f.target,f.part,f.mode).catch(e=>window.__phase2Error=String(e));},fixture);
+ let tick=0;
+ for(;tick<1000&&await page.evaluate(()=>__ironVow.pending);tick++){
+  await page.clock.runFor(34);
+  const state=await page.evaluate(f=>({time:clock,events:IronVowScene.combat.history.filter(e=>e.actor===f.actor),error:window.__phase2Error}),fixture);assert.equal(state.error,null,item.id);
+  for(const type of ['launch','impact','arrival'])if(!seen.has(type)&&state.events.some(e=>e.type===type)){
+   seen.add(type);if(detailed||type==='impact')await save(page,prefix+'/'+String(tick+1).padStart(3,'0')+'-'+type,{...base,phase:type,tick:tick+1,time:state.time,observed_events:state.events});
+  }
+ }
+ assert.ok(tick<1000,'Completes '+item.id);assert.ok(seen.has('impact'),'Actual contact '+item.id);
+ if(item.scenario){for(const delayMs of [510,1530,11000,1700]){await page.clock.runFor(delayMs);await save(page,prefix+'/post-'+Math.round(await page.evaluate(()=>clock)*1000),{...base,phase:'post-contact',time:await page.evaluate(()=>clock)});}}
+ if(detailed){await page.clock.runFor(204);await save(page,prefix+'/999-recovery',{...base,phase:'recovery'});}
+ const result=await page.evaluate(f=>({after:{...battle.units.find(u=>u.id===f.target).hp},events:IronVowScene.combat.history.filter(e=>e.actor===f.actor),error:window.__phase2Error}),fixture);assert.equal(result.error,null);assert.ok(Object.keys(fixture.before).some(k=>fixture.before[k]>result.after[k]),'Actual HP damage');manifest.cases.push({...base,...result});checkpoint();
+}
+async function presentationCases(page,viewport,motion,documentHash){
+ for(const kind of ['jumpjet','mortar-future-presentation']){
+  const fixture=await page.evaluate(kind=>{const frame=FRAMES.findIndex(f=>kind==='jumpjet'?f.jumpjet:f.name==='BEHEMOTH');__ironVow.start({seed:9876,frames:[frame],contract:0});const a=current(),target=battle.units.find(u=>u.team==='enemy');battle.units=[a,target];battle.cover.clear();for(const c of battle.field.cells)c.level=0;Object.assign(a,{x:3,z:15,vx:3,vz:15,ap:8});Object.assign(target,{x:7,z:15,vx:7,vz:15});focusBattleCamera(a,true);IronVowScene.clear();IronVowScene.render(clock,0);return {actor:a.id,frame,ap:a.ap,hp:{...target.hp}};},kind);
+  const deadline=Date.now()+120000;while(!await page.evaluate(()=>IronVowScene.ready)){assert.ok(Date.now()<deadline);await page.clock.runFor(34);await new Promise(r=>setTimeout(r,20));}
+  const base={weapon:kind,viewport,motion,document_sha256:documentHash,fixture,policy:kind==='jumpjet'?'Actual useJumpjet operation with AP and landing rules':'Future presentation hook only; no gameplay action or invented damage rule'};
+  const prefix=viewport.width+'x'+viewport.height+'/'+motion+'/'+kind;await save(page,prefix+'/ready',{...base,phase:'ready'});
+  await page.evaluate(kind=>{window.__presentationDone=false;window.__presentationError=null;if(kind==='jumpjet')void useJumpjet(current(),5,15).then(v=>{if(!v)throw Error('Jumpjet rejected');window.__presentationDone=true;}).catch(e=>window.__presentationError=String(e));else{IronVowScene.mortarPresentation(current());window.__presentationDone=true;}},kind);
+  for(const ms of [204,204,204,374,374]){await page.clock.runFor(ms);await save(page,prefix+'/'+Math.round(await page.evaluate(()=>clock)*1000),{...base,phase:'presentation',time:await page.evaluate(()=>clock)});}
+  const result=await page.evaluate(()=>({ap:current().ap,x:current().x,z:current().z,error:window.__presentationError,done:window.__presentationDone,events:IronVowScene.combat.history}));assert.equal(result.error,null);assert.ok(result.done);if(kind==='jumpjet'){assert.ok(result.ap<fixture.ap);assert.equal(result.x,5);}else assert.equal(result.events.length,0);manifest.cases.push({...base,...result});checkpoint();
+ }
+}
+async function sheet(){const esc=s=>String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));for(const c of manifest.cases){const frames=manifest.captures.filter(a=>a.weapon===c.weapon&&a.viewport.width===c.viewport.width&&a.motion===c.motion);if(frames.length<2)continue;const strip=createCanvas(frames.length*340,280),g=strip.getContext('2d');g.fillStyle='#101512';g.fillRect(0,0,strip.width,strip.height);for(const [i,a] of frames.entries()){const im=await loadImage(path.join(out,a.file));g.drawImage(im,i*340,0,340,255);g.fillStyle='#e9e3d5';g.font='12px sans-serif';g.fillText(a.phase+(a.time?' '+a.time.toFixed(3)+'s':''),i*340+6,273);}const f='filmstrips/'+c.viewport.width+'-'+c.motion+'-'+c.weapon+'.png';fs.mkdirSync(path.dirname(path.join(out,f)),{recursive:true});fs.writeFileSync(path.join(out,f),strip.toBuffer('image/png'));}
+ fs.writeFileSync(path.join(out,'contact-sheet.html'),'<!doctype html><meta charset="utf-8"><title>Phase 2 actual combat</title><style>body{background:#101512;color:#e9e3d5;font:14px system-ui}section{display:flex;overflow:auto;gap:8px;margin-bottom:28px}figure{margin:0}img{width:360px}figcaption{max-width:360px}</style><h1>Phase 2 actual combat</h1><p>'+esc(manifest.policy)+'</p><p>Source '+esc(manifest.source)+'</p>'+manifest.cases.map(c=>'<h2>'+esc(c.weapon+' '+c.viewport.width+'×'+c.viewport.height+' '+c.motion)+'</h2><section>'+manifest.captures.filter(a=>a.weapon===c.weapon&&a.viewport.width===c.viewport.width&&a.motion===c.motion).map(a=>'<figure><a href="'+esc(a.file)+'"><img loading="lazy" src="'+esc(a.file)+'"></a><figcaption>'+esc(a.phase+(a.time?' @ '+a.time.toFixed(3)+'s':''))+'</figcaption></figure>').join('')+'</section>').join(''));}
+(async()=>{fs.mkdirSync(out,{recursive:true});const dirty=sourceGit('status','--porcelain','--untracked-files=no','--','dist');if(dirty&&!process.env.IRON_VOW_VISUAL_DEV)throw Error('Commit dist source before formal capture');manifest.development=Boolean(dirty);const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});try{for(const viewport of viewports){if(process.env.IRON_VOW_VISUAL_VIEWPORT&&String(viewport.width)!==process.env.IRON_VOW_VISUAL_VIEWPORT)continue;for(const motion of ['no-preference','reduce']){if(motion==='reduce'&&viewport.touch)continue;const {context,page,documentHash}=await setup(browser,viewport,motion);try{const catalog=await page.evaluate(()=>WEAPONS.map(w=>({id:w.id,melee:Boolean(w.melee),shoulder:Boolean(w.shoulder)})));for(const [index,item] of catalog.entries()){if(motion==='reduce'&&!['rail','blade','missile'].includes(item.id))continue;if(viewport.touch&&!representative.has(item.id))continue;if(process.env.IRON_VOW_VISUAL_WEAPON&&item.id!==process.env.IRON_VOW_VISUAL_WEAPON)continue;await attackCase(page,item,index,viewport,motion,documentHash);}if(!process.env.IRON_VOW_VISUAL_WEAPON&&motion==='no-preference'&&!viewport.touch){await presentationCases(page,viewport,motion,documentHash);for(const scenario of ['shield-interception','critical-fault','right-destruction','body-death','pilot-kneel'])await attackCase(page,{id:'rifle',scenario},0,viewport,motion,documentHash);}}finally{await context.close();}}}assert.deepEqual(manifest.errors,[]);manifest.status='complete';}catch(e){manifest.status='failed';manifest.failure=String(e);throw e;}finally{checkpoint();await sheet();await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
