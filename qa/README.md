@@ -64,4 +64,6 @@ This compares served HTML, JavaScript, CSS and the expansion weapon assets to th
 
 `node qa/capture.cjs --plan` lists fixed capture presets and the four iPad viewport sizes without launching a browser. `node qa/capture.cjs --origin <supported-preview-url> --out <capture-directory>` captures an explicitly supplied preview; it never launches its own server. Reference URLs are optional `--reference-game` and `--reference-bench` inputs. See `design/baseline/README.md` for capture status and known limits. The new fixture checks are not browser or visual evidence.
 
+To check the lazy hit-mask readiness regression, add `--preset attack-shotgun --asset-delay-ms 400`. The hit state must warm before the final capture even when part-mask responses arrive late. The runner reports exact asset URLs if image readiness still fails.
+
 `node qa/renderer-inventory.cjs docs/renderer-inventory.json` regenerates the static GLB/roster audit. `docs/renderer-inventory.md` maps current rendering dependencies and corrects the Citadel/Lion source inventory. `?perf` instruments the current Canvas compositor and its offscreen Foundry renderers; it does not imply that the shared-scene migration has happened.
