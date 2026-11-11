@@ -120,9 +120,13 @@ async function checkCerberusSalvo(page,mobile,tap){
  });
  await tap('#fire');
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ // On a phone the tactical map can cover a nearby target at close zoom.
+ // Use the actual overview control before tapping the real projected target.
+ if(mobile){await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);await page.evaluate(()=>IronVowScene.render(clock,1));}
  const target=await page.evaluate(()=>{
   const p=IronVowScene.projectWorld(IronVowScene.partPoint(armoryQA.foe));
-  if(IronVowScene.pick(p.x,p.y)!==armoryQA.foe)throw Error('Cerberus target is not raycastable');return p;
+  if(IronVowScene.pick(p.x,p.y)!==armoryQA.foe)throw Error('Cerberus target is not raycastable');
+  if(document.elementFromPoint(p.x,p.y)!==canvas)throw Error('Cerberus target is obscured by UI: '+JSON.stringify({p,element:document.elementFromPoint(p.x,p.y)?.id}));return p;
  });
  if(mobile)await page.touchscreen.tap(target.x,target.y);else await page.mouse.click(target.x,target.y);
  await page.waitForFunction(hp=>armoryQA.foe.hp.body<hp&&!battle.busy,before.hp);

@@ -1,0 +1,553 @@
+{
+  "schema": 2,
+  "source": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+  "dist_tree": "613bc118b314340e3ab63d5101a27c89a2c98080",
+  "source_policy": "Natural critical-fault dispatches after an actual rail command; exact immutable source and dist tree recorded per image.",
+  "sources": [
+    {
+      "source": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+      "dist_tree": "613bc118b314340e3ab63d5101a27c89a2c98080"
+    }
+  ],
+  "expected_cases": 1,
+  "current_run_selection": {
+    "skip_weapons": [],
+    "weapon": null,
+    "viewport": null
+  },
+  "runner_source": "cc714b3cda70b1ea9ae6bbc51f8fbdae13f0dc75",
+  "runner_sha256": "e35cbfaa8ce68b6d83a3241b9bd44b066ddf7b8c9c006470908b1bf282f58fbe",
+  "url": "http://127.0.0.1:5179/",
+  "policy": "Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded main-canvas GPU draws omitted, with scene/camera matrix updates; render-target draws and readbacks remain native so cached art is populated. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.",
+  "captures": [
+    {
+      "file": "1366x1024/arc.webp",
+      "source": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+      "dist_tree": "613bc118b314340e3ab63d5101a27c89a2c98080",
+      "render_policy": "Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded main-canvas GPU draws omitted, with scene/camera matrix updates; render-target draws and readbacks remain native so cached art is populated. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.",
+      "runner_sha256": "e35cbfaa8ce68b6d83a3241b9bd44b066ddf7b8c9c006470908b1bf282f58fbe",
+      "weapon": "natural-critical-faults",
+      "viewport": {
+        "width": 1366,
+        "height": 1024,
+        "touch": false
+      },
+      "motion": "no-preference",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "orchestrator_sha256": "0a04d67f9defac058af68f67ea01284656bc61acd7cd5de0e3eef05cac364e68",
+      "actor": "ally0",
+      "target": "enemy0",
+      "before": {
+        "body": 180,
+        "pilot": 1000,
+        "right": 0,
+        "left": 1000,
+        "legs": 0
+      },
+      "phase": "arc",
+      "time": 2.6000000000000476,
+      "observed_natural_calls": [
+        {
+          "type": "arc",
+          "time": 2.6000000000000476,
+          "arguments": [
+            [
+              -17.023980874734796,
+              4.30676305508922,
+              38.16500096244942
+            ],
+            [
+              -15.297815172525583,
+              2.03360547169569,
+              38.245186849304275
+            ],
+            0.24,
+            0.6030000000000001
+          ]
+        }
+      ],
+      "actual_attack": {
+        "hp": {
+          "body": 114,
+          "pilot": 1000,
+          "right": 0,
+          "left": 1000,
+          "legs": 0
+        },
+        "error": null,
+        "events": [
+          {
+            "sequence": 1,
+            "type": "launch",
+            "time": 1.2000000000000206,
+            "archetype": "rail",
+            "expectedOrigin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "actorAlive": true,
+            "aimError": 2.1073424255447017e-8,
+            "mounted": true,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "socket": "muzzle",
+            "origin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "targetPoint": [
+              -17.023734640661303,
+              3.26537908538237,
+              37.40000096246105
+            ],
+            "flight": 0.075
+          },
+          {
+            "sequence": 2,
+            "type": "impact",
+            "time": 1.2666666666666884,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "part": "body",
+            "shield": false,
+            "point": [
+              -17.023734640661303,
+              3.26476263310715,
+              37.40000096246105
+            ],
+            "back": [
+              -0.9997113316316082,
+              -0.024026098463016343,
+              -4.721969413909047e-8
+            ],
+            "planned": 66,
+            "damage": 66,
+            "before": 180,
+            "after": 114,
+            "actorAlive": true
+          }
+        ]
+      },
+      "frame_state": {
+        "time": 2.6000000000000476,
+        "target": {
+          "id": "enemy0",
+          "hp": {
+            "body": 114,
+            "pilot": 1000,
+            "right": 0,
+            "left": 1000,
+            "legs": 0
+          },
+          "alive": true,
+          "down_reason": null,
+          "death_age": null
+        }
+      },
+      "width": 1366,
+      "height": 1024,
+      "raw_png_sha256": "484b6b312a42c25597eb3bed560cf523c6a9d6f810daee16b60cd770a06bf6bb",
+      "webp_sha256": "e0484dcd0508d2cfa5343a4bd10d1d5724062ff62147cb244d662ba22b8a8b05",
+      "rgba_sha256": "81b0a1cf551f75748ba88a1fb0f8ce41fc51e54d70eb3a390458a1213985198f",
+      "rgba_byte_equality": true,
+      "nonblack_samples": 1019
+    },
+    {
+      "file": "1366x1024/crawl.webp",
+      "source": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+      "dist_tree": "613bc118b314340e3ab63d5101a27c89a2c98080",
+      "render_policy": "Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded main-canvas GPU draws omitted, with scene/camera matrix updates; render-target draws and readbacks remain native so cached art is populated. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.",
+      "runner_sha256": "e35cbfaa8ce68b6d83a3241b9bd44b066ddf7b8c9c006470908b1bf282f58fbe",
+      "weapon": "natural-critical-faults",
+      "viewport": {
+        "width": 1366,
+        "height": 1024,
+        "touch": false
+      },
+      "motion": "no-preference",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "orchestrator_sha256": "0a04d67f9defac058af68f67ea01284656bc61acd7cd5de0e3eef05cac364e68",
+      "actor": "ally0",
+      "target": "enemy0",
+      "before": {
+        "body": 180,
+        "pilot": 1000,
+        "right": 0,
+        "left": 1000,
+        "legs": 0
+      },
+      "phase": "crawl",
+      "time": 5.733333333333453,
+      "observed_natural_calls": [
+        {
+          "type": "crawl",
+          "time": 5.733333333333453,
+          "arguments": [
+            [
+              -17.023734640649316,
+              4.345676238650609,
+              38.16500096246105
+            ],
+            [
+              -19.38504227506893,
+              3.4225996951681097,
+              37.20485875770559
+            ],
+            0.6030000000000001
+          ]
+        }
+      ],
+      "actual_attack": {
+        "hp": {
+          "body": 114,
+          "pilot": 1000,
+          "right": 0,
+          "left": 1000,
+          "legs": 0
+        },
+        "error": null,
+        "events": [
+          {
+            "sequence": 1,
+            "type": "launch",
+            "time": 1.2000000000000206,
+            "archetype": "rail",
+            "expectedOrigin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "actorAlive": true,
+            "aimError": 2.1073424255447017e-8,
+            "mounted": true,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "socket": "muzzle",
+            "origin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "targetPoint": [
+              -17.023734640661303,
+              3.26537908538237,
+              37.40000096246105
+            ],
+            "flight": 0.075
+          },
+          {
+            "sequence": 2,
+            "type": "impact",
+            "time": 1.2666666666666884,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "part": "body",
+            "shield": false,
+            "point": [
+              -17.023734640661303,
+              3.26476263310715,
+              37.40000096246105
+            ],
+            "back": [
+              -0.9997113316316082,
+              -0.024026098463016343,
+              -4.721969413909047e-8
+            ],
+            "planned": 66,
+            "damage": 66,
+            "before": 180,
+            "after": 114,
+            "actorAlive": true
+          }
+        ]
+      },
+      "frame_state": {
+        "time": 5.733333333333453,
+        "target": {
+          "id": "enemy0",
+          "hp": {
+            "body": 114,
+            "pilot": 1000,
+            "right": 0,
+            "left": 1000,
+            "legs": 0
+          },
+          "alive": true,
+          "down_reason": null,
+          "death_age": null
+        }
+      },
+      "width": 1366,
+      "height": 1024,
+      "raw_png_sha256": "429ae082dd50b305b68bded5df469576ffffba129ede94ac959bec37b5db2e43",
+      "webp_sha256": "b4b7559ff6a3f719a65905e541129e43b35e76e7982246a9b12d5a3d614662a6",
+      "rgba_sha256": "9603833c4660d995740e450cc9bdfa72d9bd3ab4bc350569ef3779cf348218dd",
+      "rgba_byte_equality": true,
+      "nonblack_samples": 1010
+    },
+    {
+      "file": "1366x1024/joint.webp",
+      "source": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+      "dist_tree": "613bc118b314340e3ab63d5101a27c89a2c98080",
+      "render_policy": "Actual __ironVow.attack commands and rules; deterministic 30 Hz. Only unrecorded main-canvas GPU draws omitted, with scene/camera matrix updates; render-target draws and readbacks remain native so cached art is populated. Each saved frame restores native GPU render/readback at deviceScaleFactor=1 with QA-only preserveDrawingBuffer. Software WebGL correctness evidence; no native iPad performance claim.",
+      "runner_sha256": "e35cbfaa8ce68b6d83a3241b9bd44b066ddf7b8c9c006470908b1bf282f58fbe",
+      "weapon": "natural-critical-faults",
+      "viewport": {
+        "width": 1366,
+        "height": 1024,
+        "touch": false
+      },
+      "motion": "no-preference",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "orchestrator_sha256": "0a04d67f9defac058af68f67ea01284656bc61acd7cd5de0e3eef05cac364e68",
+      "actor": "ally0",
+      "target": "enemy0",
+      "before": {
+        "body": 180,
+        "pilot": 1000,
+        "right": 0,
+        "left": 1000,
+        "legs": 0
+      },
+      "phase": "joint",
+      "time": 27.666666666666156,
+      "observed_natural_calls": [
+        {
+          "type": "arc",
+          "time": 27.666666666666156,
+          "arguments": [
+            [
+              -19.382243686679193,
+              3.377918061506216,
+              37.12400946197049
+            ],
+            [
+              -20.0651261168959,
+              3.930348745845552,
+              37.00866165173001
+            ],
+            0.1,
+            0.42210000000000003,
+            0
+          ]
+        },
+        {
+          "type": "joint",
+          "time": 27.666666666666156,
+          "arguments": [
+            [
+              -19.382243686679193,
+              3.377918061506216,
+              37.12400946197049
+            ],
+            [
+              -0.9932227453941282,
+              0.35,
+              -0.1162264084954465
+            ],
+            0.6030000000000001
+          ]
+        }
+      ],
+      "actual_attack": {
+        "hp": {
+          "body": 114,
+          "pilot": 1000,
+          "right": 0,
+          "left": 1000,
+          "legs": 0
+        },
+        "error": null,
+        "events": [
+          {
+            "sequence": 1,
+            "type": "launch",
+            "time": 1.2000000000000206,
+            "archetype": "rail",
+            "expectedOrigin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "actorAlive": true,
+            "aimError": 2.1073424255447017e-8,
+            "mounted": true,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "socket": "muzzle",
+            "origin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "targetPoint": [
+              -17.023734640661303,
+              3.26537908538237,
+              37.40000096246105
+            ],
+            "flight": 0.075
+          },
+          {
+            "sequence": 2,
+            "type": "impact",
+            "time": 1.2666666666666884,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "part": "body",
+            "shield": false,
+            "point": [
+              -17.023734640661303,
+              3.26476263310715,
+              37.40000096246105
+            ],
+            "back": [
+              -0.9997113316316082,
+              -0.024026098463016343,
+              -4.721969413909047e-8
+            ],
+            "planned": 66,
+            "damage": 66,
+            "before": 180,
+            "after": 114,
+            "actorAlive": true
+          }
+        ]
+      },
+      "frame_state": {
+        "time": 27.666666666666156,
+        "target": {
+          "id": "enemy0",
+          "hp": {
+            "body": 114,
+            "pilot": 1000,
+            "right": 0,
+            "left": 1000,
+            "legs": 0
+          },
+          "alive": true,
+          "down_reason": null,
+          "death_age": null
+        }
+      },
+      "width": 1366,
+      "height": 1024,
+      "raw_png_sha256": "9ca884f5d191992870d87a4949be44f655017a1a8b51fe506b294cdb1af69ac7",
+      "webp_sha256": "be150678066fe9f6197a223ae8dd5c572ef9b17f50d774b659847e5e094af0b2",
+      "rgba_sha256": "7da358d3714cc1b236070457c93f70629991e5a56d517696022a1f95ed9a78f8",
+      "rgba_byte_equality": true,
+      "nonblack_samples": 1008
+    }
+  ],
+  "cases": [
+    {
+      "source": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+      "dist_tree": "613bc118b314340e3ab63d5101a27c89a2c98080",
+      "weapon": "natural-critical-faults",
+      "viewport": {
+        "width": 1366,
+        "height": 1024,
+        "touch": false
+      },
+      "motion": "no-preference",
+      "actor": "ally0",
+      "target": "enemy0",
+      "before": {
+        "body": 180,
+        "pilot": 1000,
+        "right": 0,
+        "left": 1000,
+        "legs": 0
+      },
+      "after": {
+        "hp": {
+          "body": 114,
+          "pilot": 1000,
+          "right": 0,
+          "left": 1000,
+          "legs": 0
+        },
+        "error": null,
+        "events": [
+          {
+            "sequence": 1,
+            "type": "launch",
+            "time": 1.2000000000000206,
+            "archetype": "rail",
+            "expectedOrigin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "actorAlive": true,
+            "aimError": 2.1073424255447017e-8,
+            "mounted": true,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "socket": "muzzle",
+            "origin": [
+              -34.80130775007371,
+              3.497808546616295,
+              38.286477885368015
+            ],
+            "targetPoint": [
+              -17.023734640661303,
+              3.26537908538237,
+              37.40000096246105
+            ],
+            "flight": 0.075
+          },
+          {
+            "sequence": 2,
+            "type": "impact",
+            "time": 1.2666666666666884,
+            "actor": "ally0",
+            "target": "enemy0",
+            "weapon": "rail",
+            "index": 0,
+            "part": "body",
+            "shield": false,
+            "point": [
+              -17.023734640661303,
+              3.26476263310715,
+              37.40000096246105
+            ],
+            "back": [
+              -0.9997113316316082,
+              -0.024026098463016343,
+              -4.721969413909047e-8
+            ],
+            "planned": 66,
+            "damage": 66,
+            "before": 180,
+            "after": 114,
+            "actorAlive": true
+          }
+        ]
+      },
+      "observed_variants": [
+        "arc",
+        "crawl",
+        "joint"
+      ]
+    }
+  ],
+  "errors": [],
+  "orchestrator_sha256": "0a04d67f9defac058af68f67ea01284656bc61acd7cd5de0e3eef05cac364e68",
+  "status": "complete"
+}

@@ -1,0 +1,179 @@
+PASS Aero purchase, saved Jumpjet, ranged/melee/counter dodge and all four Relay attacks
+PASS: alternating foot lift, frame-independent movement at 30/60/144Hz, landing/AP timing, planted-foot rail recoil, collapse progression, weight-specific speeds and reduced-motion behavior.
+PASS: remaining billboard attack atlases, 24 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and three theater rules with cover and pathing.
+PASS Ashigaru roster, legacy and new checkpoints, range switches, counters, arm loss, and enemy-only equipment
+PASS Basilisk hip clearance, boot separation, planted attack feet and unchanged Warden/Kestrel motion
+PASS Bulwark Frontier roster, checkpoints, independent shield and cleaver arms, melee pursuit and acquisition gates
+PASS burst counts, independent misses, scatter, chassis evasion, capped damage, shield break, one kill and XP award, and rotated salvage reload/rebuild.
+PASS capture viewports, unique presets, input validation and all 27 isolated game fixtures (not browser captures)
+PASS half-second ignition and idle, identical Siege walking mix across chassis, timed vents, and missile and rifle audio.
+PASS real reference FX pools, directional spray, elevated spark floor, plasma ribbons with final depth bias, single missile arrival, reusable lights, exact owned-resource disposal and all 34 weapon mappings (GPU/action integration pending)
+PASS all eight classes can train both level 3 skills from either level 1 skill, with points and reload preserved
+PASS Vesper and Locust missile lockout, 5-10 damage AP-free punches on both sides, range, arms, priorities and reload
+PASS: v29 perk migration, advanced gates, readable wiki and faster real promotion into level 6.
+PASS: Vanguard retains movement and Braces on Overdrive; Breacher pierces, Braces and earns lethal refunds.
+PASS: Marksman cover, counter reach and refunds; Saboteur limb penetration, jam and Deadeye chaining.
+PASS: Engineer repairs all limbs and has one Failsafe; Sentinel extends counters and shields adjacent allies.
+PASS: all three cabin tiers, six active pilots, duty promotion and training, valid unique draft, hull and pilot identity, auxiliary limits and exact resume.
+PASS Foundry gait IK and planted feet (Aegis 0.0mm, Shrike 0.0mm, Bastion 0.0mm, Valkyrie 0.0mm, Oni 0.0mm, Behemoth 0.0mm), Behemoth four-beat walk and planted kneel fold, Oni duelist cut, narrow stance, two-hand rifle grip, clear guards, left-foot firing stance
+[
+  {
+    "model": 0,
+    "terrain": false,
+    "maxGround": 1.7208456881689926e-15,
+    "maxSlide": 1.1234667099445444e-14,
+    "maxIK": 7.598541898862822e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 0,
+    "terrain": true,
+    "maxGround": 2.3869795029440866e-15,
+    "maxSlide": 1.1546319456101628e-14,
+    "maxIK": 7.601582815929793e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 1,
+    "terrain": false,
+    "maxGround": 1.5543122344752192e-15,
+    "maxSlide": 7.32410687763558e-15,
+    "maxIK": 7.94721185223203e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 1,
+    "terrain": true,
+    "maxGround": 2.220446049250313e-15,
+    "maxSlide": 8.881784197001252e-15,
+    "maxIK": 8.055048693485857e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 2,
+    "terrain": false,
+    "maxGround": 1.2212453270876722e-15,
+    "maxSlide": 1.0805156823142814e-14,
+    "maxIK": 9.05835857617865e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 2,
+    "terrain": true,
+    "maxGround": 1.887379141862766e-15,
+    "maxSlide": 7.944109290391274e-15,
+    "maxIK": 7.993605777301127e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 3,
+    "terrain": false,
+    "maxGround": 1.7763568394002505e-15,
+    "maxSlide": 1.0805156823142814e-14,
+    "maxIK": 7.94721185223203e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 3,
+    "terrain": true,
+    "maxGround": 2.6645352591003757e-15,
+    "maxSlide": 7.944109290391274e-15,
+    "maxIK": 7.377764055609925e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 4,
+    "terrain": false,
+    "maxGround": 1.3322676295501878e-15,
+    "maxSlide": 1.0805156823142814e-14,
+    "maxIK": 7.591847593814708e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 4,
+    "terrain": true,
+    "maxGround": 2.220446049250313e-15,
+    "maxSlide": 7.944109290391274e-15,
+    "maxIK": 7.640399661428378e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 5,
+    "terrain": false,
+    "maxGround": 1.7208456881689926e-15,
+    "maxSlide": 1.0986160316453369e-14,
+    "maxIK": 9.059208990534682e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 5,
+    "terrain": true,
+    "maxGround": 3.0531133177191805e-15,
+    "maxSlide": 1.0741085019148343e-14,
+    "maxIK": 7.993605777301127e-15,
+    "maxReach": 0
+  }
+]
+PASS all six production leg types: variable speed, corners, stop/restart, lunge/shove, brace, flat and elevated terrain
+PASS: procurement, swap, paint, pilot disable, donor career migration, four campaign rosters, weapon sockets, Foundry atlases and render-target caching and fatal WebGL error reporting.
+PASS: four Gatecrasher kits, legacy save migration, ownership and hull storage; Hellbreaker salvage and rigs.
+PASS: Shogun owns separate art, loadouts and saved hull identity alongside Gatecrasher.
+PASS: separate persisted Hangar queue, reserve skills and aux resume, wound treatment, rebuilds, patches, and exact contract recon.
+PASS varied hostile liveries, seeded contract offers, no combat RNG consumption, and exact reload colors
+PASS market price ladder, paid prototypes, exact deductions, stored hull reassignment, and salvage rebuild
+PASS: legacy career, both hires, duplicate protection, identity and training on seat and hull swaps.
+PASS: deterministic reload of daily offers and exact one-, two- and three-mech checkpoints.
+PASS: skill range, costs, checkpoint restore, paid discounts, misses and reactions.
+PASS: recovered bodies, one-time scrap/rebuild, cold storage, and purchase without reassignment.
+PASS LI-02 Corridor AI fire, heavier armor, checkpoint, market and salvage exclusion
+PASS LI-01 enemy turn, checkpoint restore, market, rebuild and Picket victory salvage
+PASS Lion closed grip export, authored attack phases, playable loadouts, and isolated career state
+PASS mech kill credit, skill learning, two-slot mastery, pilot transfers and portable Jumpjet checkpoint
+Recruit contract, fresh lance: 12/12 victories; rounds 3,3,3,3,3,3,3,4,3,4,3,3
+Picket seats 0: 12/12 victories
+Picket seats 1: 12/12 victories
+Picket seats 2: 12/12 victories
+Picket seats 0,2: 12/12 victories
+Career sortie 1 {"win":true,"rounds":3,"condition":[100,79,100]}
+Career sortie 2 {"win":true,"rounds":9,"condition":[93,87,88]}
+Career sortie 3 {"win":true,"rounds":9,"condition":[86,71,97]}
+Career sortie 4 {"win":true,"rounds":3,"condition":[100,91,98]}
+Career sortie 5 {"win":true,"rounds":15,"condition":[89,75,84]}
+Zero-reserve recovery: 12/12 victories
+PASS: complete seeded missions resolve without forced kills; rewards, persistent damage, repairs, refits and redeployment exercised.
+PASS: free movement, one paid tile, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and four-facing travel assets.
+PASS: all 21 Workshop stat sheets match deployed HP, armor, mobility, AP and weapons with worn reinforced hulls; legacy mobility retained.
+PASS: both counter paths, diagonal and range limits, aircraft, both arms, disabled bodies and pilots, AP, no chains and round reset.
+PASS: all eight pilot identities, six level-10 paths, Sapper charges/refund, Signal round effects and pending reload, Retriever solo repair/two uses/salvage, corrupt checkpoint recovery.
+PASS bounded frame percentiles, all-render WebGL totals, disposal and visibility reset
+PASS 24 close/steep actual GLB emitter aim cases; prior max 2.0694841645043027 rad, current max 1.4901161193847656e-8 rad
+PASS 31 physical weapon aliases and sockets, geometry-adjacent emitters, real piledriver stroke and Parallax charge
+PASS: reserve swaps preserve career data, both native gaits and salvos render in combat, strike and subsystem rules work, and the reassigned lance resumes from its checkpoint.
+PASS published save v31-corridor.json
+PASS published save v32-picket.json
+PASS published save v35-frontier.json
+PASS published save v53-picket.json
+PASS published save v55-corridor.json
+PASS published save ashigaru-picket.json
+PASS Reaver Medium+ hostile rosters, acquisition exclusions, victory salvage and old/new checkpoint restore
+PASS: exact sortie and enemy replay, corrupt checkpoint recovery, single payout, level-100 career and stale tab save protection.
+PASS high-ground aim, symmetric ridge sightlines, indirect fire, blocked AP and reactions, and AI repositioning
+PASS measured rigid adapter: exact GLB binding, planted gait, two-hand carry, clear guards, firing stance, maul/sweep/thrust and preview framing
+PASS staged body and cockpit deaths for all 21 chassis, heavy timing, settled reloads and one reactor blast
+PASS start/stop/turn world-space bone regression [{"model":0,"worstGround":1.4988010832439613e-15,"worstSlide":8.881784197001252e-15},{"model":1,"worstGround":1.7763568394002505e-15,"worstSlide":8.881784197001252e-15},{"model":2,"worstGround":1.4432899320127035e-15,"worstSlide":8.881784197001252e-15},{"model":3,"worstGround":1.7763568394002505e-15,"worstSlide":9.057678187205883e-15},{"model":4,"worstGround":1.5543122344752192e-15,"worstSlide":7.944109290391274e-15},{"model":5,"worstGround":1.8318679906315083e-15,"worstSlide":9.057678187205883e-15}]
+PASS artillery turn/brace/return ground=1.7208456881689926e-15 slide=3.997405177810533e-15 turns=[{"face":0,"yaw":2.2697696617266676e-7,"yawError":2.2697696617266676e-7},{"face":0.7853981633974483,"yaw":0.7853982768859313,"yawError":1.1348848305559045e-7},{"face":3.141592653589793,"yaw":3.1415924266128274,"yawError":2.269769656670917e-7},{"face":-1.5707963267948966,"yaw":-1.570795872840964,"yawError":4.5395393266645096e-7}]
+PASS Gatecrasher field and cinematic shield depth across four headings and left-arm loss
+PASS shield ownership, mount compatibility, armor and Brace stacking, misses, gun, missile and melee interception, break without overflow, counters, repair and save resume
+PASS: ship construction, payout timing, crew wounds and recovery, hull service, and v8 auxiliary sorties across all contracts.
+PASS package gate is always inserted, helper failures propagate and other checkouts are rejected
+PASS: opening and original contract rosters, exact 2,000-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, priming for allied and enemy mechs, attack skip and reduced motion.
+PASS 96 seeded maps, connected terrain, valid slopes and save-stable terrain; raycast picking is tested in Chromium
+PASS: starting points, real sortie promotion, prerequisites, pilot ownership and mission training entry.
+PASS: veteran points, exclusive capstones, chassis swaps, Workshop parity and exact trained AP/movement restore.
+PASS: trained range and reactions, ranged/limb power and accuracy, brace, and actual body and limb repair.
+PASS: discounted strikes, Deadeye capstone, actual boosted counter and recurring AP.
+PASS: older careers load and malformed training preserves the valid career.
+PASS: actual DOM navigation, hangar selection/details, contract deployment, manual modal, combat controls, skills, brace, subsystem targeting/damage, withdrawal, workshop purchase/upgrade, pilots, career record, local images; desktop and mobile DOM layouts (3D rendering checked separately).
+PASS Vanguard Hard+ roster, existing and new checkpoints, melee pursuit, Hailstorm fallback and acquisition gates
+PASS 14 expansion weapons, firing, reputation gates, one-time purchase, and exact save resume.
+PASS 48 simulation suites

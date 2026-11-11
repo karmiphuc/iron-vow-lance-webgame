@@ -1,0 +1,46 @@
+START desktop checkBulwarkBench
+PASS desktop checkBulwarkBench
+START desktop checkScoutBench
+PASS desktop checkScoutBench
+START desktop checkShip
+PASS desktop checkShip
+START desktop checkHangar
+PASS desktop checkHangar
+START desktop checkCareerTabs
+desktop checkCareerTabs failed: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#brace') to be visible[22m
+
+    at checkCareerTabs (/workspace/iron-vow-phase1/qa/browser/career-tabs.cjs:67:33)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:137:31)
+Browser failure screenshot /tmp/iron-vow-qa-OsqEt6/failure.png
+RETRY desktop checkCareerTabs (1/1): locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#brace') to be visible[22m
+
+START desktop checkCareerTabs
+desktop checkCareerTabs failed: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#brace') to be visible[22m
+
+    at checkCareerTabs (/workspace/iron-vow-phase1/qa/browser/career-tabs.cjs:67:33)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:137:31)
+Error: desktop checkCareerTabs failed: locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#brace') to be visible[22m
+
+    at checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:133:16)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:137:31) {
+  [cause]: locator.waitFor: Timeout 30000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('#brace') to be visible[22m
+  
+      at checkCareerTabs (/workspace/iron-vow-phase1/qa/browser/career-tabs.cjs:67:33)
+      at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+      at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:137:31) {
+    log: [ "  - waiting for locator('#brace') to be visible" ],
+    name: 'TimeoutError'
+  }
+}

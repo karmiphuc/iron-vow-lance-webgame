@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "status": "targeted geometry and final thirty-battle campaign passed",
+  "before": {
+    "commit": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+    "distTree": "613bc118b314340e3ab63d5101a27c89a2c98080"
+  },
+  "after": {
+    "commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+    "distTree": "edac44e5b054d0e507a409ee039b4400b6420788"
+  },
+  "realBeforeFailure": {
+    "seed": 4264,
+    "rawReport": "/workspace/scratch/phase2-analytic-before-clearance-shard-15-29.json",
+    "rawSha256": "19e58b7880aaa9f20adc0016b32de7b2e606c7ecdf98b397e76ad2441caa778e",
+    "events": [
+      {
+        "type": "aimOff",
+        "unit": "ally1",
+        "frame": 7,
+        "time": 144.76666666652196,
+        "detail": {
+          "sequence": 361,
+          "type": "launch",
+          "time": 144.7333333331887,
+          "archetype": "rail",
+          "expectedOrigin": [
+            -30.321181862403492,
+            1.4464845737861605,
+            52.19884604906521
+          ],
+          "actorAlive": true,
+          "aimError": 2.2918124386294125,
+          "mounted": true,
+          "actor": "ally1",
+          "target": "enemy1",
+          "weapon": "parallax",
+          "index": 0,
+          "socket": "muzzle",
+          "origin": [
+            -30.321181862403492,
+            1.4464845737861605,
+            52.19884604906521
+          ],
+          "targetPoint": [
+            -36.95495915039662,
+            4.192639393086397,
+            50.62849584123237
+          ],
+          "flight": 0.075
+        }
+      }
+    ],
+    "actualInitialPivotDiagnostics": {
+      "calls": 150,
+      "infeasibleCount": 1,
+      "minimumDiscriminant": 31.77359776783576,
+      "minimumTravel": -1.2304088972323397,
+      "samples": [
+        {
+          "time": 144.7333333331887,
+          "actor": "ally1",
+          "physicalAsset": "parallax",
+          "discriminant": 31.77359776783576,
+          "travel": -1.2304088972323397,
+          "pivot": [
+            -35.97582677106156,
+            2.5924636448123537,
+            55.993525913192514
+          ],
+          "muzzle": [
+            -42.38372372760948,
+            4.543382157351965,
+            54.31404804875071
+          ],
+          "axis": [
+            -0.9146162208792074,
+            0.36353481960214556,
+            -0.17697345405871637
+          ],
+          "target": [
+            -36.95495915039662,
+            4.192639393086397,
+            50.62849584123237
+          ]
+        }
+      ]
+    }
+  },
+  "change": "Connected aim-weighted torso and shoulder rotation retracts long weapons while preserving their hand mount, arm joint lengths and planted feet. Production world pitch is 7.4m, selected after real Citadel shield-face endpoints still failed at 7.2m. Grid gameplay/AP/HP/RNG rules are unchanged.",
+  "geometry": {
+    "command": "node qa/check-production-weapons.cjs",
+    "committedSourceLog": "production-fa9f835.log",
+    "physicalAliases": 31,
+    "reachableOffsetRegressionCases": 24,
+    "priorDirectionOnlyMaximumRadians": 2.0694841645043027,
+    "actualBipedQuadLongWeaponCases": 341,
+    "negativeTravelRetractedPoses": 149,
+    "armOnlySyntheticCasesClassifiedSeparately": 43,
+    "legalRecordedPartMissCases": 39,
+    "realShieldFaceCases": 384,
+    "actualEndpointMaximumRadians": 2.9802322387695312e-08,
+    "plantedAnkleMaximumDrift": 0,
+    "weightedPoseCases": 90,
+    "torsoActiveProgressionFixtures": 2,
+    "maximumShoulderRatePerWeight": 4.220664924527588,
+    "maximumSpineRatePerWeight": 0.6131881714242261,
+    "legalPairings": "Recorded kit2 fixed-Citadel actor/incorrect target loadouts removed. Shields use legal Aegis kit0/Oni kit4 with no melee; Parallax actors use Shrike kit1/Behemoth kit5. Plain kit2 is not treated as a custom-weapon Bastion; the actual rigid Bastion has its own .62 weapon/shield scale."
+  },
+  "endpointPolicy": "Only actual source part/attachment endpoints, real miss offsets, and real mounted/posed shield faces gate aim. Conservative armor-box corners remain diagnostic, not independent legal shot targets. All actual launch thresholds stay at 0.12rad.",
+  "sourceScope": "The historical all34 full/touch action evidence remains on 6786df4; all48 pure suites remain on f68b5df. The narrow actual-geometry/arm/endpoint progression gate above passed on committed fa9f835 without a pitch override. Exact integrated 4243/4264 replays passed the held torso working fix at6.8; the final campaign and bounded actual-counter GPU capture validate committed7.4 separately.",
+  "qaCheckerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724",
+  "geometryCheckerSha256": "72c8418dc3aca3098bccb935df048cfe607f261536b6ad13fb09f37e5fa34de3",
+  "formalCampaign": {
+    "report": "campaign-final-30.json",
+    "status": "passed",
+    "source": {
+      "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+      "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+    },
+    "shards": 4,
+    "negativeControlsPerShard": 16,
+    "uniqueBattles": 30,
+    "ticks": 123420,
+    "assignedWorkshopWeapons": 24,
+    "actuallyCommandedWeaponIDs": 18,
+    "launches": 4238,
+    "impactHooks": 4371,
+    "maximumActualLaunchErrorRadians": 2.580956827951785e-08,
+    "initialPivotDiagnostics": {
+      "calls": 3296,
+      "infeasibleCount": 1,
+      "minimumTravel": -0.45174629328549454,
+      "minimumDiscriminant": 26.797852989803083
+    },
+    "diagnosticInterpretation": "Infeasible count records the initial wrist-only pose before the connected torso/arm solver. The single initial negative-travel case is resolved before the real firing beat, whose actual axis still passes the unchanged strict threshold."
+  },
+  "finalActualCounterCapture": {
+    "rawMetadata": "/workspace/scratch/phase2-final-counter-fa9f835.json",
+    "rawSha256": "b2880b7df33dff5aec89e714010eb324baec2e28b2d2d9971d982f8913979afe",
+    "source": {
+      "commit": "02ef40a07fc91b82f97c86859586489f272b8165",
+      "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+      "distDirty": false,
+      "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+    },
+    "viewport": {
+      "width": 1194,
+      "height": 834,
+      "dpr": 1,
+      "pixelWidth": 1194,
+      "pixelHeight": 834
+    },
+    "event": {
+      "sequence": 361,
+      "type": "launch",
+      "time": 144.7333333335005,
+      "archetype": "rail",
+      "expectedOrigin": [
+        -40.261633699303665,
+        4.176690300780217,
+        55.20032662311719
+      ],
+      "actorAlive": true,
+      "aimError": 0,
+      "mounted": true,
+      "actor": "ally1",
+      "target": "enemy1",
+      "weapon": "parallax",
+      "index": 0,
+      "socket": "muzzle",
+      "origin": [
+        -40.261633699303665,
+        4.176690300780217,
+        55.20032662311719
+      ],
+      "targetPoint": [
+        -40.267641054581446,
+        4.196875734594668,
+        55.15462316179228
+      ],
+      "flight": 0.075
+    },
+    "incomingImpact": {
+      "sequence": 360,
+      "type": "impact",
+      "time": 142.30000000016523,
+      "actor": "enemy1",
+      "target": "ally1",
+      "weapon": "piledriver",
+      "index": 0,
+      "part": "pilot",
+      "shield": false,
+      "point": [
+        -40.66329155208718,
+        4.313894571712428,
+        61.85706836863438
+      ],
+      "back": [
+        0.0590780740993109,
+        -0.09041262730423562,
+        -0.994150561024165
+      ],
+      "planned": 36,
+      "damage": 36,
+      "before": 55,
+      "after": 19,
+      "actorAlive": true
+    },
+    "renderPolicy": "One real full-resolution Three.js renderer-canvas submission/readback immediately after the real near Parallax counter launch. Temporary body output paints restored and refreshed at the same clock. UI canvas excluded; ordinary advances omit unobserved GPU/output raster. No game HP/AP/rule RNG changes or performance claim.",
+    "archivePolicy": "The visual evidence owner archives the actual PNG and lossless conversions separately; no reconstructed state is labelled as this capture."
+  }
+}

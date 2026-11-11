@@ -1,0 +1,5454 @@
+{
+  "url": "http://127.0.0.1:5177/",
+  "source": {
+    "commit": "1119a2c7d5058362297005097b386934ea8dbaba",
+    "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+    "distDirty": false,
+    "checkerSha256": "835d6d51b2f872ae8bab882cbec968910120aa4ae66f40243da7052536d1e7b1"
+  },
+  "motion": "full",
+  "renderPolicy": "Actual rules, rigs, materials, sockets and FX pools; controlled 30 Hz. Unobserved GPU draws/readbacks omitted, with real scene/camera matrix updates. No performance claim.",
+  "cases": [
+    {
+      "weapon": "breaker",
+      "frame": 10,
+      "actor": "ally0",
+      "target": "enemy0",
+      "mode": "strike",
+      "before": {
+        "body": 1000,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "beats": 1,
+      "contacts": 1,
+      "pending": false,
+      "error": null,
+      "after": {
+        "body": 938,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "type": "impact",
+          "time": 1.4333333333333578,
+          "actor": "ally0",
+          "target": "enemy0",
+          "weapon": "breaker",
+          "index": 0,
+          "part": "body",
+          "shield": false,
+          "point": [
+            -32.51761341599154,
+            4.258293669307986,
+            40.24210939082908
+          ],
+          "back": [
+            -0.9899702598512736,
+            -0.12196361007643682,
+            0.07130050790229114
+          ],
+          "planned": 62,
+          "damage": 62,
+          "before": 1000,
+          "after": 938,
+          "actorAlive": true
+        }
+      ]
+    },
+    {
+      "weapon": "piledriver",
+      "frame": 0,
+      "actor": "ally0",
+      "target": "enemy0",
+      "mode": "strike",
+      "before": {
+        "body": 1000,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "beats": 1,
+      "contacts": 1,
+      "pending": false,
+      "error": null,
+      "after": {
+        "body": 942,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "type": "impact",
+          "time": 1.2333333333333545,
+          "actor": "ally0",
+          "target": "enemy0",
+          "weapon": "piledriver",
+          "index": 0,
+          "part": "body",
+          "shield": false,
+          "point": [
+            -32.51199714487292,
+            4.25714975350649,
+            40.241104557221334
+          ],
+          "back": [
+            -0.9757094095250677,
+            -0.20893785880650417,
+            0.06584921656023955
+          ],
+          "planned": 58,
+          "damage": 58,
+          "before": 1000,
+          "after": 942,
+          "actorAlive": true
+        }
+      ]
+    },
+    {
+      "weapon": "blade",
+      "frame": 5,
+      "actor": "ally0",
+      "target": "enemy0",
+      "mode": "strike",
+      "before": {
+        "body": 1000,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "beats": 1,
+      "contacts": 1,
+      "pending": false,
+      "error": null,
+      "after": {
+        "body": 940,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "type": "impact",
+          "time": 1.199999999999956,
+          "actor": "ally0",
+          "target": "enemy0",
+          "weapon": "blade",
+          "index": 0,
+          "part": "body",
+          "shield": false,
+          "point": [
+            -32.509739085711395,
+            4.256688959321125,
+            40.24071322486579
+          ],
+          "back": [
+            -0.984537576103588,
+            -0.16012320657363496,
+            0.07103745460423411
+          ],
+          "planned": 60,
+          "damage": 60,
+          "before": 1000,
+          "after": 940,
+          "actorAlive": true
+        }
+      ]
+    },
+    {
+      "weapon": "hatchet",
+      "frame": 8,
+      "actor": "ally0",
+      "target": "enemy0",
+      "mode": "strike",
+      "before": {
+        "body": 1000,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "beats": 1,
+      "contacts": 1,
+      "pending": false,
+      "error": null,
+      "after": {
+        "body": 957,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "type": "impact",
+          "time": 1.0999999999999597,
+          "actor": "ally0",
+          "target": "enemy0",
+          "weapon": "hatchet",
+          "index": 0,
+          "part": "body",
+          "shield": false,
+          "point": [
+            -32.499501914033054,
+            4.254586493796984,
+            40.23896406643803
+          ],
+          "back": [
+            -0.9839117450465269,
+            -0.16387679919876,
+            0.07114824413762692
+          ],
+          "planned": 43,
+          "damage": 43,
+          "before": 1000,
+          "after": 957,
+          "actorAlive": true
+        }
+      ]
+    },
+    {
+      "weapon": "pike",
+      "frame": 9,
+      "actor": "ally0",
+      "target": "enemy0",
+      "mode": "strike",
+      "before": {
+        "body": 1000,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "beats": 1,
+      "contacts": 1,
+      "pending": false,
+      "error": null,
+      "after": {
+        "body": 948,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "type": "impact",
+          "time": 1.199999999999956,
+          "actor": "ally0",
+          "target": "enemy0",
+          "weapon": "pike",
+          "index": 0,
+          "part": "body",
+          "shield": false,
+          "point": [
+            -32.5097389655896,
+            4.256688970088137,
+            40.24071353133975
+          ],
+          "back": [
+            -0.9856693252714658,
+            -0.15498717436925064,
+            0.06659547281857062
+          ],
+          "planned": 52,
+          "damage": 52,
+          "before": 1000,
+          "after": 948,
+          "actorAlive": true
+        }
+      ]
+    },
+    {
+      "weapon": "anchor-hammer",
+      "frame": 12,
+      "actor": "ally0",
+      "target": "enemy0",
+      "mode": "strike",
+      "before": {
+        "body": 1000,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "beats": 1,
+      "contacts": 1,
+      "pending": false,
+      "error": null,
+      "after": {
+        "body": 918,
+        "pilot": 1000,
+        "right": 1000,
+        "left": 1000,
+        "legs": 1000
+      },
+      "events": [
+        {
+          "sequence": 1,
+          "type": "impact",
+          "time": 1.366666666666765,
+          "actor": "ally0",
+          "target": "enemy0",
+          "weapon": "anchor-hammer",
+          "index": 0,
+          "part": "body",
+          "shield": false,
+          "point": [
+            -32.517613725748774,
+            4.258293683238573,
+            40.242108991106434
+          ],
+          "back": [
+            -0.969388748309168,
+            -0.23539513437783707,
+            0.06981823087722039
+          ],
+          "planned": 82,
+          "damage": 82,
+          "before": 1000,
+          "after": 918,
+          "actorAlive": true
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "shieldAndLockout": {
+    "before": {
+      "body": 1000,
+      "pilot": 1000,
+      "right": 1000,
+      "left": 1000,
+      "legs": 1000
+    },
+    "lockout": true,
+    "after": {
+      "body": 1000,
+      "pilot": 1000,
+      "right": 1000,
+      "left": 970,
+      "legs": 1000
+    },
+    "events": [
+      {
+        "sequence": 1,
+        "type": "launch",
+        "time": 0.9666666666667372,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.04511207046078,
+          3.992291061378646,
+          42.02921184201781
+        ],
+        "actorAlive": true,
+        "aimError": 1.4901161193847656e-8,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 0,
+        "socket": "muzzle",
+        "origin": [
+          -36.04511207046078,
+          3.992291061378646,
+          42.02921184201781
+        ],
+        "targetPoint": [
+          -24.67760096428763,
+          3.3019198338568083,
+          42.47817210377965
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 2,
+        "type": "impact",
+        "time": 1.0666666666667441,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 0,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.67760096428763,
+          3.304703346508587,
+          42.47817210377965
+        ],
+        "back": [
+          -0.9938889998286357,
+          -0.00425241390116358,
+          -0.11030218944176713
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 1000,
+        "after": 996,
+        "actorAlive": true
+      },
+      {
+        "sequence": 3,
+        "type": "launch",
+        "time": 1.0666666666667441,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.331221808099215,
+          4.053465577595906,
+          42.01492490647648
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 1,
+        "socket": "muzzle",
+        "origin": [
+          -36.331221808099215,
+          4.053465577595906,
+          42.01492490647648
+        ],
+        "targetPoint": [
+          -24.67760096428763,
+          3.304703346508587,
+          42.47817210377965
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 4,
+        "type": "impact",
+        "time": 1.1666666666667511,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 1,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.644470553845153,
+          3.284104886826228,
+          42.474282647273576
+        ],
+        "back": [
+          -0.9939441667364318,
+          -0.0031918462368893765,
+          -0.1098399086317015
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 996,
+        "after": 992,
+        "actorAlive": true
+      },
+      {
+        "sequence": 5,
+        "type": "launch",
+        "time": 1.1666666666667511,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.3283867665205,
+          4.049191533096712,
+          42.01108957643398
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 2,
+        "socket": "muzzle",
+        "origin": [
+          -36.3283867665205,
+          4.049191533096712,
+          42.01108957643398
+        ],
+        "targetPoint": [
+          -24.644470553845153,
+          3.284104886826228,
+          42.474282647273576
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 6,
+        "type": "impact",
+        "time": 1.266666666666758,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 2,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.609317803889418,
+          3.2691756284599096,
+          42.4706057268362
+        ],
+        "back": [
+          -0.9939976262602678,
+          -0.0022403409580080288,
+          -0.10937869930359029
+        ],
+        "planned": 3,
+        "damage": 3,
+        "before": 992,
+        "after": 989,
+        "actorAlive": true
+      },
+      {
+        "sequence": 7,
+        "type": "launch",
+        "time": 1.266666666666758,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.32621910951452,
+          4.047851687150662,
+          42.00710220311473
+        ],
+        "actorAlive": true,
+        "aimError": 1.4901161193847656e-8,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 3,
+        "socket": "muzzle",
+        "origin": [
+          -36.32621910951452,
+          4.047851687150662,
+          42.00710220311473
+        ],
+        "targetPoint": [
+          -24.609317803889418,
+          3.2691756284599096,
+          42.4706057268362
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 8,
+        "type": "impact",
+        "time": 1.366666666666765,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 3,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.5833831671473,
+          3.2642883451684592,
+          42.46930329946527
+        ],
+        "back": [
+          -0.9940263989613737,
+          -0.0017717566179302573,
+          -0.10912551968430899
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 989,
+        "after": 985,
+        "actorAlive": true
+      },
+      {
+        "sequence": 9,
+        "type": "launch",
+        "time": 1.4000000000001007,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.31278247771639,
+          4.038068631292039,
+          42.00220971398817
+        ],
+        "actorAlive": true,
+        "aimError": 2.580956827951785e-8,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 4,
+        "socket": "muzzle",
+        "origin": [
+          -36.31278247771639,
+          4.038068631292039,
+          42.00220971398817
+        ],
+        "targetPoint": [
+          -24.570359328439736,
+          3.2582493404913264,
+          42.468731104211734
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 10,
+        "type": "impact",
+        "time": 1.5000000000001077,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 4,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.57413792978905,
+          3.2732911774274775,
+          42.47194432209
+        ],
+        "back": [
+          -0.9940153041719134,
+          -0.0018910805991998142,
+          -0.10922453426856983
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 985,
+        "after": 981,
+        "actorAlive": true
+      },
+      {
+        "sequence": 11,
+        "type": "launch",
+        "time": 1.5000000000001077,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.34198799660293,
+          4.055661443840661,
+          41.99849071706726
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 5,
+        "socket": "muzzle",
+        "origin": [
+          -36.34198799660293,
+          4.055661443840661,
+          41.99849071706726
+        ],
+        "targetPoint": [
+          -24.57413792978905,
+          3.2732911774274775,
+          42.47194432209
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 12,
+        "type": "impact",
+        "time": 1.6000000000001147,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 5,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.57147736434047,
+          3.2751399530863297,
+          42.47425617286237
+        ],
+        "back": [
+          -0.9940017168215474,
+          -0.0019262608500596953,
+          -0.10934750328632944
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 981,
+        "after": 977,
+        "actorAlive": true
+      },
+      {
+        "sequence": 13,
+        "type": "launch",
+        "time": 1.6000000000001147,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.30822425401607,
+          4.0543090023863995,
+          41.99692679177349
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 6,
+        "socket": "muzzle",
+        "origin": [
+          -36.30822425401607,
+          4.0543090023863995,
+          41.99692679177349
+        ],
+        "targetPoint": [
+          -24.57147736434047,
+          3.2751399530863297,
+          42.47425617286237
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 14,
+        "type": "impact",
+        "time": 1.7000000000001216,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 6,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.567358933555116,
+          3.272666766646077,
+          42.475094266035235
+        ],
+        "back": [
+          -0.9939995358333925,
+          -0.0017058615624209856,
+          -0.10937098700903308
+        ],
+        "planned": 3,
+        "damage": 3,
+        "before": 977,
+        "after": 974,
+        "actorAlive": true
+      },
+      {
+        "sequence": 15,
+        "type": "launch",
+        "time": 1.7000000000001216,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.33326518042308,
+          4.055936385555627,
+          41.99270898605223
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 7,
+        "socket": "muzzle",
+        "origin": [
+          -36.33326518042308,
+          4.055936385555627,
+          41.99270898605223
+        ],
+        "targetPoint": [
+          -24.567358933555116,
+          3.272666766646077,
+          42.475094266035235
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 16,
+        "type": "impact",
+        "time": 1.8000000000001286,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 7,
+        "part": "left",
+        "shield": true,
+        "point": [
+          -24.563901981636278,
+          3.270103220720775,
+          42.474947970825326
+        ],
+        "back": [
+          -0.9940034302294294,
+          -0.0014730465687169784,
+          -0.10933897212766468
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 974,
+        "after": 970,
+        "actorAlive": true
+      },
+      {
+        "sequence": 17,
+        "type": "launch",
+        "time": 3.23333333333357,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.54449266233241,
+          3.936062185284311,
+          39.79068574176311
+        ],
+        "actorAlive": true,
+        "aimError": 2.1073424255447017e-8,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 0,
+        "socket": "muzzle",
+        "origin": [
+          -30.54449266233241,
+          3.936062185284311,
+          39.79068574176311
+        ],
+        "targetPoint": [
+          -40.7,
+          3.2432566653686297,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 18,
+        "type": "impact",
+        "time": 3.3333333333335777,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 0,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.7,
+          3.2397538661546332,
+          40.7
+        ],
+        "back": [
+          0.9999984134238078,
+          -0.001781333688069978,
+          3.9887425280716617e-7
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 1000,
+        "after": 995,
+        "actorAlive": true
+      },
+      {
+        "sequence": 19,
+        "type": "launch",
+        "time": 3.3333333333335777,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.257753522010486,
+          3.9998388924826056,
+          39.79876254339168
+        ],
+        "actorAlive": true,
+        "aimError": 2.1073424255447017e-8,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 1,
+        "socket": "muzzle",
+        "origin": [
+          -30.257753522010486,
+          3.9998388924826056,
+          39.79876254339168
+        ],
+        "targetPoint": [
+          -40.7,
+          3.2397538661546332,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 20,
+        "type": "impact",
+        "time": 3.4333333333335854,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 1,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.733334062339225,
+          3.212954472633196,
+          40.69999998670388
+        ],
+        "back": [
+          0.9999999537570955,
+          -0.0003041146529303117,
+          2.9122222279740984e-7
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 995,
+        "after": 990,
+        "actorAlive": true
+      },
+      {
+        "sequence": 21,
+        "type": "launch",
+        "time": 3.4333333333335854,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.2596693640029,
+          3.993786464301363,
+          39.80858679677017
+        ],
+        "actorAlive": true,
+        "aimError": 2.1073424255447017e-8,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 2,
+        "socket": "muzzle",
+        "origin": [
+          -30.2596693640029,
+          3.993786464301363,
+          39.80858679677017
+        ],
+        "targetPoint": [
+          -40.733334062339225,
+          3.212954472633196,
+          40.69999998670388
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 22,
+        "type": "impact",
+        "time": 3.533333333333593,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 2,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.768701096569416,
+          3.192054727958422,
+          40.69999997618537
+        ],
+        "back": [
+          0.9999996985572381,
+          0.0007764569551576396,
+          1.7271879964168647e-7
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 990,
+        "after": 986,
+        "actorAlive": true
+      },
+      {
+        "sequence": 23,
+        "type": "launch",
+        "time": 3.533333333333593,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.26094761233074,
+          3.986490601889691,
+          39.81829554810409
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 3,
+        "socket": "muzzle",
+        "origin": [
+          -30.26094761233074,
+          3.986490601889691,
+          39.81829554810409
+        ],
+        "targetPoint": [
+          -40.768701096569416,
+          3.192054727958422,
+          40.69999997618537
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 24,
+        "type": "impact",
+        "time": 3.6333333333336006,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 3,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.79479144285393,
+          3.1815700046246835,
+          40.699999973536144
+        ],
+        "back": [
+          0.9999992223334238,
+          0.0012471297208971855,
+          8.38406997966144e-8
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 986,
+        "after": 981,
+        "actorAlive": true
+      },
+      {
+        "sequence": 25,
+        "type": "launch",
+        "time": 3.6333333333336006,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.265159548447084,
+          3.979916442604333,
+          39.82825673371526
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 4,
+        "socket": "muzzle",
+        "origin": [
+          -30.265159548447084,
+          3.979916442604333,
+          39.82825673371526
+        ],
+        "targetPoint": [
+          -40.79479144285393,
+          3.1815700046246835,
+          40.699999973536144
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 26,
+        "type": "impact",
+        "time": 3.7333333333336083,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 4,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.810342033754075,
+          3.1774952626793818,
+          40.699999977295874
+        ],
+        "back": [
+          0.9999990638247092,
+          0.0013683383004132457,
+          2.997138794602074e-8
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 981,
+        "after": 976,
+        "actorAlive": true
+      },
+      {
+        "sequence": 27,
+        "type": "launch",
+        "time": 3.7333333333336083,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.27232556421468,
+          3.9738798210817845,
+          39.8384080751679
+        ],
+        "actorAlive": true,
+        "aimError": 2.1073424255447017e-8,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 5,
+        "socket": "muzzle",
+        "origin": [
+          -30.27232556421468,
+          3.9738798210817845,
+          39.8384080751679
+        ],
+        "targetPoint": [
+          -40.810342033754075,
+          3.1774952626793818,
+          40.699999977295874
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 28,
+        "type": "impact",
+        "time": 3.833333333333616,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 5,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.817892003325795,
+          3.175707266916847,
+          40.699999983989265
+        ],
+        "back": [
+          0.9999999814587727,
+          0.00019256805177935335,
+          3.137274534385688e-9
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 976,
+        "after": 971,
+        "actorAlive": true
+      },
+      {
+        "sequence": 29,
+        "type": "launch",
+        "time": 3.866666666666952,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.332169253469587,
+          3.9373884051381016,
+          39.84844964655709
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 6,
+        "socket": "muzzle",
+        "origin": [
+          -30.332169253469587,
+          3.9373884051381016,
+          39.84844964655709
+        ],
+        "targetPoint": [
+          -40.826021284727965,
+          3.1692474342684633,
+          40.69999998634947
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 30,
+        "type": "impact",
+        "time": 3.9666666666669594,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 6,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.811330422910125,
+          3.1809227118168026,
+          40.699999992570525
+        ],
+        "back": [
+          0.9999999069906136,
+          0.00043129892660503537,
+          -8.078879032310186e-9
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 971,
+        "after": 967,
+        "actorAlive": true
+      },
+      {
+        "sequence": 31,
+        "type": "launch",
+        "time": 3.9666666666669594,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.250847182770627,
+          3.957372007972353,
+          39.85632773644352
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 7,
+        "socket": "muzzle",
+        "origin": [
+          -30.250847182770627,
+          3.957372007972353,
+          39.85632773644352
+        ],
+        "targetPoint": [
+          -40.811330422910125,
+          3.1809227118168026,
+          40.699999992570525
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 32,
+        "type": "impact",
+        "time": 4.066666666666967,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 7,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.8082288630056,
+          3.17877178861408,
+          40.699999997068865
+        ],
+        "back": [
+          0.9999995742468099,
+          0.0009227709352555019,
+          -8.035836672517277e-9
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 967,
+        "after": 962,
+        "actorAlive": true
+      }
+    ],
+    "error": null
+  },
+  "counter": {
+    "events": [
+      {
+        "sequence": 1,
+        "type": "launch",
+        "time": 0.9666666666667372,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.055133365545394,
+          3.9822668665524383,
+          41.618307771067975
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 0,
+        "socket": "muzzle",
+        "origin": [
+          -36.055133365545394,
+          3.9822668665524383,
+          41.618307771067975
+        ],
+        "targetPoint": [
+          -25.900000000000002,
+          3.264455186033505,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 2,
+        "type": "impact",
+        "time": 1.0666666666667441,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 0,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.900000000000002,
+          3.2627654178642977,
+          40.7
+        ],
+        "back": [
+          -0.9999997562632791,
+          -0.0006981929406527471,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 1000,
+        "after": 995,
+        "actorAlive": true
+      },
+      {
+        "sequence": 3,
+        "type": "launch",
+        "time": 1.0666666666667441,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.34192559592366,
+          4.03797864423944,
+          41.608796461424504
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 1,
+        "socket": "muzzle",
+        "origin": [
+          -36.34192559592366,
+          4.03797864423944,
+          41.608796461424504
+        ],
+        "targetPoint": [
+          -25.900000000000002,
+          3.2627654178642977,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 4,
+        "type": "impact",
+        "time": 1.1666666666667511,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 1,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.866665892898414,
+          3.237390184059021,
+          40.7
+        ],
+        "back": [
+          -0.9999999235820068,
+          0.00039094242566577576,
+          0
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 995,
+        "after": 991,
+        "actorAlive": true
+      },
+      {
+        "sequence": 5,
+        "type": "launch",
+        "time": 1.1666666666667511,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.339849553610065,
+          4.027370107695698,
+          41.599273390695544
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 2,
+        "socket": "muzzle",
+        "origin": [
+          -36.339849553610065,
+          4.027370107695698,
+          41.599273390695544
+        ],
+        "targetPoint": [
+          -25.866665892898414,
+          3.237390184059021,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 6,
+        "type": "impact",
+        "time": 1.266666666666758,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 2,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.83129885694419,
+          3.2175019742482207,
+          40.7
+        ],
+        "back": [
+          -0.9999990741697267,
+          0.0013607570280945456,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 991,
+        "after": 986,
+        "actorAlive": true
+      },
+      {
+        "sequence": 7,
+        "type": "launch",
+        "time": 1.266666666666758,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.338434696365944,
+          4.019247857827386,
+          41.58983153696671
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 3,
+        "socket": "muzzle",
+        "origin": [
+          -36.338434696365944,
+          4.019247857827386,
+          41.58983153696671
+        ],
+        "targetPoint": [
+          -25.83129885694419,
+          3.2175019742482207,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 8,
+        "type": "impact",
+        "time": 1.366666666666765,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 3,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.80520854399154,
+          3.2075992837962723,
+          40.7
+        ],
+        "back": [
+          -0.9999983705527262,
+          0.0018052401204224561,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 986,
+        "after": 981,
+        "actorAlive": true
+      },
+      {
+        "sequence": 9,
+        "type": "launch",
+        "time": 1.366666666666765,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.334124968550114,
+          4.013197430766609,
+          41.580030848965784
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 4,
+        "socket": "muzzle",
+        "origin": [
+          -36.334124968550114,
+          4.013197430766609,
+          41.580030848965784
+        ],
+        "targetPoint": [
+          -25.80520854399154,
+          3.2075992837962723,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 10,
+        "type": "impact",
+        "time": 1.466666666666772,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 4,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.78965799662734,
+          3.2036673241012226,
+          40.7
+        ],
+        "back": [
+          -0.9999982165843155,
+          0.0018886048258878452,
+          0
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 981,
+        "after": 977,
+        "actorAlive": true
+      },
+      {
+        "sequence": 11,
+        "type": "launch",
+        "time": 1.5000000000001077,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.300247168391934,
+          3.9937917697407728,
+          41.57187830372487
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 5,
+        "socket": "muzzle",
+        "origin": [
+          -36.300247168391934,
+          3.9937917697407728,
+          41.57187830372487
+        ],
+        "targetPoint": [
+          -25.77957745531468,
+          3.196948523994815,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 12,
+        "type": "impact",
+        "time": 1.6000000000001147,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 5,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.790312113885058,
+          3.208223510131109,
+          40.7
+        ],
+        "back": [
+          -0.9999988601030645,
+          0.0015098981991216664,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 977,
+        "after": 972,
+        "actorAlive": true
+      },
+      {
+        "sequence": 13,
+        "type": "launch",
+        "time": 1.6000000000001147,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.32313968841601,
+          4.002820004885454,
+          41.55885510270215
+        ],
+        "actorAlive": true,
+        "aimError": 2.1073424255447017e-8,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 6,
+        "socket": "muzzle",
+        "origin": [
+          -36.32313968841601,
+          4.002820004885454,
+          41.55885510270215
+        ],
+        "targetPoint": [
+          -25.790312113885058,
+          3.208223510131109,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 14,
+        "type": "impact",
+        "time": 1.7000000000001216,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 6,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.79159351306516,
+          3.2053970236262392,
+          40.7
+        ],
+        "back": [
+          -0.9999990470012825,
+          0.0013805783304473677,
+          0
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 972,
+        "after": 968,
+        "actorAlive": true
+      },
+      {
+        "sequence": 15,
+        "type": "launch",
+        "time": 1.7000000000001216,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -36.34889232565092,
+          3.997677257605955,
+          41.55146834795738
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 7,
+        "socket": "muzzle",
+        "origin": [
+          -36.34889232565092,
+          3.997677257605955,
+          41.55146834795738
+        ],
+        "targetPoint": [
+          -25.79159351306516,
+          3.2053970236262392,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 16,
+        "type": "impact",
+        "time": 1.8000000000001286,
+        "actor": "ally0",
+        "target": "enemy0",
+        "weapon": "rifle",
+        "index": 7,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -25.789271065898028,
+          3.1986512135652743,
+          40.7
+        ],
+        "back": [
+          -0.9999988321317542,
+          0.0015283112011302863,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 968,
+        "after": 963,
+        "actorAlive": true
+      },
+      {
+        "sequence": 17,
+        "type": "launch",
+        "time": 3.200000000000234,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.534391746623356,
+          3.883724146056319,
+          39.788696166324186
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 0,
+        "socket": "muzzle",
+        "origin": [
+          -30.534391746623356,
+          3.883724146056319,
+          39.788696166324186
+        ],
+        "targetPoint": [
+          -40.7,
+          3.2139490694739874,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 18,
+        "type": "impact",
+        "time": 3.300000000000242,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 0,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.7,
+          3.2150872281751273,
+          40.7
+        ],
+        "back": [
+          0.9999991835938327,
+          -0.0012778151932650694,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 1000,
+        "after": 995,
+        "actorAlive": true
+      },
+      {
+        "sequence": 19,
+        "type": "launch",
+        "time": 3.3333333333335777,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.243143156942406,
+          3.970861883412936,
+          39.79319085294106
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 1,
+        "socket": "muzzle",
+        "origin": [
+          -30.243143156942406,
+          3.970861883412936,
+          39.79319085294106
+        ],
+        "targetPoint": [
+          -40.716333319998704,
+          3.2022613398819386,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 20,
+        "type": "impact",
+        "time": 3.4333333333335854,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 1,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.736257931532755,
+          3.194277141339312,
+          40.7
+        ],
+        "back": [
+          0.9999998588382821,
+          0.0005313411484230867,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 995,
+        "after": 990,
+        "actorAlive": true
+      },
+      {
+        "sequence": 21,
+        "type": "launch",
+        "time": 3.4333333333335854,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.1906873865763,
+          3.988424863344358,
+          39.80367153720333
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 2,
+        "socket": "muzzle",
+        "origin": [
+          -30.1906873865763,
+          3.988424863344358,
+          39.80367153720333
+        ],
+        "targetPoint": [
+          -40.736257931532755,
+          3.194277141339312,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 22,
+        "type": "impact",
+        "time": 3.533333333333593,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 2,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.76620094975222,
+          3.1821878850848977,
+          40.7
+        ],
+        "back": [
+          0.9999991142980477,
+          0.001330940690002717,
+          0
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 990,
+        "after": 986,
+        "actorAlive": true
+      },
+      {
+        "sequence": 23,
+        "type": "launch",
+        "time": 3.533333333333593,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.19943652881652,
+          3.9863445972184395,
+          39.814167092284414
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 3,
+        "socket": "muzzle",
+        "origin": [
+          -30.19943652881652,
+          3.9863445972184395,
+          39.814167092284414
+        ],
+        "targetPoint": [
+          -40.76620094975222,
+          3.1821878850848977,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 24,
+        "type": "impact",
+        "time": 3.6333333333336006,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 3,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.7911359147673,
+          3.1764545136976396,
+          40.7
+        ],
+        "back": [
+          0.9999984609750564,
+          0.0017544365244703652,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 986,
+        "after": 981,
+        "actorAlive": true
+      },
+      {
+        "sequence": 25,
+        "type": "launch",
+        "time": 3.6333333333336006,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.216664281093617,
+          3.9832483658507924,
+          39.82527426677038
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 4,
+        "socket": "muzzle",
+        "origin": [
+          -30.216664281093617,
+          3.9832483658507924,
+          39.82527426677038
+        ],
+        "targetPoint": [
+          -40.7911359147673,
+          3.1764545136976396,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 26,
+        "type": "impact",
+        "time": 3.7333333333336083,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 4,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.80732109357768,
+          3.1766718310087074,
+          40.7
+        ],
+        "back": [
+          0.999998263295177,
+          0.0018637077641063195,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 981,
+        "after": 976,
+        "actorAlive": true
+      },
+      {
+        "sequence": 27,
+        "type": "launch",
+        "time": 3.7333333333336083,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.241910449454753,
+          3.9802297109222122,
+          39.836932886359705
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 5,
+        "socket": "muzzle",
+        "origin": [
+          -30.241910449454753,
+          3.9802297109222122,
+          39.836932886359705
+        ],
+        "targetPoint": [
+          -40.80732109357768,
+          3.1766718310087074,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 28,
+        "type": "impact",
+        "time": 3.833333333333616,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 5,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.81594064668691,
+          3.179854300995549,
+          40.7
+        ],
+        "back": [
+          0.9999997958358153,
+          0.0006390057338869268,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 976,
+        "after": 971,
+        "actorAlive": true
+      },
+      {
+        "sequence": 29,
+        "type": "launch",
+        "time": 3.833333333333616,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.27500547714449,
+          3.9618341370124996,
+          39.84889178336976
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 6,
+        "socket": "muzzle",
+        "origin": [
+          -30.27500547714449,
+          3.9618341370124996,
+          39.84889178336976
+        ],
+        "targetPoint": [
+          -40.81594064668691,
+          3.179854300995549,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 30,
+        "type": "impact",
+        "time": 3.9333333333336236,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 6,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.81953440905169,
+          3.1838407238787485,
+          40.7
+        ],
+        "back": [
+          0.999999607928625,
+          0.0008855182641801428,
+          0
+        ],
+        "planned": 4,
+        "damage": 4,
+        "before": 971,
+        "after": 967,
+        "actorAlive": true
+      },
+      {
+        "sequence": 31,
+        "type": "launch",
+        "time": 3.9333333333336236,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -30.24950115426588,
+          3.966655853102977,
+          39.8559756468715
+        ],
+        "actorAlive": true,
+        "aimError": 0,
+        "mounted": true,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 7,
+        "socket": "muzzle",
+        "origin": [
+          -30.24950115426588,
+          3.966655853102977,
+          39.8559756468715
+        ],
+        "targetPoint": [
+          -40.81953440905169,
+          3.1838407238787485,
+          40.7
+        ],
+        "flight": 0.1
+      },
+      {
+        "sequence": 32,
+        "type": "impact",
+        "time": 4.033333333333631,
+        "actor": "enemy0",
+        "target": "ally0",
+        "weapon": "rifle",
+        "index": 7,
+        "part": "body",
+        "shield": false,
+        "point": [
+          -40.82039082864339,
+          3.1877416959887053,
+          40.7
+        ],
+        "back": [
+          0.9999990490372694,
+          0.0013791028085376705,
+          0
+        ],
+        "planned": 5,
+        "damage": 5,
+        "before": 967,
+        "after": 962,
+        "actorAlive": true
+      }
+    ],
+    "error": null,
+    "reacted": true
+  },
+  "missileCounter": {
+    "range": 0,
+    "weapon": null
+  },
+  "jumpjet": {
+    "done": true,
+    "samples": [
+      {
+        "time": 0.13333333333334305,
+        "y": 0.20120705933785013,
+        "ground": 0,
+        "height": 0.20120705933785013,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.515221027365335,
+              0.5072070593378508,
+              39.492250962568974
+            ],
+            "hip": [
+              -41.098330205488466,
+              3.10568033731213,
+              40.08914818373426
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.515221027365335,
+              0.5072070593378502,
+              39.49225096256898
+            ],
+            "plant": [
+              -41.515221027365335,
+              0.5072070593378502,
+              39.49225096256898
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.88477897263468,
+              0.5072070593378508,
+              41.61529681844813
+            ],
+            "hip": [
+              -40.30166979451154,
+              3.10568033731213,
+              41.01839959728286
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.88477897263467,
+              0.5072070593378502,
+              41.61529681844814
+            ],
+            "plant": [
+              -39.88477897263467,
+              0.5072070593378502,
+              41.61529681844814
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.16666666666667881,
+        "y": 0.397919485454749,
+        "ground": 0,
+        "height": 0.397919485454749,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085657,
+              0.7039194854547488,
+              39.17805013120289
+            ],
+            "hip": [
+              -41.15111998115105,
+              3.301875756497491,
+              39.720709263886185
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              0.703919485454749,
+              39.17805013120288
+            ],
+            "plant": [
+              -41.63651190085656,
+              0.703919485454749,
+              39.17805013120288
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              0.703919485454749,
+              41.09049538224044
+            ],
+            "hip": [
+              -40.24888001884896,
+              3.301875756497491,
+              40.54783624955714
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              0.703919485454749,
+              41.09049538224045
+            ],
+            "plant": [
+              -39.763488099143444,
+              0.703919485454749,
+              41.09049538224045
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.20000000000001458,
+        "y": 0.5857430478087434,
+        "ground": 0,
+        "height": 0.5857430478087434,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085657,
+              0.8917430478087434,
+              38.51403976515161
+            ],
+            "hip": [
+              -41.15111998115105,
+              3.4891373344053562,
+              39.056698897834906
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              0.8917430478087435,
+              38.5140397651516
+            ],
+            "plant": [
+              -41.63651190085656,
+              0.8917430478087435,
+              38.5140397651516
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              0.8917430478087438,
+              40.42648501618917
+            ],
+            "hip": [
+              -40.24888001884896,
+              3.4891373344053562,
+              39.883825883505864
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              0.8917430478087435,
+              40.42648501618917
+            ],
+            "plant": [
+              -39.763488099143444,
+              0.8917430478087435,
+              40.42648501618917
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.23333333333335035,
+        "y": 0.7604820783859385,
+        "ground": 0,
+        "height": 0.7604820783859385,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085656,
+              1.0664820783859392,
+              37.63428595886707
+            ],
+            "hip": [
+              -41.15111998115105,
+              3.6632704581386104,
+              38.176945091550365
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.0664820783859386,
+              37.63428595886706
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.0664820783859386,
+              37.63428595886706
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              1.0664820783859397,
+              39.54673120990463
+            ],
+            "hip": [
+              -40.24888001884896,
+              3.6632704581386104,
+              39.00407207722132
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.0664820783859386,
+              39.54673120990463
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.0664820783859386,
+              39.54673120990463
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.2666666666666861,
+        "y": 0.9182331959907953,
+        "ground": 0,
+        "height": 0.9182331959907953,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085656,
+              1.2242331959907957,
+              36.56755450438038
+            ],
+            "hip": [
+              -41.15111998115105,
+              3.8203728840820954,
+              37.11021363706369
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.2242331959907955,
+              36.56755450438038
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.2242331959907955,
+              36.56755450438038
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              1.224233195990797,
+              38.47999975541795
+            ],
+            "hip": [
+              -40.24888001884896,
+              3.8203728840820954,
+              37.937340622734645
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.2242331959907955,
+              38.47999975541795
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.2242331959907955,
+              38.47999975541795
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.30000000000002186,
+        "y": 1.0554725013318955,
+        "ground": 0,
+        "height": 1.0554725013318955,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085656,
+              1.3614725013318956,
+              35.34261119372263
+            ],
+            "hip": [
+              -41.15111998115105,
+              3.956921930852581,
+              35.88527032640594
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.3614725013318956,
+              35.34261119372263
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.3614725013318956,
+              35.34261119372263
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.76348809914344,
+              1.3614725013318958,
+              37.2550564447602
+            ],
+            "hip": [
+              -40.24888001884896,
+              3.956921930852581,
+              36.712397312076895
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.3614725013318956,
+              37.2550564447602
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.3614725013318956,
+              37.2550564447602
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.33333333333335763,
+        "y": 1.169134295109044,
+        "ground": 0,
+        "height": 1.169134295109044,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085656,
+              1.4751342951090451,
+              33.98822181892495
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.069853195099267,
+              34.53088095160825
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.475134295109044,
+              33.98822181892495
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.475134295109044,
+              33.98822181892495
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.76348809914344,
+              1.4751342951090445,
+              35.90066706996251
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.069853195099267,
+              35.35800793727921
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.475134295109044,
+              35.900667069962516
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.475134295109044,
+              35.900667069962516
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.3666666666666934,
+        "y": 1.256679560669719,
+        "ground": 0,
+        "height": 1.256679560669719,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.636511900856554,
+              1.5626795606697192,
+              32.53315217201841
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.156629031727104,
+              33.07581130470171
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.562679560669719,
+              32.533152172018404
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.562679560669719,
+              32.533152172018404
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.76348809914344,
+              1.562679560669719,
+              34.44559742305596
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.156629031727104,
+              33.90293829037267
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.562679560669719,
+              34.44559742305597
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.562679560669719,
+              34.44559742305597
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.40000000000002917,
+        "y": 1.3161526814454916,
+        "ground": 0,
+        "height": 1.3161526814454916,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085657,
+              1.622152681445493,
+              31.006168045034144
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.215295268758145,
+              31.548827177717442
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.6221526814454916,
+              31.006168045034137
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.6221526814454916,
+              31.006168045034137
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              1.6221526814454925,
+              32.918613296071705
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.215295268758145,
+              32.3759541633884
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.6221526814454916,
+              32.918613296071705
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.6221526814454916,
+              32.918613296071705
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.43333333333336493,
+        "y": 1.3462251261946043,
+        "ground": 0,
+        "height": 1.3462251261946043,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085656,
+              1.6522251261946046,
+              29.436035230003228
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.244524889861917,
+              29.978694362686525
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.6522251261946044,
+              29.43603523000322
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.6522251261946044,
+              29.43603523000322
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              1.6522251261946046,
+              31.348480481040788
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.244524889861917,
+              30.805821348357483
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.6522251261946044,
+              31.348480481040788
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.6522251261946044,
+              31.348480481040788
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.4666666666667007,
+        "y": 1.346225126194581,
+        "ground": 0,
+        "height": 1.346225126194581,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085656,
+              1.6522251261945815,
+              27.851519518956774
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.24364770870382,
+              28.394178651640086
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.652225126194581,
+              27.85151951895678
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.652225126194581,
+              27.85151951895678
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.76348809914344,
+              1.6522251261945824,
+              29.76396476999434
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.24364770870382,
+              29.221305637311044
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.652225126194581,
+              29.76396476999435
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.652225126194581,
+              29.76396476999435
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.5000000000000364,
+        "y": 1.3161526814454227,
+        "ground": 0,
+        "height": 1.3161526814454227,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085657,
+              1.6221526814454235,
+              26.28138670392592
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.212665372177407,
+              26.824045836609226
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.6221526814454228,
+              26.28138670392592
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.6221526814454228,
+              26.28138670392592
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              1.6221526814454235,
+              28.19383195496349
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.212665372177407,
+              27.651172822280184
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.6221526814454228,
+              28.19383195496349
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.6221526814454228,
+              28.19383195496349
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.5333333333333722,
+        "y": 1.256679560669606,
+        "ground": 0,
+        "height": 1.256679560669606,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085657,
+              1.5626795606696073,
+              24.754402576941743
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.152251357312371,
+              25.297061709625037
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.562679560669606,
+              24.754402576941732
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.562679560669606,
+              24.754402576941732
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.76348809914344,
+              1.5626795606696067,
+              26.6668478279793
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.152251357312371,
+              26.124188695295995
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.562679560669606,
+              26.6668478279793
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.562679560669606,
+              26.6668478279793
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.566666666666708,
+        "y": 1.1691342951088892,
+        "ground": 0,
+        "height": 1.1691342951088892,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085656,
+              1.4751342951088895,
+              23.29933293003533
+            ],
+            "hip": [
+              -41.15111998115105,
+              4.06373596186403,
+              23.84199206271864
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.4751342951088893,
+              23.299332930035334
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.4751342951088893,
+              23.299332930035334
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.76348809914344,
+              1.4751342951088895,
+              25.2117781810729
+            ],
+            "hip": [
+              -40.24888001884896,
+              4.06373596186403,
+              24.669119048389597
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.4751342951088893,
+              25.2117781810729
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.4751342951088893,
+              25.2117781810729
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.6000000000000437,
+        "y": 1.0554725013317028,
+        "ground": 0,
+        "height": 1.0554725013317028,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085657,
+              1.3614725013317033,
+              21.944943555237824
+            ],
+            "hip": [
+              -41.15111998115105,
+              3.9490766238041157,
+              22.487602687921125
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.3614725013317028,
+              21.94494355523782
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.3614725013317028,
+              21.94494355523782
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.76348809914344,
+              1.3614725013317035,
+              23.857388806275384
+            ],
+            "hip": [
+              -40.24888001884896,
+              3.9490766238041157,
+              23.314729673592083
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.3614725013317028,
+              23.857388806275388
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.3614725013317028,
+              23.857388806275388
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.6333333333333795,
+        "y": 0.9182331959905685,
+        "ground": 0,
+        "height": 0.9182331959905685,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.63651190085657,
+              1.2242331959905683,
+              20.7200002445803
+            ],
+            "hip": [
+              -41.15111998115105,
+              3.810814232658539,
+              21.262659377263596
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.63651190085656,
+              1.2242331959905686,
+              20.72000024458029
+            ],
+            "plant": [
+              -41.63651190085656,
+              1.2242331959905686,
+              20.72000024458029
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.763488099143444,
+              1.2242331959905695,
+              22.63244549561786
+            ],
+            "hip": [
+              -40.24888001884896,
+              3.810814232658539,
+              22.089786362934554
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.763488099143444,
+              1.2242331959905686,
+              22.63244549561786
+            ],
+            "plant": [
+              -39.763488099143444,
+              1.2242331959905686,
+              22.63244549561786
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.6666666666667153,
+        "y": 0.760482078385683,
+        "ground": 0,
+        "height": 0.760482078385683,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.73016758372776,
+              1.066482078385683,
+              19.754990977089353
+            ],
+            "hip": [
+              -41.191379890308696,
+              3.6520164085546827,
+              20.24467666344353
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.730167583727756,
+              1.066482078385683,
+              19.754990977089353
+            ],
+            "plant": [
+              -41.730167583727756,
+              1.066482078385683,
+              19.754990977089353
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.66983241627225,
+              1.066482078385683,
+              21.46399185413596
+            ],
+            "hip": [
+              -40.20862010969131,
+              3.6520164085546827,
+              20.97430616778178
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.66983241627225,
+              1.066482078385683,
+              21.46399185413596
+            ],
+            "plant": [
+              -39.66983241627225,
+              1.066482078385683,
+              21.46399185413596
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.700000000000051,
+        "y": 0.5857430478084649,
+        "ground": 0,
+        "height": 0.5857430478084649,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.80200796475325,
+              0.8917430478084649,
+              18.970135940280485
+            ],
+            "hip": [
+              -41.221847046223495,
+              3.476209015958627,
+              19.4100195142074
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.802007964753244,
+              0.8917430478084649,
+              18.97013594028048
+            ],
+            "plant": [
+              -41.802007964753244,
+              0.8917430478084649,
+              18.97013594028048
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.59799203524676,
+              0.8917430478084643,
+              20.489339278376374
+            ],
+            "hip": [
+              -40.17815295377651,
+              3.476209015958627,
+              20.04945570444945
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.59799203524676,
+              0.8917430478084649,
+              20.48933927837637
+            ],
+            "plant": [
+              -39.59799203524676,
+              0.8917430478084649,
+              20.48933927837637
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.7333333333333868,
+        "y": 0.3979194854544537,
+        "ground": 0,
+        "height": 0.3979194854544537,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.856882329506874,
+              0.7039194854544539,
+              18.392645134114932
+            ],
+            "hip": [
+              -41.244773839631264,
+              3.2872974418984646,
+              18.786862645930675
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.85688232950688,
+              0.7039194854544537,
+              18.392645134114936
+            ],
+            "plant": [
+              -41.85688232950688,
+              0.7039194854544537,
+              18.392645134114936
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.54311767049312,
+              0.7039194854544544,
+              19.73880935244008
+            ],
+            "hip": [
+              -40.15522616036874,
+              3.2872974418984646,
+              19.344591840624346
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.543117670493125,
+              0.7039194854544537,
+              19.738809352440086
+            ],
+            "plant": [
+              -39.543117670493125,
+              0.7039194854544537,
+              19.738809352440086
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.7666666666667226,
+        "y": 0.2012070593375442,
+        "ground": 0,
+        "height": 0.2012070593375442,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.89869585380426,
+              0.5072070593375446,
+              18.050789714842114
+            ],
+            "hip": [
+              -41.26195549111647,
+              3.089479397112614,
+              18.40384206297792
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.89869585380427,
+              0.5072070593375443,
+              18.050789714842114
+            ],
+            "plant": [
+              -41.89869585380427,
+              0.5072070593375443,
+              18.050789714842114
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.50130414619573,
+              0.5072070593375448,
+              19.241662504139878
+            ],
+            "hip": [
+              -40.13804450888354,
+              3.089479397112614,
+              18.888610156004074
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.501304146195736,
+              0.5072070593375443,
+              19.241662504139878
+            ],
+            "plant": [
+              -39.501304146195736,
+              0.5072070593375443,
+              19.241662504139878
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.8000000000000583,
+        "y": 1.6532731788489269e-16,
+        "ground": 0,
+        "height": 1.6532731788489269e-16,
+        "airborne": true,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.93052406916173,
+              0.30600000000000005,
+              17.973476719210183
+            ],
+            "hip": [
+              -41.274792775228384,
+              2.887151187924655,
+              18.289863697697772
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.93052406916173,
+              0.3060000000000002,
+              17.973476719210183
+            ],
+            "plant": [
+              -41.93052406916173,
+              0.3060000000000002,
+              17.973476719210183
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.46947593083828,
+              0.30600000000000005,
+              19.02652328078981
+            ],
+            "hip": [
+              -40.12520722477162,
+              2.887151187924655,
+              18.710136302302228
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.46947593083828,
+              0.3060000000000002,
+              19.026523280789817
+            ],
+            "plant": [
+              -39.46947593083828,
+              0.3060000000000002,
+              19.026523280789817
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.8333333333333941,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.93237542526163,
+              0.5663289819230646,
+              17.922840540735145
+            ],
+            "hip": [
+              -41.28436284797306,
+              2.78975933017232,
+              18.31816473964377
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.93237542526163,
+              0.5663289819230646,
+              17.922840540735145
+            ],
+            "plant": [
+              -41.93052406916173,
+              0.3060000000000002,
+              17.973476719210183
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.46762457473838,
+              0.5663289819230648,
+              18.966614064672385
+            ],
+            "hip": [
+              -40.11563715202695,
+              2.78975933017232,
+              18.68183526035623
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.46762457473837,
+              0.5663289819230646,
+              18.966614064672378
+            ],
+            "plant": [
+              -39.46947593083828,
+              0.3060000000000002,
+              19.026523280789817
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.8666666666667299,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.94745885750969,
+              0.7048471399699523,
+              17.913388264110438
+            ],
+            "hip": [
+              -41.29148555776276,
+              2.80311726519876,
+              18.342873188290223
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.94745885750968,
+              0.7048471399699516,
+              17.913388264110438
+            ],
+            "plant": [
+              -41.93052406916173,
+              0.3060000000000002,
+              17.973476719210183
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.452541142490325,
+              0.7048471399699516,
+              18.876149135351383
+            ],
+            "hip": [
+              -40.108514442237244,
+              2.80311726519876,
+              18.657126811709777
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.452541142490325,
+              0.7048471399699516,
+              18.876149135351387
+            ],
+            "plant": [
+              -39.46947593083828,
+              0.3060000000000002,
+              19.026523280789817
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.9000000000000656,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.9753886322843,
+              0.6567402885326663,
+              18.035414544262277
+            ],
+            "hip": [
+              -41.29678035994539,
+              2.818414968352905,
+              18.36436371435543
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.9753886322843,
+              0.6567402885326667,
+              18.035414544262274
+            ],
+            "plant": [
+              -41.93052406916173,
+              0.3060000000000002,
+              17.973476719210183
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.42461136771571,
+              0.6567402885326667,
+              18.835450751833438
+            ],
+            "hip": [
+              -40.10321964005462,
+              2.818414968352905,
+              18.63563628564457
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.424611367715706,
+              0.6567402885326667,
+              18.83545075183344
+            ],
+            "plant": [
+              -39.46947593083828,
+              0.3060000000000002,
+              19.026523280789817
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.9333333333334014,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -41.997307391307814,
+              0.4445181580468187,
+              18.157694561542662
+            ],
+            "hip": [
+              -41.30071283522662,
+              2.8334775427708117,
+              18.383003890688624
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -41.997307391307814,
+              0.4445181580468182,
+              18.15769456154266
+            ],
+            "plant": [
+              -41.93052406916173,
+              0.3060000000000002,
+              17.973476719210183
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.4026926086922,
+              0.4445181580468187,
+              18.81465771532391
+            ],
+            "hip": [
+              -40.099287164773386,
+              2.8334775427708117,
+              18.616996109311376
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.40269260869219,
+              0.4445181580468182,
+              18.81465771532391
+            ],
+            "plant": [
+              -39.46947593083828,
+              0.3060000000000002,
+              19.026523280789817
+            ],
+            "swing": false,
+            "settle": true,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 0.9666666666667372,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.006358845630416,
+              0.3060000000000007,
+              18.208722097571428
+            ],
+            "hip": [
+              -41.30363157416366,
+              2.8469486422203776,
+              18.399139092445566
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.393641154369604,
+              0.3060000000000007,
+              18.791277902428572
+            ],
+            "hip": [
+              -40.096368425836346,
+              2.8469486422203776,
+              18.600860907554434
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.0000000000000728,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.0063588456304,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "hip": [
+              -41.305796844884654,
+              2.837762094607806,
+              18.413085198453878
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.39364115436959,
+              0.3059999999999998,
+              18.791277902428572
+            ],
+            "hip": [
+              -40.09420315511535,
+              2.837762094607806,
+              18.586914801546122
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.0333333333334085,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.006358845630416,
+              0.3060000000000005,
+              18.208722097571428
+            ],
+            "hip": [
+              -41.307402573170556,
+              2.8352885806674823,
+              18.42512601182124
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.393641154369604,
+              0.3060000000000007,
+              18.79127790242857
+            ],
+            "hip": [
+              -40.09259742682945,
+              2.8352885806674823,
+              18.57487398817876
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.0666666666667441,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.00635884563042,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "hip": [
+              -41.30859303542288,
+              2.8371845869092724,
+              18.435513433687543
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.3936411543696,
+              0.3059999999999996,
+              18.79127790242857
+            ],
+            "hip": [
+              -40.091406964577125,
+              2.8371845869092724,
+              18.564486566312457
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.1000000000000798,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.006358845630416,
+              0.30600000000000027,
+              18.20872209757142
+            ],
+            "hip": [
+              -41.30947545088461,
+              2.8415784471937564,
+              18.444469154796582
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.39364115436959,
+              0.30600000000000027,
+              18.791277902428572
+            ],
+            "hip": [
+              -40.09052454911539,
+              2.8415784471937564,
+              18.555530845203418
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.1333333333334155,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.0063588456304,
+              0.3060000000000005,
+              18.208722097571425
+            ],
+            "hip": [
+              -41.31012943445886,
+              2.8470638919391322,
+              18.452187102086167
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428575
+            ],
+            "hip": [
+              -40.08987056554115,
+              2.8470638919391322,
+              18.547812897913833
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.1666666666667511,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.00635884563041,
+              0.3060000000000005,
+              18.208722097571425
+            ],
+            "hip": [
+              -41.3106140678812,
+              2.8526545918760866,
+              18.45883617965275
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.393641154369604,
+              0.3059999999999998,
+              18.791277902428572
+            ],
+            "hip": [
+              -40.08938593211881,
+              2.8526545918760866,
+              18.54116382034725
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.2000000000000868,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.006358845630416,
+              0.3059999999999996,
+              18.208722097571428
+            ],
+            "hip": [
+              -41.31097317574647,
+              2.857718038552949,
+              18.464563034578592
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.393641154369604,
+              0.3059999999999998,
+              18.791277902428572
+            ],
+            "hip": [
+              -40.08902682425354,
+              2.857718038552949,
+              18.535436965421408
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.2333333333334224,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.006358845630416,
+              0.3060000000000007,
+              18.20872209757143
+            ],
+            "hip": [
+              -41.31123925473119,
+              2.86190221505731,
+              18.469494697581236
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.393641154369604,
+              0.30600000000000005,
+              18.791277902428575
+            ],
+            "hip": [
+              -40.088760745268814,
+              2.86190221505731,
+              18.530505302418764
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.266666666666758,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.006358845630395,
+              0.30600000000000005,
+              18.208722097571425
+            ],
+            "hip": [
+              -41.31143639577379,
+              2.865064218357666,
+              18.473741022046497
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.39364115436958,
+              0.3059999999999998,
+              18.79127790242857
+            ],
+            "hip": [
+              -40.088563604226216,
+              2.865064218357666,
+              18.526258977953503
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.3000000000000937,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.0063588456304,
+              0.30600000000000027,
+              18.208722097571428
+            ],
+            "hip": [
+              -41.31158245510694,
+              2.8672064620160693,
+              18.477396889475756
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.3936411543696,
+              0.3060000000000007,
+              18.791277902428575
+            ],
+            "hip": [
+              -40.08841754489307,
+              2.8672064620160693,
+              18.522603110524244
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.3333333333334294,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.00635884563041,
+              0.3059999999999998,
+              18.208722097571428
+            ],
+            "hip": [
+              -41.31169066601759,
+              2.8684233503432246,
+              18.480544175500444
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.39364115436961,
+              0.3060000000000005,
+              18.791277902428572
+            ],
+            "hip": [
+              -40.088309333982416,
+              2.8684233503432246,
+              18.519455824499556
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      },
+      {
+        "time": 1.366666666666765,
+        "y": 0,
+        "ground": 0,
+        "height": 0,
+        "airborne": false,
+        "feet": [
+          {
+            "side": "L",
+            "ankle": [
+              -42.0063588456304,
+              0.3060000000000005,
+              18.208722097571425
+            ],
+            "hip": [
+              -41.311770834745566,
+              2.868859324220385,
+              18.483253485296483
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "plant": [
+              -42.00635884563041,
+              0.30600000000000005,
+              18.208722097571428
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          },
+          {
+            "side": "R",
+            "ankle": [
+              -39.393641154369604,
+              0.30600000000000027,
+              18.791277902428575
+            ],
+            "hip": [
+              -40.08822916525444,
+              2.868859324220385,
+              18.516746514703517
+            ],
+            "reach": 2.8350000000000004,
+            "target": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "plant": [
+              -39.3936411543696,
+              0.30600000000000005,
+              18.791277902428572
+            ],
+            "swing": false,
+            "settle": false,
+            "ankleHeight": 0.30600000000000005,
+            "ground": 0,
+            "kneeContact": null
+          }
+        ]
+      }
+    ],
+    "land": 0.8000000000000583,
+    "motion": false,
+    "reduced": false
+  },
+  "mortar": {
+    "before": [
+      {
+        "id": "ally0",
+        "hp": {
+          "body": 210,
+          "pilot": 70,
+          "right": 90,
+          "left": 90,
+          "legs": 150
+        }
+      },
+      {
+        "id": "ally1",
+        "hp": {
+          "body": 126,
+          "pilot": 55,
+          "right": 78,
+          "left": 78,
+          "legs": 100
+        }
+      },
+      {
+        "id": "ally2",
+        "hp": {
+          "body": 180,
+          "pilot": 80,
+          "right": 100,
+          "left": 100,
+          "legs": 90
+        }
+      },
+      {
+        "id": "enemy0",
+        "hp": {
+          "body": 151,
+          "pilot": 70,
+          "right": 87,
+          "left": 87,
+          "legs": 98
+        }
+      },
+      {
+        "id": "enemy1",
+        "hp": {
+          "body": 82,
+          "pilot": 55,
+          "right": 45,
+          "left": 45,
+          "legs": 72
+        }
+      },
+      {
+        "id": "enemy2",
+        "hp": {
+          "body": 64
+        }
+      },
+      {
+        "id": "enemy3",
+        "hp": {
+          "body": 43
+        }
+      }
+    ],
+    "at": 0,
+    "rest": -0.18,
+    "glows": [
+      {
+        "time": 0.9666666666667372,
+        "point": [
+          -55.694766270342654,
+          5.421388720409944,
+          48.862300000000005
+        ],
+        "expected": [
+          -55.694766270342654,
+          5.421388720409944,
+          48.862300000000005
+        ]
+      }
+    ],
+    "elevation": -0.9298891318003035,
+    "after": [
+      {
+        "id": "ally0",
+        "hp": {
+          "body": 210,
+          "pilot": 70,
+          "right": 90,
+          "left": 90,
+          "legs": 150
+        }
+      },
+      {
+        "id": "ally1",
+        "hp": {
+          "body": 126,
+          "pilot": 55,
+          "right": 78,
+          "left": 78,
+          "legs": 100
+        }
+      },
+      {
+        "id": "ally2",
+        "hp": {
+          "body": 180,
+          "pilot": 80,
+          "right": 100,
+          "left": 100,
+          "legs": 90
+        }
+      },
+      {
+        "id": "enemy0",
+        "hp": {
+          "body": 151,
+          "pilot": 70,
+          "right": 87,
+          "left": 87,
+          "legs": 98
+        }
+      },
+      {
+        "id": "enemy1",
+        "hp": {
+          "body": 82,
+          "pilot": 55,
+          "right": 45,
+          "left": 45,
+          "legs": 72
+        }
+      },
+      {
+        "id": "enemy2",
+        "hp": {
+          "body": 64
+        }
+      },
+      {
+        "id": "enemy3",
+        "hp": {
+          "body": 43
+        }
+      }
+    ]
+  },
+  "damageVisuals": {
+    "hp": {
+      "body": 200,
+      "pilot": 1000,
+      "right": 0,
+      "left": 1000,
+      "legs": 1000
+    },
+    "max": {
+      "body": 1000,
+      "pilot": 1000,
+      "right": 1000,
+      "left": 1000,
+      "legs": 1000
+    },
+    "parts": {
+      "body": {
+        "state": 1,
+        "detachable": 5,
+        "visible": 5
+      },
+      "pilot": {
+        "state": 0,
+        "detachable": 2,
+        "visible": 2
+      },
+      "right": {
+        "state": 2,
+        "detachable": 3,
+        "visible": 0
+      },
+      "left": {
+        "state": 0,
+        "detachable": 5,
+        "visible": 5
+      },
+      "legs": {
+        "state": 0,
+        "detachable": 8,
+        "visible": 8
+      }
+    }
+  },
+  "critical": {
+    "calls": [
+      {
+        "type": "smoke",
+        "time": 0
+      },
+      {
+        "type": "smoke",
+        "time": 0.2666666666666861
+      },
+      {
+        "type": "joint",
+        "time": 0.5000000000000364
+      },
+      {
+        "type": "arc",
+        "time": 0.5000000000000364
+      },
+      {
+        "type": "smoke",
+        "time": 0.5000000000000364
+      },
+      {
+        "type": "smoke",
+        "time": 0.5333333333333722
+      },
+      {
+        "type": "smoke",
+        "time": 0.8000000000000583
+      },
+      {
+        "type": "smoke",
+        "time": 1.0666666666667441
+      },
+      {
+        "type": "smoke",
+        "time": 1.3333333333334294
+      },
+      {
+        "type": "smoke",
+        "time": 1.6000000000001147
+      },
+      {
+        "type": "smoke",
+        "time": 1.8666666666668
+      },
+      {
+        "type": "smoke",
+        "time": 2.133333333333486
+      },
+      {
+        "type": "crawl",
+        "time": 2.166666666666822
+      },
+      {
+        "type": "smoke",
+        "time": 2.400000000000173
+      }
+    ],
+    "motion": false
+  },
+  "wreck": {
+    "start": 2.5000000000001807,
+    "time": 17.500000000000185,
+    "alive": false,
+    "attacking": false,
+    "object": "D9E6D1E3-5A8F-4B3A-B572-C4C19251B162",
+    "visible": true,
+    "calls": [
+      {
+        "type": "arc",
+        "time": 2.6000000000001884
+      },
+      {
+        "type": "smoke",
+        "time": 2.66666666666686
+      },
+      {
+        "type": "fire",
+        "time": 2.66666666666686
+      },
+      {
+        "type": "crawl",
+        "time": 2.766666666666868
+      },
+      {
+        "type": "smoke",
+        "time": 2.933333333333547
+      },
+      {
+        "type": "fire",
+        "time": 2.933333333333547
+      },
+      {
+        "type": "crawl",
+        "time": 2.966666666666883
+      },
+      {
+        "type": "dustwave",
+        "time": 3.0666666666668907
+      },
+      {
+        "type": "smoke",
+        "time": 3.0666666666668907
+      },
+      {
+        "type": "fire",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "fire",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "fire",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "fire",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "fire",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "fire",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "smoke",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "arc",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "smoke",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "fire",
+        "time": 3.200000000000234
+      },
+      {
+        "type": "arc",
+        "time": 3.4000000000002495
+      },
+      {
+        "type": "dustwave",
+        "time": 3.4666666666669212
+      },
+      {
+        "type": "smoke",
+        "time": 3.4666666666669212
+      },
+      {
+        "type": "smoke",
+        "time": 3.4666666666669212
+      },
+      {
+        "type": "fire",
+        "time": 3.4666666666669212
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "fire",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "smoke",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "dustwave",
+        "time": 3.566666666666929
+      },
+      {
+        "type": "arc",
+        "time": 3.6000000000002648
+      },
+      {
+        "type": "smoke",
+        "time": 3.7333333333336083
+      },
+      {
+        "type": "fire",
+        "time": 3.7333333333336083
+      },
+      {
+        "type": "fire",
+        "time": 3.80000000000028
+      },
+      {
+        "type": "fire",
+        "time": 3.80000000000028
+      },
+      {
+        "type": "fire",
+        "time": 3.80000000000028
+      },
+      {
+        "type": "fire",
+        "time": 3.80000000000028
+      },
+      {
+        "type": "fire",
+        "time": 3.80000000000028
+      },
+      {
+        "type": "fire",
+        "time": 3.80000000000028
+      },
+      {
+        "type": "smoke",
+        "time": 3.80000000000028
+      },
+      {
+        "type": "arc",
+        "time": 3.9333333333336236
+      },
+      {
+        "type": "smoke",
+        "time": 4.000000000000295
+      },
+      {
+        "type": "fire",
+        "time": 4.000000000000295
+      },
+      {
+        "type": "arc",
+        "time": 4.266666666666982
+      },
+      {
+        "type": "smoke",
+        "time": 4.266666666666982
+      },
+      {
+        "type": "fire",
+        "time": 4.266666666666982
+      },
+      {
+        "type": "smoke",
+        "time": 4.533333333333669
+      },
+      {
+        "type": "fire",
+        "time": 4.533333333333669
+      },
+      {
+        "type": "smoke",
+        "time": 4.800000000000356
+      },
+      {
+        "type": "fire",
+        "time": 4.800000000000356
+      },
+      {
+        "type": "smoke",
+        "time": 5.066666666667043
+      },
+      {
+        "type": "fire",
+        "time": 5.066666666667043
+      },
+      {
+        "type": "smoke",
+        "time": 5.33333333333373
+      },
+      {
+        "type": "fire",
+        "time": 5.33333333333373
+      },
+      {
+        "type": "smoke",
+        "time": 5.600000000000417
+      },
+      {
+        "type": "fire",
+        "time": 5.600000000000417
+      },
+      {
+        "type": "smoke",
+        "time": 5.866666666667104
+      },
+      {
+        "type": "fire",
+        "time": 5.866666666667104
+      },
+      {
+        "type": "smoke",
+        "time": 6.133333333333791
+      },
+      {
+        "type": "fire",
+        "time": 6.133333333333791
+      },
+      {
+        "type": "smoke",
+        "time": 6.400000000000478
+      },
+      {
+        "type": "fire",
+        "time": 6.400000000000478
+      },
+      {
+        "type": "smoke",
+        "time": 6.666666666667165
+      },
+      {
+        "type": "fire",
+        "time": 6.666666666667165
+      },
+      {
+        "type": "smoke",
+        "time": 6.933333333333852
+      },
+      {
+        "type": "fire",
+        "time": 6.933333333333852
+      },
+      {
+        "type": "smoke",
+        "time": 7.200000000000539
+      },
+      {
+        "type": "fire",
+        "time": 7.200000000000539
+      },
+      {
+        "type": "smoke",
+        "time": 7.466666666667226
+      },
+      {
+        "type": "fire",
+        "time": 7.466666666667226
+      },
+      {
+        "type": "smoke",
+        "time": 7.733333333333913
+      },
+      {
+        "type": "smoke",
+        "time": 8.0000000000006
+      },
+      {
+        "type": "smoke",
+        "time": 8.26666666666728
+      },
+      {
+        "type": "smoke",
+        "time": 8.53333333333396
+      },
+      {
+        "type": "smoke",
+        "time": 8.80000000000064
+      },
+      {
+        "type": "smoke",
+        "time": 9.06666666666732
+      },
+      {
+        "type": "smoke",
+        "time": 9.333333333334
+      },
+      {
+        "type": "smoke",
+        "time": 9.60000000000068
+      },
+      {
+        "type": "smoke",
+        "time": 9.86666666666736
+      },
+      {
+        "type": "smoke",
+        "time": 10.13333333333404
+      },
+      {
+        "type": "smoke",
+        "time": 10.40000000000072
+      },
+      {
+        "type": "smoke",
+        "time": 10.6666666666674
+      },
+      {
+        "type": "smoke",
+        "time": 10.93333333333408
+      },
+      {
+        "type": "smoke",
+        "time": 11.20000000000076
+      },
+      {
+        "type": "smoke",
+        "time": 11.46666666666744
+      },
+      {
+        "type": "smoke",
+        "time": 11.73333333333412
+      },
+      {
+        "type": "smoke",
+        "time": 12.0000000000008
+      },
+      {
+        "type": "smoke",
+        "time": 12.26666666666748
+      },
+      {
+        "type": "smoke",
+        "time": 12.53333333333416
+      },
+      {
+        "type": "smoke",
+        "time": 12.80000000000084
+      },
+      {
+        "type": "smoke",
+        "time": 13.066666666667519
+      },
+      {
+        "type": "smoke",
+        "time": 13.333333333334199
+      },
+      {
+        "type": "smoke",
+        "time": 13.600000000000822
+      },
+      {
+        "type": "smoke",
+        "time": 13.866666666667445
+      },
+      {
+        "type": "smoke",
+        "time": 14.133333333334068
+      },
+      {
+        "type": "smoke",
+        "time": 14.400000000000691
+      },
+      {
+        "type": "smoke",
+        "time": 14.666666666667314
+      },
+      {
+        "type": "smoke",
+        "time": 14.933333333333938
+      },
+      {
+        "type": "smoke",
+        "time": 15.20000000000056
+      },
+      {
+        "type": "smoke",
+        "time": 15.466666666667184
+      },
+      {
+        "type": "smoke",
+        "time": 15.733333333333807
+      },
+      {
+        "type": "smoke",
+        "time": 16.00000000000043
+      },
+      {
+        "type": "smoke",
+        "time": 16.266666666667053
+      }
+    ],
+    "parts": {
+      "body": {
+        "state": 2,
+        "detachable": 5,
+        "visible": 0
+      },
+      "pilot": {
+        "state": 0,
+        "detachable": 2,
+        "visible": 2
+      },
+      "right": {
+        "state": 2,
+        "detachable": 3,
+        "visible": 0
+      },
+      "left": {
+        "state": 0,
+        "detachable": 5,
+        "visible": 5
+      },
+      "legs": {
+        "state": 0,
+        "detachable": 8,
+        "visible": 8
+      }
+    }
+  },
+  "dynamicReducedMotion": {
+    "reduced": true,
+    "touch": false
+  },
+  "status": "passed"
+}

@@ -1,0 +1,24 @@
+PASS real-state fault probe nan
+PASS real-state fault probe footGround
+PASS real-state fault probe footSlide
+PASS real-state fault probe bounds
+PASS real-state fault probe overlap
+PASS real-state fault probe stuck
+PASS real-state fault probe ikReach
+PASS real combat fault probe aimOff
+PASS real combat fault probe weaponMount
+PASS real combat fault probe muzzleFar
+PASS real combat fault probe noDamage
+PASS real combat fault probe deadPartDamage
+PASS real combat fault probe hpRange
+PASS real combat fault probe wreckActs
+PASS real combat fault probe partVisual
+PASS real combat fault probe popSwap
+{"seed":4258,"frames":[0,5,6],"ticks":1773,"result":true,"anomalies":[],"errors":[]}
+{"seed":4259,"frames":[7,8,9],"ticks":4953,"result":true,"anomalies":[],"errors":[]}
+{"seed":4260,"frames":[10,12,0],"ticks":5073,"result":false,"anomalies":[],"errors":[]}
+{"seed":4261,"frames":[5,6,7],"ticks":4563,"result":false,"anomalies":[],"errors":[]}
+{"seed":4262,"frames":[8,9,10],"ticks":1443,"result":true,"anomalies":[],"errors":[]}
+{"seed":4263,"frames":[12,0,5],"ticks":4293,"result":true,"anomalies":[],"errors":[]}
+{"seed":4264,"frames":[6,7,8],"ticks":4503,"result":false,"anomalies":[],"errors":[]}
+PASS 7 seeded campaign battles, 26601 actual-bone ticks

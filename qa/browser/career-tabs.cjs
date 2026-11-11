@@ -31,6 +31,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>save.day),4,'a legacy localStorage career still loads before its first transaction');
 
  const other=await context.newPage();
+ other.setDefaultTimeout(Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000));
  try{
   await other.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
   await other.locator('[data-build-facility="office"]').waitFor();
@@ -63,6 +64,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   await tap('[data-deploy="0"]');
   await tap('#modal-1');
   await tap('#modal-0');
+  assert.ok((await saved(page)).sortie,'deployment is durably saved before the other tab reloads');
   await reloadCareer(other);
   await other.locator('#brace').waitFor();
   await tap('#brace');

@@ -1,0 +1,200 @@
+{
+  "schema": 1,
+  "scope": "Real close/steep firing regression, separate from prior observer semantics corrections. Firing tolerance remains 0.12 radians.",
+  "observerCorrections": [
+    "Behemoth poseLift intentionally replaces the ankle pose while retaining a walking anchor; physical hip-to-ankle reach remains checked and ordinary IK targets remain strict.",
+    "Recovery animation is not a firing beat. Aim is measured from the actual muzzle axis at each real launch, and its negative control physically rotates the real barrel during a real command."
+  ],
+  "runtimeBug": "The previous solver corrected the barrel axis in three iterations while each wrist correction moved the muzzle. At close/steep targets it oscillated and left actual firing axes off target. The analytic solver rotates the emitter offset and axis together.",
+  "before": {
+    "commit": "9af2015f8f92ed219c278c48960fb75ef471eb39",
+    "distTree": "06b72b8f3ed6ed17d9bedc9723639b339d375d49",
+    "path": "dist/foundry/scene-rigs.js",
+    "gitBlob": "92ed3b50dbc6717ca94928da71ea5807fcdb329b",
+    "sha256": "48f249f230469831a3bb58556e163187a95f43bd5e0c2a65cd1dfa674abb9493"
+  },
+  "after": {
+    "commit": "f68b5dff18072d19907e14b3cdf2556f5d99c602",
+    "distTree": "613bc118b314340e3ab63d5101a27c89a2c98080",
+    "path": "dist/foundry/scene-rigs.js",
+    "gitBlob": "f0c698f31bff7a1796e66a826752c16d49fde3f1",
+    "sha256": "6545d4bf8546ed01f9c2b10a6beae81796014611ad9034c10f13c47cc711d461"
+  },
+  "rawFailingReports": [
+    {
+      "path": "/workspace/scratch/phase2-failed-launch-shard-0-14.json",
+      "sha256": "1a75beae4feb2187e4c1ea3b1daec0112afa3ff4ee39c8e43d7a1744ad54caab",
+      "source": {
+        "commit": "2a960ad1dc3069b60cca65008b78323e07b30533",
+        "distTree": "06b72b8f3ed6ed17d9bedc9723639b339d375d49",
+        "distDirty": false,
+        "checkerSha256": "6abe52328144092782cc9d20beaac40e7367793e683b805612c84c6aaa86f19d"
+      }
+    },
+    {
+      "path": "/workspace/scratch/phase2-failed-launch-shard-15-29.json",
+      "sha256": "a2e4397521be677edd157eacdc288d8c75294c1c0c90844fcc6c042475f83714",
+      "source": {
+        "commit": "2a960ad1dc3069b60cca65008b78323e07b30533",
+        "distTree": "06b72b8f3ed6ed17d9bedc9723639b339d375d49",
+        "distDirty": false,
+        "checkerSha256": "6abe52328144092782cc9d20beaac40e7367793e683b805612c84c6aaa86f19d"
+      }
+    }
+  ],
+  "actualFailingLaunchEvents": [
+    {
+      "seed": 4243,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "type": "aimOff",
+      "unit": "ally2",
+      "frame": 9,
+      "time": 28.233333333329387,
+      "detail": {
+        "sequence": 43,
+        "type": "launch",
+        "time": 28.199999999996045,
+        "archetype": "shotgun",
+        "expectedOrigin": [
+          -57.25006474143412,
+          2.0831755248854043,
+          6.026107410272393
+        ],
+        "actorAlive": true,
+        "aimError": 0.7700418166264753,
+        "mounted": true,
+        "actor": "ally2",
+        "target": "enemy0",
+        "weapon": "rampart",
+        "index": 0,
+        "socket": "muzzle",
+        "origin": [
+          -57.25006474143412,
+          2.0831755248854043,
+          6.026107410272393
+        ],
+        "targetPoint": [
+          -57.799999966598115,
+          2.7697934433707223,
+          3.310001437081165
+        ],
+        "flight": 0.13
+      }
+    },
+    {
+      "seed": 4243,
+      "frames": [
+        7,
+        8,
+        9,
+        0
+      ],
+      "type": "aimOff",
+      "unit": "ally1",
+      "frame": 8,
+      "time": 103.26666666669004,
+      "detail": {
+        "sequence": 97,
+        "type": "launch",
+        "time": 103.2333333333567,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -22.9188581949295,
+          4.925424476766983,
+          19.2402645064396
+        ],
+        "actorAlive": true,
+        "aimError": 0.15062059535626854,
+        "mounted": true,
+        "actor": "ally1",
+        "target": "enemy1",
+        "weapon": "hailstorm",
+        "index": 0,
+        "socket": "muzzle",
+        "origin": [
+          -22.9188581949295,
+          4.925424476766983,
+          19.2402645064396
+        ],
+        "targetPoint": [
+          -23.27286716355444,
+          5.386540463726747,
+          16.48166546366663
+        ],
+        "flight": 0.09
+      }
+    },
+    {
+      "seed": 4257,
+      "frames": [
+        9,
+        10,
+        12
+      ],
+      "type": "aimOff",
+      "unit": "ally2",
+      "frame": 12,
+      "time": 144.700000000006,
+      "detail": {
+        "sequence": 374,
+        "type": "launch",
+        "time": 144.66666666667268,
+        "archetype": "rifle",
+        "expectedOrigin": [
+          -25.856672348839922,
+          3.5682754673843817,
+          51.44977131038129
+        ],
+        "actorAlive": true,
+        "aimError": 0.22936231101182714,
+        "mounted": true,
+        "actor": "ally2",
+        "target": "enemy2",
+        "weapon": "rifle",
+        "index": 0,
+        "socket": "muzzle",
+        "origin": [
+          -25.856672348839922,
+          3.5682754673843817,
+          51.44977131038129
+        ],
+        "targetPoint": [
+          -23.00742871944017,
+          4.198893773206506,
+          50.69592063776318
+        ],
+        "flight": 0.1
+      }
+    }
+  ],
+  "isolatedGeometry": {
+    "command": "node qa/check-production-weapons.cjs",
+    "weapons": [
+      "rampart",
+      "hailstorm"
+    ],
+    "actualGLBEmitterCases": 24,
+    "priorMaximumErrorRadians": 2.0694841645043027,
+    "analyticMaximumErrorRadians": 1.4901161193847656e-08,
+    "log": "production-aim-regression.log",
+    "negativeControl": "Preserved pre-fix algorithm from 9af2015; actual GLB geometry and rotated/translated socket hierarchy."
+  },
+  "integratedSeed4243": {
+    "report": "/workspace/scratch/phase2-aim-analytic-seed4243-v1.json",
+    "sha256": "154cde500e375f90b5b8b8156e666f4f55ca47bbb9b83ca523a4f179c85b3248",
+    "sourcePolicy": "Development run used the held working-tree analytic fix subsequently committed as f68b5df. Formal shard reports separately validate committed immutable source.",
+    "status": "passed",
+    "ticks": 5312,
+    "maximumActualLaunchAimErrorRadians": 2.1073424255447017e-08,
+    "actualCommandsIdentical": true,
+    "outcomeIdentical": true,
+    "orderedFXAndHPEventsIdentical": true,
+    "anomalies": [],
+    "errors": []
+  }
+}
