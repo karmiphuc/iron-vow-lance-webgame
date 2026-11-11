@@ -2694,8 +2694,6 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(sequence?.skipped)continue;
   const light=Boolean(w.burst);
   effects.push({type:'boom',target:t.id,part:event.part,x:t.x,z:t.z,t:1,light,broken,big:Boolean(power&&!reducedMotion),
-   fxKind:weaponMotion(w.id),fxSeed:(Math.imul(a.index+1,73856093)^Math.imul(t.index+1,19349663)^Math.imul((event.index??0)+1,83492791)^Math.round(clock*1000))>>>0,
-   nx:-hitX/hitLength,ny:-hitY/hitLength,
    ...(guard?{shieldImpact:impact}:{})});
   shake=Math.max(shake,power?.shake??(broken?6:light?2.8:4));
   if(!rockets){
@@ -5085,48 +5083,12 @@ function drawDetonation(e,t,subject){
  ctx.restore();
 }
 
-// PixelFX-inspired overlays use current animated hardpoints, including the attack cutaway.
-function drawPixelfxFaults(t,subject,plantOnly){
- const fx=window.IronVowVFX;if(plantOnly||!fx||reducedMotion||!battle)return;
- for(const u of subject?[subject]:battle.units){
-  if(u.kind)continue; // Vehicles retain their dedicated wreck/detonation effects.
-  const dying=!u.alive&&u.downReason!=='pilot'&&Number.isFinite(u.deathTime);
-  const critical=u.alive&&(u.hp.body/u.max.body<.24||u.hp.right===0||u.hp.legs===0);
-  if(!dying&&!critical)continue;
-  const age=dying?destructionAge(u,t):0,seed=Math.imul(u.index+1,761)>>>0;
-  if(dying&&(age<0||age>2.3))continue;
-  if(dying){
-   const contact=destructionStyle(u)==='fall'?DESTRUCTION.fallEnd:DESTRUCTION.kneelEnd;
-   const delta=age-contact;
-   if(delta>=0&&delta<.55)fx.ground(ctx,{point:project(u.vx,0,u.vz),progress:delta/.55,scale,seed,mass:Math.min(1.8,MECH_MOTION[u.frame].mass)});
-  }
-  let q=-1,pulse=0;
-  if(dying){
-   const beats=[.07,.25,.45,.67,.87,1.1,1.43,1.75];
-   for(let i=0;i<beats.length;i++){const v=(age-beats[i])/.16;if(v>=0&&v<1){q=v;pulse=i;break}}
-  }else{
-   const period=1.35+(seed%5)*.1,cycle=(t+seed*.007)%period;
-   if(cycle<.16){q=cycle/.16;pulse=Math.floor((t+seed*.007)/period)}
-  }
-  if(q<0)continue;
-  const joints=[['body','right'],['right','pilot'],['body','left'],['body','legs'],['pilot','body']];
-  const pair=joints[(pulse+seed)%joints.length],a=mechAttachmentPoint(u,pair[0],t),b=mechAttachmentPoint(u,pair[1],t);
-  fx.arc(ctx,{a,b,progress:q,seed:seed+pulse*331,scale,strength:dying?.95:.67});
- }
-}
 function drawEffects(t,subject=null,plantOnly=false){for(const e of effects){
  if(plantOnly){
   if(!e.attackPlant||e.actor!==subject.id)continue;
  }else if(subject&&(e.x!==subject.x||e.z!==subject.z||!e.deathImpact&&!['boom','detonation'].includes(e.type)))continue;
  const phase=1-e.t;if(e.type==='shot'){drawAttackEffect(e,t);
  }else if(e.type==='boom'){
-  if(e.fxKind&&window.IronVowVFX&&!reducedMotion){
-   const victim=subject||battle.units.find(u=>u.id===e.target);
-   const point=e.shieldImpact&&!subject?resolveAttachment(e.shieldImpact):victim?mechAttachmentPoint(victim,e.shieldImpact?'shield':e.part||'body',t):project(e.x,1.1,e.z);
-   window.IronVowVFX.impact(ctx,{point,normal:subject?{x:subject.face||-1,y:-.1}:{x:e.nx,y:e.ny},progress:1-e.t,
-    kind:e.shieldImpact?'rail':e.fxKind,seed:e.fxSeed,scale,broken:e.broken});
-   continue;
-  }
   if(e.light&&!e.broken){
    const target=subject||battle.units.find(u=>u.id===e.target);
    const p=target?mechAttachmentPoint(target,e.shieldImpact?'shield':e.part,t):project(e.x,1.1,e.z);
@@ -5155,9 +5117,7 @@ function drawEffects(t,subject=null,plantOnly=false){for(const e of effects){
   const p=project(e.x,0,e.z);ctx.save();ctx.globalAlpha=e.t*.65;ctx.strokeStyle=['#e8bc77','#b1d7e6','#b6d8c5'][e.kind]??CREW[e.kind].color;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*(.35+phase*.9),scale*(.13+phase*.3),0,0,Math.PI*2);ctx.stroke();ctx.restore();
  }
  else{const p=project(e.x,2.6+phase*.6,e.z);ctx.save();ctx.globalAlpha=Math.min(1,e.t*3);ctx.fillStyle=e.type==='heal'?'#bbd8c9':'#f5dbb1';ctx.font='600 '+(W<760?'9':'12')+'px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.shadowColor='#07111a';ctx.shadowBlur=6;ctx.fillText(e.text,p.x,p.y);ctx.restore()}
-}
- drawPixelfxFaults(t,subject,plantOnly);
-}
+}}
 function focusBattleCamera(u,reset=false){
  if(!u)return;
  fieldCamera.x=u.x;fieldCamera.z=u.z;fieldCamera.overview=false;
@@ -5525,7 +5485,7 @@ function draw(ts){
   else if(mode==='hangar'){hangar(clock);lastHangarPaint=ts}
   canvasMode=mode;
  }
- effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.fxKind?1/.44:e.light&&!e.broken?5:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);window.IronVowPerformance?.end(ts);requestAnimationFrame(draw);
+ effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.light&&!e.broken?5:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);window.IronVowPerformance?.end(ts);requestAnimationFrame(draw);
 }
 canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();zoomField(e.deltaY<0?1.12:1/1.12)},{passive:false});
 function screenTile(clientX,clientY){
