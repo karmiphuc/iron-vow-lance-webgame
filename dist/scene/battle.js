@@ -5,7 +5,7 @@ const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=6.8,HEIGHT=3.4;
 const LIVE=new Set([0,5,6,7,8,9,10,12]);
 let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let cameraReady=false,lightningAt=4,lightning=0;
-const models=new Map(),aimTargets=new Map(),groundMeshes=[],coverMeshes=[];
+const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[],coverMeshes=[];
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
 const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){return !u.kind&&!u.lionTrial&&LIVE.has(u.frame);}
@@ -38,8 +38,8 @@ function init(){
  root.IronVowRenderer.subscribe(({type})=>{if(type==='restored'){clear();cameraReady=false;}});
 }
 function clear(){
- combat?.dispose();combat=null;
- root.IronVowFoundry?.clearCombat();root.IronVowBillboards?.clear();models.clear();aimTargets.clear();
+ combat?.dispose();combat=null;root.IronVowAdapterWeapons?.clear();
+ root.IronVowFoundry?.clearCombat();root.IronVowBillboards?.clear();models.clear();aimTargets.clear();mortarCues.clear();
  if(scene){sun?.shadow.map?.dispose();disposeTree(scene);}
  kit?.dispose();kit=null;scene=null;battleRef=null;groundMeshes.length=coverMeshes.length=0;
 }
@@ -94,7 +94,7 @@ function build(){
 }
 function partPoint(unit,part='body'){
  if(!scene||battleRef!==battle)build();
- if(!isLive(unit))return root.IronVowBillboards.worldAttachment(unit,part);
+ if(!isLive(unit))return root.IronVowAdapterWeapons.attachment(unit,part)||root.IronVowBillboards.worldAttachment(unit,part);
  const entry=models.get(unit.id)?.entry,m=entry?.m;
  if(m?.rig){
   const r=m.rig,node=part==='pilot'?r.neck:part==='right'?r.arms.R.el:part==='left'?r.arms.L.el:part==='legs'?r.legs[0].kn:r.spine;
@@ -105,12 +105,13 @@ function partPoint(unit,part='body'){
 }
 function attachmentPoint(unit,part='body',t=clock){
  if(!scene||battleRef!==battle)build();
- if(!isLive(unit))return root.IronVowBillboards.worldAttachment(unit,part,t);
+ if(!isLive(unit))return root.IronVowAdapterWeapons.attachment(unit,part)||root.IronVowBillboards.worldAttachment(unit,part,t);
  const entry=models.get(unit.id)?.entry,m=entry?.m;
  if(!m)return partPoint(unit,part);
  const mounts=root.IronVowFoundryRig.mountPoints(m),r=m.rig;
  const node=({body:r.spine,pilot:r.neck,right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,
-  ...mounts,muzzle:entry.primary?.muzzle||mounts.muzzle,muzzle2:entry.primary?.muzzle2||mounts.muzzle2,
+  ...mounts,muzzle:entry.primary?.muzzle||mounts.muzzle,muzzle2:entry.primary?.muzzle2||entry.primary?.muzzle||mounts.muzzle2,
+  shoulderMuzzle:entry.primarySocket?entry.primary?.muzzle:mounts.shoulderMuzzle,shoulderMuzzle2:entry.primarySocket?(entry.primary?.muzzle2||entry.primary?.muzzle):mounts.shoulderMuzzle2,
   meleeTip:entry.secondary?.tip,mortarMuzzle:m.mortar?.muzzle,shield:entry.shield?.face})[part];
  return node?.getWorldPosition(V3())||partPoint(unit,part);
 }
@@ -140,14 +141,20 @@ function updateCamera(t,dt){
  camera.lookAt(cameraTarget);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);cameraReady=true;
  scene.fog.near=distance*.9;scene.fog.far=distance*2.6;
 }
+function goalFor(u){const goal=aimTargets.get(u.id);return goal?partPoint(goal.target,goal.part):null;}
 function prepareUnit(u,t){
  let record=models.get(u.id),object;
  if(isLive(u)){
-  const pose=animationPose(u,hitstopTime(u,t)),p=world(u.vx,u.vz),goal=aimTargets.get(u.id);
+  const pose=animationPose(u,hitstopTime(u,t)),p=world(u.vx,u.vz),goal=aimTargets.get(u.id),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
+  if(airborne)p.y+=jumpjetHeight(u,t);
+  const mortar=mortarCues.get(u.id);if(mortar){pose.mortarAge=t-mortar.at;if(pose.mortarAge>=2.1)mortarCues.delete(u.id);}
   const motion=u.motion,heading=motion?Math.atan2(motion.toX-motion.fromX,motion.toZ-motion.fromZ):(displayedHeading(u)+Math.PI/4);
   const speed=record?.previousPosition&&t>record.previousTime?p.distanceTo(record.previousPosition)/(t-record.previousTime):0;
   const aim=goal&&goal.target.alive?partPoint(goal.target,goal.part):p.clone().add(V3(Math.sin(heading)*20,4,Math.cos(heading)*20));
-  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,onStep:(...args)=>combat?.step(...args),face:goal?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
+  const targetRoot=goal?world(goal.target.vx,goal.target.vz):p.clone();
+  const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
+  const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
+  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face:goal?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
   const custom=u.frame===0?'warden':u.frame===10?'bastion':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;
@@ -156,7 +163,7 @@ function prepareUnit(u,t){
   record.previousPosition=p;record.previousTime=t;
  }else{
   object=root.IronVowBillboards.get(u,t);if(!object)return;
-  object.position.copy(world(u.vx,u.vz));
+  root.IronVowAdapterWeapons.update(u,camera,units,goalFor(u));
   if(!record){record={};models.set(u.id,record);}
  }
  if(object.parent!==units)units.add(object);record.object=object;
@@ -168,10 +175,11 @@ function prepareUnit(u,t){
   record.proxy.userData.unitId=u.id;units.add(record.proxy);
  }
  const p=world(u.vx,u.vz);record.proxy.position.copy(p).add(V3(0,record.height/2,0));record.proxy.visible=u.alive;record.proxy.updateMatrixWorld(true);
- if(!isLive(u)){
-  const bounds=root.IronVowBillboards.bounds(u.id,camera);
-  if(bounds){if(!record.billboardProxy){record.proxy.geometry.dispose();record.proxy.geometry=new T.BoxGeometry(1,1,1);record.billboardProxy=true;}bounds.getCenter(record.proxy.position);bounds.getSize(record.proxy.scale);record.proxy.scale.clampScalar(.1,100);record.proxy.updateMatrixWorld(true);}
- }
+ if(!isLive(u))updateBillboardProxy(u,record);
+}
+function updateBillboardProxy(u,record){
+ const bounds=root.IronVowBillboards.bounds(u.id,camera),weaponBounds=root.IronVowAdapterWeapons.bounds(u.id);if(bounds&&weaponBounds)bounds.union(weaponBounds);
+ if(bounds){if(!record.billboardProxy){record.proxy.geometry.dispose();record.proxy.geometry=new T.BoxGeometry(1,1,1);record.billboardProxy=true;}bounds.getCenter(record.proxy.position);bounds.getSize(record.proxy.scale);record.proxy.scale.clampScalar(.1,100);record.proxy.updateMatrixWorld(true);}
 }
 function updateOverlays(){
  const selectedUnit=current(),ready=battle.phase==='player'&&!battle.busy;
@@ -200,7 +208,8 @@ function render(t,dt){
  if(root.IronVowRenderer.lost)return;
  if(battleRef!==battle||!scene)build();
  for(const u of battle.units)prepareUnit(u,t);
- combat.update(t,dt);updateCamera(t,dt);updateOverlays();
+ for(const u of battle.units){const cue=mortarCues.get(u.id);if(cue&&!cue.fired&&t-cue.at>=.95){cue.fired=true;const p=attachmentPoint(u,'mortarMuzzle');combat.fx.glow(p,0xffb050,3,.15);combat.fx.smoke(p,4,1.4,0xc4bdb0,.5,.8,1.4,.3);}}
+ combat.update(t,dt);updateCamera(t,dt);for(const u of battle.units)if(!isLive(u)){root.IronVowBillboards.get(u,t);root.IronVowAdapterWeapons.update(u,camera,units,goalFor(u));const record=models.get(u.id);if(record?.proxy)updateBillboardProxy(u,record);}updateOverlays();
  const storm=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3===2;
  if(storm&&!reducedMotion){if(t>=lightningAt){lightning=1;lightningAt=t+kit.random(5,11);}lightning*=Math.exp(-dt*9);sun.intensity=kit.PAL[2].sun[1]+lightning*2.5*(kit.random(0,1)>.3?1:.4);}
  root.IronVowRenderer.show(true);root.IronVowRenderer.resize(innerWidth,innerHeight);
@@ -229,6 +238,7 @@ root.IronVowScene={isLive,render,project,projectWorld,screenTile,pick,pan,partPo
  get covers(){return coverMeshes.map(m=>({min:m.userData.bounds.min.toArray(),max:m.userData.bounds.max.toArray()}));},
  overlayInfo(){return {triangles:overlays.geometry.index.count/3,path:pathGroup.children.filter(m=>m.visible).map(m=>({position:m.position.toArray(),color:m.material.color.getHex()})),selected:selection.visible,target:targetRing.visible};},
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
- get combat(){return combat;},get camera(){return camera;},get scene(){return scene;},get models(){return models;},get ready(){return Boolean(scene&&battleRef===battle&&battle?.units.every(u=>isLive(u)?models.get(u.id)?.entry.armed:root.IronVowBillboards.ready(u.id)));}
+ mortarPresentation(unit,at=clock){if(models.get(unit.id)?.entry?.m?.mortar)mortarCues.set(unit.id,{at,fired:false});},
+ get combat(){return combat;},get camera(){return camera;},get scene(){return scene;},get models(){return models;},get ready(){return Boolean(scene&&battleRef===battle&&root.IronVowAdapterWeapons.ready&&battle?.units.every(u=>isLive(u)?models.get(u.id)?.entry.armed:root.IronVowBillboards.ready(u.id)));}
 };
 })(window);
