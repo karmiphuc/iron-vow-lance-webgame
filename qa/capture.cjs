@@ -33,7 +33,7 @@ async function capture(config){
  let browser;
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim(),runner_source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
-  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],retries:[],failures:[]};
+  environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
  const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
  if(previous&&previous.source!==manifest.source)throw Error('Resume requires the same committed source');
  if(previous){const digest=createHash('sha256').update(JSON.stringify(previous)).digest('hex');fs.writeFileSync(path.join(output,'prior-'+digest+'.json'),JSON.stringify(previous,null,2)+'\n');manifest.previous_manifest='prior-'+digest+'.json';}
@@ -98,7 +98,7 @@ async function capture(config){
      };
      const NativeImage=window.Image;window.__captureImages=new Set();
      const getContext=HTMLCanvasElement.prototype.getContext;window.__captureWebGL=new WeakMap();
-     HTMLCanvasElement.prototype.getContext=function(...args){const context=getContext.apply(this,args);if(context&&/^(webgl2?|experimental-webgl)$/.test(args[0]))window.__captureWebGL.set(this,context);return context;};
+     HTMLCanvasElement.prototype.getContext=function(...args){const webgl=/^(webgl2?|experimental-webgl)$/.test(args[0]);if(webgl)args[1]={...args[1],preserveDrawingBuffer:true};const context=getContext.apply(this,args);if(context&&webgl)window.__captureWebGL.set(this,context);return context;};
      window.__captureActiveImages=()=>{const images=[];for(const ref of window.__captureImages){const image=ref.deref();if(image)images.push(image);else window.__captureImages.delete(ref);}return images;};
      window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.add(new WeakRef(image));return image;}});
     });
@@ -163,6 +163,17 @@ async function capture(config){
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
+    if(webglSample){
+     const {createCanvas,loadImage}=require('@napi-rs/canvas');
+     const image=await loadImage(path.join(output,filename)),sample=createCanvas(32,32),g=sample.getContext('2d');
+     // Exclude the HTML header/build panel/dock: a black WebGL canvas can still
+     // produce a colourful full-page PNG because its HTML controls render.
+     g.drawImage(image,image.width*.4,image.height*.22,image.width*.5,image.height*.5,0,0,32,32);
+     const pixels=g.getImageData(0,0,32,32).data;let bright=0;
+     for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
+     if(bright<64)throw Error('Rig Bench final PNG is blank: '+bright+'/1024 non-black viewport samples');
+     webglSample.screenshot_non_black_samples=bright;
+    }
     manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(webglSample?{webgl_sample:webglSample}:{})});
     checkpoint();
     console.log('SAVED '+filename);
