@@ -176,7 +176,7 @@ async function capture(config){
       return __ironVow.legalMoves(u.id).filter(m=>m.cost>free).map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-180&&m.p.y>180&&m.p.y<innerHeight-180&&document.elementFromPoint(m.p.x,m.p.y)===canvas&&IronVowScene.screenTile(m.p.x,m.p.y)?.x===m.x&&IronVowScene.screenTile(m.p.x,m.p.y)?.z===m.z);
      });
      if(!target)throw Error('No visible paid-move tile for capture');
-     await page.mouse.move(target.p.x,target.p.y);await page.evaluate(()=>window.__captureTick());
+     await page.mouse.move(target.p.x,target.p.y);await page.evaluate(()=>window.__captureTick(6066));
      selectedMoveViewVerified=await page.evaluate(()=>{const info=IronVowScene.overlayInfo();return info.triangles>0&&info.path.some(p=>p.color===0xcc9b49)});
      if(!selectedMoveViewVerified)throw Error('Paid-move path overlay did not render');
     }
@@ -191,10 +191,10 @@ async function capture(config){
      if(!controls.length||rect.top<(header?.bottom||0)||rect.bottom>innerHeight||controls.some(node=>{const r=node.getBoundingClientRect();return r.top<(header?.bottom||0)||r.bottom>innerHeight||r.left<0||r.right>innerWidth;}))throw Error('Paint panel controls do not fit the viewport');
      return true;
     });
-    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(()=>{
+    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(isMove=>{
      // Sample immediately after a real render: non-preserved WebGL buffers can
      // otherwise clear between tasks even when the compositor retains the frame.
-     window.__captureTick();
+     window.__captureTick(isMove?6100:5000);
      const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=canvas.id==='c'?'Rig Bench':'Battle';
      if(!gl||gl.isContextLost())throw Error(name+' WebGL context is unavailable or lost');
      const sample=document.createElement('canvas');sample.width=sample.height=32;
@@ -203,7 +203,7 @@ async function capture(config){
      for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
      if(bright<64)throw Error(name+' WebGL canvas is blank: '+bright+'/1024 non-black samples');
      return {canvas:canvas.id,non_black_samples:bright,total_samples:1024,context_lost:false};
-    });
+    },job.preset.id==='selected-move');
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
