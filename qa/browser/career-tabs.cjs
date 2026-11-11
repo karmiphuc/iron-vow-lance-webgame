@@ -65,13 +65,13 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   await tap('#modal-0');
   assert.ok((await saved(page)).sortie,'deployment is durably saved before the other tab reloads');
   await reloadCareer(other);
-  await other.locator('#brace').waitFor();
+  await other.locator('#brace').waitFor({state:'attached'});
   await tap('#brace');
   await checkStale(other);
   const sortie=(await saved(page)).sortie;
   assert.equal(sortie.units[0].brace,true);
   await reloadCareer(other);
-  await other.locator('#brace').waitFor();
+  await other.locator('#brace').waitFor({state:'attached'});
   assert.deepEqual(await other.evaluate(()=>JSON.parse(JSON.stringify(captureSortie()))),sortie);
 
   const compete=(tab,amount)=>tab.evaluate(async cost=>{save.credits-=cost;await persist();return careerStale},amount);
@@ -82,7 +82,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   assert.equal((await saved(page)).credits,winning);
   await other.evaluate(career=>localStorage.setItem(CAREER_STORAGE,JSON.stringify(career)),oldCareer);
   await other.reload({waitUntil:'domcontentloaded'});
-  await other.locator('#brace').waitFor();
+  await other.locator('#brace').waitFor({state:'attached'});
   assert.equal(await other.evaluate(()=>save.credits),winning,'the committed checkpoint takes precedence over a legacy tab write');
 
   await other.addInitScript(()=>{
