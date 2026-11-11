@@ -30,9 +30,9 @@ function setGamePreset(preset){
   if(preset.paint)document.querySelector('.paint-panel')?.scrollIntoView?.({block:'center',behavior:'instant'});
   return;
  }
- page='contracts';createBattle(preset.contract);selected=0;action='move';
+ page='contracts';if(preset.liveFrame!==undefined)save.units[0].frame=preset.liveFrame;createBattle(preset.contract);selected=0;action='move';
  const ally=battle.units.find(u=>u.team==='ally'),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind);
- if(preset.liveFrame!==undefined){surveyTerrain(101);ally.frame=preset.liveFrame;ally.weapon=FRAMES[ally.frame].weapon;ally.melee=FRAMES[ally.frame].melee;}
+ if(preset.liveFrame!==undefined)surveyTerrain(101);
  if(!ally||!foe)throw Error('Capture fixture requires an ally and a hostile mech');
  if(typeof focusBattleCamera==='function')focusBattleCamera(ally,true);
  if(preset.overview&&typeof fieldCamera!=='undefined')fieldCamera.overview=true;
