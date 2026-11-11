@@ -24,7 +24,7 @@ const out=path.resolve(process.env.IRON_VOW_COMBAT_REPORT||'combat-actions.json'
   await page.evaluate(()=>{requestAnimationFrame=fn=>setTimeout(()=>fn(performance.now()),1000/30);last=performance.now();requestAnimationFrame(draw);});
   const catalog=await page.evaluate(()=>WEAPONS.map(w=>({id:w.id,melee:Boolean(w.melee),shoulder:Boolean(w.shoulder)})));
   for(const [index,item] of catalog.entries()){
-   if(index<Number(process.env.IRON_VOW_COMBAT_START_INDEX||0)||process.env.IRON_VOW_COMBAT_PRESENTATION_ONLY==='1')continue;
+   if(index<Number(process.env.IRON_VOW_COMBAT_START_INDEX||0)||process.env.IRON_VOW_COMBAT_PRESENTATION_ONLY==='1'||process.env.IRON_VOW_COMBAT_WEAPONS&&!process.env.IRON_VOW_COMBAT_WEAPONS.split(',').includes(item.id))continue;
    const frame=item.shoulder?20:[0,5,6,7,8,9,10,12][index%8];
    console.log('START '+item.id+' frame '+frame);
    const fixture=await page.evaluate(({item,index,frame})=>{
@@ -99,11 +99,19 @@ const out=path.resolve(process.env.IRON_VOW_COMBAT_REPORT||'combat-actions.json'
   assert.equal(report.missileCounter.range,0);assert.equal(report.missileCounter.weapon,null,'Missile cannot counter at ranged distance');
   await prepare(false);
   // Use the real jump operation on a live rig with the Aero skill, recording its physical airborne root.
-  await page.evaluate(()=>{const a=current();a.mechSkills=[AERO_FRAME];window.__jumpDone=false;window.__jumpSamples=[];const render=IronVowScene.render;IronVowScene.render=function(...args){const result=render.apply(this,args);if(a.motion?.jumpjet){const r=IronVowScene.models.get(a.id);__jumpSamples.push({time:clock,y:r.object.position.y,ground:IronVowScene.groundAt(r.object.position.x,r.object.position.z),height:jumpjetHeight(a,clock),feet:__ironVow.snapshot().units.find(u=>u.id===a.id).feet});}return result;};void useJumpjet(a,3,12).then(()=>__jumpDone=true);});
+  await page.evaluate(()=>{const a=current();a.mechSkills=[AERO_FRAME];window.__jumpDone=false;window.__jumpSamples=[];const render=IronVowScene.render;IronVowScene.render=function(...args){const result=render.apply(this,args);if(a.motion?.jumpjet||Number.isFinite(a.landTime)&&clock>=a.landTime&&clock-a.landTime<.6){const r=IronVowScene.models.get(a.id);__jumpSamples.push({time:clock,y:r.object.position.y,ground:IronVowScene.groundAt(r.object.position.x,r.object.position.z),height:jumpjetHeight(a,clock),airborne:Boolean(a.motion?.jumpjet),feet:__ironVow.snapshot().units.find(u=>u.id===a.id).feet});}return result;};void useJumpjet(a,3,12).then(()=>__jumpDone=true);});
   for(let i=0;i<200&&!await page.evaluate(()=>__jumpDone);i++)await page.clock.runFor(34);
+  await page.clock.runFor(650);
   report.jumpjet=await page.evaluate(()=>({done:__jumpDone,samples:__jumpSamples,land:current().landTime,motion:Boolean(current().motion),reduced:reducedMotion}));
   assert.equal(report.jumpjet.done,true);assert.equal(report.jumpjet.motion,false);assert.ok(Number.isFinite(report.jumpjet.land),'Actual landing timestamp');
-  if(!report.jumpjet.reduced)assert.ok(report.jumpjet.samples.some(s=>s.height>1&&s.y-s.ground>1),'Real live rig root leaves the ground');
+  if(!report.jumpjet.reduced){
+   const peak=report.jumpjet.samples.filter(s=>s.airborne&&s.height>1);
+   assert.ok(peak.length&&peak.every(s=>s.y-s.ground>1),'Real live rig root leaves the ground');
+   assert.ok(peak.every(s=>s.feet.every(f=>f.ankle[1]-f.ground-f.ankleHeight>.8)),'Actual ankles leave terrain near jump peak');
+  }
+  assert.ok(report.jumpjet.samples.every(s=>s.feet.every(f=>Math.hypot(...f.ankle.map((n,i)=>n-f.target[i]))<.02&&Math.hypot(...f.hip.map((n,i)=>n-f.target[i]))<f.reach+.01)),'Airborne and landing ankles track reachable goals');
+  const landed=report.jumpjet.samples.filter(s=>!s.airborne&&s.time-report.jumpjet.land>.45);
+  assert.ok(landed.length&&landed.every(s=>s.feet.every(f=>Math.abs(f.ankle[1]-f.ground-f.ankleHeight)<.02)),'Actual ankles return to terrain after landing');
   // Mortar remains a presentation-only announced-future cue, with no added damage rules.
   await page.evaluate(()=>{__ironVow.start({seed:4713,frames:[7],contract:0});battle.cover.clear();IronVowScene.clear();IronVowScene.render(clock,1);});
   {const deadline=Date.now()+120000;while(!await page.evaluate(()=>IronVowScene.ready)){assert.ok(Date.now()<deadline,'Mortar assets');await page.clock.runFor(34);await new Promise(r=>setTimeout(r,20));}}
