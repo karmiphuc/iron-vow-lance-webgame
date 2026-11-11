@@ -1,48 +1,34 @@
-const assert=require('node:assert/strict');
+const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require('node:crypto'),{execFileSync}=require('node:child_process');
+const sharedScene=require('./browser/shared-scene.cjs'),livePaint=require('./browser/live-paint.cjs'),billboards=require('./browser/billboards.cjs');
 const {createReadStream,existsSync,mkdtempSync}=require('node:fs');
 const {stat}=require('node:fs/promises');
 const {createServer}=require('node:http');
 const {tmpdir}=require('node:os');
 const {extname,join,resolve,sep}=require('node:path');
 const {chromium,devices}=require('playwright');
-const checkPaint=require('./browser/paint.cjs');
-const checkImpact=require('./browser/impact.cjs');
 const checkCampaign=require('./browser/campaign.cjs');
-const checkWarden=require('./browser/warden.cjs');
-const checkWardenMelee=require('./browser/warden-melee.cjs');
 const checkWardenRigBench=require('./browser/warden-rig-bench.cjs');
 const checkBulwarkBench=require('./browser/bulwark-bench.cjs');
 const checkScoutBench=require('./browser/scout-bench.cjs');
-const checkBulwarkCombat=require('./browser/bulwark-combat.cjs');
-const checkAshigaru=require('./browser/ashigaru.cjs');
 const checkShip=require('./browser/ship.cjs');
 const checkHangar=require('./browser/hangar.cjs');
 const checkCareerTabs=require('./browser/career-tabs.cjs');
 const checkDutyRoster=require('./browser/duty-roster.cjs');
 const checkBastionGrips=require('./browser/bastion.cjs');
-const checkGatecrasherArmed=require('./browser/gatecrasher-armed.cjs');
-const checkChassisScale=require('./browser/chassis-scale.cjs');
 const checkArmory=require('./browser/armory.cjs');
 const checkLineInfantry=require('./browser/line-infantry.cjs');
 const checkInfantryCarry=require('./browser/infantry-carry.cjs');
 const checkLineElite=require('./browser/line-elite.cjs');
-const checkInfantryDestruction=require('./browser/infantry-destruction.cjs');
-const checkRosterDestruction=require('./browser/roster-destruction.cjs');
 const checkVanguard=require('./browser/vanguard.cjs');
 const checkReaver=require('./browser/reaver.cjs');
 const checkAero=require('./browser/aero.cjs');
 const checkLionTrial=require('./browser/lion-trial.cjs');
 const checkShields=require('./browser/shields.cjs');
-const checkAttackExchange=require('./browser/attack-exchange.cjs');
-const checkVolley=require('./browser/volley.cjs');
-const checkPartMasks=require('./browser/part-masks.cjs');
 const checkTerrain=require('./browser/terrain.cjs');
 const checkRidgeCombat=require('./browser/ridge-combat.cjs');
 const checkMovePreview=require('./browser/move-preview.cjs');
 const checkPairedWalk=require('./browser/paired-walk.cjs');
 const checkMechComputer=require('./browser/mech-computer.cjs');
-const checkCanvasToning=require('./browser/canvas-toning.cjs');
-const checkLiveWarden=require('./browser/live-warden.cjs');
 const dist=resolve(__dirname,'../dist');
 
 const types={
@@ -80,10 +66,15 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkCanvasToning,checkLiveWarden,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkPartMasks,checkVolley,checkAttackExchange,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkInfantryDestruction,checkRosterDestruction,checkVanguard,checkReaver,checkBulwarkCombat,checkAshigaru,checkAero,checkArmory,checkPaint,checkImpact,checkCampaign,checkWarden,checkWardenMelee,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkGatecrasherArmed,checkChassisScale]){
+async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
+ if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
+ const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
+ const cpuFlows=new Set(['checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);
  const timeout=Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000);
  if(!Number.isFinite(timeout)||timeout<1000||timeout>120000)throw Error('IRON_VOW_QA_TIMEOUT_MS must be between 1000 and 120000.');
  const server=origin?null:await serve();
+ const git=(...args)=>execFileSync('git',args,{cwd:resolve(__dirname,'..'),encoding:'utf8'}).trim();
+ const report={started:new Date().toISOString(),commit:git('rev-parse','HEAD'),distTree:git('rev-parse','HEAD:dist'),distDirty:Boolean(git('status','--porcelain','--','dist')),runnerSha256:crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),softwareBehaviorDPR:process.env.IRON_VOW_SOFTWARE_QA?.5:null,scenarios:scenarios.map(s=>({name:s.name,sha256:crypto.createHash('sha256').update(s.toString()).digest('hex')})),checks:[],status:'incomplete'};
  let browser;
  try{
   const url=new URL(origin??`http://127.0.0.1:${server.address().port}/`);
@@ -93,13 +84,30 @@ async function checkBrowser(origin,scenarios=[checkCanvasToning,checkLiveWarden,
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   // Short animation stages can be missed by software-rendered CI frames. Retry in
   // fresh storage/contexts without relaxing any assertion; persistent failures fail.
-  async function checkDevice(mobile){for(const scenario of scenarios){for(let attempt=0;attempt<3;attempt++){
+  async function checkDevice(mobile){for(const scenario of scenarios){for(let attempt=0;attempt<attempts;attempt++){
    const label=(mobile?'mobile touch':'desktop')+' '+scenario.name;
    const context=await browser.newContext({
     ...(mobile?{...devices['iPhone 13'],deviceScaleFactor:1}:{viewport:{width:1440,height:1000}}),
-    // Pixel comparison scenarios retain their normal canvas resolution.
-    ...(!mobile&&process.env.IRON_VOW_SOFTWARE_QA&&[checkAshigaru,checkBulwarkCombat,checkWardenMelee].includes(scenario)?{deviceScaleFactor:.5}:{}),
+    // Behavioral software-GL runs reduce resolution; capture.cjs retains its declared resolution.
+    ...(process.env.IRON_VOW_SOFTWARE_QA?{deviceScaleFactor:.5}:{}),
     reducedMotion:'reduce'
+   });
+   const cpuFlow=Boolean(process.env.IRON_VOW_SOFTWARE_QA&&cpuFlows.has(scenario.name));
+   if(cpuFlow)await context.addInitScript(()=>{
+    // These cases assert UI/rules or temporary 2D sheet data. The separate visual
+    // cases and capture workflow always submit real GPU frames. Keep actual game
+    // commands, source animation, geometry, picking and image decoding untouched.
+    const withoutGPU=fn=>function(...args){const r=IronVowRenderer.get(),render=r.render,read=r.readRenderTargetPixels;r.render=(scene,camera)=>{scene.updateMatrixWorld();camera.updateMatrixWorld();};r.readRenderTargetPixels=()=>{};try{return fn.apply(this,args);}finally{r.render=render;r.readRenderTargetPixels=read;}};
+    for(const name of ['IronVowScene','IronVowFoundry'])Object.defineProperty(window,name,{configurable:true,set(api){if(name==='IronVowScene'){const render=api.render;let first=true;api.render=function(...args){if(first){first=false;return render.apply(this,args);}return withoutGPU(render).apply(this,args);};}else for(const method of ['preview','previewAnimated'])api[method]=withoutGPU(api[method]);Object.defineProperty(window,name,{value:api,writable:true,configurable:true});}});
+   });
+   const benchCPU=Boolean(process.env.IRON_VOW_SOFTWARE_QA&&['checkWardenRigBench','checkBulwarkBench','checkScoutBench'].includes(scenario.name));
+   if(benchCPU)await context.route('**/rig-bench/vendor/three.min.js',async route=>{
+    const response=await route.fetch(),script=await response.text();
+    // Rig Bench assertions inspect actual input, animation and socket matrices.
+    // Submit one real frame after the painted rig loads; omit later unobserved
+    // main-canvas draws while preserving the same matrix updates and RAF clock.
+    const shim=`;(()=>{const Native=THREE.WebGLRenderer;THREE.WebGLRenderer=new Proxy(Native,{construct(Type,args){const renderer=new Type(...args),render=renderer.render;let paintedFrame=false;renderer.render=function(scene,camera){if(!paintedFrame&&(document.body.dataset.rigModel==='painted'||document.querySelector('#status')?.textContent==='Live 3D · Rig online')){paintedFrame=true;window.__qaPaintedBenchFrame=true;return render.apply(this,arguments);}scene.updateMatrixWorld();camera.updateMatrixWorld();};return renderer;}});})();`;
+    await route.fulfill({response,body:script+shim});
    });
    const page=await context.newPage(),errors=[];
    page.setDefaultTimeout(timeout);
@@ -109,26 +117,35 @@ async function checkBrowser(origin,scenarios=[checkCanvasToning,checkLiveWarden,
    });
    const tap=selector=>mobile?page.locator(selector).tap():page.locator(selector).click();
    try{
+    console.log('START '+label);
     await scenario({context,page,mobile,origin:url.href,tap});
+    if(benchCPU)assert.equal(await page.evaluate(()=>window.__qaPaintedBenchFrame),true,'Ready bench rendered a real GPU frame');
     assert.deepEqual(errors,[],'browser and asset errors');
+    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'passed',renderPolicy:benchCPU?'Bench input/animation/socket correctness; one real ready-rig frame per page submitted, unobserved main-canvas draws omitted while matrices update.':cpuFlow?'UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.':'Full GPU rendering'});
     console.log('PASS '+label);
     break;
    }catch(error){
-    console.error(label+' failed: '+error.message);
+    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'failed',error:error.message,assetErrors:errors});
+    console.error(label+' failed: '+error.stack);
     const capture=join(mkdtempSync(join(tmpdir(),'iron-vow-qa-')),'failure.png');
     try{await page.screenshot({path:capture,timeout:3000});console.error('Browser failure screenshot '+capture)}catch{}
-    if(attempt<2)console.error('RETRY '+label+' ('+(attempt+1)+'/2): '+error.message);
+    if(attempt<attempts-1)console.error('RETRY '+label+' ('+(attempt+1)+'/'+(attempts-1)+'): '+error.message);
     else throw Error(label+' failed: '+error.message,{cause:error});
    }finally{await context.close()}
   }}}
-  if(process.env.IRON_VOW_QA_SERIAL==='1'){
+  const deviceFilter=process.env.IRON_VOW_QA_DEVICES||'both';assert.ok(['desktop','touch','both'].includes(deviceFilter));
+  if(deviceFilter==='desktop')await checkDevice(false);
+  else if(deviceFilter==='touch')await checkDevice(true);
+  else if(process.env.IRON_VOW_QA_SERIAL==='1'){
    await checkDevice(false);
    await checkDevice(true);
   }else{
    const results=await Promise.allSettled([checkDevice(false),checkDevice(true)]);
    for(const result of results)if(result.status==='rejected')throw result.reason;
   }
+  report.status='complete';
  }finally{
+  report.ended=new Date().toISOString();if(process.env.IRON_VOW_QA_REPORT){const file=resolve(process.env.IRON_VOW_QA_REPORT);fs.writeFileSync(file+'.tmp',JSON.stringify(report,null,2)+'\n');fs.renameSync(file+'.tmp',file);}
   try{await browser?.close()}finally{if(server)await new Promise(done=>server.close(done))}
  }
 }

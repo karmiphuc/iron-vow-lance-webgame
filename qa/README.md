@@ -27,18 +27,16 @@ The supported maximum is `IRON_VOW_QA_TIMEOUT_MS=120000` for slower hosted model
 | Crew Cabins | Three expansion tiers, active roster caps, hired portrait decoding, relief training, crew and hull identity, duplicate pilot prevention, auxiliary compatibility and exact mid-sortie reload. |
 | Saves | Published v31 and v32 fixtures, current checkpoints, interrupted enemy phases, corrupt checkpoints and duplicate payout checks. |
 | Browser UI | Desktop and phone-size Chromium with touch input, layouts, controls, hold tooltips, default music and mute preference. |
-| Canvas compatibility | Pixel-tested filter detection, filter-disabled spent units and wrecks, transformed crops, silhouette alpha, and hit flashes over persistent part damage. |
-| Live Warden | Actual WebGL loading, desktop and touch movement, continuous tile seams, Jumpjet altitude, reduced-motion behavior, baked fallback, and owned-material/cache cleanup. |
-| Warden upgrade | Four distinct high resolution field atlases, a real two-tile move, a right-foot brace, planted recoil and the firing close-up. |
-| Gatecrasher R2 | Workshop purchase, equip and remove, all four loadout routes, and real pointer and touch input for the optional shoulder salvo and cleaver strike. |
-| Armory | 22 classified weapon cards, 12 new attacks and paired sprites, trained stats, purchase and save resume, missile restrictions, desktop and touch browse, and grip, muzzle, tip and pivot checks on the mounted GLB. |
-| LI-01 R32 | Picket Sweep deployment and enemy AI fire on desktop and touch, both baked weapon states, market and salvage exclusion, and new and pre-R32 checkpoint recovery. |
-| RV-04 Reaver | Medium+ hostile deployment, braced AI fire on desktop and touch, four arm states, player acquisition exclusions, and pre-Reaver and Reaver checkpoints. |
-| LI-02 Elite | Iron Corridor AI fire, separate paint channels in both weapon states, heavier armor, acquisition exclusion and pre-Elite checkpoint recovery. |
-| Infantry destruction | Lethal body and cockpit shots, staged falls on the field and in the attack camera, timed detonation, and settled wrecks after resume. |
-| IV-03 Aero | Premium purchase and assignment, Jumpjet landing and checkpoint recovery, passive dodge, four Rig Bench replays and live Relay strikes. |
+| Shared battle scene | One real WebGL context, eight live rigs, actual framebuffer pixels, raycast terrain/units, pan/pinch/wheel, tactical map, Overview/centre, reach/paid paths, over-shoulder attack/Skip, real context loss/restoration and playable legacy 10×10 saves. |
+| Live previews | All eight live frames apply their material colors and render real 640×640 target images through the shared renderer. Bastion's UI motion tests use the same animator and native paired pistons. |
+| Temporary sheets | The remaining twelve frames and vehicles use one camera-facing adapter. Delayed image readiness, visible bodies, GPU texture updates, sprite-plane attachments and expiring hit flashes are checked. Infantry/elite/carry/paired gait sheet data remains covered while those dependencies exist. |
+| Armory/shields | Cards, trained stats, prices, equip/remove, tooltips, save resume and actual GLB socket fitting in the shared preview; limb-health shield visibility and real guarded exchanges remain covered. |
 
-The live-Warden browser scenario explicitly enables the HD rig so it is still exercised on software WebGL. Ordinary software-rendered sessions use the baked Warden to preserve combat frame rate; the rest of the scenarios retain their existing animation assertions.
+The replaced eight-frame baked/cinematic/filter scenarios, old `drawUnit` tint and staged-compositor destruction cases are retired with that compositor. Their renderer assertions are covered by the shared scene, live previews and actual-bone checker. Rules/AP, destruction outcomes and all published save migrations remain in the 45 simulation suites. Phase 2 adds the full reference 3D effects/damage-motion coverage.
+
+For behavioral software-WebGL runs, set `IRON_VOW_SOFTWARE_QA=1` to use 0.5 DPR. Capture runs retain their declared full-resolution viewports. This setting makes no device performance claim. `IRON_VOW_QA_SCENARIOS` selects named scenarios for focused reruns; the normal browser command runs the complete maintained set.
+
+`node qa/check-scene.cjs` checks 30 real seeded campaign battles, every live frame and actual bones at 30 Hz. It validates NaN, foot-ground, foot-slide, bounds, overlap and stuck detection against deliberate real-state/bone faults in separate disposable scenes before the normal run. The report keeps those negative controls separate. The formal run requires committed immutable application source and records its commit, dist tree and checker digest. Initial GPU drawing uses 0.5 DPR; the rest of the bone soak suppresses unobserved GPU submissions and does not measure performance.
 
 `npm test --prefix qa` runs the simulation suites. New `qa/check-*.cjs` files are picked up automatically. `npm run test:browser --prefix qa` runs the local browser suite. Browser failures save a screenshot in the temporary directory. Set `IRON_VOW_QA_OUTPUT` when running the simulation alone to request native canvas captures in a separate folder.
 
@@ -67,3 +65,6 @@ This compares served HTML, JavaScript, CSS and the expansion weapon assets to th
 To check the lazy hit-mask readiness regression, add `--preset attack-shotgun --asset-delay-ms 400`. The hit state must warm before the final capture even when part-mask responses arrive late. The runner reports exact asset URLs if image readiness still fails.
 
 `node qa/renderer-inventory.cjs docs/renderer-inventory.json` regenerates the static GLB/roster audit. `docs/renderer-inventory.md` maps current rendering dependencies and corrects the Citadel/Lion source inventory. `?perf` instruments the current Canvas compositor and its offscreen Foundry renderers; it does not imply that the shared-scene migration has happened.
+
+
+Software behavior policy: company/combat UI and temporary-sheet data cases keep real source animation, geometry, raycasts, DOM input and image decoding, but omit unobserved GPU submissions/readbacks after the first main scene frame. This prevents software rendering from skipping short sheet-animation stages. The shared-scene, live-paint, delayed-billboard, Bastion, shield and prototype bench visual cases retain GPU rendering. `capture.cjs` always retains real full-resolution GPU output. The JSON browser report labels each policy; no software run measures device performance. Lion's sheet sequence uses a 30 Hz controlled clock with its unobserved GPU draws omitted; Bastion's image samples use a controlled clock and real render targets.

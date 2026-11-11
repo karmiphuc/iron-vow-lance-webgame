@@ -9,6 +9,18 @@
       "source": "Direct reply to the Phase 1 native-measurement question",
       "instruction": "Dont care, just cont",
       "effect": "Continue implementation and PR merging without waiting for native iPad measurements. Native measurements remain untested; do not invent passing metrics."
+    },
+    {
+      "date": "2026-11-11",
+      "source": "Reply to the spacing/stride design question",
+      "instruction": "Allow spacing and clearance adjustments",
+      "effect": "May adapt visual tile pitch and stride clearance to prevent overlaps on legal campaign paths; retain gameplay rules and action timings."
+    },
+    {
+      "date": "2026-11-11",
+      "source": "Direct Phase 2 instruction",
+      "instruction": "For Phase 2, do pay attn to the PR 20 and ur existing bugs. Trust Claude's work highly, and reliable",
+      "effect": "Use PR20 corrected gait as baseline; give Claude author evidence substantial weight and focus on integration and known defects."
     }
   ],
   "phases": [
@@ -16,25 +28,40 @@
       "phase": 0,
       "issue": 10,
       "pr": 7,
-      "status": "software verification complete; reviewed evidence ready for merge",
+      "status": "merged in PR #7",
       "evidence": "design/baseline/reviewed-20261111/manifest.json",
       "stills": 312,
       "filmstrips": 26,
       "simulation_suites": 47,
-      "native_ipad": "untested; owner directed continuation"
+      "native_ipad": "untested; owner directed continuation",
+      "merge_commit": "bfc45fbd055c897ec04f88d1a8408b9e31be5b41"
     },
     {
       "phase": 1,
       "issue": 11,
       "branch": "renderer/phase1",
-      "status": "implementation started; not merge-ready",
-      "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase."
+      "pr": 18,
+      "status": "review-ready after final evidence assembly",
+      "evidence": "design/phase1/reviewed-20261111/manifest.json",
+      "runtime_dist_tree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+      "simulation_suites": 46,
+      "campaign_battles": 30,
+      "campaign_actual_bone_ticks": 133230,
+      "campaign_anomalies": 0,
+      "browser_scenarios_per_device": 26,
+      "browser_devices": [
+        "desktop",
+        "touch"
+      ],
+      "native_ipad": "untested; owner directed continuation",
+      "next": "Merge the exact validated PR head after evidence assembly and review."
     },
     {
       "phase": 2,
       "issue": 12,
-      "status": "pending Phase 1",
-      "next": "Port reference animation/effects including final PR #9; map every WEAPONS entry, retain reference timings, add actual scene/anomaly coverage and delete replaced effects."
+      "status": "isolated local preparation; full runtime integration pending Phase 1",
+      "next": "Port merged PR19 plasma/crawl/joint FX and PR20 gait, preserving terrain/brace fixes; wire runtime and all weapons, then verify production action/aim/damage coverage.",
+      "local_preparation": "renderer/phase2 commits through 98c1693; pooled missile endpoint regression reproduced then fixed and pure check passed. Runtime integration pending; preparation must be rebased after Phase 1."
     },
     {
       "phase": 3,
@@ -56,13 +83,15 @@
     "Blender/source requirements require resolution before Phase 3 can be completed."
   ],
   "site": {
-    "published_version": 98,
+    "published_version": "refresh required; last observed 98 before concurrent owner imports",
     "deployment_made_in_this_work": false,
     "source_sync_pending": true
   },
   "pr_outcomes": {
     "4": "closed unmerged",
     "8": "973567c5726a836e827fbe85b3b34675a769fc0b",
-    "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a"
+    "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a",
+    "19": "62feebbbcd7d1b3acf9c90e914adca11acf7c0fc",
+    "20": "5770d8cb66f070ba32588bf48fcdd04b7618ff49"
   }
 }

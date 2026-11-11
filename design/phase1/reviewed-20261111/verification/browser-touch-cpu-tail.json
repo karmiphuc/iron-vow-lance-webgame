@@ -1,0 +1,69 @@
+{
+  "started": "2026-11-11T13:37:18.040Z",
+  "commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkCampaign",
+      "sha256": "5ae937f4a91d79f29ed83a468e9511c856ebb0f71ea3be5746cf1e7d4d8bf751"
+    },
+    {
+      "name": "checkShip",
+      "sha256": "e108fffa69022b2e384a1b3fe30644b141bf5c027d826fe3e8eb8a1b976b624d"
+    },
+    {
+      "name": "checkHangar",
+      "sha256": "c7e9b0556cb86eb2a64e8ec1af58e607bbfda73dbe5c0ce6cec607a048007224"
+    },
+    {
+      "name": "checkCareerTabs",
+      "sha256": "52c3ad9fb1482fe5ce8927ee32c2c3fce6cb22c8f0c336e497b0e45a96c96111"
+    },
+    {
+      "name": "checkDutyRoster",
+      "sha256": "93a7c441df947769c31061dc406497a2a3c1a4595bb04a931190d900fd5fe0b6"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkCampaign",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkShip",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkHangar",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkCareerTabs",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkDutyRoster",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-11T13:48:38.591Z"
+}

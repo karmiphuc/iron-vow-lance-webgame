@@ -58,23 +58,28 @@ function swingDirection(from,to,weight){
   const turn=new T.Quaternion().setFromUnitVectors(from,to);
   return from.clone().applyQuaternion(new T.Quaternion().slerp(turn,weight)).normalize();
 }
-function poseBehemothBrace(m,artillery){
+function poseBehemothBrace(m,artillery,I){
   const {body,rig:r,dims:D}=m,p=r.pelvis,A=D.legA,B=D.legB;
   const [hull,left,right]=artillery||[0,0,0];
   if(artillery){
+    const solvedY=p.position.y;
     const kneeY=kneeContact.y-D.hipY+Math.sqrt(A*A-(D.hipX-kneeContact.x)**2-(kneeContact.z-D.hipZ-pelvisShift)**2);
-    p.position.set(0,lerp(D.py,kneeY,hull),pelvisShift*hull);
+    const authoredY=lerp(D.py,kneeY,hull);
+    p.position.set(0,I?.groundAt?Math.min(solvedY,authoredY):authoredY,pelvisShift*hull);
     p.rotation.set(0,0,0);
   }
   body.updateWorldMatrix(true,true);
   const rootQ=body.getWorldQuaternion(new T.Quaternion());
-  for(const leg of r.legs){
+  for(const [index,leg] of r.legs.entries()){
     const sign=Math.sign(leg.restX),front=Boolean(leg.kneeShoe),drive=front?(sign>0?left:right):0;
     // The foot stays planted on its IK goal while the hull sinks; only then does the knee drop and the shin tuck.
     const fold=smooth(clamp((drive-.42)/.58,0,1));
     const hip=body.worldToLocal(leg.hip.getWorldPosition(V3()));
-    const goal=V3(leg.restX,D.ankleH,leg.restZ),target=goal.clone();
+    const goal=I?.groundAt?body.worldToLocal(m.legs[index].foot.clone()):V3(leg.restX,D.ankleH,leg.restZ),target=goal.clone();
     const contact=front?V3(sign*kneeContact.x,kneeContact.y,kneeContact.z):null;
+    if(contact&&I?.groundAt){const point=body.localToWorld(contact.clone());contact.y+=(I.groundAt(point.x,point.z)-(I.ground||0))/m.scale;}
+    m.legs[index].poseLift=fold>0;
+    m.legs[index].kneeContact=front&&fold>=.999&&hull>=.999;
     if(fold>0){
       // Two-bone IK toward an ankle target that travels from the planted foot to its folded spot under the hull.
       // The knee pole turns toward the knee pad, so the solve lands exactly on the kneeling pose at fold 1.
@@ -179,18 +184,41 @@ function supportGrip(m,arm,weight){
   arm.wr.rotation.x=lerp(arm.wr.rotation.x,0,weight);
   m.supportTarget=best||point;
 }
+/* [walk fix] a foothold on the floor no further than lim from the hip: keeps its height and slides toward the hip's ground point */
+function onFloorWithin(p,hip,lim){const dy=p.y-hip.y,hx=p.x-hip.x,hz=p.z-hip.z,hd=Math.hypot(hx,hz),mx=Math.sqrt(Math.max(0,lim*lim-dy*dy));
+  if(hd<=mx||hd<1e-6)return p;const k=mx/hd;p.x=hip.x+hx*k;p.z=hip.z+hz*k;return p;}
+/* [walk fix] gait start: the cycle phase that keeps every planted foot inside half a stride for the rest of its stance,
+   preferring swings that start early. Planted feet stay where they are; only the cycle's starting point is chosen. */
+function startPhase(m,cont,D,stepLen,dir){let best=m.gait.phase,bc=1e9;
+  for(let k=0;k<32;k++){const g=k/32;let c=0;
+    m.rig.legs.forEach((l,i)=>{const ph=((g+(l.phase??i*.5)+(m.legs[i].phaseOffset||0))%1+1)%1,L=m.legs[i],home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ));
+      if(ph<(D.duty??.5)){const off=(L.planted.x-home.x)*dir.x+(L.planted.z-home.z)*dir.z,end=off-((D.duty??.5)-ph)*2*stepLen;c+=Math.max(0,-end-stepLen*(D.duty??.5))*10+Math.max(0,off-stepLen*(D.duty??.5))*10;}
+      else c+=(ph-(D.duty??.5));});
+    if(c<bc-1e-9){bc=c;best=g;}}
+  return best;}
 /* in: {pos,moving,speed,stepLen,heading,face,brace,alive,deathAge,down,pilotRatio,armDead,legsDead,shieldDead,ground,onStep,noPlant} */
 function animateMech(m,I,dt,t){
   const r=m.rig,cont=m.cont,S=m.s,sc=m.scale,D=m.dims;
+  for(const L of m.legs){L.poseLift=false;L.kneeContact=false;}
   if(m.artilleryBrace){
     r.pelvis.position.z=0;
     for(const leg of r.legs)leg.kneeShoe?.quaternion.identity();
     m.artilleryBrace=false;
   }
   if(!m.init){m.yaw=I.face;cont.rotation.y=m.yaw;cont.position.set(I.pos.x,I.ground||0,I.pos.z);cont.updateMatrixWorld(true);
-    r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
+    r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));if(I.groundAt&&I.alive)h.y=I.groundAt(h.x,h.z)+D.ankleH*sc;m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
   cont.position.set(I.pos.x+S.kx.x,I.ground||0,I.pos.z+S.kz.x);
-  const targetYaw=I.moving?I.heading:I.face;m.yaw=dampAngle(m.yaw,targetYaw,I.moving?8:4.5,dt);
+  const targetYaw=I.moving?I.heading:I.face,oldYaw=m.yaw;let nextYaw=dampAngle(oldYaw,targetYaw,I.moving?8:4.5,dt);
+  if(I.groundAt&&I.alive&&!I.moving){
+    const supports=r.legs.map((l,i)=>({leg:l,state:m.legs[i]})).filter(({state:L})=>!L.swing&&!L.settle&&!L.poseLift);
+    // Each planted support limits the body's turn until its next real step makes room.
+    if(supports.length){cont.updateMatrixWorld(true);const reach=(D.legA+D.legB-.03)*sc;
+      const limits=supports.map(({leg,state:L})=>{const local=cont.worldToLocal(leg.hip.getWorldPosition(V3())),vertical=Math.max(0,(I.ground||0)+(D.py+(D.hipY||0)-.4)*sc-L.planted.y);return{local,goal:L.planted,horizontal:Math.sqrt(Math.max(0,reach*reach-vertical*vertical))};});
+      const safe=yaw=>{const c=Math.cos(yaw),s=Math.sin(yaw);return limits.every(({local:p,goal,horizontal})=>Math.hypot(cont.position.x+sc*(p.x*c+p.z*s)-goal.x,cont.position.z+sc*(p.z*c-p.x*s)-goal.z)<=horizontal);};
+      if(!safe(nextYaw)){let low=0,high=1;for(let i=0;i<12;i++){const q=(low+high)/2;if(safe(oldYaw+(nextYaw-oldYaw)*q))low=q;else high=q;}nextYaw=oldYaw+(nextYaw-oldYaw)*low;}
+    }
+  }
+  m.yaw=nextYaw;
   const dead=!I.alive,pd=dead&&I.down==='pilot';
   const dE=dead?smooth(clamp((I.deathAge-.05)/(pd?.85:.51),0,1)):0;
   const tip=dead&&!pd?smooth(clamp((I.deathAge-.42)/.52,0,1)):0;
@@ -200,11 +228,17 @@ function animateMech(m,I,dt,t){
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
   // Heavier frames take shorter, quicker steps so a longer planted phase stays within leg reach.
   const stepLen=(I.stepLen??1.55)*(D.stride??1);
+  // PR #20: actual root velocity also covers lunges, shoves and changing headings.
+  const vel=m.vel||(m.vel=V3());if(m.lastPos&&dt>0){_c.set(cont.position.x-m.lastPos.x,0,cont.position.z-m.lastPos.z).divideScalar(dt);vel.lerp(_c,1-Math.exp(-dt*20));}
+  (m.lastPos||(m.lastPos=V3())).copy(cont.position);
+  const fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw)),vs=Math.hypot(vel.x,vel.z),dir=vs>.3?V3(vel.x/vs,0,vel.z/vs):fwd;
+  if(I.moving&&!dead&&!m.gait.wasMoving){m.gait.phase=startPhase(m,cont,D,stepLen,dir);for(const L of m.legs)L.startSwing=true;}
+  m.gait.wasMoving=I.moving&&!dead;
   if(Number.isFinite(I.cycle))m.gait.phase=I.cycle;
   else if(I.moving)m.gait.phase+=dt*I.speed/(2*stepLen);
-  const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
-  // Fraction of each cycle a foot stays planted. Above .5 gives double support; heavy frames keep more feet down.
-  const duty=D.duty??.5;
+  const g=m.gait.phase,duty=D.duty??.5,reach=(D.legA+D.legB)*sc;
+  // Land on the actual terrain even when the reach clamp adjusts horizontal position.
+  const floorWithin=(point,hip)=>{for(let i=0;i<4;i++){if(I.groundAt)point.y=I.groundAt(point.x,point.z)+D.ankleH*sc;onFloorWithin(point,hip,reach*.985);}if(I.groundAt)point.y=I.groundAt(point.x,point.z)+D.ankleH*sc;return point;};
   // Firing stance (dims.carry.fire, empty left hand): lead with the left foot and blade the torso so the left hand
   // reaches the under-barrel. Driven by I.ready (attack priming or aiming) and blended so it also animates under noPlant.
   const F=D.carry?.fire,ready=Boolean(F&&!dead&&!I.moving&&(m.offhand??'free')==='free'&&m.primaryWeapon&&((I.ready??t<m.aim.until)||m.aim.blend>.35));
@@ -215,20 +249,50 @@ function animateMech(m,I,dt,t){
   p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
   p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   p.rotation.y=F?-F.hips*fs:0;
+  cont.updateMatrixWorld(true);
   let settling=m.legs.some(L=>L.settle);
+  const artilleryPreparing=D.quad&&!I.moving&&Boolean(I.artillery||Number.isFinite(I.mortarAge));
+  const pitches=[];
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
     const home=cont.localToWorld(_a.set(l.restX-(lead?F.narrow*fs:0),D.ankleH,l.restZ+(F?(lead?F.step:-F.back)*fs:0))).clone();let pitch=0;
+    if(I.groundAt&&I.alive)home.y=I.groundAt(home.x,home.z)+D.ankleH*sc;
+    const hip=l.hip.getWorldPosition(V3()),ph=((g+(l.phase??i*.5)+(L.phaseOffset||0))%1+1)%1;
+    const lifting=I.moving&&!dead&&ph>=duty;
+    const strained=!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
+    if(strained){L.settle={from:L.planted.clone(),t:0,dur:.26};settling=true;}
     if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;
       if(lead&&!dead){L.foot.y+=F.lift*Math.sin(PI*fs)*sc;pitch=.3*Math.sin(PI*fs);}}
-    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5))%1+1)%1;L.settle=null;
-      if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
-      else{if(!L.swing){L.swing=true;L.from.copy(L.planted);}const q=(ph-duty)/(1-duty);L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=home.y;
+    else if(L.settle&&(!dead||pd)){
+      const step=L.settle;step.t+=dt/(step.dur||.42);const q=Math.min(1,step.t),land=home.clone().addScaledVector(vel,(1-q)*(step.dur||.42));
+      if(I.moving)land.addScaledVector(dir,stepLen*duty*.5);
+      if(I.groundAt)land.y=I.groundAt(land.x,land.z)+D.ankleH*sc;else land.y=home.y;
+      L.foot.lerpVectors(step.from,land,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
+      if(q>=1){L.planted.copy(floorWithin(land,hip));L.foot.copy(L.planted);L.settle=null;L.swing=false;I.onStep&&I.onStep(m,L.planted,i,.45);}
+    }
+    else if(I.moving&&!dead){
+      if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(floorWithin(L.to,hip));I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
+      else{if(!L.swing){L.swing=true;L.from.copy(L.foot);L.swingBegin=L.startSwing?ph:duty;L.startSwing=false;}const q=clamp((ph-(L.swingBegin??duty))/(1-(L.swingBegin??duty)),0,1);
+        L.to.copy(home).addScaledVector(dir,stepLen*duty);L.to.y=I.groundAt?I.groundAt(L.to.x,L.to.z)+D.ankleH*sc:home.y;
         L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;pitch=q<.3?.45*Math.sin(PI*q/.3):q>.62?-.35*Math.sin(PI*(q-.62)/.38):0;}}
-    else{if(L.swing){L.swing=false;L.planted.copy(L.foot);L.planted.y=home.y;}
-      if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
-        if(q>=1){L.planted.copy(home);L.settle=null;I.onStep&&I.onStep(m,home,i,.45);}}
-      else{if(!dead&&!settling&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}
-    const loc=cont.worldToLocal(_b.copy(L.foot));solveLeg(m,l,loc,pitch*w);});
+    else{
+      if(L.swing){L.swing=false;L.settle={from:L.foot.clone(),t:0,dur:.3};settling=true;}
+      else{if(!dead&&(!settling||artilleryPreparing&&!l.kneeShoe)&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}
+    }
+    // PR #20: in-flight goals remain reachable; planted anchors never move under this clamp.
+    if(L.swing||L.settle){const d=hip.distanceTo(L.foot);if(d>reach*.99)L.foot.sub(hip).multiplyScalar(reach*.99/d).add(hip);}
+    pitches[i]=pitch*w;});
+  if(I.groundAt&&I.alive){
+    // Uneven tiles and the first/last half-step can require compression beyond the flat-floor walk bob.
+    // Lower the pelvis enough for the actual goals; the world-space planted anchors never move.
+    cont.updateMatrixWorld(true);let drop=0;
+    for(let i=0;i<r.legs.length;i++){
+      const hip=r.legs[i].hip.getWorldPosition(V3()),goal=m.legs[i].foot,reach=(D.legA+D.legB-.004)*sc;
+      const horizontal=Math.hypot(hip.x-goal.x,hip.z-goal.z),vertical=Math.sqrt(Math.max(0,reach*reach-horizontal*horizontal));
+      drop=Math.max(drop,(hip.y-goal.y-vertical)/sc);
+    }
+    p.position.y-=Math.max(0,drop);cont.updateMatrixWorld(true);
+  }
+  r.legs.forEach((l,i)=>{const loc=cont.worldToLocal(_b.copy(m.legs[i].foot));solveLeg(m,l,loc,pitches[i]);});
   // kusazuri hinge with the thighs so the skirt never cuts through a moving leg
   if(r.skirts)VC.skirtPose(r.skirts);
   m.aim.blend=damp(m.aim.blend,t<m.aim.until&&!dead?1:0,t<m.aim.until?9:2.5,dt);
@@ -287,10 +351,14 @@ function animateMech(m,I,dt,t){
   const vm=m.build.visorMat,base=3;
   if(dead)vm.emissiveIntensity=damp(vm.emissiveIntensity,0,6,dt);
   else{let k=1;if(m.flicker>0&&Math.random()<.35)k=.15;else if(I.pilotRatio!==undefined&&I.pilotRatio<.5&&Math.random()<.06)k=.2;vm.emissiveIntensity=base*k;}
-  const special=poseBehemothMortar(m,I.mortarAge),artillery=special||I.artillery;
-  if(D.quad&&I.alive&&!I.moving&&!I.legsDead){
+  const special=poseBehemothMortar(m,I.mortarAge);let artillery=special||I.artillery;
+  if(I.groundAt&&artillery){
+    if(Math.abs(wrapA(I.face-m.yaw))>.15){m.artilleryDeferred=true;m.artilleryCatchup=0;artillery=null;}
+    else if(m.artilleryDeferred){m.artilleryCatchup=Math.min(1,(m.artilleryCatchup||0)+dt/.35);artillery=artillery.map(v=>v*smooth(m.artilleryCatchup));}
+  }else if(!artillery){m.artilleryDeferred=false;m.artilleryCatchup=0;}
+  if(D.quad&&I.alive&&!I.moving&&!I.legsDead&&artillery?.some(Boolean)){
     m.artilleryBrace=Boolean(artillery?.some(Boolean));
-    poseBehemothBrace(m,m.artilleryBrace?artillery:null);
+    poseBehemothBrace(m,artillery,I);
   }else{
     cont.updateMatrixWorld(true);
     for(const [a,bb] of r.pistons){bb.getWorldPosition(_a);a.lookAt(_a);a.getWorldPosition(_a);bb.lookAt(_a);}

@@ -54,8 +54,10 @@ module.exports=async function checkLineElite({page,mobile,origin,tap}){
  assert.equal(result.painted,true);
  assert.ok(result.primary>500&&result.secondary>50&&result.bare>100,JSON.stringify(result));
  assert.equal(result.leak,0,'each paint channel preserves the other layer and the mechanical surfaces');
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  await tap('#end');
  await page.waitForFunction(()=>battle?.turn===2&&!battle.busy);
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  await tap('#end');
  await page.waitForFunction(()=>activeCinematic?.actor.frame===LINE_ELITE_FRAME&&activeCinematic.phase==='fire');
  if(process.env.IRON_VOW_ELITE_PROOF){

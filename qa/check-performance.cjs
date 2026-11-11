@@ -19,4 +19,6 @@ assert.equal(report.calls,0,'Cached/composited frames have no new WebGL calls');
 assert.equal(report.geometries,0,'Disposed contexts do not keep reporting old memory');
 sampler.reset();sampler.begin(20000);
 assert.equal(sampler.report().frameMs.p95,null,'Background-tab time is excluded after reset');
+sampler.end({contexts:1});sampler.record({render:{calls:7,triangles:90}});sampler.begin(20016);sampler.end({contexts:1});
+assert.equal(sampler.report().calls,7,'Asynchronous preview renders between animation frames are counted');
 console.log('PASS bounded frame percentiles, all-render WebGL totals, disposal and visibility reset');

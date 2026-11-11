@@ -1,0 +1,45 @@
+START mobile touch checkTerrain
+PASS mobile touch checkTerrain
+START mobile touch checkLineInfantry
+PASS Picket hostile phase LINE INFANTRY 1 → WARDEN / PILOT −18
+PASS mobile touch checkLineInfantry
+START mobile touch checkLineElite
+PASS Corridor hostile phase LINE INFANTRY ELITE 1 → WARDEN / BODY −38, separate primary and secondary plate colors
+PASS mobile touch checkLineElite
+START mobile touch checkInfantryCarry
+PASS mobile touch checkInfantryCarry
+START mobile touch checkVanguard
+PASS Vanguard pursuit, Piledriver cinematic and independently disarmed atlases
+PASS mobile touch checkVanguard
+START mobile touch checkReaver
+PASS mobile touch checkReaver
+START mobile touch checkAero
+PASS Aero purchase and assignment, Jumpjet across cover and reload, four Rig Bench replays and Relay melee exchanges
+PASS mobile touch checkAero
+START mobile touch checkArmory
+mobile touch checkArmory failed: page.waitForFunction: Timeout 120000ms exceeded.
+    at checkCerberusSalvo (/workspace/iron-vow-phase1/qa/browser/armory.cjs:128:13)
+    at async checkArmory (/workspace/iron-vow-phase1/qa/browser/armory.cjs:85:2)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34)
+Browser failure screenshot /tmp/iron-vow-qa-XglbR6/failure.png
+RETRY mobile touch checkArmory (1/1): page.waitForFunction: Timeout 120000ms exceeded.
+START mobile touch checkArmory
+mobile touch checkArmory failed: page.waitForFunction: Timeout 120000ms exceeded.
+    at checkCerberusSalvo (/workspace/iron-vow-phase1/qa/browser/armory.cjs:128:13)
+    at async checkArmory (/workspace/iron-vow-phase1/qa/browser/armory.cjs:85:2)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34)
+Browser failure screenshot /tmp/iron-vow-qa-wcQKjZ/failure.png
+Error: mobile touch checkArmory failed: page.waitForFunction: Timeout 120000ms exceeded.
+    at checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:133:16)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34) {
+  [cause]: page.waitForFunction: Timeout 120000ms exceeded.
+      at checkCerberusSalvo (/workspace/iron-vow-phase1/qa/browser/armory.cjs:128:13)
+      at async checkArmory (/workspace/iron-vow-phase1/qa/browser/armory.cjs:85:2)
+      at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:121:5)
+      at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:138:34) {
+    log: [],
+    name: 'TimeoutError'
+  }
+}

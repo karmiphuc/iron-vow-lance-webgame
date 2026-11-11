@@ -1,0 +1,47 @@
+{
+  "started": "2026-11-11T13:39:17.448Z",
+  "commit": "0fefc6f1e202cfc5b273c041048b256dbbb28988",
+  "distTree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "distDirty": false,
+  "runnerSha256": "d741cc2b60bd36f876bfda7391bdd2e6167be84e4ca3c68e5bd229efef3696af",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkArmory",
+      "sha256": "375da07a9fe0ebba039c9c12fb8cffe0edd945fa86d71d3c4fc77cde940b098b"
+    },
+    {
+      "name": "checkBulwarkBench",
+      "sha256": "0b7d8d3e90ace429a7637c44f94952dc6735e0f1742bf9655727cee4fb5bb936"
+    },
+    {
+      "name": "checkScoutBench",
+      "sha256": "105717aa46394f2495598b0c699ecda72d796419277883dff2cc9f0c4001cee1"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkArmory",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+    },
+    {
+      "name": "checkBulwarkBench",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Bench input/animation/socket correctness; one real ready-rig frame per page submitted, unobserved main-canvas draws omitted while matrices update."
+    },
+    {
+      "name": "checkScoutBench",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Bench input/animation/socket correctness; one real ready-rig frame per page submitted, unobserved main-canvas draws omitted while matrices update."
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-11T13:42:00.749Z"
+}

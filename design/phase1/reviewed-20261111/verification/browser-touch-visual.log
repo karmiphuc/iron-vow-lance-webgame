@@ -1,0 +1,9 @@
+START mobile touch checkShields
+Shield reload state {"page":"workshop","selected":0,"frame":0,"classTabs":["assault","strike","melee","shields"],"url":"http://127.0.0.1:38041/?view=workshop","modal":false}
+PASS mobile touch checkShields
+START mobile touch bastionSharedRig
+Bastion bought and assigned
+Bastion shared preview ready
+Bastion fittings checked
+Bastion Test Strike animated
+PASS mobile touch bastionSharedRig

@@ -27,7 +27,7 @@ vm.createContext(context);
 const run=source=>vm.runInContext(source,context);
 const click=selector=>{const node=document.querySelector(selector);assert.ok(node&&!node.disabled,selector);node.click()};
 const ready=async condition=>{for(let i=0;i<100;i++){if(run(condition))return;await new Promise(resolve=>setTimeout(resolve,25))}assert.fail(condition)};
-for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js','theater-layouts.js','prototype-combat.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
+for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js','theater-layouts.js','prototype-combat.js','scene/billboards.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
 
 (async()=>{
  await ready('decodedArt.size===Object.keys(artImages).length');
@@ -80,6 +80,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
  })()`),true);
  assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id==='blade'?'cleaver':weaponMotion(w.id)].some(p=>p.level===.7))))"));
  for(const [frame,views] of JSON.parse(run('JSON.stringify(arsenal.chassis)')).entries()){
+  if(frame===0)continue; // Warden's sprite assertions are replaced by actual-bone checks.
   for(const [view,visual] of Object.entries(views)){
    const {attackMotion:atlas}=visual;
    const {prime,aim,kick,breaker,cleaver,piledriver}=atlas;
@@ -91,7 +92,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
    for(const f of [...prime,...aim,...kick,...breaker,...cleaver,...piledriver])assert.deepEqual(f.rearFoot,start.rearFoot,atlas.key);
    for(const f of [...aim,...kick,...breaker,...cleaver,...piledriver])assert.deepEqual(f.leadFoot,plant.leadFoot,atlas.key);
    assert.ok([breaker,cleaver,piledriver].every(m=>m.some(f=>f.level===.7)),atlas.key);
-   run(`selected=${frame};current().face=${view==='right'?1:-1};current().attack={kind:'rifle',start:0,primeDuration:.60};drawUnit(current(),.3)`);
+   run(`selected=${frame};current().face=${view==='right'?1:-1};current().attack={kind:'rifle',start:0,primeDuration:.60};drawUnitBody(current(),.3)`);
    await ready(`decoded.has('assets/${atlas.key}.webp')`);
    assert.equal(run("wardenMotionFrame(current(),activeWardenVisual(current()),animationPose(current(),.3)).frame.level"),.5);
    run("current().attack.fireAt=.9;current().attack.releaseAt=1.1");
@@ -101,15 +102,13 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
   }
  }
  for(const [index,name] of ['relay','corridor','frontier'].entries()){
-  run(`effects=[];createBattle(${index+1});fieldCamera.overview=true;action='move';battlefield(clock)`);
-  await ready(`decoded.has('assets/ground-${name}.webp') && Object.values(battle.field.cover).every(prop=>decoded.has('assets/cover-'+prop+'.webp'))`);
+  run(`effects=[];createBattle(${index+1});fieldCamera.overview=true;action='move'`);
   assert.equal(run('battle.field.ground'),name);
   assert.equal(run('new Set(Object.values(battle.field.cover)).size'),2);
   assert.ok(run(`Array.from(battle.cover).every(key=>{
    const [x,z]=key.split(',').map(Number);
    return !paths(current()).has(key)&&inCover({x:x-1,z});
   })`));
-  run('battlefield(clock)');
  }
- console.log('PASS: all six planted attack atlases, 24 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.');
+ console.log('PASS: remaining billboard attack atlases, 24 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and three theater rules with cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

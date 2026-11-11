@@ -1,0 +1,100 @@
+START desktop sharedScene
+shared scene ready: desktop
+raycasts, Overview and centre passed
+map jump, zoom and pan passed
+wheel/pinch zoom passed
+legal campaign attack ready
+3D attack camera and Skip passed
+actual context restoration and preserved checkpoint passed
+PASS desktop sharedScene
+START desktop livePaint
+warming 0,5,6
+warming 10,8,9
+live preview assets ready
+checking live preview 0
+checking live preview 5
+checking live preview 6
+checking live preview 7
+checking live preview 8
+checking live preview 9
+checking live preview 10
+checking live preview 12
+PASS desktop livePaint
+START desktop temporaryBillboards
+PASS desktop temporaryBillboards
+START desktop checkLionTrial
+PASS desktop checkLionTrial
+START desktop checkPairedWalk
+PASS desktop checkPairedWalk
+START desktop checkMechComputer
+PASS desktop checkMechComputer
+START desktop checkMovePreview
+PASS desktop checkMovePreview
+START desktop checkRidgeCombat
+PASS desktop checkRidgeCombat
+START desktop checkTerrain
+desktop checkTerrain failed: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+null !== 'enemy0'
+
+    at checkTerrain (/workspace/iron-vow-phase1/qa/browser/terrain.cjs:69:9)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:112:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:130:4)
+Browser failure screenshot /tmp/iron-vow-qa-W68rxl/failure.png
+RETRY desktop checkTerrain (1/1): Expected values to be strictly equal:
+
+null !== 'enemy0'
+
+START desktop checkTerrain
+PASS desktop checkTerrain
+START desktop checkShields
+Shield reload state {"page":"workshop","selected":0,"frame":0,"classTabs":["assault","strike","melee","shields"],"url":"http://127.0.0.1:44523/?view=workshop","modal":false}
+PASS desktop checkShields
+START desktop checkLineInfantry
+PASS Picket hostile phase LINE INFANTRY 1 → WARDEN / PILOT −18
+PASS desktop checkLineInfantry
+START desktop checkLineElite
+PASS Corridor hostile phase LINE INFANTRY ELITE 1 → WARDEN / BODY −38, separate primary and secondary plate colors
+PASS desktop checkLineElite
+START desktop checkInfantryCarry
+PASS desktop checkInfantryCarry
+START desktop checkVanguard
+PASS Vanguard pursuit, Piledriver cinematic and independently disarmed atlases
+PASS desktop checkVanguard
+START desktop checkReaver
+PASS desktop checkReaver
+START desktop checkAero
+PASS Aero purchase and assignment, Jumpjet across cover and reload, four Rig Bench replays and Relay melee exchanges
+PASS desktop checkAero
+START desktop checkArmory
+PASS desktop checkArmory
+START desktop checkCampaign
+PASS campaign UI, touch tooltip, reserve reload, Workshop, Wiki, variable seats and new skills
+PASS desktop checkCampaign
+START desktop checkWardenRigBench
+desktop checkWardenRigBench failed: locator.click: Timeout 120000ms exceeded.
+Call log:
+[2m  - waiting for locator('#btnFire')[22m
+
+    at tap (/workspace/iron-vow-phase1/qa/check-browser.cjs:109:83)
+    at checkWardenRigBench (/workspace/iron-vow-phase1/qa/browser/warden-rig-bench.cjs:38:9)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:112:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:130:4)
+RETRY desktop checkWardenRigBench (1/1): locator.click: Timeout 120000ms exceeded.
+Call log:
+[2m  - waiting for locator('#btnFire')[22m
+
+START desktop checkWardenRigBench
+desktop checkWardenRigBench failed: locator.click: Target page, context or browser has been closed
+Call log:
+[2m  - waiting for locator('#gunNext')[22m
+
+    at tap (/workspace/iron-vow-phase1/qa/check-browser.cjs:109:83)
+    at checkWardenRigBench (/workspace/iron-vow-phase1/qa/browser/warden-rig-bench.cjs:43:9)
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:112:5)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:130:4)
+browserContext.close: Target page, context or browser has been closed
+    at async checkDevice (/workspace/iron-vow-phase1/qa/check-browser.cjs:124:13)
+    at async checkBrowser (/workspace/iron-vow-phase1/qa/check-browser.cjs:130:4) {
+  log: []
+}

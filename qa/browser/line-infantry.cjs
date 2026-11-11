@@ -32,6 +32,7 @@ module.exports=async function checkLineInfantry({page,mobile,origin,tap}){
  assert.equal(atlases.disabled,true);
  assert.equal(atlases.primary,true);
  assert.ok(atlases.muzzle.every(Number.isFinite));
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  await tap('#end');
  await page.waitForFunction(()=>activeCinematic?.actor.frame===LINE_INFANTRY_FRAME&&activeCinematic.phase==='fire');
  if(process.env.IRON_VOW_LI01_PROOF){

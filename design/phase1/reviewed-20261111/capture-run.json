@@ -1,0 +1,2913 @@
+{
+  "label": "phase1-pr20",
+  "source": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+  "runner_source": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+  "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+  "asset_delay_ms": 0,
+  "dist_tree": "e2494c105158883d1b60b57a0d185d8fc8552189",
+  "candidate_advance_policy": "All CPU animation and matrix updates execute. Unrecorded main-canvas warmup and advance GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.",
+  "non_visual_fetch_policy": "Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.",
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "webgl_capture_policy": "QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.",
+  "captures": [
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-0",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-0.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "929eae4ee643a8f5db01bee1d0e693a135543a6c6c7a2e743f94b936db0eb602",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-5",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-5.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "2ae18dac35d064e06e32a26abf93cba316cbf6b412f61ffb00b1f6e168ab4eae",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1022
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-6",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-6.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "4af9da5249bec12d009da878af31195f7ed126de4622594ace0c98a8741d3f30",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-7",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-7.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "940c143f40db2f6e68060823902f69eac5479fd2c947cdd2f302c0f81a9fd879",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1022,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1019
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-8",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-8.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "18dfb9352aebbb4e8eb83ef86546a6aa0b1a305acab3e50f242e111bcf35e557",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-9",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-9.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "e9865dc02982b9e6840b1abf27bb246e010b43bcbd6a087f7293bc4ee88eaed9",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-10",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-10.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "bfca49a6ac5a107a46adae09331ef3c986c5a8696211e76b6274f3dace54e965",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-12",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/live-frame-12.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "f0e137c28c69a32e569699d7268d14e619e811a7f88b59884973351c29a17914",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1021
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/hangar.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "01beef5eaeae2a3558b41ec8c9c64c1a0bb4df63984ba076e85d076eb05d89de",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/workshop-0.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "bcce74e30d453b84235713a2c9abc09311c0ee4e2fdb82bfae411063c167b472",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/workshop-1.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "91a865f75f0f48bd2cc4df55c3b8037378cf3ce3c2624b1d1f4805ac2284c8c9",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/workshop-2.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "75bc12a3c817edc7d8bce0c8cb5aeb557d10759d6c692e663c05f8443e3bd048",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/paint.png",
+      "source_commit": "955497b542afaaf9edcdef8e8305b6779a4b32a7",
+      "runner_sha256": "c66377cd77b48ba9173fc96bca5f58154c59542423dd80a48e8af0ff6311bdd7",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "67036a21e686a280173189d2599485e1e3b4c6835d4909136d2a713771553a25",
+      "attempt": 1,
+      "paint_view_verified": 2,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/paint-primary.png",
+      "source_commit": "955497b542afaaf9edcdef8e8305b6779a4b32a7",
+      "runner_sha256": "c66377cd77b48ba9173fc96bca5f58154c59542423dd80a48e8af0ff6311bdd7",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "82ab6662ef2eaabf214eda66b39e820da7825f6154087ec7936d26c5b3c9c024",
+      "attempt": 1,
+      "paint_view_verified": 2,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/paint-secondary.png",
+      "source_commit": "955497b542afaaf9edcdef8e8305b6779a4b32a7",
+      "runner_sha256": "c66377cd77b48ba9173fc96bca5f58154c59542423dd80a48e8af0ff6311bdd7",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "3e515bbf7533cd670f5f8aa3dcef27dac54bd39a6eb4138f422f5322afdda94d",
+      "attempt": 1,
+      "paint_view_verified": 2,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/paint-accent.png",
+      "source_commit": "955497b542afaaf9edcdef8e8305b6779a4b32a7",
+      "runner_sha256": "c66377cd77b48ba9173fc96bca5f58154c59542423dd80a48e8af0ff6311bdd7",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "9dcc0e6af9a68390038480c9729e943020cddab449f111731d93448ff2cb34e1",
+      "attempt": 1,
+      "paint_view_verified": 2,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/contracts.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "b47606d822dc72b0d451ec308981fc9019185460250a78d33736d91a732599a6",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/battle-theater-0.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "c050311b4cb5ad79dc7302148f962e2fdf6c51ed2d09d774fc022b5948bdfe0a",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 898,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/battle-theater-1.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "7f3f3f70b7d9217252d33e7d63cb79bba03619b7800d847a24c4545e7862443f",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 896,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1022
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/battle-theater-2.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "bccddd230bc81b41af2c96b238c9e8725924f37c3799deb16140594e3e5ce71a",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 898,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/selected-move.png",
+      "source_commit": "e6c9a076ca1c031ae6ad11f4a6decb9c76119e18",
+      "runner_sha256": "bb41f584690c8184dd7e4850a9e6a56359f01531619a467017b86a647d573c7d",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "97e23383dc38a82261d24032ac030bb05e9ef7805e26349bdba3ee7d2cf70015",
+      "attempt": 1,
+      "selected_move_view_verified": 5,
+      "selected_move_camera": "Overview control; actual paid path hovered",
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 898,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/attack-rifle.png",
+      "source_commit": "e6c9a076ca1c031ae6ad11f4a6decb9c76119e18",
+      "runner_sha256": "bb41f584690c8184dd7e4850a9e6a56359f01531619a467017b86a647d573c7d",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ddbef3318676d4a638d11d5423e75d3705ef5a7c678e522a50e8decf5efc2c4a",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 543
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/attack-shotgun.png",
+      "source_commit": "e6c9a076ca1c031ae6ad11f4a6decb9c76119e18",
+      "runner_sha256": "bb41f584690c8184dd7e4850a9e6a56359f01531619a467017b86a647d573c7d",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ae768c8456bd7f59b387ba33ac13b378a7cf84d5e1650ca98726029e065f8bec",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 543
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/attack-missile.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "57d7d15f711ae94b43d9a1a35df03113840177633bc87a7420215164aa7488fe",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 541
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/attack-rail.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "12965420b33f2711884ccf5fbc1dba0c7e38443533eeccf0d280eab9dd45d1fd",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 543
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/attack-blade.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "5fdd26c53fb57829286f42a35b8458c847e7977ae58af33cc139372b398b7178",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 541
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/attack-parallax.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "60e5836304484fb77caaea3627befa1176f296561cfab9be01b65f16b43c573a",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 541
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/damaged.png",
+      "source_commit": "a7735c2432c6d15441799b61d5f4fc96769e6a86",
+      "runner_sha256": "8f6b6998ad253a1ed1609163881f55294dc40ff7e0f61a2559c6ded70f5643ba",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "7adfe722968b5e01419199a853439ea3985fb74b86e40998411ead11d0b59525",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 483,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 408
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/damage-healthy.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "0b1ec11e5a17ddb118ab9b72f6ccab60cd286c52074b4bd029372683ba14fcff",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 484,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 411
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/damage-body-destroyed.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "468af6b1636aa83007a07bdc2a22d8eb83252936099edfd8fb7e9fd6c0f897ab",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 532,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 516
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/damage-right-damaged.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "b63ebb97f157dc7f8154d29a1ed19f459cc449d1e3151144de2a5b88fff767ee",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 491,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 454
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/damage-right-destroyed.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "63f23e85a53bded5bfd2d485a344bc8a54d65bfbc6ab6f3acba2cc5a1ddb98b3",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 496,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 440
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/damage-legs-damaged.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "9f3f00636f1e3351ed6185b56e94335e9b2ddbbe6c68361f96ec2e1a6e1afee2",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 557,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 557
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/damage-legs-destroyed.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "29baa40aadb5995dd4678d4a8339ab5f0b7d96132ed40fe580089fe9d8455ac0",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 557,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 564
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/burning-wreck.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "25618e43690f68878112523de6e6524db5f2acb79aabc48ec662c1d33c240b2f",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1023,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase1-pr20/1366x1024/rig-bench.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "935cfc6c0a5f0447c908420681bcd6dee1b73b9ebbba34c84bd0ae67fa6139cf",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "c",
+        "non_black_samples": 855,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-0",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-0.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "7eff2161ea77d9ee3b783ce824c7db9cb6a5eea03ba5832fe27b82edd5165801",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-5",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-5.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "6f434f8a67268d7b198fb81e5c1791871f99af1ce1dce2c287d2cc7dc65f7093",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-6",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-6.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "029f024c0dffeb402d5df68f5f398a991c6c141447b7f4818fd5173511c98301",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-7",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-7.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a3d171a8046a570bdbad8694625d930308132e43d0b866abf8b62c42e9f74e30",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1022,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1018
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-8",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-8.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "c7fa475b1a805695c91025fcda01dd7089b6c96242f5237d081093eee10205b2",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-9",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-9.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "408be2fcd2e984fd7835b4e4dac4045e9fa9ce3822ad33ab3299fbfcbf57ad4b",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-10",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-10.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "0d71924530b6d59b9c7756d64e686bd40801ae9b8ee80c0c2f8db8f380f6492e",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-12",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/live-frame-12.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "6ace7f92bddb2e2e3cfa5b193e4c9e05354e0d516a147d38988f4206f9f22da4",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/hangar.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "d60685cd2b5b7a5b259ffea459ac2055edf6045eddcf18812f1cb3f446eb303d",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/workshop-0.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "16b69b4d2a171abda2ec11c7cfcb07673557f62d1c8c31b21e0f4b55ae430dc6",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/workshop-1.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "d66f45271d13b4939f84f9f20d4c57b35447cc9b5d8673229392150f3b6cf47c",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/workshop-2.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "4546383bc608c8fff4683dba3ba118e43b8d546a5ff632e08e6ff5b9a80f56f8",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/contracts.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a7cd3a69f7c90dfd768adaaf0e9318419f89abe948b6a87522ac225687851c49",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/battle-theater-0.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "9b00fa7500fafe53479ca815a6c42746d6b45e626106c6d47bdba35f343861f8",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 894,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/battle-theater-1.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "8c8dc9da87504019b9b707974d550419a94855b71393a6a0b247facce1c2bfb6",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 894,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/battle-theater-2.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "7678a4b511f3c46fde42595fc5546db3039d01decc39b094203f7d64d3304be0",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 894,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/attack-rifle.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "1334546a474bf93c0d62755d636c37c0334638aab9c471481d5cf3ea20e7d356",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 547,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 537
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/attack-shotgun.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "eb77867bd9680b185e6feff0645bdaeac0c28dd302b3de23b4974e96bc9a069e",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 546,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 544
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/attack-missile.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a78e615c65fae568040c33a97665e6a4e62cf1710c70fa6a16242d2da3bb1027",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 547,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 537
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/attack-rail.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "4cf1f0a8fe2ec8a7121f217978b7ebda6e41dc2983afe204226b32a3c763fff3",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 546,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 545
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/attack-blade.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "26333b37e408cc256bfe2a2002d62f52b205999976f24312ddf7414abe08a507",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 547,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 537
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/attack-parallax.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "b59909360b8c5357bb5a1c39c4c72a6d4bcbda3fe6d3aad808ef497c4b415288",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 547,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 543
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/damaged.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ef37d6d6bb0fe2b7bc5ef3f8d4a6a234edf78bef508ccd140ebd5524a9f6b777",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 471,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 416
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/damage-healthy.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "e6c31f570d1e72d854c0e6d3304d72588b51c7e3ba72af6b5fc0c3b52fd3eaea",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 473,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 419
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/damage-body-destroyed.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "cc7cad59c2ebf0816355b87ebe69df624f937f2be1a25f75f2eb813e61e56fee",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 527,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 525
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/damage-right-damaged.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "816c008f3ef6dac27bcfafc49c010af7a340bdd230df9239d25973aa2ddb9eea",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 494,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 454
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/damage-right-destroyed.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "61f5501720b2454c3ecd74ce5c3e6748341f6daa066c5fc148950ee637c31e00",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 493,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 456
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/damage-legs-damaged.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a4c287a60ab25bdf01eb2ea7459bd8e2f07ca4da0fa30ea5fae8321fe13c7b9c",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 553,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 568
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/damage-legs-destroyed.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a874ddcf213e3d9cb281098c34ac480760e95e5742a96c5bd6477fcd7dce0160",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 554,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 574
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/burning-wreck.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "87ed81f67aa1021c381c2498fc830743c3ea5b41ca6072118eedcde5f44c9fcd",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1022,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/rig-bench.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "0139c15a41c7fbae021987dae079ab83e97a46b8f8bba63d02970136115f43b7",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "c",
+        "non_black_samples": 858,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1020
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-0",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-0.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "7bb6d271d8a8c3ccce755d96f43b0d07a40452af144c768db884125f9a02f601",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-5",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-5.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "54e929a363f9149a74c5bbaf898b0042219536d1d72ca246324f883859ef5be9",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1022
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-6",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-6.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "0afd5f9176be68df830b74b4a67620a8fdfaa3ca681c942eab4ac6542b8793ed",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-7",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-7.png",
+      "source_commit": "e4f81c6b07c43430752a8b24df3aa21ea87afeb0",
+      "runner_sha256": "22a400d9ed8583f66408005d1737867ef098a64e2db60151912a3cc9539d1d62",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "7f149e959296158b8cacc8ec5608bd52b5318ea6f0f2d0d102e44a8fbf185cf3",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1022,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1019
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-8",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-8.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "67fb08a52fc65c7a57c3dd984c63e6f15af7a8c8508c0f44947825c5042570e7",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-9",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-9.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "6805bc06dbd8a0f712092880c9d1d0855e0e3c3e5784ee95eb8541502c15409f",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-10",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-10.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "baff928d2a11820437de9f5a6e880538e02f1aedf7f55424ab0c797ee8b1008b",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-12",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/live-frame-12.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "b7d2b3e8822d36d6f607144b4c70f0424a098b6d3ca9c3f010b1dbde407c3598",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1021
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/hangar.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a2a36bcbcad9d0f14464bc57c31f5ea9c889165f6482cfa15f2ee1984f5e824d",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/workshop-0.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ff9d3a5544418a59281de1d92d89936238ec4c3f146b923a91930c8b6d2ae226",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/workshop-1.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "57ef54a78325090d1b65194044c3bb567a214d94651a82b2393edc27a404a48b",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/workshop-2.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "e69933fd3efcf91bbcb00f366e964eea5e3f2ea1c8afe4b995cf88d7e2eb5a6c",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/contracts.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "aeead3d09307c8b744467cda4f77fea09a93902e902c332257d65b278b285368",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/battle-theater-0.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "47701428f942a799efb728cedc6c1f0f58b3f6e2fb1b7507aae4346f99481fe5",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 898,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/battle-theater-1.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "8567816fcfda4fc6a636a57c5ef1cee5fdf8d1a233c631893baea35bad6ffc44",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 896,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/battle-theater-2.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ef292fb14e4e72e37ba34ccae38f7ccf1519c8250f918e8b7eb512ae4428ead0",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 898,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/attack-rifle.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "968de464ff7c7ec55f220c9a0d17737fcb549c12a3b62877005e5d2eabb95036",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 544
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/attack-shotgun.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "11af7ccdb0ea6ab04b5764f79a7203c5dcb29c83146e367c2cf309397e844417",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 544
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/attack-missile.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a49bf04f8170c9c86c34970d88a37d2199767f620dfab2c7b906d51a883a4cae",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 541
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/attack-rail.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "876c12e65c58fd6101a87f1f8999039d26e007006e5798fdae62763122ffa480",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 549,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 541
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/attack-blade.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "f46165a5aeb2aebbc4a4003a73df6113e4cef112e188347b00a25cef3d4e9e96",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 541
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/attack-parallax.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "44fd10a959d44367af3237742522260acf45e6a66d38aa1c474c83d3a3a1174d",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 544
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/damaged.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "92c365c39093dda8197c1ec17b06b9f6e769c5e167d9b597df97c7e037a104c0",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 478,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 410
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/damage-healthy.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "cc2cd7d316293429354ed891be6cd598eabc89994d2b3d9bf0c4f3914d727314",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 482,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 409
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/damage-body-destroyed.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "8f73a31d1b7b05467cb5c95e2a38a048f045f90a4f2df9c6f45378b872c26ae3",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 528,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 516
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/damage-right-damaged.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "74b995d0cfcd49fc28c62700ce6979bc6537b89ab2716902773554cc4c50a149",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 491,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 452
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/damage-right-destroyed.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "22ab60e3e3c52ff88c077cf8c44e7951f07ac3602ef13362f3f5a7a09fee0b44",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 496,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 442
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/damage-legs-damaged.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "880be63d00bb35007552ad4d633f69edbea7c823cdf5570df440b5793ab4aee2",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 557,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 560
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/damage-legs-destroyed.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "88d11e6c8f36f2dc87309668decedda701921ea38fe49f5dd50c703d24f9ba61",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 556,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 565
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/burning-wreck.png",
+      "source_commit": "1a2e9ce7eb8b04fca5a43b068200eebabf5a301b",
+      "runner_sha256": "ae16f0e8bdd2e28aaaa557bd8d3f66a2d8395ba517da505296753eab983238b9",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "0c74876cf5e85186db11527dec369ad7d0fa3b479a0f65feba7b2d16e5f7a51c",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1022,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      },
+      "retained": true
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/paint.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "186f053169694d434c62b6ecee51547e8a1a79b24402a9e161907f9bbba9ea09",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/paint-primary.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "67c9982ef83915cda21cc87429edfa90cfc9e4349e32e4d449a7df1002d13125",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/paint-secondary.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ecdcd328281c2b9cf5701d97f3d42d6620df392ffaf4446c7d72b4efed4ed17b",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/paint-accent.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "1eb0df363d03317ad0887d1f8b083f9954233da1cdbfc00a298134c22616f87d",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase1-pr20/1194x834/selected-move.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ff46eca9e473606ec341a5d750c55dc9b6662708aad5b607990df5133b2a1f8b",
+      "attempt": 1,
+      "selected_move_view_verified": 5,
+      "selected_move_camera": "Overview control; actual paid path hovered",
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 894,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/paint.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "c39bc07e4635c03e1ff3354694e1fa0898d12ebe62c550d79ee54f307f987f60",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/paint-primary.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "caa46c151d1d165cfec8802c19b5cc8c1777945dffe39a582011658279ffcb36",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/paint-secondary.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "f33307b478a1127a8a5100cd6bb2004e413c1085089f88a497e9b5e467d56cd8",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/paint-accent.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "5497c4ff9dabd66a399a60c476823f6a5aa25c6096cd59d3ef241e7bade854f6",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/selected-move.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "6389a8d8bf9921bced1ac24395439267e3fba893a76a657ba58ef1fd4b42a189",
+      "attempt": 1,
+      "selected_move_view_verified": 5,
+      "selected_move_camera": "Overview control; actual paid path hovered",
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 898,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase1-pr20/1376x1032/rig-bench.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "c9a2781dc376b9f03a0b17e70b4e39ab5e9677e7620dd81b356a949df96cb5e8",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "c",
+        "non_black_samples": 855,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-0",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-0.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "3bc039c435f31f51963309ed177885c2870f890580dc03f9516d7cc889632ea1",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-5",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-5.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "0b3a533731bbf762dee1502aa4285a97ee0e655450af3e301c8eb80a00080182",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-6",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-6.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "cce3e28c294a60f1b8d88b0a15b4e152e0be686328a5068c7e15cce4ec4f41a6",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1023,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-7",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-7.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "42b8a55ae52f9d1bec5adc7d3ab64690da52e1ff40b1d8f90f513a97150e22fd",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1021,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1019
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-8",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-8.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "6c2a87e1294c0c3febe89c25de2ed820581254db11af60c8644132e9bb3078f1",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-9",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-9.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "1bc682f50a9e123c2fdf6fa09826a9201033130455b252dd56106e5f1c52cf1e",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-10",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-10.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "61455e328f3f862cebef57a5943a9b7d9ee1bdaa5374e8058a7b1f5e62ddf152",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "live-frame-12",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/live-frame-12.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "031701f53568d2f127ad084cd957e0bb0a6ccd7e057c82a16c22128b7249b55c",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1024,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1022
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/hangar.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "dd564cd76eb57cc1c70fbbe843d7060bc93df16ee477c94d30600ea8b423c968",
+      "attempt": 1
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/workshop-0.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "22616d9197c43aca19efedb152082d1d05526c2e51b8a1e9ebbbb822a0d98da8",
+      "attempt": 1
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/workshop-1.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "33acb699458495422f94584862e94a2fac46b9f9dabba8d0e3995a7ede8b58d6",
+      "attempt": 1
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/workshop-2.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "68d795ccfd5130d48b84906472e8015983b9c1278ec3b24c479f50ce410ccd51",
+      "attempt": 1
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/paint.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "69643fd571d9bb2a46c1191cc94d664bf98181c0eed1d244e50c221b5e7ac10c",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-primary",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/paint-primary.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "e90136102ab2419e42308e6e9ec3fb60cac2b22e141ef6294ee0e904806a23c9",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-secondary",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/paint-secondary.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "78d576cd65585d2acc1b86793bbbba4feeb84262c01e232a7df41607eeb10b01",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "paint-accent",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/paint-accent.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "4ed42d1628382e5e255aaa27eafaaad380f4bb160b6c735cd802be336f1ffa52",
+      "attempt": 1,
+      "paint_view_verified": 2
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/contracts.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "ea4e774e80519be371da0b60d9abce02268d2ffff710eb2ee498ea66aab4ebde",
+      "attempt": 1
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/battle-theater-0.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "dd74be757f196e44e4ca960535faa063c22c96f7afd222576f501e7f69737980",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 900,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/battle-theater-1.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "677dad229ba28ff5dc309329555d2b5da3b04ad1ed4f53bc6f0bd33b4e2e25dc",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 900,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/battle-theater-2.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "cddeb312ad835d212a4d1fa5e9c34bf015dc078d93c4e9e82815a7fb6503a75b",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 900,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/selected-move.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "f8a431eebdc453da621a699f12ece0649b7babd833099e2448e684e0c3b9da49",
+      "attempt": 1,
+      "selected_move_view_verified": 5,
+      "selected_move_camera": "Overview control; actual paid path hovered",
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 900,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1024
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/attack-rifle.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "27c58c72c5c19947f4658ad3f2d2959e9dbe7fb2434240f2a207a7e7b1cc9fe5",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 547,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 531
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/attack-shotgun.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a39c58bdcb046e05a15bdb18ebaa9a8057939040bfec919a205bf2e06676819e",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 547,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 531
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/attack-missile.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a303347ca79396f01d940290ae6b4334f5423c9a51deafd6bf3f8f290260e0c6",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 530
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/attack-rail.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a8ae24d04b8486fc727597d1a6dc5eeac1fa548dfda9d4380d3e7555f730741a",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 549,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 530
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/attack-blade.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "bdae7a6ffddec7849432a01140844d885d5555527786afbd4ea926b763f0a0cd",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 549,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 530
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/attack-parallax.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "a3c5b46830270e2cb4684284920bf83be74598d0b6a4be20959665977b4311b3",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 548,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 530
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/damaged.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "4e90decadfaa094c3db451093db31e0c31e56010f8cccce64b76b039c9ed91e4",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 465,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 416
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-healthy",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/damage-healthy.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "0919bf46bb0a8b512d2a0458cd0b81d8e6d277c2c5fab5c40e53de53137d85dc",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 466,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 419
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-body-destroyed",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/damage-body-destroyed.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "cb5c59c8ac386a703f508b7c4e8ef05d4cf8930de337ded175e1f7bc96fb0ce8",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 527,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 522
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-damaged",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/damage-right-damaged.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "c02a181d60cba243207a6c6b56ee053e87a59c0d8aecdd5687ecdd5e1a65cf8c",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 493,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 453
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-right-destroyed",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/damage-right-destroyed.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "7f5c7a489951e9f7dbed049c6f3787ad15d01ba12ad4ed7e1a912dacfd83b008",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 492,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 456
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-damaged",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/damage-legs-damaged.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "46b91374d513f32750ccd5955a3d22ac97f8ae7dcd5fe5658156773cc1fa4ce6",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 552,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 570
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "damage-legs-destroyed",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/damage-legs-destroyed.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "17dcb2d188f636be937c287e14dad454c2da62fa2c7d301a5f4c3ddca2b1475f",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 555,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 570
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/burning-wreck.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "1075291b94af63a81528a75987334bfcbe23ec513c1396213c680e9a36b32a27",
+      "png_sha256": "2af9ac10372a2bbfe7f37a988d3cc3345184ce6191426884e0e7cf74b59ce5e6",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "world-scene",
+        "non_black_samples": 1023,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      }
+    },
+    {
+      "source": "phase1-pr20",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase1-pr20/1210x834/rig-bench.png",
+      "source_commit": "3264230555c6ca1b2a7b533113e912a1dc0fdba0",
+      "runner_sha256": "817abd4c32313d1d5e1283817e2a9f0d494137117c2640b9f0b978b838b751c8",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "b02f655988635c91e25945c325ddcce73cf1493b5bed3a8a2d6212b10dd38d53",
+      "attempt": 1,
+      "webgl_sample": {
+        "canvas": "c",
+        "non_black_samples": 857,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1019
+      }
+    }
+  ],
+  "retries": [],
+  "failures": [],
+  "retained_source_commit": "e6c9a076ca1c031ae6ad11f4a6decb9c76119e18",
+  "previous_manifest": "prior-704f3bbe54fe566c65de84da1b57757a11888c1721783d2aa5e80ee7021f566d.json",
+  "expected_capture_count": 144,
+  "status": "complete"
+}

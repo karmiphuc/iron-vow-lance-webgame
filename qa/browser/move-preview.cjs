@@ -17,7 +17,7 @@ module.exports=async function checkMovePreview({page,mobile,origin,tap}){
   window.movePreviewQA={u,ap:u.ap,move:u.moveLeft};
   return {names:foes.map(foe=>foe.name),ap:u.ap};
  });
- await page.waitForFunction(()=>imageReady(moduleImages['theater-tiles']));
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  const point=await page.evaluate(()=>project(7,0,10));
  const preview=page.locator('#move-preview');
  const click=()=>mobile?page.touchscreen.tap(point.x,point.y):page.mouse.click(point.x,point.y);

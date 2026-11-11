@@ -15,6 +15,7 @@ const presets=[
  {id:'burning-wreck',contract:1,wreck:true,advanceSeconds:2},
  {id:'rig-bench',path:'rig-bench/'}
 ];
+const phase1Presets=[0,5,6,7,8,9,10,12].map(liveFrame=>({id:'live-frame-'+liveFrame,contract:1,liveFrame}));
 // Serialized into the page by Playwright. No production test hooks or save-schema edits.
 function setGamePreset(preset){
  save=fresh();battle=null;selected=preset.selected??0;effects=[];clock=5;last=5000-1000/60;
@@ -29,8 +30,9 @@ function setGamePreset(preset){
   if(preset.paint)document.querySelector('.paint-panel')?.scrollIntoView?.({block:'center',behavior:'instant'});
   return;
  }
- page='contracts';createBattle(preset.contract);selected=0;action='move';
+ page='contracts';if(preset.liveFrame!==undefined)save.units[0].frame=preset.liveFrame;createBattle(preset.contract);selected=0;action='move';
  const ally=battle.units.find(u=>u.team==='ally'),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+ if(preset.liveFrame!==undefined)surveyTerrain(101);
  if(!ally||!foe)throw Error('Capture fixture requires an ally and a hostile mech');
  if(typeof focusBattleCamera==='function')focusBattleCamera(ally,true);
  if(preset.overview&&typeof fieldCamera!=='undefined')fieldCamera.overview=true;
@@ -64,4 +66,4 @@ function setGamePreset(preset){
  }
  render();
 }
-module.exports={viewports,presets,setGamePreset};
+module.exports={viewports,presets,phase1Presets,setGamePreset};

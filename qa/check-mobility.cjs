@@ -57,7 +57,8 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('selected'),0);
 
  const keys=run('Object.keys(window.IRON_VOW_TRAVEL)');
- assert.equal(keys.filter(key=>!key.startsWith('shogun')).length,17);
+ assert.equal(keys.length,14);
+ assert.ok(!keys.some(key=>key==='warden'||/^foundry-[0-5]$/.test(key)),'Live-frame travel data is deleted');
  assert.deepEqual(Array.from(keys.filter(key=>key.startsWith('shogun'))).sort(),
   ['shogun','shogun-bare','shogun-cleaver','shogun-vesper']);
  for(const key of keys){
@@ -66,7 +67,7 @@ const simulate=require('./sim-harness.cjs');
   assert.ok(fs.existsSync(path.join(__dirname,'../dist/assets',visual.key+'.webp')));
  }
  const bins=run(`[[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dz])=>{
-  current().heading=headingTo(dx,dz);return travelVisual(current(),clock).heading;
+  const walker=battle.units.find(u=>u.frame===1);walker.heading=headingTo(dx,dz);return travelVisual(walker,clock).heading;
  })`);
  assert.deepEqual(Array.from(bins),[2,0,1,3]);
  for(const kind of ['tank','helicopter']){
