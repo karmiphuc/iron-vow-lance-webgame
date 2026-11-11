@@ -4,7 +4,7 @@ Capture collection is in progress. Phase 0 remains a draft until the complete ma
 
 The owner explicitly approved local Playwright screenshots for this work in [PR #7](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/7#issuecomment-6785288934). AGENTS.md links that approval. Local browser operation is authorized, including in the hosted environment.
 
-Actual baseline, candidate and reference screenshots have been captured. Hangar, paint, attack and reference Rig Bench images have been inspected. The full matrix is still running; partial output does not establish a complete visual gate. Capture evidence and its source/hash manifest will be committed after collection and review.
+Actual baseline, candidate and reference screenshots have been captured. Hangar, paint, attack and reference Rig Bench images have been inspected. A [reviewed local subset](local-proof-20261111/manifest.json) records image hashes, source commits and the unchanged runtime tree across QA-only commits. It includes [the performance overlay](local-proof-20261111/hangar-perf.png), [paint controls](local-proof-20261111/paint.png), [a shotgun impact](local-proof-20261111/attack-shotgun.png), and [actual body/cockpit kill captures](local-proof-20261111/desktop-contact.png). The full matrix is still running; this subset does not establish a complete visual gate.
 
 Use `node qa/capture.cjs --plan` to inspect the matrix, then run against an explicitly supplied local or hosted preview URL:
 
