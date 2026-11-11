@@ -8,6 +8,14 @@ const pelvis=add('pelvis'),spine=add('spine',pelvis);add('neck',spine);
 for(const s of ['L','R']) {let p=spine;for(const n of ['shoulder','elbow','wrist','socket'])p=add(`${n}.${s}`,p);p=pelvis;for(const n of ['hip','knee','ankle'])p=add(`${n}.${s}`,p);}
 const meshNode=add('geometry');g.nodes[meshNode].mesh=0;
 assert.equal(validate(g).ok,true);
+// A name-complete skeleton must still connect each major limb to the body.
+for(const [parentName,childName] of [['root','pelvis'],['pelvis','spine'],['spine','neck'],['spine','shoulder.L'],['pelvis','hip.R']]) {
+  const parent=g.nodes.find(n=>n.name===parentName),child=g.nodes.findIndex(n=>n.name===childName);
+  parent.children=parent.children.filter(i=>i!==child);
+  assert(validate(g).errors.some(e=>e===`${childName} is not below ${parentName}`), `${childName} must be attached below ${parentName}`);
+  parent.children.push(child);
+}
+
 assert.equal(renderedTriangles(g),100);
 const instance=add('instance');g.nodes[instance].mesh=0;
 assert.equal(renderedTriangles(g),200,'instances must count towards rendered budget');

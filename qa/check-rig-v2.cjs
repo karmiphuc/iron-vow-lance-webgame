@@ -52,7 +52,7 @@ function validate(g, weapons=[]) {
     while(queue.length) {const i=queue.pop(); if(seen.has(i)) continue; seen.add(i); for(const c of nodes[i]?.children||[]) {if(c===child)return true; queue.push(c);} }
     return false;
   }
-  for(const chain of [...arms,...chains]) for(let i=1;i<chain.length;i++) if(byName.has(chain[i-1]) && byName.has(chain[i]) && !descends(byName.get(chain[i-1]),byName.get(chain[i]))) errors.push(`${chain[i]} is not below ${chain[i-1]}`);
+  for(const chain of [['root','pelvis','spine','neck'],...arms.map(chain=>['spine',...chain]),...chains.map(chain=>['pelvis',...chain])]) for(let i=1;i<chain.length;i++) if(byName.has(chain[i-1]) && byName.has(chain[i]) && !descends(byName.get(chain[i-1]),byName.get(chain[i]))) errors.push(`${chain[i]} is not below ${chain[i-1]}`);
   const materials=new Set((g.materials||[]).map(m=>m.name));
   for(const slot of slots) if(!materials.has(slot)) errors.push(`missing material ${slot}`);
   for(const [i,m] of meshes.entries()) if(!parts.has(m.extras?.part)) errors.push(`mesh ${i} (${m.name||'unnamed'}) missing or invalid extras.part`);
