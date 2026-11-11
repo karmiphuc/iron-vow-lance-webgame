@@ -1,12 +1,15 @@
 /* Seeded campaign commands, real runtime bones, 30 Hz controlled clock. GPU captures run separately. */
-const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{execFileSync}=require('node:child_process');
 const {chromium}=require('playwright');
 const url=process.env.IRON_VOW_URL||'http://127.0.0.1:5176/';
 const count=Number(process.env.IRON_VOW_SCENE_BATTLES||30),out=path.resolve(process.env.IRON_VOW_SCENE_REPORT||'scene-report.json');
 const live=[0,5,6,7,8,9,10,12];
 (async()=>{
  const tileOverride=process.env.IRON_VOW_SCENE_TILE?Number(process.env.IRON_VOW_SCENE_TILE):null;
- const report={schema:1,url,clockHz:30,tileOverride,renderPolicy:'First scene rendered normally; subsequent bone soak skips GPU submissions. No performance claim.',overlapPolicy:'Reference 80% footprint margin; convex hull of actual ankle mesh bounds, rather than a circumscribed radius. Circle candidates are also counted.',battles:[],errors:[]};
+ const root=path.resolve(__dirname,'..'),git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
+ const source={commit:git('rev-parse','HEAD'),distTree:git('rev-parse','HEAD:dist'),distDirty:Boolean(git('status','--porcelain','--','dist')),checkerSha256:crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex')};
+ if(count>=30){assert.equal(source.distDirty,false,'The formal soak requires committed, immutable application source');assert.equal(tileOverride,null,'The formal soak tests the production pitch');}
+ const report={schema:1,url,source,clockHz:30,tileOverride,renderPolicy:'First scene rendered normally; subsequent bone soak skips GPU submissions. No performance claim.',overlapPolicy:'Reference 80% footprint radii, actual ankle-mesh footprint hulls with the same margin, and actual cover bounds with the reference half-radius margin.',battles:[],errors:[]};
  const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});
  try{
   const page=await browser.newPage({viewport:{width:1366,height:1024}});
@@ -16,6 +19,8 @@ const live=[0,5,6,7,8,9,10,12];
   });
   await page.addInitScript(()=>{
    const request=requestAnimationFrame.bind(window),cancel=cancelAnimationFrame.bind(window),pending=new Set();
+   const get=HTMLCanvasElement.prototype.getContext,contexts=new Set();window.__sceneWebglContexts=0;
+   HTMLCanvasElement.prototype.getContext=function(type,...args){const result=get.call(this,type,...args);if(/webgl/.test(type)&&result){contexts.add(result);window.__sceneWebglContexts=contexts.size;}return result;};
    window.requestAnimationFrame=fn=>{const id=request(t=>{pending.delete(id);fn(t);});pending.add(id);return id;};
    window.__qaStopNativeFrames=()=>{for(const id of pending)cancel(id);pending.clear();};
   });
@@ -27,6 +32,7 @@ const live=[0,5,6,7,8,9,10,12];
    await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
    await page.evaluate(()=>{IronVowRenderer.get().render=()=>{};});
   }
+  assert.equal(await page.evaluate(()=>__sceneWebglContexts),1,'One actual WebGL context across all eight frames and previews');
   await page.evaluate(()=>__qaStopNativeFrames());
   const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
   await page.evaluate(()=>{
@@ -68,8 +74,11 @@ const live=[0,5,6,7,8,9,10,12];
     const units=s.units.filter(u=>u.live&&u.alive&&u.root);
     for(let i=0;i<units.length;i++)for(let j=i+1;j<units.length;j++){
      const a=units[i],b=units[j],d=Math.hypot(a.root[0]-b.root[0],a.root[2]-b.root[2]);
-     if(d<(a.radius+b.radius)*.8)q.circleCandidates++;
+     if(d<(a.radius+b.radius)*.8){q.circleCandidates++;fail('overlap',a,{other:b.id,distance:d,threshold:(a.radius+b.radius)*.8,source:'reference footprint radii'});}
      if(overlaps(a,b))fail('overlap',a,{other:b.id,distance:d,footprintA:a.footprint,footprintB:b.footprint});
+    }
+    for(const u of units)for(const cover of s.covers){const x=Math.max(cover.min[0],Math.min(cover.max[0],u.root[0])),z=Math.max(cover.min[2],Math.min(cover.max[2],u.root[2]));
+     if(Math.hypot(u.root[0]-x,u.root[2]-z)<u.radius*.5)fail('overlap',u,{source:'cover',cover});
     }
    };
    const schedule=fn=>setTimeout(()=>{fn(performance.now());if(fn===draw)afterFrame();},1000/30);
@@ -104,6 +113,9 @@ const live=[0,5,6,7,8,9,10,12];
    console.log(JSON.stringify({seed,frames,ticks:result.ticks,result:result.result?.win,anomalies:result.anomalies,errors:result.commandErrors}));
    assert.deepEqual(result.commandErrors,[]);assert.ok(result.ticks>0,'No animation ticks checked');
   }
+  report.webglContexts=await page.evaluate(()=>__sceneWebglContexts);assert.equal(report.webglContexts,1);
+  assert.equal(git('rev-parse','HEAD:dist'),source.distTree,'Application tree stayed immutable during the run');assert.equal(Boolean(git('status','--porcelain','--','dist')),source.distDirty);
+  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),source.checkerSha256,'Checker stayed immutable during the run');
   assert.deepEqual(report.errors,[],'Browser errors');assert.equal(report.battles.flatMap(b=>b.anomalies).length,0,'Scene anomalies');
   assert.deepEqual([...new Set(report.battles.flatMap(b=>b.frames))].sort((a,b)=>a-b),live,'Every live frame covered');
   console.log('PASS '+count+' seeded campaign battles, '+report.battles.reduce((n,b)=>n+b.ticks,0)+' actual-bone ticks');

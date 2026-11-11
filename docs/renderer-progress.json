@@ -9,6 +9,12 @@
       "source": "Direct reply to the Phase 1 native-measurement question",
       "instruction": "Dont care, just cont",
       "effect": "Continue implementation and PR merging without waiting for native iPad measurements. Native measurements remain untested; do not invent passing metrics."
+    },
+    {
+      "date": "2026-11-11",
+      "source": "Reply to the spacing/stride design question",
+      "instruction": "Allow spacing and clearance adjustments",
+      "effect": "May adapt visual tile pitch and stride clearance to prevent overlaps on legal campaign paths; retain gameplay rules and action timings."
     }
   ],
   "phases": [
@@ -36,7 +42,7 @@
         4243,
         4244
       ],
-      "development_scene_findings": "All three default-pitch battles finished without ground/slide errors; footprint overlaps remain. A 4.5 m study did not clear the gate. Awaiting owner design preference before spacing changes.",
+      "development_scene_findings": "Footprint overlap remains; owner has approved spacing and clearance adjustments to resolve it. The 4.5 m study failed and is not a production change.",
       "handoff": "docs/phase1-development.md"
     },
     {

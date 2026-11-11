@@ -16,7 +16,7 @@ function load(){
    asset={...data,carbine:carbine.scene,melee:melee.scene,clip:new T.AnimationClip('BST-04 Combat',-1,tracks),
     start:Math.min(...tracks.map(track=>track.times[0]))};
    window.dispatchEvent(new window.Event('bastion-art-ready'));
-  }).catch(error=>console.warn('Bastion using still art',error));
+  }).catch(error=>{window.IronVowRenderer.fatal(error);throw error;});
  }
  return pending;
 }
@@ -25,7 +25,7 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const points=['body','pilot','right','left','legs'];
 const base=t=>new T.Color(t).convertSRGBToLinear();
 function build(){
- if(!asset){load();return null}
+ if(!asset){load().catch(()=>{});return null}
  const cont=new T.Group(),body=asset.scene.clone(true),mixer=new T.AnimationMixer(body);
  cont.add(body);
  const action=mixer.clipAction(asset.clip);

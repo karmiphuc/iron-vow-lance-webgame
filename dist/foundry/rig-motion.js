@@ -249,7 +249,9 @@ function animateMech(m,I,dt,t){
       else if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
       else{if(!L.swing){L.swing=true;L.from.copy(L.foot);L.swingBegin=L.startSwing?ph:duty;L.startSwing=false;}const q=(ph-(L.swingBegin??duty))/(1-(L.swingBegin??duty));L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=I.groundAt?I.groundAt(L.to.x,L.to.z)+D.ankleH*sc:home.y;
         L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;pitch=q<.3?.45*Math.sin(PI*q/.3):q>.62?-.35*Math.sin(PI*(q-.62)/.38):0;}}
-    else{L.recovery=null;if(L.swing){L.swing=false;L.planted.copy(L.foot);L.planted.y=I.groundAt?I.groundAt(L.planted.x,L.planted.z)+D.ankleH*sc:home.y;}
+    else{L.recovery=null;if(L.swing){L.swing=false;
+        if(I.groundAt&&!dead)L.settle={from:l.an.getWorldPosition(V3()),t:0};
+        else{L.planted.copy(L.foot);L.planted.y=I.groundAt?I.groundAt(L.planted.x,L.planted.z)+D.ankleH*sc:home.y;}}
       if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
         if(q>=1){L.planted.copy(home);L.settle=null;I.onStep&&I.onStep(m,home,i,.45);}}
       else{if(!dead&&!settling&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}

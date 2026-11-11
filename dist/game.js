@@ -3842,10 +3842,10 @@ function fieldScale(){
 function zoomField(factor){
  if(!battle||battle.busy)return;
  const {fit,close}=fieldScale();
- const from=fieldCamera.overview?fit/close:viewZoom;
- viewZoom=Math.min(1.65,Math.max(fit/close,from*factor));
+ const minimum=window.IronVowScene?.overviewZoom??fit/close,from=fieldCamera.overview?minimum:viewZoom;
+ viewZoom=Math.min(1.65,Math.max(minimum,from*factor));
  if(fieldCamera.overview){
-  if(viewZoom===fit/close)return;
+  if(viewZoom===minimum)return;
   fieldCamera.x=(battle.size.width-1)/2;fieldCamera.z=(battle.size.depth-1)/2;
   fieldCamera.overview=false;renderBattle();
  }
@@ -4185,7 +4185,7 @@ window.__ironVow=(()=>{
   createBattle(options.contract??1);action='move';render();return snapshot();
  }
  function snapshot(){
-  return {seed,time:clock,busy:Boolean(battle?.busy),pending:Boolean(pending),phase:battle?.phase,turn:battle?.turn,size:battle?.size,result:!battle?save.history.at(-1):null,ready:window.IronVowScene.ready,renderer:window.IronVowRenderer.metrics(),
+  return {seed,time:clock,busy:Boolean(battle?.busy),pending:Boolean(pending),phase:battle?.phase,turn:battle?.turn,size:battle?.size,result:!battle?save.history.at(-1):null,ready:window.IronVowScene.ready,renderer:window.IronVowRenderer.metrics(),covers:window.IronVowScene.covers,
    units:(battle?.units||[]).map(u=>{const record=window.IronVowScene.models.get(u.id),m=record?.entry?.m,feet=[],footprint=[];
     if(m?.rig)for(let i=0;i<m.rig.legs.length;i++){const leg=m.rig.legs[i],state=m.legs[i],p=leg.an.getWorldPosition(new THREE.Vector3());
      const contact=state.kneeContact&&leg.kneeShoe?.localToWorld(new THREE.Vector3(0,-.3155,.035));

@@ -14,13 +14,13 @@ The new actual-bone campaign checker found startup/turn overreach and a quad idl
 
 `qa/check-scene-regressions.cjs` reproduces the old gait failure using the animator from `18f34e1`: model 0's planted ankle was 0.405 m off the floor. The current six-kit start/stop/right-angle fixture passes the unchanged 0.15 m ground and 0.30 m slide limits, with numerical-scale residuals. The campaign checker also reads real GLB bones and exact campaign commands.
 
-The latest three-seed development run (4242–4244) completed all battles with no foot-ground/foot-slide errors, but a footprint overlap remains during a legal move near Behemoth. This is unresolved. A test-only 4.5 m grid experiment still reported overlap and is not a production change. The overlap checker records reference circle candidates and tests actual ankle-mesh footprint hulls with the reference 80% margin; the exact collision evidence needs review before declaring the gate passed.
+The latest three-seed development run (4242–4244) completed all battles with no foot-ground/foot-slide errors, but a footprint overlap remains during a legal move near Behemoth. This is unresolved. A test-only 4.5 m grid experiment still reported overlap and is not a production change. The checker now enforces the reference 80% footprint radii as well as actual ankle-mesh hulls and cover bounds. The owner approved spacing and clearance adjustments. A 6.8 m horizontal pitch, with terrain heights kept at the original 3.4 m scale, cleared the three-seed trial (13,989 ticks). The 30-seed gate is still pending.
 
 Most recent complete pure suite run: 45 suites passed after retiring four obsolete sprite/filter test files and adding actual rigid-binding and world-gait checks. Procurement, saves, migration, combat/AP, campaign completion, roster and DOM checks remain. Rendering assertions moved from the Node canvas tests to Chromium. Additional edits after that run still require final verification.
 
 Outstanding before merge:
 
-1. Resolve the actual overlap evidence without weakening the gate or changing rules. Obtain owner approval before any material visual departure from #6.
+1. Complete the full clearance soak at the owner-approved spacing, preserving rules and action timings.
 2. Finish/run `qa/browser/shared-scene.cjs`: actual context count, raycasts, controls, overlays, Skip, real `WEBGL_lose_context` recovery, and a 10×10 checkpoint fixture.
 3. Verify delayed billboard image loads redraw correctly; captures exposed a cached shadow-only vehicle before invalidation/readiness was added.
 4. Retire or adapt the remaining browser tests that assert replaced 2D paths; wire the shared-scene case into the maintained browser entrypoint.
@@ -31,3 +31,5 @@ Outstanding before merge:
 Native iPad Safari/Chrome measurements remain untested. The owner's “Dont care, just cont” direction makes waiting for those measurements nonblocking; it does not certify native performance.
 
 Phase 3 still requires the owner's Blender MCP and external `.blend` files. Their absence does not block completing Phases 1–2. No Site deployment has been made.
+
+Owner direction: “Allow spacing and clearance adjustments” (reply to the documented grid study). The current 6.8 m pitch keeps the required 0.9 chassis scale and adds room for full planted strides on legal adjacent tiles. Terrain height is decoupled from that horizontal pitch. Close-camera scale and overview zoom transition are adapted to preserve legibility; final captures remain pending.

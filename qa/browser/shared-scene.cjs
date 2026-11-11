@@ -1,15 +1,22 @@
 const assert=require('node:assert/strict');
 const legacy=require('../fixtures/legacy-10x10-scene.json');
 module.exports=async function sharedScene({page,context,mobile,origin,tap}){
+ await page.emulateMedia({reducedMotion:'no-preference'});
  await page.addInitScript(()=>{
   const get=HTMLCanvasElement.prototype.getContext,contexts=new Set();window.__webglContextCount=0;
-  HTMLCanvasElement.prototype.getContext=function(type,...args){const result=get.call(this,type,...args);if(/webgl/.test(type)&&result){contexts.add(result);window.__webglContextCount=contexts.size;}return result;};
+  const request=requestAnimationFrame.bind(window),cancel=cancelAnimationFrame.bind(window),frames=new Set();
+  window.requestAnimationFrame=fn=>{const id=request(t=>{frames.delete(id);fn(t);});frames.add(id);return id;};
+  window.__stopNativeSceneFrames=()=>{for(const id of frames)cancel(id);frames.clear();};
+  HTMLCanvasElement.prototype.getContext=function(type,...args){if(/webgl/.test(type))args[0]={...args[0],preserveDrawingBuffer:true};const result=get.call(this,type,...args);if(/webgl/.test(type)&&result){contexts.add(result);window.__webglContextCount=contexts.size;}return result;};
+  window.__readBattlePixels=()=>{const gl=IronVowRenderer.get().getContext(),pixels=new Uint8Array(32*32*4);gl.readPixels(Math.floor(gl.drawingBufferWidth/2),Math.floor(gl.drawingBufferHeight/2),32,32,gl.RGBA,gl.UNSIGNED_BYTE,pixels);let visible=0;for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>10)visible++;return visible;};
  });
  await page.goto(origin,{waitUntil:'domcontentloaded',timeout:120000});
  await page.waitForFunction(()=>window.__ironVow&&document.querySelector('#nav button'));
  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[10,8,7]}));
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ console.log('shared scene ready: '+(mobile?'touch':'desktop'));
  assert.equal(await page.evaluate(()=>__webglContextCount),1,'One actual WebGL context, including UI previews');
+ assert.ok(await page.evaluate(()=>__readBattlePixels())>64,'Actual main framebuffer contains the rendered battlefield');
  const picks=await page.evaluate(()=>{
   const s=__ironVow.snapshot(),camera=IronVowScene.camera;let tested=0;
   for(let z=0;z<s.size.depth;z++)for(let x=0;x<s.size.width;x++){
@@ -23,11 +30,13 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);
  await tap('#map-center');await page.waitForFunction(()=>!fieldCamera.overview);
  assert.deepEqual(await page.evaluate(()=>[fieldCamera.x,fieldCamera.z]),await page.evaluate(()=>[current().x,current().z]));
+ console.log('raycasts, Overview and centre passed');
  const radar=await page.locator('#map-radar').boundingBox();
  await page.mouse.click(radar.x+radar.width*.75,radar.y+radar.height*.25);
  const jump=await page.evaluate(()=>({x:fieldCamera.x,z:fieldCamera.z,size:battle.size}));
  assert.ok(Math.abs(jump.x-(jump.size.width*.75-.5))<.2&&Math.abs(jump.z-(jump.size.depth*.25-.5))<.2,'Tactical map jumps to tapped location');
  await tap('#map-center');
+ console.log('map jump, zoom and pan passed');
  const start=await page.evaluate(()=>({x:fieldCamera.x,z:fieldCamera.z,zoom:viewZoom}));
  if(mobile){
   const cdp=await context.newCDPSession(page),x=page.viewportSize().width*.5,y=page.viewportSize().height*.5;
@@ -39,12 +48,13 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
   await page.mouse.move(600,470);await page.mouse.wheel(0,-120);
  }
  await page.waitForFunction(zoom=>viewZoom>zoom,start.zoom);
+ console.log('wheel/pinch zoom passed');
  await page.mouse.move(mobile?150:600,470);await page.mouse.down();await page.mouse.move(mobile?195:655,510,{steps:4});await page.mouse.up();
  assert.ok(await page.evaluate(({x,z})=>Math.hypot(fieldCamera.x-x,fieldCamera.z-z)>.01,start),'Pointer drag pans through world-space rays');
  await tap('#map-center');
  const move=await page.evaluate(()=>{
   const u=current(),free=freeMovement(u),moves=__ironVow.legalMoves(u.id).filter(m=>m.cost>free);
-  return moves.map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-280&&m.p.y>230&&m.p.y<innerHeight-180);
+  return moves.map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-280&&m.p.y>230&&m.p.y<innerHeight-180&&IronVowScene.pick(m.p.x,m.p.y)?.team!=='enemy');
  });
  if(move&&!mobile){await page.mouse.move(move.p.x,move.p.y);await page.waitForFunction(()=>IronVowScene.overlayInfo().path.length>0);const info=await page.evaluate(()=>IronVowScene.overlayInfo());assert.ok(info.triangles>0&&info.path.some(p=>p.color===0xcc9b49),'Reach and paid-move path render actual amber geometry');assert.equal(info.selected,true);}
  let attack;
@@ -59,19 +69,35 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
   await page.waitForFunction(()=>!__ironVow.pending,null,{timeout:120000});
  }
  assert.ok(attack,'Real campaign deployment has a legal attack');
+ console.log('legal campaign attack ready');
+ // Hold short camera stages on software GL while still drawing the real scene and running real timers.
+ await page.evaluate(()=>__stopNativeSceneFrames());
+ const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
+ await page.evaluate(()=>{last=performance.now();requestAnimationFrame(draw);});
  await page.evaluate(a=>{void __ironVow.attack(a.id,a.target,a.part,a.mode);},attack);
- await page.waitForFunction(()=>activeCinematic);
+ assert.equal(await page.evaluate(()=>Boolean(activeCinematic)),true,'Real attack opens the camera');
+ await page.clock.fastForward(34);
  assert.equal(await page.evaluate(()=>IronVowScene.camera.isPerspectiveCamera),true);
- await tap('#skip-shot');await page.waitForFunction(()=>!__ironVow.pending&&!activeCinematic,null,{timeout:120000});
+ await page.evaluate(()=>document.querySelector('#skip-shot').click());
+ for(let i=0;i<20&&await page.evaluate(()=>__ironVow.pending);i++)await page.clock.fastForward(1000);
+ assert.equal(await page.evaluate(()=>__ironVow.pending||Boolean(activeCinematic)),false,'Skip resolves the real exchange');
+ console.log('3D attack camera and Skip passed');
  const before=await page.evaluate(()=>({checkpoint:__ironVow.checkpoint(),generation:IronVowRenderer.generation}));
  // The extension exercises real GL resource loss; the game state must survive untouched.
- await page.evaluate(()=>IronVowRenderer.get().getContext().getExtension('WEBGL_lose_context').loseContext());
- await page.waitForFunction(()=>IronVowRenderer.lost);
- await page.evaluate(()=>IronVowRenderer.get().getContext().getExtension('WEBGL_lose_context').restoreContext());
- await page.waitForFunction(()=>!IronVowRenderer.lost&&IronVowScene.ready,null,{timeout:120000});
+ await page.evaluate(()=>{window.__loseContext=IronVowRenderer.get().getContext().getExtension('WEBGL_lose_context');__loseContext.loseContext();});
+ for(let i=0;i<100&&!await page.evaluate(()=>IronVowRenderer.lost);i++)await new Promise(resolve=>setTimeout(resolve,25));
+ assert.equal(await page.evaluate(()=>IronVowRenderer.lost),true,'Actual context-loss event is observed');
+ await page.evaluate(()=>__loseContext.restoreContext());
+ for(let i=0;i<100&&await page.evaluate(()=>IronVowRenderer.lost);i++)await new Promise(resolve=>setTimeout(resolve,25));
+ await page.clock.fastForward(34);
+ assert.equal(await page.evaluate(()=>!IronVowRenderer.lost&&IronVowScene.ready),true,'Context restoration rebuilds the live scene');
  const after=await page.evaluate(()=>({checkpoint:__ironVow.checkpoint(),generation:IronVowRenderer.generation,contexts:__webglContextCount}));
+ assert.ok(await page.evaluate(()=>__readBattlePixels())>64,'The restored context actually redraws the battlefield');
  assert.deepEqual(after.checkpoint,before.checkpoint,'Context restoration rebuilds presentation from exact game state');assert.equal(after.generation,before.generation+1);assert.equal(after.contexts,1);
- await page.evaluate(record=>__ironVow.loadCareer(record),legacy);await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ console.log('actual context restoration and preserved checkpoint passed');
+ await page.evaluate(record=>__ironVow.loadCareer(record),legacy);
+ for(let i=0;i<100&&!await page.evaluate(()=>IronVowScene.ready);i++){await new Promise(resolve=>setTimeout(resolve,25));await page.clock.fastForward(34);}
+ assert.equal(await page.evaluate(()=>IronVowScene.ready),true,'Legacy scene is fully loaded');
  assert.deepEqual(await page.evaluate(()=>__ironVow.snapshot().size),{width:10,depth:10});
  const restored=await page.evaluate(()=>__ironVow.checkpoint());assert.equal(restored.legacy,true);
  assert.ok(await page.evaluate(()=>__ironVow.legalMoves(__ironVow.snapshot().units.find(u=>u.team==='ally').id).some(m=>m.cost>0)),'Legacy checkpoint remains playable');

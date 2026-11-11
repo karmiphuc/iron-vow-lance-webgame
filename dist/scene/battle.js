@@ -1,7 +1,7 @@
 /* Shared battle scene. Game state owns rules and movement; this module owns presentation. */
 (function(root){
 'use strict';
-const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=3.4;
+const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=6.8,HEIGHT=3.4;
 const LIVE=new Set([0,5,6,7,8,9,10,12]);
 let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup;
 let cameraReady=false,lightningAt=4,lightning=0;
@@ -11,9 +11,19 @@ const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){return !u.kind&&LIVE.has(u.frame);}
 function world(x,z,y){
  const size=battle.size;
- return V3((x-(size.width-1)/2)*TILE,y??terrainHeight(x,z)*TILE,(z-(size.depth-1)/2)*TILE);
+ return V3((x-(size.width-1)/2)*TILE,y??terrainHeight(x,z)*HEIGHT,(z-(size.depth-1)/2)*TILE);
 }
-function groundAt(x,z){return terrainHeight(x/TILE+(battle.size.width-1)/2,z/TILE+(battle.size.depth-1)/2)*TILE;}
+function groundAt(x,z){
+ const fx=x/TILE+(battle.size.width-1)/2,fz=z/TILE+(battle.size.depth-1)/2,tx=Math.round(fx),tz=Math.round(fz);
+ if(tx<0||tz<0||tx>=battle.size.width||tz>=battle.size.depth)return-.18;
+ const mesh=groundMeshes[tz*battle.size.width+tx];if(!mesh)return terrainHeight(fx,fz)*HEIGHT;
+ // Interpolate the actual rendered plate triangle, rather than a different analytic surface under the feet.
+ const u=Math.max(0,Math.min(4,((fx-tx)*TILE/(TILE-.1)+.5)*4)),v=Math.max(0,Math.min(4,((fz-tz)*TILE/(TILE-.1)+.5)*4));
+ const ix=Math.min(3,Math.floor(u)),iz=Math.min(3,Math.floor(v)),a=iz*5+ix,b=a+5,c=b+1,d=a+1,h=mesh.geometry.attributes.position;
+ const sx=u-ix,sz=v-iz;
+ return sx+sz<=1?h.getY(a)+sx*(h.getY(d)-h.getY(a))+sz*(h.getY(b)-h.getY(a)):
+  h.getY(c)+(1-sx)*(h.getY(b)-h.getY(c))+(1-sz)*(h.getY(d)-h.getY(c));
+}
 function disposeTree(node){
  const seen=new Set();node.traverse(o=>{
   if(o.geometry&&!seen.has(o.geometry)){seen.add(o.geometry);o.geometry.dispose();}
@@ -37,7 +47,7 @@ function plate(x,z){
  const positions=geometry.attributes.position;
  for(let i=0;i<positions.count;i++){
   const px=x+positions.getX(i)/TILE,pz=z+positions.getZ(i)/TILE;
-  positions.setY(i,terrainHeight(px,pz)*TILE);
+  positions.setY(i,terrainHeight(px,pz)*HEIGHT);
  }
  geometry.computeVertexNormals();return geometry;
 }
@@ -67,9 +77,9 @@ function build(){
  for(const [x,z,w,d] of [[0,-battle.size.depth*TILE/2,battle.size.width*TILE,.3],[0,battle.size.depth*TILE/2,battle.size.width*TILE,.3],[-battle.size.width*TILE/2,0,.3,battle.size.depth*TILE],[battle.size.width*TILE/2,0,.3,battle.size.depth*TILE]]){
   const mesh=new T.Mesh(new T.BoxGeometry(w,.16,d),edgeMaterial);mesh.position.set(x,-.08,z);mesh.receiveShadow=true;board.add(mesh);
  }
- for(const key of battle.cover){const [x,z]=key.split(',').map(Number),cover=kit.buildCover(key);cover.position.y=terrainHeight(x,z)*TILE;board.add(cover);coverMeshes.push(cover);}
+ for(const key of battle.cover){const [x,z]=key.split(',').map(Number),cover=kit.buildCover(key);cover.position.y=terrainHeight(x,z)*HEIGHT;board.add(cover);cover.userData.bounds=new T.Box3().setFromObject(cover);coverMeshes.push(cover);}
  kit.buildProps(board,index);
- const ring=color=>{const m=new T.Mesh(new T.RingGeometry(1.35,1.46,48),new T.MeshBasicMaterial({color,transparent:true,opacity:.9,depthWrite:false,side:T.DoubleSide}));m.rotation.x=-Math.PI/2;m.renderOrder=3;scene.add(m);return m;};
+ const ring=color=>{const m=new T.Mesh(new T.RingGeometry(TILE*.4,TILE*.43,48),new T.MeshBasicMaterial({color,transparent:true,opacity:.9,depthWrite:false,side:T.DoubleSide}));m.rotation.x=-Math.PI/2;m.renderOrder=3;scene.add(m);return m;};
  selection=ring(0xe6b76a);targetRing=ring(0xe2846e);
  pathGroup=new T.Group();scene.add(pathGroup);
  const surface=document.createElement('canvas');surface.width=surface.height=64;const g=surface.getContext('2d');
@@ -111,7 +121,7 @@ function updateCamera(t,dt){
  const usable=Math.max(200,innerWidth-(mobile?24:380)),hf=2*Math.atan(Math.tan(fov*Math.PI/360)*usable/innerHeight);
  const fit=Math.max(size.width*TILE*1.3/(2*Math.tan(hf/2)),size.depth*TILE*.9/(2*Math.tan(fov*Math.PI/360)));
  const target=fieldCamera.overview?world((size.width-1)/2,(size.depth-1)/2):world(fieldCamera.x,fieldCamera.z);
- const distance=fieldCamera.overview?fit:fit*.47/Math.max(.2,viewZoom),az=mobile?0:Math.PI/4,el=mobile?.8:.66;
+ const distance=fieldCamera.overview?fit:fit*overviewZoom/Math.max(overviewZoom,viewZoom),az=mobile?0:Math.PI/4,el=mobile?.8:.66;
  const position=target.clone().add(V3(Math.sin(az)*Math.cos(el),Math.sin(el),Math.cos(az)*Math.cos(el)).multiplyScalar(distance));
  const shot=activeCinematic;
  if(shot&&!reducedMotion){
@@ -189,7 +199,7 @@ function render(t,dt){
  renderer.setRenderTarget(null);renderer.render(scene,camera);root.IronVowPerformance?.recordRender(renderer.info);
 }
 function project(x,y,z){
- if(!scene||battleRef!==battle)build();const p=world(x,z,y*TILE).project(camera);
+ if(!scene||battleRef!==battle)build();const p=world(x,z,y*HEIGHT).project(camera);
  return {x:(p.x+1)*innerWidth/2,y:(1-p.y)*innerHeight/2,z:p.z};
 }
 function ray(x,y){pointer.set(x/innerWidth*2-1,1-y/innerHeight*2);raycaster.setFromCamera(pointer,camera);return raycaster;}
@@ -204,7 +214,9 @@ function pan(dx,dy){
  if(!scene)return;const a=ray(innerWidth/2,innerHeight/2).ray.intersectPlane(plane,V3()),b=ray(innerWidth/2+dx,innerHeight/2+dy).ray.intersectPlane(plane,V3());
  if(!a||!b)return;fieldCamera.x=Math.max(-.5,Math.min(battle.size.width-.5,fieldCamera.x+(a.x-b.x)/TILE));fieldCamera.z=Math.max(-.5,Math.min(battle.size.depth-.5,fieldCamera.z+(a.z-b.z)/TILE));
 }
-root.IronVowScene={isLive,render,project,projectWorld,screenTile,pick,pan,partPoint,attachmentPoint,labelPoint,groundAt,world,clear,
+const overviewZoom=.47*3.4/TILE;
+root.IronVowScene={isLive,render,project,projectWorld,screenTile,pick,pan,partPoint,attachmentPoint,labelPoint,groundAt,world,clear,overviewZoom,
+ get covers(){return coverMeshes.map(m=>({min:m.userData.bounds.min.toArray(),max:m.userData.bounds.max.toArray()}));},
  overlayInfo(){return {triangles:overlays.geometry.index.count/3,path:pathGroup.children.filter(m=>m.visible).map(m=>({position:m.position.toArray(),color:m.material.color.getHex()})),selected:selection.visible,target:targetRing.visible};},
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
  get camera(){return camera;},get scene(){return scene;},get models(){return models;},get ready(){return Boolean(scene&&battleRef===battle&&battle?.units.every(u=>isLive(u)?models.get(u.id)?.entry.armed:root.IronVowBillboards.ready(u.id)));}

@@ -21,7 +21,7 @@ function load(url,motionUrl){
    const root=gltf.scene.getObjectByName('Painted_Warden');
    if(!root)throw Error('Painted Warden root is missing');
    asset=root;motion=clips;return asset;
-  }).catch(error=>{failed=true;console.warn('Live Warden unavailable; using baked art',error);throw error});
+  }).catch(error=>{failed=true;window.IronVowRenderer?.fatal(error);throw error});
  }
  return loading||Promise.reject(Error('Live Warden unavailable'));
 }
