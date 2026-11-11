@@ -10,7 +10,7 @@ function options(args){
  const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
  for(let i=0;i<args.length;i++){
   const flag=args[i];if(flag==='--plan'){result.plan=true;continue;}if(flag==='--details'){result.details=true;continue;}if(flag==='--resume'){result.resume=true;continue;}
-  if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset','--asset-delay-ms'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
+  if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset','--asset-delay-ms','--source-root'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
   result[flag.slice(2)]=args[++i];
  }
  if(!/^[a-z0-9-]+$/.test(result.label))throw Error('Use a simple alphanumeric capture label');
@@ -26,12 +26,13 @@ async function capture(config){
  const plan={viewports,presets:selected};
  if(config.plan){console.log(JSON.stringify(plan,null,2));return;}
  if(!config.origin)throw Error('Supply --origin from your supported preview; this runner never starts a server');
- if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd:__dirname,encoding:'utf8'}).trim())throw Error('Commit tracked source changes before capturing, so the manifest SHA identifies the source');
+ const sourceRoot=path.resolve(config['source-root']||path.join(__dirname,'..'));
+ for(const cwd of new Set([__dirname,sourceRoot]))if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd,encoding:'utf8'}).trim())throw Error('Commit tracked source changes before capturing, so the manifest SHA identifies the source');
  const {chromium}=require('playwright');
  const executablePath=process.env.IRON_VOW_CHROME||(!fs.existsSync(chromium.executablePath())&&['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync))||undefined;
  let browser;
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
- const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
+ const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim(),runner_source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
   environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],retries:[],failures:[]};
  const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
  if(previous&&previous.source!==manifest.source)throw Error('Resume requires the same committed source');
@@ -42,14 +43,23 @@ async function capture(config){
   jobs.push({source:'reference-game',preset,url:config['reference-game']});
  if(config['reference-bench']&&(!config.preset||config.preset==='rig-bench'))
   jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
+ manifest.expected_capture_count=jobs.length*viewports.length;
+ const checkpoint=()=>{
+  manifest.status=manifest.captures.length===manifest.expected_capture_count&&!manifest.failures.length?'complete':'incomplete';
+  const temp=path.join(output,'manifest.json.tmp');
+  fs.writeFileSync(temp,JSON.stringify(manifest,null,2)+'\n');
+  fs.renameSync(temp,path.join(output,'manifest.json'));
+ };
  try{
   browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
    const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
    if(retained&&fs.existsSync(path.join(output,retained.file))){
+    const pngHash=createHash('sha256').update(fs.readFileSync(path.join(output,retained.file))).digest('hex');
+    if(retained.png_sha256&&retained.png_sha256!==pngHash)throw Error('Retained screenshot hash mismatch: '+retained.file);
     if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
     if(retained.document_sha256!==documentHashes.get(job.url))throw Error('Served document changed since the retained capture');
-    manifest.captures.push({...retained,retained:true});console.log('REUSE '+retained.file);break;
+    manifest.captures.push({...retained,png_sha256:pngHash,retained:true});checkpoint();console.log('REUSE '+retained.file);break;
    }
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
@@ -137,14 +147,15 @@ async function capture(config){
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
     manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1});
+    checkpoint();
     console.log('SAVED '+filename);
     break;
-   }catch(error){const failure={source:job.source,preset:job.preset.id,viewport,error:error.message};if(attempt===0){console.error('RETRY '+job.source+' '+job.preset.id+': '+error.message);manifest.retries.push(failure);}else{console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push(failure);}}
+   }catch(error){const failure={source:job.source,preset:job.preset.id,viewport,error:error.message};if(attempt===0){console.error('RETRY '+job.source+' '+job.preset.id+': '+error.message);manifest.retries.push(failure);}else{console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push(failure);}checkpoint();}
    finally{await context.close();}
   }
  }finally{
   await browser?.close();
-  fs.writeFileSync(path.join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+  checkpoint();
  }
  const sources=[...new Set(manifest.captures.map(c=>c.source))];
  const escape=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
