@@ -29,7 +29,7 @@ function create(){
  function make(unit){
   if(disposed)return null;
   if(!supported.has(unit.frame))throw Error('Unsupported hangar frame: '+unit.frame);
-  const holder=new T.Group(),ownedWeaponMaterials=new Set();let rig=null,dead=false,armed=false;
+  const holder=new T.Group(),ownedWeaponMaterials=new Set();let rig=null,dead=false,armed=false,shield=null;
   if(unit.frame===0)requestWarden();
   if(unit.weapon||unit.melee||unit.shield)requestArmory();
   function build(){
@@ -46,16 +46,19 @@ function create(){
    const primary=arsenal.mount(armory,profile?.asset??unit.weapon,socket);
    const meleeProfile=unit.melee&&root.IronVowWeaponFX?.get(unit.melee);
    const secondary=arsenal.mount(armory,meleeProfile?.asset??unit.melee,rig.rig.arms.L.so);
-   const shield=arsenal.mountShield(armory,unit.shield,rig.rig.arms.L.so);
+   shield=arsenal.mountShield(armory,unit.shield,rig.rig.arms.L.so);
    if(unit.frame===0||unit.frame===10){for(const weapon of [primary,secondary])weapon?.model.scale.setScalar(.62);shield?.mount.scale.setScalar(.62);}
    // Arsenal clones share source materials except for per-instance effects.
    for(const item of [primary?.mount,secondary?.mount,shield?.mount])item?.traverse(o=>{if(o.material)for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(!armoryMaterials.has(m))ownedWeaponMaterials.add(m);});
    rig.wpn=primary||{};
+   rig.offhand=shield?'shield':secondary?'blade':'free';
+   rig.primaryWeapon=socket===rig.rig.arms.R.so?primary:null;
   }
   const entry={object:holder,update({time,dt,selected}){
    if(dead)return;build();if(!rig)return;equip();
    const look=selected&&time%9<1.6;rig.aim.until=look?time+.3:-1;rig.aim.blend=look?.35:0;rig.aim.point.set(Math.sin(time*.7)*8,6,20);
    R.animateMech(rig,{pos:new T.Vector3(),ground:0,face:.3,heading:.3,moving:false,speed:0,stepLen:2,brace:0,alive:true,bodyRatio:1,pilotRatio:1,noPlant:true},dt,time);
+   if(shield)arsenal.poseShield(shield,{alive:true,hp:{left:1}},.3);
    if(unit.frame===0)root.IronVowWardenRig.afterAnimate(rig);else if(unit.frame===10)root.IronVowBastion.afterAnimate(rig);
   },dispose(){
    if(dead)return;dead=true;entries.delete(entry);
