@@ -56,7 +56,7 @@ async function capture(config){
     for(let pass=0;pass<4;pass++){
      await page.evaluate(()=>{if(typeof clock!=='undefined'){clock=5;last=5000-1000/60;}window.__captureTick();});
      await page.waitForLoadState('networkidle',{timeout:120000});
-     await page.waitForFunction(()=>[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{timeout:120000});
+     await page.waitForFunction(()=>[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
     const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     if(broken.length)throw Error('Unloaded/broken images: '+broken.length);
