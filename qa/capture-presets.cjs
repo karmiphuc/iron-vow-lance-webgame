@@ -44,6 +44,7 @@ function setGamePreset(preset){
   }else if(typeof combatCamera!=='undefined'){combatCamera={x:ally.x,z:ally.z,span:2,until:clock+100};cameraBlend=1;}
  }
  if(preset.wreck){
+  battle.cover.clear();battle.units=[ally,foe];foe.x=foe.vx=ally.x+2;foe.z=foe.vz=ally.z;
   foe.hp.body=0;foe.alive=false;foe.downReason='body';
   foe.deathTime=clock;
   if(typeof focusBattleCamera==='function')focusBattleCamera(foe,true);

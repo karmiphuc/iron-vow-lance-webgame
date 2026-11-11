@@ -50,6 +50,7 @@ async function main(){
      Object.assign(a,{x:8,z:10,vx:8,vz:10,heading:headingTo(1,0),attack:null});
      Object.assign(b,{x:9,z:10,vx:9,vz:10,heading:headingTo(-1,0),reacted:true});
      if(action==='walk')Object.assign(b,{x:12,z:10,vx:12,vz:10});
+     if(action==='destruction')Object.assign(b,{x:10,z:10,vx:10,vz:10});
      b.hp.body=b.max.body=action==='destruction'?1:10000;
      const kind=action.startsWith('attack-')?action.slice(7):'rifle';if(weapon(kind).melee)a.melee=kind;else a.weapon=kind;
      closeModal();focusBattleCamera(a,true);viewZoom=1.65;battle.busy=true;renderBattle();window.__actors={a,b};
@@ -72,6 +73,7 @@ async function main(){
       if(state.ready){start=state.start;break;}await step(1/30);
      }
      assert.ok(Number.isFinite(start),'Real action started');
+     if(action==='destruction')await page.evaluate(()=>focusBattleCamera(__actors.b,true));
      const begin=action.startsWith('attack-')?start-.1:start;
      while((await page.evaluate(()=>clock))<begin-1/60)await step(Math.min(1/30,begin-(await page.evaluate(()=>clock))));
     }else{
