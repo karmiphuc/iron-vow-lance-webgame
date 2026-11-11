@@ -41,7 +41,7 @@ function create(){
   }
   function equip(){
    if(armed||!rig||!armory)return;armed=true;
-   const profile=root.IronVowWeaponFX?.get(unit.weapon);let socket=rig.rig.arms.R.so;
+   const profile=unit.weapon&&root.IronVowWeaponFX?.get(unit.weapon);let socket=rig.rig.arms.R.so;
    if(profile?.socket?.startsWith('shoulder')){socket=new T.Object3D();socket.position.set(rig.dims.shX,rig.dims.shY+.55,-.25);rig.rig.spine.add(socket);}
    const primary=arsenal.mount(armory,profile?.asset??unit.weapon,socket);
    const meleeProfile=unit.melee&&root.IronVowWeaponFX?.get(unit.melee);
