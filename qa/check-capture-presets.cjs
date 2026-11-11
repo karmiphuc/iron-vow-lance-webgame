@@ -16,8 +16,9 @@ for(const preset of presets.filter(p=>!p.path)){
   assert.ok(sim.run('battle.units.some(u=>u.team==="ally")'),preset.id+' deployed ally');
   if(preset.overview)assert.equal(sim.run('fieldCamera.overview'),true);
   if(preset.damage)assert.ok(sim.run('battle.units[0].hp.body/battle.units[0].max.body<.5'));
+  if(preset.detailPart){const hp=sim.run('battle.units[0].hp['+JSON.stringify(preset.detailPart)+']/battle.units[0].max['+JSON.stringify(preset.detailPart)+']');assert.ok(preset.detailLevel===0?hp===1:preset.detailLevel===2?hp===0:hp>0&&hp<.5,preset.id+' explicit damage level');}
   if(preset.wreck)assert.ok(sim.run('battle.units.some(u=>!u.alive&&u.downReason==="body"&&u.hp.body===0)'));
   if(preset.weapon)assert.equal(sim.run('activeCinematic.w.id'),preset.weapon);
  }else assert.equal(sim.run('page'),preset.page);
 }
-console.log('PASS capture viewports, unique presets, input validation and all 18 isolated game fixtures (not browser captures)');
+console.log('PASS capture viewports, unique presets, input validation and all '+presets.filter(p=>!p.path).length+' isolated game fixtures (not browser captures)');

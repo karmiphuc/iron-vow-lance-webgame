@@ -62,7 +62,7 @@ async function capture(config){
      const frames=new Map();let id=0;
      window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
      window.cancelAnimationFrame=key=>frames.delete(key);
-     window.__captureTick=()=>{const queued=[...frames.values()];frames.clear();for(const callback of queued)callback(5000);};
+     window.__captureTick=(time=5000)=>{const queued=[...frames.values()];frames.clear();for(const callback of queued)callback(time);};
      window.__capturePending=0;
      const fetchNative=window.fetch.bind(window);
      window.fetch=(...args)=>{window.__capturePending++;return fetchNative(...args).finally(()=>window.__capturePending--);};
@@ -79,7 +79,7 @@ async function capture(config){
     await page.evaluate(()=>document.fonts.ready);
     if(!job.preset.path){
      if(job.source==='reference-game'&&job.preset.paint){
-      await page.evaluate(()=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';save.units[0].paint={p:'#708657',s:'#373b38',a:'#c19960'};render();document.querySelector('section.paint')?.scrollIntoView({block:'center',behavior:'instant'});});
+      await page.evaluate(preset=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';const u=save.units[0];u.paint={p:'#708657',s:'#373b38',a:'#c19960'};if(preset.paintChannel){u.frame=3;u.paint[preset.paintChannel]=preset.paintChannel==='p'?'#be5143':preset.paintChannel==='s'?'#5c82b3':'#dfb92f';}render();document.querySelector('section.paint')?.scrollIntoView({block:'center',behavior:'instant'});},job.preset);
      }else await page.evaluate(setGamePreset,{...job.preset,...(job.source==='reference-game'&&job.preset.contract!==undefined?{contract:job.preset.contract-1}:{})});
     }
     // The contact flash requests a part mask lazily. Warm that state before the
@@ -101,6 +101,10 @@ async function capture(config){
       light:Boolean(sequence.w.burst),broken:false,fxKind:weaponMotion(sequence.w.id),fxSeed:101,nx:-1,ny:-.2});
      clock=5;last=5000-1000/60;window.__captureTick();
     });
+    if(job.preset.advanceSeconds){
+     await page.evaluate(seconds=>{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);},job.preset.advanceSeconds);
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureImages,...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+    }
     const broken=await page.evaluate(()=>[...window.__captureImages,...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));
