@@ -53,9 +53,13 @@ def convert(source,dest):
   rgba=im.convert('RGBA');pixels=rgba.tobytes()
  same=False
  if dest.exists():
-  with Image.open(dest) as check:same=check.size==rgba.size and check.convert('RGBA').tobytes()==pixels
- if not same:rgba.save(dest,format='WEBP',lossless=True,method=2,exact=True)
- with Image.open(dest) as check:assert check.size==rgba.size and check.convert('RGBA').tobytes()==pixels,'WebP pixels differ: '+str(source)
+  try:
+   with Image.open(dest) as check:same=check.size==rgba.size and check.convert('RGBA').tobytes()==pixels
+  except OSError:print('Recovering interrupted WebP:',dest,flush=True)
+ checked=dest if same else dest.with_name(dest.name+'.tmp')
+ if not same:rgba.save(checked,format='WEBP',lossless=True,method=2,exact=True)
+ with Image.open(checked) as check:assert check.size==rgba.size and check.convert('RGBA').tobytes()==pixels,'WebP pixels differ: '+str(source)
+ if not same:checked.replace(dest)
  return {'original_png_sha256':digest(source),'sha256':digest(dest),'pixel_sha256':sha256(pixels).hexdigest(),'width':rgba.width,'height':rgba.height}
 cached={}
 if (out/'manifest.json').exists():
