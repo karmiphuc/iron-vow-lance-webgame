@@ -97,7 +97,7 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,c
     // These cases assert UI/rules or temporary 2D sheet data. The separate visual
     // cases and capture workflow always submit real GPU frames. Keep actual game
     // commands, source animation, geometry, picking and image decoding untouched.
-    const withoutGPU=fn=>function(...args){const r=IronVowRenderer.get(),render=r.render,read=r.readRenderTargetPixels;r.render=()=>{};r.readRenderTargetPixels=()=>{};try{return fn.apply(this,args);}finally{r.render=render;r.readRenderTargetPixels=read;}};
+    const withoutGPU=fn=>function(...args){const r=IronVowRenderer.get(),render=r.render,read=r.readRenderTargetPixels;r.render=(scene,camera)=>{scene.updateMatrixWorld();camera.updateMatrixWorld();};r.readRenderTargetPixels=()=>{};try{return fn.apply(this,args);}finally{r.render=render;r.readRenderTargetPixels=read;}};
     for(const name of ['IronVowScene','IronVowFoundry'])Object.defineProperty(window,name,{configurable:true,set(api){if(name==='IronVowScene'){const render=api.render;let first=true;api.render=function(...args){if(first){first=false;return render.apply(this,args);}return withoutGPU(render).apply(this,args);};}else for(const method of ['preview','previewAnimated'])api[method]=withoutGPU(api[method]);Object.defineProperty(window,name,{value:api,writable:true,configurable:true});}});
    });
    const page=await context.newPage(),errors=[];
