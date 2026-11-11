@@ -75,4 +75,17 @@ The pool regression exposed an inherited missile-arrival scratch-vector alias: s
 3. Complete the full-resolution capture batch, compare the original 28 matching presets against the committed Phase 0/reference evidence, inspect all eight new frame views, and commit manifests/contact sheets.
 4. Update #11/#18 and merge only the validated Phase 1 head. Continue full Phase 2 integration and its weapon/aim/damage/popSwap gates.
 5. Phase 3 needs the owner's Blender MCP and missing external .blend sources. No Blender tools were available. This does not block completing Phase 2. Phase 4 depends on the live-chassis phase.
-6. GitHub-first source sync remains pending. The Site is still published at v98; no Site save or deployment was made.
+6. GitHub-first source sync remains pending. The last confirmed Site version was v98; no Site save or deployment was made by this agent. Refresh the Site's published source/version before synchronization.
+
+
+## New PRs and concurrent main changes found during recovery
+
+The open-PR list now also contains #19 and #20. Both remain open and unmerged by this agent. Their patches and recorded evidence were reviewed through GitHub while execution was unavailable.
+
+- #19, head `cab15a1f3ee28754b79a5dfa11ec95f555879207`: plasma tendril ribbons, spark crawl and joint-short mix. The actual reference HTML SHA-256 matches the committed VFX manifest: `4e80cf73b23a0586706a91dd58d86c8b864c63ffc976a71f2f934400ed085695`. Representative far-plasma and close-joint PNGs were inspected directly from the immutable head. Arc materials retain depth testing with factor 0 / units -1. Fresh functional and occlusion runs remain pending.
+- #20, head `b6a7437ebd5d4a81de419ee163fe1cffb7a001c3`: reference gait/IK and bench-only War movement corrections. The actual HTML SHA-256 matches its walk manifest: `b7bd5f74ffa45a10812cb5592058a2e60922eecb96f17feaebf92f9b5c0a7828`. The reported 150-battle result is the author's evidence, run through a CDP-backed Playwright API stand-in; it is not an independent run by this agent. The PR explicitly requests real Playwright reruns of `qa/reference-walk.cjs` and `qa/reference-vfx.cjs`. The large walk contact sheet could not be read through the available GitHub binary API and remains uninspected here.
+- Production `VowChassis.solveLeg` already uses ZXY. Reconcile the new reference gait with the height-aware Phase 1 solver; do not reintroduce an obsolete XYZ diagnosis or lose the supported brace/terrain fixes. The reference War AI/melee reach changes are bench-only and must not be copied into production gameplay.
+- Review/verify #19 and #20 before the final Phase 2 port. The isolated preparation predates these PRs and contains the previous box-arc reference.
+- Current main was observed at `0c8030e29519a1129434fef747951f97d7a3243d`, following Site-source import `aacc5af1300d5fb05f18e9aa452b0a2763acbe4a`. These add the samurai Gatecrasher assets/install scripts and alter `dist/game.js`, travel/prototype data, the Gatecrasher GLB and related QA. Preserve and reconcile those owner changes before final Phase 1 validation/merge. This task's agent made no Site deployment.
+
+Execution was retried after the provider reported connected/running and still returned “No usable execution environment is available.” No further permission or browser approval is required; usable execution access is the immediate dependency.
