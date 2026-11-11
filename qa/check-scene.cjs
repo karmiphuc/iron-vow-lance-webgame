@@ -93,6 +93,7 @@ const live=[0,5,6,7,8,9,10,12];
    await page.evaluate(()=>{__ironVow.start({seed:4242,frames:[5,8,0]});});await page.clock.runFor(100);
    const probe=await page.evaluate(type=>{
     const q=__qa;q.anomalies=[];q.keys.clear();q.feet.clear();q.motion.clear();
+    if(type==='stuck'){battle.cover.clear();for(const cell of battle.field.cells)cell.level=0;IronVowScene.clear();IronVowScene.render(clock,1);}
     const u=battle.units.find(u=>u.id==='ally0'),m=IronVowScene.models.get(u.id).entry.m;
     const shift=(node,delta)=>{const p=node.getWorldPosition(new THREE.Vector3()).add(delta);node.position.copy(node.parent.worldToLocal(p));m.cont.updateMatrixWorld(true);};
     if(type==='nan'){m.rig.arms.L.so.position.x=NaN;m.cont.updateMatrixWorld(true);}
@@ -107,7 +108,8 @@ const live=[0,5,6,7,8,9,10,12];
     }
     if(type==='stuck'){
      // A five-tile Valkyrie move really lasts longer than the four-second limit.
-     const move=__ironVow.legalMoves(u.id).filter(p=>p.cost>=5).sort((a,b)=>b.cost-a.cost)[0];
+     const moves=__ironVow.legalMoves(u.id).map(p=>({...p,steps:route(u,p.x,p.z)}));
+     const move=moves.filter(p=>p.steps.length>=5&&(p.x===u.x||p.z===u.z)).sort((a,b)=>b.steps.length-a.steps.length)[0];
      if(!move)throw Error('No long legal movement fixture');
      void __ironVow.move(u.id,move.x,move.z);
      return{type,move,id:u.id,root:m.cont.position.toArray()};
