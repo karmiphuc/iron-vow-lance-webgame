@@ -28,3 +28,24 @@ Screenshots are encoded as lossless WebP using FFmpeg, decoded and compared byte
 - Behemoth mortar: the explicitly named `mortar-future-presentation` hook. It demonstrates the existing future muzzle/brace/recoil presentation and asserts no damage events. It does not claim a game action or invent a mortar damage rule.
 
 The action fixtures intentionally differ from Phase 0's static preset fixtures, so their images do not support pixel-difference claims against Phase 0. Matching-preset static comparisons must be identified separately. No Phase 0 reference capture is repeated.
+
+## Resume commands
+
+Keep the detached `6786df4` source server running on port 5178, and grant the capture job a GPU slot before resuming:
+
+```sh
+IRON_VOW_URL=http://127.0.0.1:5178/ \
+IRON_VOW_VISUAL_SOURCE_ROOT=/workspace/iron-vow-phase2-visual-source \
+IRON_VOW_VISUAL_RESUME=1 node qa/capture-phase2.cjs
+```
+
+The narrow matching-preset supplement runs separately after the combat batch:
+
+```sh
+NODE_PATH=/workspace/iron-vow-phase2/qa/node_modules \
+IRON_VOW_URL=http://127.0.0.1:5178/ \
+IRON_VOW_VISUAL_SOURCE_ROOT=/workspace/iron-vow-phase2-visual-source \
+node qa/capture-phase2-matched.cjs
+```
+
+`SIGTERM` or `SIGINT` closes the runner's browser and records a paused checkpoint. Resume validates the production source and every retained image hash. Individual image entries retain their original runner hashes when later tooling resumes the same source.
