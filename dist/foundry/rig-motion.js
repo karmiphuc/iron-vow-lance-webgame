@@ -184,6 +184,18 @@ function supportGrip(m,arm,weight){
   arm.wr.rotation.x=lerp(arm.wr.rotation.x,0,weight);
   m.supportTarget=best||point;
 }
+/* [walk fix] a foothold on the floor no further than lim from the hip: keeps its height and slides toward the hip's ground point */
+function onFloorWithin(p,hip,lim){const dy=p.y-hip.y,hx=p.x-hip.x,hz=p.z-hip.z,hd=Math.hypot(hx,hz),mx=Math.sqrt(Math.max(0,lim*lim-dy*dy));
+  if(hd<=mx||hd<1e-6)return p;const k=mx/hd;p.x=hip.x+hx*k;p.z=hip.z+hz*k;return p;}
+/* [walk fix] gait start: the cycle phase that keeps every planted foot inside half a stride for the rest of its stance,
+   preferring swings that start early. Planted feet stay where they are; only the cycle's starting point is chosen. */
+function startPhase(m,cont,D,stepLen,dir){let best=m.gait.phase,bc=1e9;
+  for(let k=0;k<32;k++){const g=k/32;let c=0;
+    m.rig.legs.forEach((l,i)=>{const ph=((g+(l.phase??i*.5)+(m.legs[i].phaseOffset||0))%1+1)%1,L=m.legs[i],home=cont.localToWorld(_a.set(l.restX,D.ankleH,l.restZ));
+      if(ph<(D.duty??.5)){const off=(L.planted.x-home.x)*dir.x+(L.planted.z-home.z)*dir.z,end=off-((D.duty??.5)-ph)*2*stepLen;c+=Math.max(0,-end-stepLen*(D.duty??.5))*10+Math.max(0,off-stepLen*(D.duty??.5))*10;}
+      else c+=(ph-(D.duty??.5));});
+    if(c<bc-1e-9){bc=c;best=g;}}
+  return best;}
 /* in: {pos,moving,speed,stepLen,heading,face,brace,alive,deathAge,down,pilotRatio,armDead,legsDead,shieldDead,ground,onStep,noPlant} */
 function animateMech(m,I,dt,t){
   const r=m.rig,cont=m.cont,S=m.s,sc=m.scale,D=m.dims;
@@ -216,17 +228,17 @@ function animateMech(m,I,dt,t){
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
   // Heavier frames take shorter, quicker steps so a longer planted phase stays within leg reach.
   const stepLen=(I.stepLen??1.55)*(D.stride??1);
-  if(I.groundAt&&I.moving&&!m.gait.wasMoving&&!D.quad){
-    // A standing foot starts at mid-stance, not one full stride behind the first landing.
-    m.gait.phase=Math.floor(m.gait.phase)+.25;
-    for(const L of m.legs)L.startSwing=true;
-  }
-  m.gait.wasMoving=I.moving;
+  // PR #20: actual root velocity also covers lunges, shoves and changing headings.
+  const vel=m.vel||(m.vel=V3());if(m.lastPos&&dt>0){_c.set(cont.position.x-m.lastPos.x,0,cont.position.z-m.lastPos.z).divideScalar(dt);vel.lerp(_c,1-Math.exp(-dt*20));}
+  (m.lastPos||(m.lastPos=V3())).copy(cont.position);
+  const fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw)),vs=Math.hypot(vel.x,vel.z),dir=vs>.3?V3(vel.x/vs,0,vel.z/vs):fwd;
+  if(I.moving&&!dead&&!m.gait.wasMoving){m.gait.phase=startPhase(m,cont,D,stepLen,dir);for(const L of m.legs)L.startSwing=true;}
+  m.gait.wasMoving=I.moving&&!dead;
   if(Number.isFinite(I.cycle))m.gait.phase=I.cycle;
   else if(I.moving)m.gait.phase+=dt*I.speed/(2*stepLen);
-  const g=m.gait.phase,fwd=V3(Math.sin(m.yaw),0,Math.cos(m.yaw));
-  // Fraction of each cycle a foot stays planted. Above .5 gives double support; heavy frames keep more feet down.
-  const duty=D.duty??.5;
+  const g=m.gait.phase,duty=D.duty??.5,reach=(D.legA+D.legB)*sc;
+  // Land on the actual terrain even when the reach clamp adjusts horizontal position.
+  const floorWithin=(point,hip)=>{for(let i=0;i<4;i++){if(I.groundAt)point.y=I.groundAt(point.x,point.z)+D.ankleH*sc;onFloorWithin(point,hip,reach*.985);}if(I.groundAt)point.y=I.groundAt(point.x,point.z)+D.ankleH*sc;return point;};
   // Firing stance (dims.carry.fire, empty left hand): lead with the left foot and blade the torso so the left hand
   // reaches the under-barrel. Driven by I.ready (attack priming or aiming) and blended so it also animates under noPlant.
   const F=D.carry?.fire,ready=Boolean(F&&!dead&&!I.moving&&(m.offhand??'free')==='free'&&m.primaryWeapon&&((I.ready??t<m.aim.until)||m.aim.blend>.35));
@@ -244,30 +256,30 @@ function animateMech(m,I,dt,t){
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
     const home=cont.localToWorld(_a.set(l.restX-(lead?F.narrow*fs:0),D.ankleH,l.restZ+(F?(lead?F.step:-F.back)*fs:0))).clone();let pitch=0;
     if(I.groundAt&&I.alive)home.y=I.groundAt(home.x,home.z)+D.ankleH*sc;
+    const hip=l.hip.getWorldPosition(V3()),ph=((g+(l.phase??i*.5)+(L.phaseOffset||0))%1+1)%1;
+    const lifting=I.moving&&!dead&&ph>=duty;
+    const strained=!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
+    if(strained){L.settle={from:L.planted.clone(),t:0,dur:.26};settling=true;}
     if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;
       if(lead&&!dead){L.foot.y+=F.lift*Math.sin(PI*fs)*sc;pitch=.3*Math.sin(PI*fs);}}
-    else if(I.moving&&!dead){const ph=((g+(l.phase??i*.5)+(L.phaseOffset||0))%1+1)%1;L.settle=null;
-      if(I.groundAt&&!L.swing&&!L.recovery&&ph<duty){
-        // A turn or restart can leave a stance anchor behind the normal cycle. Start a real recovery step
-        // before the hip can outrun it, using the reference swing duration and IK reach margin.
-        const duration=2*stepLen*(1-duty)/Math.max(.01,I.speed),hip=l.hip.getWorldPosition(V3());
-        const forecast=hip.clone().addScaledVector(fwd,I.speed*duration);forecast.y+=I.groundAt(forecast.x,forecast.z)-(I.ground||0);
-        if(forecast.distanceTo(L.planted)>(D.legA+D.legB)*sc-.03){L.recovery={q:0,duration};L.from.copy(L.foot);L.swing=true;}
-      }
-      if(L.recovery){const recovery=L.recovery,q=recovery.q;L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=I.groundAt(L.to.x,L.to.z)+D.ankleH*sc;
-        L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;
-        if(q>=1){L.recovery=null;L.swing=false;L.planted.copy(L.to);L.phaseOffset=-g-(l.phase??i*.5);I.onStep&&I.onStep(m,L.planted,i);}
-        else recovery.q=Math.min(1,q+dt/recovery.duration);
-      }
-      else if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(L.to);I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
-      else{if(!L.swing){L.swing=true;L.from.copy(L.foot);L.swingBegin=L.startSwing?ph:duty;L.startSwing=false;}const q=(ph-(L.swingBegin??duty))/(1-(L.swingBegin??duty));L.to.copy(home).addScaledVector(fwd,stepLen*duty);L.to.y=I.groundAt?I.groundAt(L.to.x,L.to.z)+D.ankleH*sc:home.y;
+    else if(L.settle&&(!dead||pd)){
+      const step=L.settle;step.t+=dt/(step.dur||.42);const q=Math.min(1,step.t),land=home.clone().addScaledVector(vel,(1-q)*(step.dur||.42));
+      if(I.moving)land.addScaledVector(dir,stepLen*duty*.5);
+      if(I.groundAt)land.y=I.groundAt(land.x,land.z)+D.ankleH*sc;else land.y=home.y;
+      L.foot.lerpVectors(step.from,land,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
+      if(q>=1){L.planted.copy(floorWithin(land,hip));L.foot.copy(L.planted);L.settle=null;L.swing=false;I.onStep&&I.onStep(m,L.planted,i,.45);}
+    }
+    else if(I.moving&&!dead){
+      if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(floorWithin(L.to,hip));I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
+      else{if(!L.swing){L.swing=true;L.from.copy(L.foot);L.swingBegin=L.startSwing?ph:duty;L.startSwing=false;}const q=clamp((ph-(L.swingBegin??duty))/(1-(L.swingBegin??duty)),0,1);
+        L.to.copy(home).addScaledVector(dir,stepLen*duty);L.to.y=I.groundAt?I.groundAt(L.to.x,L.to.z)+D.ankleH*sc:home.y;
         L.foot.lerpVectors(L.from,L.to,smoother(q));L.foot.y+=liftArc(q)*D.lift*sc;pitch=q<.3?.45*Math.sin(PI*q/.3):q>.62?-.35*Math.sin(PI*(q-.62)/.38):0;}}
-    else{L.recovery=null;if(L.swing){L.swing=false;
-        if(I.groundAt&&!dead)L.settle={from:l.an.getWorldPosition(V3()),t:0};
-        else{L.planted.copy(L.foot);L.planted.y=I.groundAt?I.groundAt(L.planted.x,L.planted.z)+D.ankleH*sc:home.y;}}
-      if(L.settle&&!dead){L.settle.t+=dt/.42;const q=Math.min(1,L.settle.t);L.foot.lerpVectors(L.settle.from,home,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
-        if(q>=1){L.planted.copy(home);L.settle=null;I.onStep&&I.onStep(m,home,i,.45);}}
-      else{if(!dead&&(!settling||artilleryPreparing&&!l.kneeShoe)&&L.planted.distanceTo(home)>.22*sc){L.settle={from:I.groundAt?l.an.getWorldPosition(V3()):L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}}
+    else{
+      if(L.swing){L.swing=false;L.settle={from:L.foot.clone(),t:0,dur:.3};settling=true;}
+      else{if(!dead&&(!settling||artilleryPreparing&&!l.kneeShoe)&&L.planted.distanceTo(home)>.22*sc){L.settle={from:L.planted.clone(),t:0};settling=true;}L.foot.copy(L.planted);}
+    }
+    // PR #20: in-flight goals remain reachable; planted anchors never move under this clamp.
+    if(L.swing||L.settle){const d=hip.distanceTo(L.foot);if(d>reach*.99)L.foot.sub(hip).multiplyScalar(reach*.99/d).add(hip);}
     pitches[i]=pitch*w;});
   if(I.groundAt&&I.alive){
     // Uneven tiles and the first/last half-step can require compression beyond the flat-floor walk bob.

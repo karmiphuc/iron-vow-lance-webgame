@@ -160,11 +160,11 @@ function solveLeg(rig,D,leg,t,pitch){
 
 /* ======================= WARDEN: assault brawler ======================= */
 const DIMS=[
-  {stance:.92,py:3.2,spY:.32,neck:[0,2.12,.42],shX:1.5,shY:1.78,up:1.1,fo:1.1,hipX:.84,legA:1.5,legB:1.55,ankleH:.36,restX:.74,restZ:.1,lift:.7,reverse:false,scale:1},
-  {py:3.32,spY:.25,neck:[0,.95,.72],shX:1.14,shY:1.1,up:.98,fo:1.0,hipX:.5,legA:1.45,legB:1.72,ankleH:.3,restX:.54,restZ:.04,lift:.9,reverse:true,scale:.98},
+  {stance:.92,py:3.2,spY:.32,neck:[0,2.12,.42],shX:1.5,shY:1.78,up:1.1,fo:1.1,hipX:.84,legA:1.5,legB:1.55,ankleH:.36,restX:.74,restZ:.1,lift:.7,reverse:false,scale:1,walkDrop:.1},
+  {py:3.32,spY:.25,neck:[0,.95,.72],shX:1.14,shY:1.1,up:.98,fo:1.0,hipX:.5,legA:1.45,legB:1.72,ankleH:.3,restX:.54,restZ:.04,lift:.9,reverse:true,scale:.98,walkDrop:.16},
   {stance:.86,py:2.68,spY:.36,neck:[0,1.86,.62],shX:1.86,shY:1.5,up:1.0,fo:1.0,hipX:1.04,legA:1.25,legB:1.3,ankleH:.42,restX:.96,restZ:.08,lift:.5,reverse:false,scale:1},
-  {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1},
-  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1,duty:.6,stride:.8,walkDrop:.16,
+  {py:3.3,spY:.3,neck:[0,1.98,.18],shX:1.35,shY:1.62,up:1.05,fo:1.05,hipX:.68,legA:1.55,legB:1.6,ankleH:.34,restX:.6,restZ:.08,lift:.85,reverse:false,scale:1,walkDrop:.1},
+  {py:3.05,spY:.38,neck:[0,1.66,.7],shX:1.62,shY:1.55,up:1.08,fo:1.15,hipX:.8,legA:1.45,legB:1.5,ankleH:.34,restX:.76,restZ:.14,lift:.8,reverse:false,scale:1,duty:.6,stride:.8,walkDrop:.22,
    // Feet under the shoulders and pointed forward: no splayed, toes-out gait.
    stance:.62,toe:.03,sway:.1,
    // Predator carry: chest forward, chin down, a shoulder roll with each step.

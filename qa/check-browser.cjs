@@ -123,7 +123,10 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,c
     else throw Error(label+' failed: '+error.message,{cause:error});
    }finally{await context.close()}
   }}}
-  if(process.env.IRON_VOW_QA_SERIAL==='1'){
+  const deviceFilter=process.env.IRON_VOW_QA_DEVICES||'both';assert.ok(['desktop','touch','both'].includes(deviceFilter));
+  if(deviceFilter==='desktop')await checkDevice(false);
+  else if(deviceFilter==='touch')await checkDevice(true);
+  else if(process.env.IRON_VOW_QA_SERIAL==='1'){
    await checkDevice(false);
    await checkDevice(true);
   }else{
