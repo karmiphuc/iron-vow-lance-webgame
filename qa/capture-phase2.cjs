@@ -17,11 +17,12 @@ async function rgba(file){const im=await loadImage(file),c=createCanvas(im.width
 async function save(page,name,meta){
  const retained=manifest.captures.find(c=>c.file===name+'.webp');if(retained){assert.equal(hash(fs.readFileSync(path.join(out,retained.file))),retained.webp_sha256,'Retained file hash');console.log('REUSE IMAGE '+retained.file);return;}
  await page.evaluate(()=>{window.__phase2Advance=false;try{IronVowScene.render(clock,0);}finally{window.__phase2Advance=true;}});
+ const frameState=await page.evaluate(targetId=>{const u=battle?.units.find(u=>u.id===targetId);return {time:clock,target:u?{id:u.id,hp:{...u.hp},alive:u.alive,down_reason:u.downReason||null,death_age:u.deathTime===undefined?null:clock-u.deathTime}:null};},meta.target||null);
  const png=await page.screenshot({animations:'disabled',timeout:120000});const file=name+'.webp',dest=path.join(out,file),tmp=dest+'.png';fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(tmp,png);
  execFileSync('ffmpeg',['-v','error','-threads','1','-i',tmp,'-c:v','libwebp','-lossless','1','-compression_level','6','-y',dest]);
  const a=await rgba(tmp),b=await rgba(dest);assert.equal(a.width,b.width);assert.equal(a.height,b.height);assert.ok(a.data.equals(b.data),'Lossless RGBA equality: '+file);
  const c=createCanvas(32,32),g=c.getContext('2d'),im=await loadImage(tmp);g.drawImage(im,im.width*.4,im.height*.22,im.width*.5,im.height*.5,0,0,32,32);const pixels=g.getImageData(0,0,32,32).data;let bright=0;for(let i=0;i<pixels.length;i+=4)if(Math.max(...pixels.slice(i,i+3))>16)bright++;assert.ok(bright>=64,'Nonblank actual GPU image '+file);
- fs.unlinkSync(tmp);manifest.captures.push({file,source,dist_tree:distTree,runner_sha256:manifest.runner_sha256,...meta,width:a.width,height:a.height,raw_png_sha256:hash(png),webp_sha256:hash(fs.readFileSync(dest)),rgba_sha256:hash(a.data),rgba_byte_equality:true,nonblack_samples:bright});checkpoint();console.log('SAVED '+file);
+ fs.unlinkSync(tmp);manifest.captures.push({file,source,dist_tree:distTree,runner_sha256:manifest.runner_sha256,...meta,frame_state:frameState,width:a.width,height:a.height,raw_png_sha256:hash(png),webp_sha256:hash(fs.readFileSync(dest)),rgba_sha256:hash(a.data),rgba_byte_equality:true,nonblack_samples:bright});checkpoint();console.log('SAVED '+file);
 }
 async function setup(browser,viewport,motion){
  const context=await browser.newContext({viewport:{width:viewport.width,height:viewport.height},hasTouch:viewport.touch,deviceScaleFactor:1,reducedMotion:motion,locale:'en-US',timezoneId:'UTC'}),page=await context.newPage();
@@ -55,7 +56,7 @@ async function attackCase(page,item,index,viewport,motion,documentHash){
   }
  }
  assert.ok(tick<1000,'Completes '+item.id);assert.ok(seen.has('impact'),'Actual contact '+item.id);
- if(item.scenario){for(const delayMs of (item.scenario==='body-death'?[510,1530,11000,1700]:[1530])){await page.clock.runFor(delayMs);await save(page,prefix+'/post-'+Math.round(await page.evaluate(()=>clock)*1000),{...base,phase:'post-contact',time:await page.evaluate(()=>clock)});}}
+ if(item.scenario){for(const age of (item.scenario==='body-death'?[2,6,13.8,14.2]:[null])){const delayMs=age===null?1530:await page.evaluate(({target,age})=>Math.max(0,age-(clock-battle.units.find(u=>u.id===target).deathTime))*1000,{target:fixture.target,age});await page.clock.runFor(delayMs);await save(page,prefix+'/post-'+Math.round(await page.evaluate(()=>clock)*1000),{...base,phase:'post-contact',time:await page.evaluate(()=>clock),requested_death_age:age});}}
  if(detailed){await page.clock.runFor(204);await save(page,prefix+'/999-recovery',{...base,phase:'recovery'});}
  const result=await page.evaluate(f=>({after:{...battle.units.find(u=>u.id===f.target).hp},events:IronVowScene.combat.history.filter(e=>e.actor===f.actor),error:window.__phase2Error}),fixture);assert.equal(result.error,null);assert.ok(Object.keys(fixture.before).some(k=>fixture.before[k]>result.after[k]),'Actual HP damage');manifest.cases.push({...base,...result});checkpoint();
 }
