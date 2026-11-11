@@ -134,9 +134,11 @@ const live=[0,5,6,7,8,9,10,12];
     __ironVow.start({seed,frames,contract});
    },{seed,frames,contract});
    await page.clock.runFor(100);
+   const terrainSeed=await page.evaluate(()=>battle.terrainSeed);assert.ok(Number.isInteger(terrainSeed),'Seeded terrain is present');
    let done=false,turn=0,used=new Set();
    for(let decision=0;decision<1000;decision++){
     const s=await page.evaluate(()=>__ironVow.snapshot());
+    assert.ok(Number.isInteger(s.terrainSeed)||!s.phase,'Real deployment surveyed its seeded terrain');
     if(!s.phase){done=true;break;}
     assert.ok(s.ready,'Live rig failed to load');assert.ok(s.turn<=40,'Campaign battle stalled');
     if(s.pending){await page.clock.runFor(1000);continue;}
@@ -150,8 +152,8 @@ const live=[0,5,6,7,8,9,10,12];
     await page.clock.runFor(1000);
    }
    assert.ok(done,'Decision limit exceeded');
-   const result=await page.evaluate(()=>({ticks:__qa.ticks,anomalies:__qa.anomalies,frames:[...__qa.frames],weapons:[...__qa.weapons],commands:__qa.commands,commandErrors:__qa.commandErrors,circleCandidates:__qa.circleCandidates,result:__ironVow.snapshot().result}));
-   report.battles.push({seed,frames,contract,...result});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
+   const result=await page.evaluate(()=>({terrainSeed:battle?.terrainSeed??save.sortie?.terrainSeed,ticks:__qa.ticks,anomalies:__qa.anomalies,frames:[...__qa.frames],weapons:[...__qa.weapons],commands:__qa.commands,commandErrors:__qa.commandErrors,circleCandidates:__qa.circleCandidates,result:__ironVow.snapshot().result}));
+   report.battles.push({seed,frames,contract,...result,terrainSeed});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
    console.log(JSON.stringify({seed,frames,ticks:result.ticks,result:result.result?.win,anomalies:result.anomalies,errors:result.commandErrors}));
    assert.deepEqual(result.commandErrors,[]);assert.ok(result.ticks>0,'No animation ticks checked');
   }

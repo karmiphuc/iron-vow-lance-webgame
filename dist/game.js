@@ -4108,10 +4108,10 @@ window.__ironVow=(()=>{
   if(pending)throw Error('Finish the current game operation before starting another battle');
   skipAttackCamera();closeModal();seed=options.seed??0;ruleRandom=rng(seed);save=fresh();battle=null;effects=[];clock=0;selected=0;page='contracts';
   for(const [i,frame] of (options.frames||[]).entries()){if(!FRAMES[frame]||!save.units[i])throw Error('Invalid scene fixture frame');save.units[i].frame=frame;}
-  createBattle(options.contract??1);action='move';render();return snapshot();
+  deploy(options.contract??1);closeModal();return snapshot();
  }
  function snapshot(){
-  return {seed,time:clock,busy:Boolean(battle?.busy),pending:Boolean(pending),phase:battle?.phase,turn:battle?.turn,size:battle?.size,result:!battle?save.history.at(-1):null,ready:window.IronVowScene.ready,renderer:window.IronVowRenderer.metrics(),covers:window.IronVowScene.covers,
+  return {seed,time:clock,terrainSeed:battle?.terrainSeed,busy:Boolean(battle?.busy),pending:Boolean(pending),phase:battle?.phase,turn:battle?.turn,size:battle?.size,result:!battle?save.history.at(-1):null,ready:window.IronVowScene.ready,renderer:window.IronVowRenderer.metrics(),covers:window.IronVowScene.covers,
    units:(battle?.units||[]).map(u=>{const record=window.IronVowScene.models.get(u.id),m=record?.entry?.m,feet=[],footprint=[];
     if(m?.rig)for(let i=0;i<m.rig.legs.length;i++){const leg=m.rig.legs[i],state=m.legs[i],p=leg.an.getWorldPosition(new THREE.Vector3());
      const contact=state.kneeContact&&leg.kneeShoe?.localToWorld(new THREE.Vector3(0,-.3155,.035));
