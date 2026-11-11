@@ -97,6 +97,8 @@ async function capture(config){
       try{return sendNative.apply(this,args);}catch(error){window.__capturePending--;throw error;}
      };
      const NativeImage=window.Image;window.__captureImages=new Set();
+     const getContext=HTMLCanvasElement.prototype.getContext;window.__captureWebGL=new WeakMap();
+     HTMLCanvasElement.prototype.getContext=function(...args){const context=getContext.apply(this,args);if(context&&/^(webgl2?|experimental-webgl)$/.test(args[0]))window.__captureWebGL.set(this,context);return context;};
      window.__captureActiveImages=()=>{const images=[];for(const ref of window.__captureImages){const image=ref.deref();if(image)images.push(image);else window.__captureImages.delete(ref);}return images;};
      window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.add(new WeakRef(image));return image;}});
     });
@@ -147,7 +149,7 @@ async function capture(config){
      // Sample immediately after a real render: non-preserved WebGL buffers can
      // otherwise clear between tasks even when the compositor retains the frame.
      window.__captureTick();
-     const canvas=document.getElementById('c'),gl=canvas?.getContext('webgl2')||canvas?.getContext('webgl');
+     const canvas=document.getElementById('c'),gl=window.__captureWebGL.get(canvas);
      if(!gl||gl.isContextLost())throw Error('Rig Bench WebGL context is unavailable or lost');
      const sample=document.createElement('canvas');sample.width=sample.height=32;
      const g=sample.getContext('2d');g.drawImage(canvas,0,0,32,32);
