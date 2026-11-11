@@ -1222,6 +1222,7 @@ function closeAttackCamera(sequence){
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
  effects=effects.filter(e=>e.type!=='shot'||e.actor!==sequence.actor.id||e.born!==sequence.fireAt);
+ window.IronVowScene?.combat?.clear();
  sequence.skipped=true;sequence.resume?.();closeAttackCamera(sequence);
 }
 function beginAttackCamera(actor,target,w,part){
@@ -2684,6 +2685,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(event.report){
    if(sequence?.skipped)continue;
    const type=rockets?'rocketLaunch':power?.sound||(w.scatter&&w.id!=='ember'?'shotgun':weaponMotion(w.id));
+   window.IronVowScene?.combat?.launch(a,t,w,event.index,contacts,guard);
    sound(type,event.index?.93:1,{weapon:w.id,
     rate:rockets?(w.id==='locust'?1.12:1)*(event.index?.90:1):rate,
     pan:rockets?(event.index?.22:-.22):(a.face||1)*-.23});
@@ -2702,6 +2704,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   const before=t.hp[event.part];
   t.hp[event.part]=Math.max(0,before-event.amount);
   event.damage=before-t.hp[event.part];
+  if(!sequence?.skipped)window.IronVowScene?.combat?.landed(a,t,w,event,guard);
   d+=event.amount;lost+=event.damage;
   const broken=before>0&&t.hp[event.part]===0;
   if(broken)disabled.push(event.part);
@@ -2763,7 +2766,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(charged&&--a.breach===0)delete a.breach;
  if(!reaction&&a.order&&--a.order.shots===0)delete a.order;
  if(a.team==='ally'&&t.painted&&(--t.painted.shots===0||!t.alive))delete t.painted;
- const hitstop=power?.hitstop??(w.id==='blade'?.085:0);
+ const hitstop=w.melee?.085:0;
  if(hit&&hitstop&&!reducedMotion&&!sequence?.skipped){
   a.hitstop=t.hitstop={at:clock,until:clock+hitstop};
   await waitAttack(hitstop*1000,sequence);
@@ -3540,7 +3543,7 @@ function animationPose(u,t,visual=activeWardenVisual(u)){
  const kneel=u.alive?0:reducedMotion?1:smoothRange(.04,DESTRUCTION.kneelEnd,deathAge);
  const explosion=u.alive||u.downReason==='pilot'?0:reducedMotion?1:smoothRange(DESTRUCTION.blast-.02,DESTRUCTION.blast+.15,deathAge);
  const landAge=t-(u.landTime??-100),land=!reducedMotion&&landAge>=0&&landAge<.4?Math.sin(landAge*30)*Math.exp(-landAge*15):0;
- const pose={rig,flip,strikeKind,strikeProgress,primePhase,primeProgress,nativeDirection:visual?unitFacing(u):u.frame===1?1:-1,phase,stride,cycle,walk,dx,dy,recoil,impact,death,deathAge,kneel,explosion,aim:reducedMotion?0:aim,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion||spent(u)?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
+ const pose={rig,flip,strikeKind,strikeProgress,primePhase,primeProgress,nativeDirection:visual?unitFacing(u):u.frame===1?1:-1,phase,stride,cycle,walk,dx,dy,recoil,impact,death,deathAge,kneel,explosion,aim:reducedMotion?(u.attack?1:0):aim,land,brace:u.braceBlend??(u.brace?1:0),idle:reducedMotion||spent(u)?0:Math.sin(t*1.4+u.index*2.1)*.0014,impactX:(u.hitVector?.x||0)*facing,impactY:u.hitVector?.y||0};
  if(!reducedMotion&&!strikeKind&&attack?.kind===u.weapon&&window.IRON_VOW_EXPANSION_RIG?.[u.weapon])
   Object.assign(pose,firingPose(u,t)||weaponRigPose(profile,age));
  pose.time=t;pose.podRecoil=profile.beats.map(beat=>reducedMotion||strikeKind?0:dampedImpulse(age-beat,32,18));pose.upper=upperPose(u,pose);return pose;
@@ -3703,40 +3706,9 @@ function drawDetonation(e,t,subject){
  ctx.restore();
 }
 
-function drawEffects(t,subject=null,plantOnly=false){for(const e of effects){
- if(plantOnly){
-  if(!e.attackPlant||e.actor!==subject.id)continue;
- }else if(subject&&(e.x!==subject.x||e.z!==subject.z||!e.deathImpact&&!['boom','detonation'].includes(e.type)))continue;
- const phase=1-e.t;if(e.type==='shot'){drawAttackEffect(e,t);
- }else if(e.type==='boom'){
-  if(e.light&&!e.broken){
-   const target=subject||battle.units.find(u=>u.id===e.target);
-   const p=target?mechAttachmentPoint(target,e.shieldImpact?'shield':e.part,t):project(e.x,1.1,e.z);
-   const radius=scale*.34;
-   ctx.save();ctx.globalAlpha=e.t;ctx.strokeStyle=e.shieldImpact?'#dffbff':'#ffe2a5';
-   ctx.lineWidth=1.3;ctx.shadowColor='#ed8a47';ctx.shadowBlur=7;
-   ctx.beginPath();
-   for(let i=0;i<9;i++){
-    const angle=i*2.399,reach=radius*(.23+phase)*(.48+(i%4)*.19);
-    const dx=Math.cos(angle)*reach,dy=Math.sin(angle)*reach;
-    ctx.moveTo(p.x+dx*.34,p.y+dy*.34);ctx.lineTo(p.x+dx,p.y+dy+radius*phase*phase*.45);
-   }
-   ctx.stroke();ctx.fillStyle='#fff4cf';ctx.beginPath();
-   ctx.arc(p.x,p.y,Math.max(1.2,radius*.15*e.t),0,Math.PI*2);ctx.fill();ctx.restore();
-   continue;
-  }
-  const target=subject||battle.units.find(u=>u.id===e.target),p=e.shieldImpact&&!subject?resolveAttachment(e.shieldImpact):target?mechAttachmentPoint(target,e.shieldImpact?'shield':e.part||'body',t):project(e.x,1.1,e.z),radius=scale*(e.big?1.1:.5);ctx.save();ctx.globalAlpha=e.t;const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,radius*(.3+phase));g.addColorStop(0,'#fff8dc');g.addColorStop(.22,'#ffda8f');g.addColorStop(.5,'#f2873c99');g.addColorStop(1,'#b54c1200');ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.3+phase),0,Math.PI*2);ctx.fill();for(let i=0;i<(e.big?22:13);i++){const angle=i*2.399,v=(.25+(i%5)*.19)*phase*radius*2;ctx.strokeStyle=i%2?'#ffba6c':'#fff2c6';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(p.x+Math.cos(angle)*v*.65,p.y+Math.sin(angle)*v*.65+phase*phase*scale*.5);ctx.lineTo(p.x+Math.cos(angle)*v,p.y+Math.sin(angle)*v+phase*phase*scale*.5);ctx.stroke()}ctx.restore();
- }else if(e.type==='detonation'){drawDetonation(e,t,subject);
- }else if(e.type==='step'){
-  const actor=e.attackPlant&&(subject||battle.units.find(u=>u.id===e.actor));
-  const p=actor?mechAttachmentPoint(actor,'leadFoot',t):project(e.x,0,e.z),mass=e.mass||1;
-  p.x+=(e.ox||0)*scale;p.y+=(e.oy||0)*scale;
-  ctx.save();ctx.globalAlpha=e.t*.34;ctx.strokeStyle='#c0d4dc';ctx.lineWidth=.9;ctx.beginPath();ctx.ellipse(p.x+(e.side||0)*scale*.15,p.y,scale*phase*.62*mass,scale*phase*.2*mass,0,0,Math.PI*2);ctx.stroke();
-  for(let i=0;i<5;i++){const angle=i*2.4;ctx.globalAlpha=e.t*.16;ctx.fillStyle='#aabdc6';ctx.beginPath();ctx.arc(p.x+Math.cos(angle)*phase*scale*.5,p.y+Math.sin(angle)*phase*scale*.14-phase*scale*.12,scale*(.025+phase*.055)*mass,0,Math.PI*2);ctx.fill()}ctx.restore();
- }else if(e.type==='skill'){
-  const p=project(e.x,0,e.z);ctx.save();ctx.globalAlpha=e.t*.65;ctx.strokeStyle=['#e8bc77','#b1d7e6','#b6d8c5'][e.kind]??CREW[e.kind].color;ctx.lineWidth=1.4;ctx.beginPath();ctx.ellipse(p.x,p.y,scale*(.35+phase*.9),scale*(.13+phase*.3),0,0,Math.PI*2);ctx.stroke();ctx.restore();
- }
- else{const p=project(e.x,2.6+phase*.6,e.z);ctx.save();ctx.globalAlpha=Math.min(1,e.t*3);ctx.fillStyle=e.type==='heal'?'#bbd8c9':'#f5dbb1';ctx.font='600 '+(W<760?'9':'12')+'px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.shadowColor='#07111a';ctx.shadowBlur=6;ctx.fillText(e.text,p.x,p.y);ctx.restore()}
+function drawEffects(t){for(const e of effects){
+ if(e.type!=='text'&&e.type!=='heal')continue;
+ const phase=1-e.t,p=project(e.x,2.6+phase*.6,e.z);ctx.save();ctx.globalAlpha=Math.min(1,e.t*3);ctx.fillStyle=e.type==='heal'?'#bbd8c9':'#f5dbb1';ctx.font='600 '+(W<760?'9':'12')+'px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.shadowColor='#07111a';ctx.shadowBlur=6;ctx.fillText(e.text,p.x,p.y);ctx.restore();
 }}
 function focusBattleCamera(u,reset=false){
  if(!u)return;

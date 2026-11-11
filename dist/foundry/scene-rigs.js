@@ -122,6 +122,20 @@ function wardenAnchor(point,groundRow){
 }
 
 
+function aimMounted(m,weapon,target,weight){
+ if(!weapon?.muzzle||!weapon.axis||weight<=0)return;
+ const wrist=m.rig.arms.R.wr,worldQ=new T.Quaternion(),parentQ=new T.Quaternion(),delta=new T.Quaternion();
+ // Correct the actual barrel axis after authored carry/fire poses and recoil.
+ // Re-evaluate the muzzle after each correction because the wrist also moves it.
+ for(let i=0;i<3;i++){
+  m.cont.updateMatrixWorld(true);
+  const muzzle=weapon.muzzle.getWorldPosition(V3()),axis=weapon.axis.getWorldPosition(V3()),line=muzzle.clone().sub(axis).normalize(),desired=target.clone().sub(muzzle).normalize();
+  if(line.lengthSq()<.5||desired.lengthSq()<.5)break;
+  delta.setFromUnitVectors(line,desired);delta.slerp(new T.Quaternion(),1-weight);
+  wrist.getWorldQuaternion(worldQ);wrist.parent.getWorldQuaternion(parentQ);
+  wrist.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));
+ }
+}
 function draw(u,t,pose,scope,model,custom){
  if(!init())return null;
  if(!pose.preview&&combatScope!==scope){clearCombat();combatScope=scope;}
@@ -180,7 +194,7 @@ function draw(u,t,pose,scope,model,custom){
  m.primaryWeapon=entry.primary&&u.hp.right>0?entry.primary:null;
  animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
-  armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?false:!step,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
+  bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?false:!step,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
  if(custom==='warden')window.IronVowWardenRig.afterAnimate(m);else if(custom==='bastion')bastion.afterAnimate(m);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
@@ -191,8 +205,8 @@ function draw(u,t,pose,scope,model,custom){
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
  if(armory&&!entry.armed){
-  entry.primary=arsenal.mount(armory,u.weapon,m.rig.arms.R.so);
-  entry.secondary=arsenal.mount(armory,u.melee,m.rig.arms.L.so);
+  entry.primary=arsenal.mount(armory,window.IronVowWeaponFX?.get(u.weapon).asset??u.weapon,m.rig.arms.R.so);
+  entry.secondary=arsenal.mount(armory,u.melee?(window.IronVowWeaponFX?.get(u.melee).asset??u.melee):null,m.rig.arms.L.so);
   entry.armed=true;
   // The Warden carries the production arsenal at its Rig Bench scale.
   if(custom==='warden'||custom==='bastion')for(const w of [entry.primary,entry.secondary])w?.model.scale.setScalar(.62);
@@ -215,6 +229,7 @@ function draw(u,t,pose,scope,model,custom){
   if(entry.secondary.spike)entry.secondary.spike.position.z=entry.secondary.spikeRest+(pose.strikeProgress>=.61&&pose.strikeProgress<=.81?.50:0);
   arsenal.animate(entry.secondary,pose);
  }
+ if(world&&u.alive&&u.hp.right>0&&!melee&&aim>.01)aimMounted(m,entry.primary,world.aim,Math.min(1,aim));
  m.cont.updateMatrixWorld(true);
  if(!world){
   setCamera(.46);

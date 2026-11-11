@@ -3,7 +3,7 @@
 'use strict';
 const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=6.8,HEIGHT=3.4;
 const LIVE=new Set([0,5,6,7,8,9,10,12]);
-let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup;
+let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let cameraReady=false,lightningAt=4,lightning=0;
 const models=new Map(),aimTargets=new Map(),groundMeshes=[],coverMeshes=[];
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
@@ -38,6 +38,7 @@ function init(){
  root.IronVowRenderer.subscribe(({type})=>{if(type==='restored'){clear();cameraReady=false;}});
 }
 function clear(){
+ combat?.dispose();combat=null;
  root.IronVowFoundry?.clearCombat();root.IronVowBillboards?.clear();models.clear();aimTargets.clear();
  if(scene){sun?.shadow.map?.dispose();disposeTree(scene);}
  kit?.dispose();kit=null;scene=null;battleRef=null;groundMeshes.length=coverMeshes.length=0;
@@ -87,6 +88,7 @@ function build(){
  const chevTexture=new T.CanvasTexture(surface),chevGeometry=new T.PlaneGeometry(1.3,1.3);chevGeometry.rotateX(-Math.PI/2);
  for(let i=0;i<battle.size.width*battle.size.depth;i++){const mesh=new T.Mesh(chevGeometry,new T.MeshBasicMaterial({map:chevTexture,color:0xe6c182,transparent:true,depthWrite:false}));mesh.renderOrder=4;mesh.visible=false;pathGroup.add(mesh);}
  camera=new T.PerspectiveCamera(30,innerWidth/innerHeight,.3,500);cameraReady=false;
+ combat=root.IronVowCombat.create(scene,{camera,groundAt,world,partPoint,attachmentPoint,models,isLive,sync:u=>prepareUnit(u,clock)});
  lightningAt=clock+4;lightning=0;
  updateCamera(clock,0);
 }
@@ -145,7 +147,7 @@ function prepareUnit(u,t){
   const motion=u.motion,heading=motion?Math.atan2(motion.toX-motion.fromX,motion.toZ-motion.fromZ):(displayedHeading(u)+Math.PI/4);
   const speed=record?.previousPosition&&t>record.previousTime?p.distanceTo(record.previousPosition)/(t-record.previousTime):0;
   const aim=goal&&goal.target.alive?partPoint(goal.target,goal.part):p.clone().add(V3(Math.sin(heading)*20,4,Math.cos(heading)*20));
-  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,face:goal?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
+  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,onStep:(...args)=>combat?.step(...args),face:goal?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
   const custom=u.frame===0?'warden':u.frame===10?'bastion':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;
@@ -198,7 +200,7 @@ function render(t,dt){
  if(root.IronVowRenderer.lost)return;
  if(battleRef!==battle||!scene)build();
  for(const u of battle.units)prepareUnit(u,t);
- updateCamera(t,dt);updateOverlays();
+ combat.update(t,dt);updateCamera(t,dt);updateOverlays();
  const storm=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3===2;
  if(storm&&!reducedMotion){if(t>=lightningAt){lightning=1;lightningAt=t+kit.random(5,11);}lightning*=Math.exp(-dt*9);sun.intensity=kit.PAL[2].sun[1]+lightning*2.5*(kit.random(0,1)>.3?1:.4);}
  root.IronVowRenderer.show(true);root.IronVowRenderer.resize(innerWidth,innerHeight);
@@ -227,6 +229,6 @@ root.IronVowScene={isLive,render,project,projectWorld,screenTile,pick,pan,partPo
  get covers(){return coverMeshes.map(m=>({min:m.userData.bounds.min.toArray(),max:m.userData.bounds.max.toArray()}));},
  overlayInfo(){return {triangles:overlays.geometry.index.count/3,path:pathGroup.children.filter(m=>m.visible).map(m=>({position:m.position.toArray(),color:m.material.color.getHex()})),selected:selection.visible,target:targetRing.visible};},
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
- get camera(){return camera;},get scene(){return scene;},get models(){return models;},get ready(){return Boolean(scene&&battleRef===battle&&battle?.units.every(u=>isLive(u)?models.get(u.id)?.entry.armed:root.IronVowBillboards.ready(u.id)));}
+ get combat(){return combat;},get camera(){return camera;},get scene(){return scene;},get models(){return models;},get ready(){return Boolean(scene&&battleRef===battle&&battle?.units.every(u=>isLive(u)?models.get(u.id)?.entry.armed:root.IronVowBillboards.ready(u.id)));}
 };
 })(window);
