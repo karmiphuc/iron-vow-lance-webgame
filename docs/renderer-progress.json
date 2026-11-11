@@ -60,8 +60,8 @@
     {
       "phase": 2,
       "issue": 12,
-      "status": "verified; final PR evidence review",
-      "next": "Finish visual evidence review and merge PR #21.",
+      "status": "complete in PR #21",
+      "next": "Phase 3 actual rig exports require the specified authoring workflow and source files; see draft #22.",
       "branch": "renderer/phase2",
       "pr": 21,
       "runtime_commit": "fa9f835",
