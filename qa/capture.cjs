@@ -169,10 +169,11 @@ async function capture(config){
     if(errors.length)throw Error(errors.join('\n'));
     let selectedMoveViewVerified=false;
     if(job.preset.id==='selected-move'&&job.source!=='reference-game'){
-     await page.locator('#map-overview').click();await page.evaluate(()=>window.__captureTick());
+     await page.locator('#map-overview').click();
+     await page.evaluate(()=>{window.__captureAdvanceOnly=true;try{for(let i=1;i<=30;i++)window.__captureTick(5000+i*1000/30);}finally{window.__captureAdvanceOnly=false;}window.__captureTick(6033);});
      const target=await page.evaluate(()=>{
       const u=current(),free=freeMovement(u);
-      return __ironVow.legalMoves(u.id).filter(m=>m.cost>free).map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-180&&m.p.y>180&&m.p.y<innerHeight-180&&IronVowScene.screenTile(m.p.x,m.p.y)?.x===m.x&&IronVowScene.screenTile(m.p.x,m.p.y)?.z===m.z);
+      return __ironVow.legalMoves(u.id).filter(m=>m.cost>free).map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-180&&m.p.y>180&&m.p.y<innerHeight-180&&document.elementFromPoint(m.p.x,m.p.y)===canvas&&IronVowScene.screenTile(m.p.x,m.p.y)?.x===m.x&&IronVowScene.screenTile(m.p.x,m.p.y)?.z===m.z);
      });
      if(!target)throw Error('No visible paid-move tile for capture');
      await page.mouse.move(target.p.x,target.p.y);await page.evaluate(()=>window.__captureTick());
