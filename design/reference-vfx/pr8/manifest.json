@@ -1,0 +1,176 @@
+{
+  "source_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+  "environment": "Playwright Chromium; software WebGL; no device performance claim",
+  "checks": [
+    {
+      "device": "desktop",
+      "kind": "rifle",
+      "bursts": 3,
+      "particlesPerBurst": 13
+    },
+    {
+      "device": "desktop",
+      "kind": "shotgun",
+      "bursts": 1,
+      "particlesPerBurst": 20
+    },
+    {
+      "device": "desktop",
+      "kind": "missile",
+      "bursts": 3,
+      "particlesPerBurst": 28
+    },
+    {
+      "device": "desktop",
+      "kind": "rail",
+      "bursts": 1,
+      "particlesPerBurst": 16
+    },
+    {
+      "device": "desktop",
+      "kind": "blade",
+      "bursts": 1,
+      "particlesPerBurst": 18
+    },
+    {
+      "device": "desktop",
+      "naturalCriticalArcs": 6,
+      "collapse": {
+        "before": {
+          "arc": 5,
+          "airwave": 1,
+          "dustwave": 1
+        },
+        "after": {
+          "arc": 5,
+          "airwave": 2,
+          "dustwave": 2
+        }
+      }
+    },
+    {
+      "device": "touch",
+      "kind": "rifle",
+      "bursts": 3,
+      "particlesPerBurst": 8
+    },
+    {
+      "device": "touch",
+      "kind": "shotgun",
+      "bursts": 1,
+      "particlesPerBurst": 12
+    },
+    {
+      "device": "touch",
+      "kind": "missile",
+      "bursts": 3,
+      "particlesPerBurst": 17
+    },
+    {
+      "device": "touch",
+      "kind": "rail",
+      "bursts": 1,
+      "particlesPerBurst": 10
+    },
+    {
+      "device": "touch",
+      "kind": "blade",
+      "bursts": 1,
+      "particlesPerBurst": 11
+    },
+    {
+      "device": "touch",
+      "naturalCriticalArcs": 6,
+      "collapse": {
+        "before": {
+          "arc": 5,
+          "airwave": 1,
+          "dustwave": 1
+        },
+        "after": {
+          "arc": 5,
+          "airwave": 2,
+          "dustwave": 2
+        }
+      }
+    },
+    {
+      "reducedMotion": true,
+      "arcs": 0
+    }
+  ],
+  "captures": [
+    {
+      "file": "rifle-16ms.png",
+      "sha256": "5e6e0c3a521deb2d745ae27676383a0026e3ce6e24d5524cec92f1716325cb54"
+    },
+    {
+      "file": "rifle-100ms.png",
+      "sha256": "39f475f2fe3f9ae9ef22279b0c3afec16ae4b8236f6c28be729b4dc0aa76b99b"
+    },
+    {
+      "file": "rifle-250ms.png",
+      "sha256": "1afe5523612740aa06143be9bf0fe3877a447c4043b3e7e561644ef74d4c3c8c"
+    },
+    {
+      "file": "shotgun-16ms.png",
+      "sha256": "a5a4f0fe8b5a9fabb62b2112d4d21edf753bca1df0cdfd6773114e185f07ffbe"
+    },
+    {
+      "file": "shotgun-100ms.png",
+      "sha256": "8caff6279d1962376ac1904efde05d7d041439fd8d467cf8e118217c75f20427"
+    },
+    {
+      "file": "shotgun-250ms.png",
+      "sha256": "994b425a6d6bd4037fc13645e8bb48ef3bd014e7391c718a5f0a141b8997fd0c"
+    },
+    {
+      "file": "missile-16ms.png",
+      "sha256": "2040bd542741067d2346950f3ac0bad5db968fab0c2b766ed625d49b8136ef12"
+    },
+    {
+      "file": "missile-100ms.png",
+      "sha256": "287c527c99f822e1c19d83922a101fee00188d8aa8a0f74b33efd28a2f527c98"
+    },
+    {
+      "file": "missile-250ms.png",
+      "sha256": "554c2ac1cad34ee3e07b77d4123dbe7d86e87357e9a29bd54710973522bbb272"
+    },
+    {
+      "file": "rail-16ms.png",
+      "sha256": "f9be8883ea2cbcc391a2e7955fcb1299d02d13fd2477a7aaf9f4435a75d81f7c"
+    },
+    {
+      "file": "rail-100ms.png",
+      "sha256": "e5e08fffb563fb0a66498a8b5bc3e7207bc403362cc0e1e09dab33a3f542eb0f"
+    },
+    {
+      "file": "rail-250ms.png",
+      "sha256": "ff107263f2e8a2fb5f82440f260dc5567622d8026b6d753dfe02df8f615d4f1f"
+    },
+    {
+      "file": "blade-16ms.png",
+      "sha256": "1ca621e50b90385b056c25ec7091bd206ef99f616699ea6e30b1ff02e37c576f"
+    },
+    {
+      "file": "blade-100ms.png",
+      "sha256": "b6a8004f7ee23ce8921c7f620599193fa1e8cd2192e9c50e634ffacf2c06af39"
+    },
+    {
+      "file": "blade-250ms.png",
+      "sha256": "04c55986be2d997e198a456aa49ad7bb256f5a9d5f8eb7d2c9e42bd45089e88c"
+    },
+    {
+      "file": "collapse-ground-slam.png",
+      "sha256": "4e3f67656f5c2f8c20b2c9e763e0cef778a9a2dc0091fdc12d0f7c1aa64397a7"
+    }
+  ],
+  "base_commit": "2034d9b66ead3038a553f927440baf51bc06366f",
+  "reviewed_pr_head_before_fix": "5abf88982802ac6555f23e17688707c4663bb7e8",
+  "notes": [
+    "The prior head produced zero missile sprays; the fixed hook produces three, preserving the existing salvo timing.",
+    "Impact images inject one seeded profile into the real scene at the mech body; the separate hook checks fire each actual bench weapon.",
+    "Seeded comparison retains raw pre-existing correctness and host-timing anomalies; this PR does not certify the future shared-scene zero-anomaly gate."
+  ],
+  "contact_sheet_sha256": "6ac452e819f67738277e4f41df9515702f04f6a029713bfcde14e2c681864533"
+}

@@ -1,0 +1,80 @@
+
+> test
+> node check-simulation.cjs
+
+PASS Aero purchase, saved Jumpjet, ranged/melee/counter dodge and all four Relay attacks
+PASS: alternating foot lift, frame-independent movement at 30/60/144Hz, landing/AP timing, planted-foot rail recoil, collapse progression, weight-specific speeds and reduced-motion behavior.
+PASS: all six planted attack atlases, 24 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and all three terrain sets with matching cover and pathing.
+PASS Ashigaru roster, legacy and new checkpoints, range switches, counters, arm loss, and enemy-only equipment
+PASS Basilisk hip clearance, boot separation, planted attack feet and unchanged Warden/Kestrel motion
+PASS Bulwark Frontier roster, checkpoints, independent shield and cleaver arms, melee pursuit and acquisition gates
+PASS burst counts, independent misses, scatter, chassis evasion, capped damage, shield break, one kill and XP award, and rotated salvage reload/rebuild.
+PASS filterless spent units, vehicle wrecks, transformed crops, silhouette alpha and context restoration
+PASS half-second ignition and idle, identical Siege walking mix across chassis, timed vents, and missile and rifle audio.
+PASS all eight classes can train both level 3 skills from either level 1 skill, with points and reload preserved
+PASS Vesper and Locust missile lockout, 5-10 damage AP-free punches on both sides, range, arms, priorities and reload
+PASS: v29 perk migration, advanced gates, readable wiki and faster real promotion into level 6.
+PASS: Vanguard retains movement and Braces on Overdrive; Breacher pierces, Braces and earns lethal refunds.
+PASS: Marksman cover, counter reach and refunds; Saboteur limb penetration, jam and Deadeye chaining.
+PASS: Engineer repairs all limbs and has one Failsafe; Sentinel extends counters and shields adjacent allies.
+PASS: all three cabin tiers, six active pilots, duty promotion and training, valid unique draft, hull and pilot identity, auxiliary limits and exact resume.
+PASS Foundry gait IK and planted feet (Aegis 0.0mm, Shrike 10.2mm, Bastion 0.0mm, Valkyrie 9.7mm, Oni 0.0mm, Behemoth 0.0mm), Behemoth four-beat walk and planted kneel fold, Oni duelist cut, narrow stance, two-hand rifle grip, clear guards, left-foot firing stance
+PASS: procurement, swap, paint, pilot disable, donor career migration, four fallback battle paths, weapon sockets, Foundry atlases and simulated WebGL failure recovery.
+PASS: four Gatecrasher kits, legacy save migration, ownership and hull storage; Hellbreaker salvage and rigs.
+PASS: separate persisted Hangar queue, reserve skills and aux resume, wound treatment, rebuilds, patches, and exact contract recon.
+PASS varied hostile liveries, seeded contract offers, no combat RNG consumption, and exact reload colors
+PASS market price ladder, paid prototypes, exact deductions, stored hull reassignment, and salvage rebuild
+PASS: legacy career, both hires, duplicate protection, identity and training on seat and hull swaps.
+PASS: deterministic reload of daily offers and exact one-, two- and three-mech checkpoints.
+PASS: skill range, costs, checkpoint restore, paid discounts, misses and reactions.
+PASS: recovered bodies, one-time scrap/rebuild, cold storage, and purchase without reassignment.
+PASS LI-02 Corridor AI fire, heavier armor, checkpoint, market and salvage exclusion
+PASS LI-01 enemy turn, checkpoint restore, market, rebuild and Picket victory salvage
+PASS Lion closed grip export, authored attack phases, playable loadouts, and isolated career state
+PASS real live-Warden movement, tile seams, loading handoff and owned-material cleanup (0.039 tile maximum planted-foot shift)
+PASS live Warden: exact re-rig, planted gait, two-hand carry, clear guards, left-foot firing stance, maul/sweep/thrust, field framing, Jumpjet altitude, automatic loading and live/baked routing
+PASS mech kill credit, skill learning, two-slot mastery, pilot transfers and portable Jumpjet checkpoint
+Recruit contract, fresh lance: 12/12 victories; rounds 3,3,3,3,3,3,3,4,3,4,3,3
+Picket seats 0: 12/12 victories
+Picket seats 1: 12/12 victories
+Picket seats 2: 12/12 victories
+Picket seats 0,2: 12/12 victories
+Career sortie 1 {"win":true,"rounds":3,"condition":[100,79,100]}
+Career sortie 2 {"win":true,"rounds":9,"condition":[93,87,88]}
+Career sortie 3 {"win":true,"rounds":9,"condition":[86,71,97]}
+Career sortie 4 {"win":true,"rounds":3,"condition":[100,91,98]}
+Career sortie 5 {"win":true,"rounds":15,"condition":[89,75,84]}
+Zero-reserve recovery: 12/12 victories
+PASS: complete seeded missions resolve without forced kills; rewards, persistent damage, repairs, refits and redeployment exercised.
+PASS: free movement, one paid tile, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and four-facing travel assets.
+PASS: all 20 Workshop stat sheets match deployed HP, armor, mobility, AP and weapons with worn reinforced hulls; legacy mobility retained.
+PASS: both counter paths, diagonal and range limits, aircraft, both arms, disabled bodies and pilots, AP, no chains and round reset.
+PASS: all eight pilot identities, six level-10 paths, Sapper charges/refund, Signal round effects and pending reload, Retriever solo repair/two uses/salvage, corrupt checkpoint recovery.
+PASS: reserve swaps preserve career data, both native gaits and salvos render in combat, strike and subsystem rules work, and the reassigned lance resumes from its checkpoint.
+PASS published save v31-corridor.json
+PASS published save v32-picket.json
+PASS published save v35-frontier.json
+PASS published save v53-picket.json
+PASS published save v55-corridor.json
+PASS published save ashigaru-picket.json
+PASS Reaver Medium+ hostile rosters, acquisition exclusions, victory salvage and old/new checkpoint restore
+PASS: exact sortie and enemy replay, corrupt checkpoint recovery, single payout, level-100 career and stale tab save protection.
+PASS high-ground aim, symmetric ridge sightlines, indirect fire, blocked AP and reactions, and AI repositioning
+PASS staged body and cockpit deaths for all 20 chassis, heavy timing, settled reloads and one reactor blast
+PASS Gatecrasher field and cinematic shield depth across four headings and left-arm loss
+PASS shield ownership, mount compatibility, armor and Brace stacking, misses, gun, missile and melee interception, break without overflow, counters, repair and save resume
+PASS: ship construction, payout timing, crew wounds and recovery, hull service, and v8 auxiliary sorties across all contracts.
+PASS package gate is always inserted, helper failures propagate and other checkouts are rejected
+PASS: opening and original contract rosters, exact 2,000-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, priming for allied and enemy mechs, attack skip and reduced motion.
+PASS 96 seeded maps, connected terrain, height-aware picking and save-stable terrain
+PASS: starting points, real sortie promotion, prerequisites, pilot ownership and mission training entry.
+PASS: veteran points, exclusive capstones, chassis swaps, Workshop parity and exact trained AP/movement restore.
+PASS: trained range and reactions, ranged/limb power and accuracy, brace, and actual body and limb repair.
+PASS: discounted strikes, Deadeye capstone, actual boosted counter and recurring AP.
+PASS: older careers load and malformed training preserves the valid career.
+PASS: actual DOM navigation, hangar selection/details, contract deployment, manual modal, combat controls, skills, brace, subsystem targeting/damage, withdrawal, workshop purchase/upgrade, pilots, career record, local images; native canvas rendering at 1440x1024 and 390x844.
+PASS: approved feet unchanged; independent arm aim with rigid rifle/planted feet; knee-fold chest drop; distinct fall; reactor blast after collapse exactly once; camera-relative attachments.
+PASS: an actual hit flashes the selected subsystem, the flash expires, and a disabled raster subsystem stays dark.
+PASS Vanguard Hard+ roster, existing and new checkpoints, melee pursuit, Hailstorm fallback and acquisition gates
+PASS 14 expansion weapons, firing, reputation gates, one-time purchase, and exact save resume.
+PASS 45 simulation suites
