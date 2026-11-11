@@ -1,0 +1,769 @@
+{
+  "label": "phase0",
+  "source": "cdf6ce62e2106fc3916e5701a5a9b6ff5fdd069d",
+  "asset_delay_ms": 0,
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "captures": [
+    {
+      "source": "phase0",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/hangar.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/workshop-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/workshop-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/workshop-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/paint.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/battle-theater-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/battle-theater-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/battle-theater-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/selected-move.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/attack-rifle.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/attack-shotgun.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/attack-missile.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/attack-rail.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/attack-blade.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/attack-parallax.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9"
+    },
+    {
+      "source": "phase0",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/hangar.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/workshop-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/workshop-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/workshop-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/paint.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/battle-theater-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/battle-theater-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/battle-theater-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/selected-move.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/attack-rifle.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/attack-shotgun.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/attack-missile.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/attack-rail.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/attack-blade.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/attack-parallax.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9"
+    },
+    {
+      "source": "phase0",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/hangar.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/workshop-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/workshop-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/workshop-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/paint.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/battle-theater-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/battle-theater-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/battle-theater-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/selected-move.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/attack-rifle.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/attack-shotgun.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/attack-missile.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/attack-rail.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/attack-blade.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/attack-parallax.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9"
+    },
+    {
+      "source": "phase0",
+      "preset": "hangar",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/hangar.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-0",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/workshop-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/workshop-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "workshop-2",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/workshop-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "paint",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/paint.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-0",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/battle-theater-0.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-1",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/battle-theater-1.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "battle-theater-2",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/battle-theater-2.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/selected-move.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rifle",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/attack-rifle.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-shotgun",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/attack-shotgun.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-missile",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/attack-missile.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-rail",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/attack-rail.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-blade",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/attack-blade.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "attack-parallax",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/attack-parallax.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "damaged",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/damaged.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "burning-wreck",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/burning-wreck.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b"
+    },
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9"
+    }
+  ],
+  "failures": []
+}
