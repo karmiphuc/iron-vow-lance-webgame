@@ -78,6 +78,41 @@ async function main(){
      let arcs=0;const arc=B.fx.arc;B.fx.arc=(...a)=>{arcs++;return arc(...a);};__stepReference(8);B.fx.arc=arc;return arcs;
     });
     assert.ok(critical>0,'critical damage produces natural arcs');
+    const arcPixels=await page.evaluate(()=>{
+     const T=THREE,R=RB.R,scene=new T.Scene(),camera=new T.OrthographicCamera(-2,2,1, -1,.1,20);
+     scene.background=new T.Color(0);camera.position.set(0,0,8);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+     const fx=VowAnim.FX(scene,{arcs:1,lights:1,glow:1,fire:1,smoke:1,sparks:1,debris:1,streaks:1});
+     const cover=new T.Mesh(new T.PlaneGeometry(5,5),new T.MeshBasicMaterial({color:0x555555}));cover.position.z=1;scene.add(cover);
+     const target=new T.WebGLRenderTarget(256,128),pixels=new Uint8Array(256*128*4),samples=[];
+     try{
+      fx.arc(new T.Vector3(-1,0,0),new T.Vector3(1,0,0),1,1);fx.update(1/60);
+      for(const state of ['exposed','behind-cover','in-front-of-cover']){
+       cover.visible=state!=='exposed';if(state==='in-front-of-cover')cover.position.z=-1;
+       R.setRenderTarget(target);R.render(scene,camera);R.readRenderTargetPixels(target,0,0,256,128,pixels);
+       let blue=0;for(let i=0;i<pixels.length;i+=4)if(pixels[i+2]>pixels[i]+20&&pixels[i+2]>pixels[i+1]+10)blue++;
+       const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
+       const image=canvas.getContext('2d').createImageData(256,128);
+       for(let y=0;y<128;y++)image.data.set(pixels.subarray((127-y)*1024,(128-y)*1024),y*1024);
+       canvas.getContext('2d').putImageData(image,0,0);samples.push({state,bluePixels:blue,png:canvas.toDataURL('image/png').split(',')[1]});
+      }
+     }finally{
+      R.setRenderTarget(null);target.dispose();const disposed=new Set();scene.traverse(o=>{if(o.geometry&&!disposed.has(o.geometry)){disposed.add(o.geometry);o.geometry.dispose();}for(const m of [o.material].flat().filter(Boolean))if(!disposed.has(m)){disposed.add(m);m.dispose();}});
+     }
+     return samples;
+    });
+    for(const {state,bluePixels,png} of arcPixels){
+     evidence.checks.push({device:touch?'touch':'desktop',arcVisibility:state,bluePixels});
+     if(config.out){fs.mkdirSync(config.out,{recursive:true});const file=(touch?'touch':'desktop')+'-arc-'+state+'.png';fs.writeFileSync(path.join(config.out,file),Buffer.from(png,'base64'));evidence.captures.push({file,sha256:createHash('sha256').update(fs.readFileSync(path.join(config.out,file))).digest('hex')});}
+    }
+    assert.ok(arcPixels[0].bluePixels>100,'exposed electrical arc is visibly blue');
+    assert.equal(arcPixels[1].bluePixels,0,'opaque foreground cover hides the electrical arc');
+    assert.ok(arcPixels[2].bluePixels>100,'the same arc remains visible in front of cover');
+    await page.evaluate(()=>{
+     const B=RB.bench;B.rebuild();B.setPart('body',1);let fired=false;const original=B.fx.arc;
+     B.fx.arc=(...args)=>{fired=true;return original(...args);};
+     try{for(let i=0;i<600&&!fired;i++)__stepReference(1/60);if(!fired)throw Error('Natural critical arc never appeared');}finally{B.fx.arc=original;}
+    });
+    await screenshot(page,(touch?'touch':'desktop')+'-natural-critical-arc');
     const collapse=await page.evaluate(()=>{
      const B=RB.bench;B.rebuild();VowAnim.BT.hitstop=0;__stepReference(1/60);
      const count={arc:0,airwave:0,dustwave:0},original={};
@@ -116,8 +151,12 @@ async function main(){
    assert.deepEqual(correctness(runs[1]),correctness(runs[0]),'seeded outcomes and existing correctness anomalies match the previous reference');
    evidence.soak={seed:4242,battles:3,baseline:runs[0],current:runs[1],timingNote:'All raw anomalies are retained. frameSpike depends on host scheduling and is excluded from deterministic equality; no performance claim'};
   }
-  if(config.out){fs.mkdirSync(config.out,{recursive:true});fs.writeFileSync(path.join(config.out,'manifest.json'),JSON.stringify(evidence,null,2)+'\n');}
+  evidence.status='passed';
   console.log(config.soakOnly?'PASS 3-battle reference seeded comparison':'PASS reference VFX: all five real hit hooks, touch particle counts, natural critical/collapse arcs, ground slam, reduced motion'+(baseline?', 3-battle seeded comparison':''));
- }finally{await browser?.close();await new Promise(done=>server.close(done));}
+ }finally{
+  evidence.status??='incomplete';
+  if(config.out){fs.mkdirSync(config.out,{recursive:true});fs.writeFileSync(path.join(config.out,'manifest.json'),JSON.stringify(evidence,null,2)+'\n');}
+  await browser?.close();await new Promise(done=>server.close(done));
+ }
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
