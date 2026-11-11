@@ -134,6 +134,13 @@ const live=[0,5,6,7,8,9,10,12];
     __ironVow.start({seed,frames,contract});
    },{seed,frames,contract});
    await page.clock.runFor(100);
+   // Each contract may introduce a temporary enemy atlas not present in the warmup.
+   // Let real decoding finish while advancing the controlled animation clock.
+   const readyDeadline=Date.now()+120000;
+   while(!await page.evaluate(()=>IronVowScene.ready)){
+    assert.ok(Date.now()<readyDeadline,'Battle assets did not become ready within 120 seconds');
+    await page.clock.runFor(34);await new Promise(resolve=>setTimeout(resolve,20));
+   }
    const terrainSeed=await page.evaluate(()=>battle.terrainSeed);assert.ok(Number.isInteger(terrainSeed),'Seeded terrain is present');
    let done=false,turn=0,used=new Set();
    for(let decision=0;decision<1000;decision++){
