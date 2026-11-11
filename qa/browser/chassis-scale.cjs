@@ -4,9 +4,10 @@ module.exports=async function checkChassisScale({page,mobile,origin}){
  if(mobile)await page.setViewportSize({width:320,height:568});
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  const result=await page.evaluate(async()=>{
-  save.credits=FRAMES[3].cost+FRAMES[AERO_FRAME].cost;
+  save.credits=FRAMES[3].cost+FRAMES[SHOGUN_FRAME].cost+FRAMES[AERO_FRAME].cost;
   if(!assignChassis(0,3))throw Error('Gatecrasher procurement failed');
   if(!assignChassis(1,AERO_FRAME))throw Error('Aero procurement failed');
+  if(!acquireHull(SHOGUN_FRAME))throw Error('Shogun procurement failed');
   createBattle(0,false,false,[0,1,2]);
   const heavy=current(),scout=battle.units.find(u=>u.frame===ASHIGARU_FRAME),aero=battle.units[1];
   battle.units=[heavy,scout,aero];battle.cover.clear();
@@ -20,7 +21,7 @@ module.exports=async function checkChassisScale({page,mobile,origin}){
    let bounds;
    const drawImage=ctx.drawImage;
    ctx.drawImage=function(image,...args){
-    if(!bounds&&/gatecrasher|ashigaru-combat|aero-motion/.test(image.src||'')){
+    if(!bounds&&/gatecrasher|shogun|ashigaru-combat|aero-motion/.test(image.src||'')){
      const [sx,sy,sw,sh,dx,dy,dw,dh]=args.length===8?args:[0,0,image.width,image.height,...args];
      pixels.clearRect(0,0,224,224);
      pixels.drawImage(image,sx,sy,sw,sh,0,0,224,224);
@@ -42,8 +43,9 @@ module.exports=async function checkChassisScale({page,mobile,origin}){
    return bounds;
   }
   const samples=[];
-  for(const [melee,shoulder] of [[null,null],['cleaver',null],[null,'vesper-shoulder'],['cleaver','vesper-shoulder']]){
-   Object.assign(heavy,{melee,shoulder});
+  const loadouts=[[null,null],['cleaver',null],[null,'vesper-shoulder'],['cleaver','vesper-shoulder']];
+  for(const [frame,melee,shoulder] of [3,SHOGUN_FRAME].flatMap(frame=>loadouts.map(kit=>[frame,...kit]))){
+   Object.assign(heavy,{frame,melee,shoulder});
    const atlas=travelAtlas(heavy).grounded;
    await Promise.all([
     ...preloadNativeMotion(heavy.frame,heavy.paint,heavy),

@@ -30,8 +30,10 @@ async function verifyLive(url){
  const files=readdirSync(dist,{recursive:true}).filter(file=>file===join('assets','theater-tiles.webp')||file.endsWith('-parts.webp')||/-walk(?:-[^\\/]+)?\.webp$/.test(file)||/\.(?:html|js|css)$|(?:^|[\\/])(?:(?:aero-[^\\/]+|lion-[^\\/]+|armory-[^\\/]+|foundry-[6789](?:-[^\\/]+)?|reaver-[^\\/]+|bulwark|scout|ashigaru(?:-combat)?|foundry-1[01]|foundry-1[0-2]-death(?:-[0-3])?|aegis-(?:idle|[0-3]-(?:full|right-down|left-down|disarmed)))\.webp|expansion-weapons\.glb|shields\.glb|bulwark\.glb|scout\.glb)$/.test(file));
  files.push(...readdirSync(join(dist,'assets','audio')).filter(file=>file.endsWith('.wav'))
   .map(file=>join('assets','audio',file)));
- files.push(...readdirSync(join(dist,'assets')).filter(file=>/^(?:grid-travel-)?gatecrasher.*\.webp$/.test(file))
-  .map(file=>join('assets',file)),join('rig-bench','prototypes','gatecrasher.glb'),join('rig-bench','prototypes','gatecrasher.webp'));
+ files.push(...readdirSync(join(dist,'assets')).filter(file=>/^(?:grid-travel-)?(?:gatecrasher|shogun).*\.webp$/.test(file))
+  .map(file=>join('assets',file)));
+ for(const model of ['gatecrasher','shogun'])for(const type of ['glb','webp'])
+  files.push(join('rig-bench','prototypes',model+'.'+type));
  for(const file of new Set(files)){
   const asset=new URL(file.replaceAll('\\','/'),base);
   const options={cache:'no-store',signal:AbortSignal.timeout(20000)};

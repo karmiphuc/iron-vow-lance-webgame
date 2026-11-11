@@ -55,7 +55,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare
   assert.equal(art.key,`${prefix}-combat-${face}`);
   assert.equal(art.motion.cell,448);
   assert.notDeepEqual(art.muzzle,art.muzzle2);
-  for(const key of [art.key,art.motion.key])for(const suffix of ['','-paint','-parts'])
+  for(const key of [art.key,art.motion.key])for(const suffix of ['','-paint'])
    assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
  }
  const atlas=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL[${JSON.stringify(model)}])`));
@@ -66,8 +66,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare
  assert.equal(gait.detail.cell,384);
  assert.equal(gait.points.length,2+6*gait.samples+(gait.strike?.samples??0));
  for(const [heading,key] of gait.detail.keys.entries()){
-  for(const suffix of model==='hellbreaker'?['','-paint']:['','-paint','-parts'])
-   assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
+  for(const suffix of ['','-paint'])assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')));
   for(const [kind,start] of Object.entries(gait.walk)){
    const points=gait.points.slice(start,start+gait.samples).map(row=>row[heading]);
    const side=kind.at(-1);
@@ -90,10 +89,7 @@ for(const [model,prefix] of [['gatecrasher','gatecrasher-r2'],['gatecrasher-bare
  assert.deepEqual(new Set(json.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire',...(model==='gatecrasher'?['Strike']:[])]));
  assert.ok(json.nodes.some(node=>node.name===model.toUpperCase()+' / Rig'));
  if(model==='gatecrasher'){
-  for(const name of ['Midnight blue ceramic','Slate blue ceramic','Deep blue ceramic','Graphite structure','Black titanium mechanisms'])
-   assert.ok(json.materials.some(material=>material.name===`HV-09 Paint | ${name}`),name);
-  for(const name of ['Continuous hip skirt','Forearm armored sleeve.L','Tapered jet pod.R','Morrow / wrist receiver'])
-   assert.ok(json.nodes.some(node=>node.name===name),name);
+  assert.ok(json.materials.some(material=>material.name==='HV-09 / badge'),'raised torso badge has its paint role');
   for(const socket of ['Muzzle.Upper','Muzzle.Lower','Hardpoint.L','Cleaver Tip.L','Shoulder Hardpoint.R','Shoulder Muzzle.R','Shoulder Muzzle2.R'])
    assert.ok(json.nodes.some(node=>node.name===socket),socket);
   assert.ok(!json.nodes.some(node=>node.name==='Hardpoint.R'));
@@ -121,3 +117,35 @@ purchase("assignChassis(0,0);assignChassis(0,3)");
 assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher');
 assert.equal(purchase("validSave(save)"),true);
 console.log('PASS: four Gatecrasher kits, legacy save migration, ownership and hull storage; Hellbreaker salvage and rigs.');
+
+const flagship=simulate({travel:true}).run;
+assert.equal(flagship('FRAMES[SHOGUN_FRAME].name'),'SHOGUN');
+assert.equal(flagship('FRAMES[SHOGUN_FRAME].cost>FRAMES[3].cost && FRAMES[SHOGUN_FRAME].hp>FRAMES[3].hp'),true);
+assert.equal(flagship(`(()=>{
+ save.credits=FRAMES[3].cost+FRAMES[SHOGUN_FRAME].cost+3600;
+ if(!acquireHull(3)||!acquireHull(SHOGUN_FRAME)||!assignChassis(0,3)||!assignChassis(1,SHOGUN_FRAME))return false;
+ selected=1;equipWeapon('cleaver');equipWeapon('vesper-shoulder');
+ const restored=loadCareer(JSON.parse(JSON.stringify(save)));
+ return !!restored&&pilotFrame(0,restored)===3&&pilotFrame(1,restored)===SHOGUN_FRAME&&
+   nativeHullKey(3,restored.units[0])==='gatecrasher-bare'&&nativeHullKey(SHOGUN_FRAME,restored.units[1])==='shogun';
+})()`),true);
+for(const kit of ['shogun','shogun-bare','shogun-cleaver','shogun-vesper']){
+ const entry=JSON.parse(flagship(`JSON.stringify({combat:prototypes[${JSON.stringify(kit)}],
+  travel:window.IRON_VOW_TRAVEL[${JSON.stringify(kit)}]})`));
+ assert.equal(entry.travel.key,'grid-travel-shogun');
+ const keys=[entry.travel.key,...entry.travel.grounded.detail.keys];
+ for(const face of ['left','right']){
+  const view=entry.combat[face];
+  assert.equal(view.key,`${kit}-combat-${face}`);
+  assert.notDeepEqual(view.muzzle,view.muzzle2);
+  keys.push(view.key,view.motion.key);
+ }
+ for(const key of keys)for(const suffix of ['','-paint','-parts'])
+  assert.ok(existsSync(join(dist,'assets',key+suffix+'.webp')),key+suffix);
+}
+const shogunGlb=readFileSync(join(dist,'rig-bench/prototypes/shogun.glb'));
+const shogun=JSON.parse(shogunGlb.subarray(20,20+shogunGlb.readUInt32LE(12)));
+assert.ok(shogun.nodes.some(node=>node.name==='SHOGUN / Rig'));
+assert.ok(shogun.nodes.some(node=>node.name==='Continuous hip skirt'));
+assert.deepEqual(new Set(shogun.animations.map(a=>a.name)),new Set(['Idle','Walk','Deploy','Fire','Strike']));
+console.log('PASS: Shogun owns separate art, loadouts and saved hull identity alongside Gatecrasher.');

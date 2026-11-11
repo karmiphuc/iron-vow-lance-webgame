@@ -31,7 +31,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
  {id:'flechette-scattergun',name:'Flechette scattergun',type:'SCOUT SCATTERGUN',burst:12,scatter:true,damage:31,range:2,ap:5,builtIn:true,effect:'shotgun',scout:'scatter'},
  {id:'signal-knife',name:'Signal knife',type:'SCOUT KNIFE',damage:26,range:1,ap:5,builtIn:true,effect:'cleaver',scout:'knife',melee:true,pierce:.4},
- {id:'vesper-shoulder',name:'Vesper Shoulder Pod',type:'GUIDED MISSILE POD',damage:45,range:7,ap:4,price:2400,shoulder:true,desc:'The Gatecrasher right-shoulder mount launches guided missiles across cover.'}
+ {id:'vesper-shoulder',name:'Vesper Shoulder Pod',type:'GUIDED MISSILE POD',damage:45,range:7,ap:4,price:2400,shoulder:true,desc:'Launch guided missiles across cover from a compatible right-shoulder mount.'}
 ];
 const FREE_HAND_COUNTER={id:'free-hand',damage:10,range:1,ap:0,melee:true};
 const BURST_BONUS=1.15;
@@ -242,7 +242,11 @@ FRAMES.push(
 );
 const BASTION_FRAME=FRAMES.length-1;
 const playerHull=frame=>Boolean(FRAMES[frame]&&(!FRAMES[frame].enemyOnly||FRAMES[frame].salvageOnly));
-const canFitShield=frame=>playerHull(frame)&&(frame===3||!FRAMES[frame].native&&!FRAMES[frame].fixedWeapons);
+const breachLoadout=frame=>{
+ const model=FRAMES[frame]?.native;
+ return model==='gatecrasher'||model==='shogun';
+};
+const canFitShield=frame=>playerHull(frame)&&(breachLoadout(frame)||!FRAMES[frame].native&&!FRAMES[frame].fixedWeapons);
 const bastionRig=unit=>FRAMES[unit.frame]?.rig==='bastion';
 const PART_LABEL={body:'BODY',pilot:'PILOT',right:'WEAPON ARM',left:'LEFT ARM',legs:'LEGS'};
 const HELLBREAKER=FRAMES.length;
@@ -273,6 +277,9 @@ for(const [model,death] of Object.entries(window.IRON_VOW_ROSTER_DESTRUCTION??{}
 const AERO_FRAME=FRAMES.push({name:'AERO',model:'IV-03',role:'ELITE RECON',color:'#385647',
  hp:134,arm:84,leg:108,move:6,armor:3,cost:400000,weapon:'rifle',melee:'blade',
  foundry:11,noSalvage:true,fixedLivery:true,dodge:.15,jumpjet:true})-1;
+const SHOGUN_FRAME=FRAMES.push({name:'SHOGUN',model:'HV–12',role:'FLAGSHIP ASSAULT',color:'#3978a8',
+ hp:238,arm:124,leg:138,move:3,armor:10,cost:500000,weapon:'morrow',native:'shogun',
+ brief:'A flagship assault chassis with layered armor and a planted stride. The Morrow twin cannon is standard.'})-1;
 const MECH_SIGNATURES={
  0:['Steady Aim','First direct shot before moving gains +6 aim.'],
  1:['High Spot','A hit from high ground gives the next allied shot +5 aim.'],
@@ -291,7 +298,8 @@ const MECH_SIGNATURES={
  [REAVER_FRAME]:['Suppressing Fire','A direct hit to the weapon arm gives the target’s next shot −10 aim.'],
  [BULWARK_FRAME]:['Shield Bash','Bulwark’s bash pushes the target one tile. Other frames push with melee hits. Requires a clear destination.'],
  [ASHIGARU_FRAME]:['Range Discipline','Ashigaru switches to flechettes up close. Other frames gain +5 aim on adjacent strikes or ranged shots from two or more tiles.'],
- [AERO_FRAME]:['Jumpjet','Jump up to five tiles for 2 AP, once per sortie.']
+ [AERO_FRAME]:['Jumpjet','Jump up to five tiles for 2 AP, once per sortie.'],
+ [SHOGUN_FRAME]:['Siegebreaker','Direct fire cuts Brace reduction by 20 points.']
 };
 const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
 function hasMechSkill(u,frame){return Boolean(u?.mechSkills&&(u.frame===frame||u.mechSkills.includes(frame)))}
@@ -936,7 +944,7 @@ function money(n){return n.toLocaleString()+' CR'}
 function weapon(id){return WEAPONS.find(w=>w.id===id)||WEAPONS[0]}
 const weaponMotion=id=>{const w=weapon(id);return w.motion??w.effect??id};
 function meleeWeapon(u){return u.melee&&(u.frame===BULWARK_FRAME||!equippedShield(u))?weapon(u.melee):null}
-function shoulderWeapon(u,frame=u?.frame){return frame===3&&u.shoulder==='vesper-shoulder'?weapon('missile'):null}
+function shoulderWeapon(u,frame=u?.frame){return breachLoadout(frame)&&u.shoulder==='vesper-shoulder'?weapon('missile'):null}
 function selectedWeapon(u,mode=action,target=null){
  if(!u)return;
  if(mode==='strike')return meleeWeapon(u);
@@ -1091,7 +1099,7 @@ function workshopArmory(u,training){
 }
 function equipWeapon(id){
  const shield=shieldItem(id),w=shield||WEAPONS.find(entry=>entry.id===id),frame=pilotFrame(selected),u=save.units[selected];
- if(battle||!w||w.builtIn||FRAMES[frame].fixedWeapons||(shield?!canFitShield(frame):frame===3?id!=='cleaver'&&!w.shoulder:FRAMES[frame].native||w.shoulder))return;
+ if(battle||!w||w.builtIn||FRAMES[frame].fixedWeapons||(shield?!canFitShield(frame):breachLoadout(frame)?id!=='cleaver'&&!w.shoulder:FRAMES[frame].native||w.shoulder))return;
  const slot=shield?'shield':armorySlot(w);
  if(!save.owned.includes(id)&&u[slot]!==id){
   if(save.rep<(w.rep??0))return toast('Requires '+w.rep+' reputation');
@@ -1187,8 +1195,8 @@ function assignChassis(i,frame,allowSwap=false){
 }
 function builtInLoadout(u,training,frame){
  const loadout={...u,frame};
- const fixed=[unitWeapon(loadout),frame!==3&&meleeWeapon(loadout)].filter(Boolean).map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w.melee&&w.hand!=='right'?'LEFT HAND':'PRIMARY'} / ${ARMORY_CLASSES[armoryClass(w)]}</span>${infoTip(w.name,w.desc||'Factory weapon.')}</div><h3>${w.name}</h3><small>${w.damage} BASE DMG / ${armoryReach(w,training)} / ${weaponAP(w,training)} AP</small></article>`).join('');
- if(frame!==3)return fixed;
+ const fixed=[unitWeapon(loadout),!breachLoadout(frame)&&meleeWeapon(loadout)].filter(Boolean).map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w.melee&&w.hand!=='right'?'LEFT HAND':'PRIMARY'} / ${ARMORY_CLASSES[armoryClass(w)]}</span>${infoTip(w.name,w.desc||'Factory weapon.')}</div><h3>${w.name}</h3><small>${w.damage} BASE DMG / ${armoryReach(w,training)} / ${weaponAP(w,training)} AP</small></article>`).join('');
+ if(!breachLoadout(frame))return fixed;
  return fixed+`<div class="armory-grid armory-kits">
   <div><h3 class="loadout-slot">LEFT HAND / MELEE</h3>${armoryCard(u,weapon('cleaver'),training)}
    ${u.melee?'<button class="remove-melee" id="remove-melee" type="button">UNEQUIP CLEAVER</button>':''}</div>
@@ -1681,9 +1689,11 @@ const wardenVisuals=window.IRON_VOW_WARDEN_ART||{},baseArsenal=window.IRON_VOW_A
 const arsenal={...baseArsenal,weapons:{...baseArsenal.weapons,...window.IRON_VOW_EXPANSION_ART}};
 const wardenUpgrade=window.WARDEN_FIDELITY;
 function nativeHullKey(frame,hull){
- if(frame!==3)return FRAMES[frame]?.native;
+ const model=FRAMES[frame]?.native;
+ if(!breachLoadout(frame))return model;
  const blade=hull?.melee==='cleaver',pod=hull?.shoulder==='vesper-shoulder';
- return blade?(pod?'gatecrasher':'gatecrasher-cleaver'):(pod?'gatecrasher-vesper':'gatecrasher-bare');
+ if(blade&&pod)return model;
+ return model+(blade?'-cleaver':pod?'-vesper':'-bare');
 }
 function wardenVisual(frame,loadout,direction,stock=false,hull){
  const face=direction===1?'right':'left';
@@ -1771,9 +1781,9 @@ function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=(
 function validHull(u,frame,owned=[]){
  const f=FRAMES[frame];
  if(!u||!playerHull(frame))return false;
- const slotValid=frame===3?(u.shoulder==null||u.shoulder==='vesper-shoulder'&&owned.includes(u.shoulder)):
+ const slotValid=breachLoadout(frame)?(u.shoulder==null||u.shoulder==='vesper-shoulder'&&owned.includes(u.shoulder)):
   u.shoulder==null;
- const meleeValid=frame===3?(u.melee==null||u.melee==='breach-gauntlet'||u.melee==='cleaver'&&owned.includes(u.melee)):
+ const meleeValid=breachLoadout(frame)?(u.melee==null||frame===3&&u.melee==='breach-gauntlet'||u.melee==='cleaver'&&owned.includes(u.melee)):
   u.melee===f.melee;
  const shieldValid=u.shield==null||canFitShield(frame)&&u.melee==null&&shieldItem(u.shield)&&owned.includes(u.shield);
  return shieldValid&&slotValid&&(f.native||f.fixedWeapons?u.weapon===f.weapon&&meleeValid:
@@ -2192,7 +2202,8 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const power=w.damage*(1+.05*(a.level-1))*(a.boost?deadeyePower(training):1)*(1+weaponPower+limbPower+reactionPower+support+breachPower);
  const armor=t.hp.left===0?damagedArmor(t.armor):t.armor;
  const pierce=Math.max(w.pierce??0,w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0,charged?training?.breachPierce??.50:0);
- const brace=t.brace?Math.max(0,braceReduction(t.training)-(!w.melee&&!launchesMissiles(w)&&hasMechSkill(a,3)?.15:0)):0;
+ const bracePiercing=!w.melee&&!launchesMissiles(w)?(hasMechSkill(a,SHOGUN_FRAME)?.20:hasMechSkill(a,3)?.15:0):0;
+ const brace=t.brace?Math.max(0,braceReduction(t.training)-bracePiercing):0;
  const amount=Math.max(5,Math.round((power-armor*(1-pierce))*(1-brace)*(1-shieldProtection(t))));
  return w===FREE_HAND_COUNTER?Math.min(amount,10):amount;
 }
@@ -2545,7 +2556,7 @@ async function moveUnit(u,x,z){
   u.vx=p.x;u.vz=p.z;u.motion=null;
   if(!twoStep||segments[i].index===segments[i].length-1)u.landTime=clock;
   if(!twoStep&&!u.kind&&(!grounded||reducedMotion))effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});
-  if(!twoStep&&!reducedMotion&&!u.kind&&(u.frame===2||u.frame===3||u.frame===HELLBREAKER||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
+  if(!twoStep&&!reducedMotion&&!u.kind&&(u.frame===2||breachLoadout(u.frame)||u.frame===HELLBREAKER||foundryModel(u.frame)!=null))shake=Math.max(shake,MECH_MOTION[u.frame].mass*.75);
  }
  u.walkCount=gaitBase+steps.length;
 }
@@ -2585,7 +2596,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(images.length)await Promise.race([Promise.allSettled(images.map(image=>image.decode())),delay(900)]);
  }
  const shoulder=w===shoulderWeapon(a),clip=w.melee?'strike':'fire';
- const plantedCleaver=a.frame===3&&w.id==='cleaver';
+ const plantedCleaver=breachLoadout(a.frame)&&w.id==='cleaver';
  const native=!lionStrike&&!shoulder&&!a.kind&&wardenVisual(a.frame,a.weapon,a.face,a.team==='enemy',a)?.timing?.[clip];
  const plantedBastion=a.brace&&bastionRig(a);
  const plantedWarden=a.brace&&a.hp.legs>0&&upgradedWardenTravel(travelAtlas(a));
@@ -3303,6 +3314,7 @@ MECH_SIZE[REAVER_FRAME]=3.40;
 MECH_SIZE[BULWARK_FRAME]=3.65;
 MECH_SIZE[ASHIGARU_FRAME]=2.58;
 MECH_SIZE[AERO_FRAME]=3.18;
+MECH_SIZE[SHOGUN_FRAME]=MECH_SIZE[3];
 // Match the breach hull's padded travel cells to its close-up silhouette.
 const GATECRASHER_TRAVEL_SCALE=1.34;
 function jumpjetHeight(u,t){
@@ -3344,6 +3356,7 @@ MECH_MOTION[REAVER_FRAME]={...MECH_MOTION[0],step:.54};
 MECH_MOTION[BULWARK_FRAME]={...MECH_MOTION[3],step:.55,mass:1.5};
 MECH_MOTION[ASHIGARU_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.29,mass:.72};
 MECH_MOTION[AERO_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.43,mass:.89};
+MECH_MOTION[SHOGUN_FRAME]={...MECH_MOTION[3],mass:1.66};
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
 function dampedImpulse(age,frequency=35,decay=15){return age>=0&&age<.8?Math.sin(age*frequency)*Math.exp(-age*decay):0}
@@ -3832,7 +3845,7 @@ function bindWorkshop(){
  if(testRifle)testRifle.onclick=()=>testBastionGrip(false);
  if(testMelee)testMelee.onclick=()=>testBastionGrip(true);
  const remove=$('#remove-melee');
- if(remove)remove.onclick=()=>{delete u.melee;persist();refreshArmory(pilotFrame(selected)===3?'[data-equip="cleaver"]':`[data-armory-class="${armoryGroup}"]`);toast('Melee weapon unequipped')};
+ if(remove)remove.onclick=()=>{delete u.melee;persist();refreshArmory(breachLoadout(pilotFrame(selected))?'[data-equip="cleaver"]':`[data-armory-class="${armoryGroup}"]`);toast('Melee weapon unequipped')};
  const removeShoulder=$('#remove-shoulder');
  if(removeShoulder)removeShoulder.onclick=()=>{delete u.shoulder;persist();refreshArmory('[data-equip="vesper-shoulder"]');toast('Shoulder pod unequipped')};
  const removeShield=$('#remove-shield');
@@ -3928,7 +3941,7 @@ function fieldStepProgress(phase,segment){
 }
 
 function groundedTravelSpan(u,data){
- return data.span/3.65*(u.frame===3?GATECRASHER_TRAVEL_SCALE:1);
+ return data.span/3.65*(breachLoadout(u.frame)?GATECRASHER_TRAVEL_SCALE:1);
 }
 
 function twoStepContacts(u,progress){
@@ -4195,7 +4208,7 @@ function travelVisual(u,t){
   const strike=u.attack&&ATTACK_PROFILES[u.attack.kind].melee?animationPose(u,t):null;
   return {atlas,image:detail.image,source,bounds,row,heading,points:data.points[row][heading],direction,strike,grounded:true};
  }
- if(u.frame===3)return null;
+ if(breachLoadout(u.frame))return null;
  const gait=u.motion?(u.motion.stepBeats!=null?fieldStepProgress(phase,u.motion.segment):
   FRAMES[u.frame]?.native?phase:((u.motion.gaitBase+phase)/2)%1):0;
  const prime=u.attack?.primeDuration?clamp01((t-u.attack.start)/u.attack.primeDuration):0;
@@ -4602,7 +4615,7 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
 function freezeAttachment(u,part,t=clock){const p=mechAttachmentPoint(u,part,t),base=project(u.vx,0,u.vz);return{x:u.vx,z:u.vz,ox:(p.x-base.x)/scale,oy:(p.y-base.y)/scale}}
 function shotMuzzle(actor,id,index){
  const alternate=(id==='missile'||id==='cerberus'||ATTACK_PROFILES[id].alternate)&&index%2;
- const shoulder=actor.frame===3&&id==='missile';
+ const shoulder=breachLoadout(actor.frame)&&id==='missile';
  return shoulder?(alternate?'shoulderMuzzle2':'shoulderMuzzle'):(alternate?'muzzle2':'muzzle');
 }
 function resolveAttachment(a){const p=project(a.x,0,a.z);return{x:p.x+a.ox*scale,y:p.y+a.oy*scale}}
@@ -5351,7 +5364,8 @@ function mechAttackPaneFit(pane,u){
  if(u.lionTrial)return Math.min(heightLimit,(pane.h*.82-45)/2.7);
  // Keep the raised tower shield below the header in compact panes.
  if(u.frame===BULWARK_FRAME)return Math.min(heightLimit,(pane.h*.82-49)/2.48);
- if(u.frame===3&&pane.h<300)return Math.min(heightLimit,(pane.h*.76-48)/2.23);
+ if(u.frame===SHOGUN_FRAME&&pane.h<300)return Math.min(heightLimit,(pane.h*.76-48)/2.23);
+ if(u.frame===3&&pane.h<300)return Math.min(heightLimit,(pane.h*.78-48)/2.18);
  return heightLimit;
 }
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
@@ -5409,8 +5423,9 @@ function drawAttackPane(sequence,pane,subject,attacker,t){
  const compactInfantry=pane.h<300&&window.IRON_VOW_FOUNDRY_ART?.[foundryModel(subject.frame)]?.destruction;
  const settle=airborne&&!subject.alive?smoothRange(0,VEHICLES.helicopter.wreckAt,vehicleDeathAge(subject,t)):0;
  const painted=upgradedWardenTravel(travelAtlas(subject));
- const breachFloor=subject.frame===3||subject.frame===ASHIGARU_FRAME&&opponent?.frame===3;
- const breachFloorRatio=pane.h<300?.76:.78;
+ const breachFloor=breachLoadout(subject.frame)||subject.frame===ASHIGARU_FRAME&&breachLoadout(opponent?.frame);
+ const shogunPane=subject.frame===SHOGUN_FRAME||subject.frame===ASHIGARU_FRAME&&opponent?.frame===SHOGUN_FRAME;
+ const breachFloorRatio=shogunPane&&pane.h<300?.76:.78;
  const floor=pane.h*(airborne?.88-.14*settle:subject.kind?.74:painted?.75:breachFloor?breachFloorRatio:compactInfantry?.78:.82);
  // Fit both mechs with the same lens so a cutaway preserves their relative size.
  const fit=airborne?(pane.h*.88-49)/2.48:subject.kind?pane.h/2.25:

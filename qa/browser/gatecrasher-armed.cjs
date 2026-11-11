@@ -5,8 +5,9 @@ async function checkSamuraiWalk({page,mobile,origin}){
  await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.emulateMedia({reducedMotion:'no-preference'});
  const target=await page.evaluate(async()=>{
-  battle=null;save=fresh();save.credits=FRAMES[3].cost+10000;
-  if(!acquireHull(3)||!assignChassis(0,3,true))throw Error('Gatecrasher procurement failed');
+  battle=null;save=fresh();save.credits=FRAMES[3].cost+FRAMES[SHOGUN_FRAME].cost;
+  if(!acquireHull(3)||!acquireHull(SHOGUN_FRAME)||!assignChassis(0,SHOGUN_FRAME,true)||!assignChassis(1,3,true))
+   throw Error('Separate hull procurement failed');
   createBattle(0,false,false,[0]);surveyTerrain(0);battle.cover.clear();
   for(const cell of battle.field.cells)cell.level=0;
   const actor=current();
@@ -30,21 +31,23 @@ async function checkSamuraiWalk({page,mobile,origin}){
  await page.waitForFunction(()=>!battle.busy&&current().x===10&&current().z===10);
  const rows=await page.evaluate(()=>[...samuraiWalkQA.rows]);
  assert.ok(rows.length>=8,'the battlefield draws multiple planted-foot poses');
- assert.ok(rows.every(([,key])=>/^grid-travel-gatecrasher-bare-ground-[0-3]$/.test(key)));
+ assert.ok(rows.every(([,key])=>/^grid-travel-shogun-bare-ground-[0-3]$/.test(key)));
 }
 
 module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
- for(const mode of ['missile','strike']){
+ for(const [chassis,mode] of ['gatecrasher','shogun'].flatMap(chassis=>['missile','strike'].map(mode=>[chassis,mode]))){
   await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
   await page.locator('#nav button').first().waitFor({state:'attached'});
   await page.emulateMedia({reducedMotion:'no-preference'});
-  const credits=await page.evaluate(()=>{
-   battle=null;closeModal();save=fresh();save.credits=FRAMES[3].cost+10000;
-   if(!acquireHull(3)||!assignChassis(0,3,true))throw Error('Gatecrasher procurement failed');
+  const credits=await page.evaluate(chassis=>{
+   const frame=FRAMES.findIndex(f=>f.native===chassis);
+   battle=null;closeModal();save=fresh();save.credits=FRAMES[frame].cost+10000;
+   if(!acquireHull(frame)||!assignChassis(0,frame,true))throw Error(chassis+' procurement failed');
    selected=0;page='workshop';workshopView='assigned';render();
    return save.credits;
-  });
-  assert.equal(await page.evaluate(()=>nativeHullKey(3,save.units[0])),'gatecrasher-bare');
+  },chassis);
+  const kit=()=>page.evaluate(()=>nativeHullKey(pilotFrame(0),save.units[0]));
+  assert.equal(await kit(),chassis+'-bare');
   assert.match(await page.locator('[data-equip="cleaver"]').innerText(),/BUY & EQUIP/);
   assert.match(await page.locator('[data-equip="vesper-shoulder"]').innerText(),/BUY & EQUIP/);
   const item=mode==='missile'?'vesper-shoulder':'cleaver';
@@ -52,13 +55,13 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
   assert.equal(await page.evaluate(()=>save.credits),credits-(mode==='missile'?2400:1200));
   if(mode==='missile'){
    await tap('[data-equip="cleaver"]');
-   assert.equal(await page.evaluate(()=>nativeHullKey(3,save.units[0])),'gatecrasher');
+   assert.equal(await kit(),chassis);
    await tap('#remove-melee');
    await tap('[data-equip="cleaver"]');
    assert.equal(await page.evaluate(()=>save.credits),credits-3600,'owned cleaver equips without a second charge');
    await tap('#remove-melee');
    await tap('#remove-shoulder');
-   assert.equal(await page.evaluate(()=>nativeHullKey(3,save.units[0])),'gatecrasher-bare');
+   assert.equal(await kit(),chassis+'-bare');
    await tap('[data-equip="vesper-shoulder"]');
    assert.equal(await page.evaluate(()=>save.credits),credits-3600,'owned pod equips without a second charge');
   }
@@ -91,7 +94,7 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
    const w=selectedWeapon(actor,mode);
    return {ap:actor.ap,hp:foe.hp.body,cost:paidAttackAP(actor,w),damage:partDamage(actor,foe,'body',w),kit:nativeHullKey(actor.frame,actor)};
   },mode);
-  assert.equal(start.kit,mode==='missile'?'gatecrasher-vesper':'gatecrasher-cleaver');
+  assert.equal(start.kit,chassis+(mode==='missile'?'-vesper':'-cleaver'));
   if(mode==='missile')assert.equal(await page.locator('#strike').isDisabled(),true);
   else assert.equal(await page.locator('#missile').count(),0);
   if(mobile&&mode==='missile'){
@@ -156,5 +159,13 @@ module.exports=async function checkGatecrasherArmed({page,mobile,origin,tap}){
   assert.equal(await page.locator('[data-clip="Strike"]').isVisible(),true);
   await page.locator('#preview-vesper').check();
   assert.deepEqual(await visible(),{HardpointL:true,ShoulderHardpointR:true});
+  await page.locator('[data-chassis="shogun"]').click();
+  await page.waitForFunction(()=>{
+   let shogun=false;
+   model?.traverse(node=>{if(node.name.replace(/[^a-z]/gi,'').toUpperCase()==='SHOGUNRIG')shogun=true});
+   return shogun&&document.querySelector('#status').textContent.startsWith('Live 3D');
+  });
+  assert.equal(await page.locator('#name').textContent(),'Shogun');
+  assert.ok(await page.locator('[data-clip="Walk"]').isEnabled());
  }
 };
