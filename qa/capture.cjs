@@ -29,7 +29,7 @@ async function capture(config){
  if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd:__dirname,encoding:'utf8'}).trim())throw Error('Commit tracked source changes before capturing, so the manifest SHA identifies the source');
  const {chromium}=require('playwright');
  const executablePath=process.env.IRON_VOW_CHROME||(!fs.existsSync(chromium.executablePath())&&['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync))||undefined;
- const browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
+ let browser;
  const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
  const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
   environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',captures:[],retries:[],failures:[]};
@@ -43,6 +43,7 @@ async function capture(config){
  if(config['reference-bench']&&(!config.preset||config.preset==='rig-bench'))
   jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
  try{
+  browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
   for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
    const retained=previous?.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
    if(retained&&fs.existsSync(path.join(output,retained.file))){
@@ -135,14 +136,14 @@ async function capture(config){
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
-    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,attempt:attempt+1});
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1});
     console.log('SAVED '+filename);
     break;
    }catch(error){const failure={source:job.source,preset:job.preset.id,viewport,error:error.message};if(attempt===0){console.error('RETRY '+job.source+' '+job.preset.id+': '+error.message);manifest.retries.push(failure);}else{console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push(failure);}}
    finally{await context.close();}
   }
  }finally{
-  await browser.close();
+  await browser?.close();
   fs.writeFileSync(path.join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
  }
  const sources=[...new Set(manifest.captures.map(c=>c.source))];
