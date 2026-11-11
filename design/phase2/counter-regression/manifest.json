@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "captured-working-fix",
+  "status": "historical-working-fix",
   "scope": "Actual automatic near Parallax counter during the real mandatory seed4264 replay; no reconstructed state or RNG. Frozen source link pending; working source bytes archived exactly.",
   "source": {
     "commit": "287db825ac2fbd8bdeae06ba8830530d3c4fc581",
@@ -27,7 +27,7 @@
       50.674580443274635
     ],
     "actorAlive": true,
-    "aimError": 1.4901161193847656e-08,
+    "aimError": 1.4901161193847656e-8,
     "mounted": true,
     "actor": "ally1",
     "target": "enemy1",
@@ -138,5 +138,12 @@
     "file": "source/check-scene.cjs",
     "sha256": "84e31334734983efc7f958c4253f7115a93d0ebead464c2df6317d6fc59f4b5c",
     "scope": "Exact observer code used for the direct real-counter capture; archived before later checker changes."
+  },
+  "final_source_capture": "final-source/manifest.json",
+  "final_source_relation": {
+    "production_commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+    "production_dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+    "identical_to_working_capture": false,
+    "note": "Final production additionally changes grid pitch and connected clearance. The historical working frame is not relabeled; final frozen actual-counter evidence is stored separately."
   }
 }

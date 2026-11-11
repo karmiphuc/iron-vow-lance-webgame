@@ -1,0 +1,173 @@
+{
+  "runner_source": "fb1bf4b5e1b2394582ae31b78d9d0835a3934aeb",
+  "runner_sha256": "0dbcd9203015e71d552c029f4ef369c60c27e6f6e8d83e0508ae459bbef10a43",
+  "workshop_readiness_checks": [
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "arsenal_ready": true,
+      "weapon": "rifle",
+      "native_preview_nontransparent_pixels": 37436
+    },
+    {
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "arsenal_ready": true,
+      "weapon": "rifle",
+      "native_preview_nontransparent_pixels": 37436
+    }
+  ],
+  "source_dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+  "policy": "Same existing setGamePreset IDs and viewport dimensions. Existing reviewed Phase0 images copied byte-for-byte, never recaptured. Workshop-1 exercises the fresh nonlive body and physical weapon UI compositor; arsenal readiness and a nonblank native render-target weapon preview are asserted before both shots. Actual game commands are documented separately in ../combat. Rendering is expected to change and no pixel-equality claim is made across phases.",
+  "comparisons": [
+    {
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "phase0": "phase0/1366x1024/selected-move.webp",
+      "phase2": "selected-move/phase2/1366x1024/selected-move.webp",
+      "phase0_webp_sha256": "ee2e7cb68661f61e2fb21141b195330549a4a9942bd56a89a8916870cec4f2a7",
+      "phase2_source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "phase2_webp_sha256": "a0739c0db28b448b6c97af52b058d697487e4870dde228143ba0a9126ccabb89",
+      "phase0_source_notes": {
+        "baseline": "853f1e7510dc2ca5940f09575efea737cfe2ea5a / deployed v98",
+        "phase0_runtime_tree": "2f643d767b4b7b4ca3bc5c3bf67f6f97add404f1",
+        "reference_main": "973567c5726a836e827fbe85b3b34675a769fc0b",
+        "reference_bench_note": "Reference baseline is frozen at PR #8; PR #9 follow-up evidence is stored separately.",
+        "runtime_unchanged_during_collection": "Subsequent commits change QA, inventory and evidence only; each original run manifest retains its source and document hashes."
+      },
+      "phase0_original_capture": {
+        "source": "phase0",
+        "preset": "selected-move",
+        "viewport": {
+          "width": 1366,
+          "height": 1024
+        },
+        "file": "phase0/1366x1024/selected-move.webp",
+        "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+        "original_png_sha256": "745565158c20787b5b13e6ea1a24472835b1f0b1fdd1be5372cb5488c6d092a8",
+        "sha256": "ee2e7cb68661f61e2fb21141b195330549a4a9942bd56a89a8916870cec4f2a7",
+        "pixel_sha256": "4403a34d79eb56b8bf670a7db390d6b959ccecdcd3f7b5e91a0c26afc2b7856b",
+        "width": 1366,
+        "height": 1024,
+        "run": "phase0-original"
+      },
+      "phase0_manifest_sha256": "6a4616ad2719fd41eee37215f082ec698597e4bd6b0343b39518da6d08efe679"
+    },
+    {
+      "preset": "selected-move",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "phase0": "phase0/1194x834/selected-move.webp",
+      "phase2": "selected-move/phase2/1194x834/selected-move.webp",
+      "phase0_webp_sha256": "5a2670ec82ffb5fc93de304252411092276c343365794b62ceb553b84565294d",
+      "phase2_source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "phase2_webp_sha256": "4eb506f0d0c3cc133abb02ac5c839eaa287b3f746c8293748c9559ed83667237",
+      "phase0_source_notes": {
+        "baseline": "853f1e7510dc2ca5940f09575efea737cfe2ea5a / deployed v98",
+        "phase0_runtime_tree": "2f643d767b4b7b4ca3bc5c3bf67f6f97add404f1",
+        "reference_main": "973567c5726a836e827fbe85b3b34675a769fc0b",
+        "reference_bench_note": "Reference baseline is frozen at PR #8; PR #9 follow-up evidence is stored separately.",
+        "runtime_unchanged_during_collection": "Subsequent commits change QA, inventory and evidence only; each original run manifest retains its source and document hashes."
+      },
+      "phase0_original_capture": {
+        "source": "phase0",
+        "preset": "selected-move",
+        "viewport": {
+          "width": 1194,
+          "height": 834
+        },
+        "file": "phase0/1194x834/selected-move.webp",
+        "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+        "original_png_sha256": "0ab75a342eb4fc22f9122d73946a0968e15902cda1ac011044d921fb3ef608df",
+        "sha256": "5a2670ec82ffb5fc93de304252411092276c343365794b62ceb553b84565294d",
+        "pixel_sha256": "c7ce5d35d3acb6084d7146ac70f78c4b3b99522d1d2024696a2b4c6dbf5b359b",
+        "width": 1194,
+        "height": 834,
+        "run": "phase0-original"
+      },
+      "phase0_manifest_sha256": "6a4616ad2719fd41eee37215f082ec698597e4bd6b0343b39518da6d08efe679"
+    },
+    {
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "phase0": "phase0/1366x1024/workshop-1.webp",
+      "phase2": "workshop-1/phase2/1366x1024/workshop-1.webp",
+      "phase0_webp_sha256": "2d1f723d68eb67f77c34a15215cd3ace5668a941e522ed069a60be172a0d7aec",
+      "phase2_source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "phase2_webp_sha256": "4114e1363c2be9d873aac6bd0eb1fd72beb39ac8ab647e3fb942d27196aa1c6c",
+      "phase0_source_notes": {
+        "baseline": "853f1e7510dc2ca5940f09575efea737cfe2ea5a / deployed v98",
+        "phase0_runtime_tree": "2f643d767b4b7b4ca3bc5c3bf67f6f97add404f1",
+        "reference_main": "973567c5726a836e827fbe85b3b34675a769fc0b",
+        "reference_bench_note": "Reference baseline is frozen at PR #8; PR #9 follow-up evidence is stored separately.",
+        "runtime_unchanged_during_collection": "Subsequent commits change QA, inventory and evidence only; each original run manifest retains its source and document hashes."
+      },
+      "phase0_original_capture": {
+        "source": "phase0",
+        "preset": "workshop-1",
+        "viewport": {
+          "width": 1366,
+          "height": 1024
+        },
+        "file": "phase0/1366x1024/workshop-1.webp",
+        "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+        "original_png_sha256": "630db826eca0b5c8f73dfe28cccba0668cffe0acee37f238a468fa958a427e66",
+        "sha256": "2d1f723d68eb67f77c34a15215cd3ace5668a941e522ed069a60be172a0d7aec",
+        "pixel_sha256": "9f5ad335af8345b506312d982f4ac9278bebec294dedd286060bc7aca8bf019f",
+        "width": 1366,
+        "height": 1024,
+        "run": "phase0-original"
+      },
+      "phase0_manifest_sha256": "6a4616ad2719fd41eee37215f082ec698597e4bd6b0343b39518da6d08efe679"
+    },
+    {
+      "preset": "workshop-1",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "phase0": "phase0/1194x834/workshop-1.webp",
+      "phase2": "workshop-1/phase2/1194x834/workshop-1.webp",
+      "phase0_webp_sha256": "8dc2c791bd8ec6a754dda122297adb33b700e8334de2233188b523f88b755bbd",
+      "phase2_source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "phase2_webp_sha256": "12f37afe9974e4e4439abb6e6b1c84310fd609342c6057215d6ecfd849c9202c",
+      "phase0_source_notes": {
+        "baseline": "853f1e7510dc2ca5940f09575efea737cfe2ea5a / deployed v98",
+        "phase0_runtime_tree": "2f643d767b4b7b4ca3bc5c3bf67f6f97add404f1",
+        "reference_main": "973567c5726a836e827fbe85b3b34675a769fc0b",
+        "reference_bench_note": "Reference baseline is frozen at PR #8; PR #9 follow-up evidence is stored separately.",
+        "runtime_unchanged_during_collection": "Subsequent commits change QA, inventory and evidence only; each original run manifest retains its source and document hashes."
+      },
+      "phase0_original_capture": {
+        "source": "phase0",
+        "preset": "workshop-1",
+        "viewport": {
+          "width": 1194,
+          "height": 834
+        },
+        "file": "phase0/1194x834/workshop-1.webp",
+        "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+        "original_png_sha256": "0fe94481efb432e1bfe7ca27bd2689142e0e9d8d123e5b8935dd86fe55104060",
+        "sha256": "8dc2c791bd8ec6a754dda122297adb33b700e8334de2233188b523f88b755bbd",
+        "pixel_sha256": "12c17bcda3488c8b7ebb244d674af46d17f4ceb45de80a30acd36f8701494469",
+        "width": 1194,
+        "height": 834,
+        "run": "phase0-original"
+      },
+      "phase0_manifest_sha256": "6a4616ad2719fd41eee37215f082ec698597e4bd6b0343b39518da6d08efe679"
+    }
+  ],
+  "metadata_enrichment": "Offline normalization of Phase0 reviewed manifest source_notes and original capture records; screenshot runner hashes remain those used for the actual captures."
+}

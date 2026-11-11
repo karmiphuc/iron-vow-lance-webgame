@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "status": "complete",
+  "scope": "Direct frame from the real seed4264 automatic near Parallax counter on frozen production; no state/RNG reconstruction.",
+  "source": {
+    "commit": "02ef40a07fc91b82f97c86859586489f272b8165",
+    "distTree": "edac44e5b054d0e507a409ee039b4400b6420788",
+    "distDirty": false,
+    "checkerSha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+  },
+  "production_commit": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+  "production_dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+  "observer_archive": {
+    "file": "source/check-scene.cjs",
+    "sha256": "30eec70ef7446da72334c05bda91038caf2a717187b363a2f3ba957754a98724"
+  },
+  "seed": 4264,
+  "event": {
+    "sequence": 361,
+    "type": "launch",
+    "time": 144.7333333335005,
+    "archetype": "rail",
+    "expectedOrigin": [
+      -40.261633699303665,
+      4.176690300780217,
+      55.20032662311719
+    ],
+    "actorAlive": true,
+    "aimError": 0,
+    "mounted": true,
+    "actor": "ally1",
+    "target": "enemy1",
+    "weapon": "parallax",
+    "index": 0,
+    "socket": "muzzle",
+    "origin": [
+      -40.261633699303665,
+      4.176690300780217,
+      55.20032662311719
+    ],
+    "targetPoint": [
+      -40.267641054581446,
+      4.196875734594668,
+      55.15462316179228
+    ],
+    "flight": 0.075
+  },
+  "incoming": {
+    "sequence": 360,
+    "type": "impact",
+    "time": 142.30000000016523,
+    "actor": "enemy1",
+    "target": "ally1",
+    "weapon": "piledriver",
+    "index": 0,
+    "part": "pilot",
+    "shield": false,
+    "point": [
+      -40.66329155208718,
+      4.313894571712428,
+      61.85706836863438
+    ],
+    "back": [
+      0.0590780740993109,
+      -0.09041262730423562,
+      -0.994150561024165
+    ],
+    "planned": 36,
+    "damage": 36,
+    "before": 55,
+    "after": 19,
+    "actorAlive": true
+  },
+  "actor": {
+    "id": "ally1",
+    "frame": 7,
+    "ap": 2,
+    "alive": true,
+    "reacted": true,
+    "hp": {
+      "body": 210,
+      "pilot": 19,
+      "right": 90,
+      "left": 90,
+      "legs": 150
+    }
+  },
+  "target": {
+    "id": "enemy1",
+    "frame": 15,
+    "hp": {
+      "body": 46,
+      "pilot": 55,
+      "right": 88,
+      "left": 88,
+      "legs": 103
+    }
+  },
+  "clock": 144.7333333335005,
+  "turn": 5,
+  "phase": "enemy",
+  "camera": {
+    "position": [
+      -43.96386585419345,
+      6.000000007074037,
+      69.4427564616586
+    ],
+    "quaternion": [
+      -0.08082361249116848,
+      -0.11134832845218044,
+      -0.009086370414653528,
+      0.9904476418708211
+    ],
+    "fov": 30
+  },
+  "viewport": {
+    "width": 1194,
+    "height": 834,
+    "dpr": 1,
+    "pixelWidth": 1194,
+    "pixelHeight": 834
+  },
+  "render_policy": "One real full-resolution Three.js renderer-canvas submission/readback immediately after the real near Parallax counter launch. Temporary body output paints restored and refreshed at the same clock. UI canvas excluded; ordinary advances omit unobserved GPU/output raster. No game HP/AP/rule RNG changes or performance claim.",
+  "capture": {
+    "file": "actual-counter.webp",
+    "width": 1194,
+    "height": 834,
+    "raw_png_sha256": "b054e0c030bac8efbf9a880cf9828a6833b1403e453e2959a7e72803cb15aca7",
+    "webp_sha256": "551a92a01735140f4d90a404f43c1404c11555b78e5fe6a274cfbd12e1aab4a9",
+    "rgba_sha256": "7b60cdc3fc86e113a563135b1e3298df5951f4b09a8ce44dea534adfdaa043cd",
+    "rgba_byte_equality": true
+  },
+  "actual_event_json_sha256": "b2880b7df33dff5aec89e714010eb324baec2e28b2d2d9971d982f8913979afe",
+  "muzzle_to_target_distance": 0.0503224247506893,
+  "visual_limit": "Original shoulder camera crops actor. This actual main-canvas frame establishes context and weapon pose; full body/joint/foot constraints are verified separately by geometry checks."
+}

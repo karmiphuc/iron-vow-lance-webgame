@@ -1,64 +1,46 @@
-# Phase 2 combat visual evidence
+# Phase 2 visual review
 
-The current checkpoint contains 124 main images across 49 source-scoped cases, plus three natural critical-fault images and one actual near-counter frame. The main manifest remains `partial`: touch Parallax and matching-preset captures await a later frozen source. The minimum-range automatic counter has been captured directly during the real replay on the working torso fix; its final frozen-commit link remains pending. These artifacts do not claim a final catalog or clearance gate pass.
+Visual evidence is complete: **128 main images across fifty source-scoped combat cases**, three natural-fault frames, historical and final actual-counter frames, four final matching-preset images, and one actual Assigned Workshop image. The 138 captured images retain individual source, render-policy and lossless-encoding metadata; copied Phase 0 baseline files and derivative sheets are additional review aids.
 
-Thirteen original nonairborne images retain source `6786df4` / dist tree `76ac81ff753ae6ebbfa45a093f794588cf919764`. The other 111 main images and the three fault images use detached `f68b5df` / dist tree `613bc118b314340e3ab63d5101a27c89a2c98080`, including its airborne ankle fix. Each image and case records its actual source; historical files are never relabeled as a later build. A subsequent campaign identified a separate close-Parallax clearance failure on this source, so its earlier three-tile Parallax fixture is historical evidence within that narrower scope.
+## Evidence
 
-Open `design/phase2/combat/contact-sheet.html` for the linked full-resolution files and individual action sequences. The three `contact-*.png` files provide compact contact overviews. `filmstrips/` contains labeled derivative strips. Natural B/C/D dispatch captures have their own manifest and contact sheet under `design/phase2/fault-mix/`. The actual minimum-range counter and its archived working source are under `design/phase2/counter-regression/`.
-
-## Completed checkpoint coverage
-
-| Scope | Cases | Actual GPU images |
+| Scope | Cases | Captured images |
 | --- | ---: | ---: |
-| Desktop catalog fixtures, including built-ins and shoulder item | 34 | 52 |
-| Shield, critical damage, arm destruction, body death, pilot kneel, jumpjet and future mortar presentation | 7 | 40 |
+| Desktop catalog, including built-ins and shoulder item | 34 | 52 |
+| Shield, critical damage, arm destruction, body death, pilot kneel, jumpjet, future mortar presentation | 7 | 40 |
 | Reduced-motion missile, rail and blade | 3 | 12 |
-| Touch-capable 1194×834 rifle, shotgun, missile, rail and blade | 5 | 20 |
-| Natural plasma / crawl / joint dispatch supplement | 1 | 3 |
-| Actual automatic near Parallax counter in seed-4264 replay | 1 | 1 |
+| Touch-capable tablet rifle, shotgun, missile, rail, blade and Parallax | 6 | 24 |
+| Natural plasma/crawl/joint dispatch supplement | 1 | 3 |
+| Actual near-Parallax counter, historical working fix and final source | 2 | 2 |
+| Existing selected-move and Workshop-1 baseline presets, two viewports | 4 | 4 |
+| Actual Assigned Workshop / Kestrel chassis | 1 | 1 |
 
-The 34-entry row records actual attacks in the declared controlled fixtures; it does not cover the subsequently identified minimum-range Parallax campaign state. Matching Phase 0 static presets and the final source link for the real-counter frame remain pending. No Phase 0 capture is repeated.
+- [Main contact sheet](../design/phase2/combat/contact-sheet.html) links the actual-command images and filmstrips.
+- [Natural fault supplement](../design/phase2/fault-mix/contact-sheet.html) records original dispatches after a real rail attack, without forcing a random branch.
+- [Actual counter](../design/phase2/counter-regression/contact-sheet.html) distinguishes the historical working source from [the final committed-source frame](../design/phase2/counter-regression/final-source/manifest.json).
+- [Baseline comparisons](../design/phase2/matched-presets/contact-sheet.html) copy existing reviewed Phase 0 images; no baseline is recaptured.
+- [Assigned Workshop](../design/phase2/ui-preview/contact-sheet.html) shows the larger native Kestrel body with its physical rifle preview.
 
-## Capture policy and verification
+## Source and render scope
 
-The runner invokes actual `__ironVow.attack` commands, preserving AP, action timing, rolls, landed contacts and HP rules. Catalog fixtures use deterministic hit rolls, an unobstructed two-actor field, and 1000 HP per target part so an early kill cannot truncate a burst. Damage scenarios declare their initial HP before issuing real attacks. Body-death and pilot-kneel fixtures retain an offscreen live hostile witness to prevent normal mission completion from clearing the battlefield before the aftermath is recorded.
+The main set contains thirteen images from `6786df4`, 111 from `f68b5df`, and four final tablet Parallax images from `fa9f835` / application tree `edac44e5b054d0e507a409ee039b4400b6420788`. Natural faults retain `f68b5df`; matching presets, the Assigned UI route and the final real counter use the final tree. Historical images are not relabelled as later geometry or minimum-range evidence. Current clearance and campaign acceptance are established separately in the [requirements review](phase2-requirements-review.md).
 
-Every CPU animation update executes at controlled 30 Hz. Every saved frame uses the original main GPU render at device scale 1 with QA-only `preserveDrawingBuffer`. The current runner omits only unrecorded main-canvas GPU draws; native render-target draws and readbacks remain active so cached preview art is populated.
+Forty retained main images omitted unobserved intermediate render-target work. Their saved main-scene meshes and contacts are actual GPU output, but these images do not prove cached UI previews. The other eighty-eight main images preserve native render-target draws/readbacks, as do the final UI and matching-preset captures. Every saved frame restores the native main render at device scale 1. Software WebGL provides correctness evidence, not native-device performance.
 
-Forty retained main images used an earlier policy that also omitted intermediate render-target draws/readbacks. Their final main-scene frames still render with the real GPU. Battle `registerWeapon` returns before the cached `adapter.image` preview path, and inspected live meshes/contact effects remain valid within that main-scene scope. These forty images do **not** establish UI-preview correctness. Each image retains its original render policy and runner hash; the other 84 main images and all three natural-fault images preserve native render-target work.
+All images were encoded as lossless WebP and decoded byte-for-byte against the original PNG RGBA before PNG removal. Raw PNG, WebP and decoded RGBA hashes remain in the manifests. Final offline verification checks the WebP bytes and decoded RGBA hashes again. Filmstrips/contact sheets are derivatives.
 
-All full-resolution screenshots are encoded as lossless WebP, decoded and compared byte for byte in RGBA with the raw PNG before that PNG is discarded. Entries retain raw PNG, WebP and decoded RGBA SHA-256 hashes, dimensions, original equality results and a nonblank sample. Offline verification passed all 128 WebP file hashes and decoded RGBA hashes; see the two `artifact-verification.json` reports. Filmstrips and compact contact sheets are derived review aids.
+## Actual workflows and observations
 
-Software WebGL provides image correctness evidence. None of these measurements establishes native iPad performance. The prior compositor timeout under host oversubscription remains in the retained history and is not classified as a source defect.
+Catalog and damage fixtures issue real game attacks with unchanged AP, action timing, hit/contact and HP rules. Catalog targets have declared 1000-HP parts to avoid truncating bursts. Death/kneel fixtures retain a live offscreen hostile so ordinary mission completion does not clear the aftermath.
 
-## Visual observations and limits
+The final counter frame is the actual enemy-phase seed-4264 event 361, Behemoth `ally1` to `enemy1`, immediately after a Piledriver hit reduces **pilot** HP from 55 to 19. It preserves the actual Parallax miss, records zero launch-axis error and uses a real 1194×834 DPR-1 renderer-canvas frame with UI excluded. The older working-fix frame remains explicitly historical; a far initiating player action was not substituted for the automatic counter. Archived source/checker bytes and original event data accompany both frames.
 
-- The inspected rifle contact is visibly on the target torso. The missile sequence shows the actual missile, smoke trail, arrival/contact and recovery.
-- The production shoulder camera crops the actor and can hide the exact weapon silhouette. The brief melee contact bloom clips white and obscures part of the target. Those single frames cannot prove the complete body pose.
-- The Aero jumpjet frame at 400 ms visibly separates the body/feet from the ground ring and shadow. Its temporary sprite adapter casts a broad rectangular shadow; this is an adapter limitation for Phase 3 review.
-- The natural-fault supplement observes the original `fx.arc`, `fx.crawl` and `fx.joint` calls after a real rail hit changes body HP from 180 to 114 while the arm and legs remain disabled. No variant or effect is fabricated. Plasma is visible; crawl and joint effects are subtle or self-occluded by Bastion armor from this azimuth, so the images do not establish that every shader is clearly visible.
-- Body-death aftermath samples record actual death ages approximately 3, 6, 13.8 and 14.2 seconds. Existing particles may linger after the emission cutoff; the images are not an assertion that all smoke disappears exactly at 14 seconds.
-- The actual counter frame is the real enemy-phase event 361, `ally1` Behemoth → `enemy1` Gravemaw, immediately after event 360 Piledriver hit **PILOT** HP 55→19. It uses a 1194×834 DPR-1 Three.js renderer-canvas capture with UI excluded and temporary body output paints restored at the same clock. Launch aim error is approximately 1.49×10⁻⁸ rad and the actual muzzle-to-target distance is 0.05029 m. The original shoulder camera crops the actor: this frame establishes actual context/weapon pose, not complete body, joint or foot placement. Source `scene-rigs.js` bytes are archived with SHA-256 `bb35b754ab1524a847b56887cae0d2888c6106521fe80bca0f077556d7de29c4`; together with the unchanged production files they form working dist tree `622be7c80e0e50b5d5b9cbeeb86b20a62270fee9`. It remains labeled working-fix evidence until the final commit is linked.
-- `mortar-future-presentation` calls the explicitly named presentation hook and records no combat events. It shows the future brace/elevation/muzzle/recoil presentation without inventing a gameplay action or damage rule.
+The matching Workshop preset initially shows small comparison thumbnails. Its native render-target guard passes, but that view does not establish a large weapon silhouette. The separate Assigned image uses actual Workshop, Kestrel and Assigned controls, then scrolls the chassis into view. Root inspection confirms a visible rifle held at the hand, plausible body/weapon scale and readable controls. The manifest records the actual frame 1/rifle/Assigned state and native preview pixels. No production code was changed for the image.
 
-The actual-command fixtures differ from Phase 0's static presets and therefore support no cross-phase pixel-equality claim. The separate matching-preset runner uses the unchanged preset IDs and existing reviewed Phase 0 files.
+Rifle contact, missile travel/smoke/arrival, rail and melee effects are visible in the reviewed sequences. The Aero jumpjet frame separates body/feet from the ground ring. Actual death-age samples near 13.8 and 14.2 seconds show the smoke aftermath; particles may linger after emission stops. Future mortar is the named no-damage presentation hook, not an invented gameplay action.
 
-## Reproduction
+## Limits retained for review
 
-The prepared detached source server is at port 5179 in `/workspace/iron-vow-phase2-visual-fixed`. While the Parallax source hold remains, retain that frozen snapshot and skip new Parallax cases:
+The shoulder camera crops the actor, may obscure the target or weapon, and brief contact bloom can saturate white. The actual counter frame does not prove the complete body/joint/foot pose; geometry checks supply that evidence. The temporary Aero sprite casts a broad rectangular shadow. Mixed legacy bodies differ in apparent size/style from live rigs. Natural crawl/joint effects can be self-occluded by armor. These composition/adapter limitations are documented for Phase 3; neither static comparisons nor these images imply cross-phase pixel/style parity or complete rig-v2 conversion.
 
-```sh
-IRON_VOW_URL=http://127.0.0.1:5179/ \
-IRON_VOW_VISUAL_SOURCE_ROOT=/workspace/iron-vow-phase2-visual-fixed \
-IRON_VOW_VISUAL_MIXED_SOURCE=1 IRON_VOW_VISUAL_RESUME=1 \
-IRON_VOW_VISUAL_SKIP_WEAPONS=parallax node qa/capture-phase2.cjs
-```
-
-After the next freeze, use the new detached snapshot for touch Parallax and the matching-preset supplement. The minimum-range automatic counter was captured directly inside the mandatory seed-4264 replay, preserving its real state and rule RNG. A restored far player-attack fixture is not a substitute for that counter event. `SIGTERM`/`SIGINT` records a scheduling pause and closes the browser. Resume validates each retained file hash and retains its original source, render policy and runner hash.
-
-Offline verification and contact overview generation require no browser:
-
-```sh
-node qa/summarize-phase2-visuals.cjs
-IRON_VOW_VISUAL_OUT=design/phase2/fault-mix node qa/summarize-phase2-visuals.cjs
-```
+Reproduction tools are `qa/capture-phase2.cjs`, `qa/capture-phase2-matched.cjs` and `qa/summarize-phase2-visuals.cjs`. The formal checker has a bounded actual-counter capture option. The manifests record exact sources, runner hashes, UI steps, viewport dimensions and policies. No restored-state/RNG counter reconstruction is used.

@@ -1,0 +1,114 @@
+{
+  "schema": 2,
+  "source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+  "dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+  "source_policy": "One actual Assigned Workshop UI route on frozen fa9f835/edac; no preset-state reconstruction.",
+  "sources": [
+    {
+      "source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788"
+    }
+  ],
+  "expected_cases": 1,
+  "current_run_selection": {
+    "skip_weapons": [],
+    "weapon": null,
+    "viewport": null
+  },
+  "runner_source": "1119a2c7d5058362297005097b386934ea8dbaba",
+  "runner_sha256": "e35cbfaa8ce68b6d83a3241b9bd44b066ddf7b8c9c006470908b1bf282f58fbe",
+  "url": "http://127.0.0.1:5179/",
+  "policy": "Actual Workshop/Assigned/Kestrel controls and scroll. Native render-target preview draws/readbacks preserved; one1366x1024DPR1 full-resolution screenshot. Deterministic paused clock only; no game state/RNG modifications or performance claim.",
+  "captures": [
+    {
+      "file": "1366x1024/assigned-kestrel-chassis.webp",
+      "source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+      "render_policy": "Actual Workshop/Assigned/Kestrel controls and scroll. Native render-target preview draws/readbacks preserved; one1366x1024DPR1 full-resolution screenshot. Deterministic paused clock only; no game state/RNG modifications or performance claim.",
+      "runner_sha256": "e35cbfaa8ce68b6d83a3241b9bd44b066ddf7b8c9c006470908b1bf282f58fbe",
+      "weapon": "assigned-workshop-kestrel",
+      "viewport": {
+        "width": 1366,
+        "height": 1024,
+        "touch": false
+      },
+      "motion": "no-preference",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "phase": "assigned-chassis",
+      "actual_ui_state": {
+        "page": "workshop",
+        "view": "assigned",
+        "selected": 1,
+        "frame": 1,
+        "weapon": "rifle",
+        "arsenal_ready": true,
+        "native_preview_nontransparent_pixels": 37436,
+        "chassis_bounds": {
+          "x": 823.59375,
+          "y": 119.8125,
+          "width": 502.40625,
+          "height": 857.171875
+        },
+        "scroll_y": 0
+      },
+      "controls": [
+        "[data-page=\"workshop\"]",
+        "[data-select=\"1\"]",
+        "[data-bay=\"assigned\"]",
+        "scroll section.workshop-chassis into view"
+      ],
+      "click_policy": "Real locator clicks, force:true to bypass animation-frame stability waits under paused clock.",
+      "frame_state": {
+        "time": 3.5217333333333407,
+        "target": null
+      },
+      "width": 1366,
+      "height": 1024,
+      "raw_png_sha256": "db55b86c2807d456b403646916ba87602e1321710185f91f05d069b7cabb42da",
+      "webp_sha256": "9ce46863a15bad015483cfcc3d3e6559d8348efd2a0cab20bb24a1cfae82f75d",
+      "rgba_sha256": "fa4d52069ad65b424190abb275da2bc6bc30830093168755cd134e2be6517035",
+      "rgba_byte_equality": true,
+      "nonblack_samples": 1016
+    }
+  ],
+  "cases": [
+    {
+      "source": "fa9f83576f75878c85afc5eb4c4b9467157c0675",
+      "dist_tree": "edac44e5b054d0e507a409ee039b4400b6420788",
+      "weapon": "assigned-workshop-kestrel",
+      "viewport": {
+        "width": 1366,
+        "height": 1024,
+        "touch": false
+      },
+      "motion": "no-preference",
+      "document_sha256": "4cdba2211e7f405f8fbd6a59aaa69166f71d79925b141081b18a8a2011f2cf92",
+      "phase": "assigned-chassis",
+      "actual_ui_state": {
+        "page": "workshop",
+        "view": "assigned",
+        "selected": 1,
+        "frame": 1,
+        "weapon": "rifle",
+        "arsenal_ready": true,
+        "native_preview_nontransparent_pixels": 37436,
+        "chassis_bounds": {
+          "x": 823.59375,
+          "y": 119.8125,
+          "width": 502.40625,
+          "height": 857.171875
+        },
+        "scroll_y": 0
+      },
+      "controls": [
+        "[data-page=\"workshop\"]",
+        "[data-select=\"1\"]",
+        "[data-bay=\"assigned\"]",
+        "scroll section.workshop-chassis into view"
+      ],
+      "click_policy": "Real locator clicks, force:true to bypass animation-frame stability waits under paused clock."
+    }
+  ],
+  "errors": [],
+  "status": "complete"
+}
