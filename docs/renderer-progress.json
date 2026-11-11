@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "updated_date": "2026-11-11",
+  "objective": "Review/merge open PRs and implement renderer Phases 0 through 4",
+  "scope_issue": 6,
+  "owner_decisions": [
+    {
+      "date": "2026-11-11",
+      "source": "Direct reply to the Phase 1 native-measurement question",
+      "instruction": "Dont care, just cont",
+      "effect": "Continue implementation and PR merging without waiting for native iPad measurements. Native measurements remain untested; do not invent passing metrics."
+    }
+  ],
+  "phases": [
+    {
+      "phase": 0,
+      "issue": 10,
+      "pr": 7,
+      "status": "software verification complete; reviewed evidence ready for merge",
+      "evidence": "design/baseline/reviewed-20261111/manifest.json",
+      "stills": 312,
+      "filmstrips": 26,
+      "simulation_suites": 47,
+      "native_ipad": "untested; owner directed continuation"
+    },
+    {
+      "phase": 1,
+      "issue": 11,
+      "branch": "renderer/phase1",
+      "status": "implementation started; not merge-ready",
+      "next": "Complete shared board/camera, eight live frames, one temporary adapter for the other 12, raycast/overlays/context recovery, scene anomaly checks and baseline comparison. Delete replaced renderer/terrain/cover paths in this phase."
+    },
+    {
+      "phase": 2,
+      "issue": 12,
+      "status": "pending Phase 1",
+      "next": "Port reference animation/effects including final PR #9; map every WEAPONS entry, retain reference timings, add actual scene/anomaly coverage and delete replaced effects."
+    },
+    {
+      "phase": 3,
+      "issue": 13,
+      "status": "pending Phase 2; asset work may run in parallel",
+      "external_dependency": "Blender MCP on the owner machine and missing external .blend sources. No Blender tools were available in this session. This does not block Phases 0\u20132.",
+      "next": "Gatecrasher first; exact rig v2 contract and <=60k triangles including weapons; integrate every frame and delete temporary adapters/sprites."
+    },
+    {
+      "phase": 4,
+      "issue": 14,
+      "status": "pending Phase 3",
+      "next": "Port live hangar, active-seat bays plus reserve row, ambient workers/lights, condition maintenance, projected HTML hotspots; delete the old backdrop renderer."
+    }
+  ],
+  "verification_limits": [
+    "Native iPad Safari/Chrome fps, p95 and device context-loss session untested.",
+    "Current renderer baseline is not certification of future scene/rig requirements.",
+    "Blender/source requirements require resolution before Phase 3 can be completed."
+  ],
+  "site": {
+    "published_version": 98,
+    "deployment_made_in_this_work": false,
+    "source_sync_pending": true
+  },
+  "pr_outcomes": {
+    "4": "closed unmerged",
+    "8": "973567c5726a836e827fbe85b3b34675a769fc0b",
+    "9": "d8afef601b5eea3e0f35eee5864e7cf81d3f728a"
+  }
+}

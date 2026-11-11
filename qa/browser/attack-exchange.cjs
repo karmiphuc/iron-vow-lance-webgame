@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkAttackExchange({page,mobile,origin,tap}){
  await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.clock.install({time:new Date('2026-11-11T00:00:00Z')});
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.evaluate(()=>{
@@ -30,6 +31,14 @@ module.exports=async function checkAttackExchange({page,mobile,origin,tap}){
   new MutationObserver(records=>attackQA.trace.camera.push(...records.map(r=>r.oldValue)))
    .observe(document.body,{attributes:true,attributeOldValue:true,attributeFilter:['data-shot']});
  });
+ // Drive each animation frame explicitly. Software WebGL can otherwise skip the
+ // opening brace while wall-clock timers continue; all original assertions remain.
+ await page.clock.pauseAt(new Date((await page.evaluate(()=>Date.now()))+60000));
+ let stepping=true;
+ const pumping=(async()=>{
+  while(stepping){await page.clock.runFor(1000/60);await new Promise(setImmediate);}
+ })();
+ const checkExchange=async()=>{
  await tap('#modal-0');
  await tap('#fire');
  const target=await page.evaluate(()=>{
@@ -62,4 +71,7 @@ module.exports=async function checkAttackExchange({page,mobile,origin,tap}){
  await tap('#end');
  await page.waitForFunction(()=>!battle.busy&&battle.turn===2);
  await check('cleaver');
+ };
+ try{await Promise.race([checkExchange(),pumping]);}
+ finally{stepping=false;await pumping.catch(()=>{});if(!page.isClosed())await page.clock.resume();}
 };

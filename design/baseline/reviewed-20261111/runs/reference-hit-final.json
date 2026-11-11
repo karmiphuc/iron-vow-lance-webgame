@@ -1,0 +1,547 @@
+{
+  "kind": "bench",
+  "label": "reference",
+  "source": "2e795ef74ae601edd8edb74cec6f94cf4fdcb062",
+  "runner_sha256": "1cd0c9cf1b4e83362005f111b1f6bfc15f162a58d4f3accc48015fbc1bc235b0",
+  "environment": "Chromium software WebGL. Fixed 30 Hz frames and controlled real timers; no performance claim.",
+  "strips": [
+    {
+      "action": "hit-reaction",
+      "file": "reference-hit-reaction.png",
+      "sha256": "c49713b78710360b38672305d50d7dd2382f18315c468710c172fadce1ae8f26",
+      "document_sha256": "51ba410cbfae77248bcd602e78b2927a56274d2b759dd43f5519794d2e7b81f6",
+      "instrumentation": "Temporary QA API calls existing War applyDamage. Unrelated actors are held and hidden to isolate the reaction; the reference file is unchanged.",
+      "frames": [
+        {
+          "clock": 0,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "f13e5fbbae1668c47ea75bb34d4b7221e20b591fe5d7730d8e103aabaa5fe5fc"
+        },
+        {
+          "clock": 0.05,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "79fe63c2eedaf201a3b022e3b12798c1add0a764c16249a22b90dbce58540ffa"
+        },
+        {
+          "clock": 0.1,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "05068d855f7ba7aa55e7b65eaebcca6571a2cdbf233ba7ad54f97ee2f63520e2"
+        },
+        {
+          "clock": 0.15,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "97e3ce1fc34c9a7dbc2be784969f882656b48b037172f13fb957ec8a7a28e1cb"
+        },
+        {
+          "clock": 0.2,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "b4b55ccf523421f83210df090e6efc5adbf86bc0a3278bf08888e4e914c242d4"
+        },
+        {
+          "clock": 0.267,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "d939e209b19e9e3f9127a7ddbc014ceff4301a38dc0ad327cc46731455ee6181"
+        },
+        {
+          "clock": 0.317,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "58c4beef6cdca590e68cddb6aa1f54bb746d6c5548c3795e8a0208cee350302c"
+        },
+        {
+          "clock": 0.367,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "f9361c6783f91993d6a99c4924c84f7030f5421cfaadf937d2d6e5a7fa1b72cd"
+        },
+        {
+          "clock": 0.417,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "53798defacfe2a3613684ceb3727098ea24077f69706088f562193e45df76067"
+        },
+        {
+          "clock": 0.483,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "65ffa165d25376f7f409326a3cdcbcfc4ddcc58ef3694acd14aaab77e0e5064c"
+        },
+        {
+          "clock": 0.533,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "31e2e446e64073d176703322288c820475fc12ee62e0f97d63c54ac40f61ed40"
+        },
+        {
+          "clock": 0.583,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "5e9477e1da1d5e8907d720317ed677d9993588948eb7365e905f664f338d9407"
+        },
+        {
+          "clock": 0.633,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "d19807831d960e150ec80b51bb02375d24036ccc3a7046ef995a0b7fcb911898"
+        },
+        {
+          "clock": 0.7,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "09ccd6e6c33077a6b70abba06246f31ef39270f4c0d388c03562c34f50949dcc"
+        },
+        {
+          "clock": 0.75,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "5fa40a49e6cf4a5793bc15d3435f6ca7e098b47f5a439146cae79c08daca9dd3"
+        },
+        {
+          "clock": 0.8,
+          "subject": {
+            "tag": "A1",
+            "team": "ally",
+            "build": "L:BAS C:KES A:BAS \u00b7 shotgun",
+            "mods": {
+              "legs": 2,
+              "core": 1,
+              "arms": 2
+            },
+            "weapon": "shotgun",
+            "alive": true,
+            "down": null,
+            "x": -17,
+            "z": -19.3,
+            "hp": {
+              "body": 81,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            },
+            "max": {
+              "body": 85,
+              "pilot": 63,
+              "right": 60,
+              "left": 60,
+              "legs": 90
+            }
+          },
+          "png_sha256": "03c6e5262534661acc23cd052ef35c54a2c5684734c9205782e4fbe6070b7868"
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

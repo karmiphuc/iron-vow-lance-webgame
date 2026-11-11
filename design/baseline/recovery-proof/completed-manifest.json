@@ -1,0 +1,65 @@
+{
+  "label": "recovery",
+  "source": "efb4cd2d48d655f746dc9893d21bbccd52404fdc",
+  "runner_source": "efb4cd2d48d655f746dc9893d21bbccd52404fdc",
+  "runner_sha256": "b264b109286f89827f8455504f8609c863893d71c45b9c47bb24abb537df0ffc",
+  "asset_delay_ms": 0,
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "webgl_capture_policy": "QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.",
+  "captures": [
+    {
+      "source": "recovery",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "recovery/1366x1024/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+      "png_sha256": "b47606d822dc72b0d451ec308981fc9019185460250a78d33736d91a732599a6",
+      "attempt": 1,
+      "retained": true
+    },
+    {
+      "source": "recovery",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "recovery/1194x834/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+      "png_sha256": "a7cd3a69f7c90dfd768adaaf0e9318419f89abe948b6a87522ac225687851c49",
+      "attempt": 1
+    },
+    {
+      "source": "recovery",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "recovery/1376x1032/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+      "png_sha256": "aeead3d09307c8b744467cda4f77fea09a93902e902c332257d65b278b285368",
+      "attempt": 1
+    },
+    {
+      "source": "recovery",
+      "preset": "contracts",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "recovery/1210x834/contracts.png",
+      "document_sha256": "933fe6df8ff01477c8210eee1306846da068c9e69a351b5cda8649894499f37b",
+      "png_sha256": "ea4e774e80519be371da0b60d9abce02268d2ffff710eb2ee498ea66aab4ebde",
+      "attempt": 1
+    }
+  ],
+  "retries": [],
+  "failures": [],
+  "previous_manifest": "prior-ac062d9e233f7525dcf6ab71b0293ca0990cb02dede30cc23bd01ba6d41c9e2b.json",
+  "expected_capture_count": 4,
+  "status": "complete"
+}

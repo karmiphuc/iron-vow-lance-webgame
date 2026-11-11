@@ -1,0 +1,96 @@
+{
+  "status": "reviewed subset; full 204-view matrix is incomplete",
+  "approval": "https://github.com/karmiphuc/iron-vow-lance-webgame/pull/7#issuecomment-6785288934",
+  "dist_tree": "35ff3d4e50374aa6804d3655184aeab1b02f5d66",
+  "environment": "Headless Chromium with software WebGL. Desktop/touch emulation cannot establish native iPad performance.",
+  "reference_sha256": {
+    "mercenary-command.html": "9559b21e26c61b4a60499105fcbe70a0dace1187789adc24a58887d697967308",
+    "rig-bench.html": "8904fc689e6813f25fbfb973a0202e1d5654a453c41377ddc16f2e1d5f2e74e0"
+  },
+  "captures": [
+    {
+      "file": "hangar-perf.png",
+      "source_commit": "a593ebedb14772b273fc81fa5b1326283b3dd717",
+      "sha256": "9c1cd7f4d96c7593b7b98912c28514ae648b750f30d92f99fabb2093483b662e",
+      "note": "opt-in performance overlay smoke"
+    },
+    {
+      "file": "reference-hangar.png",
+      "source_commit": "a593ebedb14772b273fc81fa5b1326283b3dd717",
+      "sha256": "e4eb9ae72e5ab69459383783044d3d63fc2d874a6d105ca62d33e6909e59ea44",
+      "note": "read-only mercenary-command reference"
+    },
+    {
+      "file": "paint.png",
+      "source_commit": "a593ebedb14772b273fc81fa5b1326283b3dd717",
+      "sha256": "9f99cba490a7545bd8934e5f3aabeae1bb9358ef5ced081b042aa4e3a5b483df",
+      "note": "fixed clock; paint controls scrolled into view"
+    },
+    {
+      "file": "attack-rifle.png",
+      "source_commit": "a593ebedb14772b273fc81fa5b1326283b3dd717",
+      "sha256": "f17b838669dc30af4a8de4e5a48b5ccb13d30b66819cbbd1bd67c8ca806a9f4e",
+      "note": "fixed clock; seeded body-impact fixture after art readiness"
+    },
+    {
+      "file": "attack-shotgun.png",
+      "source_commit": "a593ebedb14772b273fc81fa5b1326283b3dd717",
+      "sha256": "32f99fec454330c06d12b7e9a0d9050b98e271338ddaed6bea9a3bd2eab4af76",
+      "note": "fixed clock; seeded body-impact fixture after art readiness"
+    },
+    {
+      "file": "AERO-body-desktop-buckle.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "409ad23870666993345bb6d3bf7847b8ab9d86ca73c3130b50678f14fe62c9af",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "AERO-body-desktop-contact.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "12a54eed9b512a5e9cd591ce7fe5ef401f77151ccdfa6a996c6a1a20079dc05b",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "ASHIGARU-body-desktop-buckle.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "e83375b54fb6e431ee96c587960e59200ff5ce17bca0ae89838132b66d7e8295",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "ASHIGARU-body-desktop-contact.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "b91f7d29807fd14b8713383ca393ce183eafc2a0f5fad95fa32e82c28302f3b5",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "BULWARK-AEGIS-body-desktop-buckle.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "0e536084fd5a6b1a5afa95c4375ddabeb4b039663980583e6d43439794cb082f",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "BULWARK-AEGIS-body-desktop-contact.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "3cdacdf0eabb8afa5e3c7cad69d019cf48b1e94f7969fc462ff5c1196aa08360",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "BULWARK-AEGIS-pilot-desktop-buckle.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "f838330108c37b27792b1650a5cb0d8473363f6de87be89b83733135854aaf97",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "BULWARK-AEGIS-pilot-desktop-contact.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "fe68a79c1ce0af05740a0d40d1ef218226302d209dd5be86287f2f71da2b2954",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    },
+    {
+      "file": "desktop-contact.png",
+      "source_commit": "7cb066a58c52a65b8125a38fb89fc4168844740d",
+      "sha256": "55b7e62ec051e8ae386449dce7a902af4f0204ee2d9522ca68fd417f3635f5a0",
+      "note": "actual browser combat in qa/browser/roster-destruction.cjs; desktop-contact.png is a labeled contact sheet"
+    }
+  ]
+}

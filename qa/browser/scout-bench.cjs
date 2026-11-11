@@ -31,7 +31,7 @@ module.exports = async function checkScoutBench({ page, origin, tap, mobile }) {
   await page.goto(new URL("rig-bench/", origin).href, { waitUntil: "domcontentloaded" });
   await tap('.prototype-links a[href$="chassis=scout"]');
   await page.waitForFunction(() => document.querySelector("#status").textContent === "Live 3D · Rig online");
-  assert.equal(await page.locator("#name").textContent(), "Ashigaru");
+  assert.equal(await page.evaluate(() => document.getElementById("name").textContent), "Ashigaru");
   assert.equal(await page.locator("#role").textContent(), "Hostile scout");
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth === innerWidth));
 
@@ -101,7 +101,7 @@ module.exports = async function checkScoutBench({ page, origin, tap, mobile }) {
   for (const [id, name] of [["cicada", "Cicada"], ["hellbreaker", "Hellbreaker"]]) {
     await tap(`[data-chassis="${id}"]`);
     await page.waitForFunction(() => document.querySelector("#status").textContent === "Live 3D · Rig online");
-    assert.equal(await page.locator("#name").textContent(), name);
+    assert.equal(await page.evaluate(() => document.getElementById("name").textContent), name);
     assert.equal(await page.locator('[data-clip="Fire"]').isEnabled(), true);
   }
 };

@@ -1,0 +1,160 @@
+{
+  "label": "phase0",
+  "source": "d6964e9e5376b19728dcd7da66801ecf43170e63",
+  "runner_source": "d6964e9e5376b19728dcd7da66801ecf43170e63",
+  "runner_sha256": "b264b109286f89827f8455504f8609c863893d71c45b9c47bb24abb537df0ffc",
+  "asset_delay_ms": 0,
+  "environment": "Headless Chromium. Software WebGL is correctness evidence, not device performance.",
+  "webgl_capture_policy": "QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.",
+  "captures": [
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "phase0/1366x1024/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "935cfc6c0a5f0447c908420681bcd6dee1b73b9ebbba34c84bd0ae67fa6139cf",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 855,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      }
+    },
+    {
+      "source": "reference-bench",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "file": "reference-bench/1366x1024/rig-bench.png",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "png_sha256": "0602728946b1e124c40c50c73f6a137c1ae029b739a00506f2bfa3e8d8ef39d2",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 1019,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 995
+      }
+    },
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "phase0/1194x834/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "0139c15a41c7fbae021987dae079ab83e97a46b8f8bba63d02970136115f43b7",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 858,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1020
+      }
+    },
+    {
+      "source": "reference-bench",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1194,
+        "height": 834
+      },
+      "file": "reference-bench/1194x834/rig-bench.png",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "png_sha256": "ee7998152563809857cb3e80734c9fd3e80ff90f158cd3c623762a415b114993",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 1017,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1002
+      }
+    },
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "phase0/1376x1032/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "c9a2781dc376b9f03a0b17e70b4e39ab5e9677e7620dd81b356a949df96cb5e8",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 855,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1023
+      }
+    },
+    {
+      "source": "reference-bench",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1376,
+        "height": 1032
+      },
+      "file": "reference-bench/1376x1032/rig-bench.png",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "png_sha256": "ad1f571cea1b644889b92cfa6c1a4ef92f0b7a0cba92c2980a88593c8a0f2fba",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 1017,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 992
+      }
+    },
+    {
+      "source": "phase0",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "phase0/1210x834/rig-bench.png",
+      "document_sha256": "614ad5eb268840198f9e3c122adf0615655f37d60ec90faa2e5c4248d008bae9",
+      "png_sha256": "b02f655988635c91e25945c325ddcce73cf1493b5bed3a8a2d6212b10dd38d53",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 857,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 1019
+      }
+    },
+    {
+      "source": "reference-bench",
+      "preset": "rig-bench",
+      "viewport": {
+        "width": 1210,
+        "height": 834
+      },
+      "file": "reference-bench/1210x834/rig-bench.png",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "png_sha256": "e041216b4d91152d3a7a7b51c4c2deb13a218303c67c013b882f96c2a57fac59",
+      "attempt": 1,
+      "webgl_sample": {
+        "non_black_samples": 1016,
+        "total_samples": 1024,
+        "context_lost": false,
+        "screenshot_non_black_samples": 997
+      }
+    }
+  ],
+  "retries": [],
+  "failures": [],
+  "expected_capture_count": 8,
+  "status": "complete",
+  "reference_advance_policy": "All 30 Hz CPU animation updates execute. Intermediate WebGL draws during unrecorded static time advances are omitted; the final frame renders normally. Motion filmstrips use their separate unmodified render path."
+}

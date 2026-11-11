@@ -109,6 +109,7 @@ function paintRig(m,surface,target=renderer,groundRow=ground){
  scene.add(m.cont);
  try{
   target.render(scene,camera);
+  window.IronVowPerformance?.recordRender(target.info);
   const g=surface.getContext('2d');
   g.clearRect(0,0,size,size);
   g.drawImage(target.domElement,0,offsetY,size,size);
@@ -288,5 +289,11 @@ function liveWardenAllowed(){
   !/[?&]bakedwarden\b/.test(window.location?.search||'');
 }
 function wardenReady(){return !failed&&liveWardenAllowed()&&init()&&liveWardenAllowed()&&Boolean(window.IronVowWardenRig?.ready());}
-window.IronVowFoundry={draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
+function metrics(){
+ const targets=[renderer,bastionRenderer].filter(Boolean);
+ return targets.reduce((sum,target)=>({contexts:sum.contexts+1,
+  geometries:sum.geometries+target.info.memory.geometries,textures:sum.textures+target.info.memory.textures}),
+  {contexts:0,geometries:0,textures:0});
+}
+window.IronVowFoundry={metrics,draw:withFallback(draw),previewBastion:withFallback(previewBastion),clearCombat,wardenReady};
 })();

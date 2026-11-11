@@ -1,0 +1,12 @@
+Converted and pixel-checked 40 / 312
+Converted and pixel-checked 80 / 312
+Traceback (most recent call last):
+  File "/workspace/iron-vow-phase0/qa/assemble-baseline.py", line 66, in <module>
+    dest=out/Path(c['file']).with_suffix('.webp');checks=convert(root/c['file'],dest)
+                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/iron-vow-phase0/qa/assemble-baseline.py", line 56, in convert
+    with Image.open(dest) as check:same=check.size==rgba.size and check.convert('RGBA').tobytes()==pixels
+         ^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/PIL/Image.py", line 3730, in open
+    raise UnidentifiedImageError(msg)
+PIL.UnidentifiedImageError: cannot identify image file '/workspace/iron-vow-phase0/design/baseline/reviewed-20261111/phase0/1194x834/attack-rail.webp'

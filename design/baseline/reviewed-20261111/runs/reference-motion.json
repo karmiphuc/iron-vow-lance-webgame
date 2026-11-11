@@ -1,0 +1,858 @@
+{
+  "kind": "bench",
+  "label": "reference",
+  "source": "2e795ef74ae601edd8edb74cec6f94cf4fdcb062",
+  "runner_sha256": "36cdfdd8561b4d3ca6754c71eb367538006c62116b9ba75355d378fcaa5c03db",
+  "environment": "Chromium software WebGL. Fixed 30 Hz frames and controlled real timers; no performance claim.",
+  "strips": [
+    {
+      "action": "attack-rifle",
+      "file": "reference-attack-rifle.png",
+      "sha256": "a8a683c6c513f18b6fc5541517f4c8101eb0fd96639e1716699c33e9843e6f16",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.057,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "05b2bfd2d9c7d2e14462b339566a8c066af9ec5186bb53f4b07a4b4332907e7e"
+        },
+        {
+          "clock": 0.091,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "9d3bb32b59ee4b9079368f4ee8091cb6650d8268555ab72d0f14abbed87d51f6"
+        },
+        {
+          "clock": 0.125,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "2041a1a5c2cff97e78684de1be774fffe0eea0312906897eede95d23a68e9a47"
+        },
+        {
+          "clock": 0.159,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "d791c4b91cea9d84d1aad392c393769ba00f239da2c08b274ca553b614d3d913"
+        },
+        {
+          "clock": 0.193,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "532af88b82bdb5df069db849251787b215c9e3dded89175ed11cfbbcd99abf9a"
+        },
+        {
+          "clock": 0.227,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "6c7346939cedb553dc8cf6e95410513ad947ca8e8ef3d1c06d22f956d1d2b2e3"
+        },
+        {
+          "clock": 0.261,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "f3ca865cebe6c93a77c0395b0b6e7bf118d411723ccc821961f429bf93974852"
+        },
+        {
+          "clock": 0.29500000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "4d00aabdfd9b9e9a34900e784b3247c5019fac6cee6a0a11d67efeabf4b4c35a"
+        },
+        {
+          "clock": 0.32900000000000007,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "e0d41200f455dbb6c316ef7dcd127c56bc37f641a71222acf82c8a006ad57fea"
+        },
+        {
+          "clock": 0.3630000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "188b4a74153ceba52b872876d018fcff4d87f1788a12ebb14e2c51b7260d4877"
+        },
+        {
+          "clock": 0.39700000000000013,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "81bdf7cd685d35e20128c93dd60238678dd3a0be0ab297a2c143665afaa5992b"
+        },
+        {
+          "clock": 0.43100000000000016,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "68d9016b98da116af0788947c48925a86ba166a909c07aae6f9e510c2da2d048"
+        },
+        {
+          "clock": 0.4650000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "ea82871e3892278e2e68bf760cbfbe311590abc95de4c1d0ef711d2e4de863ed"
+        },
+        {
+          "clock": 0.4990000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "a198cb762de50d521d6cf6be3096a7489aa82c48436f80d364191e028168c1bd"
+        },
+        {
+          "clock": 0.5330000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "5b5df9bcffb56b5db056be5285f3da232d9ad1ad7eb63e1d994229dd95bf02b4"
+        },
+        {
+          "clock": 0.5670000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "59e2fe6d28cd5754add750320bbc1a2f59661301182590ffaf83bf86997207a3"
+        }
+      ]
+    },
+    {
+      "action": "attack-shotgun",
+      "file": "reference-attack-shotgun.png",
+      "sha256": "91b1cd00e2ed479a25532d7a48bde75903f8e2b27390a3bdd621400e56ad277d",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.056,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "389766fe8b0d4355e7fe0b49245ed6fa5403cdbdec2bfac8c5e47eb13651fd1b"
+        },
+        {
+          "clock": 0.09,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "2e08c57a845672af9186c563047b23f28eca7a28738e033bed144a40f2e80fd7"
+        },
+        {
+          "clock": 0.124,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "304c761287255b6a3af3f07f20a0ef2fe674ccee22833d228a83af89b9b6b844"
+        },
+        {
+          "clock": 0.158,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "8cfc728e89d691ca58f0a2856f96f53d04ce4d38b54e5471a7e2c1b41d8ba531"
+        },
+        {
+          "clock": 0.192,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "64c47f9569c98324328c8a2aa3cdbe81a1b5a2129d814332658a0254ced0e695"
+        },
+        {
+          "clock": 0.226,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "3751f531ce5fef1a40dfe2d48fafdb19f83b61b5c9fb92fe867a5c28df004cb9"
+        },
+        {
+          "clock": 0.26,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "36f7e60b6c571602c003520dbd4622479c6607862b5b5d8d90b3744e2663b228"
+        },
+        {
+          "clock": 0.29400000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "1ac49138bc0cc9c507ce6c7acfabffb192b7e485ab3398571c3089396eb6c923"
+        },
+        {
+          "clock": 0.32800000000000007,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "226f0459c7585f0dab45d15b513d0d8b611af130387e3316bed0a0a88e1dd42e"
+        },
+        {
+          "clock": 0.3620000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "b6e0cacb0effbb104d32d2b9de4689383187a3c05b93af3213f3a6405a73dec5"
+        },
+        {
+          "clock": 0.39600000000000013,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "1afd05df1768ada8ff6cdfd88da225981ad18c6175f2610c0c93817845f1c344"
+        },
+        {
+          "clock": 0.43000000000000016,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "99e5abe63c13a782fbd5b0b0223dfe1145695e7e5763d08e2bcec407bc5c8771"
+        },
+        {
+          "clock": 0.4640000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "fd195d94a931e9100b18d1ab58bfe9825db5ae330f9ac390efbe889c994a0df5"
+        },
+        {
+          "clock": 0.4980000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "a150bd7d8022f02ee9d6bc3a195b61d20b4b9a9ded389f6cfae0ddc534728c72"
+        },
+        {
+          "clock": 0.5320000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "f4d9f3aee6347ca40abc23a762a7b12593573eb7dc5d212f9e2a51f9cab9baa1"
+        },
+        {
+          "clock": 0.5660000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "80c1137dd2acaf650caff996273352e794a21eb263ab0de08baa5da4d5339282"
+        }
+      ]
+    },
+    {
+      "action": "attack-missile",
+      "file": "reference-attack-missile.png",
+      "sha256": "12195eb96c8212f212b292a4c04f635d38d089cc1fcfc00334c5d72af33df1d2",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.05500000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "23acd1324109d7d97e93a2cc2d24d9b91a149e3a35bf13c8fae60c89b15ee049"
+        },
+        {
+          "clock": 0.08900000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "d196068df9f83a999daebf66909e6b00e4156a8d682b0837db5146a20ce79662"
+        },
+        {
+          "clock": 0.12300000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "0c563b1cf91e47bd821d436a46d03da9ecb62b56c5660b76cf073268acadeb9d"
+        },
+        {
+          "clock": 0.15700000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "46141b25bf85319a01deab28d8518d07fdb8505b7898363ad908e8dce74daabe"
+        },
+        {
+          "clock": 0.19100000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "85266fe2a3626e081a2c429b23020f74d2ecd6141883b534e45c0f55a4ccf18e"
+        },
+        {
+          "clock": 0.22500000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "dacbe6dae27a15b589717fd71610cf8195377a6d9083a3c52e8f5483bf36f1ac"
+        },
+        {
+          "clock": 0.259,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "6e5a62090effc42ec97feec4371a9cf85d2542d1a92402bc9d02740ed244c7bc"
+        },
+        {
+          "clock": 0.29300000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "04bed083ba5edb80f7f7d72fd37152911ac11905067e0f0177545466a46bd378"
+        },
+        {
+          "clock": 0.32700000000000007,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "816ad12feca9ca7080dae77d00b03e199188f4e195e947b9d0124b8a2fbb21c2"
+        },
+        {
+          "clock": 0.3610000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "0daeaf79590db9e87956748eba6df2131dc5fb803ea4beef90606126ca0b1e3c"
+        },
+        {
+          "clock": 0.39500000000000013,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "3bf6722517b22445011577d3ac18d702adb4743ef36a3b95368d6aded2ace465"
+        },
+        {
+          "clock": 0.42900000000000016,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "d17acb32f0dfdd8c6b50c7c8a4d4304b0b755b4e0a017703f6b2afd0940adbf2"
+        },
+        {
+          "clock": 0.4630000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "a9ba70845f7d9ce1a23848887afe3271dee41fd9f7b07eb865480f462ffa9013"
+        },
+        {
+          "clock": 0.4970000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "db625369280821a5224a6550345c114253693e3e0e926347abdbcd67d066838a"
+        },
+        {
+          "clock": 0.5310000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "257d9774d68d89fbd9cab91a1385000513f6c9e6829cd4f5f8461fe7cbd05809"
+        },
+        {
+          "clock": 0.5650000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "33142ca678d12b0c30f4814409af918f9274144f147523c7dd77cc1c88356576"
+        }
+      ]
+    },
+    {
+      "action": "attack-rail",
+      "file": "reference-attack-rail.png",
+      "sha256": "3af7fa3b454aa2db1dd083f7ff89ad1c1aada4337f9a482983ecccf3b0dc3b85",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.056,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "0264f65c90a77dc2153cd906608a37c5cd651b11be91dfd26c0c73526fa2aa0d"
+        },
+        {
+          "clock": 0.09,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "1e2e67a65c8c6851afc070149474ce226e8cb7bfdf4f9b5b2a6ddb27ac97d9f6"
+        },
+        {
+          "clock": 0.124,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "74e8a2604296497a1b068d2b69464aea6c310381c3c02f04b2bc9dda78dc39df"
+        },
+        {
+          "clock": 0.158,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "e6e8f117bd7ff7787bb548d1b9391faa10800adf8971442307560d9b4b812e5d"
+        },
+        {
+          "clock": 0.192,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "926db1971b7192d2aeb3b57f5ba12ed9b4fd5fdfbddd96623c1177c08c1a95fd"
+        },
+        {
+          "clock": 0.226,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "ba5609fbfdc646c4177b7187fb0dfe0a841f223be968ffc09047cc079eb5f971"
+        },
+        {
+          "clock": 0.26,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "b6769ead06d9b8894ec7deff44132be9087605906d38f712efae4196b96926b1"
+        },
+        {
+          "clock": 0.29400000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "d8766542d74d0dd73dcc9e5662311bd69d424a037ebf7e9b8fbcfee5e1b42e88"
+        },
+        {
+          "clock": 0.32800000000000007,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "f9068325cf0fcfd45707a965b0342a68c9b0e8f915b1a789d67b47fe1f1d2277"
+        },
+        {
+          "clock": 0.3620000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "3b1492581fe2a10fd5c25022bcd0b481b39ee664f91679ff362c740adb5986ae"
+        },
+        {
+          "clock": 0.39600000000000013,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "93e76637622fe2ca74189a920eecf879b4ae9600564d22dadff9fe373b9b9c34"
+        },
+        {
+          "clock": 0.43000000000000016,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "db1a28a2f5e3df9c53cda055281bfb3a5bdcf835df0a27615d6259b9214ecbf9"
+        },
+        {
+          "clock": 0.4640000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "461a77946dae24404ea345e082979868615adb5eab41806e16a4e0f67b3655bc"
+        },
+        {
+          "clock": 0.4980000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "c43f2c018844006ca0f60810820b3e27efe0a68e92ffb20405eadd5446549275"
+        },
+        {
+          "clock": 0.5320000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "f8f876e7a628977002c0e4c681e038181e38adbdaa124050454e8fab8e4cadc6"
+        },
+        {
+          "clock": 0.5660000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "e99385178ee65f7d848035b5591027338d184174df07690652b90cd1dd6308de"
+        }
+      ]
+    },
+    {
+      "action": "attack-blade",
+      "file": "reference-attack-blade.png",
+      "sha256": "5afc10943d455a8791c922c52cbae99f72684d0ab471f7b7a4db2d4ec3e5c793",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.42300000000000015,
+          "meleeAge": 0.3670000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "9af66943d5f816566b42634fc81abddc4443915a1c3e8ce00247dfdc7ca8573c"
+        },
+        {
+          "clock": 0.4570000000000002,
+          "meleeAge": 0.40100000000000013,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "5f4bb566cf28d9d4c767c769140bb457bc97813f5be4b1f6d9e16d57151ab570"
+        },
+        {
+          "clock": 0.4910000000000002,
+          "meleeAge": 0.43500000000000016,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "97399f0f96fce063dd150b24eced531d492fde47179bfc884a490a48b7d73d83"
+        },
+        {
+          "clock": 0.5250000000000002,
+          "meleeAge": 0.4690000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "db74f62c9265868f0978f7e1556f30346c473133ea69f969019707bc43fd938a"
+        },
+        {
+          "clock": 0.5270400000000003,
+          "meleeAge": 0.4710400000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "4004acb8db588d3187d014a48c288d8795870ae7298841a31042f28d78cae63a"
+        },
+        {
+          "clock": 0.5290800000000003,
+          "meleeAge": 0.47308000000000017,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "58ec0e88ad397cfb1e9e1f5478f86b2e6a7d491ce4153301ac2cb91d981826d7"
+        },
+        {
+          "clock": 0.5311200000000004,
+          "meleeAge": 0.47512000000000015,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "048b0be6bb4107843b3474b40ee329b4c5bc7736658dec18659e2fd29d62d869"
+        },
+        {
+          "clock": 0.5651200000000004,
+          "meleeAge": 0.5091200000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "5aa922965aa0b547bfde6ba4769e13fd37f4ef1333d619c92bdfcfc775b1bd6e"
+        },
+        {
+          "clock": 0.5991200000000004,
+          "meleeAge": 0.5431200000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "2e6f1a4458cc4cf23df382e32a3f27005fbaae04fc33165220189f6f49bdd1f1"
+        },
+        {
+          "clock": 0.6331200000000005,
+          "meleeAge": 0.5771200000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "ffeee5e3fd1a71cec85c40f2bdd10ef27f70ce00f769f7c76f0afc3471980cde"
+        },
+        {
+          "clock": 0.6671200000000005,
+          "meleeAge": 0.6111200000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "73afe1767e3bc89d704ca3d6c77bf0a4839b010bd079bfe3dce7350411688614"
+        },
+        {
+          "clock": 0.7011200000000005,
+          "meleeAge": 0.6451200000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "2435a91955549cf70b741bef42bba08fc9763652c25c6ab4082a99f8e03bcd3d"
+        },
+        {
+          "clock": 0.7351200000000006,
+          "meleeAge": 0.6791200000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "58e49de57b2ff4802cb761e35f425dc964ebc81074b938c86910749f974a6709"
+        },
+        {
+          "clock": 0.7691200000000006,
+          "meleeAge": 0.7131200000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "86621c44c1521c2ecac1b193d6bd87df58ea5a0d0792552adbec7bccc8949aaf"
+        },
+        {
+          "clock": 0.8031200000000006,
+          "meleeAge": 0.7471200000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "6fcadaf3937cdfee850b1f2be53bd8e5316abcd790be00cc575c7e5c903bf133"
+        },
+        {
+          "clock": 0.8371200000000006,
+          "meleeAge": 0.7811200000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "228363e935cab612d9dcdd98cf4ac7dc1972dac54f9c7c237084d72a6bdf7391"
+        }
+      ]
+    },
+    {
+      "action": "walk",
+      "file": "reference-walk.png",
+      "sha256": "f8b299606625e1ed1bcfe3b25dd08de9e03d6559f39329cf01ef6e2eb0801f94",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.057,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "05b2bfd2d9c7d2e14462b339566a8c066af9ec5186bb53f4b07a4b4332907e7e"
+        },
+        {
+          "clock": 0.132,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "7d96c97f7efb60ce7dd2413f76091ab1d49694be8aeb7aa01c7367d2a50b382d"
+        },
+        {
+          "clock": 0.20700000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "d3e99bc9c853f0ae4cb39e5aa75ecb78c9884be73804b46c99644bfd451d1bf1"
+        },
+        {
+          "clock": 0.28200000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "49c0473df1c4f26a92ea256619fa4f23d2ed9bc143337ea63ef352276d8553b0"
+        },
+        {
+          "clock": 0.3570000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "04cc1716c92a14f1634d4aff9c5c20055aa0c19895e5698fda7e8a7a32dbb78a"
+        },
+        {
+          "clock": 0.43200000000000016,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "d2696104610f19def7fe1d5fa46ec435d621553f0243e19e40752a56094d84e5"
+        },
+        {
+          "clock": 0.5070000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "fdc59245f644c6086e2d1465630cad770aff1ce8fc389f312e9ff6430ca331f4"
+        },
+        {
+          "clock": 0.5820000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "dcbae7c0adc5c3b9e0d9174338f91202c139454015babfc6afb53359b7987f53"
+        },
+        {
+          "clock": 0.6570000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "c63956cfacaec82da2ee4a74857cd850d7b2b556f78e2b9afc1efd34baff82bf"
+        },
+        {
+          "clock": 0.7320000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "fd33735d763f4eb8b7c38d930212244f8e4231b53e40b209221c79e88d08a6bf"
+        },
+        {
+          "clock": 0.8070000000000005,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "93b2ee2152f0278569aaa5123aa8d5ab0fb26df4862bd15d4d9ac1b3169d9a9b"
+        },
+        {
+          "clock": 0.8820000000000006,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "7163a018471a9a38508581f74f0851bea39b49b5d1263148f791632f13155189"
+        },
+        {
+          "clock": 0.9570000000000006,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "1dc1edf74a8088044a27576aec61230f03fe176e6cf8cc8f9109e57ef2bb5eb5"
+        },
+        {
+          "clock": 1.0320000000000005,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "92f22c61cf203ec6e2fe7070565ea1adf7f90f988591ff58c90f306cc4b2cfd4"
+        },
+        {
+          "clock": 1.1070000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "43ee3058202126eb007e21b2faa376177eccd740c4ec8b252a6dcb1c9665de36"
+        },
+        {
+          "clock": 1.1820000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "34eb5660ba56567043873480e153ed4db9a2dd716ce49bb2bbb90f82d156c3d1"
+        }
+      ]
+    },
+    {
+      "action": "hit-reaction",
+      "file": "reference-hit-reaction.png",
+      "sha256": "941672c127a23b1186423549520e370b8fa57fb5de66bab9c10820fe278596f1",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.066,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "09eaa7c4cd44ba0ec0574abebdc7c0f1d307df71c5230bd7aa9ac90f350ce5c3"
+        },
+        {
+          "clock": 0.12000000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "5bd697dd68a2e3207c660a726f3b62d91349b1e73dce5e045263acd2b70f171a"
+        },
+        {
+          "clock": 0.17400000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "6ee053b3140314130ecf7795200ada8f7f943673ded71855c2860ef78ee5ca21"
+        },
+        {
+          "clock": 0.228,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "b84a6ba99ee15b47244fc9d31db0ddcecb8d8e4edf742cd94e68bba9a2871d5c"
+        },
+        {
+          "clock": 0.28200000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "47b1e30240112e44260a81c94e56fb143eb14b52d2fda56f174e2b1df62f5b71"
+        },
+        {
+          "clock": 0.3360000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "12b93c0ed4e391650d2f83a972ecf209e459e7ecfa26442a4c1a6a82b7162848"
+        },
+        {
+          "clock": 0.3900000000000001,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "6de096653872ddc5c467d743d686e8012e7841ed591f844d4b7dd779d47cad0a"
+        },
+        {
+          "clock": 0.4440000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "f8821c576cab4ab066534ae16c9348b7eeb1a5cb0f411ca123b66ae534ac961c"
+        },
+        {
+          "clock": 0.4980000000000002,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "60c3d1c23dcdb1de354f0c85eed215fd7554a490c4ace97e66a64e15fd3d3d69"
+        },
+        {
+          "clock": 0.5520000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "a6544335d87320233fa512a8d46dbba887471d02bcb419de523c90b52d561fcf"
+        },
+        {
+          "clock": 0.6060000000000003,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "ca7558b5d135f6b959a28d5c64c493c039501a018098ce400c59c2e25434e077"
+        },
+        {
+          "clock": 0.6600000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "fc21ba440faff5f031c7f80eac96f6880c72740759ecbafe662591efb9d5c72a"
+        },
+        {
+          "clock": 0.7140000000000004,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "095226bf47ad2b786679a9f6238fbc423cc613ae49ae15b9f7043e0a50dd127e"
+        },
+        {
+          "clock": 0.7680000000000005,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "efe21ce0be84c031553452916482176396fde285fdbe16c0e3af00e54125c222"
+        },
+        {
+          "clock": 0.8220000000000005,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "35acb97b14d11a436403614b6507aa7bff134ccad302f00435acac72b8022638"
+        },
+        {
+          "clock": 0.8760000000000006,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "3e88815336893ddcb0548471481255f6e9f0d384d68663873b0fb9782f23cccd"
+        }
+      ]
+    },
+    {
+      "action": "destruction",
+      "file": "reference-destruction.png",
+      "sha256": "0994911c3e6c1e28ba58444c9a7c401e63e5bc00357e13d9fde2ea3e5537eec9",
+      "document_sha256": "99436c6539e7ae50a6f6130a80fd861fca7960abeac176870d9397a252a2882e",
+      "frames": [
+        {
+          "clock": 0.052000000000000005,
+          "deathAge": 0,
+          "fault": 0,
+          "png_sha256": "a72c1075956906d5e55762ee8ee42ce02e4da41f0504cc1d60fa46e6c3afc014"
+        },
+        {
+          "clock": 0.21500000000000002,
+          "deathAge": 0.163,
+          "fault": 1,
+          "png_sha256": "13eae3ba386a40479a794c4d6011361897c10da32957da7bd06de164245b7906"
+        },
+        {
+          "clock": 0.3780000000000001,
+          "deathAge": 0.32600000000000007,
+          "fault": 2,
+          "png_sha256": "2e3cfa0c208cb1ec0fc3a76b4dff016642e656db39b3ea8c3e59ccccf520fab9"
+        },
+        {
+          "clock": 0.5410000000000003,
+          "deathAge": 0.4890000000000002,
+          "fault": 3,
+          "png_sha256": "169b561e8c76978ebe8c15e28c1eede3d885bf0426b1c90b240ae1c652ea563e"
+        },
+        {
+          "clock": 0.7040000000000004,
+          "deathAge": 0.6520000000000004,
+          "fault": 3,
+          "png_sha256": "71d58558c90b2053cc15e7eaff39bcd0b41497fb7d3a040a28c617fd7b7065ff"
+        },
+        {
+          "clock": 0.8670000000000005,
+          "deathAge": 0.8150000000000005,
+          "fault": 4,
+          "png_sha256": "5368c9d00e5def37cbeef49b89ed501d7fd3aaee947a0412abe5a4bbaf600389"
+        },
+        {
+          "clock": 1.0300000000000005,
+          "deathAge": 0.9780000000000006,
+          "fault": 5,
+          "png_sha256": "e0ebca8c1ad9fb4eb67fea41d16d6787cecafe7ad9ec31a147b1e705852a7983"
+        },
+        {
+          "clock": 1.1930000000000005,
+          "deathAge": 1.1410000000000007,
+          "fault": 6,
+          "png_sha256": "41a619d38f680a90b1cf6c518f51af4b119cac174619858ed8ade3cd7b846b74"
+        },
+        {
+          "clock": 1.3560000000000005,
+          "deathAge": 1.3040000000000007,
+          "fault": 6,
+          "png_sha256": "09558289da7a4ee46a632d053bb523cf9bdbf77403b1f8b40e1d7b761575f04b"
+        },
+        {
+          "clock": 1.5190000000000006,
+          "deathAge": 1.4670000000000007,
+          "fault": 7,
+          "png_sha256": "e708dec7ab55827ed01396f0d603cb96b73401f9d0e7a16e8d970e1e2f71accc"
+        },
+        {
+          "clock": 1.6820000000000006,
+          "deathAge": 1.6300000000000008,
+          "fault": 7,
+          "png_sha256": "433023e029b5ff3c8bdd610bb4a6da92287f24027b4574e3b04693aed55d675d"
+        },
+        {
+          "clock": 1.8450000000000006,
+          "deathAge": 1.7930000000000008,
+          "fault": 8,
+          "png_sha256": "228245a2a878d243cb56e6dbcdf7db6b2aafda54adecd2ebaa6ce197e8bf1cd5"
+        },
+        {
+          "clock": 2.008000000000001,
+          "deathAge": 1.9560000000000008,
+          "fault": 8,
+          "png_sha256": "65d04041ca7fd845cf9d696bb495e32ae5eddc2c75c2a09b9c664a51005503b8"
+        },
+        {
+          "clock": 2.1710000000000003,
+          "deathAge": 2.1190000000000007,
+          "fault": 8,
+          "png_sha256": "72ee40adf1dad33c04053a77b805bb587ed99a7cc9c10452d8dfad9bd51ab72f"
+        },
+        {
+          "clock": 2.3339999999999996,
+          "deathAge": 2.282,
+          "fault": 8,
+          "png_sha256": "29ecefa258c9b9dd170ae1cc1edad9a9000cd1bb6eccb88f7410317baba560b7"
+        },
+        {
+          "clock": 2.496999999999999,
+          "deathAge": 2.4449999999999994,
+          "fault": 8,
+          "png_sha256": "3281aa53b14945ef4a00b55098623f7a14cea03a8bc1303891d1bd2029ebfc99"
+        }
+      ]
+    }
+  ],
+  "failures": []
+}
