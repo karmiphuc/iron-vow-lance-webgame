@@ -1,0 +1,120 @@
+[
+  {
+    "model": 0,
+    "terrain": false,
+    "maxGround": 6.827871601444713e-15,
+    "maxSlide": 1.1234667099445444e-14,
+    "maxIK": 8.66134072726455e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 0,
+    "terrain": true,
+    "maxGround": 6.2727600891321345e-15,
+    "maxSlide": 1.1234667099445444e-14,
+    "maxIK": 1.0087767680389479e-14,
+    "maxReach": 0
+  },
+  {
+    "model": 1,
+    "terrain": false,
+    "maxGround": 1.0769163338864018e-14,
+    "maxSlide": 1.5987211554602254e-14,
+    "maxIK": 1.5587468005037626e-14,
+    "maxReach": 0
+  },
+  {
+    "model": 1,
+    "terrain": true,
+    "maxGround": 1.0658141036401503e-14,
+    "maxSlide": 1.4210854715202004e-14,
+    "maxIK": 1.6110097386971715e-14,
+    "maxReach": 0
+  },
+  {
+    "model": 2,
+    "terrain": false,
+    "maxGround": 5.329070518200751e-15,
+    "maxSlide": 0.4249508689856115,
+    "maxIK": 0.4249508689856133,
+    "maxReach": 0.4240508689856122
+  },
+  {
+    "model": 2,
+    "terrain": true,
+    "maxGround": 0.01299857591317466,
+    "maxSlide": 0.42495086898561335,
+    "maxIK": 0.4249508689856133,
+    "maxReach": 0.4240508689856122
+  },
+  {
+    "model": 3,
+    "terrain": false,
+    "maxGround": 3.9968028886505635e-15,
+    "maxSlide": 1.1374233532693354e-14,
+    "maxIK": 7.513511730867176e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 3,
+    "terrain": true,
+    "maxGround": 4.218847493575595e-15,
+    "maxSlide": 9.565974336450908e-15,
+    "maxIK": 7.95651227888113e-15,
+    "maxReach": 0
+  },
+  {
+    "model": 4,
+    "terrain": false,
+    "maxGround": 1.1102230246251565e-14,
+    "maxSlide": 0.07810072427608279,
+    "maxIK": 0.07810072427608303,
+    "maxReach": 0.07720072427608304
+  },
+  {
+    "model": 4,
+    "terrain": true,
+    "maxGround": 0.0025625661801378374,
+    "maxSlide": 0.07810072427608279,
+    "maxIK": 0.07810072427608303,
+    "maxReach": 0.07720072427608304
+  },
+  {
+    "model": 5,
+    "terrain": false,
+    "maxGround": 2.0374348558283017e-7,
+    "maxSlide": 0.5375275775472035,
+    "maxIK": 0.5375275826462788,
+    "maxReach": 0.536627582646279
+  },
+  {
+    "model": 5,
+    "terrain": true,
+    "maxGround": 0.01465419176057886,
+    "maxSlide": 0.5375674114375449,
+    "maxIK": 0.5375743642159139,
+    "maxReach": 0.5366743642159144
+  }
+]
+node:internal/assert/utils:77
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: model 2 planted drift 0.4249508689856115
+    at Object.<anonymous> (/workspace/iron-vow-phase2/qa/check-foundry-walk.cjs:50:105)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

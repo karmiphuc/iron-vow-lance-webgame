@@ -72,12 +72,7 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
     effects.slice(effectStart).some(effect=>effect.type==='shot'&&effect.kind===w.id);
   })()`),id);
  }
- assert.equal(run(`(()=>{
-  const v=activeWardenVisual(current()),bounds=unitBounds(current(),v);
-  const idle=weaponMount(v,v,bounds,'piledriver',unitFacing(current()),0);
-  const hit=weaponMount(v,v,bounds,'piledriver',unitFacing(current()),.7);
-  return !idle.asset.key.includes('extended')&&hit.asset.key.includes('extended');
- })()`),true);
+ // Piledriver extension now uses the real 3D spike; check-production-weapons covers it.
  assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id==='blade'?'cleaver':weaponMotion(w.id)].some(p=>p.level===.7))))"));
  for(const [frame,views] of JSON.parse(run('JSON.stringify(arsenal.chassis)')).entries()){
   if(frame===0)continue; // Warden's sprite assertions are replaced by actual-bone checks.
