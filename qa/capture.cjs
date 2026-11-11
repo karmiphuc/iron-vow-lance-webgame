@@ -165,19 +165,6 @@ async function capture(config){
     let webglSample;
     const battleWebgl=await page.evaluate(()=>Boolean(window.IronVowScene&&typeof battle!=='undefined'&&battle&&document.getElementById('world-scene')));
     if(battleWebgl)await page.evaluate(()=>{if(!IronVowScene.ready)throw Error('Battle capture has pending live rigs or temporary images');});
-    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(()=>{
-     // Sample immediately after a real render: non-preserved WebGL buffers can
-     // otherwise clear between tasks even when the compositor retains the frame.
-     window.__captureTick();
-     const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=canvas.id==='c'?'Rig Bench':'Battle';
-     if(!gl||gl.isContextLost())throw Error(name+' WebGL context is unavailable or lost');
-     const sample=document.createElement('canvas');sample.width=sample.height=32;
-     const g=sample.getContext('2d');g.drawImage(canvas,0,0,32,32);
-     const pixels=g.getImageData(0,0,32,32).data;let bright=0;
-     for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
-     if(bright<64)throw Error(name+' WebGL canvas is blank: '+bright+'/1024 non-black samples');
-     return {canvas:canvas.id,non_black_samples:bright,total_samples:1024,context_lost:false};
-    });
     if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
     if(errors.length)throw Error(errors.join('\n'));
     let selectedMoveViewVerified=false;
@@ -197,8 +184,23 @@ async function capture(config){
     if(job.preset.paint&&job.source!=='reference-game')paintViewVerified=await page.evaluate(()=>{
      const panel=document.querySelector('.paint-panel');if(!panel)throw Error('Paint panel missing');
      panel.scrollIntoView({block:'center',behavior:'instant'});
-     const rect=panel.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight)throw Error('Paint panel outside viewport');
+     const rect=panel.getBoundingClientRect(),header=document.querySelector('header')?.getBoundingClientRect();
+     const controls=[...panel.querySelectorAll('.paint-swatch, #custom-paint, [data-trim]')];
+     if(!controls.length||rect.top<(header?.bottom||0)||rect.bottom>innerHeight||controls.some(node=>{const r=node.getBoundingClientRect();return r.top<(header?.bottom||0)||r.bottom>innerHeight||r.left<0||r.right>innerWidth;}))throw Error('Paint panel controls do not fit the viewport');
      return true;
+    });
+    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(()=>{
+     // Sample immediately after a real render: non-preserved WebGL buffers can
+     // otherwise clear between tasks even when the compositor retains the frame.
+     window.__captureTick();
+     const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=canvas.id==='c'?'Rig Bench':'Battle';
+     if(!gl||gl.isContextLost())throw Error(name+' WebGL context is unavailable or lost');
+     const sample=document.createElement('canvas');sample.width=sample.height=32;
+     const g=sample.getContext('2d');g.drawImage(canvas,0,0,32,32);
+     const pixels=g.getImageData(0,0,32,32).data;let bright=0;
+     for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
+     if(bright<64)throw Error(name+' WebGL canvas is blank: '+bright+'/1024 non-black samples');
+     return {canvas:canvas.id,non_black_samples:bright,total_samples:1024,context_lost:false};
     });
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
