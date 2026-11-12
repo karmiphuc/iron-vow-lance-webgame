@@ -20,7 +20,7 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
   focusBattleCamera(u,true);renderBattle();
   window.terrainQA={next};
  });
- await page.waitForFunction(()=>imageReady(moduleImages['theater-tiles']));
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  const move=await page.evaluate(()=>{
   const [x,z]=terrainQA.next,p=project(x,0,z);
   return {x,z,p,under:screenTile(p.x,p.y),close:scale,expected:fieldScale().close};
@@ -53,8 +53,12 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
   Math.random=()=>0;
   window.terrainQA={foe,hp:foe.hp.body};
  });
- await page.waitForFunction(()=>travelVisual(terrainQA.foe,clock)?.grounded);
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  for(let i=0;i<4;i++)await tap('#map-zoom-out');
+ // A legal range-10 lane can extend outside a narrow phone viewport even at
+ // minimum zoom. Use the actual Overview control to expose both units.
+ await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);
+ await page.evaluate(()=>IronVowScene.render(clock,1));
  const target=await page.evaluate(()=>{
   const u=current(),{foe}=terrainQA;
   const ground=project(foe.x,0,foe.z),p={x:Math.round(ground.x),y:Math.round(ground.y)};

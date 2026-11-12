@@ -2,7 +2,7 @@
 
 A self-contained, original browser tactical mech game inspired by part-based strategy games such as Front Mission 3. No original game assets are used.
 
-This repository includes the complete Iron Vow Sites project through **Site version 97**, including its source history, game assets, 3D models, authoring tools, tests, and fixtures. Import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). GitHub development can include changes beyond that published snapshot; use the Sites publication workflow to deploy them.
+This repository includes the complete Iron Vow Sites project through **Site version 98**, including its source history, game assets, 3D models, authoring tools, tests, and fixtures. Import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). GitHub development can include changes beyond that published snapshot; use the Sites publication workflow to deploy them.
 
 ## Run locally
 
@@ -37,6 +37,8 @@ The canvas renderer detects filter support on pixels and uses offscreen composit
 Run `npm run setup:qa`, then `npm test` for the simulation suites. `npm run test:browser` checks desktop and touch behavior; `npm run test:release` runs the complete release gate. Browser checks require Chromium as described in [Release checks](qa/README.md). QA dependencies are development-only.
 
 The same release gate runs through `qa/site-package.cjs` before a Sites publication. `.openai/hosting.json` retains the existing Site identity. GitHub pushes do not automatically deploy the Site; use the Sites source and publication workflow when a deployment is requested.
+
+The latest published source and local/live verification results are recorded in [docs/release-verification.json](docs/release-verification.json).
 
 ## Scope
 

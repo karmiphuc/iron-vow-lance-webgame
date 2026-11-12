@@ -13,11 +13,10 @@ const setTimeout = (callback, ms) => {
     const u=current(), visual=activeWardenVisual(u);
     advanceUnitAnimation(u,clock,.031);
     const pose=animationPose(u,clock,visual),frame=wardenMotionFrame(u,visual,pose)?.frame;
-    drawUnit(u,clock);
-    for(const e of effects.filter(e=>e.type==='shot'))drawAttackEffect(e,clock);
+    drawUnitBody(u,clock);
     if(activeCinematic)drawAttackCamera(clock);
     return {index:frame?.index,level:frame?.level,clip:u.attack?.native?.clip,walking:!!u.motion,priming:pose.primePhase==='step'&&visual.motion.gait.includes(frame),
-     advanced:recoilingBounds(u,unitBounds(u,visual),clock).x!==unitBounds(u,visual).x};
+     advanced:pose.primeProgress>0};
    })())`));
    if(sample.index!==undefined)poses.push(sample);
   }
@@ -74,8 +73,8 @@ const setTimeout = (callback, ms) => {
   assert.ok(poses.some(p=>p.clip==='fire'&&p.level===.42),id+' reaches the first release pose');
   assert.ok(poses.some(p=>p.clip==='fire'&&p.level===.58),id+' reaches the second release pose');
   assert.ok(run(`(()=>{
-   const shot=effects.find(e=>e.kind==='${id}'&&e.type==='shot');
-   return shot.origins.length===2 && Math.hypot(shot.origins[0].ox-shot.origins[1].ox,shot.origins[0].oy-shot.origins[1].oy)>.04;
+   const u=current(),a=freezeAttachment(u,shotMuzzle(u,'${id}',0)),b=freezeAttachment(u,shotMuzzle(u,'${id}',1));
+   return Math.hypot(a.ox-b.ox,a.oy-b.oy)>.04;
   })()`),id+' uses distinct emitter origins');
  }
  assert.equal(run("hitChance(battle.units[1],battle.units[3],'body',weapon('locust'))"),

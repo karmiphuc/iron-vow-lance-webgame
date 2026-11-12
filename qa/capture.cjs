@@ -1,0 +1,252 @@
+/* Fixed-viewport visual baselines. Operates only on an explicitly supplied server. */
+const fs=require('node:fs');
+const path=require('node:path');
+const {createHash}=require('node:crypto');
+const {execFile,execFileSync}=require('node:child_process');
+const {promisify}=require('node:util');
+const {viewports,presets,phase1Presets,setGamePreset}=require('./capture-presets.cjs');
+const fetchPublicAsset=promisify(execFile),referenceAssets=new Map();
+function options(args){
+ const result={out:path.resolve(__dirname,'../design/baseline'),label:'current'};
+ for(let i=0;i<args.length;i++){
+  const flag=args[i];if(flag==='--phase1'){result.phase1=true;continue;}if(flag==='--plan'){result.plan=true;continue;}if(flag==='--details'){result.details=true;continue;}if(flag==='--resume'){result.resume=true;continue;}
+  if(!['--origin','--reference-game','--reference-bench','--out','--label','--preset','--asset-delay-ms','--source-root'].includes(flag)||!args[i+1])throw Error('Unknown/missing capture option: '+flag);
+  result[flag.slice(2)]=args[++i];
+ }
+ if(!/^[a-z0-9-]+$/.test(result.label))throw Error('Use a simple alphanumeric capture label');
+ if(result.preset&&![...presets,...phase1Presets].some(p=>p.id===result.preset))throw Error('Unknown preset: '+result.preset);
+ if(result['asset-delay-ms']!==undefined&&(!Number.isInteger(Number(result['asset-delay-ms']))||Number(result['asset-delay-ms'])<0||Number(result['asset-delay-ms'])>5000))throw Error('Use an asset delay between 0 and 5000 ms');
+ for(const key of ['origin','reference-game','reference-bench'])if(result[key]){
+  const url=new URL(result[key]);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Use an HTTP(S) URL without credentials');
+ }
+ return result;
+}
+async function checkSavedWebgl(file){
+ const {createCanvas,loadImage}=require('@napi-rs/canvas');
+ const image=await loadImage(file),sample=createCanvas(32,32),g=sample.getContext('2d');
+ // Exclude the HTML controls, which remain visible when the WebGL canvas is black.
+ g.drawImage(image,image.width*.4,image.height*.22,image.width*.5,image.height*.5,0,0,32,32);
+ const pixels=g.getImageData(0,0,32,32).data;let bright=0;
+ for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
+ if(bright<64)throw Error('Rig Bench final PNG is blank: '+bright+'/1024 non-black viewport samples');
+ return bright;
+}
+async function capture(config){
+ const selected=[...(config.phase1||config.preset?.startsWith('live-frame-')?phase1Presets:[]),...presets].filter(p=>(!config.preset||p.id===config.preset)&&(!config.details||p.paintChannel||p.detailPart||p.wreck));
+ const plan={viewports,presets:selected};
+ if(config.plan){console.log(JSON.stringify(plan,null,2));return;}
+ if(!config.origin)throw Error('Supply --origin from your supported preview; this runner never starts a server');
+ const sourceRoot=path.resolve(config['source-root']||path.join(__dirname,'..'));
+ for(const cwd of new Set([__dirname,sourceRoot]))if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd,encoding:'utf8'}).trim())throw Error('Commit tracked source changes before capturing, so the manifest SHA identifies the source');
+ const {chromium}=require('playwright');
+ const executablePath=process.env.IRON_VOW_CHROME||(!fs.existsSync(chromium.executablePath())&&['/usr/bin/chromium','/usr/bin/google-chrome'].find(fs.existsSync))||undefined;
+ let browser;
+ const output=path.resolve(config.out);fs.mkdirSync(output,{recursive:true});
+ const manifest={label:config.label,source:execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim(),runner_source:execFileSync('git',['rev-parse','HEAD'],{cwd:__dirname,encoding:'utf8'}).trim(),runner_sha256:createHash('sha256').update(fs.readFileSync(__filename)).digest('hex'),asset_delay_ms:Number(config['asset-delay-ms']||0),
+  dist_tree:execFileSync('git',['rev-parse','HEAD:dist'],{cwd:sourceRoot,encoding:'utf8'}).trim(),candidate_advance_policy:'All CPU animation and matrix updates execute. Unrecorded main-canvas warmup and advance GPU submissions are omitted; render-target previews and the final full-resolution frame render normally.',non_visual_fetch_policy:'Audio fetches do not block visual readiness; all requested images, scene readiness, canvas pixels and final screenshots remain checked.',environment:'Headless Chromium. Software WebGL is correctness evidence, not device performance.',webgl_capture_policy:'QA-only preserveDrawingBuffer retains the last actual render while animation frames are controlled. Both canvas pixels and the final PNG are checked for blank output.',captures:[],retries:[],failures:[]};
+ const previous=config.resume&&fs.existsSync(path.join(output,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(output,'manifest.json'),'utf8')):null;
+ if(previous&&previous.source!==manifest.source){
+  const object=(sha,file)=>execFileSync('git',['rev-parse',sha+':'+file],{cwd:sourceRoot,encoding:'utf8'}).trim();
+  if(object(previous.source,'dist')!==manifest.dist_tree||object(previous.source,'qa/capture-presets.cjs')!==object(manifest.source,'qa/capture-presets.cjs'))throw Error('Resume requires identical committed application and fixture objects');
+  manifest.retained_source_commit=previous.source;
+ }
+ if(previous){const digest=createHash('sha256').update(JSON.stringify(previous)).digest('hex');fs.writeFileSync(path.join(output,'prior-'+digest+'.json'),JSON.stringify(previous,null,2)+'\n');manifest.previous_manifest='prior-'+digest+'.json';}
+ const documentHashes=new Map();
+ const jobs=selected.map(preset=>({source:config.label,preset,url:new URL(preset.path??'',config.origin).href}));
+ if(config['reference-game'])for(const preset of selected.filter(p=>p.liveFrame===undefined&&(p.page||p.contract!==undefined&&!p.weapon)))
+  jobs.push({source:'reference-game',preset,url:config['reference-game']});
+ if(config['reference-bench']&&(!config.preset||config.preset==='rig-bench'))
+  jobs.push({source:'reference-bench',preset:{id:'rig-bench',path:'rig-bench/'},url:config['reference-bench']});
+ manifest.expected_capture_count=jobs.length*viewports.length;
+ const checkpoint=()=>{
+  manifest.status=manifest.captures.length===manifest.expected_capture_count&&!manifest.failures.length?'complete':'incomplete';
+  const temp=path.join(output,'manifest.json.tmp');
+  fs.writeFileSync(temp,JSON.stringify(manifest,null,2)+'\n');
+  fs.renameSync(temp,path.join(output,'manifest.json'));
+ };
+ // Rebuild the retention cache from all checkpoint manifests before the next
+ // checkpoint. An interrupted resume may not yet have visited valid later jobs.
+ if(previous){
+  const history=[previous,...fs.readdirSync(output).filter(f=>/^prior-.*\.json$/.test(f)).map(f=>JSON.parse(fs.readFileSync(path.join(output,f),'utf8')))];
+  const object=(sha,file)=>execFileSync('git',['rev-parse',sha+':'+file],{cwd:sourceRoot,encoding:'utf8'}).trim();
+  const validSources=new Map(),fileHashes=new Map(),seen=new Set();
+  for(const m of history)for(const c of m.captures||[]){
+   const job=jobs.find(j=>j.source===c.source&&j.preset.id===c.preset);
+   if(!job||!viewports.some(v=>v.width===c.viewport.width&&v.height===c.viewport.height)||job.preset.path&&c.webgl_sample?.screenshot_non_black_samples<64||job.preset.paint&&job.source!=='reference-game'&&c.paint_view_verified!==2||job.preset.id==='selected-move'&&job.source!=='reference-game'&&c.selected_move_view_verified!==5)continue;
+   const key=[c.source,c.preset,c.viewport.width,c.viewport.height].join('/');if(seen.has(key))continue;
+   const source=c.source_commit||m.source;if(!source)continue;
+   if(!validSources.has(source))validSources.set(source,object(source,'dist')===manifest.dist_tree&&object(source,'qa/capture-presets.cjs')===object(manifest.source,'qa/capture-presets.cjs'));
+   if(!validSources.get(source))continue;
+   const file=path.join(output,c.file);if(!fs.existsSync(file)||!c.png_sha256)continue;
+   if(!fileHashes.has(file))fileHashes.set(file,createHash('sha256').update(fs.readFileSync(file)).digest('hex'));
+   if(fileHashes.get(file)!==c.png_sha256)continue;
+   if(!documentHashes.has(job.url)){const response=await fetch(job.url);if(!response.ok)throw Error('Cannot verify resumed source');documentHashes.set(job.url,createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'));}
+   if(c.document_sha256!==documentHashes.get(job.url))continue;
+   manifest.captures.push({...c,retained:true,source_commit:source,runner_sha256:c.runner_sha256||m.runner_sha256});seen.add(key);
+  }
+  checkpoint();console.log('RECOVERED '+manifest.captures.length+' verified retained captures from checkpoint history');
+ }
+ try{
+  browser=await chromium.launch({executablePath,args:['--enable-unsafe-swiftshader']});
+  for(const viewport of viewports)for(const job of jobs)for(let attempt=0;attempt<2;attempt++){
+   const retained=manifest.captures.find(c=>c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height);
+   if(retained){console.log('REUSE '+retained.file);break;}
+   console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
+   const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
+   const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
+   page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+   if(config['asset-delay-ms'])await context.route(/-parts\.webp(?:\?|$)/,async route=>{await new Promise(done=>setTimeout(done,Number(config['asset-delay-ms'])));await route.continue();});
+   page.on('response',response=>{if(response.status()>=400)errors.push(response.status()+' '+response.url());});
+   page.on('requestfailed',request=>errors.push('Request failed: '+request.url().slice(0,180)));
+   try{
+    if(job.source.startsWith('reference-')){
+     const vendor=fs.readFileSync(path.resolve(__dirname,'../dist/rig-bench/vendor/three.min.js'),'utf8');
+     const shim='\n;(()=>{const Native=THREE.WebGLRenderer;THREE.WebGLRenderer=new Proxy(Native,{construct(Type,args){const renderer=new Type(...args),render=renderer.render;renderer.render=function(...args){if(!window.__captureAdvanceOnly)return render.apply(this,args);};return renderer;}});})();';
+     await context.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',route=>route.fulfill({body:vendor+shim,contentType:'text/javascript'}));
+     manifest.reference_advance_policy='All 30 Hz CPU animation updates execute. Intermediate WebGL draws during unrecorded static time advances are omitted; the final frame renders normally. Motion filmstrips use their separate unmodified render path.';
+     await context.route(/^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com)\//,async route=>{
+      const url=route.request().url();
+      try{
+       if(!referenceAssets.has(url))referenceAssets.set(url,fetchPublicAsset('curl',['-fsS','--max-time','30',url],{encoding:'buffer',maxBuffer:8*1024*1024}).then(result=>result.stdout));
+       await route.fulfill({body:await referenceAssets.get(url),contentType:new URL(url).hostname==='fonts.googleapis.com'?'text/css':'font/woff2'});
+      }catch{errors.push('Reference font could not be fetched: '+url);await route.abort();}
+     });
+    }
+    await page.addInitScript(()=>{
+     // Static captures advance every CPU animation frame; submit the final full-resolution board frame.
+     Object.defineProperty(window,'IronVowRenderer',{configurable:true,set(api){const get=api.get;api.get=function(){const renderer=get();if(!renderer.__captureAdvanceWrapped){renderer.__captureAdvanceWrapped=true;const render=renderer.render;renderer.render=function(scene,camera){if(window.__captureAdvanceOnly&&this.getRenderTarget()===null){scene.updateMatrixWorld();camera.updateMatrixWorld();return;}return render.apply(this,arguments);};}return renderer;};Object.defineProperty(window,'IronVowRenderer',{value:api,configurable:true});}});
+     window.__captureAdvanceOnly=true;
+     let seed=101;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+     const frames=new Map();let id=0;
+     window.requestAnimationFrame=callback=>{frames.set(++id,callback);return id;};
+     window.cancelAnimationFrame=key=>frames.delete(key);
+     window.__captureTick=(time=5000)=>{const queued=[...frames.values()];frames.clear();for(const callback of queued)callback(time);};
+     window.__capturePending=0;
+     const fetchNative=window.fetch.bind(window);
+     window.fetch=(...args)=>{const url=String(args[0]?.url||args[0]);if(/(?:^|\/)assets\/audio\//.test(url))return fetchNative(...args);window.__capturePending++;return fetchNative(...args).finally(()=>window.__capturePending--);};
+     const sendNative=XMLHttpRequest.prototype.send;
+     XMLHttpRequest.prototype.send=function(...args){
+      window.__capturePending++;this.addEventListener('loadend',()=>window.__capturePending--,{once:true});
+      try{return sendNative.apply(this,args);}catch(error){window.__capturePending--;throw error;}
+     };
+     const NativeImage=window.Image;window.__captureImages=new Set();
+     const getContext=HTMLCanvasElement.prototype.getContext;window.__captureWebGL=new WeakMap();
+     HTMLCanvasElement.prototype.getContext=function(...args){const webgl=/^(webgl2?|experimental-webgl)$/.test(args[0]);if(webgl)args[1]={...args[1],preserveDrawingBuffer:true};const context=getContext.apply(this,args);if(context&&webgl)window.__captureWebGL.set(this,context);return context;};
+     window.__captureActiveImages=()=>{const images=[];for(const ref of window.__captureImages){const image=ref.deref();if(image)images.push(image);else window.__captureImages.delete(ref);}return images;};
+     window.Image=new Proxy(NativeImage,{construct(target,args){const image=new target(...args);window.__captureImages.add(new WeakRef(image));return image;}});
+    });
+    const response=await page.goto(job.url,{waitUntil:'domcontentloaded',timeout:120000});
+    const documentHash=createHash('sha256').update(await response.body()).digest('hex');
+    await page.evaluate(()=>document.fonts.ready);
+    if(!job.preset.path){
+     if(job.source==='reference-game'&&job.preset.paint){
+      await page.evaluate(preset=>{save=fresh();battle=null;selected=0;effects=[];clock=5;last=5000-1000/60;page='workshop';const u=save.units[0];u.paint={p:'#708657',s:'#373b38',a:'#c19960'};if(preset.paintChannel){u.frame=3;u.paint[preset.paintChannel]=preset.paintChannel==='p'?'#be5143':preset.paintChannel==='s'?'#5c82b3':'#dfb92f';}render();document.querySelector('section.paint')?.scrollIntoView({block:'center',behavior:'instant'});},job.preset);
+     }else{
+      const fixture={...job.preset};
+      if(job.source==='reference-game'&&fixture.contract!==undefined){
+       const name={1:'Ashes of the relay',2:'The iron corridor',3:'No quiet frontier'}[fixture.contract];
+       fixture.contract=await page.evaluate(name=>CONTRACTS.findIndex(c=>c.name.toLowerCase()===name.toLowerCase()),name);
+       if(fixture.contract<0)throw Error('Reference theater not found: '+name);
+      }
+      await page.evaluate(setGamePreset,fixture);
+     }
+    }
+    // The contact flash requests a part mask lazily. Warm that state before the
+    // final shot, so a slow mask response cannot leave the screenshot incomplete.
+    if(job.preset.weapon)await page.evaluate(()=>{activeCinematic.target.hitTime=5-.06;activeCinematic.target.hitPart='body';});
+    // Render once to request lazy art, then wait for all art and repeat. Fixed game clock.
+    for(let pass=0;pass<4;pass++){
+     await page.evaluate(()=>{if(typeof clock!=='undefined'){clock=5;last=5000-1000/60;}window.__captureTick();});
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+    }
+    if(job.preset.path&&job.source!=='reference-bench'){
+     await page.waitForFunction(()=>document.body.dataset.rigModel==='painted',null,{polling:50,timeout:120000});
+     await page.evaluate(()=>window.__captureTick());
+    }
+    if(job.preset.weapon)await page.evaluate(()=>{
+     const sequence=activeCinematic,target=sequence.target;
+     target.hitTime=5-.06;target.hitPart='body';
+     effects.push({type:'boom',target:target.id,part:'body',x:target.x,z:target.z,t:.82,
+      light:Boolean(sequence.w.burst),broken:false,fxKind:weaponMotion(sequence.w.id),fxSeed:101,nx:-1,ny:-.2});
+     clock=5;last=5000-1000/60;window.__captureTick();
+    });
+    if(job.preset.advanceSeconds){
+     await page.evaluate(seconds=>{for(let i=1;i<=Math.ceil(seconds*30);i++)window.__captureTick(5000+i*1000/30);},job.preset.advanceSeconds);
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+     await page.evaluate(seconds=>window.__captureTick(5000+(Math.ceil(seconds*30)+1)*1000/30),job.preset.advanceSeconds);
+     await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
+    }
+    await page.evaluate(()=>{window.__captureAdvanceOnly=false;});
+    const broken=await page.evaluate(()=>[...window.__captureActiveImages(),...document.images].filter(image=>image.src&&(!image.complete||!image.naturalWidth)).map(image=>image.src));
+    let webglSample;
+    const battleWebgl=await page.evaluate(()=>Boolean(window.IronVowScene&&typeof battle!=='undefined'&&battle&&document.getElementById('world-scene')));
+    if(battleWebgl)await page.evaluate(()=>{if(!IronVowScene.ready)throw Error('Battle capture has pending live rigs or temporary images');});
+    if(broken.length)throw Error('Unloaded/broken images: '+JSON.stringify(broken));
+    if(errors.length)throw Error(errors.join('\n'));
+    let selectedMoveViewVerified=false;
+    if(job.preset.id==='selected-move'&&job.source!=='reference-game'){
+     await page.locator('#map-overview').click();
+     await page.evaluate(()=>{window.__captureAdvanceOnly=true;try{for(let i=1;i<=30;i++)window.__captureTick(5000+i*1000/30);}finally{window.__captureAdvanceOnly=false;}window.__captureTick(6033);});
+     const target=await page.evaluate(()=>{
+      const u=current(),free=freeMovement(u);
+      return __ironVow.legalMoves(u.id).filter(m=>m.cost>free).map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-180&&m.p.y>180&&m.p.y<innerHeight-180&&document.elementFromPoint(m.p.x,m.p.y)===canvas&&IronVowScene.screenTile(m.p.x,m.p.y)?.x===m.x&&IronVowScene.screenTile(m.p.x,m.p.y)?.z===m.z);
+     });
+     if(!target)throw Error('No visible paid-move tile for capture');
+     await page.mouse.move(target.p.x,target.p.y);await page.evaluate(()=>window.__captureTick(6066));
+     selectedMoveViewVerified=await page.evaluate(()=>{const info=IronVowScene.overlayInfo();return info.triangles>0&&info.path.some(p=>p.color===0xcc9b49)});
+     if(!selectedMoveViewVerified)throw Error('Paid-move path overlay did not render');
+    }
+    // The game may rerender the workshop after lazy assets arrive. Scroll only
+    // after that settles so the recorded paint preset contains its controls.
+    let paintViewVerified=false;
+    if(job.preset.paint&&job.source!=='reference-game')paintViewVerified=await page.evaluate(()=>{
+     const panel=document.querySelector('.paint-panel');if(!panel)throw Error('Paint panel missing');
+     panel.scrollIntoView({block:'center',behavior:'instant'});
+     const rect=panel.getBoundingClientRect(),header=document.querySelector('header')?.getBoundingClientRect();
+     const controls=[...panel.querySelectorAll('.paint-swatch, #custom-paint, [data-trim]')];
+     if(!controls.length||rect.top<(header?.bottom||0)||rect.bottom>innerHeight||controls.some(node=>{const r=node.getBoundingClientRect();return r.top<(header?.bottom||0)||r.bottom>innerHeight||r.left<0||r.right>innerWidth;}))throw Error('Paint panel controls do not fit the viewport');
+     return true;
+    });
+    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(isMove=>{
+     // Sample immediately after a real render: non-preserved WebGL buffers can
+     // otherwise clear between tasks even when the compositor retains the frame.
+     window.__captureTick(isMove?6100:5000);
+     const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=canvas.id==='c'?'Rig Bench':'Battle';
+     if(!gl||gl.isContextLost())throw Error(name+' WebGL context is unavailable or lost');
+     const sample=document.createElement('canvas');sample.width=sample.height=32;
+     const g=sample.getContext('2d');g.drawImage(canvas,0,0,32,32);
+     const pixels=g.getImageData(0,0,32,32).data;let bright=0;
+     for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
+     if(bright<64)throw Error(name+' WebGL canvas is blank: '+bright+'/1024 non-black samples');
+     return {canvas:canvas.id,non_black_samples:bright,total_samples:1024,context_lost:false};
+    },job.preset.id==='selected-move');
+    const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
+    fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
+    await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});
+    if(webglSample){
+     webglSample.screenshot_non_black_samples=await checkSavedWebgl(path.join(output,filename));
+    }
+    manifest.captures=manifest.captures.filter(c=>!(c.source===job.source&&c.preset===job.preset.id&&c.viewport.width===viewport.width&&c.viewport.height===viewport.height));
+    manifest.captures.push({source:job.source,preset:job.preset.id,viewport,file:filename,source_commit:manifest.source,runner_sha256:manifest.runner_sha256,document_sha256:documentHash,png_sha256:createHash('sha256').update(fs.readFileSync(path.join(output,filename))).digest('hex'),attempt:attempt+1,...(paintViewVerified?{paint_view_verified:2}:{}),...(selectedMoveViewVerified?{selected_move_view_verified:5,selected_move_camera:'Overview control; actual paid path hovered'}:{}),...(webglSample?{webgl_sample:webglSample}:{})});
+    checkpoint();
+    console.log('SAVED '+filename);
+    break;
+   }catch(error){const failure={source:job.source,preset:job.preset.id,viewport,error:error.message};if(attempt===0){console.error('RETRY '+job.source+' '+job.preset.id+': '+error.message);manifest.retries.push(failure);}else{console.error('FAILED '+job.source+' '+job.preset.id+': '+error.message);manifest.failures.push(failure);}checkpoint();}
+   finally{await context.close();}
+  }
+ }finally{
+  await browser?.close();
+  checkpoint();
+ }
+ const sources=[...new Set(manifest.captures.map(c=>c.source))];
+ const escape=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const rows=viewports.flatMap(v=>selected.map(p=>'<tr><th>'+p.id+'<br>'+v.width+'×'+v.height+'</th>'+sources.map(s=>{
+  const match=manifest.captures.find(c=>c.source===s&&c.preset===p.id&&c.viewport.width===v.width&&c.viewport.height===v.height);
+  return '<td>'+(match?'<a href="'+escape(match.file)+'"><img loading="lazy" width="420" src="'+escape(match.file)+'"></a>':'No matching capture')+'</td>';
+ }).join('')+'</tr>'));
+ fs.writeFileSync(path.join(output,'contact-sheet.html'),'<!doctype html><meta charset="utf-8"><title>Iron Vow captures</title><style>body{background:#111;color:#eee;font:14px system-ui}td,th{padding:8px;vertical-align:top}img{max-width:35vw}</style><h1>Iron Vow captures</h1><p>Source '+escape(manifest.source)+'. Check manifest.json for failures.</p><table><tr><th>Preset</th>'+sources.map(s=>'<th>'+s+'</th>').join('')+'</tr>'+rows.join('')+'</table>');
+ if(manifest.failures.length)throw Error(manifest.failures.length+' captures failed; see manifest.json');
+ console.log('Captured '+manifest.captures.length+' views in '+output);
+}
+if(require.main===module)capture(options(process.argv.slice(2))).catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={options,capture,checkSavedWebgl};

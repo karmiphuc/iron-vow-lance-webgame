@@ -20,7 +20,7 @@ sandbox.document={createElement:()=>{const c={width:1,height:1,style:{}};c.getCo
  createElementNS:()=>sandbox.document.createElement()};
 for(const file of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.js','foundry/production-arsenal.js',
  'foundry/behemoth-core.js','foundry/chassis.js','foundry/rig-motion.js'])
- vm.runInThisContext(readFileSync(join(dist,file),'utf8'),{filename:file});
+ vm.runInThisContext(readFileSync(file==='foundry/rig-motion.js'&&process.env.IRON_VOW_MOTION_SOURCE?process.env.IRON_VOW_MOTION_SOURCE:join(dist,file),'utf8'),{filename:file});
 const T=sandbox.THREE,R=sandbox.IronVowFoundryRig,V3=R.V3,dt=1/60;
 const NAMES=['Aegis','Shrike','Bastion','Valkyrie','Oni','Behemoth'];
 
@@ -56,7 +56,7 @@ for(const g of gaits){
  assert.ok(g.stanceError<.06,`${g.name} planted foot IK error ${g.stanceError.toFixed(3)} m`);
  assert.ok(g.fewestDown>=1,`${g.name} has a frame with no foot on the ground`);
 }
-for(const name of ['Oni','Behemoth']){
+for(const name of NAMES){
  const g=gaits.find(entry=>entry.name===name);
  assert.ok(g.slide<.001,`${name} planted foot slides ${(g.slide*1000).toFixed(1)} mm per frame`);
  assert.ok(g.stanceError<.001,`${name} planted foot leaves its IK goal by ${g.stanceError.toFixed(3)} m`);

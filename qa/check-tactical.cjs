@@ -62,14 +62,7 @@ const create=require('./sim-harness.cjs');
   return !paths(heli).has('10,9')&&paths(heli).has('11,9')&&route(heli,11,9).length===2&&!inCover(heli)&&!canReachTarget(weapon('breaker'),heli);
  })()`));
 
- const range=create();
- range.run(`createBattle(0);action='fire';const drawnTargets=[];targetingTile=(x,z,locked=false)=>drawnTargets.push({x,z,locked});
-  const contact=battle.units.find(u=>u.kind==='tank');contact.x=contact.vx=2;contact.z=contact.vz=16;lockedTarget=contact.id;battlefield(0)`);
- assert.ok(range.run("drawnTargets.some(tile=>tile.x===2&&tile.z===16&&tile.locked)"));
- assert.ok(range.run("drawnTargets.every(tile=>distance(current(),tile)>0&&distance(current(),tile)<=weapon(current().weapon).range)"));
- range.run("drawnTargets.length=0;battle.busy=true;battlefield(0)");
- assert.equal(range.run("drawnTargets.length"),0);
-
+ // Range/target overlay rendering now runs against actual WebGL in browser/shared-scene.cjs.
  const timers=new Map();let timerId=0;
  const live=create({random:()=>0,setTimeout:(fn,ms)=>{const id=++timerId;timers.set(id,{fn,ms});return id}});
  live.sandbox.clearTimeout=id=>timers.delete(id);
@@ -83,7 +76,7 @@ const create=require('./sim-harness.cjs');
  assert.equal(live.run('animationPose(current(),.3).primeProgress'),.5);
  assert.equal(live.run('current().attack.fireAt'),null);
  const [plantId,plant]=[...timers][0];timers.delete(plantId);
- live.run('draw(600)');plant.fn();await live.flush();
+ live.run('clock=.6;advanceUnitAnimation(current(),clock,1/60)');plant.fn();await live.flush();
  assert.equal(live.run('animationPose(current(),clock).primePhase'),'planted');
  assert.equal(live.run('current().attack.fireAt'),null);
  assert.equal(live.run("effects.filter(e=>e.attackPlant).length"),1);

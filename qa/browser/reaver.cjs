@@ -31,6 +31,7 @@ module.exports=async function checkReaver({page,mobile,origin,tap}){
  });
  assert.deepEqual(result,{contract:'corridor',team:'enemy',name:'REAVER 3',paint:null,trim:null,variants:[true,true,true,true],hd:true});
  assert.match(await page.locator('#target-toggle').textContent(),/MEDIUM\+/);
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  await tap('#end');
  await page.waitForFunction(()=>activeCinematic?.actor.frame===REAVER_FRAME&&activeCinematic.phase==='aim'&&foundryRender(activeCinematic.actor,clock,true).index===11);
  await page.waitForFunction(()=>activeCinematic?.actor.frame===REAVER_FRAME&&activeCinematic.phase==='fire');
