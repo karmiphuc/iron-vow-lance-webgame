@@ -1,0 +1,28 @@
+# Phase 3 asset export gate
+
+Issue #13 starts with Gatecrasher. Blender MCP 5.2.4 produced reference exports from the editable Gatecrasher R2 and Cicada scenes. The tank and gunship now use live battle meshes. Live chassis integration and the remaining exports are pending.
+
+The legacy Prototype Bay Gatecrasher draws 162,386 triangles. The new `dist/rig-bench/rig-v2/gatecrasher-r2-reference.glb` draws 54,252 triangles with the integral cannon, Arc Cleaver and Vesper pod. It is separate from the Prototype Bay model because that viewer requires its authored motion clips. The reference is equipped as one file, so no extra weapon GLB is passed to the gate for this configuration.
+
+The exported `socket.L` and `mount.shoulderR` subtrees contain 1,040 and 3,330 triangles respectively, leaving 49,882 for the chassis and integral cannon. The browser gate exercised every distinct equipment combination with the production shield mounts. The heaviest configuration draws 56,608 triangles with the authored Vesper pod and Citadel shield. The shield and cleaver occupy the same slot.
+
+`tools/export_gatecrasher_v2.py` exposes `export_gatecrasher(source, output)` for Blender MCP. Use the private `local-armed-r2/iron-vow-gatecrasher-r2.blend` source whose SHA-256 is `7ada236a0ab73c11111c2ce5f869822faf6ea201aadbe3c0e5cd386e24e3353f`. The script appends an isolated scene, simplifies the dense rigid assemblies, exports the named rig and paint materials with meshopt, and restores the previous scene. Its gait values are starting points for runtime tuning and the export is a rest pose with no authored overlay clips.
+
+See the [Phase 3 evidence](../design/phase3/README.md) for the Chromium rig and loadout checks. The browser gate also checks shield grip alignment and shield disappearance after left-arm loss.
+
+`tools/export_cicada_v2.py` exposes `export_cicada(source, output)` for Blender MCP. The input is the recovered `native-mask-source/cicada.blend`, SHA-256 `80e31189e9e072cc2c9c06514c3223a7f9dbd38a2770898896a1b1db21957023`. The meshopt export retains both integrated Locust racks and the Pulse Bash housing, with 49,978 triangles in the factory loadout. The isolated export restored the active scene and the input hash matched after export.
+
+`tools/render_vehicles.py` exposes `export_vehicle_motion(output)` for Blender MCP. It builds the procedural Javelin tank and Kite gunship in a temporary scene with body and muzzle anchors. Each GLB batches the original motion geometry by material. The sortie loads the models it needs and releases the shared geometry on exit. The existing sprites cover failed loads, and the offline package embeds both GLBs.
+
+Run the checkpoint using the local QA dependencies.
+
+```sh
+node qa/gate-phase3.cjs --out /tmp/iron-vow-phase3
+```
+
+After export, run `node qa/check-rig-v2.cjs path/to/chassis.glb path/to/mounted-weapon.glb ...` for each actual equipped configuration. Arguments after the chassis must contain only the weapon geometry actually mounted; library GLBs holding multiple unused weapons overcount. The tool counts mesh instances in the default scene, includes supplied weapons, checks exact names, limb hierarchy, dimensions' presence, paint material names, part tags, and meshopt extension declaration. It exits 1 for contract failures and 2 for unreadable or unsupported input. `node qa/check-rig-v2-test.cjs` verifies instance and equipment accounting and failure reporting.
+
+A passing static gate is necessary, not sufficient: review dimension values and units, socket/muzzle placement and required optional mounts, emissive materials, plate selection, compression contents, rig deformation, visual quality and planted-foot behavior in the runtime. Check every legal loadout against the 60,000-triangle limit. Commit each GLB with its Blender MCP export script as #13 requires; regenerate the full renderer inventory and run the scene anomaly and visual gates before removing any adapter.
+
+
+Static gate updates, 12 November 2026 Singapore time: required rig nodes must be reachable from the actual default scene, and that scene must contain mesh geometry. Name lookup and duplicate detection use that same reachable set, so an inactive scene cannot supply missing bones or falsely reject a valid rig by reusing names. Fixtures reproduce the former orphaned-rig acceptance and inactive-name rejection and verify the corrected behavior. Sibling geometry/skeleton scenes remain supported. These checks do not claim any model conversion or certify deformation.

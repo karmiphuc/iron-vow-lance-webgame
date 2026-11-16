@@ -1,4 +1,7 @@
-"""Original Iron Vow hostile miniatures. blender -b -t 6 -P tools/render_vehicles.py
+"""Original Iron Vow hostile miniatures and live battle GLBs.
+
+In Blender MCP, load this file with runpy.run_path and call export_vehicle_motion().
+The still-image CLI is blender -b -t 6 -P tools/render_vehicles.py.
 448px square RGBA; anchor (.5,.72); draw square at 3.9192 * tile scale.
 Right sprites are exact mirrored counterparts, including projected muzzle anchors.
 """
@@ -6,14 +9,22 @@ import bpy, math, json, tempfile, sys
 from pathlib import Path
 from mathutils import Vector
 from bpy_extras.object_utils import world_to_camera_view
-from PIL import Image, ImageDraw, ImageOps
 OUT=Path(__file__).resolve().parents[1]/'dist/assets'
-bpy.ops.wm.read_factory_settings(use_empty=True);scene=bpy.context.scene
-
 def material(name,color,metal=.5,rough=.62):
- m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True;p=m.node_tree.nodes['Principled BSDF'];p.inputs['Base Color'].default_value=(*color,1);p.inputs['Metallic'].default_value=metal;p.inputs['Roughness'].default_value=rough;return m
-armor=material('Deep crimson ceramic armor',(.105,.008,.016),.25,.50);steel=material('Blackened machined metal',(.068,.082,.09),.65,.43);dark=material('Graphite secondary armor',(.009,.013,.018),.25,.55);red=material('Crimson identification panels',(.26,.012,.025),.25,.49);glass=material('Near-black armored canopy',(.004,.012,.018),.12,.34);warm=material('Amber optic lens',(.75,.20,.018),.4,.24)
-glass.node_tree.nodes['Principled BSDF'].inputs['Specular IOR Level'].default_value=.18
+ m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True;p=principled(m);p.inputs['Base Color'].default_value=(*color,1);p.inputs['Metallic'].default_value=metal;p.inputs['Roughness'].default_value=rough;return m
+
+def principled(material):
+ return next(node for node in material.node_tree.nodes if node.type=="BSDF_PRINCIPLED")
+
+def make_materials():
+ global armor,steel,dark,red,glass,warm
+ armor=material('Deep crimson ceramic armor',(.105,.008,.016),.25,.50)
+ steel=material('Blackened machined metal',(.068,.082,.09),.65,.43)
+ dark=material('Graphite secondary armor',(.009,.013,.018),.25,.55)
+ red=material('Crimson identification panels',(.26,.012,.025),.25,.49)
+ glass=material('Near-black armored canopy',(.004,.012,.018),.12,.34)
+ warm=material('Amber optic lens',(.75,.20,.018),.4,.24)
+ principled(glass).inputs['Specular IOR Level'].default_value=.18
 
 
 def finish(o,m,bevel=.01):
@@ -22,16 +33,16 @@ def finish(o,m,bevel=.01):
   mod=o.modifiers.new('Machined edge bevel','BEVEL');mod.width=bevel;mod.segments=2;o.modifiers.new('Weighted normals','WEIGHTED_NORMAL')
  return o
 
-def box(n,p,s,m=armor,b=.012):
- bpy.ops.mesh.primitive_cube_add(size=1,location=p);o=bpy.context.object;o.name=n;o.scale=s;bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);return finish(o,m,b)
-def cylinder(n,p,r,d,m=steel,rot=(0,0,0),v=16):
- bpy.ops.mesh.primitive_cylinder_add(vertices=v,radius=r,depth=d,location=p,rotation=rot);o=bpy.context.object;o.name=n;return finish(o,m,.005)
-def sphere(n,p,s,m=armor):
- bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=1,location=p);o=bpy.context.object;o.name=n;o.scale=s;return finish(o,m,0)
-def rod(n,a,b,r,m=steel):
+def box(n,p,s,m=None,b=.012):
+ bpy.ops.mesh.primitive_cube_add(size=1,location=p);o=bpy.context.object;o.name=n;o.scale=s;bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);return finish(o,m or armor,b)
+def cylinder(n,p,r,d,m=None,rot=(0,0,0),v=16):
+ bpy.ops.mesh.primitive_cylinder_add(vertices=v,radius=r,depth=d,location=p,rotation=rot);o=bpy.context.object;o.name=n;return finish(o,m or steel,.005)
+def sphere(n,p,s,m=None):
+ bpy.ops.mesh.primitive_uv_sphere_add(segments=16,ring_count=8,radius=1,location=p);o=bpy.context.object;o.name=n;o.scale=s;return finish(o,m or armor,0)
+def rod(n,a,b,r,m=None):
  a,b=Vector(a),Vector(b);o=cylinder(n,(a+b)/2,r,(b-a).length,m);o.rotation_euler=(b-a).to_track_quat('Z','Y').to_euler();return o
 
-def loft(n,rings,m=armor,bevel=.018):
+def loft(n,rings,m=None,bevel=.018):
  # Four-sided cross sections (y,halfwidth,bottom,top), original armor geometry.
  vertices=[]
  for y,w,b,t in rings:vertices.extend([(-w,y,b),(w,y,b),(w,y,t),(-w,y,t)])
@@ -39,7 +50,7 @@ def loft(n,rings,m=armor,bevel=.018):
  for i in range(len(rings)-1):
   for j in range(4):faces.append((i*4+j,i*4+(j+1)%4,(i+1)*4+(j+1)%4,(i+1)*4+j))
  faces.append(tuple(range((len(rings)-1)*4,len(rings)*4)))
- mesh=bpy.data.meshes.new(n);mesh.from_pydata(vertices,[],faces);mesh.update();o=bpy.data.objects.new(n,mesh);scene.collection.objects.link(o);return finish(o,m,bevel)
+ mesh=bpy.data.meshes.new(n);mesh.from_pydata(vertices,[],faces);mesh.update();o=bpy.data.objects.new(n,mesh);bpy.context.scene.collection.objects.link(o);return finish(o,m or armor,bevel)
 
 def tank():
  # Wide low armored hull, sloped glacis and faceted composite turret.
@@ -92,7 +103,7 @@ def tank():
  rod('Low radio mast',(-.23,.35,.65),(-.24,.37,.92),.005,dark)
  # Bake deliberate low, long proportions into all meshes, including fitted details.
  bpy.context.view_layer.update()
- for o in [o for o in bpy.data.objects if o.type=='MESH']:
+ for o in [o for o in bpy.context.scene.objects if o.type=='MESH']:
   cannon=any(token in o.name for token in ['Smooth bore cannon','Thermal sleeve','Fume extractor','Muzzle reinforced','Dark cannon'])
   sy=1.30 if cannon else 1.20
   world=o.matrix_world.copy();inv=world.inverted()
@@ -165,7 +176,7 @@ def helicopter():
    o=box('Rotor tip marking',(x,y,.962),(.12,.064,.016),red,.001);o.rotation_euler[2]=angle
  # Extend the entire tail assembly coherently from its root, preserving attachments.
  bpy.context.view_layer.update()
- for o in [o for o in bpy.data.objects if o.type=='MESH']:
+ for o in [o for o in bpy.context.scene.objects if o.type=='MESH']:
   if any(token in o.name for token in ['tail','Tail']):
    # World-space vertex transform also handles rotated rotor and wheel geometry.
    world=o.matrix_world.copy();inv=world.inverted()
@@ -176,40 +187,95 @@ def helicopter():
  # Red cheeks and the canopy surround keep the gunship's faction legible against black armor.
  return [(0,-.988,.205),(-.405,-.223,.32),(.405,-.223,.32)]
 
-if "--export-motion" in sys.argv:
- out=Path(sys.argv[sys.argv.index("--export-motion")+1])
- out.mkdir(parents=True,exist_ok=True)
- for name,build in [('tank',tank),('helicopter',helicopter)]:
-  for obj in list(bpy.data.objects):
-   bpy.data.objects.remove(obj,do_unlink=True)
-  muzzles=build()
-  for label,position in [('muzzle',muzzles[0]),('body',(0,0,.38 if name=='tank' else .42))]:
-   marker=bpy.data.objects.new(label,None)
-   marker.location=position
-   scene.collection.objects.link(marker)
-  bpy.ops.export_scene.gltf(filepath=str(out/f'{name}.glb'),export_format='GLB')
- raise SystemExit(0)
+def consolidate_vehicle_meshes(scene):
+ # Match the existing motion export's base geometry. The still-image render
+ # uses the higher-detail bevel modifiers separately.
+ meshes=[obj for obj in scene.objects if obj.type=='MESH']
+ bpy.ops.object.select_all(action='DESELECT')
+ for obj in meshes:
+  obj.modifiers.clear()
+  obj.select_set(True)
+ bpy.context.view_layer.objects.active=meshes[0]
+ bpy.ops.object.join()
+ bpy.context.object.name='Vehicle hull'
 
-world=bpy.data.worlds.new('Ambient');scene.world=world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.35,.43,.52,1);world.node_tree.nodes['Background'].inputs[1].default_value=.6
-for pos,power,size,col in [((-3,-4,7),800,4,(1,.88,.72)),((4,1,5),650,3,(.6,.77,1))]:
- l=bpy.data.lights.new('Softbox','AREA');l.energy=power;l.size=size;l.color=col;o=bpy.data.objects.new('Softbox',l);scene.collection.objects.link(o);o.location=pos;o.rotation_euler=(-o.location).to_track_quat('-Z','Y').to_euler()
-c=bpy.data.cameras.new('Isometric');cam=bpy.data.objects.new('Isometric',c);scene.collection.objects.link(cam);scene.camera=cam;cam.location=(8,-8,5.49);cam.rotation_euler=(-cam.location).to_track_quat('-Z','Y').to_euler();c.type='ORTHO';c.ortho_scale=3.2;c.shift_y=.22
-scene.render.engine='CYCLES';scene.cycles.samples=80;scene.cycles.use_denoising=False;scene.render.resolution_x=scene.render.resolution_y=448;scene.render.resolution_percentage=100;scene.render.film_transparent=True;scene.render.image_settings.file_format='PNG';scene.view_settings.view_transform='AgX'
-previews=[];metadata={}
-with tempfile.TemporaryDirectory() as td:
- for name,build in [('tank',tank),('helicopter',helicopter)]:
-  for o in list(bpy.data.objects):
-   if o.type=='MESH':bpy.data.objects.remove(o,do_unlink=True)
-  muzzles=build();bpy.context.view_layer.update();points=[]
-  for point in muzzles:
-   p=world_to_camera_view(scene,cam,Vector(point));points.append([round(p.x,5),round(1-p.y,5)])
-  scene.render.filepath=f'{td}/{name}.png';bpy.ops.render.render(write_still=True);im=Image.open(scene.render.filepath).convert('RGBA')
-  bounds=im.getchannel('A').getbbox();assert bounds and min(bounds)>0 and bounds[2]<448 and bounds[3]<448,(name,bounds)
-  for facing,sprite in [('left',im),('right',ImageOps.mirror(im))]:
-   key=f'hostile-{name}-{facing}';sprite.save(OUT/f'{key}.webp',quality=90,method=6)
-   metadata[key]={'anchor':[.5,.72],'size':448,'tileScale':3.9192,'opaqueBounds':sprite.getchannel('A').getbbox(),'muzzles':points if facing=='left' else [[round(1-x,5),y] for x,y in points]}
-   p=Image.new('RGBA',(448,480),'#26343c');p.alpha_composite(sprite);ImageDraw.Draw(p).text((15,456),key,fill='white');previews.append(p)
- sheet=Image.new('RGB',(896,960))
- for i,p in enumerate(previews):sheet.paste(p,((i%2)*448,(i//2)*480))
- sheet.save('/tmp/iron-vow-vehicles-preview.jpg')
-print(json.dumps(metadata,indent=2));print('Total bytes',sum(p.stat().st_size for p in OUT.glob('hostile-*.webp')))
+
+def export_vehicle_motion(output):
+ window=bpy.context.window
+ if not window or bpy.context.mode!='OBJECT':
+  raise RuntimeError('Run with a Blender window in Object Mode')
+ output=Path(output).expanduser().resolve()
+ targets=[(output/'tank.glb',tank,.38),(output/'helicopter.glb',helicopter,.42)]
+ if any(file.exists() for file,_,_ in targets):
+  raise FileExistsError('Use a new vehicle export directory')
+ output.mkdir(parents=True,exist_ok=True)
+ original=window.scene
+ collections=('materials','meshes','objects','scenes')
+ prior={name:set(getattr(bpy.data,name)) for name in collections}
+ try:
+  make_materials()
+  scene=bpy.data.scenes.new('Iron Vow vehicle export')
+  window.scene=scene
+  for file,build,body_height in targets:
+   for obj in list(scene.objects):
+    bpy.data.objects.remove(obj,do_unlink=True)
+   muzzles=build()
+   consolidate_vehicle_meshes(scene)
+   for name,point in [('muzzle',muzzles[0]),('body',(0,0,body_height))]:
+    marker=bpy.data.objects.new(name,None)
+    marker.location=point
+    marker['vehicleAnchor']=name
+    scene.collection.objects.link(marker)
+   result=bpy.ops.export_scene.gltf(filepath=str(file),export_format='GLB',
+    use_active_scene=True,export_extras=True,export_animations=False,
+    export_cameras=False,export_lights=False)
+   if result!={'FINISHED'} or not file.is_file():
+    raise RuntimeError(f'Blender did not produce {file}')
+ finally:
+  window.scene=original
+  added=[block for name in collections for block in getattr(bpy.data,name) if block not in prior[name]]
+  def cleanup():
+   bpy.data.batch_remove(ids=added)
+  if bpy.app.background:
+   cleanup()
+  else:
+   # The operator's context still references the temporary scene during this
+   # callback. Free its data after Blender has restored the window context.
+   bpy.app.timers.register(cleanup,first_interval=0.1)
+
+
+def render_sprites():
+ from PIL import Image, ImageDraw, ImageOps
+ bpy.ops.wm.read_factory_settings(use_empty=True)
+ scene=bpy.context.scene
+ make_materials()
+ world=bpy.data.worlds.new('Ambient');scene.world=world;world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.35,.43,.52,1);world.node_tree.nodes['Background'].inputs[1].default_value=.6
+ for pos,power,size,col in [((-3,-4,7),800,4,(1,.88,.72)),((4,1,5),650,3,(.6,.77,1))]:
+  l=bpy.data.lights.new('Softbox','AREA');l.energy=power;l.size=size;l.color=col;o=bpy.data.objects.new('Softbox',l);scene.collection.objects.link(o);o.location=pos;o.rotation_euler=(-o.location).to_track_quat('-Z','Y').to_euler()
+ c=bpy.data.cameras.new('Isometric');cam=bpy.data.objects.new('Isometric',c);scene.collection.objects.link(cam);scene.camera=cam;cam.location=(8,-8,5.49);cam.rotation_euler=(-cam.location).to_track_quat('-Z','Y').to_euler();c.type='ORTHO';c.ortho_scale=3.2;c.shift_y=.22
+ scene.render.engine='CYCLES';scene.cycles.samples=80;scene.cycles.use_denoising=False;scene.render.resolution_x=scene.render.resolution_y=448;scene.render.resolution_percentage=100;scene.render.film_transparent=True;scene.render.image_settings.file_format='PNG';scene.view_settings.view_transform='AgX'
+ previews=[];metadata={}
+ with tempfile.TemporaryDirectory() as td:
+  for name,build in [('tank',tank),('helicopter',helicopter)]:
+   for o in list(scene.objects):
+    if o.type=='MESH':bpy.data.objects.remove(o,do_unlink=True)
+   muzzles=build();bpy.context.view_layer.update();points=[]
+   for point in muzzles:
+    p=world_to_camera_view(scene,cam,Vector(point));points.append([round(p.x,5),round(1-p.y,5)])
+   scene.render.filepath=f'{td}/{name}.png';bpy.ops.render.render(write_still=True);im=Image.open(scene.render.filepath).convert('RGBA')
+   bounds=im.getchannel('A').getbbox();assert bounds and min(bounds)>0 and bounds[2]<448 and bounds[3]<448,(name,bounds)
+   for facing,sprite in [('left',im),('right',ImageOps.mirror(im))]:
+    key=f'hostile-{name}-{facing}';sprite.save(OUT/f'{key}.webp',quality=90,method=6)
+    metadata[key]={'anchor':[.5,.72],'size':448,'tileScale':3.9192,'opaqueBounds':sprite.getchannel('A').getbbox(),'muzzles':points if facing=='left' else [[round(1-x,5),y] for x,y in points]}
+    p=Image.new('RGBA',(448,480),'#26343c');p.alpha_composite(sprite);ImageDraw.Draw(p).text((15,456),key,fill='white');previews.append(p)
+  sheet=Image.new('RGB',(896,960))
+  for i,p in enumerate(previews):sheet.paste(p,((i%2)*448,(i//2)*480))
+  sheet.save('/tmp/iron-vow-vehicles-preview.jpg')
+ print(json.dumps(metadata,indent=2));print('Total bytes',sum(p.stat().st_size for p in OUT.glob('hostile-*.webp')))
+
+
+if __name__=='__main__':
+ if '--export-motion' in sys.argv:
+  export_vehicle_motion(sys.argv[sys.argv.index('--export-motion')+1])
+ else:
+  render_sprites()

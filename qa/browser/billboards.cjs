@@ -1,6 +1,8 @@
 const assert=require('node:assert/strict');
 module.exports=async function temporaryBillboards({page,origin}){
  if(process.env.IRON_VOW_LOADING_FAULT==='1')await page.route(/\/game\.js(?:\?|$)/,async route=>{const response=await route.fetch(),source=await response.text(),line='battlefieldReady=window.IronVowScene?.ready!==false;';assert.ok(source.includes(line));await route.fulfill({response,body:source.replace(line,'')});});
+ // Exercise the delayed-image regression when the live tank model is unavailable.
+ await page.route('**/assets/vehicles/tank.glb',route=>route.abort('failed'));
  const held=[],inFlight=[],pattern=/\/assets\/(?:grid-travel-tank|hostile-tank-(?:left|right))\.webp(?:\?|$)/;let sawTank;
  const requested=new Promise(resolve=>{sawTank=resolve;});
  const releaseImages=async()=>{for(const release of held.splice(0))release();await Promise.all(inFlight);await page.unroute(pattern);};

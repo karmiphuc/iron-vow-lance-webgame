@@ -33,7 +33,8 @@ function mountShield(scene,id,socket){
  if(!original)return null;
  const mount=original.clone(true);
  socket.add(mount);
- const marker=part=>mount.getObjectByName(id+'.'+part);
+ const marker=part=>mount.getObjectByName(id+'.'+part)
+  ??mount.getObjectByName(T.PropertyBinding.sanitizeNodeName(id+'.'+part));
  return {mount,grip:marker('grip'),face:marker('face'),rotation:new T.Quaternion()};
 }
 function poseShield(shield,u,heading){
