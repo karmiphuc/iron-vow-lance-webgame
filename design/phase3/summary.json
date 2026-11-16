@@ -1,0 +1,146 @@
+{
+  "status": "pass",
+  "seed": 4242,
+  "gatecrasher": {
+    "triangles": 54252,
+    "skinned": 140,
+    "tagged": 159,
+    "motion": [
+      {
+        "anchor": "muzzle.main",
+        "movement": 0.6569979165715043
+      }
+    ],
+    "shieldTravel": 0.17211050574813094,
+    "loadouts": [
+      {
+        "offhand": "empty",
+        "vesper": false,
+        "triangles": 49882
+      },
+      {
+        "offhand": "cleaver",
+        "vesper": false,
+        "triangles": 50922
+      },
+      {
+        "offhand": "bulwark-shield",
+        "vesper": false,
+        "triangles": 52226,
+        "gripError": 0
+      },
+      {
+        "offhand": "citadel-shield",
+        "vesper": false,
+        "triangles": 53278,
+        "gripError": 0
+      },
+      {
+        "offhand": "empty",
+        "vesper": true,
+        "triangles": 53212
+      },
+      {
+        "offhand": "cleaver",
+        "vesper": true,
+        "triangles": 54252
+      },
+      {
+        "offhand": "bulwark-shield",
+        "vesper": true,
+        "triangles": 55556,
+        "gripError": 0
+      },
+      {
+        "offhand": "citadel-shield",
+        "vesper": true,
+        "triangles": 56608,
+        "gripError": 0
+      }
+    ],
+    "colors": 1003,
+    "glError": 0
+  },
+  "cicada": {
+    "triangles": 49978,
+    "skinned": 116,
+    "tagged": 116,
+    "motion": [
+      {
+        "anchor": "muzzle.locust.L",
+        "movement": 0.31979760822398345,
+        "oppositeMovement": 0
+      },
+      {
+        "anchor": "muzzle.locust.R",
+        "movement": 0.31979760822398295,
+        "oppositeMovement": 0
+      }
+    ],
+    "loadouts": [],
+    "colors": 1047,
+    "glError": 0
+  },
+  "vehicles": {
+    "desktop": {
+      "vehicles": [
+        {
+          "kind": "tank",
+          "picked": true,
+          "hover": 0,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        },
+        {
+          "kind": "helicopter",
+          "picked": true,
+          "hover": 2.788,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        }
+      ],
+      "contexts": 1,
+      "glError": 0,
+      "disposedOnce": true,
+      "detached": true
+    },
+    "touch": {
+      "vehicles": [
+        {
+          "kind": "tank",
+          "picked": true,
+          "hover": 0,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        },
+        {
+          "kind": "helicopter",
+          "picked": true,
+          "hover": 2.788,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        }
+      ],
+      "contexts": 1,
+      "glError": 0,
+      "disposedOnce": true,
+      "detached": true
+    }
+  }
+}
