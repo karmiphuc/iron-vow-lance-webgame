@@ -36,7 +36,9 @@ for(const attack of [basilisk.attack,basilisk.attackLeft])for(const rows of Obje
  feet.forEach((foot,i)=>assert.ok(foot.distanceTo(new T.Vector3(...pose.footTargets[i]))<1e-5,'Basilisk attack feet stay planted'));
  assert.ok(feet[0].x-feet[1].x>=2.1,'attack stance must retain wide boot spacing');
 }
-const before=execFileSync('git',['show','686a69c63ef66c06c3990775028473b7dda10183:tools/sample_warden_motion.cjs'],{cwd:root,encoding:'utf8'});
+// Exact approved sampler from 686a69c63ef66c06c3990775028473b7dda10183.
+// Keep it as a fixture so the comparison works in a fresh slim clone.
+const before=fs.readFileSync(path.join(__dirname,'fixtures/warden-motion-before-basilisk.cjs'),'utf8');
 let original='';vm.runInNewContext(before,{require:require('node:module').createRequire(path.join(root,'tools/sample_warden_motion.cjs')),__dirname:path.join(root,'tools'),process:{argv:['node','sampler','--arsenal'],stdout:{write:s=>original+=s}}});
 for(const model of ['warden','kestrel'])assert.equal(JSON.stringify(samples(model)),JSON.stringify(JSON.parse(original)),model+' keeps approved animation');
 console.log('PASS Basilisk hip clearance, boot separation, planted attack feet and unchanged Warden/Kestrel motion');
