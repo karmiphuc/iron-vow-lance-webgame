@@ -24,11 +24,13 @@ assets["rig-bench/weapons.glb"] = (
 )
 
 def stylesheet(path):
+    path = path.split("?", 1)[0]
     css = (dist / path).read_text()
     css = re.sub(r"@import url\(['\"]?([^'\")]+)['\"]?\);", lambda match: stylesheet(match[1]), css)
     return re.sub(r"url\(['\"]?(assets/[^'\")]+)['\"]?\)", lambda match: f"url('{assets[match[1]]}')", css)
 
 def script(path):
+    path = path.split("?", 1)[0]
     content = (dist / path).read_text().replace("</script", "<\\/script")
     if path == "game.js":
         for link in ("rig-bench/index.html", "rig-bench/prototypes/", "foundry/studio.html"):
