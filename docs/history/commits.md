@@ -5883,3 +5883,99 @@ AGENTS.md: pace and evidence rules for renderer phases
 ### `ee85274372` 2026-11-16 · karmiphuc · merge
 Merge pull request #24 from karmiphuc/claude/agents-pace-rules  
 *main*
+
+### `90343b84e1` 2026-11-16 · Karmi Phuc
+refactor: extract shared combat rules  
+*unmerged: renderer/phase6 *
+- M `check.cjs`
+- A `dist/combat-simulation.js`
+- M `dist/game.js`
+- M `dist/index.html`
+- M `dist/rig-bench/index.html`
+- M `qa/check-arsenal.cjs`
+- A `qa/check-combat-simulation.cjs`
+- A `qa/check-offline-paths.cjs`
+- M `qa/check-ui.cjs`
+- M `qa/render-animation.cjs`
+- M `qa/sim-harness.cjs`
+- M `tools/package_offline.py`
+
+### `4b8b60804a` 2026-11-16 · Karmi Phuc
+feat(hangar): open selected reserve hulls in Workshop  
+*unmerged: renderer/phase4 *
+
+### `09b0430698` 2026-11-16 · Codex
+refactor: share counterattack selection rules  
+*unmerged: renderer/phase6 *
+- M `dist/combat-simulation.js`
+- M `dist/game.js`
+- M `qa/check-combat-simulation.cjs`
+
+### `b8a9697b07` 2026-11-16 · Codex
+feat: export the first Gatecrasher rig-v2 reference  
+*unmerged: renderer/phase3 *
+- A `dist/rig-bench/rig-v2/gatecrasher-r2-reference.glb`
+- M `docs/phase3-export-gate.md`
+- A `docs/phase3-gatecrasher-r2-preview.png`
+- A `qa/preview-rig-v2.cjs`
+- A `tools/export_gatecrasher_v2.py`
+
+### `8a91912267` 2026-11-16 · Codex
+refactor: share enemy turn decisions with the combat simulation  
+*unmerged: renderer/phase6 *
+- M `dist/combat-simulation.js`
+- M `dist/game.js`
+- A `qa/check-enemy-turn.cjs`
+
+### `b1fb80c171` 2026-11-16 · Codex
+feat: export Cicada and verify equipped rig-v2 budgets  
+*unmerged: renderer/phase3 *
+- A `design/phase3/README.md`
+- M `dist/foundry/production-arsenal.js`
+- A `dist/rig-bench/rig-v2/cicada-reference.glb`
+- M `docs/phase3-export-gate.md`
+- D `docs/phase3-gatecrasher-r2-preview.png`
+- A `qa/gate-phase3.cjs`
+- M `qa/preview-rig-v2.cjs`
+- A `qa/test_export_cicada_v2.py`
+- A `tools/export_cicada_v2.py`
+
+### `955971e8ca` 2026-11-16 · Codex
+feat(hangar): connect ship and facilities navigation routes  
+*unmerged: renderer/phase4 *
+- M `dist/game.js`
+- M `dist/style.css`
+- M `docs/phase4-hangar-preparation.md`
+- A `qa/check-hangar-navigation.cjs`
+- M `qa/check-ui.cjs`
+
+### `65dfb91cb9` 2026-11-16 · Codex
+feat: render hostile vehicles as live 3D models in sorties  
+*unmerged: renderer/phase3 *
+- M `design/phase3/README.md`
+- A `dist/assets/vehicles/helicopter.glb`
+- A `dist/assets/vehicles/tank.glb`
+- M `dist/index.html`
+- M `dist/scene/battle.js`
+- A `dist/scene/vehicles.js`
+- M `docs/phase3-export-gate.md`
+- M `qa/browser/billboards.cjs`
+- A `qa/browser/vehicles.cjs`
+- M `qa/check-browser.cjs`
+- M `qa/gate-phase3.cjs`
+- M `tools/package_offline.py`
+- M `tools/render_vehicles.py`
+
+### `29d7a6193d` 2026-11-16 · Codex
+Merge remote-tracking branch 'origin/main' into renderer/phase3  
+*unmerged: renderer/phase3 *
+
+### `25f328df12` 2026-11-16 · Claude
+CRUCIAL: finish the repository shrink  
+*main*
+- M `AGENTS.md`
+- A `tools/finalize-history-rewrite.sh`
+
+### `443a776148` 2026-11-17 · Karmi Phuc
+Merge pull request #26 from karmiphuc/claude/crucial-history-shrink  
+*main*
