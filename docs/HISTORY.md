@@ -7,9 +7,9 @@ The owner approved shrinking the repository. Before the rewrite, `.git` was abou
 What was done:
 - History was replaced with two commits:
   1. **`sites-v98` source** – the tree of the deployed Sites v98 source (old commit `853f1e7510dc2ca5940f09575efea737cfe2ea5a`). The `dist/` tree hash is unchanged (`a716bb2c2645a813b0ef6f0cb360e41cf6071f54`, as recorded in `docs/sites-export.json`). Tag `sites-v98` points here. This is also the pre-renderer game; check it out to recapture the old 2D baseline if ever needed.
-  2. **main** – the tree of old main `57d854f68e02317cd824ecef309136f269b1caba`, plus this file and `docs/history/`.
+  2. **main** – the tree of old main `57d854f68e02317cd824ecef309136f269b1caba` (then PR #24 on top, matching old main `ee85274`), plus this file and `docs/history/`.
 - Removed from both trees: every file under `design/` except Markdown. Screenshots, capture JSON, campaign shards and manifests are gone; the Markdown READMEs that describe the evidence remain. QA scripts that wrote to or compared against `design/...` still work if they regenerate their inputs; `qa/assemble-phase1.py` and `qa/capture-phase2-matched.cjs` read the deleted Phase 0 baseline captures and need a fresh `qa/capture.cjs` run (against `sites-v98`) first.
-- Open PR branches `renderer/phase3` (#22), `renderer/phase4` (#23) and `claude/agents-pace-rules` (#24) were rebuilt as one commit each on the new main, carrying the same changes (minus `design/` binaries).
+- PR #24 (`claude/agents-pace-rules`) was merged into the old main on 2026-11-16 (old merge commit `ee85274372948982001f8e685b95d5ec4d0ad292`, the last old main head) before the rewrite was applied; its change is included here. Open PR branches `renderer/phase3` (#22) and `renderer/phase4` (#23) were rebuilt as one commit each on the new main, carrying the same changes (minus `design/` binaries).
 - Deleted: merged branches, the stale unpublished Sites branches, the closed PR #4 branch, and tags `sites-v84`…`sites-v97`. They are recorded below.
 - GitHub still keeps each pull request's original commits and diffs on its PR page, so the PR links below remain the most detailed record.
 - Every commit (old SHA, date, author, subject, files touched) is listed in [history/commits.md](history/commits.md).
@@ -34,7 +34,7 @@ What was done:
 | [#21](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/21) | merged 2026-11-11 | `renderer/phase2` | Phase 2: live combat effects and physical weapon mounts |
 | [#22](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/22) | open | `renderer/phase3` | Phase 3 preparation: validate rig-v2 exports and skeleton ancestry |
 | [#23](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/23) | open | `renderer/phase4` | Phase 4 preparation: shared-renderer hangar scene and fixture |
-| [#24](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/24) | open | `claude/agents-pace-rules` | AGENTS.md: pace and evidence rules for renderer phases |
+| [#24](https://github.com/karmiphuc/iron-vow-lance-webgame/pull/24) | merged 2026-11-16 | `claude/agents-pace-rules` | AGENTS.md: pace and evidence rules for renderer phases |
 
 ## Sites releases (tags)
 

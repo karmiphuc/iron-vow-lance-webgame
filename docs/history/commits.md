@@ -5879,3 +5879,7 @@ Phase 4 preparation: shared-renderer hangar scene and fixture
 AGENTS.md: pace and evidence rules for renderer phases  
 *unmerged: rewrite/claude/agents-pace-rules*
 - M `AGENTS.md`
+
+### `ee85274372` 2026-11-16 · karmiphuc · merge
+Merge pull request #24 from karmiphuc/claude/agents-pace-rules  
+*main*
