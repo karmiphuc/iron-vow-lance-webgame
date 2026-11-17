@@ -24,7 +24,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
  const markers=new T.Group(),markerGeometry=new T.SphereGeometry(.077,8,6),markerMaterial=new T.MeshBasicMaterial({color:0x5fd4c4});
  for(let i=0;i<4;i++)markers.add(new T.Mesh(markerGeometry,markerMaterial));
  const health=Object.fromEntries(parts.map(part=>[part,100]));
- let frame=lookup.get(String(initialFrame))??frames[0],unit,modules,entry,entries=[],lastStats,view='orbit',group='all',az=-.52,el=.1,dist=19;
+ let frame=lookup.get(String(initialFrame))??frames[0],lowerFrame=frame,unit,modules,entry,lowerEntry,entries=[],lastStats,view='orbit',group='all',az=-.52,el=.1,dist=19;
  let time=0,prior,walk=false,advance=0,aim=false,fire=-Infinity,strike=-Infinity,clip='',clipTime=0,clipList='',drag;
  let showMarkers=false,paint={},team='ally',frameRequest,metricsAt=-Infinity;
  let clipSource='current',archive=null,archiveRequest=0,archiveError='',playing=false,lastArchiveSample='',firePod=false;
@@ -71,6 +71,9 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
   if(!parts.includes(id)||![0,40,100].includes(hp))throw Error('Invalid Bench part state');
   health[id]=hp;$('bench-part-'+id).value=hp;
  }
+ function compatibleLegs(upper){
+  return frames.filter(candidate=>candidate.authored&&candidate.quad===upper.quad);
+ }
  function refreshLoadout(){
   const guns=frame.fixed?stockList(frame.primaries||[frame.stock.weapon]):arsenalIds(weapons.filter(w=>!w.builtIn&&!w.shoulder&&!w.melee));
   const melee=frame.fixed?stockList(frame.melees||[frame.stock.melee]):arsenalIds(weapons.filter(w=>!w.builtIn&&!w.shoulder&&w.melee));
@@ -81,13 +84,16 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
   $('bench-fire-pod').hidden=!frame.pod;$('bench-fire-pod').disabled=!unit.shoulder||clipSource==='archive';
   select('bench-kit',[0,1,2,3].slice(0,frame.mix?4:1).map(i=>[i,i?'Kit '+i:'Factory']),unit.upgrade);
   for(const key of ['legs','core','arms']){
-   select('bench-'+key,frame.mix?kits.map(f=>[f.model,f.name]):[[frame.model??0,frame.name]],modules?.[key]??frame.model??0);
-   $('bench-'+key).disabled=!frame.mix;
+   const control=$('bench-'+key),authored=frame.authored&&key==='legs';
+   const choices=frame.mix?kits.map(f=>[f.model,f.name]):authored?compatibleLegs(frame).map(f=>[f.id,f.name]):[[frame.model??0,frame.name]];
+   select('bench-'+key,choices,authored?lowerFrame.id:modules?.[key]??frame.model??0);
+   control.parentElement.hidden=key!=='legs'&&!frame.mix;
+   control.disabled=clipSource==='archive'||!frame.mix&&(!authored||choices.length<2);
   }
  }
  function reset(frameChanged=false){
   foundry.clearInspection(frameChanged);
-  entry=null;entries=[];advance=0;fire=strike=-Infinity;
+  entry=null;lowerEntry=null;entries=[];advance=0;fire=strike=-Infinity;
  }
  function availableClips(){return (clipSource==='archive'?archive?.clips:entry?.m.nativeV2?.clips)??[];}
  function setClip(name,time=0){
@@ -116,6 +122,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
    $('bench-'+id).disabled=archived;
   }
   $('bench-fire-pod').disabled=archived||!unit?.shoulder;
+  if(unit)refreshLoadout();
   if(!archived){$('bench-clip').disabled=false;return;}
   setView('orbit');walk=false;aim=false;
   $('bench-clip').disabled=true;
@@ -136,7 +143,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
  function selectFrame(id){
   const next=lookup.get(String(id));if(!next)throw Error('Unknown Bench frame '+id);
   void setClipSource('current');
-  frame=next;$('bench-frame').value=id;walk=false;aim=false;
+  frame=lowerFrame=next;$('bench-frame').value=id;walk=false;aim=false;
   select('bench-clip-source',[['current','Live rig'],...(frame.archive?[['archive','Authored archive']]:[])],'current');
   $('bench-walk').setAttribute('aria-pressed','false');$('bench-aim').setAttribute('aria-pressed','false');
   for(const id of parts)applyPart(id,100);
@@ -191,19 +198,31 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
   camera.position.set(Math.sin(az)*Math.cos(el)*d,Math.sin(el)*d,Math.cos(az)*Math.cos(el)*d).add(target);
   camera.lookAt(target);
  }
+ function isLeg(mesh){return (mesh.userData.part??mesh.geometry.userData.part)==='legs';}
+ function alignUpper(upper,lower){
+  // Join both authored assemblies at the actual animated pelvis. Each
+  // source retains its bone weights, measurements and per-part geometry.
+  const source=upper.m.rig.pelvis.matrixWorld,target=lower.m.rig.pelvis.matrixWorld;
+  upper.m.cont.applyMatrix4(target.clone().multiply(source.clone().invert()));
+  upper.m.cont.updateMatrixWorld(true);
+ }
  function metrics(){
   if((!entry&&!archive)||!lastStats)return null;
   const m=entry?.m,bounds=new T.Box3();
-  (archive?.source??m.cont).traverseVisible(node=>{if(node.isMesh){
+  const add=(object,filter)=>object.traverseVisible(node=>{if(node.isMesh&&filter(node)){
    if(!node.geometry.boundingBox)node.geometry.computeBoundingBox();
    bounds.union(node.geometry.boundingBox.clone().applyMatrix4(node.matrixWorld));
   }});
+  if(archive)add(archive.source,()=>true);
+  else if(lowerEntry){add(m.cont,node=>!isLeg(node));add(lowerEntry.m.cont,isLeg);}
+  else add(m.cont,()=>true);
   if(archive)return {triangles:lastStats.triangles,drawCalls:lastStats.calls,height:bounds.max.y-bounds.min.y,feet:[]};
-  const feet=m.rig.legs.map(({side,an},i)=>({side,ankle:an.getWorldPosition(vector()).toArray(),
-   target:m.legs[i].foot.toArray(),error:an.getWorldPosition(vector()).distanceTo(m.legs[i].foot)}));
+  const lower=lowerEntry?.m??m;
+  const feet=lower.rig.legs.map(({side,an},i)=>({side,ankle:an.getWorldPosition(vector()).toArray(),
+   target:lower.legs[i].foot.toArray(),error:an.getWorldPosition(vector()).distanceTo(lower.legs[i].foot)}));
   const stance=Math.max(...feet.map(f=>f.ankle[0]))-Math.min(...feet.map(f=>f.ankle[0]));
   return {triangles:lastStats.triangles,drawCalls:lastStats.calls,height:bounds.max.y-bounds.min.y,
-   hipWidth:m.dims.hipX*2*m.scale,stance,feet,mods:{...m.build.mods}};
+   hipWidth:lower.dims.hipX*2*lower.scale,stance,feet,mods:{...m.build.mods}};
  }
  function draw(timestamp){
   const dt=Math.min(.05,Math.max(0,(timestamp-(prior??timestamp))/1000));prior=timestamp;time+=dt;
@@ -215,6 +234,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
   const archived=clipSource==='archive',lineup=!archived&&view==='lineup',mobile=innerWidth<innerHeight;
   if(!archived&&walk&&!clip&&!lineup&&health.legs>0&&health.body>0&&health.pilot>0)advance+=dt*2.6;
   const source=modelUnit(unit,0,advance,true);
+  lowerEntry=null;
   if(archived){
    entries=[];
    const key=clip+'|'+clipTime+'|'+unit.melee+'|'+unit.shoulder;
@@ -239,19 +259,29 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
    }).filter(Boolean);
   }else{
    entry=foundry.inspect(source,frame.model,time,modelPose(source,0,advance,true));
-   entries=entry?[entry]:[];updateClipList();
+   entries=entry?[entry]:[];
+   if(entry&&!clip&&frame.authored&&lowerFrame!==frame){
+    const lower=modelUnit({id:'bench-lower',index:0,frame:lowerFrame.frame,lionTrial:lowerFrame.lionTrial,...lowerFrame.stock},0,advance,true);
+    lowerEntry=foundry.inspect(lower,lowerFrame.model,time,modelPose(lower,0,advance,true));
+    if(lowerEntry){alignUpper(entry,lowerEntry);entries.push(lowerEntry);}
+   }
+   updateClipList();
   }
   ground.position.z=Math.round(advance/10)*10;
   const objects=[ground,...entries.map(e=>e.m.cont)],hidden=[];
   if(archived&&archive)objects.push(archive.source);
-  if(group!=='all'&&!lineup&&!archived&&entry){
-   entry.m.cont.traverseVisible(node=>{
-    if(node.isMesh&&(node.userData.part==='legs')!==(group==='legs')){node.visible=false;hidden.push(node);}
-   });
+  const hide=(object,visible)=>object.traverseVisible(node=>{
+   if(node.isMesh&&!visible(node)){node.visible=false;hidden.push(node);}
+  });
+  if(!lineup&&!archived&&entry){
+   if(lowerEntry){
+    hide(entry.m.cont,node=>group!=='legs'&&!isLeg(node));
+    hide(lowerEntry.m.cont,node=>group!=='upper'&&isLeg(node));
+   }else if(group!=='all')hide(entry.m.cont,node=>isLeg(node)===(group==='legs'));
   }
   if(showMarkers&&!lineup&&!archived&&entry&&!clip){
    markers.children.forEach((marker,i)=>{
-    const leg=entry.m.legs[i];marker.visible=Boolean(leg);
+    const leg=(lowerEntry?.m??entry.m).legs[i];marker.visible=Boolean(leg);
     if(leg)marker.position.copy(leg.foot);
    });
    objects.push(markers);
@@ -292,7 +322,10 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
    reset();refreshLoadout();
   };
  }
- for(const slot of ['legs','core','arms'])$('bench-'+slot).onchange=e=>{modules[slot]=Number(e.target.value);reset();};
+ for(const slot of ['legs','core','arms'])$('bench-'+slot).onchange=e=>{
+  if(modules){modules[slot]=Number(e.target.value);reset();return;}
+  lowerFrame=lookup.get(e.target.value);reset(true);
+ };
  $('bench-team').onchange=e=>{team=e.target.value;reset();};
  for(const [i,key] of ['p','s','a'].entries())$('bench-paint-'+i).onchange=e=>{paint[key]=e.target.value;reset();};
  $('bench-factory').onclick=()=>{paint={};for(const [i,color] of COLOR_DEFAULTS.entries())$('bench-paint-'+i).value=color;reset();};
@@ -333,10 +366,15 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
   return {nodes,clip,time:clipTime,duration:Math.max(0,...availableClips().filter(c=>c.name===clip).map(c=>c.duration))};
  }
  root.__bench={selectFrame,setView,setClip,setClipSource,sampleArchive,get state(){return {roster:frames.map(f=>f.id),frame:frame.id,loaded:clipSource==='archive'?Number(Boolean(archive)):entries.length,view,clip,clipSource,clipTime,group,
-  model:entry?.m.live??frame.model,clips:availableClips().map(c=>({name:c.name,duration:c.duration})),
+  model:entry?.m.live??frame.model,authoredMix:lowerEntry?{
+   upper:entry.m.live,lower:lowerEntry.m.live,
+   pelvisGap:entry.m.rig.pelvis.getWorldPosition(vector()).distanceTo(lowerEntry.m.rig.pelvis.getWorldPosition(vector()))
+  }:null,clips:availableClips().map(c=>({name:c.name,duration:c.duration})),
   bones:entry?.m.rig.legs.map(l=>l.an.matrixWorld.toArray())??[],
   authoredAnkles:entry?.m.nativeV2?['ankleL','ankleR'].map(name=>entry.m.nativeV2.source.getObjectByName(name)?.getWorldPosition(vector()).toArray()):[],health:{...health},paint:{...paint},weapon:entry?.primary?.id,
-  melee:entry?.secondary?.id,shield:Boolean(entry?.shield?.mount.visible),pod:entry?.shoulderWeapon?.id,metrics:metrics()};}};
+  melee:entry?.secondary?.id,shield:Boolean(entry?.shield?.mount.visible),pod:entry?.shoulderWeapon?.id,
+  camera:camera.position.toArray(),ikMarkers:showMarkers&&!clip?markers.children.filter(marker=>marker.visible).length:0,
+  partStates:entry?{...entry.m.partState}:null,metrics:metrics()};}};
  root.addEventListener('pagehide',event=>{if(event.persisted)return;
   cancelAnimationFrame(frameRequest);foundry.clearInspection(true);archiveRequest++;releaseArchive();
   ground.geometry.dispose();ground.material.dispose();markerGeometry.dispose();markerMaterial.dispose();flashGeometry.dispose();flashMaterial.dispose();});

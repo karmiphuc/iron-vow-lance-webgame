@@ -7,6 +7,9 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.waitForURL('**/?bench=rig');
  await page.waitForFunction(()=>window.__bench?.state?.metrics);
  const entries=await page.locator('#bench-frame option').evaluateAll(nodes=>nodes.map(node=>[node.value,node.text]));
+ const catalog=await page.evaluate(()=>WEAPONS.map(({id,builtIn,shoulder,melee})=>({id,builtIn,shoulder,melee})));
+ const mounted=new Set();
+
  assert.equal(entries.length,22);
  const models=[];
  for(const [id,name] of entries){
@@ -35,12 +38,47 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.waitForFunction(()=>__bench.state.shield&&!__bench.state.melee);
  await page.locator('details').filter({hasText:'Damage'}).locator('summary').click();
  await page.locator('#bench-part-left').selectOption('0');
- assert.equal(await page.evaluate(()=>__bench.state.health.left),0);
+ await page.waitForFunction(()=>__bench.state.health.left===0&&__bench.state.partStates.left===2&&!__bench.state.shield);
+ await page.locator('#bench-part-left').selectOption('100');
  await page.locator('details').filter({hasText:'Paint'}).locator('summary').click();
  await page.locator('#bench-paint-0').fill('#507f9b');
  assert.equal(await page.evaluate(()=>__bench.state.paint.p),'#507f9b');
- await page.evaluate(()=>__bench.selectFrame(5));
+ for(const {id,melee} of catalog.filter(w=>!w.builtIn&&!w.shoulder)){
+  const key=melee?'melee':'weapon';
+  await page.locator(melee?'#bench-melee':'#bench-primary').selectOption(id);
+  await page.waitForFunction(({key,id})=>__bench.state[key]===id,{key,id});
+  mounted.add(id);
+ }
  await page.locator('details').filter({hasText:'Modules'}).locator('summary').click();
+ await page.locator('#bench-legs').selectOption('2');
+ await page.waitForFunction(()=>__bench.state.authoredMix?.lower==='basilisk');
+ const mix=await page.evaluate(()=>__bench.state.authoredMix);
+ assert.equal(mix.upper,'bastion');
+ assert.ok(mix.pelvisGap<1e-5);
+ await page.locator('#bench-ik').check();
+ await page.waitForFunction(()=>__bench.state.ikMarkers===2);
+ const rest=await page.evaluate(()=>__bench.state.metrics.feet[0].ankle);
+ await page.locator('#bench-walk').click();
+ await page.waitForFunction(rest=>Math.abs(__bench.state.metrics.feet[0].ankle[2]-rest[2])>.15,rest);
+ const cameras=[];
+ for(const view of ['orbit','game','front','side','hip']){
+  await page.locator('#bench-view').selectOption(view);
+  cameras.push(await page.evaluate(async()=>{await new Promise(resolve=>requestAnimationFrame(resolve));return __bench.state.camera;}));
+ }
+ assert.equal(new Set(cameras.map(position=>JSON.stringify(position))).size,5);
+
+ const integrated=[[3,'weapon','morrow'],[4,'weapon','locust'],[4,'melee','pulse-bash'],[11,'melee','breach-gauntlet'],
+  [17,'weapon','aegis-cleave'],[17,'melee','aegis-bash'],[18,'weapon','needle-carbine'],[18,'melee','signal-knife'],
+  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder']];
+ for(const [frame,slot,id] of integrated){
+  await page.evaluate(frame=>__bench.selectFrame(frame),frame);
+  if(id==='flechette-scattergun')await page.locator('#bench-primary').selectOption(id);
+  if(slot==='pod')await page.locator('#bench-shoulder').selectOption(id);
+  await page.waitForFunction(({slot,id})=>__bench.state[slot]===(id==='vesper-shoulder'?'vesper':id),{slot,id});
+  mounted.add(id);
+ }
+ assert.deepEqual([...mounted].sort(),catalog.map(w=>w.id).sort(),'Every actual catalog weapon mounts');
+ await page.evaluate(()=>__bench.selectFrame(5));
  const other=await page.locator('#bench-legs option').evaluateAll(nodes=>nodes.find(n=>n.value!==n.parentElement.value).value);
  await page.locator('#bench-legs').selectOption(other);
  await page.waitForFunction(other=>__bench.state.metrics?.mods.legs===Number(other),other);
@@ -82,5 +120,5 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();
  await page.waitForFunction(()=>window.__bench?.state?.loaded);
  console.log(`PASS ${mobile?'touch':'desktop'} Bench roster, native clip, loadout, paint, damage, mixed legs and six-rig lineup`);
- return {frames:entries.length,prototypeArchives:Object.values(archives),wardenClips,contexts:1};
+ return {frames:entries.length,weapons:[...mounted],authoredMix:mix,prototypeArchives:Object.values(archives),wardenClips,contexts:1};
 };

@@ -3780,13 +3780,14 @@ if(benchRig){
  const frames=FRAMES.map((frame,id)=>({
   id,frame:id,name:frame.name,model:frame.foundry,
   mix:frame.foundry!=null&&!window.IronVowRigV2.applies({frame:id}),
+  authored:window.IronVowRigV2.applies({frame:id}),quad:id===REAVER_FRAME,
   stock:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
   primaries:id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:undefined,
   melees:breachLoadout(id)?['cleaver']:undefined,
   shield:canFitShield(id),pod:breachLoadout(id),
   archive:id===0?'rig-bench/warden-painted.glb':prototypeArchives[id]?'rig-bench/prototypes/'+prototypeArchives[id]+'.glb':null
  }));
- frames.push({id:'lion',frame:0,lionTrial:true,name:'LION',fixed:true,stock:{weapon:'rifle',melee:'cleaver',upgrade:0},melees:LION_TRIAL_WEAPONS});
+ frames.push({id:'lion',frame:0,lionTrial:true,name:'LION',fixed:true,authored:true,quad:false,stock:{weapon:'rifle',melee:'cleaver',upgrade:0},melees:LION_TRIAL_WEAPONS});
  const request=new URLSearchParams(window.location.search);
  window.IronVowBench.mount({frames,weapons:WEAPONS,shields:SHIELDS,attackProfile,weaponRigPose,
   initialFrame:request.get('frame'),initialArchive:request.get('source')==='archive'});
