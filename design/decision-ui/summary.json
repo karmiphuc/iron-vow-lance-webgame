@@ -1,0 +1,41 @@
+{
+  "status": "passed",
+  "source": {
+    "commit": "4bcb105d0a4c49ce8f8dd07a7fb97a60eb225a5a",
+    "distTree": "f18ca45682a1ce9404ed62bf8a6c1c642fc7d545",
+    "dirty": false
+  },
+  "sourceAfter": {
+    "commit": "4bcb105d0a4c49ce8f8dd07a7fb97a60eb225a5a",
+    "distTree": "f18ca45682a1ce9404ed62bf8a6c1c642fc7d545",
+    "dirty": false
+  },
+  "results": [
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 1366
+      },
+      "status": "passed"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "status": "passed"
+    }
+  ],
+  "captures": [
+    "contracts-1024x1366.webp",
+    "combat-1366x1024.webp",
+    "combat-1024x1366.webp",
+    "workshop-1366x1024.webp",
+    "workshop-1024x1366.webp",
+    "ship-1024x1366.webp"
+  ],
+  "protectedGameplayFunctionsUnchanged": 260,
+  "saveSchemaChanged": false,
+  "nativeIPadPerformance": "unverified",
+  "review": "Astra reviewed the six actual captures and found no blocking visual issues."
+}
