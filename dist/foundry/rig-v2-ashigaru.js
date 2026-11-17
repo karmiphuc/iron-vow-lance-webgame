@@ -20,7 +20,7 @@ root.IronVowRigV2.register(18,{
   const knife={id:'signal-knife',model:knifeModel,mount:knifeMount,carrier:sockets.L,tip:marker('tip.knife',knifeMount),bounds:()=>bounds('module.knife')};
   return {boundsNames:['module.carbine','module.scatter','module.knife'],pose(entry,u){
    const right=u.alive&&u.hp.right>0,left=u.alive&&u.hp.left>0;
-   const active=u.attack?.kind==='flechette-scattergun'?'scatter':'carbine';
+   const active=(u.attack?.kind??u.inspectWeapon)==='flechette-scattergun'?'scatter':'carbine';
    for(const [id,gun] of Object.entries(guns))gun.model.visible=gun.mount.visible=right&&id===active;
    knifeModel.visible=knifeMount.visible=left;
    entry.primary=guns[active];entry.secondary=knife;

@@ -7,7 +7,7 @@ const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemoth
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer,scene,camera,failed=false;
-const combat=new Map(),previews=new Map(),stageModels={hangar:new Map(),workshop:new Map()},objectPortraits=new Map();
+const combat=new Map(),previews=new Map(),stageModels={hangar:new Map(),workshop:new Map(),bench:new Map()},objectPortraits=new Map();
 function clearPreviews(scope){
  for(const [key,entry] of previews)if(!scope||entry.previewScope===scope){disposeEntry(entry);previews.delete(key);}
 }
@@ -43,7 +43,7 @@ function init(){
   configure(renderer,pixels);
   window.IronVowRenderer.subscribe(({type})=>{
    if(type==='lost'){
-    clearCombat();clearPreviews();
+    clearCombat();clearPreviews();clearInspection(false);
     previewTarget?.dispose();previewTarget=null;
     studioTarget?.dispose();studioTarget=null;
    }
@@ -79,6 +79,7 @@ function setCamera(elevation,azimuth=0){
  camera.updateMatrixWorld(true);
 }
 function disposeEntry({m,primary,secondary}){
+ m.cont.parent?.remove(m.cont);
  m.nativeV2?.dispose();
  if(!m.nativeV2?.pose)for(const weapon of [primary,secondary])for(const material of weapon?.ownedMaterials||[])material.dispose();
  const unique=new Set([m.build.visorMat,m.build.stackMat,...(m.build.ownedMaterials||[])]);
@@ -222,7 +223,7 @@ function draw(u,t,pose,scope,model,custom){
 
  if(!entry){
   const m=custom==='rig-v2'?rigV2.build(u,pose.stage||pose.previewScope||'battle'):
-   buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
+   buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim,pose.modules);
   if(!m)return null;
   entry={m,surface:pose.stage?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
@@ -325,6 +326,7 @@ function draw(u,t,pose,scope,model,custom){
  }
  v2?.sync();
  if(v2&&u.upgrade&&!m.build.kits&&(pose.preview||pose.stage))VC.fitReinforcement(m,u.upgrade);
+ if(pose.stage==='bench'&&pose.clip)v2?.scrub?.(pose.clip,pose.clipTime);
  m.cont.updateMatrixWorld(true);
  const span=m.previewSpan,groundRow=span?(ground-(1-span)/2)/span:ground;
  if(pose.stage)return entry;
@@ -420,6 +422,28 @@ function releaseStageRig(scope,id){
  const cache=stageModels[scope],entry=cache.get(id);
  if(entry){entry.m.cont.parent?.remove(entry.m.cont);disposeEntry(entry);cache.delete(id);}
 }
+function inspect(unit,model,time,pose){
+ if(!init()||!armory)return null;
+ const authored=rigV2.applies(unit),status=rigV2.status(unit,'bench');
+ if(authored&&status!=='ready'){
+  if(!status)void rigV2.load([unit],'bench');
+  return null;
+ }
+ return draw(unit,time,{...pose,stage:'bench'},null,model,authored?'rig-v2':undefined);
+}
+function clearInspection(frameChanged){
+ for(const id of stageModels.bench.keys())releaseStageRig('bench',id);
+ if(frameChanged)rigV2.clear('bench');
+}
+function renderInspection(objects,view){
+ if(!init()||window.IronVowRenderer.lost)return;
+ window.IronVowRenderer.resize(innerWidth,innerHeight);
+ window.IronVowRenderer.show(true);
+ for(const object of objects)scene.add(object);
+ scene.background=new T.Color(0x152128);
+ try{renderer.render(scene,view);return {...renderer.info.render};}
+ finally{scene.background=null;for(const object of objects)scene.remove(object);}
+}
 window.IronVowFoundry={releaseStageRig,metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),
- equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
+ equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview,inspect:withFallback(inspect),clearInspection,renderInspection:withFallback(renderInspection)};
 })();

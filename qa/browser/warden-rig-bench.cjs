@@ -1,73 +1,45 @@
 const assert=require('node:assert/strict');
+const distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 
-module.exports=async function checkWardenRigBench({page,origin,tap}){
- const url=new URL('/rig-bench/',origin).href;
+module.exports=async function checkWardenRigBench({page,origin}){
  const requests=new Set();
  page.on('request',request=>requests.add(new URL(request.url()).pathname));
- await page.route(url,async route=>{
-  const response=await route.fetch();
-  const html=(await response.text()).replace('  const I=inst.gun; I.muzzle.getWorldPosition(tmp);',
-   '  window.rigBenchShots=(window.rigBenchShots||0)+1; const I=inst.gun; I.muzzle.getWorldPosition(tmp);');
-  await route.fulfill({response,body:html.replace('loadProductionAssets();',`
-   window.benchState=()=>{
-     const slots=Object.fromEntries(['gun','melee'].map(slot=>{
-       const I=inst[slot],socket=weaponSocket(slot,rig);
-       const center=slot==='gun'||I.def.id==='piledriver'?V3(0,-.075,.015):V3(0,0,0);
-       const pos=socket.getWorldPosition(V3());
-       return [slot,{id:I.def.id,parent:socket.parent.name,pos:pos.toArray(),gap:I.model.localToWorld(center).distanceTo(pos)}];
-     }));
-     return {root:rig.root.name,clips:Object.keys(rig.actions),shots:window.rigBenchShots||0,ready:gun.state==='idle'&&rig.aim<.01,
-       impact:melee.active&&melee.impactDone,walk:rig.walkTime,...slots};
-   };
-   loadProductionAssets();
-  `)});
- });
- await page.goto(url,{waitUntil:'domcontentloaded'});
- await page.waitForSelector('body[data-rig-model=painted]');
- const snapshot=()=>page.evaluate(()=>window.benchState());
- assert.deepEqual((await snapshot()).clips,['Aim','Brace','Melee maul','Melee sweep','Melee thrust','Recoil','Walk']);
- const travel=(a,b)=>Math.hypot(...a.pos.map((value,i)=>value-b.pos[i]));
- function contact(state){
-  assert.equal(state.root,'Painted_Warden');
-  assert.equal(state.gun.parent,'Bench_Hand_R');
-  assert.equal(state.melee.parent,'Bench_Hand_L');
-  assert.ok(state.gun.gap<.001&&state.melee.gap<.001,JSON.stringify(state));
- }
- for(const [id,name] of [['kestrel','KESTREL AR-8'],['hailstorm','HAILSTORM M-8'],['longbow','LONGBOW R-12']]){
-  await page.waitForFunction(()=>window.benchState().ready);
-  const before=await snapshot();
-  assert.equal(before.gun.id,id);
-  assert.equal(await page.locator('#gunName').textContent(),name);
-  await tap('#btnFire');
-  await page.waitForFunction(shots=>window.benchState().shots>shots,before.shots);
-  const during=await snapshot();
-  contact(during);
-  assert.ok(travel(before.gun,during.gun)>.025,id+' right hand moves to firing pose');
-  await tap('#gunNext');
+ await page.goto(new URL('rig-bench/',origin).href,{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>window.__bench?.state?.model==='warden'&&__bench.state.loaded);
+ const state=()=>page.evaluate(()=>__bench.state);
+ for(const id of ['rifle','hailstorm','rail']){
+  await page.locator('#bench-primary').selectOption(id);
+  await page.waitForFunction(id=>__bench.state.mounts?.primary?.id===id,id);
+  const before=await state();
+  await page.locator('#bench-fire').click();
+  await page.waitForFunction(shots=>__bench.state.shots>shots,before.shots);
+  const after=await state();
+  assert.ok(after.mounts.primary.seated&&distance(before.mounts.primary.point,after.mounts.primary.point)>.025,id+' visibly moves while firing');
  }
  for(const id of ['breaker','cleaver','piledriver']){
-  const before=await snapshot();
-  assert.equal(before.melee.id,id);
-  await tap('#btnStrike');
-  await page.waitForFunction(()=>window.benchState().impact);
-  const during=await snapshot();
-  contact(during);
-  assert.ok(travel(before.melee,during.melee)>.035,'left hand moves to strike pose');
-  await tap('#meleeNext');
+  await page.locator('#bench-melee').selectOption(id);
+  await page.waitForFunction(id=>__bench.state.mounts?.melee?.id===id,id);
+  const before=await state();
+  await page.locator('#bench-strike').click();
+  await page.waitForFunction(strikes=>__bench.state.strikes>strikes,before.strikes);
+  const after=await state();
+  assert.ok(after.mounts.melee.seated&&distance(before.mounts.melee.point,after.mounts.melee.point)>.035,id+' visibly moves at contact');
  }
- await tap('#btnWalk');
- await page.waitForFunction(()=>window.benchState().walk>.1);
- contact(await snapshot());
- await tap('#btnRig');
- assert.equal(await page.locator('#btnRig').getAttribute('aria-pressed'),'true');
- await tap('#btnSpec');
- assert.equal(await page.locator('#spec').isVisible(),true);
- await tap('#specClose');
- assert.equal(await page.locator('#spec').isVisible(),false);
- const sound=await page.locator('#btnSound').getAttribute('aria-pressed');
- await tap('#btnSound');
- assert.notEqual(await page.locator('#btnSound').getAttribute('aria-pressed'),sound);
+ const before=await state();
+ await page.locator('#bench-walk').click();
+ await page.waitForFunction(before=>Math.abs(__bench.state.metrics.feet[0].ankle[2]-before)>.15,before.metrics.feet[0].ankle[2]);
+ await page.locator('#bench-walk').click();
+ await page.locator('#bench-rig').check();
+ await page.waitForFunction(()=>Number.isFinite(__bench.state.rigLines)&&__bench.state.rigLines>=12);
+ const specs=page.locator('details').filter({hasText:'Specs & metrics'}).locator('summary');
+ await specs.click();assert.equal(await page.locator('#bench-metrics').isVisible(),false);
+ await specs.click();assert.equal(await page.locator('#bench-metrics').isVisible(),true);
+ await page.locator('#bench-sound').click();
+ assert.equal(await page.locator('#bench-sound').getAttribute('aria-pressed'),'true');
+ await page.locator('#bench-clip-source').selectOption('archive');
+ await page.waitForFunction(()=>__bench.state.clipSource==='archive'&&__bench.state.clips.length===7);
  assert.ok(requests.has('/rig-bench/warden-painted.glb'));
- for(const asset of ['rig-motion.js','painted-warden.js','warden-painted-motion.json','warden-rig-loop.webp','warden-rifle-left.webp'])
-  assert.ok(![...requests].some(path=>path.endsWith('/'+asset)),'Bench still requested '+asset);
+ for(const asset of ['/rig-bench/rig-motion.js','/rig-bench/painted-warden.js','/rig-bench/warden-painted-motion.json',
+  '/assets/warden-rig-loop.webp','/assets/warden-rifle-left.webp'])
+  assert.ok(!requests.has(asset),'Bench still requested '+asset);
 };
