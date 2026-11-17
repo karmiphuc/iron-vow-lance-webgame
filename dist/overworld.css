@@ -32,6 +32,7 @@ body[data-view="overworld"] #ui{overflow:hidden;background:transparent}
 .chart-detail[open] summary:after{content:'−'}
 .chart-detail summary::-webkit-details-marker{display:none}
 .chart-detail-card{position:absolute;bottom:calc(100% + 32px);left:-18px;width:270px;padding:18px;background:#172326fa;border:1px solid #8da39b88;box-shadow:0 12px 30px #06101388;z-index:6;max-height:min(360px,55vh);overflow:auto}
+.chart-lance-detail .chart-detail-card{left:auto;right:0}
 .chart-detail-card h3{font:500 18px Barlow,sans-serif;margin:0 0 14px}
 .chart-detail-card dl{margin:0;display:grid;gap:10px}
 .chart-detail-card dl>div{display:flex;justify-content:space-between;gap:15px;font-size:11px}
