@@ -6,6 +6,7 @@ const checkBrowser = require('./check-browser.cjs');
 const checkVehicleScene = require('./browser/vehicles.cjs');
 const checkGatecrasherScene = require('./browser/gatecrasher-v2.cjs');
 const checkCicadaV2 = require('./browser/cicada-v2.cjs');
+const checkReaver = require('./browser/reaver.cjs');
 const checkLineInfantry = require('./browser/line-infantry.cjs');
 const checkLineElite = require('./browser/line-elite.cjs');
 const checkInfantryCarry = require('./browser/infantry-carry.cjs');
@@ -46,7 +47,7 @@ async function main() {
   function capture(test) {
     async function scenario(context) {
       const result = await test({ ...context, out: directory });
-      live[context.mobile ? 'touch' : 'desktop'][test.name] = result?.launches ?? true;
+      live[context.mobile ? 'touch' : 'desktop'][test.name] = result?.launches ?? result ?? true;
     }
     return Object.defineProperty(scenario, 'name', { value: test.name });
   }
@@ -59,13 +60,14 @@ async function main() {
       liveGatecrasher[context.mobile ? 'touch' : 'desktop'] = { plantedFeet: gait.plantedPairs > 0, ...results };
     },
     capture(checkCicadaV2),
+    capture(checkReaver),
     capture(checkLineInfantry),
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
   const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
-  console.log('PASS Phase 3 checkpoint: live Gatecrasher, Cicada, Infantry, tank and gunship; rig-v2 Reaver export');
+  console.log('PASS Phase 3 checkpoint: live Gatecrasher, Cicada, Reaver, Infantry, tank and gunship');
 }
 
 main().catch(error => {

@@ -140,7 +140,7 @@ function skeleton(D){
 /* ---------- general 2-bone leg IK (biped or quad yaw mounts). t = foot target in rig-root space ---------- */
 const _IM=new T.Matrix4(),_IQ=new T.Quaternion(),_IQ2=new T.Quaternion(),_IV=new T.Vector3(),_IE=new T.Euler();
 function solveLeg(rig,D,leg,t,pitch){
-  const p=rig.pelvis,hp=leg.hip.parent,A=D.legA,Bl=D.legB;
+  const p=rig.pelvis,hp=leg.hip.parent,A=leg.legA??D.legA,Bl=leg.legB??D.legB;
   p.updateMatrix();_IM.copy(p.matrix);_IQ.copy(p.quaternion);
   if(hp!==p){hp.updateMatrix();_IM.multiply(hp.matrix);_IQ.multiply(hp.quaternion);}
   _IV.copy(t).applyMatrix4(_IM.invert());

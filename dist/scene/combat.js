@@ -18,11 +18,12 @@ root.IronVowCombat={create(scene,api){
   api.sync(actor);api.sync(target);
   const profile=profileFor(actor,w),kind=profile.archetype;
   if(kind==='blade')return;
-  const socket=profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):shotMuzzle(actor,w.id,index);
+  const mounted=api.models.get(actor.id)?.entry;
+  const socket=profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):
+   mounted?.primary?.alternate&&index%2?'muzzle2':shotMuzzle(actor,w.id,index);
   const selected=contacts.filter(c=>c.index===index||w.scatter&&index===0),contact=selected[0]||contacts[0];
   const part=guard?'shield':contact?.part||'body',to=point(target,part);
   if(contact&&!contact.hit)to.add(V3(.6,0,.4));
-  const mounted=api.models.get(actor.id)?.entry;
   const native=mounted?.m.nativeV2,shoulder=socket.startsWith('shoulderMuzzle'),alternate=socket.endsWith('2');
   const weapon=native&&shoulder?mounted.shoulderWeapon:mounted?.primary;
   if(weapon){
@@ -34,13 +35,14 @@ root.IronVowCombat={create(scene,api){
   const adapter=!mounted?root.IronVowAdapterWeapons.aimAt(actor,to):null;
   const from=point(actor,socket);
   const flight=Math.max(.025,contact?.travel||attackProfile(actor,w.id).travel);
-  const entry=mounted,barrel=weapon||adapter;
+  const entry=mounted,barrel=alternate&&weapon?.alternate||weapon||adapter;
   const expectedMarker=alternate?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
   const aimMarker=native?expectedMarker:barrel?.muzzle;
   const axis=aimMarker?.getWorldDirection(V3()),muzzle=aimMarker?.getWorldPosition(V3());
   const aimError=axis&&muzzle?axis.angleTo(to.clone().sub(muzzle)):null;
   const carrier=barrel?.carrier||entry?.primarySocket||entry?.m.rig.arms.R.so;
   log('launch',{archetype:kind,expectedOrigin:expectedMarker?.getWorldPosition(V3()).toArray(),actorAlive:actor.alive,aimError,mounted:entry?.m?Boolean(barrel&&barrel.mount.parent===carrier):null,actor:actor.id,target:target.id,weapon:w.id,index,socket,origin:from.toArray(),targetPoint:to.toArray(),flight});
+  barrel?.onLaunch?.(clock);
   const model=api.models.get(actor.id)?.entry?.m;
   if(model){model.recoil=Math.max(model.recoil,.8);model.s.comp.v-=.28;}
   const targets=(w.scatter?selected:[contact]).filter(Boolean).map(c=>{const p=point(target,guard?'shield':c.part);return c.hit?p:p.add(V3(.5+(c.index%3)*.17,-.3,.2));});

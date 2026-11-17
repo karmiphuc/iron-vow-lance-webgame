@@ -1,6 +1,6 @@
 # Phase 3 asset export gate
 
-Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, both Line Infantry variants, the tank and the gunship use live battle meshes. The Reaver export has passed its asset checks and awaits runtime integration.
+Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, both Line Infantry variants, the tank and the gunship use live battle meshes.
 
 The legacy Prototype Bay Gatecrasher draws 162,386 triangles. The new `dist/rig-bench/rig-v2/gatecrasher-r2-reference.glb` draws 54,252 triangles with the integral cannon, Arc Cleaver and Vesper pod. It is separate from the Prototype Bay model because that viewer requires its authored motion clips. The reference is equipped as one file, so no extra weapon GLB is passed to the gate for this configuration.
 
@@ -18,7 +18,7 @@ The sortie loads Gatecrasher's meshopt GLB on demand. A normalized joint hierarc
 
 Cicada uses independent Locust rack pivots and the authored left Pulse Bash emitter. LI-01 and LI-02 use the same animator with their own authored carbine mounts and two-hand carry. The battle loads each rig when needed and releases its asset on exit.
 
-`tools/export_reaver_v2.py` exposes `export_reaver(source, output)` for Blender MCP. Use `Reaver-Clay/R14/Reaver-R14-Hostile.blend` with SHA-256 `ac07e34e86d052805395f8a4ea714f1364bddf204948228bbbc67af96bebdfa2`. The 16,340-triangle export contains the production dual-autocannon loadout and both authored muzzles. The untouched input hash and restored Blender scene were verified. Runtime still needs to exercise the four arm-damage states and authored quad gait.
+`tools/export_reaver_v2.py` exposes `export_reaver(source, output)` for Blender MCP. Use `Reaver-Clay/R14/Reaver-R14-Hostile.blend` with SHA-256 `ac07e34e86d052805395f8a4ea714f1364bddf204948228bbbc67af96bebdfa2`. The 16,340-triangle export contains both factory autocannons. The untouched input hash and restored Blender scene were verified. The shared gait solver uses each leg's measured length and authored stance. The existing three-beat attack alternates right, left, right when both arms are intact. With the left arm lost it uses the right cannon for all three beats. Right-arm loss retains the existing firing lock. Damage and AP rules stay in the game.
 
 `tools/render_vehicles.py` exposes `export_vehicle_motion(output)` for Blender MCP. It builds the procedural Javelin tank and Kite gunship in a temporary scene with body and muzzle anchors. Each GLB batches the original motion geometry by material. The sortie loads the models it needs and releases the shared geometry on exit. The existing sprites cover failed loads, and the offline package embeds both GLBs.
 

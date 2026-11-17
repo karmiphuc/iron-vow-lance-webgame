@@ -210,15 +210,45 @@
   "live": {
     "desktop": {
       "checkCicadaV2": 2,
+      "checkReaver": {
+        "planted": 19,
+        "dualReports": 6,
+        "rightOnlyReports": 6,
+        "geometries": 109
+      },
       "checkLineInfantry": 16,
       "checkLineElite": 16,
-      "checkInfantryCarry": true
+      "checkInfantryCarry": {
+        "li-01": {
+          "traversals": 2,
+          "plantedPairs": 25
+        },
+        "li-02": {
+          "traversals": 2,
+          "plantedPairs": 32
+        }
+      }
     },
     "touch": {
       "checkCicadaV2": 2,
+      "checkReaver": {
+        "planted": 20,
+        "dualReports": 6,
+        "rightOnlyReports": 6,
+        "geometries": 109
+      },
       "checkLineInfantry": 16,
       "checkLineElite": 16,
-      "checkInfantryCarry": true
+      "checkInfantryCarry": {
+        "li-01": {
+          "traversals": 2,
+          "plantedPairs": 25
+        },
+        "li-02": {
+          "traversals": 2,
+          "plantedPairs": 34
+        }
+      }
     }
   }
 }

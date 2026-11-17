@@ -91,9 +91,9 @@ function build(unit){
   drivers.set(authored,joint);
   return joint;
  }
- function segment(name,child,parent){
+ function segment(name,child,parent,axis=V3(0,0,1)){
   const up=at(name).sub(at(child)).normalize();
-  const forward=V3(0,0,1).addScaledVector(up,-up.z).normalize();
+  const forward=axis.clone().addScaledVector(up,-up.dot(axis)).normalize();
   return driver(name,parent,Q().setFromRotationMatrix(new T.Matrix4().makeBasis(up.clone().cross(forward),up,forward)));
  }
  function marker(name,parent,axis=[0,1,0]){
@@ -107,32 +107,49 @@ function build(unit){
   parent.add(peg);
   return peg;
  }
- const dims={...bone('root').userData,shX:Math.abs(at('shoulder.L').x),hipY:at('hip.L').y-at('pelvis').y,
+ const rest=bone('root').userData,legSides=rest.quad?['LF','RF','LB','RB']:['L','R'];
+ const hipRest=at('hip.'+legSides[0]),ankleRest=at('ankle.'+legSides[0]);
+ const dims={...rest,shX:Math.abs(at('shoulder.L').x),hipY:hipRest.y-at('pelvis').y,
+  hipX:Math.abs(hipRest.x),hipZ:Math.abs(hipRest.z),
   up:at('shoulder.L').distanceTo(at('elbow.L')),fo:at('elbow.L').distanceTo(at('wrist.L')),
   so:at('wrist.L').distanceTo(at('socket.L')),walkDrop:.14};
  const pelvis=driver('pelvis',body),spine=driver('spine',pelvis),neck=driver('neck',spine);
  const arms={},legs=[];
- for(const [i,side] of ['L','R'].entries()){
+ for(const side of ['L','R']){
   const sh=segment('shoulder.'+side,'elbow.'+side,spine);
   const el=segment('elbow.'+side,'wrist.'+side,sh);
   const wr=driver('wrist.'+side,el,el.getWorldQuaternion(Q()));
   const so=driver('socket.'+side,wr,wr.getWorldQuaternion(Q()));
   const paul=find('Pauldron.'+side)?driver('Pauldron.'+side,spine):new T.Group();
   arms[side]={sh,el,wr,so,paul};
-  const hip=segment('hip.'+side,'knee.'+side,pelvis),kn=segment('knee.'+side,'ankle.'+side,hip);
-  const an=driver('ankle.'+side,kn);
-  const sign=i===0?1:-1;
-  legs.push({hip,kn,an,side,restX:sign*dims.restX,restZ:dims.restZ,toe:sign*dims.toe,phase:dims.phases[i]});
+ }
+ // Share the yaw mounts and -Y limb convention from the Foundry quad in chassis.js:133-134.
+ if(rest.quad)dims.reach=Math.hypot(ankleRest.x-hipRest.x,ankleRest.z-hipRest.z);
+ for(const [i,side] of legSides.entries()){
+  const hipName='hip.'+side,kneeName='knee.'+side,ankleName='ankle.'+side;
+  const foot=at(ankleName),hipPoint=at(hipName),kneePoint=at(kneeName);
+  let parent=pelvis,ankleBasis=Q();
+  if(rest.quad){
+   // The authored mounts include thigh pitch. Isolate the radial yaw for the leg solver.
+   const radial=kneePoint.clone().sub(hipPoint);
+   ankleBasis=Q().setFromAxisAngle(V3(0,1,0),Math.atan2(radial.x,radial.z));
+   parent=driver('mount.'+side,pelvis,ankleBasis);
+  }
+  const axis=V3(0,0,1).applyQuaternion(ankleBasis);
+  const hip=segment(hipName,kneeName,parent,axis),kn=segment(kneeName,ankleName,hip,axis);
+  const an=driver(ankleName,kn,ankleBasis),sign=i===0?1:-1;
+  legs.push({hip,kn,an,side,restX:rest.quad?foot.x:sign*dims.restX,restZ:rest.quad?foot.z:dims.restZ,
+   toe:rest.quad?0:sign*dims.toe,phase:dims.phases[i],legA:hipPoint.distanceTo(kneePoint),legB:kneePoint.distanceTo(foot)});
  }
  const rig={pelvis,spine,neck,arms,legs,pistons:[],spinners:[]};
  const equipment=profile.setup({bone,find,driver,marker,bounds,rig});
  const parts=Object.fromEntries(R.parts.map(part=>[part,[]])),materials=new Map();
- const boxes=new Map(['neck','ankle.L','ankle.R',...(equipment.boundsNames||[])].map(name=>[bone(name),new T.Box3()]));
+ const boxes=new Map(['neck',...legSides.map(side=>'ankle.'+side),...(equipment.boundsNames||[])].map(name=>[bone(name),new T.Box3()]));
  function bounds(name){
   const joint=bone(name);
   return boxes.get(joint).clone().applyMatrix4(joint.matrixWorld);
  }
- const channels={paint_primary:unit.paint||(unit.team==='enemy'?'#9c3a30':null),paint_secondary:unit.trim?.s,paint_accent:unit.trim?.a};
+ const channels={paint_primary:unit.paint||(unit.team==='enemy'&&!profile.factoryLivery?'#9c3a30':null),paint_secondary:unit.trim?.s,paint_accent:unit.trim?.a};
  source.traverse(mesh=>{
   if(!mesh.isMesh)return;
   // These assemblies use rigid weights or rigid parenting. Bind picking and
@@ -204,6 +221,7 @@ function build(unit){
    authored.updateMatrixWorld(true);
   }
   for(const {a,b,restA,restB} of rams){pointRam(a,b,restA);pointRam(b,a,restB);}
+  equipment.afterSync?.();
   source.updateMatrixWorld(true);
  }
  mech.nativeV2={

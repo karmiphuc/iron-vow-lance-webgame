@@ -129,7 +129,7 @@ function aimMounted(m,weapon,target,weight,node){
  // A long gun can extend past a nearby target. Pull the articulated arm back
  // around its shoulder until the target lies beyond the muzzle's pivot radius;
  // the weapon stays attached to the hand throughout the adjustment.
- const shoulder=!node&&m.rig?.arms.R.sh;
+ const shoulder=wrist===m.rig?.arms.R.wr?m.rig.arms.R.sh:wrist===m.rig?.arms.L.wr?m.rig.arms.L.sh:null;
  if(shoulder){
   m.cont.updateMatrixWorld(true);
   let pivot=wrist.getWorldPosition(V3());const muzzle=weapon.muzzle.getWorldPosition(V3()),radius=muzzle.distanceTo(pivot)+.05;
@@ -241,7 +241,7 @@ function draw(u,t,pose,scope,model,custom){
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
  if(v2){
-  v2.pose(entry,u,pose);
+  v2.pose(entry,u,pose,t);
   entry.armed=!u.shield||Boolean(armory);
  }else if(armory&&!entry.armed){
   const profile=window.IronVowWeaponFX?.get(u.weapon);
