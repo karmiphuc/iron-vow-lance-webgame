@@ -1,3 +1,4 @@
+const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
@@ -18,6 +19,7 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  await nav('hangar');
  assert.match(await page.locator('#duty-count').innerText(),/3 \/ 3/);
  await tap('[data-build-room="cabins"]');
+ await ensureContractOffer(page,0);
  await nav('contracts');
  await tap('[data-deploy="0"]');
  await tap('#modal-1');
@@ -39,6 +41,7 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
   save.ship={levels:{drop:2}};save.credits+=FRAMES[6].cost;acquireHull(6);
   save.dispatch={day:save.day,sizes:[3,2,1,3]};persist();
  });
+ await ensureContractOffer(page,0);
  await nav('contracts');
  await tap('[data-deploy="0"]');
  assert.equal(await page.locator('[data-sortie-pilot="0"] option').count(),6);

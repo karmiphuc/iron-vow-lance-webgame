@@ -1,3 +1,4 @@
+const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 const paths=[
  ['sapper-shaped','sapper-fuse','sapper-drill','sapper-core','sapper-gap','sapper-twin'],
@@ -94,6 +95,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
   assert.equal(await page.locator('.wiki-pilot').nth(i).locator('li:visible').count(),12);
  }
  await fit();
+ await ensureContractOffer(page,0);
  await nav('contracts');
  const sizes=await page.evaluate(()=>save.dispatch.sizes);
  assert.ok(sizes.every(size=>size>=1&&size<=3));

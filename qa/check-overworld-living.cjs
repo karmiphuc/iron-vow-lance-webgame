@@ -95,6 +95,48 @@ assert.equal(scout.run(`scoutWorldOffer(${JSON.stringify(scoutOffer.id)})`),fals
 assert.equal(JSON.stringify(saved(scout)),scoutedSave,'a rejected second click cannot charge again');
 assert.deepEqual(saved(load(saved(scout))).world,saved(scout).world,'scouted intel survives reload');
 
+// Pooled cards preserve purchased local Recon perks and paid reports at Recon 0.
+const report=scout.run('pooledContractsPage()');
+assert.match(report,/<div class="offer-intel"><details class="contract-intel"><summary>HOSTILE MANIFEST<\/summary><ul><li>/,'paid scouting reveals a real roster without a Recon Cell');
+assert(!/<details class="offer-intel">/.test(report),'contact reports need only one disclosure');
+assert(!report.includes('data-rescan'),'scouting alone never grants a paid dispatch survey');
+const recon=simulate({random:()=>0});
+recon.run('ensureWorld();save.hangar={levels:{recon:1}};save.ship={levels:{drop:2}};persist()');
+const reconOffer=json(recon,'availableOffers(companyPort())[0]');
+const localBoard=recon.run('pooledContractsPage()');
+assert.match(localBoard,/<details class="contract-intel"><summary>HOSTILE MANIFEST<\/summary><ul><li>/,'Recon 1 shows the exact local roster');
+assert(!localBoard.includes('data-scout-offer'),'local Recon intel does not require the 90 CR scout');
+assert(!localBoard.includes('data-rescan'),'Recon 1 does not grant a dispatch survey');
+assert.match(localBoard,/\+ AUX OPTION/,'the pooled lance readout retains the installed auxiliary drop option');
+assert.match(localBoard,new RegExp('CONTACTS</span><b>'+recon.run(`sortieSpawns(CONTRACTS[${reconOffer.templateIndex}],dispatchSizes()[${reconOffer.templateIndex}]).filter(spawn=>spawn.length===2).length`)+' MECH'),'local Recon replaces the uncertain contact range with an exact count');
+recon.run('save.hangar.levels.recon=2;page="contracts"');
+const surveyIndex=reconOffer.templateIndex;
+assert.match(recon.run('pooledContractsPage()'),new RegExp('data-rescan="'+surveyIndex+'"'),'Recon 2 retains the local survey action');
+// Exercise the existing render binding, not merely the underlying mutation.
+const surveyButton={dataset:{rescan:String(surveyIndex)}};
+recon.sandbox.document.querySelectorAll=selector=>selector==='[data-rescan]'?[surveyButton]:[];
+recon.run('render()');
+assert.equal(typeof surveyButton.onclick,'function');
+const surveyCredits=recon.run('save.credits'),oldSize=recon.run(`dispatchSizes()[${surveyIndex}]`);
+surveyButton.onclick();
+const newSize=recon.run(`dispatchSizes()[${surveyIndex}]`);
+assert.notEqual(newSize,oldSize,'the survey changes the offered deployment capacity');
+assert.equal(recon.run('save.credits'),surveyCredits-350,'the dispatch survey charges the established 350 CR');
+assert.match(recon.node('#ui').innerHTML,new RegExp('LANCE</span><b>'+newSize+' MECH'),'the surveyed card refreshes its lance capacity');
+assert.match(recon.node('#ui').innerHTML,/SURVEY USED TODAY/);
+assert.equal(recon.run(`rerollDispatch(${surveyIndex})`),false,'only one survey is allowed per day');
+assert.equal(recon.run('save.credits'),surveyCredits-350);
+const remotePort=recon.run('window.IronVowWorld.PORTS.find(port=>port.id!==companyPort()&&availableOffers(port.id).length).id');
+recon.run(`contractPortSelection=${JSON.stringify(remotePort)}`);
+const remoteUnscouted=recon.run('pooledContractsPage()');
+assert(remoteUnscouted.includes('data-scout-offer'),'remote intel still requires scouting despite a Recon Cell');
+assert(!remoteUnscouted.includes('contract-intel'),'local Recon does not reveal remote manifests');
+const remoteOffer=json(recon,`availableOffers(${JSON.stringify(remotePort)})[0]`);
+assert.equal(recon.run(`scoutWorldOffer(${JSON.stringify(remoteOffer.id)})`),true);
+const remoteBoard=recon.run('pooledContractsPage()');
+assert.match(remoteBoard,/<div class="offer-intel"><details class="contract-intel"><summary>HOSTILE MANIFEST<\/summary><ul><li>/,'remote scouting reuses the roster report');
+assert(!remoteBoard.includes('data-rescan'),'remote boards never offer a local dispatch survey');
+
 // Holding advances one day, applies one day of rest/service, and records unpaid operating costs as arrears.
 const wait=simulate({random:()=>0});
 wait.run(`ensureWorld();save.units[0].condition=40;save.ship={levels:{repair:1}};save.wounds={rook:2,ghost:1};persist()`);

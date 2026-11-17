@@ -422,10 +422,11 @@ function pooledContractsPage(){
  return `<div class="page"><div class="pagehead"><div><div class="eyebrow">${portName(port)} / DISPATCH</div><h1>CONTRACT BOARD</h1></div><button data-page="overworld">CHART TABLE ${icon('arrow-right')}</button></div>
   <div class="grid contract-grid">${offers.map(offer=>{
    const contract=CONTRACTS[offer.templateIndex],size=sizes[offer.templateIndex],contacts=sortieSpawns(contract,size).filter(spawn=>spawn.length===2).length;
-   const intel=offer.scouted?contacts+' MECH'+(contacts===1?'':'S'):Math.min(contacts,offer.intel.minMechs)+'–'+Math.max(contacts,offer.intel.maxMechs)+' MECHS';
+   const revealed=offer.scouted||local&&hangarLevel('recon')>0;
+   const intel=revealed?contacts+' MECH'+(contacts===1?'':'S'):Math.min(contacts,offer.intel.minMechs)+'–'+Math.max(contacts,offer.intel.maxMechs)+' MECHS';
    return `<article class="card offer-card"><div class="eyebrow">${contract.tag} · ${local?'LOCAL':'REMOTE'}</div><h2>${contract.name}</h2><p>${contract.desc}</p>
-    <div class="offer-terms">${stat('PAYMENT',money(worldContractPay(contract,size,offer)))}${stat('EXPIRES','DAY '+offer.expiryDay)}${stat('LANCE',size+' MECH'+(size===1?'':'S'))}${stat('CONTACTS',intel+(contract.difficulty>=2&&!offer.scouted?' · HEAVY LIKELY':''))}</div>
-    ${offer.scouted?`<details class="offer-intel"><summary>Contact report</summary>${contractIntel(offer.templateIndex,size)}</details>`:`<button type="button" data-scout-offer="${offer.id}" ${save.credits<90?'disabled':''}>SCOUT · 90 CR</button>`}
+    <div class="offer-terms">${stat('PAYMENT',money(worldContractPay(contract,size,offer)))}${stat('EXPIRES','DAY '+offer.expiryDay)}${stat('LANCE',size+' MECH'+(size===1?'':'S')+(shipLevel('drop')===2?' + AUX OPTION':''))}${stat('CONTACTS',intel+(contract.difficulty>=2&&!revealed?' · HEAVY LIKELY':''))}</div>
+    ${revealed?`<div class="offer-intel">${contractIntel(offer.templateIndex,size,{reveal:offer.scouted,local})}</div>`:`<button type="button" data-scout-offer="${offer.id}" ${save.credits<90?'disabled':''}>SCOUT · 90 CR</button>`}
     <button class="primary full" data-deploy="${offer.templateIndex}" data-world-offer="${offer.id}">${local?'PREPARE SORTIE':'PLOT COURSE'} ${icon('arrow-right')}</button></article>`;
   }).join('')||'<div class="offer-empty"><h2>No open offers</h2><p>Check another mooring or hold for the next dispatch.</p><button data-page="overworld">OPEN CHART</button></div>'}</div></div>`;
 }
@@ -1072,10 +1073,10 @@ function hostileFrame(i,contract,stock=false,hellbreaker=false,picketLineInfantr
  if(!stock&&reaverHostiles&&i===reaverSlot(contract))return REAVER_FRAME;
  return i===0&&hellbreaker?HELLBREAKER:(stock?null:FOUNDRY_HOSTILES[contract.id])?.[i]??i%3;
 }
-function contractIntel(i,count){
+function contractIntel(i,count,{reveal=false,local=true}={}){
  const level=hangarLevel('recon');
- if(!level)return '';
- const contract=CONTRACTS[i],scanUsed=save.hangar.scanDay===save.day;
+ if(!reveal&&(!local||!level))return '';
+ const contract=CONTRACTS[i],scanUsed=save.hangar?.scanDay===save.day;
  const aero=contract.id==='relay'&&count>1?dailyAeroMelee():null;
  const hostiles=sortieSpawns(contract,count).map((spawn,index)=>{
   if(spawn.length===3)return VEHICLES[spawn[0]].name;
@@ -1083,7 +1084,7 @@ function contractIntel(i,count){
   return FRAMES[frame].name+(frame===AERO_FRAME?' · '+weapon(aero).name:'');
  });
  return `<details class="contract-intel"><summary>HOSTILE MANIFEST</summary><ul>${hostiles.map(name=>'<li>'+name+'</li>').join('')}</ul></details>
-  ${level===2?`<button class="rescan-contract" data-rescan="${i}" ${scanUsed||save.credits<HANGAR_SERVICE_COST?'disabled':''}>${scanUsed?'SURVEY USED TODAY':'RESURVEY · '+money(HANGAR_SERVICE_COST)}</button>`:''}`;
+  ${local&&level===2?`<button class="rescan-contract" data-rescan="${i}" ${scanUsed||save.credits<HANGAR_SERVICE_COST?'disabled':''}>${scanUsed?'SURVEY USED TODAY':'RESURVEY · '+money(HANGAR_SERVICE_COST)}</button>`:''}`;
 }
 const contractPay=(contract,count,tier=shipLevel('office'))=>Math.round(contract.pay*[0,.65,.85,1][count]*[1,1.15,1.25][tier]);
 const validSlots=slots=>Array.isArray(slots)&&slots.length>=1&&slots.length<=3&&new Set(slots).size===slots.length&&slots.every(i=>LANCE_SLOTS.includes(i));

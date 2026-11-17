@@ -1,3 +1,4 @@
+const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
@@ -60,6 +61,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   assert.equal(both.ship.project.facility,'office');
 
   await reloadCareer(page);
+  await ensureContractOffer(page,0);
   await tap('#nav [data-page="contracts"]');
   await tap('[data-deploy="0"]');
   await tap('#modal-1');
