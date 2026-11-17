@@ -34,10 +34,9 @@ root.IronVowCombat={create(scene,api){
    root.IronVowFoundry.aimMounted(mounted.m,native?{muzzle:selected}:weapon,to,1,pivot);
    native?.sync();
   }
-  const adapter=!mounted?root.IronVowAdapterWeapons.aimAt(actor,to):null;
   const from=point(actor,socket);
   const flight=Math.max(.025,contact?.travel||attackProfile(actor,w.id).travel);
-  const entry=mounted,barrel=alternate&&weapon?.alternate||weapon||adapter;
+  const entry=mounted,barrel=alternate&&weapon?.alternate||weapon;
   const expectedMarker=alternate?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
   const aimMarker=native?expectedMarker:barrel?.muzzle;
   const axis=aimMarker?.getWorldDirection(V3()),muzzle=aimMarker?.getWorldPosition(V3());

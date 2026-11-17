@@ -371,7 +371,9 @@
       "vehicleLoading": true,
       "checkArmory": true,
       "bastionSharedRig": true,
-      "checkBehemothBudget": true
+      "checkBehemothBudget": true,
+      "sharedScene": true,
+      "checkVehicles": true
     },
     "touch": {
       "checkCicadaV2": {
@@ -487,7 +489,9 @@
       "vehicleLoading": true,
       "checkArmory": true,
       "bastionSharedRig": true,
-      "checkBehemothBudget": true
+      "checkBehemothBudget": true,
+      "sharedScene": true,
+      "checkVehicles": true
     }
   },
   "hellbreaker": {

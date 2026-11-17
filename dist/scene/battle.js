@@ -11,7 +11,7 @@ const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0
 const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){
  if(u.kind)return false;
- if(rigV2.applies(u))return battleRef?.units.includes(u)?rigV2.status(u)!=='error':u.frame===0||u.frame===10;
+ if(rigV2.applies(u))return Boolean(battleRef?.units.includes(u))||u.frame===0||u.frame===10;
  return !u.lionTrial&&LIVE.has(u.frame);
 }
 function world(x,z,y){
@@ -22,7 +22,7 @@ function unitRoot(u){
  const point=world(u.vx??u.x,u.vz??u.z);
  // The fixed practice target sits near its tile's edge so the authored Lion
  // strike reaches the target while the feet follow the original floor contacts.
- if(battle.lionTrial&&!u.lionTrial&&rigV2.applies(battle.units[0])&&rigV2.status(battle.units[0])!=='error')point.add(V3(battle.units[0].melee==='cleaver'?-3.12:-3.55,0,-.92));
+ if(battle.lionTrial&&!u.lionTrial)point.add(V3(battle.units[0].melee==='cleaver'?-3.12:-3.55,0,-.92));
  return point;
 }
 function groundAt(x,z){
@@ -50,9 +50,9 @@ function init(){
  root.IronVowRenderer.subscribe(({type})=>{if(type==='restored'){clear();cameraReady=false;}});
 }
 function clear(){
- combat?.dispose();combat=null;root.IronVowAdapterWeapons?.clear();
+ combat?.dispose();combat=null;
  for(const record of models.values())if(record.vehicle)root.IronVowVehicles.release(record.vehicle);
- root.IronVowFoundry?.clearCombat();root.IronVowBillboards?.clear();root.IronVowVehicles.clear();models.clear();aimTargets.clear();mortarCues.clear();
+ root.IronVowFoundry?.clearCombat();root.IronVowVehicles.clear();models.clear();aimTargets.clear();mortarCues.clear();
  rigV2.clear();
  if(scene){sun?.shadow.map?.dispose();disposeTree(scene);}
  kit?.dispose();kit=null;scene=null;battleRef=null;groundMeshes.length=coverMeshes.length=0;
@@ -112,20 +112,19 @@ function build(){
 function partPoint(unit,part='body'){
  if(!scene||battleRef!==battle)build();
  if(unit.kind&&models.get(unit.id)?.vehicle)return attachmentPoint(unit,part);
- if(!isLive(unit))return root.IronVowAdapterWeapons.attachment(unit,part)||root.IronVowBillboards.worldAttachment(unit,part);
  const entry=models.get(unit.id)?.entry,m=entry?.m;
  if(m?.rig){
   const r=m.rig,node=m.nativeV2?.anchors?.[part]||(part==='pilot'?r.neck:part==='right'?r.arms.R.el:part==='left'?r.arms.L.el:part==='legs'?r.legs[0].kn:r.spine);
   const p=node.getWorldPosition(V3());if(part==='body')p.y+=1.2*(m.scale||1);return p;
  }
  const node=m?.anchors?.[part];if(node)return node.getWorldPosition(V3());
- return unitRoot(unit).add(V3(0,part==='legs'?1:part==='pilot'?5.7:3.8,0));
+ const height=unit.kind?(VEHICLES[unit.kind].altitude+.4)*HEIGHT:part==='legs'?1:part==='pilot'?5.7:3.8;
+ return unitRoot(unit).add(V3(0,height,0));
 }
-function attachmentPoint(unit,part='body',t=clock){
+function attachmentPoint(unit,part='body'){
  if(!scene||battleRef!==battle)build();
  const vehicle=models.get(unit.id)?.vehicle;
  if(vehicle)return (part.startsWith('muzzle')?vehicle.muzzle:vehicle.body).getWorldPosition(V3());
- if(!isLive(unit))return root.IronVowAdapterWeapons.attachment(unit,part)||root.IronVowBillboards.worldAttachment(unit,part,t);
  const entry=models.get(unit.id)?.entry,m=entry?.m;
  if(!m)return partPoint(unit,part);
  const mounts=root.IronVowFoundryRig.mountPoints(m),r=m.rig;
@@ -140,7 +139,7 @@ function projectWorld(point){const p=point.clone().project(camera);return{x:(p.x
 function labelPoint(unit){
  const record=models.get(unit.id),m=record?.entry?.m;
  if(record?.vehicle)return projectWorld(attachmentPoint(unit,'body').add(V3(0,1.2,0)));
- if(!m){const p=root.IronVowBillboards.worldAttachment(unit,unit.kind?'body':'pilot');return projectWorld(p.addScaledVector(V3(0,1,0).applyQuaternion(camera.quaternion),.9));}
+ if(!m)return projectWorld(partPoint(unit,unit.kind?'body':'pilot').add(V3(0,.7,0)));
  const neck=(m.nativeV2?.anchors?.pilot||m.rig.neck).getWorldPosition(V3());
  return projectWorld(neck.add(V3(0,record.headHeight+.7,0)));
 }
@@ -163,10 +162,16 @@ function updateCamera(t,dt){
  camera.lookAt(cameraTarget);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);cameraReady=true;
  scene.fog.near=distance*.9;scene.fog.far=distance*2.6;
 }
-function goalFor(u){const goal=aimTargets.get(u.id);return goal?partPoint(goal.target,goal.part):null;}
 function prepareUnit(u,t){
  let record=models.get(u.id),object;
- if(isLive(u)){
+ if(u.kind){
+  if(root.IronVowVehicles.status(u.kind)!=='ready')return;
+  if(!record){
+   record={vehicle:root.IronVowVehicles.create(u.kind)};models.set(u.id,record);
+  }
+  root.IronVowVehicles.update(record.vehicle,u,t,world(u.vx,u.vz),displayedHeading(u),reducedMotion);
+  object=record.vehicle.object;
+ }else{
   const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),goal=aimTargets.get(u.id),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
   if(airborne)p.y+=jumpjetHeight(u,t);
   const mortar=mortarCues.get(u.id);if(mortar){pose.mortarAge=t-mortar.at;if(pose.mortarAge>=2.1)mortarCues.delete(u.id);}
@@ -183,14 +188,6 @@ function prepareUnit(u,t){
   object=entry.m.cont;
   if(!record){record={entry};models.set(u.id,record);}else record.entry=entry;
   record.previousPosition=p;record.previousTime=t;
- }else if(u.kind&&root.IronVowVehicles.status(u.kind)==='ready'){
-  if(!record){record={};models.set(u.id,record);}
-  if(!record.vehicle){if(record.object)units.remove(record.object);record.vehicle=root.IronVowVehicles.create(u.kind);}
-  root.IronVowVehicles.update(record.vehicle,u,t,world(u.vx,u.vz),displayedHeading(u),reducedMotion);object=record.vehicle.object;
- }else{
-  object=root.IronVowBillboards.get(u,t);if(!object)return;
-  root.IronVowAdapterWeapons.update(u,camera,units,goalFor(u));
-  if(!record){record={};models.set(u.id,record);}
  }
  if(object.parent!==units)units.add(object);record.object=object;
  if(!record.proxy){
@@ -198,16 +195,15 @@ function prepareUnit(u,t){
   record.height=bounds?Math.max(2,bounds.max.y-p.y):u.kind?4:7.5;
   const headBounds=m&&(m.nativeV2?.bounds('neck')||new T.Box3().setFromObject(m.rig.neck));
   record.headHeight=headBounds?Math.max(0,headBounds.max.y-(m.nativeV2?.anchors?.pilot||m.rig.neck).getWorldPosition(V3()).y):0;
-  record.proxy=new T.Mesh(new T.BoxGeometry(bounds?Math.max(2,bounds.max.x-bounds.min.x):3,record.height,bounds?Math.max(2,bounds.max.z-bounds.min.z):3),new T.MeshBasicMaterial({visible:false}));
+  const proxySize=record.vehicle?[1,1,1]:[Math.max(2,bounds.max.x-bounds.min.x),record.height,Math.max(2,bounds.max.z-bounds.min.z)];
+  record.proxy=new T.Mesh(new T.BoxGeometry(...proxySize),new T.MeshBasicMaterial({visible:false}));
   record.proxy.userData.unitId=u.id;units.add(record.proxy);
  }
- const p=unitRoot(u);record.proxy.position.copy(p).add(V3(0,record.height/2,0));record.proxy.visible=u.alive;record.proxy.updateMatrixWorld(true);
- if(record.vehicle){const bounds=record.vehicle.bounds.clone().applyMatrix4(object.matrixWorld);if(!record.billboardProxy){record.proxy.geometry.dispose();record.proxy.geometry=new T.BoxGeometry(1,1,1);record.billboardProxy=true;}bounds.getCenter(record.proxy.position);bounds.getSize(record.proxy.scale);record.proxy.updateMatrixWorld(true);}
- else if(!isLive(u))updateBillboardProxy(u,record);
-}
-function updateBillboardProxy(u,record){
- const bounds=root.IronVowBillboards.bounds(u.id,camera),weaponBounds=root.IronVowAdapterWeapons.bounds(u.id);if(bounds&&weaponBounds)bounds.union(weaponBounds);
- if(bounds){if(!record.billboardProxy){record.proxy.geometry.dispose();record.proxy.geometry=new T.BoxGeometry(1,1,1);record.billboardProxy=true;}bounds.getCenter(record.proxy.position);bounds.getSize(record.proxy.scale);record.proxy.scale.clampScalar(.1,100);record.proxy.updateMatrixWorld(true);}
+ if(record.vehicle){
+  const bounds=record.vehicle.bounds.clone().applyMatrix4(object.matrixWorld);
+  bounds.getCenter(record.proxy.position);bounds.getSize(record.proxy.scale);
+ }else record.proxy.position.copy(unitRoot(u)).add(V3(0,record.height/2,0));
+ record.proxy.visible=u.alive;record.proxy.updateMatrixWorld(true);
 }
 function updateOverlays(){
  const selectedUnit=current(),ready=battle.phase==='player'&&!battle.busy;
@@ -237,7 +233,7 @@ function render(t,dt){
  if(battleRef!==battle||!scene)build();
  for(const u of battle.units)prepareUnit(u,t);
  for(const u of battle.units){const cue=mortarCues.get(u.id);if(cue&&!cue.fired&&t-cue.at>=.95){cue.fired=true;const p=attachmentPoint(u,'mortarMuzzle');combat.fx.glow(p,0xffb050,3,.15);combat.fx.smoke(p,4,1.4,0xc4bdb0,.5,.8,1.4,.3);}}
- combat.update(t,dt);updateCamera(t,dt);for(const u of battle.units)if(!isLive(u)&&!models.get(u.id)?.vehicle){root.IronVowBillboards.get(u,t);root.IronVowAdapterWeapons.update(u,camera,units,goalFor(u));const record=models.get(u.id);if(record?.proxy)updateBillboardProxy(u,record);}updateOverlays();
+ combat.update(t,dt);updateCamera(t,dt);updateOverlays();
  const storm=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3===2;
  if(storm&&!reducedMotion){if(t>=lightningAt){lightning=1;lightningAt=t+kit.random(5,11);}lightning*=Math.exp(-dt*9);sun.intensity=kit.PAL[2].sun[1]+lightning*2.5*(kit.random(0,1)>.3?1:.4);}
  root.IronVowRenderer.show(true);root.IronVowRenderer.resize(innerWidth,innerHeight);
@@ -267,6 +263,12 @@ root.IronVowScene={isLive,render,project,projectWorld,screenTile,pick,pan,partPo
  overlayInfo(){return {triangles:overlays.geometry.index.count/3,path:pathGroup.children.filter(m=>m.visible).map(m=>({position:m.position.toArray(),color:m.material.color.getHex()})),selected:selection.visible,target:targetRing.visible};},
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
  mortarPresentation(unit,at=clock){if(models.get(unit.id)?.entry?.m?.mortar)mortarCues.set(unit.id,{at,fired:false});},
- get combat(){return combat;},get camera(){return camera;},get scene(){return scene;},get models(){return models;},get ready(){return Boolean(scene&&battleRef===battle&&root.IronVowAdapterWeapons.ready&&battle?.units.every(u=>isLive(u)?models.get(u.id)?.entry.armed:u.kind&&root.IronVowVehicles.status(u.kind)==='loading'?false:models.get(u.id)?.vehicle||root.IronVowBillboards.ready(u.id)));}
+ get combat(){return combat;},get camera(){return camera;},get scene(){return scene;},get models(){return models;},
+ get loadFailed(){return Boolean(scene&&battleRef===battle&&battle?.units.some(u=>(
+  u.kind?root.IronVowVehicles.status(u.kind):rigV2.status(u)
+ )==='error'));},
+ get ready(){return Boolean(scene&&!root.IronVowRenderer.lost&&battleRef===battle&&battle?.units.every(u=>(
+  u.kind?models.get(u.id)?.vehicle:models.get(u.id)?.entry.armed
+ )));}
 };
 })(window);

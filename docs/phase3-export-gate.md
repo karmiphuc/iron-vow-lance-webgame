@@ -42,7 +42,7 @@ Cicada uses independent Locust rack pivots and the authored left Pulse Bash emit
 
 `tools/export_rebuilt_stock_v2.py` exposes `export_stock(source, output, model)` for Blender MCP. The sources were rebuilt in isolated Blender processes from `tools/authoring/kestrel/build_kestrel.py` and `tools/authoring/basilisk/build_basilisk.py`. The rebuilt legacy Basilisk has 59 more triangles than the previously published GLB before simplification. Both rig-v2 files retain the atlas and piston pivots. The heaviest equipped loadouts draw 38,421 triangles for Kestrel and 46,321 for Basilisk. Basilisk's default missiles launch from the integrated right and left pods. Alternate ranged weapons use its hand grip.
 
-`tools/render_vehicles.py` exposes `export_vehicle_motion(output)` for Blender MCP. It builds the procedural Javelin tank and Kite gunship in a temporary scene with body and muzzle anchors. Each GLB batches the original motion geometry by material. The sortie loads the models it needs and releases the shared geometry on exit. The existing sprites cover failed loads, and the offline package embeds both GLBs.
+`tools/render_vehicles.py` exposes `export_vehicle_motion(output)` for Blender MCP. It builds the procedural Javelin tank and Kite gunship in a temporary scene with body and muzzle anchors. Each GLB batches the original motion geometry by material. The sortie loads the models it needs and releases the shared geometry on exit. The offline package embeds both GLBs. While models decode, the scene leaves their pick proxies absent and disables combat. A failed load reports the issue and keeps withdrawal available.
 
 Run the checkpoint using the local QA dependencies.
 

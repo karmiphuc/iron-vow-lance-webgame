@@ -17,6 +17,10 @@ module.exports=async function vehicleLoading({page,origin}){
   },null,{timeout:120000});
   assert.equal(await page.evaluate(()=>IronVowScene.ready),false,'Pending tank geometry keeps the sortie loading');
   assert.equal(await page.locator('#end').isDisabled(),true,'Loading controls reject combat input');
+  assert.equal(await page.evaluate(()=>{
+   const tank=battle.units.find(u=>u.kind==='tank');
+   return IronVowScene.models.has(tank.id);
+  }),false,'The loading tank has no sprite or pick proxy');
   release();
   await page.waitForFunction(()=>IronVowScene.ready&&document.querySelector('#end')?.disabled===false,null,{timeout:120000});
   const bodies=()=>page.evaluate(()=>battle.units.map(u=>{
@@ -33,6 +37,13 @@ module.exports=async function vehicleLoading({page,origin}){
   await page.evaluate(()=>__ironVow.start({seed:4242,frames:[17,18,10]}));
   await page.waitForFunction(()=>IronVowScene.ready&&document.querySelector('#end')?.disabled===false,null,{timeout:120000});
   await check();
+  await page.unroute(asset);
+  await page.route(asset,route=>route.abort('failed'));
+  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[17,18,10]}));
+  await page.waitForFunction(()=>IronVowScene.loadFailed,null,{timeout:30000});
+  await page.getByText('BATTLEFIELD MODEL FAILED TO LOAD',{exact:true}).waitFor();
+  assert.equal(await page.locator('#end').isDisabled(),true,'A missing GLB keeps combat disabled');
+  assert.equal(await page.locator('#withdraw').isEnabled(),true,'A failed asset load leaves withdrawal available');
  }finally{
   release();
   await page.unroute(asset);

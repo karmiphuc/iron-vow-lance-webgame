@@ -43,3 +43,5 @@ The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in 
 The sortie-exit assertion caught a cleanup call unavailable in the vendored Three.js. Cleanup now removes the instance from its parent before disposing shared geometry.
 
 See the [Phase 3 gate](../../docs/phase3-export-gate.md) for commands. Remaining chassis conversion and the final 30-seed campaign are pending. Native iPad performance is unverified.
+
+The battlefield draws models only after their GLBs are ready. An injected tank load failure kept combat disabled and withdrawal available. On desktop and touch, restoring the actual WebGL context reloaded the rigs, drew the field again, and retained the exact sortie checkpoint. The 10×10 published checkpoint also reopened and accepted legal movement.

@@ -153,9 +153,7 @@ function browserPath(){
     // Only discard paints into already-measured output canvases. Scratch canvases are untouched.
     for(const name of ['drawImage','fill','stroke','fillRect','strokeRect','clearRect','fillText','strokeText','putImageData'])context[name]=()=>{__qa.rasterOmitted++;};
    };
-   const afterFrame=()=>{if(__qa.cpuRaster){omitRaster(ctx);for(const [id,record] of IronVowScene.models){const canvas=record.object?.material?.map?.image;
-    if(canvas instanceof HTMLCanvasElement&&IronVowBillboards.ready(id)&&IronVowBillboards.bounds(id,IronVowScene.camera))omitRaster(canvas.getContext('2d'));
-   }}
+   const afterFrame=()=>{if(__qa.cpuRaster)omitRaster(ctx);
     const s=__ironVow.snapshot(),q=__qa;
     if(q.observedBattle!==battle){
      if(!s.ready)return;
@@ -330,8 +328,7 @@ function browserPath(){
     __qaStartScenario({seed,frames,contract,loadouts});
    },{seed,frames,contract,loadouts,weapons,cpuRaster:cpuRaster||rasterPair&&planned.index>startIndex,rasterPair});
    await page.clock.runFor(100);
-   // Each contract may introduce a temporary enemy atlas not present in the warmup.
-   // Let real decoding finish while advancing the controlled animation clock.
+   // Each contract may load different rigs. Advance the clock as those assets decode.
    const readyDeadline=Date.now()+120000;
    while(!await page.evaluate(()=>IronVowScene.ready)){
     assert.ok(Date.now()<readyDeadline,'Battle assets did not become ready within 120 seconds');
@@ -345,9 +342,9 @@ function browserPath(){
       const contexts=[ctx,...[...IronVowScene.models.values()].map(v=>v.object?.material?.map?.image).filter(c=>c instanceof HTMLCanvasElement).map(c=>c.getContext('2d'))];
       try{
        for(const c of contexts)for(const name of ['drawImage','fill','stroke','fillRect','strokeRect','clearRect','fillText','strokeText','putImageData']){restores.push([c,name,c[name]]);c[name]=CanvasRenderingContext2D.prototype[name];}
-       r.render=__qaActualRender;r.readRenderTargetPixels=__qaActualRead;IronVowBillboards.invalidate();for(const u of battle.units)if(!IronVowScene.isLive(u))IronVowBillboards.get(u,clock);
+       r.render=__qaActualRender;r.readRenderTargetPixels=__qaActualRead;
        r.setPixelRatio(1);r.setSize(innerWidth,innerHeight,false);r.setRenderTarget(null);r.clear();r.render(IronVowScene.scene,IronVowScene.camera);
-       __qa.counterCapture={clock,turn:battle.turn,phase:battle.phase,event:{...event},incoming:combat.history.filter(e=>e.type==='impact'&&e.actor==='enemy1'&&e.target==='ally1'&&e.time<=event.time).at(-1),units:JSON.parse(JSON.stringify(battle.units)),camera:{position:IronVowScene.camera.position.toArray(),quaternion:IronVowScene.camera.quaternion.toArray(),fov:IronVowScene.camera.fov},viewport:{width:innerWidth,height:innerHeight,dpr:1,pixelWidth:r.domElement.width,pixelHeight:r.domElement.height},renderPolicy:'One real full-resolution Three.js renderer-canvas submission/readback immediately after the real near Parallax counter launch. Temporary body output paints restored and refreshed at the same clock. UI canvas excluded; ordinary advances omit unobserved GPU/output raster. No game HP/AP/rule RNG changes or performance claim.',png:r.domElement.toDataURL('image/png')};
+       __qa.counterCapture={clock,turn:battle.turn,phase:battle.phase,event:{...event},incoming:combat.history.filter(e=>e.type==='impact'&&e.actor==='enemy1'&&e.target==='ally1'&&e.time<=event.time).at(-1),units:JSON.parse(JSON.stringify(battle.units)),camera:{position:IronVowScene.camera.position.toArray(),quaternion:IronVowScene.camera.quaternion.toArray(),fov:IronVowScene.camera.fov},viewport:{width:innerWidth,height:innerHeight,dpr:1,pixelWidth:r.domElement.width,pixelHeight:r.domElement.height},renderPolicy:'One real full-resolution Three.js renderer-canvas submission/readback immediately after the real near Parallax counter launch. UI canvas excluded; ordinary advances omit unobserved GPU/output raster. No game HP/AP/rule RNG changes or performance claim.',png:r.domElement.toDataURL('image/png')};
       }finally{for(const [c,name,method]of restores)c[name]=method;r.render=oldRender;r.readRenderTargetPixels=oldRead;r.setPixelRatio(dpr);r.setSize(innerWidth,innerHeight,false);r.setRenderTarget(target);}
      }
      return result;
