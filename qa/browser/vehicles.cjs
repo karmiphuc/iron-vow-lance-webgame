@@ -6,6 +6,24 @@ module.exports = async function checkVehicles({ page, origin, mobile, out }) {
   await page.waitForFunction(() => window.__ironVow);
   await page.evaluate(() => __ironVow.start({ seed: 4242, contract: 0 }));
   await page.waitForFunction(() => IronVowScene.ready, null, { timeout: 120000 });
+  const portraits=[];
+  for(const kind of ['tank','helicopter']){
+    await page.evaluate(kind=>{
+      lockedTarget=battle.units.find(unit=>unit.kind===kind).id;
+      hover=null;renderBattle();
+    },kind);
+    const portrait=await page.locator('.combat-target .vehicle-target').evaluate(async image=>{
+      await image.decode();
+      const surface=document.createElement('canvas');surface.width=surface.height=32;
+      const ctx=surface.getContext('2d');ctx.drawImage(image,0,0,32,32);
+      return {src:image.getAttribute('src'),width:image.naturalWidth,height:image.naturalHeight,
+        painted:ctx.getImageData(0,0,32,32).data.some((byte,i)=>i%4===3&&byte>64)};
+    });
+    assert.ok(portrait.src.startsWith('data:image/png;base64,')&&portrait.painted,kind+' uses its rendered GLB');
+    assert.deepEqual([portrait.width,portrait.height],[640,640]);
+    portraits.push(portrait.src);
+  }
+  assert.notEqual(...portraits,'Tank and gunship have distinct renders');
   await page.evaluate(() => {
     battle.units.filter(u => u.kind).forEach((u, i) => {
       Object.assign(u, { x: 1 + i * 2, vx: 1 + i * 2, z: 15, vz: 15 });

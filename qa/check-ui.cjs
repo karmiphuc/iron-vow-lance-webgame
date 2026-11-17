@@ -8,7 +8,7 @@ const {document}=parseHTML(fs.readFileSync(root+'/dist/index.html','utf8'));cons
 class LocalImage extends Image{set src(v){super.src=fs.readFileSync(path.join(root,'dist',v))}get src(){return super.src}}
 class NativeSurface{constructor(w,h){return createCanvas(w,h)}}
 const storage=new Map(),warnings=[];const context={document,Image:LocalImage,OffscreenCanvas:NativeSurface,console:{log:console.log,warn:(...a)=>warnings.push(a.join(' ')),error:console.error},window:{addEventListener:()=>{},matchMedia:()=>({matches:false})},innerWidth:1440,innerHeight:1024,devicePixelRatio:1,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},requestAnimationFrame:()=>{},setTimeout:r=>{queueMicrotask(r);return 1},clearTimeout:()=>{},URL,Blob,Math:Object.create(Math)};
-vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/warden-visuals.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/theater-layouts.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/scene/billboards.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
+vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/theater-layouts.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
 function checkHangarNavigation(){
  const navigation=context.window.IronVowHangarNavigation;
  assert.ok(navigation);
@@ -43,7 +43,7 @@ function checkHangarNavigation(){
  assert.equal(document.querySelectorAll('.base-room').length,4);
  assert.equal(run('JSON.stringify({save,selected})'),careerBeforeRoutes);
 }
-(async()=>{for(let attempt=0;attempt<100;attempt++){if(run('decodedArt.size===Object.keys(artImages).length'))break;await new Promise(r=>setTimeout(r,50))}assert.equal(run("Object.values(artImages).every(imageReady)"),true);assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,8);assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.command-deck [data-select]').length,2);assert.equal(document.querySelectorAll('[data-hangar-hotspot]').length,3);
+(async()=>{assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,8);assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.command-deck [data-select]').length,2);assert.equal(document.querySelectorAll('[data-hangar-hotspot]').length,3);
 checkHangarNavigation();
 click('[data-page="journal"]');assert.equal(document.body.dataset.view,'journal');
 assert.equal(document.querySelectorAll('.manual-topics > div').length,9);

@@ -5,21 +5,33 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#121719">
   <title>IV-03 Strike Review · Iron Vow</title>
-  <link rel="stylesheet" href="../fonts.css">
-  <link rel="stylesheet" href="aero.css">
-  <script defer src="../aero-strikes.js"></script>
-  <script defer src="../foundry/aero-baked.js"></script>
-  <script defer src="aero.js"></script>
+  <base href="../">
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="rig-bench/aero.css">
+  <script defer src="rig-bench/vendor/three.min.js"></script>
+  <script defer src="rig-bench/vendor/GLTFLoader.js"></script>
+  <script defer src="rig-bench/vendor/meshopt-decoder.js"></script>
+  <script defer src="shared-renderer.js"></script>
+  <script defer src="armory-visuals.js"></script>
+  <script defer src="foundry/production-arsenal.js"></script>
+  <script defer src="foundry/chassis.js"></script>
+  <script defer src="foundry/rig-motion.js"></script>
+  <script defer src="foundry/rig-v2.js"></script>
+  <script defer src="foundry/rig-v2-aero.js"></script>
+  <script defer src="scene/weapon-fx.js"></script>
+  <script defer src="foundry/scene-rigs.js"></script>
+  <script defer src="aero-strikes.js"></script>
+  <script defer src="rig-bench/aero.js"></script>
 </head>
 <body>
-  <header><a href="./">IRON VOW / RIG BENCH</a><span>HOSTILE SYSTEMS</span></header>
+  <header><a href="rig-bench/">IRON VOW / RIG BENCH</a><span>HOSTILE SYSTEMS</span></header>
   <main>
     <section class="stage" aria-label="Aero motion">
       <div class="stage-top"><span>IV-03 / BATTLE CAMERA</span><span id="phase">GUARD</span></div>
-      <canvas id="motion" width="600" height="600" aria-label="Aero melee animation"></canvas>
+      <canvas id="motion" width="640" height="640" aria-label="Aero melee animation"></canvas>
       <div class="transport">
-        <button id="play" type="button">Play</button>
-        <input id="time" type="range" min="0" max="1000" value="0" aria-label="Scrub strike">
+        <button id="play" type="button" disabled>Play</button>
+        <input id="time" type="range" disabled min="0" max="1000" value="0" aria-label="Scrub strike">
         <output id="clock" for="time">0.00 s</output>
       </div>
     </section>
@@ -29,7 +41,7 @@
       <p class="intro">Review the four hostile loadouts used in <em>Ashes of the Relay</em>.</p>
       <div id="weapons"></div>
       <p id="detail"></p>
-      <a class="return" href="../">Return to Mercenary Command</a>
+      <a class="return" href="./">Return to Mercenary Command</a>
       <p id="status" role="status"></p>
     </section>
   </main>

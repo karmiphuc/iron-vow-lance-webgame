@@ -6,6 +6,23 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  const card=id=>page.locator('[data-weapon-card="'+id+'"]');
  const equip=id=>tap('[data-equip="'+id+'"]');
  const tab=id=>tap('[data-armory-class="'+id+'"]');
+ const livePortrait=async image=>{
+  await image.scrollIntoViewIfNeeded();
+  await page.waitForFunction(selector=>[...document.querySelectorAll(selector)].every(img=>img.hasAttribute('src')),'.armory-card .weapon-card-art');
+  return image.evaluate(async img=>{
+   await img.decode();
+   const surface=document.createElement('canvas');surface.width=surface.height=32;
+   const ctx=surface.getContext('2d');ctx.drawImage(img,0,0,32,32);
+   const pixels=ctx.getImageData(0,0,32,32).data;
+   return {src:img.getAttribute('src'),width:img.naturalWidth,height:img.naturalHeight,
+    painted:pixels.some((byte,i)=>i%4===3&&byte>64),transparent:pixels[3]===0};
+  });
+ };
+ const checkPortrait=async image=>{
+  const {src,width,height,painted,transparent}=await livePortrait(image);
+  assert.ok(src.startsWith('data:image/png;base64,')&&painted&&transparent);
+  assert.deepEqual([width,height],[640,640]);
+ };
  const crew='?view=workshop';
  await page.goto(new URL(crew,origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('[data-armory-class="assault"]').waitFor();
@@ -24,8 +41,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   assert.equal(await cards.count(),count);
   for(const item of await cards.all()){
    const image=item.locator('.weapon-card-art');
-   await image.scrollIntoViewIfNeeded();
-   await image.evaluate(async img=>{await img.decode()});
+   await checkPortrait(image);
    const id=await item.getAttribute('data-weapon-card');
    seen.push(id);
    const expected=await page.evaluate(id=>{
@@ -41,6 +57,8 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   assert.ok(await page.locator('#ui .page').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
  }
  assert.equal(new Set(seen).size,24);
+ await tab('shields');
+ for(const item of await page.locator('[data-shield-card]').all())await checkPortrait(item.locator('.weapon-card-art'));
  if(mobile)await page.setViewportSize({width:390,height:844});
  await tab('strike');
  assert.equal(await card('obelisk').locator('[data-equip]').isDisabled(),true);
@@ -75,7 +93,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  assert.deepEqual(await page.locator('.armory-mounted b').allTextContents(),['Sidewinder SM-2','Pilum Pike']);
  assert.equal(await page.evaluate(()=>save.credits),1850);
  await page.waitForFunction(()=>IronVowFoundry.preview({frame:10,weapon:'sidewinder',melee:'pike'},2)?.secondary?.tip,null,{timeout:120000});
- const fittings=await page.evaluate(()=>Object.keys(IRON_VOW_EXPANSION_ART).map(id=>{
+ const fittings=await page.evaluate(()=>WEAPONS.map(w=>w.id).filter(IronVowProductionArsenal.isExpansion).map(id=>{
   const melee=weapon(id).melee,entry=IronVowFoundry.preview({frame:10,weapon:melee?'sidewinder':id,melee:melee?id:'pike'},2),mount=melee?entry.secondary:entry.primary;
   const point=node=>node.getWorldPosition(new THREE.Vector3()),socket=entry.m.rig.arms[melee?'L':'R'].so;
   return{id,seated:point(mount.grip).distanceTo(point(socket)),tip:point(melee?mount.tip:mount.muzzle).distanceTo(point(mount.grip)),pixels:entry.surface.width};

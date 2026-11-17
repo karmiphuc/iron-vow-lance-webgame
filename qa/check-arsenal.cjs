@@ -1,67 +1,60 @@
-const {parseHTML}=require('linkedom');
-const {createCanvas,Image}=require('@napi-rs/canvas');
-const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
-const dist=path.resolve(__dirname,'../dist');
-const {document}=parseHTML(fs.readFileSync(path.join(dist,'index.html'),'utf8'));
-const scene=document.querySelector('#scene');
-scene.getContext=()=>createCanvas(390,844).getContext('2d');
-const canvasPrototype=Object.getPrototypeOf(scene),surfaces=new WeakMap();
-canvasPrototype.getContext=function(){
- if(!surfaces.has(this))surfaces.set(this,createCanvas(+this.getAttribute('width'),+this.getAttribute('height')));
- return surfaces.get(this).getContext('2d');
-};
-Object.defineProperty(canvasPrototype,'width',{get(){return +this.getAttribute('width')},set(value){this.setAttribute('width',value)}});
-const decoded=new Set();
-class LocalImage extends Image {
- set src(url){
-  const callback=this.onload;
-  this.onload=()=>{decoded.add(url);callback?.()};
-  super.src=fs.readFileSync(path.join(dist,url));
- }
-}
-const storage=new Map();
-const context={document,decoded,Image:LocalImage,OffscreenCanvas:class{constructor(w,h){return createCanvas(w,h)}},window:{location:{search:'?view=workshop'},addEventListener(){},matchMedia:()=>({matches:false})},
- console,localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)},innerWidth:390,innerHeight:844,devicePixelRatio:1,
- requestAnimationFrame(){},setTimeout:fn=>queueMicrotask(fn),clearTimeout(){},Math:Object.create(Math)};
-vm.createContext(context);
-const run=source=>vm.runInContext(source,context);
-const click=selector=>{const node=document.querySelector(selector);assert.ok(node&&!node.disabled,selector);node.click()};
-const ready=async condition=>{for(let i=0;i<100;i++){if(run(condition))return;await new Promise(resolve=>setTimeout(resolve,25))}assert.fail(condition)};
-for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js','theater-layouts.js','prototype-combat.js','scene/billboards.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
 
 (async()=>{
- await ready('decodedArt.size===Object.keys(artImages).length');
- const tab=group=>click('[data-armory-class="'+group+'"]');
+ const sim=simulate({random:()=>0,reducedMotion:true}),{run}=sim;
+ const control=(dataset={})=>({dataset,setAttribute(){},focus(){},onclick:null,oninput:null,onchange:null,value:''});
+ const paintPreset=control({paint:'#577eac'}),custom=control(),equip=control(),removeMelee=control();
+ const controls=new Map([['#custom-paint',custom],['#remove-melee',removeMelee]]);
+ sim.sandbox.document.querySelector=selector=>controls.get(selector)||sim.node(selector);
+ sim.sandbox.document.querySelectorAll=selector=>selector==='[data-paint]'?[paintPreset]:selector==='[data-equip]'?[equip]:[];
+
+ const renderWorkshop=()=>run("page='workshop';workshopView='assigned';render()");
+ const html=()=>sim.node('#ui').innerHTML;
+ const equipItem=id=>{
+  const group=run(`armoryClass(weapon('${id}'))`);
+  run(`armoryGroup='${group}';render()`);
+  assert.ok(html().includes(`data-weapon-card="${id}"`),id+' is listed in its armory class');
+  equip.dataset.equip=id;
+  assert.equal(typeof equip.onclick,'function',id+' has the bound purchase action');
+  equip.onclick();
+ };
+
+ renderWorkshop();
  const listed=new Set();
  for(const [group,count] of Object.entries({assault:8,strike:8,melee:8})){
-  tab(group);
-  const cards=[...document.querySelectorAll('[data-weapon-card]')];
+  run(`armoryGroup='${group}';render()`);
+  const cards=[...html().matchAll(/data-weapon-card="([^"]+)"/g)].map(([,id])=>id);
   assert.equal(cards.length,count);
-  for(const card of cards){
-   const id=card.dataset.weaponCard,preview=card.querySelector('.weapon-card-art');
-   assert.ok(preview&&fs.existsSync(path.join(dist,preview.getAttribute('src'))),id);
+  for(const id of cards){
    assert.equal(run(`armoryClass(weapon('${id}'))`),group,id);
    listed.add(id);
   }
  }
  assert.equal(listed.size,24);
- click('[data-paint="#577eac"]');
- assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).units[0].paint"),'#577eac');
- assert.equal(decoded.has('assets/warden-chassis-left-paint.webp'),false,'Paint changes use the live preview');
- tab('assault');click('[data-equip="hailstorm"]');tab('melee');click('[data-equip="cleaver"]');
+
+ run("armoryGroup='assault';render()");
+ assert.equal(typeof paintPreset.onclick,'function','Preset paint has a bound action');
+ paintPreset.onclick();
+ assert.equal(run('save.units[0].paint'),'#577eac');
+ assert.equal(JSON.parse(sim.storage.get('iron-vow-career')).units[0].paint,'#577eac');
+ equipItem('hailstorm');equipItem('cleaver');
  assert.equal(run("save.units[0].weapon+' '+save.units[0].melee"),'hailstorm cleaver');
- click('[data-select="1"]');assert.equal(run('save.units[1].paint'),undefined);
- const custom=document.querySelector('#custom-paint');custom.value='#335544';custom.oninput();custom.onchange();
+
+ run('selected=1;render()');
+ assert.equal(run('save.units[1].paint'),undefined);
+ custom.value='#335544';custom.oninput();custom.onchange();
  assert.equal(run('save.units[1].paint'),'#335544');
- click('[data-select="2"]');
- run('save.credits=20000;render()');
- for(const id of ['breaker','piledriver'])click('[data-equip="'+id+'"]');
- tab('strike');click('[data-equip="rampart"]');
- click('#remove-melee');assert.equal(run('save.units[2].melee'),undefined);
+ assert.equal(JSON.parse(sim.storage.get('iron-vow-career')).units[1].paint,'#335544');
+
+ run('selected=2;save.credits=20000;render()');
+ equipItem('breaker');equipItem('piledriver');equipItem('rampart');
+ assert.equal(typeof removeMelee.onclick,'function','Equipped melee has a bound unequip action');
+ removeMelee.onclick();assert.equal(run('save.units[2].melee'),undefined);
+
  run("createBattle(0,false,true);selected=0;action='move';renderBattle();Math.random=()=>0");
  assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>HOSTILE_LIVERIES.some(([p,s])=>u.paint===p&&u.trim.s===s))"));
- click('#strike');assert.equal(run('action'),'strike');
- run('persist()');
+ run("action='strike';persist()");
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).sortie.action"),'strike');
  for(const id of ['breaker','cleaver','piledriver','hailstorm','rampart']){
   assert.ok(await run(`(async()=>{
@@ -91,5 +84,5 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
    return !paths(current()).has(key)&&inCover({x:x-1,z});
   })`));
  }
- console.log('PASS: live attack phase timing, 24 classified weapon options, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and three theater rules with cover and pathing.');
+ console.log('PASS: live attack phase timing, 24 classified weapon options, independent saved paint and loadouts, purchases and melee unequip, strike save, attack AP/damage, and three theater rules with cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -24,6 +24,9 @@ const checkLineInfantry = require('./browser/line-infantry.cjs');
 const checkLineElite = require('./browser/line-elite.cjs');
 const checkInfantryCarry = require('./browser/infantry-carry.cjs');
 const checkLivePortraits = require('./browser/live-portraits.cjs');
+const checkArmory = require('./browser/armory.cjs');
+const checkAeroReview = require('./browser/aero-review.cjs');
+const checkWardenRigBench = require('./browser/warden-rig-bench.cjs');
 
 function checkWorkshopBudgets(assets) {
   const dir = path.resolve(assets, '../..');
@@ -166,6 +169,9 @@ async function main() {
     capture(checkLineElite),
     capture(checkInfantryCarry),
     capture(checkLivePortraits),
+    capture(checkArmory),
+    capture(checkAeroReview),
+    capture(checkWardenRigBench),
   ]);
   const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, warden, aero, kestrel, basilisk, bastion, ashigaru,
     lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) },

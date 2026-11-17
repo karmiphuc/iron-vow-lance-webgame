@@ -23,7 +23,7 @@ for(const file of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.
 vm.runInThisContext(readFileSync(join(__dirname,'../tools/authoring/warden/legacy-bind.js'),'utf8'));
 const T=THREE,R=window.IronVowFoundryRig,W=window.IronVowWardenRig,A=window.IronVowProductionArsenal,V3=R.V3,dt=1/60;
 const buffer=file=>{const b=readFileSync(join(dist,file));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)};
-const motion=JSON.parse(readFileSync(join(dist,'rig-bench/warden-painted-motion.json'),'utf8'));
+const motion=JSON.parse(readFileSync(join(__dirname,'../tools/authoring/warden/approved-bench-motion.json'),'utf8'));
 
 async function main(){
  await W.load(buffer('rig-bench/warden-painted.glb'),motion);

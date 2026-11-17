@@ -57,7 +57,6 @@ const purchase=simulate({random:()=>0}).run;
 purchase("save.credits=FRAMES[3].cost+10000;assignChassis(0,3);selected=0;page='workshop'");
 assert.equal(purchase("save.units[0].melee"),undefined);
 assert.equal(purchase("save.units[0].shoulder"),undefined);
-assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher-bare');
 assert.equal(purchase("save.owned.includes('missile')&&!save.owned.includes('vesper-shoulder')"),true);
 assert.equal(purchase(`(()=>{
  const old=JSON.parse(JSON.stringify(save));old.units[0].melee='breach-gauntlet';
@@ -65,14 +64,14 @@ assert.equal(purchase(`(()=>{
  return restored.units[0].melee===undefined&&restored.credits===save.credits;
 })()`),true);
 purchase("equipWeapon('cleaver');equipWeapon('vesper-shoulder')");
-assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher');
+assert.equal(purchase("save.units[0].melee==='cleaver'&&save.units[0].shoulder==='vesper-shoulder'"),true);
 assert.equal(purchase("validSave(save)"),true);
 assert.equal(purchase(`(()=>{
  const invalid=JSON.parse(JSON.stringify(save));invalid.owned=invalid.owned.filter(id=>id!=='vesper-shoulder');
  return validSave(invalid);
 })()`),false);
 purchase("assignChassis(0,0);assignChassis(0,3)");
-assert.equal(purchase("nativeHullKey(3,save.units[0])"),'gatecrasher');
+assert.equal(purchase("save.units[0].melee==='cleaver'&&save.units[0].shoulder==='vesper-shoulder'"),true);
 assert.equal(purchase("validSave(save)"),true);
 console.log('PASS: four Gatecrasher kits, legacy save migration, ownership and hull storage; Hellbreaker salvage and rigs.');
 
@@ -85,7 +84,8 @@ assert.equal(flagship(`(()=>{
  selected=1;equipWeapon('cleaver');equipWeapon('vesper-shoulder');
  const restored=loadCareer(JSON.parse(JSON.stringify(save)));
  return !!restored&&pilotFrame(0,restored)===3&&pilotFrame(1,restored)===SHOGUN_FRAME&&
-   nativeHullKey(3,restored.units[0])==='gatecrasher-bare'&&nativeHullKey(SHOGUN_FRAME,restored.units[1])==='shogun';
+   restored.units[0].melee===undefined&&restored.units[0].shoulder===undefined&&
+   restored.units[1].melee==='cleaver'&&restored.units[1].shoulder==='vesper-shoulder';
 })()`),true);
 // browser/shogun-v2.cjs exercises the same live sortie checks for Shogun.
 const shogunGlb=readFileSync(join(dist,'rig-bench/prototypes/shogun.glb'));

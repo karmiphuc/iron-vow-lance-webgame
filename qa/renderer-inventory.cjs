@@ -60,7 +60,7 @@ function inventory(){
  const currentRig=name=>shipped.has(rigV2File(name))?rigV2File(name):null;
  return {baseline:'f264567f01d0501b11f40e1ffdc15a314f47993d',
   frames:frames.map(f=>({...f,rig_v2:currentRig(f.name),glbs:[currentRig(f.name),...(mapping[f.name]??[])].filter(Boolean),
-   source:f.foundry<6?'procedural kit':'GLB or baked-only; see markdown'})),
+   source:currentRig(f.name)?'rig-v2 GLB':'procedural kit'})),
   glbs,optional_chassis:[{name:'LION',in_frames:false,rig_v2:currentRig('LION'),glbs:[currentRig('LION')].filter(Boolean),source:'Lion-Clay/Extended-Follow-Through/Lion-Rigged.blend'}],
   note:'GLB presence does not establish rig contract v2. Counts inspect file JSON, not live renderer.info. Unique mesh triangles exclude node instancing.'};
 }

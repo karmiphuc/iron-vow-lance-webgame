@@ -11,7 +11,7 @@
         "rig-bench/warden-painted.glb",
         "rig-bench/warden.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 1,
@@ -22,7 +22,7 @@
         "rig-bench/rig-v2/kestrel.glb",
         "rig-bench/kestrel.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 2,
@@ -33,7 +33,7 @@
         "rig-bench/rig-v2/basilisk.glb",
         "rig-bench/basilisk.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 3,
@@ -45,7 +45,7 @@
         "rig-bench/rig-v2/gatecrasher-r2-reference.glb",
         "rig-bench/prototypes/gatecrasher.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 4,
@@ -57,7 +57,7 @@
         "rig-bench/rig-v2/cicada-reference.glb",
         "rig-bench/prototypes/cicada.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 5,
@@ -115,7 +115,7 @@
         "rig-bench/rig-v2/bastion.glb",
         "rig-bench/bastion-bst04.glb"
       ],
-      "source": "procedural kit"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 11,
@@ -127,7 +127,7 @@
         "rig-bench/rig-v2/hellbreaker.glb",
         "rig-bench/prototypes/hellbreaker.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 12,
@@ -148,7 +148,7 @@
       "glbs": [
         "rig-bench/rig-v2/li-01.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 14,
@@ -159,7 +159,7 @@
       "glbs": [
         "rig-bench/rig-v2/li-02.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 15,
@@ -170,7 +170,7 @@
       "glbs": [
         "rig-bench/rig-v2/vanguard.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 16,
@@ -181,7 +181,7 @@
       "glbs": [
         "rig-bench/rig-v2/reaver.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 17,
@@ -193,7 +193,7 @@
         "rig-bench/rig-v2/bulwark.glb",
         "rig-bench/prototypes/bulwark.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 18,
@@ -205,7 +205,7 @@
         "rig-bench/rig-v2/ashigaru.glb",
         "rig-bench/prototypes/scout.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 19,
@@ -216,7 +216,7 @@
       "glbs": [
         "rig-bench/rig-v2/aero.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     },
     {
       "id": 20,
@@ -228,7 +228,7 @@
         "rig-bench/rig-v2/shogun.glb",
         "rig-bench/prototypes/shogun.glb"
       ],
-      "source": "GLB or baked-only; see markdown"
+      "source": "rig-v2 GLB"
     }
   ],
   "glbs": [
@@ -7559,12 +7559,20 @@
     },
     {
       "file": "rig-bench/warden-painted.glb",
-      "bytes": 2487532,
+      "bytes": 2830372,
       "nodes": 54,
       "meshes": 23,
       "unique_mesh_triangles": 50316,
       "skins": 0,
-      "clips": [],
+      "clips": [
+        "Aim",
+        "Brace",
+        "Melee maul",
+        "Melee sweep",
+        "Melee thrust",
+        "Recoil",
+        "Walk"
+      ],
       "materials": [
         "Warden / dark structural steel",
         "Warden / blue graphite armor",

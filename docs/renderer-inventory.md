@@ -36,6 +36,8 @@ The procedural kit publishes the same joints, dimensions, materials and damage g
 
 The remaining chassis and Lion have rig-v2 GLBs. The Phase 0 tables below retain the historical sources before migration.
 
+The current build has removed the temporary billboard and weapon adapters, sprite atlases, paint masks, and baked fallback stills. Original editable projects and export scripts remain available.
+
 ## Phase 0 baseline
 
 Baseline: GitHub `f264567f01d0501b11f40e1ffdc15a314f47993d` / Sites v98. References entered main through PR #5 (`2034d9b`). No presentation paths have been replaced or deleted in this phase.

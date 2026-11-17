@@ -2,22 +2,11 @@ const assert=require('node:assert/strict');
 const simulate=require('./sim-harness.cjs');
 const fixture=require('./fixtures/aero-relay.json');
 let roll=0;
-const options={foundry:true,random:()=>roll};
+const options={random:()=>roll};
 const sim=simulate(options),{run}=sim;
 const ids=['cleaver','breaker','piledriver','blade'];
 
 (async()=>{
- const asset=run('window.IRON_VOW_AERO_ART');
- assert.deepEqual(Object.keys(asset.strikes),ids);
- for(const id of ids){
-  const {levels,frames}=asset.strikes[id];
-  assert.ok(levels.length>=20);
-  assert.equal(frames.length,levels.length);
-  const tipAt=level=>frames[levels.indexOf(level)].meleeTip;
-  assert.ok(tipAt(.70)[0]<tipAt(0)[0]-.12,id+' reaches forward at impact');
-  assert.ok(new Set(frames.map(f=>JSON.stringify(f.meleeTip))).size>=13,id+' moves its weapon through the strike');
-  assert.ok(tipAt(.70).every(n=>n>0&&n<1),id+' impact remains inside the frame');
- }
  assert.equal(run('FRAMES[AERO_FRAME].name'),'AERO');
  assert.equal(run('FRAMES[AERO_FRAME].cost'),400000);
  assert.equal(run('hullOnMarket(AERO_FRAME)&&!acquireHull(AERO_FRAME)'),true);
@@ -32,9 +21,8 @@ const ids=['cleaver','breaker','piledriver','blade'];
   run(`{
    const u=battle.units.find(u=>u.frame===AERO_FRAME),t=current(),profile=attackProfile(u,"${id}");
    Object.assign(u,{attack:{kind:"${id}",start:10,fireAt:10+profile.raise,releaseAt:10+profile.raise+profile.travel}});
-   const view=foundryRender(u,u.attack.releaseAt);
-   if(!view.secondary||window.IRON_VOW_AERO_ART.strikes["${id}"].levels[view.index]!==.70||
-    !view.anchors.meleeTip.every(Number.isFinite))throw Error("Incorrect impact pose");
+   const pose=animationPose(u,u.attack.releaseAt);
+   if(pose.strikeKind!=="${id}"||Math.abs(pose.strikeProgress-.7)>1e-6)throw Error("Incorrect impact phase");
    u.attack=null;
    if(save.day===3)u.hp.right=0;
    battle.units=[t,u];battle.cover.clear();

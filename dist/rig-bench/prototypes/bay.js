@@ -72,7 +72,6 @@ const clipButtons = [...document.querySelectorAll("[data-clip]")];
 const cameraButtons = [...document.querySelectorAll("[data-camera]")];
 const canvas = byId("view");
 const viewport = canvas.parentElement;
-const still = byId("still");
 const scrubber = byId("time");
 const playButton = byId("play");
 const rigButton = byId("rig");
@@ -120,7 +119,6 @@ function presetAngle(id, preset) {
 
 function setControls(ready) {
   viewport.classList.toggle("live", ready);
-  still.hidden = ready;
   canvas.hidden = !ready;
   for (const button of [...clipButtons, ...cameraButtons, playButton, rigButton]) {
     button.disabled = !ready;
@@ -300,7 +298,7 @@ function createViewer() {
       event.preventDefault();
       setPlaying(false);
       setControls(false);
-      status.textContent = "Still preview · 3D context lost";
+      status.textContent = "3D context lost";
     });
     canvas.addEventListener("webglcontextrestored", () => selectChassis(activeChassis));
     return true;
@@ -325,8 +323,6 @@ async function selectChassis(id) {
   setPlaying(false);
   setControls(false);
   byId("geometry").textContent = "—";
-  still.src = "./" + id + ".webp";
-  still.alt = meta.name + " inspection render";
   for (const key of ["name", "role", "summary", "weapon", "serial"]) byId(key).textContent = meta[key];
   byId("legs").textContent = meta.legs || "Two-bone IK";
   byId("mechanisms").textContent = meta.mechanisms || "4 telescoping rams";
@@ -335,7 +331,7 @@ async function selectChassis(id) {
   }
   showTrial();
   if (!renderer) {
-    status.textContent = "Still preview · WebGL unavailable";
+    status.textContent = "WebGL required";
     return;
   }
   status.textContent = "Loading chassis";
@@ -410,7 +406,7 @@ async function selectChassis(id) {
   } catch (error) {
     if (serial !== loadSerial) return;
     setControls(false);
-    status.textContent = "Still preview · Model unavailable";
+    status.textContent = "Model unavailable";
     console.warn("Prototype Bay could not load " + id, error);
   }
 }

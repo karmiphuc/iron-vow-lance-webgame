@@ -1,6 +1,4 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
 const createSimulation = require('./sim-harness.cjs');
 
 let sim, capture = false, poses = [];
@@ -10,15 +8,14 @@ const setTimeout = (callback, ms) => {
   for(let t = start + .021; t < end; t += .031){
    const sample = JSON.parse(sim.run(`JSON.stringify((()=>{
     clock=${t};
-    const u=current(), visual=activeWardenVisual(u);
+    const u=current();
     advanceUnitAnimation(u,clock,.031);
-    const pose=animationPose(u,clock,visual),frame=wardenMotionFrame(u,visual,pose)?.frame;
-    drawUnitBody(u,clock);
-    if(activeCinematic)drawAttackCamera(clock);
-    return {index:frame?.index,level:frame?.level,clip:u.attack?.native?.clip,walking:!!u.motion,priming:pose.primePhase==='step'&&visual.motion.gait.includes(frame),
+    const pose=animationPose(u,clock);
+    return {phase:pose.phase,walking:!!u.motion,priming:pose.primePhase==='step',
+     aim:pose.aim,strike:pose.strikeProgress,fired:Number.isFinite(u.attack?.fireAt),windup:u.attack?.windup,
      advanced:pose.primeProgress>0};
    })())`));
-   if(sample.index!==undefined)poses.push(sample);
+   poses.push(sample);
   }
   sim.run(`clock=${end}`);
  }
@@ -58,7 +55,7 @@ const setTimeout = (callback, ms) => {
   await run(`moveUnit(current(),${x},${z},1)`);
   capture=false;
   assert.equal(run('current().ap'),8);
-  assert.ok(new Set(poses.filter(p=>p.walking).map(p=>p.index)).size>8,id+' uses animated gait');
+  assert.ok(new Set(poses.filter(p=>p.walking).map(p=>p.phase)).size>8,id+' advances the live gait clock');
   poses=[];
   const before=run('battle.units[4].hp.body');
   assert.ok(run('distance(current(),battle.units[4])<=unitWeapon(current()).range'));
@@ -70,12 +67,8 @@ const setTimeout = (callback, ms) => {
   assert.equal(run('current().ap'),4);
   assert.ok(run('battle.units[4].hp.body')<before);
   assert.ok(poses.some(p=>p.priming&&p.advanced),id+' takes a forward step before releasing');
-  assert.ok(poses.some(p=>p.clip==='fire'&&p.level===.42),id+' reaches the first release pose');
-  assert.ok(poses.some(p=>p.clip==='fire'&&p.level===.58),id+' reaches the second release pose');
-  assert.ok(run(`(()=>{
-   const u=current(),a=freezeAttachment(u,shotMuzzle(u,'${id}',0)),b=freezeAttachment(u,shotMuzzle(u,'${id}',1));
-   return Math.hypot(a.ox-b.ox,a.oy-b.oy)>.04;
-  })()`),id+' uses distinct emitter origins');
+  assert.ok(poses.some(p=>p.fired&&p.aim>.9&&Math.abs(p.windup-.42*56/30)<1e-6),id+' preserves its release timing');
+  // browser/gatecrasher-v2 and browser/cicada-v2 verify distinct authored emitters.
  }
  assert.equal(run("hitChance(battle.units[1],battle.units[3],'body',weapon('locust'))"),
               run("hitChance(battle.units[1],battle.units[3],'body',weapon('missile'))"));
@@ -87,13 +80,13 @@ const setTimeout = (callback, ms) => {
  await run("shoot(current(),battle.units[3],'body',selectedWeapon(current(),'strike'))");
  capture=false;
  assert.equal(run('current().ap'),2);
- assert.ok(poses.some(p=>p.clip==='strike'&&p.level===.54));
+ assert.ok(poses.some(p=>p.fired&&p.strike>.5&&Math.abs(p.windup-.34*1.05)<1e-6));
  run('selected=1;battle.units[5].x=4;battle.units[5].z=18');
  poses=[];capture=true;
  await run("shoot(current(),battle.units[5],'body',weapon('pulse-bash'))");
  capture=false;
  assert.equal(run('current().ap'),2);
- assert.ok(poses.some(p=>p.clip==='strike'&&p.level===.54));
+ assert.ok(poses.some(p=>p.fired&&p.strike>.5&&Math.abs(p.windup-.34*1.05)<1e-6));
  assert.ok(run('battle.units[5].hp.body<battle.units[5].max.body'));
  run('persist()');
  const saved=run('JSON.stringify(captureSortie())');
@@ -104,15 +97,5 @@ const setTimeout = (callback, ms) => {
  assert.equal(restored.run('save.units[0].level'),2);
  assert.equal(restored.run("validSave({...save,units:[save.units[0],save.units[0],save.units[2]]})"),false);
 
- for(const model of ['gatecrasher','cicada']){
-  for(const face of ['left','right']){
-   const data=JSON.parse(run(`JSON.stringify(prototypes.${model}.${face})`));
-   assert.ok(data.ground>.7&&data.ground<.95);
-   for(const clip of ['gait','fire','strike'])assert.ok(data.motion[clip].length>=15);
-   for(const key of [data.key,data.motion.key]){
-    for(const suffix of ['', '-paint'])assert.ok(fs.existsSync(path.join(__dirname,'../dist/assets',key+suffix+'.webp')));
-   }
-  }
- }
- console.log('PASS: reserve swaps preserve career data, both native gaits and salvos render in combat, strike and subsystem rules work, and the reassigned lance resumes from its checkpoint.');
+ console.log('PASS: reserve swaps preserve career data, both hulls advance the live gait and retain salvo timing, strike and subsystem rules work, and the reassigned lance resumes from its checkpoint.');
 })().catch(error=>{console.error(error);process.exitCode=1});

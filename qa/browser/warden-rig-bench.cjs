@@ -2,6 +2,8 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkWardenRigBench({page,origin,tap}){
  const url=new URL('/rig-bench/',origin).href;
+ const requests=new Set();
+ page.on('request',request=>requests.add(new URL(request.url()).pathname));
  await page.route(url,async route=>{
   const response=await route.fetch();
   const html=(await response.text()).replace('  const I=inst.gun; I.muzzle.getWorldPosition(tmp);',
@@ -14,7 +16,7 @@ module.exports=async function checkWardenRigBench({page,origin,tap}){
        const pos=socket.getWorldPosition(V3());
        return [slot,{id:I.def.id,parent:socket.parent.name,pos:pos.toArray(),gap:I.model.localToWorld(center).distanceTo(pos)}];
      }));
-     return {root:rig.root.name,shots:window.rigBenchShots||0,ready:gun.state==='idle'&&rig.aim<.01,
+     return {root:rig.root.name,clips:Object.keys(rig.actions),shots:window.rigBenchShots||0,ready:gun.state==='idle'&&rig.aim<.01,
        impact:melee.active&&melee.impactDone,walk:rig.walkTime,...slots};
    };
    loadProductionAssets();
@@ -23,6 +25,7 @@ module.exports=async function checkWardenRigBench({page,origin,tap}){
  await page.goto(url,{waitUntil:'domcontentloaded'});
  await page.waitForSelector('body[data-rig-model=painted]');
  const snapshot=()=>page.evaluate(()=>window.benchState());
+ assert.deepEqual((await snapshot()).clips,['Aim','Brace','Melee maul','Melee sweep','Melee thrust','Recoil','Walk']);
  const travel=(a,b)=>Math.hypot(...a.pos.map((value,i)=>value-b.pos[i]));
  function contact(state){
   assert.equal(state.root,'Painted_Warden');
@@ -57,4 +60,14 @@ module.exports=async function checkWardenRigBench({page,origin,tap}){
  contact(await snapshot());
  await tap('#btnRig');
  assert.equal(await page.locator('#btnRig').getAttribute('aria-pressed'),'true');
+ await tap('#btnSpec');
+ assert.equal(await page.locator('#spec').isVisible(),true);
+ await tap('#specClose');
+ assert.equal(await page.locator('#spec').isVisible(),false);
+ const sound=await page.locator('#btnSound').getAttribute('aria-pressed');
+ await tap('#btnSound');
+ assert.notEqual(await page.locator('#btnSound').getAttribute('aria-pressed'),sound);
+ assert.ok(requests.has('/rig-bench/warden-painted.glb'));
+ for(const asset of ['rig-motion.js','painted-warden.js','warden-painted-motion.json','warden-rig-loop.webp','warden-rifle-left.webp'])
+  assert.ok(![...requests].some(path=>path.endsWith('/'+asset)),'Bench still requested '+asset);
 };

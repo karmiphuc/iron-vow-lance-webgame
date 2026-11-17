@@ -7,7 +7,7 @@ const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemoth
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer,scene,camera,failed=false;
-const combat=new Map(),previews=new Map(),hangarModels=new Map();
+const combat=new Map(),previews=new Map(),hangarModels=new Map(),objectPortraits=new Map();
 function clearPreviews(scope){
  for(const [key,entry] of previews)if(!scope||entry.previewScope===scope){disposeEntry(entry);previews.delete(key);}
 }
@@ -91,18 +91,61 @@ function makeSurface(){
 }
 function paintRig(m,surface,target=renderer,groundRow=ground){
  const size=surface.width,center=V3().project(camera),offsetY=Math.round(size*(groundRow-(.5-center.y*.5)));
+ paintPreview(m.cont,surface,camera,target,offsetY);
+}
+function paintPreview(object,surface,view,target=renderer,offsetY=0){
+ const size=surface.width;
  if(!previewTarget){previewTarget=new T.WebGLRenderTarget(size,size);previewTarget.texture.encoding=T.sRGBEncoding;}
  if(previewTarget.width!==size)previewTarget.setSize(size,size);
- const pixels=new Uint8Array(size*size*4),previous=target.getRenderTarget(),parent=m.cont.parent;
- scene.add(m.cont);
+ const pixels=new Uint8Array(size*size*4),previous=target.getRenderTarget(),parent=object.parent;
+ scene.add(object);
  try{
-  target.setRenderTarget(previewTarget);target.render(scene,camera);
+  target.setRenderTarget(previewTarget);target.render(scene,view);
   window.IronVowPerformance?.recordRender(target.info);
   target.readRenderTargetPixels(previewTarget,0,0,size,size,pixels);
   const g=surface.getContext('2d'),image=g.createImageData(size,size);
   for(let y=0;y<size;y++)image.data.set(pixels.subarray((size-1-y)*size*4,(size-y)*size*4),y*size*4);
   g.clearRect(0,0,size,size);g.putImageData(image,0,offsetY);
- }finally{target.setRenderTarget(previous);scene.remove(m.cont);if(parent)parent.add(m.cont);}
+ }finally{target.setRenderTarget(previous);scene.remove(object);if(parent)parent.add(object);}
+}
+function objectPortrait(key,object){
+ object.updateMatrixWorld(true);
+ const bounds=new T.Box3().setFromObject(object);
+ if(bounds.isEmpty())return;
+ const center=bounds.getCenter(V3()),radius=Math.max(.05,bounds.getSize(V3()).length()*.5);
+ const half=radius*1.14,view=new T.OrthographicCamera(-half,half,half,-half,radius,radius*7);
+ view.position.copy(center).addScaledVector(V3(4,2.8,6).normalize(),radius*4);
+ view.lookAt(center);
+ const surface=makeSurface();
+ paintPreview(object,surface,view);
+ const url=surface.toDataURL('image/png');
+ objectPortraits.set(key,url);
+ if(objectPortraits.size>32)objectPortraits.delete(objectPortraits.keys().next().value);
+ return url;
+}
+function equipmentThumbnail(kind,id){
+ if(!init()||!armory||window.IronVowRenderer.lost)return;
+ const key=kind+':'+id;
+ if(objectPortraits.has(key))return objectPortraits.get(key);
+ const socket=new T.Group();
+ const item=kind==='shield'?arsenal.mountShield(armory,id,socket):
+  arsenal.mount(armory,window.IronVowWeaponFX?.get(id).asset??id,socket);
+ if(!item)return;
+ try{return objectPortrait(key,socket);}
+ finally{for(const material of item.ownedMaterials||[])material.dispose();}
+}
+function vehicleThumbnail(kind,facing){
+ const vehicles=window.IronVowVehicles;
+ if(vehicles?.status(kind)!=='ready'||!init()||window.IronVowRenderer.lost)return;
+ const key=kind+':'+facing;
+ if(objectPortraits.has(key))return objectPortraits.get(key);
+ const record=vehicles.create(kind);
+ if(!record)return;
+ try{
+  const unit={kind,index:0,alive:true,hp:{body:100},max:{body:100}};
+  vehicles.update(record,unit,0,V3(),facing>0?.68:-.68,true);
+  return objectPortrait(key,record.object);
+ }finally{vehicles.release(record);}
 }
 function projectedAnchor(point){
  const p=point.project(camera);
@@ -373,5 +416,6 @@ function releaseHangarRig(id){
  const entry=hangarModels.get(id);
  if(entry){entry.m.cont.parent?.remove(entry.m.cont);disposeEntry(entry);hangarModels.delete(id);}
 }
-window.IronVowFoundry={releaseHangarRig,metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
+window.IronVowFoundry={releaseHangarRig,metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),
+ equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
 })();
