@@ -59,33 +59,68 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
   return moves.map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-280&&m.p.y>230&&m.p.y<innerHeight-180&&IronVowScene.pick(m.p.x,m.p.y)?.team!=='enemy');
  });
  if(move&&!mobile){await page.mouse.move(move.p.x,move.p.y);await page.waitForFunction(()=>IronVowScene.overlayInfo().path.length>0);const info=await page.evaluate(()=>IronVowScene.overlayInfo());assert.ok(info.triangles>0&&info.path.some(p=>p.color===0xcc9b49),'Reach and paid-move path render actual amber geometry');assert.equal(info.selected,true);}
- let attack;
- for(let attempt=0;attempt<4;attempt++){
-  const decision=await page.evaluate(()=>{
-   for(const u of battle.units.filter(u=>u.team==='ally')){const choice=__ironVow.choices(u.id).attacks.find(a=>a.mode==='fire');if(choice)return{attack:{id:u.id,...choice}};}
-   for(const u of battle.units.filter(u=>u.team==='ally')){const choices=__ironVow.choices(u.id),move=choices.moves.sort((a,b)=>a.score-b.score)[0];if(move&&move.score<choices.currentScore)return{move:{id:u.id,...move}};}
-  });
-  if(decision?.attack){attack=decision.attack;break;}
-  if(!decision?.move)break;
-  await page.evaluate(move=>{void __ironVow.move(move.id,move.x,move.z);},decision.move);
-  await page.waitForFunction(()=>!__ironVow.pending,null,{timeout:120000});
- }
- assert.ok(attack,'Real campaign deployment has a legal attack');
+ const attack=await page.evaluate(()=>{
+  const defender=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+  // Use a clear nearby tile so the fixture always tests a mech defending a legal shot.
+  for(const actor of battle.units.filter(u=>u.team==='ally')){
+   for(const [dx,dz] of [[2,0],[0,-2],[-2,0],[0,2],[1,0],[0,-1],[-1,0],[0,1]]){
+    const x=actor.x+dx,z=actor.z+dz;
+    if(!onBoard(x,z)||battle.cover.has(x+','+z)||occupied(x,z))continue;
+    defender.x=defender.vx=x;defender.z=defender.vz=z;
+    const shot=__ironVow.choices(actor.id).attacks.find(choice=>choice.target===defender.id&&choice.mode==='fire');
+    if(shot)return {id:actor.id,...shot};
+   }
+  }
+ });
+ assert.ok(attack,'Campaign fixture has a legal attack on a mech');
  console.log('legal campaign attack ready');
  // Hold short camera stages on software GL while still drawing the real scene and running real timers.
  await page.evaluate(()=>__stopNativeSceneFrames());
  const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
  await page.evaluate(()=>{last=performance.now();requestAnimationFrame(draw);});
+ const beforeGuard=await page.evaluate(({id,target,offset})=>{
+  const actor=battle.units.find(u=>u.id===id),defender=battle.units.find(u=>u.id===target);
+  const bearing=Math.atan2(actor.vx-defender.vx,actor.vz-defender.vz);
+  // Exercise a flank attack on desktop and a rear attack on touch.
+  defender.headingOverride=bearing+offset-Math.PI/4;
+  const model=IronVowScene.models.get(target).entry.m;
+  model.init=false;
+  IronVowScene.render(clock,1/60);
+  return {bearing,yaw:model.yaw,hip:model.rig.pelvis.position.y,arm:model.rig.arms.L.sh.rotation.x,
+   heading:defender.heading,brace:defender.brace,ap:defender.ap};
+ },{...attack,offset:mobile?Math.PI:Math.PI/2});
  await page.evaluate(a=>{void __ironVow.attack(a.id,a.target,a.part,a.mode);},attack);
  assert.equal(await page.evaluate(()=>Boolean(activeCinematic)),true,'Real attack opens the camera');
  await page.clock.fastForward(34);
  assert.equal(await page.evaluate(()=>IronVowScene.camera.isPerspectiveCamera),true);
  const shoulder=await page.evaluate(id=>{IronVowScene.render(clock,1);const actor=battle.units.find(u=>u.id===id);return IronVowScene.camera.position.distanceTo(IronVowScene.world(actor.vx,actor.vz));},attack.id);
  assert.ok(shoulder<12,'The actual camera moves over the attacker shoulder: '+shoulder);
+ const duringGuard=await page.evaluate(({id,target})=>{
+  // Sample the aim stage before any volley result, with real rig and GPU updates.
+  for(let frame=1;frame<=12;frame++)IronVowScene.render(clock+frame/30,1/30);
+  const defender=battle.units.find(u=>u.id===target),model=IronVowScene.models.get(target).entry.m;
+  const camera=IronVowScene.camera,attackerMeshes=[];
+  IronVowScene.models.get(id).object.traverseVisible(mesh=>{if(mesh.isMesh)attackerMeshes.push(mesh);});
+  const landmarks=[model.rig.pelvis,model.rig.arms.L.el];
+  const guardVisible=landmarks.every(node=>{
+   const point=node.getWorldPosition(new THREE.Vector3()),ndc=point.clone().project(camera);
+   const direction=point.sub(camera.position),distance=direction.length();
+   const ray=new THREE.Raycaster(camera.position,direction.normalize(),0,distance);
+   return Math.abs(ndc.x)<1&&Math.abs(ndc.y)<1&&ndc.z<1&&!ray.intersectObjects(attackerMeshes,false).length;
+  });
+  return {yaw:model.yaw,hip:model.rig.pelvis.position.y,arm:model.rig.arms.L.sh.rotation.x,
+   heading:defender.heading,brace:defender.brace,ap:defender.ap,guardVisible};
+ },attack);
+ const separation=yaw=>Math.acos(Math.min(1,Math.max(-1,Math.cos(yaw-beforeGuard.bearing))));
+ assert.ok(separation(duringGuard.yaw)<separation(beforeGuard.yaw)-.4,
+  `The defending rig turns toward the actual attacker (${separation(beforeGuard.yaw)} to ${separation(duringGuard.yaw)} rad)`);
+ assert.ok(duringGuard.hip<beforeGuard.hip-.12&&duringGuard.arm<beforeGuard.arm-.3,'The defending rig lowers its stance and raises its guard before impact');
+ assert.ok(duringGuard.guardVisible,'The close shot leaves the defender’s stance and guard clear of the attacker');
+ assert.deepEqual([duringGuard.heading,duringGuard.brace,duringGuard.ap],[beforeGuard.heading,beforeGuard.brace,beforeGuard.ap],'The camera pose does not alter the defender’s rules or heading');
  await page.evaluate(()=>document.querySelector('#skip-shot').click());
  for(let i=0;i<20&&await page.evaluate(()=>__ironVow.pending);i++)await page.clock.fastForward(1000);
  assert.equal(await page.evaluate(()=>__ironVow.pending||Boolean(activeCinematic)),false,'Skip resolves the real exchange');
- console.log('3D attack camera and Skip passed');
+ console.log('3D attack camera, defender guard and Skip passed');
  const before=await page.evaluate(()=>({checkpoint:__ironVow.checkpoint(),generation:IronVowRenderer.generation}));
  // The extension exercises real GL resource loss; the game state must survive untouched.
  await page.evaluate(()=>{window.__loseContext=IronVowRenderer.get().getContext().getExtension('WEBGL_lose_context');__loseContext.loseContext();});

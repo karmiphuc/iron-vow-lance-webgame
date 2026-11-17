@@ -20,7 +20,7 @@ function create(){
    const facing=.3,aim=new T.Vector3(selected&&!reducedMotion?Math.sin(time*.7)*8:0,6,20);
    const pose={stage:'hangar',reducedMotion,heading:facing,phase:0,primeProgress:0,strikeProgress:0,
     aim:selected&&!reducedMotion&&time%9<1.6?.35:0,recoil:0,impact:0,land:0,brace:0,
-    world:{x:0,y:0,z:0,aim,heading:facing,face:facing,speed:0,groundAt:()=>0}};
+    world:{x:0,y:0,z:0,aim,heading:facing,face:facing,speed:0,noPlant:true,groundAt:()=>0}};
    const live=F.draw(actor,time,pose,null,actor.model,kind==='kit'?undefined:kind);
    if(live&&live.m.cont.parent!==object)object.add(live.m.cont);
   },dispose(){
