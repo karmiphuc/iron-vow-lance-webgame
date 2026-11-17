@@ -1,4 +1,5 @@
 const assert=require('node:assert/strict');
+const waitForLivePortraits=require('./portrait-readiness.cjs');
 const {join}=require('node:path');
 
 module.exports=async function checkShields({context,page,mobile,origin,tap}){
@@ -10,8 +11,8 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  if(mobile)await page.setViewportSize({width:320,height:700});
  await tap(tab);
  assert.equal(await page.locator('[data-shield-card]').count(),2);
+ await waitForLivePortraits(page,'[data-shield-card] .weapon-card-art',2);
  for(const [id,discount] of [[buckler,'−20%'],[tower,'−35%']]){
-  await card(id).locator('.weapon-card-art').evaluate(img=>img.decode());
   assert.deepEqual(await card(id).locator('dd').allTextContents(),['Always',discount,'0']);
  }
  assert.ok(await page.locator('.workshop-armory').evaluate(node=>node.scrollWidth<=node.clientWidth+1));

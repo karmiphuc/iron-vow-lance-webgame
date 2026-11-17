@@ -8,7 +8,7 @@ import bpy
 from mathutils import Matrix, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from render_prototype_combat import add_strike_track
+from authoring.prototypes.cleaver_motion import add_strike_track
 
 
 arsenal, output = (Path(arg).resolve() for arg in sys.argv[sys.argv.index("--")+1:])

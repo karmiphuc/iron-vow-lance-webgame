@@ -5,7 +5,7 @@ import sys
 import bpy
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from render_prototype_combat import add_strike_track
+from authoring.prototypes.cleaver_motion import add_strike_track
 
 rig = bpy.data.objects["GATECRASHER / Rig"]
 assert "Cleaver Tip.L" in rig.pose.bones

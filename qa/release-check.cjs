@@ -1,7 +1,7 @@
 const {createHash}=require('node:crypto');
 const {execFileSync,spawnSync}=require('node:child_process');
 const {readFileSync,readdirSync}=require('node:fs');
-const {join,resolve}=require('node:path');
+const {join,relative,resolve}=require('node:path');
 const checkBrowser=require('./check-browser.cjs');
 const root=resolve(__dirname,'..');
 
@@ -24,17 +24,17 @@ function servedSource(file,bytes){
   code.includes('__CF$cv$params')&&code.includes('/cdn-cgi/challenge-platform/')?'':tag);
 }
 
+function deployedFiles(dist){
+ const supported=/\.(?:html|js|css|glb|bin|json|webp|png|jpe?g|svg|woff2|wav|mp3|ogg|mp4)$/i;
+ return readdirSync(dist,{recursive:true,withFileTypes:true})
+  .filter(entry=>entry.isFile()&&supported.test(entry.name))
+  .map(entry=>relative(dist,join(entry.parentPath,entry.name))).sort();
+}
+
 async function verifyLive(url){
- const dist=join(root,'dist'),base=new URL(url);
+ const dist=join(root,'dist'),base=new URL(url),files=deployedFiles(dist);
  if(base.protocol!=='https:'||base.username||base.password)throw Error('Use the public HTTPS Site URL.');
- const files=readdirSync(dist,{recursive:true}).filter(file=>file===join('assets','theater-tiles.webp')||file.endsWith('-parts.webp')||/-walk(?:-[^\\/]+)?\.webp$/.test(file)||/\.(?:html|js|css)$|(?:^|[\\/])(?:(?:aero-[^\\/]+|lion-[^\\/]+|armory-[^\\/]+|foundry-[6789](?:-[^\\/]+)?|reaver-[^\\/]+|bulwark|scout|ashigaru(?:-combat)?|foundry-1[01]|foundry-1[0-2]-death(?:-[0-3])?|aegis-(?:idle|[0-3]-(?:full|right-down|left-down|disarmed)))\.webp|expansion-weapons\.glb|shields\.glb|bulwark\.glb|scout\.glb)$/.test(file));
- files.push(...readdirSync(join(dist,'assets','audio')).filter(file=>file.endsWith('.wav'))
-  .map(file=>join('assets','audio',file)));
- files.push(...readdirSync(join(dist,'assets')).filter(file=>/^(?:grid-travel-)?(?:gatecrasher|shogun).*\.webp$/.test(file))
-  .map(file=>join('assets',file)));
- for(const model of ['gatecrasher','shogun'])for(const type of ['glb','webp'])
-  files.push(join('rig-bench','prototypes',model+'.'+type));
- for(const file of new Set(files)){
+ for(const file of files){
   const asset=new URL(file.replaceAll('\\','/'),base);
   const options={cache:'no-store',signal:AbortSignal.timeout(20000)};
   let response=await fetch(asset,{...options,redirect:'manual'});
@@ -50,7 +50,7 @@ async function verifyLive(url){
   const live=createHash('sha256').update(servedSource(file,Buffer.from(await response.arrayBuffer()))).digest('hex');
   if(local!==live)throw Error('Live asset differs from the checkout: '+file);
  }
- console.log('PASS '+new Set(files).size+' live code, combat audio and selected art files match the checkout');
+ console.log('PASS '+files.length+' deployed runtime files match the checkout');
  await checkBrowser(base.href);
 }
 
@@ -66,4 +66,5 @@ async function main(args){
  if(digestFiles()!==before)throw Error('Source changed while checks were running. Run the release check again.');
  console.log('PASS release gate, source '+before);
 }
-main(process.argv.slice(2)).catch(error=>{console.error(error);process.exitCode=1});
+if(require.main===module)main(process.argv.slice(2)).catch(error=>{console.error(error);process.exitCode=1});
+module.exports={deployedFiles};

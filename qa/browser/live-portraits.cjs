@@ -1,14 +1,10 @@
 const assert=require('node:assert/strict');
+const waitForLivePortraits=require('./portrait-readiness.cjs');
 
 module.exports=async function checkLivePortraits({page,origin,tap}){
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
- const cards=page.locator('.bay-card img');
  async function checkedCards(){
-  await cards.evaluateAll(images=>images.forEach(image=>{image.loading='eager';}));
-  await page.waitForFunction(()=>{
-   const images=[...document.querySelectorAll('.bay-card img')];
-   return images.length>0&&images.every(image=>image.complete&&image.naturalWidth===640&&image.naturalHeight===640);
-  },null,{timeout:120000});
+  const cards=await waitForLivePortraits(page,'.bay-card img');
   const images=await cards.evaluateAll(cards=>cards.map(image=>[image.dataset.rigPortrait,image.src]));
   assert.ok(images.every(([key,src])=>key&&src.startsWith('data:image/png;base64,')));
   assert.equal(images.length,new Set(images.map(([key])=>key)).size);
