@@ -120,10 +120,10 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
   setView('orbit');walk=false;aim=false;
   $('bench-clip').disabled=true;
   try{
-   const asset=await rigV2.loadClipArchive('rig-bench/prototypes/'+frame.archive+'.glb');
+   const asset=await rigV2.loadClipArchive(frame.archive);
    if(archiveRequest!==request){asset.dispose();return;}
    archive=asset;
-   if(frame.archive==='scout')asset.source.traverse(node=>{
+   if(frame.archive.endsWith('/scout.glb'))asset.source.traverse(node=>{
     if(!node.userData.scout_muzzle)return;
     const flash=new T.Mesh(flashGeometry,flashMaterial);
     flash.userData.archiveFlash=node.userData.scout_muzzle;
@@ -137,7 +137,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
   const next=lookup.get(String(id));if(!next)throw Error('Unknown Bench frame '+id);
   void setClipSource('current');
   frame=next;$('bench-frame').value=id;walk=false;aim=false;
-  select('bench-clip-source',[['current','Live rig'],...(frame.archive?[['archive','Prototype archive']]:[])],'current');
+  select('bench-clip-source',[['current','Live rig'],...(frame.archive?[['archive','Authored archive']]:[])],'current');
   $('bench-walk').setAttribute('aria-pressed','false');$('bench-aim').setAttribute('aria-pressed','false');
   for(const id of parts)applyPart(id,100);
   unit={id:'bench-main',index:0,frame:next.frame,lionTrial:next.lionTrial,team,...next.stock};
@@ -320,11 +320,11 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
  canvas.onwheel=e=>{e.preventDefault();dist=Math.min(95,Math.max(5,dist*Math.exp(e.deltaY*.001)));};
  selectFrame(frame.id);
  if(initialArchive&&frame.archive)void setClipSource('archive');
- function sampleArchive(){
+ function sampleArchive(names=[]){
   if(!archive)return null;
   const nodes=[];
   archive.source.traverse(node=>{
-   if(node.isBone||Object.keys(node.userData).length)nodes.push({
+   if(node.isBone||names.includes(node.name)||Object.keys(node.userData).length)nodes.push({
     name:node.name,parent:node.parent?.name,visible:node.visible,tags:{...node.userData},
     parentTags:{...node.parent?.userData},position:node.getWorldPosition(vector()).toArray(),
     parentPosition:node.parent?.getWorldPosition(vector()).toArray()

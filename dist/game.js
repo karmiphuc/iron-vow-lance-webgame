@@ -4038,7 +4038,8 @@ if(benchRig){
   stock:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
   primaries:id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:undefined,
   melees:breachLoadout(id)?['cleaver']:undefined,
-  shield:canFitShield(id),pod:breachLoadout(id),archive:prototypeArchives[id]
+  shield:canFitShield(id),pod:breachLoadout(id),
+  archive:id===0?'rig-bench/warden-painted.glb':prototypeArchives[id]?'rig-bench/prototypes/'+prototypeArchives[id]+'.glb':null
  }));
  frames.push({id:'lion',frame:0,lionTrial:true,name:'LION',fixed:true,stock:{weapon:'rifle',melee:'cleaver',upgrade:0},melees:LION_TRIAL_WEAPONS});
  const request=new URLSearchParams(window.location.search);

@@ -57,6 +57,21 @@ module.exports=async function checkRigWorkbench({page,origin,mobile}){
   await page.locator('#bench-play-clip').click();
   await page.waitForFunction(()=>__bench.state.clipTime>.08);
  }
+ await page.evaluate(()=>__bench.selectFrame(0));
+ await page.locator('#bench-clip-source').selectOption('archive');
+ await page.waitForFunction(()=>__bench.state.clipSource==='archive'&&__bench.state.loaded);
+ const wardenClips=await page.evaluate(()=>__bench.state.clips.map(c=>c.name));
+ assert.deepEqual(wardenClips,['Aim','Brace','Melee maul','Melee sweep','Melee thrust','Recoil','Walk']);
+ const wardenStep=await page.evaluate(async()=>{
+  const clip=__bench.state.clips.find(clip=>clip.name==='Walk'),names=['Bench_Foot_L','Bench_Foot_R'];
+  async function sample(time){
+   __bench.setClip('Walk',time);await new Promise(resolve=>requestAnimationFrame(resolve));
+   return __bench.sampleArchive(names).nodes.filter(node=>names.includes(node.name)).map(node=>node.position);
+  }
+  return [await sample(0),await sample(clip.duration*.42)];
+ });
+ assert.equal(wardenStep[0].length,2);
+ assert.ok(wardenStep[0].some((p,i)=>Math.hypot(...p.map((v,j)=>v-wardenStep[1][i][j]))>.01));
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
  await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();

@@ -25,6 +25,7 @@ for asset in (
     "rig-bench/shields.glb",
     *(f"rig-bench/prototypes/{name}.glb" for name in ("gatecrasher", "cicada", "hellbreaker", "bulwark", "scout", "shogun")),
     "rig-bench/rig-v2/warden.glb",
+    "rig-bench/warden-painted.glb",
     "rig-bench/rig-v2/gatecrasher-r2-reference.glb",
     "rig-bench/rig-v2/hellbreaker.glb",
     "rig-bench/rig-v2/shogun.glb",
