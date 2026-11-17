@@ -1,6 +1,6 @@
 # Phase 3 asset export gate
 
-Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, Hellbreaker, Shogun, the Lion trial, the tank and the gunship use live meshes.
+Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, Hellbreaker, Shogun, Ashigaru, the Lion trial, the tank and the gunship use live meshes.
 
 ## Editable source coverage
 
@@ -60,3 +60,6 @@ Static gate updates, 12 November 2026 Singapore time: required rig nodes must be
 `tools/export_hellbreaker_v2.py` exports the original Gatecrasher lineage as Hellbreaker's 57,726-triangle live rig. It retains the alternating Morrow ports and adds the runtime mount for the factory Breach Gauntlet. The right arm can fail independently of the left melee mount.
 
 `tools/export_shogun_v2.py` exports the mounted Samurai scene as Shogun's 47,116-triangle live rig, with the original blue livery, weighted hip skirt, Morrow, Vesper and Cleaver. The heaviest legal fit uses 49,472 triangles with Vesper and the Citadel shield.
+
+
+`tools/export_ashigaru_v2.py` exposes `export_ashigaru(source, output)` for Blender MCP. Use `Scout-Clay/Grip-Stride/IV-S07-Scout-Rigged.blend` with SHA-256 `6d8d14ecc0513a87a29e28e26c64d267ef0a3bf7645ec6232a7dedffc7f2fa23`. The export measures the authored floor for both the pelvis and ankle heights. It retains the Needle carbine and Signal knife, and reconstructs the Flechette from the recovered authoring recipe. The live rig draws 54,354 triangles with Needle and knife, or 53,892 with Flechette and knife. Range-based attacks switch between the right-hand modules, and arm damage removes gear on the affected side.

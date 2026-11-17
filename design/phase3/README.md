@@ -26,6 +26,8 @@ Kestrel and Basilisk passed desktop and touch checks for planted feet, alignment
 
 Hellbreaker's 57,726-triangle field rig passed desktop and touch checks for four alternating Morrow launches, two Breach Gauntlet hits after right-arm loss, salvage and disposal. Shogun passed both device profiles for its Morrow, Vesper and Cleaver, shield grip placement, weighted skirt, armor damage and disposal. All eight Shogun loadouts passed, peaking at 49,472 equipped triangles. The offline package embeds both GLBs byte for byte.
 
+Ashigaru's desktop and touch runs exercised Needle from range 8, Flechette from range 2, and Signal Knife from range 1. The tests checked the sole plane, planted gait, both muzzle origins, knife contact damage, equipment visibility after arm loss, and exactly-once geometry disposal. The highest equipped count is 54,354 triangles.
+
 A one-seed campaign smoke completed 2,240 observed ticks with zero anomalies. A second invocation reused the completed seed. The final 30-seed campaign remains pending.
 
 The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in five. The desktop and touch battle checks exercised picking, ground contact, hover, heading, damage, grounded wrecks and fire from the exported muzzles. Leaving the sortie detached the vehicles and disposed their shared geometry once. Both runs used one WebGL context and reported zero WebGL errors. The screenshot arranges both vehicles in a seeded test battle.

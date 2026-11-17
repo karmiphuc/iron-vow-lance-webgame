@@ -15,6 +15,9 @@ The regenerated [file audit](renderer-inventory.json) covers all 21 frame IDs, t
 | Gravemaw | 20,158 | Live. |
 | Reaver | 16,340 | Live. |
 | Aero | 52,798 | Live. The file includes all Relay melee variants; the heaviest equipped loadout is 59,592. |
+| Hellbreaker | 57,726 | Live with its original Morrow assembly and Breach Gauntlet. |
+| Shogun | 47,116 | Live. Heaviest equipped loadout is 49,472. |
+| Ashigaru | 54,908 | Live. With Needle and knife, 54,354. With Flechette and knife, 53,892. |
 | Lion | 58,753 | Live in the trial with three authored strikes. |
 
 The rest of the roster still uses the earlier live kits, adapters or temporary billboards. The Citadel kit remains outside the GLB requirement.

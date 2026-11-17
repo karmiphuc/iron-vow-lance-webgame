@@ -13,6 +13,7 @@ const checkVanguard = require('./browser/vanguard.cjs');
 const checkAero = require('./browser/aero.cjs');
 const checkLionTrial = require('./browser/lion-trial.cjs');
 const checkStockV2 = require('./browser/stock-v2.cjs');
+const checkAshigaruV2 = require('./browser/ashigaru-v2.cjs');
 const checkHellbreakerV2 = require('./browser/hellbreaker-v2.cjs');
 const checkShogunV2 = require('./browser/shogun-v2.cjs');
 const checkLineInfantry = require('./browser/line-infantry.cjs');
@@ -65,6 +66,13 @@ async function main() {
   require('./check-rig-v2-test.cjs');
   const assets = path.join(__dirname, '../dist/rig-bench/rig-v2');
   const { aero, kestrel, basilisk } = checkWorkshopBudgets(assets);
+  const scoutFile=readGLB(path.join(assets,'ashigaru.glb')),scout=validate(scoutFile);
+  if(!scout.ok)throw Error(scout.errors.join(', '));
+  const scoutWeapons=Object.fromEntries(['carbine','scatter','knife'].map(name=>[name,subtreeTriangles(scoutFile,'module.'+name)]));
+  const scoutHull=scout.total-Object.values(scoutWeapons).reduce((a,b)=>a+b,0);
+  const scoutEquipped=scoutHull+Math.max(scoutWeapons.carbine,scoutWeapons.scatter)+scoutWeapons.knife;
+  if(scoutEquipped>60000)throw Error('Ashigaru equipped exceeds 60k triangles');
+  const ashigaru={triangles:scout.total,hull:scoutHull,weapons:scoutWeapons,equipped:scoutEquipped};
   const lionFile = readGLB(path.join(assets, 'lion.glb'));
   const lion = validate(lionFile);
   if (!lion.ok) throw Error(lion.errors.join(', '));
@@ -130,6 +138,7 @@ async function main() {
     capture(checkVanguard),
     capture(checkAero),
     capture(checkStockV2),
+    capture(checkAshigaruV2),
     capture(checkHellbreakerV2),
     capture(checkShogunV2),
     capture(checkLionTrial),
@@ -137,7 +146,7 @@ async function main() {
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
-  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero, kestrel, basilisk,
+  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero, kestrel, basilisk, ashigaru,
     lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) },
     hellbreaker: { triangles: hellbreaker.total }, shogun, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');

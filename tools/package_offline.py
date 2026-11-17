@@ -35,6 +35,7 @@ for asset in (
     "rig-bench/rig-v2/basilisk.glb",
     "rig-bench/rig-v2/vanguard.glb",
     "rig-bench/rig-v2/aero.glb",
+    "rig-bench/rig-v2/ashigaru.glb",
 ):
     assets[asset] = (
         "data:model/gltf-binary;base64," + base64.b64encode((dist / asset).read_bytes()).decode("ascii")

@@ -349,7 +349,16 @@
         }
       },
       "checkHellbreakerV2": true,
-      "checkShogunV2": true
+      "checkShogunV2": true,
+      "checkAshigaruV2": {
+        "plantedPairs": 13,
+        "engaged": [
+          "needle-carbine",
+          "flechette-scattergun",
+          "signal-knife"
+        ],
+        "disposal": true
+      }
     },
     "touch": {
       "checkCicadaV2": {
@@ -443,7 +452,16 @@
         }
       },
       "checkHellbreakerV2": true,
-      "checkShogunV2": true
+      "checkShogunV2": true,
+      "checkAshigaruV2": {
+        "plantedPairs": 12,
+        "engaged": [
+          "needle-carbine",
+          "flechette-scattergun",
+          "signal-knife"
+        ],
+        "disposal": true
+      }
     }
   },
   "hellbreaker": {
@@ -453,5 +471,15 @@
     "triangles": 47116,
     "loadouts": 8,
     "maxEquippedTriangles": 49472
+  },
+  "ashigaru": {
+    "triangles": 54908,
+    "hull": 53030,
+    "equipped": 54354,
+    "weapons": {
+      "carbine": 1016,
+      "scatter": 554,
+      "knife": 308
+    }
   }
 }
