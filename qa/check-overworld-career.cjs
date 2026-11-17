@@ -1,0 +1,53 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+const arrived=require('./fixtures/overworld-relay.json');
+const legacy=require('./fixtures/v55-corridor.json');
+
+const key='iron-vow-career';
+const load=record=>simulate({storage:new Map([[key,JSON.stringify(record)]]),random:()=>0});
+const saved=sim=>JSON.parse(sim.storage.get(key));
+const roundTrip=sim=>load(saved(sim));
+const company=simulate({random:()=>0});
+
+assert.equal(company.run('companyPort()'), 'picket');
+assert.equal(company.run('travelTo("frontier")'), false, 'no direct link to Frontier');
+assert.equal(company.run('travelTo("relay","picket",511)'), false, 'a stale quote cannot be charged');
+company.run('prepareSortie(1)');
+assert.equal(company.run('page'), 'overworld');
+assert.equal(company.run('overworldSelection'), 'relay');
+assert.equal(company.run('battle'), null);
+assert.equal(company.run('save.day'), 1);
+assert.equal(company.run('save.dispatch'), undefined, 'route planning does not refresh contracts');
+company.run('dispatchSizes()');
+assert.equal(company.run('travelTo("relay","picket",510)'), true);
+assert.equal(company.run('save.dispatch'), undefined, 'arriving on a new day expires the dispatch');
+assert.equal(company.run('travelTo("relay","picket",510)'), false, 'a stale confirmation cannot debit twice');
+assert.deepEqual(saved(company), arrived);
+assert.deepEqual(saved(roundTrip(company)), arrived);
+
+const imported=simulate();
+assert.equal(imported.run(`importCareer(${JSON.stringify(arrived)})`), false, 'travel fixture has no active sortie');
+assert.deepEqual(saved(imported), arrived);
+const legacyBattle=load(legacy);
+assert.equal(legacyBattle.run('companyPort()'), 'corridor', 'an older active checkpoint resolves to its port');
+assert.equal(legacyBattle.run('travelTo("frontier")'), false, 'transit cannot interrupt a sortie');
+assert.deepEqual(saved(legacyBattle), legacy, 'reading the migration does not charge past days');
+assert.equal(load({...arrived,overworld:undefined,history:[{name:'No quiet frontier',day:1,win:false,pay:0}]}).run('companyPort()'),'frontier');
+
+const recovery=simulate({random:()=>0});
+recovery.run('save.credits=100;persist()');
+assert.equal(recovery.run('travelTo("relay")'), false, 'cash in hand must cover transit');
+assert.equal(recovery.run('save.day'), 1);
+recovery.run('createBattle(0,false,false,[0]);finish(false);closeModal()');
+assert.equal(recovery.run('save.day'), 2);
+assert.equal(recovery.run('save.credits'), 0);
+assert.equal(recovery.run('save.overworld.arrears'), 290);
+assert.equal(recovery.run('save.overworld.lastExpense.paid'), 100);
+const recovering=roundTrip(recovery);
+recovering.run('createBattle(0,false,false,[0]);finish(true);closeModal()');
+assert.equal(recovering.run('save.history.at(-1).pay'), 1300, 'after-action pay stays gross');
+assert.equal(recovering.run('save.overworld.lastExpense.arrearsPaid'), 290);
+assert.equal(recovering.run('save.overworld.arrears'), 0);
+assert.equal(recovering.run('save.credits'), 620);
+assert.equal(roundTrip(recovering).run('save.credits'), 620, 'reopening does not charge a second day');
+console.log('PASS overworld travel, additive career restore, daily wages, upkeep and arrears recovery');

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "day": 2,
+  "credits": 3990,
+  "rep": 0,
+  "wins": 0,
+  "kills": 0,
+  "owned": ["rifle", "missile"],
+  "units": [
+    {"weapon": "rifle", "condition": 100, "upgrade": 0, "level": 1, "xp": 0},
+    {"weapon": "rifle", "condition": 100, "upgrade": 0, "level": 1, "xp": 0},
+    {"weapon": "missile", "condition": 100, "upgrade": 0, "level": 1, "xp": 0}
+  ],
+  "history": [],
+  "overworld": {
+    "port": "relay",
+    "arrears": 0,
+    "lastExpense": {
+      "kind": "travel", "day": 2, "destination": "relay", "days": 1,
+      "fuel": 120, "wages": 210, "ship": 75, "hulls": 105, "total": 510,
+      "paid": 510, "arrearsPaid": 0
+    }
+  }
+}
