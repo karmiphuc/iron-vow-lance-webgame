@@ -1,4 +1,5 @@
 const assert=require('node:assert/strict');
+const waitForLivePortraits=require('./portrait-readiness.cjs');
 
 module.exports=async function checkMechComputer({page,mobile,origin,tap}){
  const workshop=new URL('?view=workshop',origin).href;
@@ -53,6 +54,6 @@ module.exports=async function checkMechComputer({page,mobile,origin,tap}){
   assert.match(await page.locator('[data-mech-pilot="0"]').innerText(),new RegExp(signature,'i'));
   assert.match(await page.locator('.workshop-armory').innerText(),/FACTORY ARMAMENT/);
   assert.doesNotMatch(await page.locator('.chassis-assignment').innerText(),/Dodge/i);
-  await page.locator('.bay-card img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
+  await waitForLivePortraits(page,'.bay-card img',3);
  }
 };

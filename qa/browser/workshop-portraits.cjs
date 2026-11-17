@@ -1,13 +1,9 @@
 const assert=require('node:assert/strict');
+const waitForLivePortraits=require('./portrait-readiness.cjs');
 
 module.exports=async function checkWorkshopPortraits({page,origin,tap,mobile}){
  const ready=async(selector,count)=>{
-  const cards=page.locator(selector);
-  await cards.evaluateAll(images=>images.forEach(image=>{image.loading='eager';}));
-  await page.waitForFunction(({selector,count})=>{
-   const images=[...document.querySelectorAll(selector)];
-   return images.length===count&&images.every(image=>image.complete&&image.naturalWidth===640&&image.naturalHeight===640);
-  },{selector,count},{timeout:90000});
+  const cards=await waitForLivePortraits(page,selector,count);
   return cards.evaluateAll(images=>images.map(image=>{
    const canvas=document.createElement('canvas');
    canvas.width=canvas.height=64;
