@@ -60,6 +60,7 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
  await ready(5);
  const kits=()=>page.evaluate(()=>IronVowWorkshop.snapshot().entry.m.build.kits.map(kit=>kit.filter(mesh=>mesh.visible).length));
  assert.deepEqual(await kits(),[0,0,0]);
+ await tap('[data-workshop-detail="trials"] > summary');
  await tap('[data-upgrade="0"]');
  await ready(5);
  assert.ok((await kits())[0]>0,'The real level-one armor plates mount in the turntable');

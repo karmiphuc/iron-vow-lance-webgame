@@ -1,3 +1,4 @@
+const selectContract=require('./select-contract.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
@@ -69,7 +70,7 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  const scoutOffer=await page.evaluate(()=>availableOffers('picket').find(offer=>offer.availableOnArrival));
  assert(scoutOffer,'the opening offer remains available at the current port');
  const scoutCredits=afterHold.credits;
- await tap(`[data-scout-offer="${scoutOffer.id}"]`);
+ await selectContract(page,{id:scoutOffer.id});await tap(`[data-scout-offer="${scoutOffer.id}"]`);
  await page.waitForFunction(({id,credits})=>save.world.scouted.includes(id)&&save.credits===credits-90,{id:scoutOffer.id,credits:scoutCredits});
  assert.equal(await page.locator(`[data-scout-offer="${scoutOffer.id}"]`).count(),0,'successful scouting removes its paid action');
  assert.equal(await page.locator('.offer-intel').count(),1,'the local contact report appears');
@@ -92,7 +93,7 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  assert.equal(duplicateScout,false,'scouting the same offer again is rejected');
  assert.equal(await page.evaluate(()=>save.credits),scouted.credits,'a duplicate scout cannot charge again');
 
- await tap(`[data-world-offer="${scoutOffer.id}"]`);
+ await selectContract(page,{id:scoutOffer.id});await tap(`[data-world-offer="${scoutOffer.id}"]`);
  await page.getByRole('dialog',{name:'SORTIE ASSIGNMENT'}).waitFor();
  await tap('#modal-1');
  await page.waitForFunction(id=>save.sortie?.offer?.id===id,scoutOffer.id);

@@ -1,3 +1,4 @@
+const selectContract=require('./select-contract.cjs');
 const assert=require('node:assert/strict');
 const arrived=require('../fixtures/overworld-relay.json');
 const restedArrival=require('../fixtures/overworld-transit-rest.json');
@@ -68,6 +69,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
 
  // The deterministic local pool starts with template zero. A remote job is reached through the chart.
  await nav('contracts');
+ await selectContract(page,{template:0});
  await page.locator('[data-world-offer][data-deploy="0"]').waitFor();
  await tap('[data-world-offer][data-deploy="0"]');
  await page.getByRole('dialog',{name:'SORTIE ASSIGNMENT'}).waitFor();
@@ -129,7 +131,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  await page.locator('.contract-grid').waitFor();
  const relayOffer=await page.evaluate(()=>availableOffers('relay').find(offer=>offer.templateIndex===1));
  assert(relayOffer,'seed zero posts the template-one Relay offer on day two');
- await tap(`[data-world-offer="${relayOffer.id}"]`);
+ await selectContract(page,{id:relayOffer.id});await tap(`[data-world-offer="${relayOffer.id}"]`);
  await page.getByRole('dialog',{name:'SORTIE ASSIGNMENT'}).waitFor();
  await tap('#modal-1');
  await tap('#modal-0');

@@ -1930,36 +1930,46 @@ function contractsPage(){
 function shipPage(){
  const project=save.ship?.project;
  const queued=project&&SHIP_DECK[project.facility].tiers[shipLevel(project.facility)];
+ const ui=shipPage.uiState??={selected:project?.facility??'drop'};
  const seats=LANCE_SLOTS.map(slot=>{
-  const frame=pilotFrame(slot),hull=save.units[slot];
-  return `<article class="ship-seat"><img ${chassisPicture(frame,hull)} alt="" width="60" height="60" loading="lazy"><div><small>SEAT 0${slot+1} · ${pilotProfile(slot).call}</small><b>${FRAMES[frame].name}</b></div></article>`;
+  const frame=pilotFrame(slot),hull=save.units[slot],wound=woundLabel(pilotId(pilotClass(slot)));
+  return `<article class="ship-seat"><img ${chassisPicture(frame,hull)} alt="" width="60" height="60" loading="lazy"><div><small>SEAT 0${slot+1} · ${pilotProfile(slot).call}</small><b>${FRAMES[frame].name}</b><small class="${wound?'wound-status':''}">${hull.condition}% INTEGRITY${wound?' · '+wound:''}</small></div></article>`;
  }).join('');
  return `<div class="page ship-page"><div class="ship-content">
-  <div class="ship-banner"><div><div class="eyebrow">HEAVY-LIFT AIRSHIP</div><h1>IVS HALYARD.</h1><p>Docked at ${portName(companyPort())} · ${money(overworld.operatingRates(save).total)} per day · ${save.rep} reputation</p></div>
+  <div class="ship-banner"><div><div class="eyebrow">HEAVY-LIFT AIRSHIP / DAY ${save.day}</div><h1>IVS HALYARD.</h1><p>Docked at ${portName(companyPort())} · ${money(overworld.operatingRates(save).total)} per day · ${save.rep} reputation</p></div>
    <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button data-page="contracts">CONTRACTS</button><button class="primary" data-page="overworld">${save.transit?'REVIEW TRANSIT':'CHART TABLE'} ${icon('arrow-right')}</button></div>
   </div>
-  <section class="ship-queue" aria-label="Engineering queue"><div><span class="eyebrow">ENGINEERING QUEUE</span><h2>${queued?queued.name:'Bay available'}</h2></div>
-   <div class="ship-progress"><span class="tag">${queued?project.wins+' WIN'+(project.wins===1?'':'S')+' LEFT':'0 / 1 PROJECTS'}</span>${queued?`<progress aria-label="Construction progress" max="${queued.wins}" value="${queued.wins-project.wins}"></progress>`:infoTip('Engineering queue','The ship can work on one project at a time. Fulfilled contracts advance construction.')}</div>
+  <section class="ship-readiness" aria-label="Lance readiness"><div class="facility-section-heading"><h2>Lance readiness</h2><span class="eyebrow">${LANCE_SLOTS.length} MECH SEATS</span></div><div class="ship-seats">${seats}</div></section>
+  <section class="ship-queue" aria-label="Engineering queue"><div><span class="eyebrow">ENGINEERING QUEUE</span><h2>${queued?queued.name:'Ready for a project'}</h2></div>
+   <div class="ship-progress"><span class="tag">${queued?project.wins+' WIN'+(project.wins===1?'':'S')+' LEFT':'1 PROJECT SLOT'}</span>${queued?`<progress aria-label="Construction progress" max="${queued.wins}" value="${queued.wins-project.wins}"></progress>`:infoTip('Engineering queue','The ship can work on one project at a time. Fulfilled contracts advance construction.')}</div>
   </section>
-  <section class="ship-seats" aria-label="Lance seats">${seats}</section>
-  <div class="ship-grid">${Object.entries(SHIP_DECK).map(([id,facility])=>{
-   const rank=shipLevel(id),current=facility.tiers[rank-1],next=facility.tiers[rank],planned=rank===0?facility.tiers[1]:null;
+  <div class="facility-section-heading"><h2>Ship upgrades</h2><span class="eyebrow">SELECT A DECK</span></div>
+  <div class="ship-grid facility-list">${Object.entries(SHIP_DECK).map(([id,facility])=>{
+   const rank=shipLevel(id),current=facility.tiers[rank-1],next=facility.tiers[rank],future=facility.tiers.slice(rank+1);
    const building=project?.facility===id;
    const disabled=project?'QUEUE OCCUPIED':next&&save.rep<next.rep?'REPUTATION TOO LOW':next&&save.credits<next.cost?'INSUFFICIENT CREDITS':'';
-   return `<article class="ship-facility" data-facility="${id}">
-    <div class="ship-facility-head">${icon(facility.glyph)}<h2>${facility.name}</h2><span class="tag">MK ${rank} / ${facility.tiers.length}</span></div>
-    <div class="ship-current"><small>${current?current.name+' ONLINE':'STANDARD ISSUE'}</small><span>${current?current.perk:'No ship bonus'}</span></div>
-    ${next?`<div class="ship-next"><div class="ship-next-title"><h3>${next.name}</h3>${infoTip(next.name,next.detail)}</div><p>${next.perk}</p>
-     <div class="ship-build"><span>${next.wins} WIN${next.wins===1?'':'S'}${next.rep?' · '+next.rep+' REP':''}</span><button type="button" data-build-facility="${id}" ${disabled?'disabled':''}>${building?'IN CONSTRUCTION':disabled||'BUILD · '+money(next.cost)}</button>${disabled&&!building?`<small>${money(next.cost)}</small>`:''}</div></div>`:'<div class="ship-next"><span class="eyebrow">FULLY OUTFITTED</span></div>'}
-    ${planned?`<div class="ship-plan"><div><small>MK II</small><b>${planned.name}</b><span>${planned.perk}</span></div>${infoTip(planned.name,money(planned.cost)+' · '+planned.rep+' REP · '+planned.wins+' wins. '+planned.detail)}</div>`:''}
-   </article>`;
+   return `<article class="ship-facility" data-facility="${id}"><details class="facility-disclosure" name="ship-facilities" data-ship-facility-detail="${id}"${ui.selected===id?' open':''}>
+    <summary class="facility-summary">${icon(facility.glyph)}<span class="facility-summary-title"><strong>${facility.name}</strong><small>${building?'IN CONSTRUCTION · '+project.wins+' WINS LEFT':current?current.name+' online':'Standard issue'}</small></span><span class="facility-summary-meta"><span class="tag">MK ${rank} / ${facility.tiers.length}</span><small>${building?'PROJECT ACTIVE':next?'NEXT · '+money(next.cost):'FULLY OUTFITTED'}</small></span><span class="facility-chevron" aria-hidden="true">+</span></summary>
+    <div class="facility-body"><div class="ship-current"><small>${current?current.name+' ONLINE':'STANDARD ISSUE'}</small><span>${current?current.perk:'No ship bonus'}</span></div>
+    ${next?`<div class="ship-next"><span class="eyebrow">${building?'CURRENT PROJECT':'NEXT UPGRADE'}</span><div class="ship-next-title"><h3>${next.name}</h3></div><p>${next.perk}</p><p class="facility-explanation">${next.detail}</p>
+     <div class="ship-build"><span>${money(next.cost)} · ${next.wins} WIN${next.wins===1?'':'S'}${next.rep?' · '+next.rep+' REP':''}</span><button type="button" data-build-facility="${id}" ${disabled?'disabled':''}>${building?'IN CONSTRUCTION':disabled||'BUILD · '+money(next.cost)}</button></div></div>`:'<div class="ship-next"><span class="eyebrow">FULLY OUTFITTED</span></div>'}
+    ${future.length?`<details class="facility-future"><summary>Future upgrades · ${future.length}</summary>${future.map(planned=>`<div class="ship-plan"><div><b>${planned.name}</b><span>${planned.perk}</span><small>${money(planned.cost)} · ${planned.rep} REP · ${planned.wins} WINS</small><p>${planned.detail}</p></div></div>`).join('')}</details>`:''}
+    </div></details></article>`;
   }).join('')}</div>
  </div></div>`;
 }
 function bindShip(){
+ const ui=shipPage.uiState;
+ for(const detail of document.querySelectorAll('[data-ship-facility-detail]'))detail.addEventListener('toggle',()=>{
+  if(!detail.isConnected)return;
+  if(detail.open){
+   ui.selected=detail.dataset.shipFacilityDetail;
+   for(const other of document.querySelectorAll('[data-ship-facility-detail]'))if(other!==detail&&other.open)other.open=false;
+  }else if(ui.selected===detail.dataset.shipFacilityDetail)ui.selected=null;
+ });
  for(const button of document.querySelectorAll('[data-build-facility]'))button.onclick=()=>{
   const id=button.dataset.buildFacility,name=SHIP_DECK[id].tiers[shipLevel(id)].name;
-  if(queueShipUpgrade(id)){render();$('.ship-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued.')}
+  if(queueShipUpgrade(id)){ui.selected=id;render();$(`[data-ship-facility-detail="${id}"] > summary`)?.focus({preventScroll:true});$('.ship-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued.')}
  };
 }
 function openStoredHull(frame){
@@ -1989,8 +1999,10 @@ function hangarRoster(){
   ...LANCE_SLOTS.map(i=>({id:pilotId(pilotClass(i)),pilot:save.units[i],slot:i})),
   ...Object.entries(save.reservePilots??{}).map(([id,pilot])=>({id,pilot}))
  ];
- return `<section class="base-roster" aria-label="Hangar crew">
-  <div class="base-roster-head"><div><span class="eyebrow">PERSONNEL ANNEX</span><h2>Duty roster</h2></div><span class="tag" id="duty-count">${activeRosterIds().length} / ${activeCapacity()} ACTIVE</span><button data-page="inn">HIRING DESK</button></div>
+ const wounded=roster.filter(({id})=>woundDays(id)>0).length;
+ return `<details class="base-roster crew-disclosure" data-crew-roster${hangarPage.uiState?.crew?' open':''}>
+  <summary class="crew-summary"><span><strong>Crew roster</strong><small>${roster.length} PILOTS · ${wounded?wounded+' WOUNDED':'NO WOUNDS'}</small></span><span class="tag" id="duty-count">${activeRosterIds().length} / ${activeCapacity()} ACTIVE</span><span class="facility-chevron" aria-hidden="true">+</span></summary><div class="crew-body">
+  <div class="base-roster-head"><div><span class="eyebrow">PERSONNEL ANNEX</span><h2>Duty roster</h2></div><button data-page="inn">HIRING DESK</button></div>
   ${level===2?`<p class="base-roster-status">${used?'Trauma Ward · next treatment tomorrow':'Trauma Ward · 1 treatment available'}</p>`:''}
   <div class="base-roster-list">${roster.map(({id,pilot,slot})=>{
    const kind=pilotKind(id),wound=woundLabel(id),unseated=slot===undefined,onDuty=active.includes(id);
@@ -2001,37 +2013,48 @@ function hangarRoster(){
      ${unseated&&hangarLevel('cabins')?`<button data-pilot-duty="${id}" data-activate="${!onDuty}" aria-label="${onDuty?'Move '+CREW[kind].call+' to reserve':'Activate '+CREW[kind].call}" ${!onDuty&&full?'disabled':''}>${onDuty?'TO RESERVE':full?'CABINS FULL':'ACTIVATE'}</button>`:''}
      ${wound&&level===2?`<button data-pilot-treatment="${id}" ${used||save.credits<HANGAR_SERVICE_COST?'disabled':''}>TREAT · ${money(HANGAR_SERVICE_COST)}</button>`:''}
     </div></article>`;
-  }).join('')}</div></section>`;
+  }).join('')}</div></div></details>`;
 }
 function hangarPage(){
  const project=save.hangar?.project;
  const queued=project&&HANGAR_ROOMS[project.room].tiers[hangarLevel(project.room)];
+ const ui=hangarPage.uiState??={selected:project?.room??'fabrication',crew:false};
  return `<div class="page base-page"><div class="ship-content">
-  <div class="ship-banner base-banner"><div><div class="eyebrow">${portName(companyPort())} / COMPANY FACILITIES</div><h1>HANGAR.</h1><p>Company facilities · ${save.rep} reputation</p></div>
+  <div class="ship-banner base-banner"><div><div class="eyebrow">${portName(companyPort())} / COMPANY FACILITIES</div><h1>HANGAR.</h1><p>${save.rep} reputation · ${money(save.credits)} available</p></div>
    <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button class="primary" data-page="workshop">WORKSHOP ${icon('arrow-right')}</button></div>
   </div>
-  <section class="ship-queue base-queue" aria-label="Hangar construction"><div><span class="eyebrow">FACILITY CONSTRUCTION</span><h2>${queued?queued.name:'Crew available'}</h2></div>
-   <div class="ship-progress"><span class="tag">${queued?project.wins+' WIN'+(project.wins===1?'':'S')+' LEFT':'0 / 1 PROJECTS'}</span>
+  <section class="ship-queue base-queue" aria-label="Hangar construction"><div><span class="eyebrow">FACILITY CONSTRUCTION</span><h2>${queued?queued.name:'Ready for a project'}</h2></div>
+   <div class="ship-progress"><span class="tag">${queued?project.wins+' WIN'+(project.wins===1?'':'S')+' LEFT':'1 PROJECT SLOT'}</span>
     ${queued?`<progress aria-label="Hangar construction progress" max="${queued.wins}" value="${queued.wins-project.wins}"></progress>`:infoTip('Hangar construction','The Hangar has its own construction crew. You can build here while the Ship is upgrading. Contract wins advance both projects.')}</div>
   </section>
-  <div class="base-grid">${Object.entries(HANGAR_ROOMS).map(([id,room])=>{
-   const level=hangarLevel(id),current=room.tiers[level-1],next=room.tiers[level],later=room.tiers[level+1];
+  <div class="facility-section-heading"><h2>Facilities</h2><span class="eyebrow">SELECT A ROOM</span></div>
+  <div class="base-grid facility-list">${Object.entries(HANGAR_ROOMS).map(([id,room])=>{
+   const level=hangarLevel(id),current=room.tiers[level-1],next=room.tiers[level],future=room.tiers.slice(level+1);
    const building=project?.room===id;
    const blocked=project?'CREW BUSY':next&&save.rep<next.rep?'REPUTATION TOO LOW':next&&save.credits<next.cost?'INSUFFICIENT CREDITS':'';
-   return `<article class="ship-facility base-room" data-base-room="${id}"${id==='cabins'?' tabindex="-1"':''}>
-    <div class="ship-facility-head">${icon(room.glyph)}<h2>${room.name}</h2><span class="tag">TIER ${level} / ${room.tiers.length}</span></div>
-    <div class="ship-current"><small>${current?current.name+' ONLINE':'STANDARD FACILITY'}</small><span>${current?.perk??'Ready for expansion'}</span></div>
-    ${next?`<div class="ship-next"><div class="ship-next-title"><h3>${next.name}</h3>${infoTip(next.name,next.detail)}</div><p>${next.perk}</p>
-     <div class="ship-build"><span>${next.wins} WIN${next.wins===1?'':'S'}${next.rep?' · '+next.rep+' REP':''}</span>
-      <button type="button" data-build-room="${id}" ${blocked?'disabled':''}>${building?'IN CONSTRUCTION':blocked||'BUILD · '+money(next.cost)}</button>
-      ${blocked&&!building?`<small>${money(next.cost)}</small>`:''}</div></div>`:'<div class="ship-next"><span class="eyebrow">FULLY OUTFITTED</span></div>'}
-    ${later?`<div class="ship-plan"><div><small>TIER ${level+2}</small><b>${later.name}</b><span>${later.perk}</span></div>${infoTip(later.name,money(later.cost)+' · '+later.rep+' REP · '+later.wins+' wins. '+later.detail)}</div>`:''}
-   </article>`;
+   return `<article class="ship-facility base-room" data-base-room="${id}"${id==='cabins'?' tabindex="-1"':''}><details class="facility-disclosure" name="hangar-facilities" data-hangar-room-detail="${id}"${ui.selected===id?' open':''}>
+    <summary class="facility-summary">${icon(room.glyph)}<span class="facility-summary-title"><strong>${room.name}</strong><small>${building?'IN CONSTRUCTION · '+project.wins+' WINS LEFT':current?current.name+' online':'Ready for expansion'}</small></span><span class="facility-summary-meta"><span class="tag">TIER ${level} / ${room.tiers.length}</span><small>${building?'PROJECT ACTIVE':next?'NEXT · '+money(next.cost):'FULLY OUTFITTED'}</small></span><span class="facility-chevron" aria-hidden="true">+</span></summary>
+    <div class="facility-body"><div class="ship-current"><small>${current?current.name+' ONLINE':'STANDARD FACILITY'}</small><span>${current?.perk??'Ready for expansion'}</span></div>
+    ${next?`<div class="ship-next"><span class="eyebrow">${building?'CURRENT PROJECT':'NEXT UPGRADE'}</span><div class="ship-next-title"><h3>${next.name}</h3></div><p>${next.perk}</p><p class="facility-explanation">${next.detail}</p>
+     <div class="ship-build"><span>${money(next.cost)} · ${next.wins} WIN${next.wins===1?'':'S'}${next.rep?' · '+next.rep+' REP':''}</span>
+      <button type="button" data-build-room="${id}" ${blocked?'disabled':''}>${building?'IN CONSTRUCTION':blocked||'BUILD · '+money(next.cost)}</button></div></div>`:'<div class="ship-next"><span class="eyebrow">FULLY OUTFITTED</span></div>'}
+    ${future.length?`<details class="facility-future"><summary>Future upgrades · ${future.length}</summary>${future.map(later=>`<div class="ship-plan"><div><b>${later.name}</b><span>${later.perk}</span><small>${money(later.cost)} · ${later.rep} REP · ${later.wins} WINS</small><p>${later.detail}</p></div></div>`).join('')}</details>`:''}
+   </div></details></article>`;
   }).join('')}</div>
   ${hangarRoster()}
  </div></div>`;
 }
 function bindHangar(){
+ const ui=hangarPage.uiState;
+ for(const detail of document.querySelectorAll('[data-hangar-room-detail]'))detail.addEventListener('toggle',()=>{
+  if(!detail.isConnected)return;
+  if(detail.open){
+   ui.selected=detail.dataset.hangarRoomDetail;
+   for(const other of document.querySelectorAll('[data-hangar-room-detail]'))if(other!==detail&&other.open)other.open=false;
+  }else if(ui.selected===detail.dataset.hangarRoomDetail)ui.selected=null;
+ });
+ const crew=$('[data-crew-roster]');
+ if(crew)crew.addEventListener('toggle',()=>{if(crew.isConnected)ui.crew=crew.open;});
  const reserves=$('#hangar-reserves');
  if(reserves)reserves.onclick=chooseStoredHull;
  for(const button of document.querySelectorAll('[data-hangar-deck]'))button.onclick=()=>{
@@ -2041,7 +2064,7 @@ function bindHangar(){
  };
  for(const button of document.querySelectorAll('[data-build-room]'))button.onclick=()=>{
   const room=button.dataset.buildRoom,name=HANGAR_ROOMS[room].tiers[hangarLevel(room)].name;
-  if(queueHangarUpgrade(room)){render();$('.base-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued in the Hangar.')}
+  if(queueHangarUpgrade(room)){ui.selected=room;render();$(`[data-hangar-room-detail="${room}"] > summary`)?.focus({preventScroll:true});$('.base-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued in the Hangar.')}
  };
  for(const button of document.querySelectorAll('[data-reserve-training]'))button.onclick=()=>trainingTree(button.dataset.reserveTraining);
  for(const button of document.querySelectorAll('[data-pilot-duty]'))button.onclick=()=>{
@@ -2053,7 +2076,7 @@ function bindHangar(){
  };
  for(const button of document.querySelectorAll('[data-pilot-treatment]'))button.onclick=()=>{
   const id=button.dataset.pilotTreatment;
-  if(treatPilot(id)){render();$('.base-roster-head')?.scrollIntoView({block:'nearest'});toast(CREW[pilotKind(id)].call+' cleared for duty.')}
+  if(treatPilot(id)){ui.crew=true;render();($(`[data-pilot-treatment="${id}"]`)||$('[data-crew-roster] > summary'))?.focus({preventScroll:true});$('.base-roster-head')?.scrollIntoView({block:'nearest'});toast(CREW[pilotKind(id)].call+' cleared for duty.')}
  };
 }
 function spaceInn(){
@@ -2131,20 +2154,24 @@ function render(){
   }
   if(page==='inn')$('#ui').innerHTML=spaceInn();
   if(page==='contracts')$('#ui').innerHTML=contractsPage();
-  if(page==='workshop')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">ENGINEERING / CHASSIS & LOADOUT</div><h1>BUILT TO ENDURE.</h1></div></div>
+  if(page==='workshop')$('#ui').innerHTML=`<div class="page workshop-page"><div class="pagehead"><div><div class="eyebrow">ENGINEERING / CHASSIS & LOADOUT</div><h1>WORKSHOP.</h1></div></div>
    ${workshopTabs()}
   <div class="lance-tabs" aria-label="Select pilot">${LANCE_SLOTS.map(i=>`<button data-select="${i}" class="${i===selected?'active':''}" aria-pressed="${i===selected}"><small>${pilotProfile(i).call}</small>${FRAMES[pilotFrame(i)].name}</button>`).join('')}</div>
-  ${chassisAssignments(selected,training)}
-   ${workshopView==='assigned'?`${workshopStats(selected,f,u,training)}
-  <button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button>
+   ${workshopView==='assigned'?`
   <div class="split workshop-refit">
-  ${f.native||f.fixedWeapons?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
-  <section class="workshop-chassis" tabindex="-1"><div class="workshop-preview-heading"><span class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</span>${f.native||f.fixedWeapons?'':'<button type="button" id="armory-back" class="armory-jump">↑ WEAPONS</button>'}</div>
+  <section class="workshop-chassis" tabindex="-1" aria-label="Selected mech"><div class="workshop-preview-heading"><span class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</span>${f.native||f.fixedWeapons?'':'<button type="button" id="armory-back" class="armory-jump">WEAPONS →</button>'}</div>
+  <div class="workshop-selected"><h2>${f.name}</h2><p>${p.call} · ${u.condition>=90?'COMBAT READY':u.condition>=30?'OPERATIONAL':'REPAIR REQUIRED'}</p></div>
   <div class="unit-render" id="paint-preview" tabindex="0" role="group" aria-label="${f.name} turntable. Drag or use arrow keys to rotate. Pinch, plus or minus to zoom. Double tap or Home to reset."></div>
-  <div class="workshop-meta"><h2>${f.name}</h2><button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}${workshopPaint(u)}
-  <a class="rig-bench-link" href="?bench=rig&amp;frame=${frame}">OPEN RIG BENCH</a><a class="rig-bench-link" href="?lion=cleaver">LION WEAPONS TRIAL</a>${stat('CONDITION',u.condition+'%',u.condition)}
-  <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><div class="inline-help"><small>+25 BODY HP · +2 ARMOR PER MK</small>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div></div></section>
-  </div>`:''}</div>`;
+  <div class="workshop-meta"><button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>${stat('INTEGRITY',u.condition+'%',u.condition)}
+  <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div>
+  ${u.condition<30?'<div class="repair-warning">Repair to 30% integrity to deploy.</div>':''}
+  <details class="workshop-disclosure" data-workshop-detail="paint" ${bindWorkshop.disclosures?.paint?'open':''}><summary>Paint</summary>${workshopPaint(u)}</details>
+  <details class="workshop-disclosure" data-workshop-detail="trials" ${bindWorkshop.disclosures?.trials?'open':''}><summary>Reinforcement & trials</summary><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button><p class="note">+25 BODY HP · +2 ARMOR PER MK</p>${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}<a class="rig-bench-link" href="?bench=rig&amp;frame=${frame}">OPEN RIG BENCH</a><a class="rig-bench-link" href="?lion=cleaver">LION WEAPONS TRIAL</a></details>
+  </div></section>
+  ${f.native||f.fixedWeapons?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
+  </div>
+  <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="compare" ${bindWorkshop.disclosures?.compare?'open':''}><summary>Compare chassis</summary>${chassisAssignments(selected,training)}</details>
+  <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}<button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button></details>`:chassisAssignments(selected,training)}</div>`;
   if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">PERSONNEL / ACTIVE DUTY</div><h1>HUMAN AT THE CORE.</h1></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
    <div class="grid">${LANCE_SLOTS.map(i=>pilotCard(pilotClass(i),save.units[i],trainingEffects(i),FRAMES[pilotFrame(i)].name,`id="train-pilot-${i}" data-train-pilot="${i}"`,trainingPoints(i))).join('')}
    ${dutyRoster().map(id=>{
@@ -2153,6 +2180,8 @@ function render(){
    }).join('')}</div></div>`;
   if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1><a class="rig-bench-link" href="?bench=rig">OPEN RIG BENCH</a></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button></div></section></div>`;
   if(page==='journal')$('#ui').innerHTML=`<div class="page journal-page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / REFERENCE</div><h1>FIELD JOURNAL.</h1></div></div>${journalMarkup(journalPage)}</div>`;
+  window.IronVowArmoryUI?.enhance(document);
+  window.IronVowMenus?.enhance(document);
   bind();
   for(const button of document.querySelectorAll('[data-mech-pilot]'))button.onclick=()=>{
    const kind=Number(button.dataset.mechPilot),slot=LANCE_SLOTS.find(i=>pilotClass(i)===kind);
@@ -2194,6 +2223,7 @@ function navigateHangarRoute(route){
  };
  if(!Object.hasOwn(targets,route)||battle||careerStale)return false;
  const target=targets[route];
+ if(route==='crew-cabin')hangarPage.uiState={...(hangarPage.uiState??{}),selected:'cabins',crew:true};
  page=target.page;if(target.deck)hangarDeck=target.deck;
  render();sound('click');
  if(target.focus){
@@ -2698,7 +2728,7 @@ function renderBattle(){
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${battle.turn} <small>${battle.phase==='player'?'YOUR TURN':'ENEMY TURN'}</small></div>
   <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">
-   ${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>${obstruction||targetStatus||shotStatus}</small></span>
+   ${icon('crosshair')}<span><strong>${target?.name||'NO TARGET'}</strong><small>${shotPreview?shotStatus+' · '+shotPreview:shotStatus}<span class="target-detail-label">DETAILS</span></small></span>
   </button>
   <aside class="combatpanel" id="target-panel" aria-label="Target subsystem details">
    <div class="inspect-head">
@@ -2713,6 +2743,7 @@ function renderBattle(){
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
   <div class="hint"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':''):'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH'}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="Right shoulder Vesper MRL">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
+  window.IronVowMenus?.combatLayout($('#ui'));
   refreshTargetPortrait();
   bindTacticalMap();
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy)selectUnit(+b.dataset.unit)});
@@ -3383,6 +3414,7 @@ function updateDestruction(u,t){
 
 
 function refreshTargetPortrait(){
+ if(!targetPanelOpen)return;
  const image=$('.combat-target img[data-target-id]');
  const target=battle?.units.find(u=>u.id===image?.dataset.targetId);
  if(!target)return;
@@ -3434,6 +3466,11 @@ function refreshArmory(focus){
 }
 function bindWorkshop(){
  const u=save.units[selected];
+ // View preferences stay in memory; career data and loadout rules are unchanged.
+ bindWorkshop.disclosures??={};
+ for(const detail of document.querySelectorAll('[data-workshop-detail]'))detail.ontoggle=()=>{
+  if(detail.isConnected)bindWorkshop.disclosures[detail.dataset.workshopDetail]=detail.open;
+ };
  for(const button of document.querySelectorAll('[data-armory-class]'))button.onclick=()=>{
   armoryGroup=button.dataset.armoryClass;
   refreshArmory(`[data-armory-class="${armoryGroup}"]`);
@@ -3441,11 +3478,14 @@ function bindWorkshop(){
  const preview=$('#armory-preview'),back=$('#armory-back');
  if(preview)preview.onclick=()=>{
   const chassis=$('.workshop-chassis');
+  for(let detail=chassis.closest('details');detail;detail=detail.parentElement?.closest('details'))detail.open=true;
   chassis.scrollIntoView({block:'start'});chassis.focus({preventScroll:true});
  };
  if(back)back.onclick=()=>{
   const tab=$('[data-armory-class][aria-pressed="true"]');
-  $('.workshop-armory').scrollIntoView({block:'start'});tab.focus({preventScroll:true});
+  const armory=$('.workshop-armory');
+  for(let detail=armory.closest('details');detail;detail=detail.parentElement?.closest('details'))detail.open=true;
+  armory.scrollIntoView({block:'start'});tab?.focus({preventScroll:true});
  };
  for(const button of document.querySelectorAll('[data-bay]'))button.onclick=()=>{
   workshopView=button.dataset.bay;render();$(`[data-bay="${workshopView}"]`)?.focus();

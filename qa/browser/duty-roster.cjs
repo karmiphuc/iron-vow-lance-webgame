@@ -1,8 +1,11 @@
+const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const openCrew=async()=>{if(!await page.locator('details[data-crew-roster]').evaluate(el=>el.open))await tap('details[data-crew-roster] > summary');};
+ const openCabins=async()=>{if(!await page.locator('[data-base-room="cabins"] > details').evaluate(el=>el.open))await tap('[data-base-room="cabins"] > details > summary');};
  const ids=['scout','marshal','sapper','signal','retriever'];
  await page.goto(new URL('?view=inn',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('[data-hire="7"]').waitFor();
@@ -18,14 +21,16 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  for(let kind=3;kind<8;kind++)await tap('[data-hire="'+kind+'"]');
  await nav('hangar');
  assert.match(await page.locator('#duty-count').innerText(),/3 \/ 3/);
+ await openCabins();
  await tap('[data-build-room="cabins"]');
  await ensureContractOffer(page,0);
  await nav('contracts');
- await tap('[data-deploy="0"]');
+ await selectContract(page,{template:0});await tap('[data-deploy="0"]');
  await tap('#modal-1');
  await page.evaluate(()=>{for(const u of battle.units)if(u.team==='enemy'){u.alive=false;u.hp.body=0}finish(true);closeModal()});
  await nav('hangar');
  assert.match(await page.locator('#duty-count').innerText(),/3 \/ 4/);
+ await openCrew();
  await tap('[data-pilot-duty="scout"]');
  assert.ok(await page.locator('[data-pilot-duty="sapper"]').isDisabled());
  await page.evaluate(()=>{save.hangar.levels.cabins=3;persist();render()});
@@ -43,12 +48,12 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  });
  await ensureContractOffer(page,0);
  await nav('contracts');
- await tap('[data-deploy="0"]');
+ await selectContract(page,{template:0});await tap('[data-deploy="0"]');
  assert.equal(await page.locator('[data-sortie-pilot="0"] option').count(),6);
  await page.locator('[data-sortie-pilot="0"]').selectOption('scout');
  await tap('#modal-0');
  assert.equal(await page.evaluate(()=>pilotProfile(0).call),'ROOK');
- await tap('[data-deploy="0"]');
+ await selectContract(page,{template:0});await tap('[data-deploy="0"]');
  await page.locator('[data-sortie-pilot="0"]').selectOption('scout');
  await page.locator('[data-sortie-pilot="1"]').selectOption('signal');
  assert.equal(await page.locator('[data-sortie-pilot="1"] option[value="scout"]').evaluate(option=>option.disabled),true);

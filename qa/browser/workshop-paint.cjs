@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 
 module.exports=async function checkWorkshopPaint({page,origin,tap}){
  const host=page.locator('#paint-preview');
+ const openPaint=async()=>{if(!await page.locator('[data-workshop-detail="paint"]').evaluate(el=>el.open))await tap('[data-workshop-detail="paint"] > summary');};
  const factoryButton='[data-livery="0"]';
  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('iron-vow-career')).units[0]);
  const waitSaved=colors=>page.waitForFunction(colors=>{
@@ -39,6 +40,7 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await host.waitFor();
  await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
+ await openPaint();
  const originalFactory=await factoryColors();
  assert.equal(originalFactory.length,3);
  assert.equal(await page.locator('[data-livery]').count(),17);
@@ -69,10 +71,12 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await tap('#nav [data-page="workshop"]');
  await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
+ await openPaint();
  await tap(factoryButton);
  await waitSaved([null,null,null]);
  assert.deepEqual(values(await saved()),[null,null,null]);
  assert.equal(await page.locator(factoryButton).getAttribute('aria-pressed'),'true');
+ await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
  assert.deepEqual(await factoryColors(),originalFactory,'Factory restores the native material colors');
  await page.reload({waitUntil:'domcontentloaded'});

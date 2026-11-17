@@ -18,15 +18,20 @@ module.exports=async function checkRidgeCombat({page,mobile,origin,tap}){
  });
  assert.ok(start.dodge>0);
  assert.doesNotMatch(await page.locator('#ui').textContent(),/%\s*DODGE/i);
- const readout=()=>page.locator(mobile?'#target-toggle':'.shot-readout').innerText();
+ const readout=()=>page.locator('#target-toggle').innerText();
  assert.match(await readout(),/RIDGE BLOCK/);
  for(let i=0;i<2;i++)await tap('#map-zoom-out');
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  const fire=async()=>{
   const p=await page.evaluate(()=>{
    const {foe}=ridgeQA;
-   const tile=project(foe.x,0,foe.z);
-   return {x:Math.round(tile.x),y:Math.round(tile.y)};
+   IronVowScene.render(clock,1);
+   const center=IronVowScene.projectWorld(IronVowScene.partPoint(foe));
+   for(const dx of [0,-6,6,-12,12])for(const dy of [0,-6,6,-12,12]){
+    const x=Math.round(center.x)+dx,y=Math.round(center.y)+dy;
+    if(document.elementFromPoint(x,y)===canvas&&IronVowScene.pick(x,y)===foe)return {x,y};
+   }
+   throw Error('No exposed raycastable Ridge target');
   });
   if(mobile)await page.touchscreen.tap(p.x,p.y);
   else await page.mouse.click(p.x,p.y);

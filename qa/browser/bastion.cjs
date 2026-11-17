@@ -22,6 +22,7 @@ module.exports=async function bastionSharedRig({page,mobile,origin,tap}){
  console.log('Bastion fittings checked');
  await page.locator('#paint-preview').scrollIntoViewIfNeeded();
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
+ await tap('[data-workshop-detail="trials"] > summary');
  await page.evaluate(()=>{
   const draw=IronVowFoundry.draw;
   window.bastionPoseQA={first:null,changed:false};

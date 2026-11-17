@@ -29,6 +29,7 @@ module.exports=async function checkWorkshopPortraits({page,origin,tap,mobile}){
  const ship=await check('.ship-seat img',3);
 
  await tap('#nav [data-page="hangar"]');
+ await tap('[data-crew-roster] > summary');
  await check('.base-roster img.duty-mech',3).then(roster=>{
   assert.deepEqual(roster,ship,'Roster and Ship reuse matching cached images byte for byte');
  });
@@ -69,10 +70,10 @@ module.exports=async function checkWorkshopPortraits({page,origin,tap,mobile}){
   focusBattleCamera(actor,true);renderBattle();
  });
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:90000});
+ if(!await page.locator('#target-panel').isVisible())await tap('#target-toggle');
  await check('.combat-target img.foundry-target',1);
- if(mobile)await tap('#target-toggle');
  const targetBefore=await page.evaluate(()=>battle.units.find(u=>u.id===lockedTarget).hp.body);
- if(mobile)await tap('#close-target');
+ if(await page.locator('#close-target').isVisible())await tap('#close-target');
  await page.waitForFunction(()=>{
   const target=battle.units.find(u=>u.id===lockedTarget);
   const point=IronVowScene.projectWorld(IronVowScene.partPoint(target));

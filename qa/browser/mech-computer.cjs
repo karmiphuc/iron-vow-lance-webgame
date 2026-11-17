@@ -4,9 +4,10 @@ const waitForLivePortraits=require('./portrait-readiness.cjs');
 module.exports=async function checkMechComputer({page,mobile,origin,tap}){
  const workshop=new URL('?view=workshop',origin).href;
  await page.goto(workshop,{waitUntil:'domcontentloaded'});
+ await tap('[data-workshop-detail="stats"] > summary');
  await page.locator('[data-mech-pilot="0"]').waitFor();
  await page.evaluate(()=>{save.mechMastery={[pilotId(0)]:{kills:{0:24,1:5,2:5}}}});
- const open=()=>tap('[data-mech-pilot="0"]');
+ const open=async()=>{if(!await page.locator('[data-workshop-detail="stats"]').evaluate(el=>el.open))await tap('[data-workshop-detail="stats"] > summary');await tap('[data-mech-pilot="0"]');};
  const computer=page.locator('.mech-computer');
  const first=computer.locator('[data-mech-slot="0"]'),second=computer.locator('[data-mech-slot="1"]');
  await open();
@@ -34,7 +35,7 @@ module.exports=async function checkMechComputer({page,mobile,origin,tap}){
  });
  const rows=[['body'],['left','right'],['legs','pilot']];
  assert.deepEqual(layout,rows);
- if(mobile)await tap('#target-toggle');
+ if(!await page.locator('#target-panel').isVisible())await tap('#target-toggle');
  const panel=page.locator('#target-panel');
  assert.deepEqual(await panel.locator('.hp-row').evaluateAll(nodes=>nodes.map(row=>[...row.children].map(button=>button.dataset.part))),rows);
  // The panel is a read-only health readout: nothing to press, no aiming state.

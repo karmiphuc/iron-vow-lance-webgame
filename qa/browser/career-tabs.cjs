@@ -1,3 +1,4 @@
+const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
@@ -35,6 +36,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
  other.setDefaultTimeout(Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000));
  try{
   await other.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
+  await other.locator('[data-ship-facility-detail="office"] > summary').click();
   await other.locator('[data-build-facility="office"]').waitFor();
   const reloaded=page.waitForNavigation({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>{
@@ -50,6 +52,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   assert.equal((await saved(page)).credits,2400,'stale writes leave the newest balance intact');
   assert.equal((await saved(page)).hangar.project.room,'fabrication');
   await reloadCareer(other);
+  await other.locator('[data-ship-facility-detail="office"] > summary').click();
   const office=other.locator('[data-build-facility="office"]');
   if(mobile)await office.tap();else await office.click();
   await checkStale(page);
@@ -63,7 +66,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
   await reloadCareer(page);
   await ensureContractOffer(page,0);
   await tap('#nav [data-page="contracts"]');
-  await tap('[data-deploy="0"]');
+  await selectContract(page,{template:0});await tap('[data-deploy="0"]');
   await tap('#modal-1');
   await tap('#modal-0');
   assert.ok((await saved(page)).sortie,'deployment is durably saved before the other tab reloads');
