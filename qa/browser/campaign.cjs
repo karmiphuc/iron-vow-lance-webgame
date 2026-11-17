@@ -82,7 +82,9 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
   for(const id of paths[i].slice(3))await tap('[data-learn="'+id+'"]');
   await tap('#modal-0');
  }
- await nav('workshop');await fit();
+ await nav('workshop');
+ if(!await page.locator('[data-workshop-detail="stats"]').evaluate(detail=>detail.open))await tap('[data-workshop-detail="stats"] > summary');
+ await fit();
  assert.match(await page.locator('.workshop-actions').innerText(),/Breach Charge 1 AP/i);
  await tap('[data-select="1"]');
  assert.match(await page.locator('.workshop-actions').innerText(),/Blackout 1 AP/i);
