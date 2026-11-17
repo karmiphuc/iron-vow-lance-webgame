@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+const runWar=require('./war-driver.cjs');
+(async()=>{
+ const first=await runWar({seed:42});
+ const again=await runWar({seed:42});
+ const other=await runWar({seed:43});
+ assert.equal(JSON.stringify(first),JSON.stringify(again),'seeded encounter must replay identically');
+ assert.notEqual(JSON.stringify(first.events),JSON.stringify(other.events),'different seed should affect combat');
+ assert.equal(first.unfinished,false);
+ assert.equal(first.result.win,true);
+ assert.ok(first.events.some(e=>e.action==='move'));
+ assert.ok(first.events.some(e=>e.action==='attack'));
+ assert.ok(first.events.some(e=>e.action==='endTurn'));
+ const round=await runWar({seed:42,maxTurns:1});
+ assert.equal(round.unfinished,true);
+ assert.equal(round.turn,2);
+ assert.ok(round.units.find(u=>u.id==='ally0').hp.pilot<70,'enemy turn must damage an ally');
+ assert.ok(round.units.some(u=>u.kind==='tank'&&!u.alive),'production vehicle must take damage');
+ assert.ok(round.units.find(u=>u.id==='enemy0').z>10,'enemy turn must move an enemy');
+ await assert.rejects(runWar({seed:-1}),/uint32/);
+ await assert.rejects(runWar({contract:999}),/Invalid contract/);
+ await assert.rejects(runWar({maxTurns:0}),/positive integer/);
+ console.log('PASS War driver: seeded legal actions, enemy turn, vehicle damage, completion and turn limit');
+})().catch(error=>{console.error(error);process.exitCode=1});
