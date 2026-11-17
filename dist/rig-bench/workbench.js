@@ -13,7 +13,7 @@ const SCOUT_ACTIONS={Fire:{weapon:'carbine',flashes:[.29]},Burst:{weapon:'scatte
 const COLOR_DEFAULTS=['#c6bd9f','#343e48','#e19b32'];
 const vector=()=>new T.Vector3();
 const option=(value,label)=>new Option(label,value);
-function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,initialArchive}){
+function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initialFrame,initialArchive}){
  const $=id=>document.getElementById(id),lookup=new Map(frames.map(frame=>[String(frame.id),frame]));
  const inventory=new Map(weapons.map(weapon=>[weapon.id,weapon]));
  const kits=frames.filter(frame=>frame.mix).slice(0,6);
@@ -23,6 +23,12 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
  const flashGeometry=new T.IcosahedronGeometry(.12,0),flashMaterial=new T.MeshBasicMaterial({color:0xffc179});
  const markers=new T.Group(),markerGeometry=new T.SphereGeometry(.077,8,6),markerMaterial=new T.MeshBasicMaterial({color:0x5fd4c4});
  for(let i=0;i<4;i++)markers.add(new T.Mesh(markerGeometry,markerMaterial));
+ const effectRoot=new T.Group(),rigGeometry=new T.BufferGeometry(),rigLines=new T.LineSegments(rigGeometry,
+  new T.LineBasicMaterial({color:0x78ddce,depthTest:false,transparent:true,opacity:.9}));
+ const linePositions=new Float32Array(3*1024);
+ rigGeometry.setAttribute('position',new T.BufferAttribute(linePositions,3));
+ rigLines.frustumCulled=false;rigLines.renderOrder=50;
+ let effects,showRig=false,audioEnabled=false,shotIndex=0,shotReports=0,strikeReports=0,contactSent=false,held;
  const health=Object.fromEntries(parts.map(part=>[part,100]));
  let frame=lookup.get(String(initialFrame))??frames[0],lowerFrame=frame,unit,modules,entry,lowerEntry,entries=[],lastStats,view='orbit',group='all',az=-.52,el=.1,dist=19;
  let time=0,prior,walk=false,advance=0,aim=false,fire=-Infinity,strike=-Infinity,clip='',clipTime=0,clipList='',drag;
@@ -54,13 +60,15 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
    <label>Authored clip<select id="bench-clip"></select></label><button id="bench-play-clip" type="button" disabled>Play clip</button>
    <label>Clip time<input id="bench-time" type="range" min="0" max="0" value="0" step=".001" disabled></label>
    <label class="bench-check"><input id="bench-ik" type="checkbox">IK targets</label>
+   <label class="bench-check"><input id="bench-rig" type="checkbox">Rig lines</label>
   </div><div class="bench-actions">
    <button id="bench-walk" type="button" aria-pressed="false">Walk</button>
    <button id="bench-aim" type="button" aria-pressed="false">Aim</button>
    <button id="bench-fire" type="button">Fire</button><button id="bench-strike" type="button">Strike</button>
    <button id="bench-fire-pod" type="button" hidden>Fire pod</button>
+   <button id="bench-sound" type="button" aria-pressed="false">Sound</button>
   </div></details>
-  <details open><summary>Metrics</summary><output id="bench-metrics"></output></details>
+  <details open><summary>Specs &amp; metrics</summary><output id="bench-metrics"></output></details>
   <p id="bench-status" role="status"></p>
  </section>`;
  const select=(id,items,value)=>{const node=$(id);node.replaceChildren(...items.map(([key,label])=>option(key,label)));node.value=value;};
@@ -93,7 +101,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
  }
  function reset(frameChanged=false){
   foundry.clearInspection(frameChanged);
-  entry=null;lowerEntry=null;entries=[];advance=0;fire=strike=-Infinity;
+  entry=null;lowerEntry=null;entries=[];advance=0;fire=strike=-Infinity;effects?.clear();
  }
  function availableClips(){return (clipSource==='archive'?archive?.clips:entry?.m.nativeV2?.clips)??[];}
  function setClip(name,time=0){
@@ -173,19 +181,65 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
   const primary=inventory.get(source.weapon),gun=firePod?inventory.get('missile'):primary;
   const melee=primary?.melee&&fire>strike&&!firePod?primary:inventory.get(source.melee);
   const strikeAt=melee===primary?fire:strike;
-  const age=time-fire,hit=time-strikeAt;
-  const firing=isActive&&gun&&!gun.melee&&age>=0&&age<1.35;
-  const striking=isActive&&melee&&hit>=0&&hit<1.1;
+  const age=time-fire,hit=time-strikeAt,profile=gun&&!gun.melee?attackProfile(source,gun.id):null;
+  const beats=profile?.beats??[],firing=isActive&&source.alive&&source.hp[firePod?'body':'right']>0&&profile&&age>=0&&age<profile.raise+(beats.at(-1)??0)+profile.travel+profile.recover;
+  const striking=isActive&&source.alive&&melee&&source.hp[melee.hand??'left']>0&&hit>=0&&hit<1.1;
   if(firing||striking)source.attack={kind:striking?melee.id:gun.id,start:striking?strikeAt:fire};
-  const profile=firing?attackProfile(source,gun.id):null,beats=profile?.beats??[];
-  const recoil=beats.reduce((peak,beat)=>Math.max(peak,Math.max(0,1-Math.abs(age-.22-beat)*15)),0);
+  const muzzleAge=age-(profile?.raise??0);
+  const recoil=beats.reduce((peak,beat)=>Math.max(peak,Math.max(0,1-Math.abs(muzzleAge-beat)*15)),0);
+  const motion=root.IronVowFoundryRig.MEL,contact=motion.hit;
+  const strikeProgress=!striking?0:hit<contact?.7*hit/contact:.7+.3*(hit-contact)/(motion.end-contact);
+  if(source.id==='bench-main')held={firing,striking,muzzleAge,hit,profile,gun,melee};
   return {world:{x,y:0,z,face:0,heading:0,speed:source.motion?2.6:0,groundAt:()=>0,
    targetRoot:new T.Vector3(x,0,z+7.4),aim:new T.Vector3(x,3.65,z+12)},
    modules:isActive?modules:undefined,clip:isActive?clip:'',clipTime,heading:0,phase:0,primeProgress:0,
    aim:isActive&&(aim||firing)?1:0,recoil,impact:0,land:0,brace:0,
-   strikeKind:striking?melee.id:null,strikeProgress:striking?Math.min(1,hit/1.1):0,
+   strikeKind:striking?melee.id:null,strikeProgress,
    deathAge:source.alive?0:2,explosion:source.alive?0:1,
-   ...(profile?weaponRigPose(profile,age-.22):{})};
+   ...(firing?weaponRigPose(profile,muzzleAge):{})};
+ }
+ function effectCue(id){if(audioEnabled)sound(id);}
+ function stageEffects(dt){
+  if(!entry||!held)return;
+  const {m}=entry,{firing,striking,profile,muzzleAge,gun,hit,melee}=held;
+  if((firing||striking)&&!effects)effects=root.IronVowEffects.create(effectRoot,{camera,contactsExternal:true});
+  if(firing){
+   const barrel=firePod?entry.shoulderWeapon:entry.primary;
+   const archetype=root.IronVowWeaponFX.get(gun.id).archetype;
+   while(barrel?.muzzle&&shotIndex<profile.beats.length&&muzzleAge>=profile.beats[shotIndex]){
+    const index=shotIndex++,marker=barrel.muzzles?.[index%barrel.muzzles.length]??(index%2&&barrel.muzzle2?barrel.muzzle2:barrel.muzzle);
+    const origin=marker.getWorldPosition(vector()),target=origin.clone().addScaledVector(marker.getWorldDirection(vector()),10);
+    effects.fireFX(m,target,archetype,'body',{origin,target,at:time,flight:profile.travel,arrival:p=>effects.explode(p,false)});
+    shotReports++;effectCue(gun.id);
+   }
+  }
+  if(striking&&entry.secondary?.tip&&m.melee){
+   effects.meleeUpdate(m,time,dt);
+   if(!contactSent&&hit>=root.IronVowFoundryRig.MEL.hit){
+    contactSent=true;strikeReports++;
+    const tip=entry.secondary.tip.getWorldPosition(vector());
+    effects.impact(tip,m.cont.position.clone().sub(tip),'blade');
+    effectCue(melee.id);
+   }
+  }
+  effects?.update(time,dt);
+ }
+ function updateRigLines(archived){
+  let i=0;
+  function segment(parent,node){
+   if(!parent||!node||i+6>linePositions.length)return;
+   parent.getWorldPosition(vector()).toArray(linePositions,i);
+   node.getWorldPosition(vector()).toArray(linePositions,i+3);i+=6;
+  }
+  if(archived){
+   archive?.source.traverse(node=>{if(node.isBone||node.name.startsWith('Bench_'))segment(node.parent,node);});
+  }else if(entry){
+   const {rig}=entry.m,lower=(lowerEntry??entry).m.rig;
+   segment(rig.pelvis,rig.spine);segment(rig.spine,rig.neck);
+   for(const arm of Object.values(rig.arms)){segment(rig.spine,arm.sh);segment(arm.sh,arm.el);segment(arm.el,arm.wr);segment(arm.wr,arm.so);}
+   for(const leg of lower.legs){segment(lower.pelvis,leg.hip);segment(leg.hip,leg.kn);segment(leg.kn,leg.an);}
+  }
+  rigGeometry.attributes.position.needsUpdate=true;rigGeometry.setDrawRange(0,i/3);
  }
  function cameraAt(){
   const mobile=innerWidth/innerHeight<1;
@@ -286,7 +340,10 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,
    });
    objects.push(markers);
   }
-  cameraAt();lastStats=foundry.renderInspection(objects,camera);
+  cameraAt();
+  if(!lineup&&!archived&&!clip){stageEffects(dt);if(effects)objects.push(effectRoot);}
+  if(showRig&&!lineup){updateRigLines(archived);objects.push(rigLines);}
+  lastStats=foundry.renderInspection(objects,camera);
   for(const node of hidden)node.visible=true;
   const status=rigV2.status(source,'bench');
   if(time-metricsAt>.15){
@@ -314,6 +371,8 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
  $('bench-view').onchange=e=>setView(e.target.value);
  $('bench-group').onchange=e=>{group=e.target.value;};
  $('bench-ik').onchange=e=>{showMarkers=e.target.checked;};
+ $('bench-rig').onchange=e=>{showRig=e.target.checked;};
+ $('bench-sound').onclick=e=>{audioEnabled=!audioEnabled;e.target.setAttribute('aria-pressed',String(audioEnabled));};
  for(const [id,key] of [['primary','weapon'],['melee','melee'],['shield','shield'],['shoulder','shoulder'],['kit','upgrade']]){
   $('bench-'+id).onchange=e=>{
    unit[key]=key==='upgrade'?Number(e.target.value):e.target.value||null;
@@ -340,9 +399,9 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
  $('bench-time').oninput=e=>{clipTime=Number(e.target.value);};
  $('bench-walk').onclick=e=>{setClip('');walk=!walk;e.target.setAttribute('aria-pressed',String(walk));};
  $('bench-aim').onclick=e=>{setClip('');aim=!aim;e.target.setAttribute('aria-pressed',String(aim));};
- $('bench-fire').onclick=()=>{setClip('');firePod=false;fire=time;};
- $('bench-fire-pod').onclick=()=>{setClip('');firePod=true;fire=time;};
- $('bench-strike').onclick=()=>{setClip('');strike=time;};
+ $('bench-fire').onclick=()=>{setClip('');firePod=false;fire=time;shotIndex=0;contactSent=false;};
+ $('bench-fire-pod').onclick=()=>{setClip('');firePod=true;fire=time;shotIndex=0;};
+ $('bench-strike').onclick=()=>{setClip('');strike=time;contactSent=false;};
  const canvas=root.IronVowRenderer.get().domElement;
  canvas.setAttribute('aria-label','Mech viewport. Drag to orbit or scroll to zoom.');
  canvas.removeAttribute('aria-hidden');
@@ -365,7 +424,26 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
   });
   return {nodes,clip,time:clipTime,duration:Math.max(0,...availableClips().filter(c=>c.name===clip).map(c=>c.duration))};
  }
- root.__bench={selectFrame,setView,setClip,setClipSource,sampleArchive,get state(){return {roster:frames.map(f=>f.id),frame:frame.id,loaded:clipSource==='archive'?Number(Boolean(archive)):entries.length,view,clip,clipSource,clipTime,group,
+ function weaponMounts(){
+  if(!entry)return null;
+  const {arms}=entry.m.rig;
+  function socket(weapon,carrier){
+   if(!weapon?.mount)return null;
+   return {id:weapon.id,seated:weapon.mount.parent===carrier,
+    point:carrier.getWorldPosition(vector()).toArray()};
+  }
+  return {primary:socket(entry.primary,entry.primary?.carrier??entry.primarySocket??arms.R.so),
+   melee:socket(entry.secondary,entry.secondary?.carrier??arms.L.so)};
+ }
+ function samplePaint(){
+  const matched={};
+  entry?.m.cont.traverseVisible(node=>{
+   for(const material of [node.material].flat())if(material?.name?.startsWith('paint_'))
+    (matched[material.name]??=[]).push(material.color.toArray());
+  });
+  return matched;
+ }
+ root.__bench={selectFrame,setView,setClip,setClipSource,sampleArchive,samplePaint,get state(){return {roster:frames.map(f=>f.id),frame:frame.id,loaded:clipSource==='archive'?Number(Boolean(archive)):entries.length,view,clip,clipSource,clipTime,group,
   model:entry?.m.live??frame.model,authoredMix:lowerEntry?{
    upper:entry.m.live,lower:lowerEntry.m.live,
    pelvisGap:entry.m.rig.pelvis.getWorldPosition(vector()).distanceTo(lowerEntry.m.rig.pelvis.getWorldPosition(vector()))
@@ -373,11 +451,12 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
   bones:entry?.m.rig.legs.map(l=>l.an.matrixWorld.toArray())??[],
   authoredAnkles:entry?.m.nativeV2?['ankleL','ankleR'].map(name=>entry.m.nativeV2.source.getObjectByName(name)?.getWorldPosition(vector()).toArray()):[],health:{...health},paint:{...paint},weapon:entry?.primary?.id,
   melee:entry?.secondary?.id,shield:Boolean(entry?.shield?.mount.visible),pod:entry?.shoulderWeapon?.id,
-  camera:camera.position.toArray(),ikMarkers:showMarkers&&!clip?markers.children.filter(marker=>marker.visible).length:0,
-  partStates:entry?{...entry.m.partState}:null,metrics:metrics()};}};
+  camera:camera.position.toArray(),shots:shotReports,strikes:strikeReports,rigLines:showRig?rigGeometry.drawRange.count/2:0,ikMarkers:showMarkers&&!clip?markers.children.filter(marker=>marker.visible).length:0,
+  partStates:entry?{...entry.m.partState}:null,mounts:weaponMounts(),kitMeshes:entry?.m.build.kits.map(group=>group.filter(mesh=>mesh.visible).length)??[],metrics:metrics()};}};
  root.addEventListener('pagehide',event=>{if(event.persisted)return;
   cancelAnimationFrame(frameRequest);foundry.clearInspection(true);archiveRequest++;releaseArchive();
-  ground.geometry.dispose();ground.material.dispose();markerGeometry.dispose();markerMaterial.dispose();flashGeometry.dispose();flashMaterial.dispose();});
+  ground.geometry.dispose();ground.material.dispose();markerGeometry.dispose();markerMaterial.dispose();flashGeometry.dispose();flashMaterial.dispose();
+  effects?.dispose();rigGeometry.dispose();rigLines.material.dispose();});
  frameRequest=requestAnimationFrame(draw);
 }
 root.IronVowBench={mount};

@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const checkBrowser=require('./check-browser.cjs');
 const scenarios=[
- require('./browser/workbench.cjs'),require('./browser/bulwark-bench.cjs'),
+ require('./browser/workbench.cjs'),require('./browser/warden-rig-bench.cjs'),require('./browser/bulwark-bench.cjs'),
  require('./browser/scout-bench.cjs'),require('./browser/war-mode.cjs')
 ];
 async function main(){

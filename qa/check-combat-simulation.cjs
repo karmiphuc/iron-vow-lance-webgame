@@ -24,8 +24,10 @@ p=planner([.95],{dodge:.1});result=p.plan({},target,'body',{},false);
 assert.equal(result.dodged,true);assert.equal(result.impacts.length,0);
 p=planner([.1],{shield:true});result=p.plan({},target,'body',{},false);
 assert.equal(result.guard,true);assert.equal(result.impacts[0].part,'left');
-for(const [file,script] of [['dist/index.html','combat-simulation.js'],['dist/rig-bench/index.html','../combat-simulation.js']])
- assert.ok(fs.readFileSync(path.join(root,file),'utf8').includes('src="'+script+'"'),file+' must load shared simulation');
+const host=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
+assert.ok(host.indexOf('src="combat-simulation.js"')>0&&host.indexOf('src="combat-simulation.js"')<host.indexOf('src="game.js'));
+const bench=fs.readFileSync(path.join(root,'dist/rig-bench/index.html'),'utf8');
+assert.match(bench,/bench\.searchParams\.set\('bench','rig'\)/,'Rig Bench opens the same engine host');
 // Golden result captured from the pre-extraction game with seed 42: includes a
 // braced target, reaction bonus, aircraft target and the production volley path.
 const sim=require('./sim-harness.cjs')({seed:42});

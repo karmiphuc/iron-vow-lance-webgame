@@ -3,7 +3,6 @@ const {join}=require('node:path');
 const {readGLB}=require('../check-rig-v2.cjs');
 module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.goto(new URL('rig-bench/',origin).href,{waitUntil:'domcontentloaded'});
- await page.locator('a[href="../?bench=rig"]').click();
  await page.waitForURL('**/?bench=rig');
  await page.waitForFunction(()=>window.__bench?.state?.metrics);
  const entries=await page.locator('#bench-frame option').evaluateAll(nodes=>nodes.map(node=>[node.value,node.text]));
@@ -34,6 +33,8 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.waitForFunction(()=>__bench.state.weapon==='parallax');
  await page.locator('#bench-melee').selectOption('pike');
  await page.waitForFunction(()=>__bench.state.melee==='pike');
+ await page.locator('#bench-shield').selectOption('bulwark-shield');
+ await page.waitForFunction(()=>__bench.state.shield&&!__bench.state.melee);
  await page.locator('#bench-shield').selectOption('citadel-shield');
  await page.waitForFunction(()=>__bench.state.shield&&!__bench.state.melee);
  await page.locator('details').filter({hasText:'Damage'}).locator('summary').click();
@@ -41,8 +42,17 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.waitForFunction(()=>__bench.state.health.left===0&&__bench.state.partStates.left===2&&!__bench.state.shield);
  await page.locator('#bench-part-left').selectOption('100');
  await page.locator('details').filter({hasText:'Paint'}).locator('summary').click();
- await page.locator('#bench-paint-0').fill('#507f9b');
- assert.equal(await page.evaluate(()=>__bench.state.paint.p),'#507f9b');
+ const colors=['#507f9b','#343e48','#fa9129'];
+ for(const [i,color] of colors.entries())await page.locator('#bench-paint-'+i).fill(color);
+ await page.waitForFunction(colors=>['paint_primary','paint_secondary','paint_accent'].every((name,i)=>{
+  const rgb=new THREE.Color(colors[i]).convertSRGBToLinear().toArray();
+  return __bench.samplePaint()[name]?.some(c=>Math.hypot(...c.map((v,j)=>v-rgb[j]))<1e-5);
+ }),colors);
+ for(const part of ['body','pilot','right','legs']){
+  await page.locator('#bench-part-'+part).selectOption('40');
+  await page.waitForFunction(part=>__bench.state.partStates[part]===1,part);
+  await page.locator('#bench-part-'+part).selectOption('100');
+ }
  for(const {id,melee} of catalog.filter(w=>!w.builtIn&&!w.shoulder)){
   const key=melee?'melee':'weapon';
   await page.locator(melee?'#bench-melee':'#bench-primary').selectOption(id);
@@ -79,9 +89,16 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  }
  assert.deepEqual([...mounted].sort(),catalog.map(w=>w.id).sort(),'Every actual catalog weapon mounts');
  await page.evaluate(()=>__bench.selectFrame(5));
- const other=await page.locator('#bench-legs option').evaluateAll(nodes=>nodes.find(n=>n.value!==n.parentElement.value).value);
- await page.locator('#bench-legs').selectOption(other);
- await page.waitForFunction(other=>__bench.state.metrics?.mods.legs===Number(other),other);
+ for(const part of ['legs','core','arms']){
+  const other=await page.locator('#bench-'+part+' option').evaluateAll(nodes=>nodes.find(n=>n.value!==n.parentElement.value).value);
+  await page.locator('#bench-'+part).selectOption(other);
+  await page.waitForFunction(({part,other})=>__bench.state.metrics?.mods[part]===Number(other),{part,other});
+ }
+ for(const level of [1,2,3]){
+  await page.locator('#bench-kit').selectOption(String(level));
+  await page.waitForFunction(level=>__bench.state.kitMeshes.slice(0,level).every(count=>count>0)&&
+   __bench.state.kitMeshes.length===3&&__bench.state.kitMeshes.slice(level).every(count=>count===0),level);
+ }
  await page.evaluate(()=>__bench.setView('lineup'));
  await page.waitForFunction(()=>__bench.state.loaded===6);
  const archives={3:'gatecrasher',4:'cicada',11:'hellbreaker',17:'bulwark',18:'scout',20:'shogun'};

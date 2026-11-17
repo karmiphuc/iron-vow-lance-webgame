@@ -3789,6 +3789,6 @@ if(benchRig){
  }));
  frames.push({id:'lion',frame:0,lionTrial:true,name:'LION',fixed:true,authored:true,quad:false,stock:{weapon:'rifle',melee:'cleaver',upgrade:0},melees:LION_TRIAL_WEAPONS});
  const request=new URLSearchParams(window.location.search);
- window.IronVowBench.mount({frames,weapons:WEAPONS,shields:SHIELDS,attackProfile,weaponRigPose,
+ window.IronVowBench.mount({frames,weapons:WEAPONS,shields:SHIELDS,attackProfile,weaponRigPose,sound,
   initialFrame:request.get('frame'),initialArchive:request.get('source')==='archive'});
 }

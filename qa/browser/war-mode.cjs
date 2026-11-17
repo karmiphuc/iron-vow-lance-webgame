@@ -12,7 +12,7 @@ module.exports=async function checkWarMode({page,origin,mobile,out}){
   };
  });
  await page.goto(new URL('rig-bench/',origin).href,{waitUntil:'domcontentloaded'});
- await page.locator('a[href="../?bench=war"]').click();
+ await page.locator('a[href="?bench=war"]').click();
  await page.waitForURL('**/?bench=war');
  await page.waitForFunction(()=>window.__bench&&IronVowScene.ready,null,{timeout:120000});
  const scene=await page.evaluate(()=>({
