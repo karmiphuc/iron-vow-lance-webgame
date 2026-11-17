@@ -6,7 +6,7 @@ const close=(a,b,tolerance=1e-5)=>Math.hypot(...a.map((value,i)=>value-b[i]))<=t
 
 async function equipLoadout(page,{shield,melee}){
  const fixture=await page.evaluate(({shield,melee})=>{
-  const actor=battle.units.find(u=>u.team==='ally'&&u.frame===3);
+  const actor=battle.units.find(u=>u.team==='ally'&&u.frame===window.__qaBreachFrame);
   const target=battle.units.find(u=>u.team==='enemy'&&u.alive);
   if(!actor||!target)throw Error('Gatecrasher sortie fixture needs one ally and one live hostile');
   for(const unit of battle.units)if(unit!==actor&&unit!==target){unit.alive=false;unit.hp.body=0;}
@@ -157,43 +157,52 @@ async function destroySide(page,fixture,side,gear){
  return result;
 }
 
-module.exports=async function checkGatecrasherV2({page,origin,mobile,out}){
+module.exports=async function checkGatecrasherV2({page,origin,mobile,out,frame=3}){
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.addInitScript(()=>{try{localStorage.setItem('iron-vow-attack-camera','off')}catch{}});
+ await page.addInitScript(frame=>{window.__qaBreachFrame=frame;try{localStorage.setItem('iron-vow-attack-camera','off')}catch{}},frame);
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.__ironVow&&window.IronVowScene);
  await page.evaluate(()=>{
-  __ironVow.start({seed:4242,contract:0,frames:[3]});
+  __ironVow.start({seed:4242,contract:0,frames:[window.__qaBreachFrame]});
   // The frame-override test seam keeps the slot's loadout. Fit its actual factory weapon.
-  const actor=battle.units.find(u=>u.team==='ally'&&u.frame===3);
-  actor.weapon=save.units[actor.index].weapon=FRAMES[3].weapon;
+  const actor=battle.units.find(u=>u.team==='ally'&&u.frame===window.__qaBreachFrame);
+  actor.weapon=save.units[actor.index].weapon=FRAMES[window.__qaBreachFrame].weapon;
  });
- await page.waitForFunction(()=>battle?.phase==='player'&&battle.units.some(u=>u.team==='ally'&&u.frame===3)&&IronVowScene.ready,null,{timeout:60000});
+ await page.waitForFunction(()=>battle?.phase==='player'&&battle.units.some(u=>u.team==='ally'&&u.frame===window.__qaBreachFrame)&&IronVowScene.ready,null,{timeout:60000});
 
  const live=await page.evaluate(()=>{
-  const unit=battle.units.find(u=>u.team==='ally'&&u.frame===3),entry=IronVowScene.models.get(unit.id)?.entry;
+  const unit=battle.units.find(u=>u.team==='ally'&&u.frame===window.__qaBreachFrame),entry=IronVowScene.models.get(unit.id)?.entry;
   return {live:IronVowScene.isLive(unit),native:Boolean(entry?.m?.nativeV2?.source?.isObject3D),frame:unit.frame};
  });
  assert.equal(live.live,true,'Gatecrasher frame 3 must be a live rig in the active sortie');
  assert.equal(live.native,true,'The live sortie scene must use the native rig-v2 source');
 
  await page.evaluate(()=>{
-  const unit=battle.units.find(u=>u.team==='ally'&&u.frame===3);
+  const unit=battle.units.find(u=>u.team==='ally'&&u.frame===window.__qaBreachFrame);
   unit.shield='citadel-shield';
   IronVowScene.clear();
  });
  await page.waitForFunction(()=>{
-  const unit=battle?.units.find(u=>u.team==='ally'&&u.frame===3),entry=unit&&IronVowScene.models.get(unit.id)?.entry;
+  const unit=battle?.units.find(u=>u.team==='ally'&&u.frame===window.__qaBreachFrame),entry=unit&&IronVowScene.models.get(unit.id)?.entry;
   return Boolean(IronVowScene.ready&&entry?.m?.nativeV2?.source?.isObject3D);
  },null,{timeout:60000});
  const shieldFixture=await page.evaluate(()=>{
-  const actor=battle.units.find(u=>u.team==='ally'&&u.frame===3);
+  const actor=battle.units.find(u=>u.team==='ally'&&u.frame===window.__qaBreachFrame);
   return {actor:actor.id};
  });
  const gait=await moveWithGait(page,shieldFixture.actor);
 
+ if(frame!==3){
+  const light=await equipLoadout(page,{shield:'bulwark-shield',melee:null});
+  const lightFit=await page.evaluate(({actor})=>{
+   const e=IronVowScene.models.get(actor).entry,m=e.m,src=m.nativeV2.source,socket=src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('socket.L'));
+   m.cont.updateMatrixWorld(true);const pos=o=>o.getWorldPosition(new THREE.Vector3()),box=new THREE.Box3();
+   for(const item of m.build.parts.body)if(item.m.visible)box.union(new THREE.Box3().setFromObject(item.m));
+   return {grip:pos(e.shield.grip).distanceTo(pos(socket)),face:box.distanceToPoint(pos(e.shield.face))};
+  },light);assert.ok(lightFit.grip<1e-5&&lightFit.face>.02,JSON.stringify(lightFit));
+ }
  const shield=await equipLoadout(page,{shield:'citadel-shield',melee:null});
- if(out&&!mobile){
+ if(out&&!mobile&&frame===3){
   fs.mkdirSync(out,{recursive:true});
   const png=await page.screenshot();
   const image=await page.evaluate(async data=>{
@@ -207,15 +216,55 @@ module.exports=async function checkGatecrasherV2({page,origin,mobile,out}){
   },png.toString('base64'));
   fs.writeFileSync(path.join(out,'gatecrasher-sortie.webp'),image,'base64');
  }
+ if(frame!==3){
+  const geometry=await page.evaluate(({actor})=>{
+   const entry=IronVowScene.models.get(actor).entry,m=entry.m,src=m.nativeV2.source,node=n=>src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(n));
+   m.cont.updateMatrixWorld(true);const pos=o=>o.getWorldPosition(new THREE.Vector3()),shield=entry.shield;
+   const gripError=pos(shield.grip).distanceTo(pos(node('socket.L'))),face=pos(shield.face);
+   const body=new THREE.Box3();for(const item of m.build.parts.body)if(item.m.visible)body.union(new THREE.Box3().setFromObject(item.m));
+   const skirtRoot=node('Continuous hip skirt');let skirt;skirtRoot.traverse(o=>{if(!skirt&&o.isSkinnedMesh)skirt=o});if(!skirt)throw Error('Skirt has no skinned primitive');const joint=skirt.skeleton.bones.findIndex(b=>b.name===THREE.PropertyBinding.sanitizeNodeName('hip.L'));
+   const weights=skirt.geometry.attributes.skinWeight,indices=skirt.geometry.attributes.skinIndex;let vertex=-1;
+   for(let i=0;i<weights.count;i++)for(let k=0;k<4;k++)if(indices[['getX','getY','getZ','getW'][k]](i)===joint&&weights[['getX','getY','getZ','getW'][k]](i)>.15){vertex=i;break;}
+   if(vertex<0)throw Error('No weighted hip vertex');
+   function vertexPoint(){const p=new THREE.Vector3().fromBufferAttribute(skirt.geometry.attributes.position,vertex);skirt.boneTransform(vertex,p);return skirt.localToWorld(p);}
+   const before=vertexPoint(),hip=m.rig.legs.find(l=>l.side==='L').hip,rest=hip.quaternion.clone();hip.rotateX(.20);m.nativeV2.sync();m.cont.updateMatrixWorld(true);const deformation=before.distanceTo(vertexPoint());hip.quaternion.copy(rest);m.nativeV2.sync();
+   return {gripError,faceToBody:body.distanceToPoint(face),deformation};
+  },shield);
+  assert.ok(geometry.gripError<1e-5&&geometry.faceToBody>.02&&geometry.deformation>.01,JSON.stringify(geometry));
+ }
+ if(frame!==3){
+  const bodyLock=await page.evaluate(({actor})=>{const u=battle.units.find(x=>x.id===actor),e=IronVowScene.models.get(actor).entry,hp=u.hp.body;u.hp.body=0;IronVowScene.render(clock,.016);const result={legal:canUseWeapon(u,shoulderWeapon(u)),visible:e.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('mount.shoulderR')).visible};u.hp.body=hp;IronVowScene.render(clock,.016);return result;},shield);
+  assert.deepEqual(bodyLock,{legal:false,visible:false},'Lost body disables the Vesper subsystem');
+ }
  const morrow=await observeLaunches(page,shield,'fire','morrow');
  const vesper=await observeLaunches(page,shield,'missile','missile');
  await destroySide(page,shield,'left','shield');
 
  const cleaver=await equipLoadout(page,{shield:null,melee:'cleaver'});
+ if(frame!==3){
+  const tip=await page.evaluate(({actor})=>{
+   const e=IronVowScene.models.get(actor).entry,src=e.m.nativeV2.source,node=n=>src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(n));
+   const p=e.secondary.tip.getWorldPosition(new THREE.Vector3());return {error:p.distanceTo(node('Cleaver Tip.L').getWorldPosition(new THREE.Vector3())),bounds:e.secondary.bounds().distanceToPoint(p)};
+  },cleaver);assert.ok(tip.error<1e-5&&tip.bounds<.15,JSON.stringify(tip));
+ }
  await observeLaunches(page,cleaver,'fire','morrow');
  await observeLaunches(page,cleaver,'missile','missile');
+ if(frame!==3){
+  const strikes=await page.evaluate(async({actor,target})=>{
+   const combat=IronVowScene.combat,old=combat.landed,hits=[];
+   combat.landed=function(...args){const result=old.apply(this,args);if(args[0].id===actor&&args[2].id==='cleaver'){
+    const e=IronVowScene.models.get(actor).entry,p=e.secondary.tip.getWorldPosition(new THREE.Vector3()),n=e.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Cleaver Tip.L'));
+    hits.push({damage:args[3].damage,tipError:p.distanceTo(n.getWorldPosition(new THREE.Vector3())),bounds:e.secondary.bounds().distanceToPoint(p)});
+   }return result;};
+   const u=battle.units.find(u=>u.id===actor);u.ap=80;ruleRandom=()=>0;
+   try{await __ironVow.attack(actor,target,'body','strike')}finally{combat.landed=old;}
+   return hits;
+  },cleaver);
+  assert.ok(strikes.length>0&&strikes.every(x=>x.damage>0&&x.tipError<1e-5&&x.bounds<.15),JSON.stringify(strikes));
+ }
  await destroySide(page,cleaver,'left','cleaver');
  await destroySide(page,cleaver,'right',null);
+ if(frame!==3)await observeLaunches(page,cleaver,'missile','missile');
 
  const lifecycle=await page.evaluate(actor=>{
   const entry=IronVowScene.models.get(actor)?.entry,cont=entry?.m?.cont;

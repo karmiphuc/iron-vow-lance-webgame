@@ -13,6 +13,8 @@ const checkVanguard = require('./browser/vanguard.cjs');
 const checkAero = require('./browser/aero.cjs');
 const checkLionTrial = require('./browser/lion-trial.cjs');
 const checkStockV2 = require('./browser/stock-v2.cjs');
+const checkHellbreakerV2 = require('./browser/hellbreaker-v2.cjs');
+const checkShogunV2 = require('./browser/shogun-v2.cjs');
 const checkLineInfantry = require('./browser/line-infantry.cjs');
 const checkLineElite = require('./browser/line-elite.cjs');
 const checkInfantryCarry = require('./browser/infantry-carry.cjs');
@@ -66,10 +68,18 @@ async function main() {
   const lionFile = readGLB(path.join(assets, 'lion.glb'));
   const lion = validate(lionFile);
   if (!lion.ok) throw Error(lion.errors.join(', '));
+  const hellbreaker = validate(readGLB(path.join(assets, 'hellbreaker.glb')));
+  if (!hellbreaker.ok) throw Error(hellbreaker.errors.join(', '));
   const gatecrasher = await previewRig({
     file: path.join(assets, 'gatecrasher-r2-reference.glb'),
     screenshot: path.join(directory, 'gatecrasher.webp'),
     matrix: true,
+  });
+  const shogun = await previewRig({
+    file: path.join(assets, 'shogun.glb'),
+    screenshot: path.join(directory, 'shogun.webp'),
+    matrix: true,
+    fit: true,
   });
   const cicada = await previewRig({
     file: path.join(assets, 'cicada-reference.glb'),
@@ -120,13 +130,16 @@ async function main() {
     capture(checkVanguard),
     capture(checkAero),
     capture(checkStockV2),
+    capture(checkHellbreakerV2),
+    capture(checkShogunV2),
     capture(checkLionTrial),
     capture(checkLineInfantry),
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
   const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero, kestrel, basilisk,
-    lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) }, vehicles, live };
+    lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) },
+    hellbreaker: { triangles: hellbreaker.total }, shogun, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
   console.log('PASS Phase 3 checkpoint: authored sortie rigs, Lion trial, tank and gunship');
 }

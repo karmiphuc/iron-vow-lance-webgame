@@ -32,6 +32,8 @@ const checkPairedWalk=require('./browser/paired-walk.cjs');
 const checkMechComputer=require('./browser/mech-computer.cjs');
 const checkVehicles=require('./browser/vehicles.cjs');
 const checkGatecrasherV2=require('./browser/gatecrasher-v2.cjs');
+const checkHellbreakerV2=require('./browser/hellbreaker-v2.cjs');
+const checkShogunV2=require('./browser/shogun-v2.cjs');
 const checkCicadaV2=require('./browser/cicada-v2.cjs');
 const dist=resolve(__dirname,'../dist');
 
@@ -70,7 +72,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkStockV2,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
+async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkStockV2,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
  const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
  const cpuFlows=new Set(['checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);

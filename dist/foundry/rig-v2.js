@@ -263,18 +263,16 @@ function build(unit){
 function register(frame,profile){profiles.set(frame,profile);}
 root.IronVowRigV2={applies,register,load,build,clear,status:unit=>assets.get(profileKey(unit))?.status};
 
-register(3,{
- id:'gatecrasher',assetPath:'rig-bench/rig-v2/gatecrasher-r2-reference.glb',
- setup({bone,driver,marker,bounds,rig:{arms}}){
+function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
   const slide=driver('Cannon Slide',arms.R.wr),slideRest=slide.position.clone();
   const slideForward=V3(0,0,1).applyQuaternion(arms.R.wr.getWorldQuaternion(Q()).invert());
   const primary={id:'morrow',carrier:arms.R.wr,mount:slide,muzzle:marker('muzzle.upper',slide),muzzle2:marker('muzzle.lower',slide),bounds:()=>bounds('Cannon Slide')};
   const shoulder=driver('mount.shoulderR',arms.R.paul);
   const vesper={id:'vesper',subsystem:'body',carrier:arms.R.paul,mount:shoulder,muzzle:marker('muzzle.vesper.1',shoulder),muzzle2:marker('muzzle.vesper.2',shoulder),aimPivot:()=>shoulder,bounds:()=>bounds('mount.shoulderR')};
-  const cleaver={id:'cleaver',mount:arms.L.so,tip:marker('Cleaver Tip.L',arms.L.so)};
+  const cleaver={id:'cleaver',mount:arms.L.so,tip:marker('Cleaver Tip.L',arms.L.so),bounds:()=>bounds('socket.L')};
   const cleaverSocket=bone('socket.L'),shoulderSocket=bone('mount.shoulderR');
   return {
-   boundsNames:['Cannon Slide','mount.shoulderR'],rams:['Arm ram','Leg ram','Ankle ram'],
+   boundsNames:['Cannon Slide','mount.shoulderR','socket.L'],rams:['Arm ram','Leg ram','Ankle ram'],
    pose(entry,unit,pose){
     entry.primary=primary;
     entry.secondary=unit.melee==='cleaver'&&!unit.shield?cleaver:null;
@@ -285,8 +283,9 @@ register(3,{
     shoulder.quaternion.identity();
    }
   };
- }
-});
+}
+register(3,{id:'gatecrasher',assetPath:'rig-bench/rig-v2/gatecrasher-r2-reference.glb',setup:breachSetup});
+register(20,{id:'shogun',assetPath:'rig-bench/rig-v2/shogun.glb',factoryLivery:true,setup:breachSetup});
 
 register(4,{
  id:'cicada',assetPath:'rig-bench/rig-v2/cicada-reference.glb',

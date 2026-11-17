@@ -1,6 +1,6 @@
 # Phase 3 export checkpoint
 
-[Gatecrasher in a sortie with Vesper and Citadel shield](gatecrasher-sortie.webp) · [Gatecrasher asset](gatecrasher.webp) · [Cicada](cicada.webp) · [LI-01](li-01.webp) · [LI-02](li-02.webp) · [Reaver in a sortie](reaver.webp) · [Gravemaw](vanguard.webp) · [Aero in a sortie](aero-sortie.webp) · [Lion trial](lion-trial.webp) · [Tank and gunship](vehicles.webp) · [Chromium results](summary.json)
+[Gatecrasher in a sortie with Vesper and Citadel shield](gatecrasher-sortie.webp) · [Gatecrasher asset](gatecrasher.webp) · [Cicada](cicada.webp) · [LI-01](li-01.webp) · [LI-02](li-02.webp) · [Reaver in a sortie](reaver.webp) · [Gravemaw](vanguard.webp) · [Aero in a sortie](aero-sortie.webp) · [Lion trial](lion-trial.webp) · [Tank and gunship](vehicles.webp) · [Hellbreaker sortie](hellbreaker-sortie.webp) · [Shogun loadout preview](shogun.webp) · [Chromium results](summary.json)
 
 The static rig-v2 validator and its fixtures passed. Chromium rendered eight loadouts at 49,882–56,608 triangles. Each count matched the default-scene geometry plus the equipped parts. The integral muzzle moved 0.657 units when its elbow rotated. Both shield grips aligned with the wrist socket, and the grip moved 0.172 units during wrist articulation. WebGL reported zero errors.
 
@@ -23,6 +23,8 @@ Aero passed desktop and touch checks for all four Relay strikes, rail and carbin
 Lion's Cleaver, Hatchet and Breaker strikes retained their AP costs, authored contact timing and damage on desktop and touch. Sampled runtime joint and tip positions differed from the approved source by at most 0.044 source units. Planted foot drift stayed below 0.00011 world units. The practice target sits closer within its original tile, with a 0.030–0.131 world-unit tip gap at the contact frame and zero grip-to-tip intersections with Lion's torso. The trial left the saved career intact.
 
 Kestrel and Basilisk passed desktop and touch checks for planted feet, alignment of all ten piston pairs, atlas paint channels, arm damage, Workshop weapon and shield fit, rail attacks and asset disposal. Basilisk's default volley used both authored pod positions. Their heaviest loadouts draw 38,421 and 46,321 triangles.
+
+Hellbreaker's 57,726-triangle field rig passed desktop and touch checks for four alternating Morrow launches, two Breach Gauntlet hits after right-arm loss, salvage and disposal. Shogun passed both device profiles for its Morrow, Vesper and Cleaver, shield grip placement, weighted skirt, armor damage and disposal. All eight Shogun loadouts passed, peaking at 49,472 equipped triangles. The offline package embeds both GLBs byte for byte.
 
 A one-seed campaign smoke completed 2,240 observed ticks with zero anomalies. A second invocation reused the completed seed. The final 30-seed campaign remains pending.
 

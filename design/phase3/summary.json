@@ -306,7 +306,7 @@
         "cleaver": {
           "poseError": 0.04099169528381584,
           "rearDrift": 0.0001061154391792449,
-          "leadDrift": 0.00008419113733874271,
+          "leadDrift": 8.419113733874271e-05,
           "contactGap": 0.12837075748516447,
           "bodyIntersections": 0,
           "damage": 35
@@ -314,7 +314,7 @@
         "hatchet": {
           "poseError": 0.044027681358058846,
           "rearDrift": 0.0001061154391792449,
-          "leadDrift": 0.00008419113733874271,
+          "leadDrift": 8.419113733874271e-05,
           "contactGap": 0.06287237130746132,
           "bodyIntersections": 0,
           "damage": 42
@@ -322,7 +322,7 @@
         "breaker": {
           "poseError": 0.042523399255164254,
           "rearDrift": 0.0001061154391792449,
-          "leadDrift": 0.00008419113733874271,
+          "leadDrift": 8.419113733874271e-05,
           "contactGap": 0.03037835895340506,
           "bodyIntersections": 0,
           "damage": 61
@@ -335,7 +335,7 @@
       },
       "checkLineElite": {
         "launches": 16,
-        "worstAimDegrees": 0.0000012074182697257333,
+        "worstAimDegrees": 1.2074182697257333e-06,
         "detachedPlates": 4
       },
       "checkInfantryCarry": {
@@ -347,7 +347,9 @@
           "traversals": 2,
           "plantedPairs": 36
         }
-      }
+      },
+      "checkHellbreakerV2": true,
+      "checkShogunV2": true
     },
     "touch": {
       "checkCicadaV2": {
@@ -398,7 +400,7 @@
         "cleaver": {
           "poseError": 0.04099169528381584,
           "rearDrift": 0.0001061154391792449,
-          "leadDrift": 0.00008419113733874271,
+          "leadDrift": 8.419113733874271e-05,
           "contactGap": 0.12907325119364377,
           "bodyIntersections": 0,
           "damage": 35
@@ -406,7 +408,7 @@
         "hatchet": {
           "poseError": 0.044027681358058846,
           "rearDrift": 0.0001061154391792449,
-          "leadDrift": 0.00008419113733874271,
+          "leadDrift": 8.419113733874271e-05,
           "contactGap": 0.0628723704232122,
           "bodyIntersections": 0,
           "damage": 42
@@ -414,7 +416,7 @@
         "breaker": {
           "poseError": 0.042523399255164254,
           "rearDrift": 0.0001061154391792449,
-          "leadDrift": 0.00008419113733874271,
+          "leadDrift": 8.419113733874271e-05,
           "contactGap": 0.030378360081746925,
           "bodyIntersections": 0,
           "damage": 61
@@ -422,12 +424,12 @@
       },
       "checkLineInfantry": {
         "launches": 16,
-        "worstAimDegrees": 8.537736462515939e-7,
+        "worstAimDegrees": 8.537736462515939e-07,
         "detachedPlates": 3
       },
       "checkLineElite": {
         "launches": 16,
-        "worstAimDegrees": 0.0000012074182697257333,
+        "worstAimDegrees": 1.2074182697257333e-06,
         "detachedPlates": 4
       },
       "checkInfantryCarry": {
@@ -439,7 +441,17 @@
           "traversals": 2,
           "plantedPairs": 36
         }
-      }
+      },
+      "checkHellbreakerV2": true,
+      "checkShogunV2": true
     }
+  },
+  "hellbreaker": {
+    "triangles": 57726
+  },
+  "shogun": {
+    "triangles": 47116,
+    "loadouts": 8,
+    "maxEquippedTriangles": 49472
   }
 }

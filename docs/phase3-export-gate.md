@@ -1,17 +1,20 @@
 # Phase 3 asset export gate
 
-Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, the Lion trial, the tank and the gunship use live meshes.
+Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, Hellbreaker, Shogun, the Lion trial, the tank and the gunship use live meshes.
 
 ## Editable source coverage
 
 | Source status | Roster |
 | --- | --- |
-| Verified original Blender projects | Gatecrasher R2, Cicada, LI-01 R32 Service, LI-02 E7, Gravemaw R10, Reaver R14 Hostile, Aero R10 Melee and Lion Extended Follow Through |
-| Rebuilt from tracked Blender generators | Kestrel and Basilisk. Keep the editable scenes and atlas images together. Original scene recovery is tracked separately. |
+| Verified original Blender projects | Gatecrasher R2, Cicada, LI-01 R32 Service, LI-02 E7, Gravemaw R10, Reaver R14 Hostile, Aero R10 Melee, Lion Extended Follow Through, Painted Warden Hands, Bulwark-Aegis Combat, Ashigaru Grip-Stride and Bastion Weapon-Sockets |
+| Verified historical alias | Shogun HV-12 uses `samurai-mounted.blend`. The original export reproduces the released geometry and five clips. |
+| Original authoring lineage with a version gap | Hellbreaker HV-09X uses the earlier Gatecrasher rig. Its meshes, transforms, joints, textures and clips match the shipped lineage. The exact published native revision remains unverified. |
+| Rebuilt from tracked Blender generators | Kestrel and Basilisk. Keep the editable scenes and atlas images together. The original scenes and standalone atlas images remain missing. |
 | Tracked procedural kit | Valkyrie, Oni, Behemoth, Aegis, Shrike and Citadel |
-| Original Blender projects still to recover | Painted Warden and its bake script, Hellbreaker HV-09X, Shogun HV-12, Bulwark-Aegis M02, Ashigaru IV-S07 Grip-Stride and Bastion BST-04 |
 
-Reconcile the production roster against the transfer manifest before signing off on source coverage. Record the chosen version, linked libraries, unpacked textures, animation actions and authoring sidecars for each rig. Check the actual scene in Blender and compare hashes after transfer. The first manifest lists 23 unresolved external references across archived revisions, so check whether the selected production versions use them.
+Both private handoffs were reconciled against all 21 campaign chassis and Lion. The selected production scenes opened on the Mac with script auto-execution disabled and no missing external dependencies. Their hashes matched the manifests. The handoff includes Warden's bake scripts, Bulwark-Aegis's shield and Cleaver, and Bastion's fitted rifle, Piledriver, six actions and six NLA strips. Ashigaru's original carbine and knife are present in Grip-Stride. The original export recipe builds its Flechette module from the carbine grip. A separately saved equipped Flechette scene remains missing.
+
+Keep editable sources, referenced assets, authoring scripts and the roster manifest in a private asset backup available when either workstation is offline. Keep the reproducible exporters and shipped GLBs with the game. On each transfer, reconcile releases and historical aliases against the full roster, verify the selected file hashes, and open the production scenes to check their dependencies before signing off.
 
 The legacy Prototype Bay Gatecrasher draws 162,386 triangles. The new `dist/rig-bench/rig-v2/gatecrasher-r2-reference.glb` draws 54,252 triangles with the integral cannon, Arc Cleaver and Vesper pod. It is separate from the Prototype Bay model because that viewer requires its authored motion clips. The reference is equipped as one file, so no extra weapon GLB is passed to the gate for this configuration.
 
@@ -53,3 +56,7 @@ A passing static gate is necessary, not sufficient: review dimension values and 
 
 
 Static gate updates, 12 November 2026 Singapore time: required rig nodes must be reachable from the actual default scene, and that scene must contain mesh geometry. Name lookup and duplicate detection use that same reachable set, so an inactive scene cannot supply missing bones or falsely reject a valid rig by reusing names. Fixtures reproduce the former orphaned-rig acceptance and inactive-name rejection and verify the corrected behavior. Sibling geometry/skeleton scenes remain supported. These checks do not claim any model conversion or certify deformation.
+
+`tools/export_hellbreaker_v2.py` exports the original Gatecrasher lineage as Hellbreaker's 57,726-triangle live rig. It retains the alternating Morrow ports and adds the runtime mount for the factory Breach Gauntlet. The right arm can fail independently of the left melee mount.
+
+`tools/export_shogun_v2.py` exports the mounted Samurai scene as Shogun's 47,116-triangle live rig, with the original blue livery, weighted hip skirt, Morrow, Vesper and Cleaver. The heaviest legal fit uses 49,472 triangles with Vesper and the Citadel shield.
