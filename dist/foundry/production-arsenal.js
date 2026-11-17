@@ -5,9 +5,11 @@ const T=window.THREE;
 if(!T?.GLTFLoader)return;
 const names={rifle:'kestrel',shotgun:'breacher',missile:'vesper',rail:'longbow',
  hailstorm:'hailstorm',rampart:'rampart',breaker:'breaker',cleaver:'cleaver',piledriver:'piledriver',blade:'cleaver'};
-const expansion=window.IRON_VOW_EXPANSION_ART??{};
+// GLB node names are independent of the temporary 2D weapon-art metadata.
+const expansion=new Set(['sidewinder','trident','forge','ember','watchman','falcon',
+ 'cerberus','obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax']);
 const rigs=window.IRON_VOW_EXPANSION_RIG??{};
-const isExpansion=id=>Object.hasOwn(expansion,id);
+const isExpansion=id=>expansion.has(id);
 const assetNodeName=id=>isExpansion(id)?id:Object.hasOwn(names,id)?names[id]:undefined;
 let arsenal;
 function load(source,expansionSource,shieldSource){

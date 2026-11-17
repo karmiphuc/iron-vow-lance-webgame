@@ -2,10 +2,24 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 globalThis.window=globalThis;globalThis.self=globalThis;
 const root=path.resolve(__dirname,'../dist');
-for(const name of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.js','armory-visuals.js','foundry/production-arsenal.js','scene/weapon-fx.js'])vm.runInThisContext(fs.readFileSync(path.join(root,name),'utf8'),{filename:name});
+for(const name of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.js','armory-visuals.js'])vm.runInThisContext(fs.readFileSync(path.join(root,name),'utf8'),{filename:name});
+// Classification and physical mounts must survive removal of the sprite metadata.
+const expansionIds=['sidewinder','trident','forge','ember','watchman','falcon','cerberus',
+ 'obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax'];
+delete globalThis.IRON_VOW_EXPANSION_ART;
+for(const name of ['foundry/production-arsenal.js','scene/weapon-fx.js'])vm.runInThisContext(fs.readFileSync(path.join(root,name),'utf8'),{filename:name});
 const buffer=name=>{const b=fs.readFileSync(path.join(root,'rig-bench',name));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);};
 (async()=>{
  const A=IronVowProductionArsenal,source=await A.load(buffer('weapons.glb'),buffer('expansion-weapons.glb'),buffer('shields.glb'));
+ for(const id of expansionIds){
+  assert.equal(A.isExpansion(id),true,id+' remains an expansion weapon without sprite metadata');
+  assert.equal(A.assetNodeName(id),id);
+  const mounted=A.mount(source,id,new THREE.Object3D());
+  assert.ok(mounted?.grip,id+' retains its physical GLB grip');
+  if(IRON_VOW_EXPANSION_RIG[id])assert.equal(mounted.motion,IRON_VOW_EXPANSION_RIG[id],id+' retains its animation rig');
+ }
+ assert.equal(A.isExpansion('rifle'),false);
+ assert.equal(A.assetNodeName('rifle'),'kestrel');
  let count=0;
  for(const [id,profile] of Object.entries(IronVowWeaponFX.profiles)){
   if(!profile.asset)continue;
