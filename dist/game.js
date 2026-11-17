@@ -2726,6 +2726,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(sequence)sequence.phase='result';
  let jammed=false,keepBoost=false;
  if(!hit){
+  if(dodged&&!sequence?.skipped)window.IronVowScene?.combat?.dodge?.(t,a);
   const result=dodged?'DODGE':'MISS';
   if(sequence)sequence.result=result;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:result});

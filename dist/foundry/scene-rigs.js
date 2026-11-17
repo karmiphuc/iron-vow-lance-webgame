@@ -52,7 +52,7 @@ function init(){
   scene.environment=studioEnvironment(renderer);
   if(arsenal&&!armoryRequested){
    armoryRequested=true;
-   const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
+   const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path.split('?')[0]]||path;
    // The live Warden and production arsenal load before battle controls are enabled.
    if(window.IronVowWardenRig)window.IronVowWardenRig.load(url('rig-bench/warden-painted.glb'),url('rig-bench/warden-painted-motion.json'))
     .then(()=>{if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
@@ -241,8 +241,7 @@ function draw(u,t,pose,scope,model,custom){
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
  if(v2){
-  v2.pose(entry,u,pose,t);
-  entry.armed=!u.shield||Boolean(armory);
+  entry.armed=v2.pose(entry,u,pose,t,armory)!==false&&(!u.shield||Boolean(armory));
  }else if(armory&&!entry.armed){
   const profile=window.IronVowWeaponFX?.get(u.weapon);
   if(profile?.socket?.startsWith('shoulder')){
@@ -257,7 +256,7 @@ function draw(u,t,pose,scope,model,custom){
  if(armory&&entry.shieldId!==u.shield){
   entry.shieldId=u.shield;
   if(entry.shield)entry.shield.mount.parent?.remove(entry.shield.mount);
-  entry.shield=arsenal.mountShield(armory,u.shield,m.rig.arms.L.so);
+  entry.shield=arsenal.mountShield(armory,u.shield,v2?.shieldSocket||m.rig.arms.L.so);
   if(custom==='warden'||custom==='bastion')entry.shield?.mount.scale.setScalar(.62);
   if(!entry.shield)delete entry.anchors.shield;
  }

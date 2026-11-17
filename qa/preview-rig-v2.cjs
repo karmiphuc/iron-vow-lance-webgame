@@ -214,7 +214,7 @@ async function main() {
   process.stdout.write(json);
 }
 
-module.exports = { previewRig };
+module.exports = { previewRig, subtreeTriangles };
 if (require.main === module) main().catch(error => {
   console.error(error);
   process.exitCode = 1;

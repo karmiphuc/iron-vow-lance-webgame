@@ -1,6 +1,6 @@
 # Phase 3 export checkpoint
 
-[Gatecrasher in a sortie with Vesper and Citadel shield](gatecrasher-sortie.webp) · [Gatecrasher asset](gatecrasher.webp) · [Cicada](cicada.webp) · [LI-01](li-01.webp) · [LI-02](li-02.webp) · [Reaver in a sortie](reaver.webp) · [Tank and gunship](vehicles.webp) · [Chromium results](summary.json)
+[Gatecrasher in a sortie with Vesper and Citadel shield](gatecrasher-sortie.webp) · [Gatecrasher asset](gatecrasher.webp) · [Cicada](cicada.webp) · [LI-01](li-01.webp) · [LI-02](li-02.webp) · [Reaver in a sortie](reaver.webp) · [Gravemaw](vanguard.webp) · [Aero in a sortie](aero-sortie.webp) · [Tank and gunship](vehicles.webp) · [Chromium results](summary.json)
 
 The static rig-v2 validator and its fixtures passed. Chromium rendered eight loadouts at 49,882–56,608 triangles. Each count matched the default-scene geometry plus the equipped parts. The integral muzzle moved 0.657 units when its elbow rotated. Both shield grips aligned with the wrist socket, and the grip moved 0.172 units during wrist articulation. WebGL reported zero errors.
 
@@ -15,6 +15,10 @@ Cicada rendered all 49,978 triangles with 116 skinned and tagged primitives. The
 LI-01 rendered 49,790 triangles in 146 primitives and LI-02 rendered 50,466 in 152. Desktop and touch sorties exercised two-hand carry, planted feet, 16 aimed carbine launches per variant and the loss of the right-arm armor and weapon.
 
 The live dual-autocannon Reaver draws 16,340 triangles. The desktop and touch runs checked four-leg gait and planting, both authored muzzle origins, six reports each in dual- and right-cannon configurations, and all four arm states. Sortie cleanup disposed each of its 109 geometry buffers once.
+
+Gravemaw's 20,158-triangle rig passed desktop and touch checks for planted feet, Piledriver pursuit and damage, the moving auger, six individual Hailstorm muzzle origins, and firing after left-arm loss.
+
+Aero passed desktop and touch checks for all four Relay strikes, rail and carbine launch origins, Pike and shield fit, a pointer-selected Jumpjet and reload, and damage-free dodges with planted feet. The Hailstorm and Citadel shield loadout totals 59,592 triangles after the export reduced the dense meshes. The offline HTML loaded Aero, rail and Pike with network access blocked after the shared arsenal began resolving its embedded assets.
 
 The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in five. The desktop and touch battle checks exercised picking, ground contact, hover, heading, damage, grounded wrecks and fire from the exported muzzles. Leaving the sortie detached the vehicles and disposed their shared geometry once. Both runs used one WebGL context and reported zero WebGL errors. The screenshot arranges both vehicles in a seeded test battle.
 

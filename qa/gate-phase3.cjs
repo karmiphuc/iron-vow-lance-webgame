@@ -1,21 +1,58 @@
 // Fast Phase 3 checkpoint for committed Blender exports.
 const fs = require('node:fs');
 const path = require('node:path');
-const { previewRig } = require('./preview-rig-v2.cjs');
+const { previewRig, subtreeTriangles } = require('./preview-rig-v2.cjs');
+const { readGLB, validate } = require('./check-rig-v2.cjs');
+const createSimulation = require('./sim-harness.cjs');
 const checkBrowser = require('./check-browser.cjs');
 const checkVehicleScene = require('./browser/vehicles.cjs');
 const checkGatecrasherScene = require('./browser/gatecrasher-v2.cjs');
 const checkCicadaV2 = require('./browser/cicada-v2.cjs');
 const checkReaver = require('./browser/reaver.cjs');
+const checkVanguard = require('./browser/vanguard.cjs');
+const checkAero = require('./browser/aero.cjs');
 const checkLineInfantry = require('./browser/line-infantry.cjs');
 const checkLineElite = require('./browser/line-elite.cjs');
 const checkInfantryCarry = require('./browser/infantry-carry.cjs');
+
+function checkAeroBudget(assets) {
+  const dir = path.resolve(assets, '../..');
+  const sim = createSimulation();
+  sim.sandbox.window.THREE = { GLTFLoader: true };
+  for (const script of ['armory-visuals.js', 'scene/weapon-fx.js', 'foundry/production-arsenal.js']) {
+    sim.run(fs.readFileSync(path.join(dir, script), 'utf8'));
+  }
+  const { IronVowProductionArsenal: arsenal, IronVowWeaponFX: effects } = sim.sandbox.window;
+  const armory = ['weapons.glb', 'expansion-weapons.glb', 'shields.glb'].map(file => readGLB(path.join(dir, 'rig-bench', file)));
+  const aero = readGLB(path.join(assets, 'aero.glb'));
+  const contract = validate(aero);
+  if (!contract.ok) throw Error(contract.errors.join(', '));
+  const native = new Map([['rifle', subtreeTriangles(aero, 'MODULE | Kestrel scout carbine')]]);
+  for (const id of sim.run('AERO_MELEE')) native.set(id, subtreeTriangles(aero, 'melee.' + id));
+  const hull = contract.total - [...native.values()].reduce((total, count) => total + count, 0);
+  const main = [], offhand = [{ id: 'empty', triangles: 0 }];
+  for (const { id, melee } of sim.run('WEAPONS.filter(weapon => !weapon.builtIn && !weapon.shoulder)')) {
+    const name = arsenal.assetNodeName(effects.get(id).asset ?? id);
+    const stock = armory.find(file => file.nodes.some(node => node.name === name));
+    if (!native.has(id) && !stock) throw Error(`Missing Aero equipment asset for ${id}`);
+    const triangles = native.get(id) ?? subtreeTriangles(stock, name);
+    (melee ? offhand : main).push({ id, triangles });
+  }
+  for (const { id } of sim.run('SHIELDS')) {
+    offhand.push({ id, triangles: subtreeTriangles(armory[2], id) });
+  }
+  const largest = items => items.reduce((a, b) => a.triangles > b.triangles ? a : b);
+  const gun = largest(main), left = largest(offhand), equipped = hull + gun.triangles + left.triangles;
+  if (equipped > 60000) throw Error(`Aero ${gun.id} and ${left.id} draw ${equipped} triangles`);
+  return { triangles: contract.total, hull, equipped, heaviestLoadout: [gun.id, left.id] };
+}
 
 async function main() {
   const [flag, directory] = process.argv.slice(2);
   if (flag !== '--out' || !directory) throw Error('Usage: node qa/gate-phase3.cjs --out directory');
   require('./check-rig-v2-test.cjs');
   const assets = path.join(__dirname, '../dist/rig-bench/rig-v2');
+  const aero = checkAeroBudget(assets);
   const gatecrasher = await previewRig({
     file: path.join(assets, 'gatecrasher-r2-reference.glb'),
     screenshot: path.join(directory, 'gatecrasher.webp'),
@@ -43,11 +80,17 @@ async function main() {
     rigid: true,
     fit: true,
   });
+  const vanguard = await previewRig({
+    file: path.join(assets, 'vanguard.glb'),
+    screenshot: path.join(directory, 'vanguard.webp'),
+    rigid: true,
+    fit: true,
+  });
   const live = { desktop: {}, touch: {} };
   function capture(test) {
     async function scenario(context) {
       const result = await test({ ...context, out: directory });
-      live[context.mobile ? 'touch' : 'desktop'][test.name] = result?.launches ?? result ?? true;
+      live[context.mobile ? 'touch' : 'desktop'][test.name] = result ?? true;
     }
     return Object.defineProperty(scenario, 'name', { value: test.name });
   }
@@ -61,13 +104,15 @@ async function main() {
     },
     capture(checkCicadaV2),
     capture(checkReaver),
+    capture(checkVanguard),
+    capture(checkAero),
     capture(checkLineInfantry),
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
-  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vehicles, live };
+  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
-  console.log('PASS Phase 3 checkpoint: live Gatecrasher, Cicada, Reaver, Infantry, tank and gunship');
+  console.log('PASS Phase 3 checkpoint: live Gatecrasher, Cicada, Reaver, Gravemaw, Aero, Infantry, tank and gunship');
 }
 
 main().catch(error => {

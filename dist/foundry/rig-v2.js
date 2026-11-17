@@ -120,7 +120,8 @@ function build(unit){
   const el=segment('elbow.'+side,'wrist.'+side,sh);
   const wr=driver('wrist.'+side,el,el.getWorldQuaternion(Q()));
   const so=driver('socket.'+side,wr,wr.getWorldQuaternion(Q()));
-  const paul=find('Pauldron.'+side)?driver('Pauldron.'+side,spine):new T.Group();
+  const paulName=find('Pauldron.'+side)?'Pauldron.'+side:'pauldron.'+side;
+  const paul=find(paulName)?driver(paulName,spine):new T.Group();
   arms[side]={sh,el,wr,so,paul};
  }
  // Share the yaw mounts and -Y limb convention from the Foundry quad in chassis.js:133-134.
@@ -225,8 +226,12 @@ function build(unit){
   source.updateMatrixWorld(true);
  }
  mech.nativeV2={
-  source,sync,bounds,pose:equipment.pose,
-  dispose(){for(const skeleton of skeletons.values())skeleton.boneTexture?.dispose();}
+  source,sync,bounds,pose:equipment.pose,shieldSocket:equipment.shieldSocket,
+  jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
+  dispose(){
+   equipment.dispose?.();
+   for(const skeleton of skeletons.values())skeleton.boneTexture?.dispose();
+  }
  };
  return mech;
 }

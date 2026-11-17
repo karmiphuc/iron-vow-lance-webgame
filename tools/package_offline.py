@@ -21,12 +21,15 @@ assets = {
 
 for asset in (
     "rig-bench/weapons.glb",
+    "rig-bench/expansion-weapons.glb",
     "rig-bench/shields.glb",
     "rig-bench/rig-v2/gatecrasher-r2-reference.glb",
     "rig-bench/rig-v2/cicada-reference.glb",
     "rig-bench/rig-v2/li-01.glb",
     "rig-bench/rig-v2/li-02.glb",
     "rig-bench/rig-v2/reaver.glb",
+    "rig-bench/rig-v2/vanguard.glb",
+    "rig-bench/rig-v2/aero.glb",
 ):
     assets[asset] = (
         "data:model/gltf-binary;base64," + base64.b64encode((dist / asset).read_bytes()).decode("ascii")

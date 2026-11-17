@@ -8,6 +8,7 @@ const names={rifle:'kestrel',shotgun:'breacher',missile:'vesper',rail:'longbow',
 const expansion=window.IRON_VOW_EXPANSION_ART??{};
 const rigs=window.IRON_VOW_EXPANSION_RIG??{};
 const isExpansion=id=>Object.hasOwn(expansion,id);
+const assetNodeName=id=>isExpansion(id)?id:Object.hasOwn(names,id)?names[id]:undefined;
 let arsenal;
 function load(source,expansionSource,shieldSource){
  if(!arsenal){
@@ -47,8 +48,9 @@ function poseShield(shield,u,heading){
 }
 function mount(scene,id,socket){
  const added=isExpansion(id);
- if(!added&&!Object.hasOwn(names,id))return null;
- const original=scene.getObjectByName(added?id:names[id]);
+ const name=assetNodeName(id);
+ if(!name)return null;
+ const original=scene.getObjectByName(name);
  if(!original)return null;
  const model=original.clone(true),mount=new T.Group(),recoil=new T.Group();
  const marker=part=>added?(model.getObjectByName(id+'.'+part)??model.getObjectByName(T.PropertyBinding.sanitizeNodeName(id+'.'+part))):model.getObjectByName(part);
@@ -90,5 +92,5 @@ function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,s
  if(kind==='spin')weapon.pivot.rotation.z=value;
  else weapon.pivot.position.z=value;
 }
-window.IronVowProductionArsenal={load,mount,isExpansion,animate,mountShield,poseShield};
+window.IronVowProductionArsenal={load,mount,isExpansion,assetNodeName,animate,mountShield,poseShield};
 })();

@@ -1,80 +1,63 @@
 const assert=require('node:assert/strict');
-const {join}=require('node:path');
-
+const dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 module.exports=async function checkVanguard({page,mobile,origin,tap}){
+ await page.addInitScript(()=>localStorage.setItem('iron-vow-attack-camera','off'));
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
- await tap('[data-bay="market"]');
- assert.equal(await page.getByRole('heading',{name:'GRAVEMAW',exact:true}).count(),0);
+ await tap('[data-bay="market"]');assert.equal(await page.getByRole('heading',{name:'GRAVEMAW',exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(()=>{Math.random=()=>.5});
- await tap('#nav [data-page="contracts"]');
- await tap('[data-deploy="2"]');
- await tap('#modal-1');
- await tap('#modal-0');
- const art=await page.evaluate(async()=>{
-  const u=battle.units.find(u=>u.frame===VANGUARD_FRAME);
-  const atlas=window.IRON_VOW_FOUNDRY_ART[8];
-  const images=atlas.variants.map(key=>motionImages[key]);
-  await Promise.all(images.map(image=>image.decode()));
-  const frames=[foundryRender(u,clock)];
-  const original={...u.hp};
-  u.hp.right=0;frames.push(foundryRender(u,clock));
-  u.hp.right=original.right;u.hp.left=0;frames.push(foundryRender(u,clock));
-  u.hp.right=0;frames.push(foundryRender(u,clock));
-  u.hp=original;
-  const walker={...u,attack:null,motion:{start:0,duration:1,gaitBase:0,stepIndex:0,totalSteps:1,
-   fromX:u.x,fromZ:u.z,toX:u.x+1,toZ:u.z}};
-  const {cell}=atlas,legTop=Math.floor(cell*.67),legHeight=Math.floor(cell*.28);
-  const layer=new OffscreenCanvas(cell,legHeight),g=layer.getContext('2d',{willReadFrequently:true});
-  const walk=Array.from({length:8},(_,i)=>{
-   const pose=foundryRender(walker,(i+.5)/8);
-   g.clearRect(0,0,cell,legHeight);
-   g.drawImage(pose.surface,pose.index%4*cell,Math.floor(pose.index/4)*cell+legTop,
-    cell,legHeight,0,0,cell,legHeight);
-   return {index:pose.index,pixels:g.getImageData(0,0,cell,legHeight).data};
-  });
-  const legChange=walk.map(({pixels})=>{
-   let changed=0,occupied=0;
-   for(let i=3;i<pixels.length;i+=4){
-    const a=walk[0].pixels[i]>=128,b=pixels[i]>=128;
-    occupied+=Number(a||b);changed+=Number(a!==b);
-   }
-   return changed/occupied;
-  });
+ await page.evaluate(()=>{Math.random=()=>0;save.dispatch={day:save.day,sizes:[1,1,3,3]}});
+ await tap('#nav [data-page="contracts"]');await tap('[data-deploy="2"]');await tap('#modal-1');await tap('#modal-0');
+ await page.waitForFunction(()=>{const u=battle?.units.find(x=>x.frame===VANGUARD_FRAME),e=u&&IronVowScene.models.get(u.id)?.entry;return Boolean(IronVowScene.ready&&u&&IronVowScene.isLive(u)&&e?.m.nativeV2&&e.primary?.muzzles?.length===6)},null,{timeout:60000});
+ const info=await page.evaluate(async()=>{
+  const u=battle.units.find(x=>x.frame===VANGUARD_FRAME),ally=current(),entry=IronVowScene.models.get(u.id).entry,m=entry.m,src=m.nativeV2.source;
+  for(const other of battle.units)if(other!==u&&other!==ally){other.alive=false;other.hp.body=0}
+  const obj=name=>src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name)),world=o=>o.getWorldPosition(new THREE.Vector3());
+  const fixed={right:u.hp.right,left:u.hp.left};
+  function state(right,left){u.hp.right=right?fixed.right:0;u.hp.left=left?fixed.left:0;IronVowScene.render(clock,.016);return [obj('SOCKET.weapon.R').visible,obj('SOCKET.weapon.L').visible];}
+  const states=[state(true,true),state(false,true),state(true,false),state(false,false)];state(true,true);
+  const pose={strikeKind:'piledriver',strikeProgress:0};m.nativeV2.pose(entry,u,pose,clock);m.nativeV2.sync();
+  const base=world(obj('tip.piledriver')).toArray();
+  m.nativeV2.pose(entry,u,{...pose,strikeProgress:.5},clock);m.nativeV2.sync();
+  const stroke=world(obj('tip.piledriver')).toArray();
+  const muzzles=entry.primary.muzzles.map(x=>world(x).toArray());
+  const authoredMuzzles=muzzles.map((_,i)=>{const a=i*Math.PI/3;return obj('Hailstorm | six-barrel rotor').localToWorld(new THREE.Vector3(.209*Math.cos(a),1.915,-.209*Math.sin(a))).toArray()});
+  battle.cover.clear();const move=__ironVow.legalMoves(u.id).find(p=>p.cost===1&&p.x===u.x+1&&p.z===u.z);
+  if(!move)throw Error('Missing one-tile Vanguard step');const samples=[];let moving=true;
+  const sampled=new Promise(resolve=>{function sample(){if(!moving){resolve();return}if(u.motion)samples.push(m.rig.legs.map((leg,i)=>{const p=world(obj('ankle.'+leg.side)),state=m.legs[i];return {p:p.toArray(),binding:p.distanceTo(world(leg.an)),goal:p.distanceTo(state.foot),floor:IronVowScene.groundAt(p.x,p.z)+m.dims.ankleH*m.scale,swing:state.swing,settle:Boolean(state.settle),plant:state.planted.toArray()}}));requestAnimationFrame(sample)}requestAnimationFrame(sample)});
+  try{await moveUnit(u,move.x,move.z)}finally{moving=false}await sampled;
   const fixture=[...paths(u)].find(([key,n])=>n===4&&!battle.cover.has(key)&&!occupied(...key.split(',').map(Number)));
-  if(!fixture)throw Error('No pursuit fixture within four reachable steps.');
-  const [x,z]=fixture[0].split(',').map(Number),a=current();
-  for(const other of battle.units)if(other!==u&&other!==a){other.alive=false;other.hp.body=0}
-  Math.random=()=>0;
-  a.max.body=a.hp.body=500;
-  a.max.pilot=a.hp.pilot=500;
-  Object.assign(a,{x,z,vx:x,vz:z});
-  const types=frames.map(f=>images.indexOf(f.surface));
-  return {types,model:u.name,paint:u.paint,pre:distance(u,a),index:frames[0].index,
-   walk:walk.map(pose=>pose.index),legChange,
-   primary:frames[0].primary,secondary:frames[0].secondary,tip:frames[0].anchors.meleeTip,
-   muzzle:frames[0].anchors.muzzle,atlasFrames:atlas.frames.length};
+  if(!fixture)throw Error('Missing four-tile pursuit');const [x,z]=fixture[0].split(',').map(Number);Object.assign(ally,{x,z,vx:x,vz:z});ally.max.body=ally.hp.body=500;ally.max.pilot=ally.hp.pilot=500;
+  window.vanguardFixture={u,entry};return {name:u.name,states,base,stroke,muzzles,authoredMuzzles,samples};
  });
- assert.deepEqual(art.types,[0,1,2,3]);
- assert.equal(art.model,'GRAVEMAW 2');
- assert.equal(art.paint,null);
- assert.equal(art.pre,4);
- assert.ok(art.primary&&art.secondary&&art.tip.every(Number.isFinite)&&art.muzzle.every(Number.isFinite));
- assert.ok(art.atlasFrames>=30);
- assert.deepEqual(art.walk,[0,1,2,3,4,5,6,7],'walking selects each of the eight gait cells');
- assert.ok(art.legChange.filter(change=>change>.08).length>=4,
-  'Gravemaw should lift and swing its legs through the gait: '+JSON.stringify(art.legChange));
- await tap('#end');
- await page.waitForFunction(()=>activeCinematic?.actor.frame===VANGUARD_FRAME&&activeCinematic.phase==='fire');
- const contact=await page.evaluate(()=>({weapon:activeCinematic.actor.attack.kind,
-   range:distance(activeCinematic.actor,activeCinematic.target)}));
- assert.deepEqual(contact,{weapon:'piledriver',range:1});
- if(process.env.IRON_VOW_VANGUARD_PROOF){
-  await page.screenshot({path:join(process.env.IRON_VOW_VANGUARD_PROOF,mobile?'vanguard-touch.png':'vanguard-desktop.png')});
- }
- await page.waitForFunction(()=>battle?.turn===2&&!battle.busy);
- assert.ok(await page.evaluate(()=>battle.log.some(line=>line.startsWith('GRAVEMAW 2 → WARDEN'))&&
-  Object.keys(current().hp).some(part=>current().hp[part]<current().max[part])));
- console.log('PASS Vanguard pursuit, Piledriver cinematic and independently disarmed atlases');
+ assert.equal(info.name,'GRAVEMAW 2');assert.deepEqual(info.states,[[true,true],[false,true],[true,false],[false,false]]);
+ assert.ok(dist(info.base,info.stroke)>.1,'Piledriver auger moves its authored tip');
+ assert.equal(info.muzzles.length,6);for(let i=0;i<6;i++)assert.ok(dist(info.muzzles[i],info.authoredMuzzles[i])<.01,JSON.stringify({i,marker:info.muzzles[i],authored:info.authoredMuzzles[i]}));assert.ok(dist(info.muzzles[0],info.muzzles[3])>.15,'Six barrel origins differ');
+ assert.ok(info.samples.length>=2&&info.samples.some(feet=>feet.some(f=>f.swing)),'Ground movement swings a leg');
+ let planted=0;for(const [i,feet] of info.samples.entries())for(const [j,foot] of feet.entries()){
+  assert.ok(foot.binding<1e-5&&foot.goal<.04,JSON.stringify(foot));const prev=info.samples[i-1]?.[j];
+  if(!prev||foot.swing||foot.settle||prev.swing||prev.settle||dist(foot.plant,prev.plant)>1e-5)continue;
+  assert.ok(dist(foot.p,prev.p)<.004&&Math.abs(foot.p[1]-foot.floor)<.04,JSON.stringify(foot));planted++;
+ }assert.ok(planted>0,'At least one planted foot was sampled');
+ await tap('#end');await page.waitForFunction(()=>battle?.turn===2&&!battle.busy,null,{timeout:60000});
+ const attack=await page.evaluate(()=>({damage:Object.keys(current().hp).some(p=>current().hp[p]<current().max[p]),attacks:IronVowScene.combat.history.filter(e=>e.actor===vanguardFixture.u.id)}));
+ assert.ok(attack.damage,'Pursuit and melee dealt real damage');
+ await page.evaluate(()=>{
+  const {u,entry}=window.vanguardFixture,a=current();battle.cover.clear();
+  Object.assign(u,{x:7,z:11,vx:7,vz:11});u.hp.left=0;
+  Object.assign(a,{x:7,z:15,vx:7,vz:15});a.max.body=a.hp.body=10000;a.max.pilot=a.hp.pilot=10000;
+  const rotor=entry.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Hailstorm | six-barrel rotor'));
+  const rest=rotor.quaternion.clone(),combat=IronVowScene.combat,launch=combat.launch;window.vanguardShots=[];
+  combat.launch=function(...args){const result=launch.apply(this,args),event=this.history.at(-1);if(event?.type==='launch'&&event.actor===u.id){
+   const marker=entry.primary.muzzles[event.index%6],p=marker.getWorldPosition(new THREE.Vector3());
+   window.vanguardShots.push({event,position:p.toArray(),markerIndex:entry.primary.muzzles.indexOf(marker),spin:rest.angleTo(rotor.quaternion)});
+  }return result;};
+ });
+ await tap('#end');await page.waitForFunction(()=>battle?.turn===3&&!battle.busy,null,{timeout:60000});
+ const shots=await page.evaluate(()=>window.vanguardShots);
+ assert.ok(shots.length>=2,'Hailstorm fired after left-arm loss');
+ for(const {event,position,markerIndex} of shots){assert.equal(event.weapon,'hailstorm');assert.equal(markerIndex,event.index%6);assert.ok(event.mounted&&event.aimError<8*Math.PI/180&&dist(event.origin,position)<1e-5,JSON.stringify({event,position}));}
+ assert.ok(new Set(shots.map(s=>s.markerIndex)).size>1,'Burst uses individual barrel origins');
+ assert.ok(shots.some(({spin})=>spin>.2),'The actual Hailstorm salvo turns its authored rotor');
+ console.log('PASS Vanguard live rig, both limb states, rotor, auger, grounded pursuit, melee and six-barrel volley');
+ return {planted,launches:shots.length};
 };
-

@@ -4,7 +4,7 @@
 'use strict';
 const T=root.THREE,A=root.IronVowProductionArsenal,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
 const layouts=new Map(),records=new Map(),stock=new Set();let source,version=0,target;
-const file=path=>new URL(path,document.baseURI).href;
+const file=path=>root.IRON_VOW_INLINE_ASSETS?.[path.split('?')[0]]||new URL(path,document.baseURI).href;
 A.load(file('rig-bench/weapons.glb'),file('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),file('rig-bench/shields.glb')).then(value=>{
  source=value;source.traverse(o=>{if(o.geometry)stock.add(o.geometry);for(const material of [o.material].flat().filter(Boolean))stock.add(material);});version++;
  root.IronVowBillboards?.invalidate();if(document.querySelector('#nav button'))render();
