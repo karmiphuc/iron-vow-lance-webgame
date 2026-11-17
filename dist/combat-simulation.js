@@ -170,5 +170,77 @@ async function runEnemyTurn(){
 }
  return {enemyAttackWeapon,runEnemyTurn};
  }
- root.IRON_VOW_SIM=Object.freeze({createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn});
+ // War's autonomous target/movement policy follows the Rig Bench reference
+ // (docs/reference/claude/rig-bench.html:2680-2701). All legal choices,
+ // effects on combat state and reactions come from the host's game commands.
+ function createWarDriver(game,{ready}={}){
+  let settings,board,state,sequence,events=[],working=false;
+  function report(){
+   return state?{...settings,...state,...board,unfinished:state.units.length>0,events:events.slice()}:null;
+  }
+  async function issue(event,command){
+   const turn=state.turn;
+   await command();
+   state=game.rulesSnapshot();
+   const record={turn,...event,log:state.log};
+   events.push(record);
+   return record;
+  }
+  const alive=id=>state.units.some(unit=>unit.id===id&&unit.alive);
+  async function* commands(){
+   for(let round=0;round<settings.maxTurns&&state.units.length;round++){
+    for(const {id} of state.units.filter(unit=>unit.team==='ally'&&unit.alive)){
+     if(!alive(id))continue;
+     let choices=game.choices(id);
+     const move=choices.moves.filter(option=>option.score<choices.currentScore)
+      .sort((a,b)=>a.score-b.score||a.cost-b.cost||a.x-b.x||a.z-b.z)[0];
+     if(move)yield await issue({actor:id,action:'move',x:move.x,z:move.z},()=>game.move(id,move.x,move.z));
+     for(let attacks=0;alive(id);attacks++){
+      choices=game.choices(id);
+      const attack=choices.attacks.sort((a,b)=>a.hp-b.hp||a.target.localeCompare(b.target)||a.mode.localeCompare(b.mode))[0];
+      if(!attack)break;
+      if(attacks>=32)throw Error('Attack action limit exceeded');
+      const {target,part,mode,weapon}=attack;
+      yield await issue({actor:id,action:'attack',target,part,mode,weapon},()=>game.attack(id,target,part,mode));
+     }
+    }
+    if(state.units.length)yield await issue({action:'endTurn'},()=>game.endTurn());
+   }
+  }
+  function newBattle({seed=1,contract=0,maxTurns=30,...loadout}={}){
+   if(working)throw Error('Finish the current War operation before starting another battle');
+   if(!Number.isInteger(seed)||seed<0||seed>0xffffffff)throw Error('seed must be a uint32');
+   if(!Number.isInteger(contract)||contract<0||contract>=game.contractCount)throw Error('Invalid contract');
+   if(!Number.isInteger(maxTurns)||maxTurns<1)throw Error('maxTurns must be a positive integer');
+   game.start({...loadout,seed,contract});
+   settings={seed,contract,maxTurns};
+   state=game.rulesSnapshot();
+   const {terrainSeed,size,theater}=state;
+   board={terrainSeed,size,theater};events=[];sequence=commands();
+   return report();
+  }
+  async function operate(operation){
+   if(!sequence)throw Error('Start a War battle first');
+   if(working)throw Error('A War operation is already running');
+   working=true;
+   try{if(state.units.length)await ready?.();return await operation();}
+   finally{working=false;}
+  }
+  function step(){
+   return operate(async()=>{const {done,value}=await sequence.next();return {done,event:value??null,state:report()};});
+  }
+  function run(){
+   return operate(async()=>{
+    // Consume the same commands as single-step, starting at the current yield.
+    while(!(await sequence.next()).done){}
+    return report();
+   });
+  }
+  async function runBattle(options){
+   newBattle(options);
+   return run();
+  }
+  return {newBattle,step,run,runBattle,eventLog:()=>events.slice(),get state(){return report();},get running(){return working;}};
+ }
+ root.IRON_VOW_SIM=Object.freeze({createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createWarDriver});
 })(typeof window==='undefined'?globalThis:window);

@@ -54,6 +54,13 @@ Barrel aim is checked at actual firing beats using the physical muzzle axis and 
 
 `npm test --prefix qa` runs the simulation suites. New `qa/check-*.cjs` files are picked up automatically. `npm run test:browser --prefix qa` runs the local browser suite. Browser failures save a screenshot in the temporary directory. Set `IRON_VOW_QA_OUTPUT` when running the simulation alone to request native canvas captures in a separate folder.
 
+
+## Rig Bench War
+
+The Rig Bench War link opens a temporary encounter on the game board. Run War issues the game's legal move, attack and end-turn commands. The same runner drives `qa/war-driver.cjs`. Browser automation can use `window.__bench.newBattle(options)`, `step()`, `run()`, `runBattle(options)`, `state` and `eventLog()`.
+
+`node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
+
 ## Package and verify the Site
 
 Open the current Site with the installed Sites helper and retain its opening result. Install the QA dependencies, then launch the repository's packaging entry point with a terminal.

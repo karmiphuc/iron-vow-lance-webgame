@@ -638,16 +638,17 @@ function seatPilot(i,id){
 const CAREER_STORAGE='iron-vow-career';
 const PENDING_CAREER_STORAGE=CAREER_STORAGE+'-pending';
 const LION_TRIAL_WEAPONS=['cleaver','hatchet','breaker'];
+const benchWar=/(?:^|[?&])bench=war(?:&|$)/.test(window.location?.search??'');
 const lionTrial=/(?:^|[?&])lion=(cleaver|hatchet|breaker)(?:&|$)/.exec(window.location?.search??'')?.[1];
 let save,storedCareer=null,careerStale=false,careerDB=null,databaseCareer;
 let pendingCareerWrite=Promise.resolve();
 const queuedCareerWrites=[];
-try{storedCareer=localStorage.getItem(CAREER_STORAGE)}catch{}
+if(!benchWar)try{storedCareer=localStorage.getItem(CAREER_STORAGE)}catch{}
 function loadStoredCareer(raw){
  try{save=loadCareer(JSON.parse(raw))??fresh()}catch{save=fresh()}
  save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
 }
-if(lionTrial)save=fresh();
+if(lionTrial||benchWar)save=fresh();
 else loadStoredCareer(storedCareer);
 const entryPage={'?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'ship';
 let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'base';
@@ -751,7 +752,7 @@ async function restorePendingCareer(){
  if(!careerStale&&databaseCareer===raw)loadStoredCareer(raw);
 }
 function persist(enemyPending=false){
- if(lionTrial)return;
+ if(lionTrial||benchWar)return;
  const warn=()=>toast('Storage unavailable. Keep this tab open to retain your career.');
  try{
   if(careerStale||!careerDB&&!careerIsCurrent())return;
@@ -2274,7 +2275,8 @@ function renderBattle(){
    ${LION_TRIAL_WEAPONS.map(id=>`<button type="button" data-lion-weapon="${id}" aria-pressed="${u?.melee===id}" ${battle.busy?'disabled':''}>${weapon(id).name}</button>`).join('')}
   </div>`:'';
   const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${JUMPJET_HELP}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+' AP'}</span></span></button>`:'';
-  $('#ui').innerHTML=`<div class="battle-top"><h2>${battle.contract.name}</h2><p>${battle.lionTrial?'PRACTICE RANGE':contacts+' '+(contacts===1?'HOSTILE':'HOSTILES')}</p><div class="battle-links"><button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>${battle.lionTrial?'EXIT TRIAL':'WITHDRAW'}</button></div>${lionLoadout}</div>
+  const warControls=benchWar?`<button type="button" class="icon" id="run-war" ${battle.busy||window.__bench.running?'disabled':''}>RUN WAR</button><a class="icon" href="rig-bench/index.html">RIG BENCH</a>`:'';
+  $('#ui').innerHTML=`<div class="battle-top"><h2>${battle.contract.name}</h2><p>${battle.lionTrial?'PRACTICE RANGE':contacts+' '+(contacts===1?'HOSTILE':'HOSTILES')}</p><div class="battle-links">${warControls}<button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>${battle.lionTrial?'EXIT TRIAL':'WITHDRAW'}</button></div>${lionLoadout}</div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${battle.turn} <small>${battle.phase==='player'?'YOUR TURN':'ENEMY TURN'}</small></div>
   <button class="target-toggle" id="target-toggle" aria-expanded="${targetPanelOpen}" aria-controls="target-panel">
@@ -2302,6 +2304,10 @@ function renderBattle(){
   if(missile)$('#missile').onclick=()=>{if(canMissile){action='missile';renderBattle();persist()}};
   $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){startAction(u);u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
   $('#end').onclick=endTurn;$('#manual').onclick=()=>guide();$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
+  if(benchWar)$('#run-war').onclick=()=>{
+   const run=window.__bench.run();renderBattle();
+   run.catch(error=>toast(error.message)).finally(()=>{if(battle)renderBattle();});
+  };
   $('#withdraw').onclick=()=>{if(battle.busy)return;if(battle.lionTrial){window.location.href='rig-bench/prototypes/';return}modal('BREAK CONTACT?','<p>Withdraw your lance. You retain earned experience, but forfeit payment and salvage. Combat damage persists.</p>',[{text:'STAY & FIGHT',fn:closeModal},{text:'WITHDRAW',fn:()=>{closeModal();finish(false)}}])};
   if(battle.lionTrial){
    $('#end').textContent='RESET TARGET';
@@ -3858,14 +3864,14 @@ function startGame(){
  });
  window.addEventListener('pageshow',event=>{if(event.persisted)checkExternalCareer()});
 }
-if(window.indexedDB&&!lionTrial){
+if(window.indexedDB&&!lionTrial&&!benchWar){
  void openCareerDB().then(async db=>{
   databaseCareer=await readCareerDB(db);
   careerDB=db;
   if(databaseCareer!==undefined)loadStoredCareer(databaseCareer);
   await restorePendingCareer();
  }).then(startGame,()=>pauseCareer('CAREER STORAGE UNAVAILABLE','<p>The saved career could not be opened. Reload to retry before continuing.</p>'));
-}else startGame();
+}else if(!benchWar)startGame();
 
 // Deterministic test seam: commands call the real game operations and snapshots read actual scene bones.
 window.__ironVow=(()=>{
@@ -3903,7 +3909,14 @@ window.__ironVow=(()=>{
     return {id:u.id,frame:u.frame,weapon:u.weapon,melee:u.melee,partVisual,weaponAimError,muzzleDistance,weaponArchetype:primary?window.IronVowWeaponFX.get(primary===entry.shoulderWeapon?'missile':u.weapon).archetype:null,weaponMounted:primary?primary.mount.parent===(primary.carrier||entry.primarySocket||m.rig.arms.R.so):false,armed:entry?.armed,primaryAsset:primary?.id,kind:u.kind,team:u.team,alive:u.alive,hp:{...u.hp},max:{...u.max},ap:u.ap,x:u.x,z:u.z,vx:u.vx,vz:u.vz,moving:Boolean(u.motion),attacking:Boolean(u.attack),motion:u.motion?{fromX:u.motion.fromX,fromZ:u.motion.fromZ,toX:u.motion.toX,toZ:u.motion.toZ,start:u.motion.start,duration:u.motion.duration}:null,live:window.IronVowScene.isLive(u),object:record?.object?.uuid,root:record?.object?.position.toArray(),matrix:m?.cont.matrixWorld.toArray(),finite,radius,footprint,feet};
    })};
  }
- return {start,snapshot,
+ function rulesSnapshot(){
+  return {terrainSeed:battle?.terrainSeed??null,turn:battle?.turn??null,size:battle?.size??null,
+   theater:battle?.contract.field??null,result:battle?null:save.history.at(-1)??null,log:battle?.log.slice()??[],
+   units:(battle?.units??[]).map(({id,frame,weapon,melee,shield,shoulder,kind,team,alive,hp,max,ap,x,z,reacted})=>
+    ({id,frame:frame??null,weapon,melee:melee??null,shield:shield??null,shoulder:shoulder??null,kind:kind??null,team,alive,
+     hp:{...hp},max:{...max},ap,x,z,reacted:Boolean(reacted)}))};
+ }
+ return {start,snapshot,rulesSnapshot,contractCount:CONTRACTS.length,
   loadCareer(record){if(pending)throw Error('Finish the current operation before loading a fixture');skipAttackCamera();closeModal();battle=null;effects=[];clock=0;return importCareer(record);},
   checkpoint(){return battle?captureSortie():null;},
   move(id,x,z){return command(async()=>{const u=unit(id);if(u.team!=='ally'||battle.phase!=='player'||battle.busy||!paths(u).get(x+','+z))throw Error('Illegal test move');selected=u.index;battle.busy=true;await moveUnit(u,x,z);battle.busy=false;renderBattle();});},
@@ -3923,3 +3936,12 @@ window.__ironVow=(()=>{
   get pending(){return Boolean(pending);}
  };
 })();
+
+if(benchWar){
+ attackCameraEnabled=false;
+ window.__bench=window.IRON_VOW_SIM.createWarDriver(window.__ironVow,{
+  async ready(){while(!window.IronVowScene.ready)await new Promise(requestAnimationFrame);}
+ });
+ window.__bench.newBattle({seed:42});
+ requestAnimationFrame(draw);
+}
