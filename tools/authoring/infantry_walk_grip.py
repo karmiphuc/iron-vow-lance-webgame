@@ -1,4 +1,4 @@
-"""Rebake the Line Infantry R32 Service or Elite E7 walk.
+"""Inspect carbine grip and joint contacts during the Line Infantry walk.
 
 blender -b SOURCE.blend --python infantry_walk_grip.py -- OUTPUT
 """
@@ -11,10 +11,6 @@ import bpy
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Matrix, Quaternion, Vector
 from mathutils.bvhtree import BVHTree
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from blender_part_pass import render_parts
-
 
 FRAMES = (12, 16, 21, 25, 30, 34, 39, 43)
 DIGITS = ("Index", "Middle", "Ring", "Little", "Thumb")
@@ -112,24 +108,7 @@ def grip_report(scene, rig, rifle, contact_reference):
     return joints, drift, contacts
 
 
-def render_paint(scene, channels, name):
-    slots = [(slot, slot.material) for ob in scene.objects if ob.type == "MESH"
-             for slot in ob.material_slots]
-    settings = scene.view_settings
-    view = settings.view_transform, settings.look, settings.exposure, settings.gamma
-    try:
-        for slot, material in slots:
-            slot.material = channels[material.get("paint_channel") if material else None]
-        settings.view_transform, settings.look, settings.exposure, settings.gamma = "Standard", "None", 0, 1
-        scene.render.filepath = str(name)
-        bpy.ops.render.render(write_still=True)
-    finally:
-        for slot, material in slots:
-            slot.material = material
-        settings.view_transform, settings.look, settings.exposure, settings.gamma = view
-
-
-def bake():
+def inspect_walk():
     args = sys.argv[sys.argv.index("--") + 1:]
     out = Path(args[0]).resolve()
     out.mkdir(parents=True, exist_ok=True)
@@ -176,23 +155,7 @@ def bake():
     camera.location = target + Vector((math.sin(az), -math.cos(az), .32)) * 14
     camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
     camera.data.ortho_scale = 7.45
-    scene.render.film_transparent = True
     scene.render.resolution_x = scene.render.resolution_y = 320
-    scene.cycles.samples = 8 if dense else 12
-    bpy.data.objects["Studio cyclorama floor"].hide_render = True
-    if model == 6:
-        bpy.data.materials["Service livery / shell"]["paint_channel"] = 0
-        bpy.data.materials["Service livery / trim"]["paint_channel"] = 1
-    channels = {}
-    for channel, rgb in ((None, (0, 0, 0)), (0, (1, 0, 0)), (1, (0, 1, 0))):
-        material = bpy.data.materials.new(f"Walk paint mask {channel}")
-        material.use_nodes = True
-        nodes = material.node_tree.nodes
-        emission = nodes.new("ShaderNodeEmission")
-        emission.inputs["Color"].default_value = (*rgb, 1)
-        material.node_tree.links.new(emission.outputs[0], nodes.get("Material Output").inputs["Surface"])
-        channels[channel] = material
-
     def project(point):
         pixel = world_to_camera_view(scene, camera, point)
         return [round(1 - pixel.x if mirror else pixel.x, 5), round(1 - pixel.y, 5)]
@@ -240,35 +203,19 @@ def bake():
         bpy.context.view_layer.update()
         return aimed
 
-    def render(name):
-        scene.render.filepath = str(out / f"{name}.png")
-        bpy.ops.render.render(write_still=True)
-        render_paint(scene, channels, out / f"{name}-paint.png")
-        engine = scene.render.engine
-        settings = scene.view_settings
-        view = settings.view_transform, settings.look, settings.exposure, settings.gamma
-        dither = scene.render.dither_intensity
-        try:
-            scene.render.filepath = str(out / f"{name}-parts.png")
-            render_parts(write_still=True)
-        finally:
-            scene.render.engine = engine
-            settings.view_transform, settings.look, settings.exposure, settings.gamma = view
-            scene.render.dither_intensity = dither
-
     frames = []
     contact_reference = None
     report = []
     animation = rig.animation_data
     action, slot, use_nla = animation.action, animation.action_slot, animation.use_nla
-    for index, frame in enumerate(samples):
+    for frame in samples:
         animation.action = action
         animation.action_slot = slot
         animation.use_nla = use_nla
         scene.frame_set(int(frame), subframe=frame % 1)
         bpy.context.view_layer.update()
-        # The render engine reevaluates the timeline. Keep the sampled pose
-        # while applying the carry, then restore the source action to advance.
+        # Freeze the sampled pose while applying the carry. Restore the source
+        # action before advancing to the next frame.
         basis = {bone.name: bone.matrix_basis.copy() for bone in p}
         animation.use_nla = False
         animation.action = None
@@ -280,8 +227,6 @@ def bake():
         bpy.context.view_layer.update()
         free = torso.matrix.inverted() @ hand.head
         carry_arm(upper, shoulder, forearm, torso.matrix @ stride.lerp(free, .30))
-        if "--inspect" not in args:
-            render(f"{index:02d}-unarmed")
         expected = pose_carry()
         for obj in drawn:
             obj.hide_render = False
@@ -294,12 +239,10 @@ def bake():
         assert max(contacts.values()) < .008, (model, frame, contacts)
         report.append({"frame": frame, "drift": drift, "gripDistances": contacts})
         frames.append(points())
-        if "--inspect" not in args:
-            render(f"{index:02d}")
     (out / "walk.json").write_text(json.dumps({"model": model, "mirror": mirror, "frames": frames,
                                                 "grip": report}, indent=2), encoding="utf-8")
     print(model, "maximum grip drift", max(row["drift"] for row in report), "grip contact", report[0]["gripDistances"])
 
 
 if __name__ == "__main__":
-    bake()
+    inspect_walk()
