@@ -79,56 +79,108 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 103,
+    "siteVersion": 104,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "2799953fc30fe7f0963de35bc4ec6f1bb806eedf",
-    "githubCommit": "eae8135641871212ac1b48b827e9fc4b1e26cc63",
-    "distTree": "61515b2de8e73b74a246f35a91c28bed50cfce38",
-    "verifiedAt": "2026-11-17T15:12:06.501Z",
-    "localReleaseSourceSha256": "76760df965c10b566860ada3d65f94917b6c7d04b4ec033b001d4d40c5e1b0c1",
-    "simulationSuites": 61,
+    "sourceCommit": "98fa27e5f25942e843a0c83b45f2fdd4bd8a859d",
+    "githubCommit": "824b275bc18fc2fb551d0c7031e4760be7b77f7e",
+    "distTree": "9d06a464c1b79748ef219326cbb9e39f9ef6698e",
+    "verifiedAt": "2026-11-17T18:40:52.563379+00:00",
+    "localReleaseSourceSha256": "d8b350d4da48d8e2b34c007ac1fe07ffb576ed04584d4dca8be24a3976769f57",
+    "simulationSuites": 66,
     "localBrowser": {
-      "desktop": 44,
-      "touch": 44,
+      "desktop": 46,
+      "touch": 46,
       "result": "passed",
-      "resumedScenarios": [
-        "checkHangar",
-        "checkHangarLive",
-        "checkWorkshopTurntable",
-        "checkWorkshopPaint",
-        "checkWorkshopPortraits",
-        "checkCareerTabs",
-        "checkDutyRoster",
-        "bastionSharedRig",
-        "checkWarMode",
-        "checkRigWorkbench"
-      ],
-      "failedAttemptsBeforePass": 9,
-      "initialSourceCommit": "903d3b39fc39a010a9dae4455df9f1c21d980f8b",
-      "resume": "Retained passing browser cases on the identical runtime. Updated the Hangar assertion for docked-port surveys and ran the remaining cases on the release source."
+      "retainedDesktopCases": 25,
+      "resumeGuard": "All JS and asset blobs match the retained build. The sole later runtime difference raises the scoped contact disclosure from 40 to 44 px; that disclosure is absent in the retained rig/combat cases and asserted in final desktop/touch overworld checks. Retained scenario hashes match the final suite.",
+      "failedAttemptsBeforeTouchPass": 2
     },
-    "liveFilesCompared": 148,
+    "liveFilesCompared": 153,
     "liveBrowser": {
+      "desktop": 6,
+      "touch": 6,
       "result": "passed",
-      "desktop": 3,
-      "touch": 3,
-      "failedAttemptsBeforePass": 0,
       "scenarios": [
-        "checkOverworld",
+        "checkCampaign",
         "checkShip",
-        "checkCampaign"
-      ]
+        "checkOverworld",
+        "checkOverworldLiving",
+        "checkOverworldPortEvents",
+        "checkHangar"
+      ],
+      "failedAttemptsBeforePass": 0
     },
     "environment": {
       "browser": "Chromium",
       "touch": "iPhone 13 emulation",
-      "graphics": "Software WebGL with the documented behavior-check policy"
+      "graphics": "Software WebGL with documented behavior-check policy",
+      "nativeIPad": "unverified"
     },
     "evidenceSha256": {
-      "localBrowser": "8c94a980770ad175d9c8c1b808738f50932559c1f6dda284f6dd6cde97363c0c",
-      "resumedLocalBrowser": "e376e9ab8e6496056c3c70b53930921271306d773c57c25c6b4cbafbfcf7293e",
-      "liveBrowser": "85729a19ada6dde2946bf7552662cd7d63227a8cce048a07997dc0cb371a0968",
-      "liveGateLog": "eb76a72ebc085f0032fb5b550f40fbe95a854945cab314c5ef4df0f750a98add"
+      "retainedDesktop": "76c8116427f7314bd06fae2c78672570e70054d1f6b82fa544f43b1b45f5b282",
+      "remainingDesktop": "fb4ad7eec8235204de78c0aad1a22f73820b0bfa985a4638e232fb17e1190628",
+      "touch": "b835fc0fa3557a93127e05d96c13c9efe69707003ffd2e4b783be07842ad6e0e",
+      "liveBrowser": "e5a1d3de65dcc6f348843f0aa1a7eaf3eb6a13c7b50823cf76509ec0cf65bc3b",
+      "packageLog": "1123a3eb0ed9784fa43b3cbd0cdaad9c9fed820dc1645baa213bf9172b082937",
+      "liveGateLog": "08084c9339d3b5a36a5b917eee91a5cb385669cbb3ef94da8e057663f1369257"
+    },
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_4246ea2a9da48191b9a6d2c24057f978",
+    "deploymentId": "appgdep_6afc9ede4c7c8191b9c75073637e2a0e",
+    "evidence": "design/release-v104/summary.json"
+  },
+  "publishedReleaseHistory": [
+    {
+      "siteVersion": 103,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "2799953fc30fe7f0963de35bc4ec6f1bb806eedf",
+      "githubCommit": "eae8135641871212ac1b48b827e9fc4b1e26cc63",
+      "distTree": "61515b2de8e73b74a246f35a91c28bed50cfce38",
+      "verifiedAt": "2026-11-17T15:12:06.501Z",
+      "localReleaseSourceSha256": "76760df965c10b566860ada3d65f94917b6c7d04b4ec033b001d4d40c5e1b0c1",
+      "simulationSuites": 61,
+      "localBrowser": {
+        "desktop": 44,
+        "touch": 44,
+        "result": "passed",
+        "resumedScenarios": [
+          "checkHangar",
+          "checkHangarLive",
+          "checkWorkshopTurntable",
+          "checkWorkshopPaint",
+          "checkWorkshopPortraits",
+          "checkCareerTabs",
+          "checkDutyRoster",
+          "bastionSharedRig",
+          "checkWarMode",
+          "checkRigWorkbench"
+        ],
+        "failedAttemptsBeforePass": 9,
+        "initialSourceCommit": "903d3b39fc39a010a9dae4455df9f1c21d980f8b",
+        "resume": "Retained passing browser cases on the identical runtime. Updated the Hangar assertion for docked-port surveys and ran the remaining cases on the release source."
+      },
+      "liveFilesCompared": 148,
+      "liveBrowser": {
+        "result": "passed",
+        "desktop": 3,
+        "touch": 3,
+        "failedAttemptsBeforePass": 0,
+        "scenarios": [
+          "checkOverworld",
+          "checkShip",
+          "checkCampaign"
+        ]
+      },
+      "environment": {
+        "browser": "Chromium",
+        "touch": "iPhone 13 emulation",
+        "graphics": "Software WebGL with the documented behavior-check policy"
+      },
+      "evidenceSha256": {
+        "localBrowser": "8c94a980770ad175d9c8c1b808738f50932559c1f6dda284f6dd6cde97363c0c",
+        "resumedLocalBrowser": "e376e9ab8e6496056c3c70b53930921271306d773c57c25c6b4cbafbfcf7293e",
+        "liveBrowser": "85729a19ada6dde2946bf7552662cd7d63227a8cce048a07997dc0cb371a0968",
+        "liveGateLog": "eb76a72ebc085f0032fb5b550f40fbe95a854945cab314c5ef4df0f750a98add"
+      }
     }
-  }
+  ]
 }

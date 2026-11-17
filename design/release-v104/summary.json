@@ -1,0 +1,688 @@
+{
+  "projectId": "appgprj_6aeeef176ee08191afe74f9556b02484",
+  "siteVersion": 104,
+  "siteVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_4246ea2a9da48191b9a6d2c24057f978",
+  "sourceCommit": "98fa27e5f25942e843a0c83b45f2fdd4bd8a859d",
+  "deploymentId": "appgdep_6afc9ede4c7c8191b9c75073637e2a0e",
+  "deployedAt": "2026-11-17T18:37:46.310905+00:00",
+  "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+  "deploymentStatus": "succeeded",
+  "archive": {
+    "format": "tar",
+    "contentHash": "sha256:6433fcc71a2986f073fda0970fbc221dcdaf3374cef20fb2dcb32a513e221c28",
+    "sizeBytes": 107601920,
+    "fileCount": 162
+  },
+  "verifiedAt": "2026-11-17T18:40:52.563379+00:00",
+  "githubSourceCommit": "824b275bc18fc2fb551d0c7031e4760be7b77f7e",
+  "sourceTree": "c95e77c38bdc70bd45b3b1c4baf63cdab7aaa0d4",
+  "distTree": "9d06a464c1b79748ef219326cbb9e39f9ef6698e",
+  "releaseSourceSha256": "d8b350d4da48d8e2b34c007ac1fe07ffb576ed04584d4dca8be24a3976769f57",
+  "simulationSuites": 66,
+  "saveFixtures": 8,
+  "localBrowser": {
+    "desktop": 46,
+    "touch": 46,
+    "result": "passed",
+    "retainedDesktopCases": 25,
+    "resumeGuard": "All JS and asset blobs match the retained build. The sole later runtime difference raises the scoped contact disclosure from 40 to 44 px; that disclosure is absent in the retained rig/combat cases and asserted in final desktop/touch overworld checks. Retained scenario hashes match the final suite.",
+    "failedAttemptsBeforeTouchPass": 2
+  },
+  "liveFilesCompared": 153,
+  "liveBrowser": {
+    "desktop": 6,
+    "touch": 6,
+    "result": "passed",
+    "scenarios": [
+      "checkCampaign",
+      "checkShip",
+      "checkOverworld",
+      "checkOverworldLiving",
+      "checkOverworldPortEvents",
+      "checkHangar"
+    ],
+    "failedAttemptsBeforePass": 0
+  },
+  "environment": {
+    "browser": "Chromium",
+    "touch": "iPhone 13 emulation",
+    "graphics": "Software WebGL with documented behavior-check policy",
+    "nativeIPad": "unverified"
+  },
+  "evidenceSha256": {
+    "retainedDesktop": "76c8116427f7314bd06fae2c78672570e70054d1f6b82fa544f43b1b45f5b282",
+    "remainingDesktop": "fb4ad7eec8235204de78c0aad1a22f73820b0bfa985a4638e232fb17e1190628",
+    "touch": "b835fc0fa3557a93127e05d96c13c9efe69707003ffd2e4b783be07842ad6e0e",
+    "liveBrowser": "e5a1d3de65dcc6f348843f0aa1a7eaf3eb6a13c7b50823cf76509ec0cf65bc3b",
+    "packageLog": "1123a3eb0ed9784fa43b3cbd0cdaad9c9fed820dc1645baa213bf9172b082937",
+    "liveGateLog": "08084c9339d3b5a36a5b917eee91a5cb385669cbb3ef94da8e057663f1369257"
+  },
+  "localBrowserCases": [
+    {
+      "name": "sharedScene",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "livePaint",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "vehicleLoading",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLivePortraits",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLionTrial",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkPairedWalk",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkMechComputer",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkMovePreview",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkRidgeCombat",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkTerrain",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkVehicles",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkGatecrasherV2",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkCicadaV2",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHellbreakerV2",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShogunV2",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShields",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLineInfantry",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLineElite",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkInfantryCarry",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkVanguard",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkReaver",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkAero",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkAeroReview",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkStockV2",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkAshigaruV2",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkBulwark",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkBehemothBudget",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkArmory",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkCampaign",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWardenRigBench",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkBulwarkBench",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkScoutBench",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShip",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworld",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHangar",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHangarLive",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWorkshopTurntable",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWorkshopPaint",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWorkshopPortraits",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkCareerTabs",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkDutyRoster",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "bastionSharedRig",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWarMode",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkRigWorkbench",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "sharedScene",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "livePaint",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "vehicleLoading",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLivePortraits",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLionTrial",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkPairedWalk",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkMechComputer",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkMovePreview",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkRidgeCombat",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkTerrain",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkVehicles",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkGatecrasherV2",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkCicadaV2",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHellbreakerV2",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShogunV2",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShields",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLineInfantry",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkLineElite",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkInfantryCarry",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 3
+    },
+    {
+      "name": "checkVanguard",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkReaver",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkAero",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkAeroReview",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkStockV2",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkAshigaruV2",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkBulwark",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkBehemothBudget",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkArmory",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkCampaign",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWardenRigBench",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkBulwarkBench",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkScoutBench",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShip",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworld",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHangar",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHangarLive",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWorkshopTurntable",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWorkshopPaint",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWorkshopPortraits",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkCareerTabs",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkDutyRoster",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "bastionSharedRig",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkWarMode",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkRigWorkbench",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    }
+  ],
+  "liveBrowserCases": [
+    {
+      "name": "checkCampaign",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShip",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworld",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHangar",
+      "device": "desktop",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkCampaign",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkShip",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworld",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    },
+    {
+      "name": "checkHangar",
+      "device": "touch",
+      "status": "passed",
+      "attempt": 1
+    }
+  ]
+}
