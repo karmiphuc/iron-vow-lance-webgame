@@ -5,10 +5,9 @@
 'use strict';
 const T=root.THREE,R=root.IronVowFoundryRig,VC=root.VowChassis;
 const V3=R.V3,Q=()=>new T.Quaternion();
-const profiles=new Map(),assets=new Map();
+const profiles=new Map(),assets={battle:new Map(),preview:new Map()};
 const profileKey=u=>u.lionTrial?'lion':u.frame;
 const applies=u=>!u.kind&&profiles.has(profileKey(u));
-let generation=0;
 
 function releaseStock(source){
  const geometry=new Set(),materials=new Set(),textures=new Set();
@@ -20,15 +19,15 @@ function releaseStock(source){
  for(const texture of textures)texture.dispose();
  for(const buffer of geometry)buffer.dispose();
 }
-function load(units){
- const current=generation;
- const loader=new T.GLTFLoader().setMeshoptDecoder(root.MeshoptDecoder);
- for(const frame of new Set(units.filter(applies).map(profileKey))){
-  if(assets.has(frame))continue;
+function load(units,scope='battle'){
+ const cache=assets[scope],loader=new T.GLTFLoader().setMeshoptDecoder(root.MeshoptDecoder);
+ return Promise.all([...new Set(units.filter(applies).map(profileKey))].map(frame=>{
+  const cached=cache.get(frame);
+  if(cached)return cached.request;
   const {id,assetPath}=profiles.get(frame),asset={status:'loading'};
-  assets.set(frame,asset);
-  loader.loadAsync(root.IRON_VOW_INLINE_ASSETS?.[assetPath]||assetPath).then(({scene,parser,animations})=>{
-   if(current!==generation){releaseStock(scene);return;}
+  cache.set(frame,asset);
+  asset.request=loader.loadAsync(root.IRON_VOW_INLINE_ASSETS?.[assetPath]||assetPath).then(({scene,parser,animations})=>{
+   if(cache.get(frame)!==asset){releaseStock(scene);return false;}
    // The vendored renderer samples all color maps through the primary attribute.
    scene.traverse(mesh=>{
     if(!mesh.isMesh)return;
@@ -39,16 +38,19 @@ function load(units){
     }
    });
    asset.scene=scene;asset.animations=animations;asset.status='ready';
+   return true;
   }).catch(error=>{
-   if(current!==generation)return;
+   if(cache.get(frame)!==asset)return false;
    asset.status='error';console.warn(id+' rig-v2 load failed',error);
+   return false;
   });
- }
+  return asset.request;
+ }));
 }
-function clear(){
- generation++;
- for(const asset of assets.values())if(asset.scene)releaseStock(asset.scene);
- assets.clear();
+function clear(scope='battle'){
+ const cache=assets[scope];
+ for(const asset of cache.values())if(asset.scene)releaseStock(asset.scene);
+ cache.clear();
 }
 function cloneSkin(stock){
  const source=stock.clone(true),nodes=new Map(),skeletons=new Map();
@@ -89,8 +91,8 @@ function workshopMounts(sockets){
  };
 }
 
-function build(unit){
- const key=profileKey(unit),asset=assets.get(key);
+function build(unit,scope='battle'){
+ const key=profileKey(unit),asset=assets[scope].get(key);
  if(!asset?.scene)return null;
  const profile=profiles.get(key);
  const {source,skeletons}=cloneSkin(asset.scene);
@@ -106,7 +108,9 @@ function build(unit){
  }
  const at=name=>bone(name).getWorldPosition(V3());
  function driver(name,parent,worldRotation=Q()){
-  const authored=bone(name),joint=new T.Group();
+  const authored=bone(name);
+  if(profile.canonical)return authored;
+  const joint=new T.Group();
   joint.name=name;
   joint.position.copy(parent.worldToLocal(authored.getWorldPosition(V3())));
   joint.quaternion.copy(parent.getWorldQuaternion(Q()).invert().multiply(worldRotation));
@@ -115,6 +119,7 @@ function build(unit){
   return joint;
  }
  function segment(name,child,parent,axis=V3(0,0,1)){
+  if(profile.canonical)return bone(name);
   const up=at(name).sub(at(child)).normalize();
   const forward=axis.clone().addScaledVector(up,-up.dot(axis)).normalize();
   return driver(name,parent,Q().setFromRotationMatrix(new T.Matrix4().makeBasis(up.clone().cross(forward),up,forward)));
@@ -132,7 +137,7 @@ function build(unit){
  }
  const rest=bone('root').userData,legSides=rest.quad?['LF','RF','LB','RB']:['L','R'];
  const hipRest=at('hip.'+legSides[0]),ankleRest=at('ankle.'+legSides[0]);
- const dims={...rest,shX:Math.abs(at('shoulder.L').x),hipY:hipRest.y-at('pelvis').y,
+ const dims=profile.canonical?{...rest}:{...rest,shX:Math.abs(at('shoulder.L').x),hipY:hipRest.y-at('pelvis').y,
   hipX:Math.abs(hipRest.x),hipZ:Math.abs(hipRest.z),
   up:at('shoulder.L').distanceTo(at('elbow.L')),fo:at('elbow.L').distanceTo(at('wrist.L')),
   so:at('wrist.L').distanceTo(at('socket.L')),walkDrop:.14,...profile.dimensions};
@@ -173,7 +178,9 @@ function build(unit){
   const joint=bone(name);
   return boxes.get(joint).clone().applyMatrix4(joint.matrixWorld);
  }
- const channels={paint_primary:unit.paint||(unit.team==='enemy'&&!profile.factoryLivery?'#9c3a30':null),paint_secondary:unit.trim?.s,paint_accent:unit.trim?.a};
+ const channels={paint_primary:unit.paint||(unit.team==='enemy'&&!profile.factoryLivery?'#9c3a30':null),
+  paint_secondary:unit.trim?.s,paint_accent:unit.trim?.a||(profile.accentInheritsSecondary?unit.trim?.s:null)};
+ const paintRole={paint_primary:'p',paint_secondary:'s',paint_accent:'a'};
  source.traverse(mesh=>{
   if(!mesh.isMesh)return;
   // These assemblies use rigid weights or rigid parenting. Bind picking and
@@ -192,13 +199,18 @@ function build(unit){
    if(Object.hasOwn(channels,material.name)){
     const override=channels[material.name];
     if(override)material.color.set(override).convertSRGBToLinear();
-    const paint=VC.paint(material.color.clone().convertLinearToSRGB().getHex());
-    material.map=material.map||paint.map;
-    if(!material.normalMap){
-     material.normalMap=paint.normalMap;
-     material.normalScale.copy(paint.normalScale).multiplyScalar(.35);
+    if(!profile.authoredPaint){
+     const paint=VC.paint(material.color.clone().convertLinearToSRGB().getHex());
+     material.map=material.map||paint.map;
+     if(!material.normalMap){
+      material.normalMap=paint.normalMap;
+      material.normalScale.copy(paint.normalScale).multiplyScalar(.35);
+     }
     }
-    material.userData.paint=true;
+    material.userData.paint=true;material.userData.paintChannel=paintRole[material.name];
+   }else if(profile.authoredPaint&&material.name==='visor'){
+    if(!material.emissiveIntensity)material.emissiveIntensity=1;
+    material.emissive.copy(material.color);
    }
    materials.set(original,material);
   }
@@ -213,9 +225,11 @@ function build(unit){
   if(!found)throw Error('Missing '+profile.id+' rig-v2 material '+name);
   return found;
  }
- const mech=R.createMech({root:body,rig,dims,parts,kits:[],mods:{core:profile.id},
+ const mech=R.createMech({root:body,rig,dims,parts,kits:[],mods:profile.canonical?{core:profile.id,arms:profile.id,legs:profile.id}:{core:profile.id},
   visorMat:emissive('visor'),stackMat:emissive('stack'),ownedMaterials},profile.id,unit.team,unit.upgrade);
  mech.live=profile.id;
+ mech.scale=profile.scale??1;mech.cont.scale.setScalar(mech.scale);
+ mech.previewSpan=profile.previewSpan;mech.equipmentScale=profile.equipmentScale;
  // Bind a fixed offset from each normalized driver to the authored bone,
  // in hierarchy order. The underlying skin weights and inverse binds stay intact.
  const pairs=[];
@@ -249,7 +263,7 @@ function build(unit){
   source.updateMatrixWorld(true);
  }
  mech.nativeV2={
-  source,sync,bounds,pose:equipment.pose,shieldSocket:equipment.shieldSocket,
+  source,sync,bounds,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,
   jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
   anchors:equipment.anchors,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){
@@ -261,7 +275,7 @@ function build(unit){
 }
 
 function register(frame,profile){profiles.set(frame,profile);}
-root.IronVowRigV2={applies,register,load,build,clear,status:unit=>assets.get(profileKey(unit))?.status};
+root.IronVowRigV2={applies,register,load,build,clear,status:(unit,scope='battle')=>assets[scope].get(profileKey(unit))?.status};
 
 function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
   const slide=driver('Cannon Slide',arms.R.wr),slideRest=slide.position.clone();

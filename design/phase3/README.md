@@ -28,6 +28,8 @@ Hellbreaker's 57,726-triangle field rig passed desktop and touch checks for four
 
 Ashigaru's desktop and touch runs exercised Needle from range 8, Flechette from range 2, and Signal Knife from range 1. The tests checked the sole plane, planted gait, both muzzle origins, knife contact damage, equipment visibility after arm loss, and exactly-once geometry disposal. The highest equipped count is 54,354 triangles.
 
+Painted Warden uses its original Aim bind, measured joint pivots and standard arsenal. Desktop and touch runs verified that the game only requests the GLB when needed. Launching a sortie releases Workshop instances, and withdrawing releases sortie geometry exactly once. The checks also exercised paint, shield alignment, and the seven Rig Bench clips.
+
 A one-seed campaign smoke completed 2,240 observed ticks with zero anomalies. A second invocation reused the completed seed. The final 30-seed campaign remains pending.
 
 The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in five. The desktop and touch battle checks exercised picking, ground contact, hover, heading, damage, grounded wrecks and fire from the exported muzzles. Leaving the sortie detached the vehicles and disposed their shared geometry once. Both runs used one WebGL context and reported zero WebGL errors. The screenshot arranges both vehicles in a seeded test battle.

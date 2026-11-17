@@ -40,7 +40,7 @@ function checkWorkshopBudgets(assets) {
     offhand.push({ id, triangles: subtreeTriangles(armory[2], id) });
   }
   const budgets = {};
-  for (const frame of ['aero', 'kestrel', 'basilisk']) {
+  for (const frame of ['warden', 'aero', 'kestrel', 'basilisk']) {
     const gltf = readGLB(path.join(assets, frame + '.glb'));
     const contract = validate(gltf);
     if (!contract.ok) throw Error(contract.errors.join(', '));
@@ -65,7 +65,7 @@ async function main() {
   if (flag !== '--out' || !directory) throw Error('Usage: node qa/gate-phase3.cjs --out directory');
   require('./check-rig-v2-test.cjs');
   const assets = path.join(__dirname, '../dist/rig-bench/rig-v2');
-  const { aero, kestrel, basilisk } = checkWorkshopBudgets(assets);
+  const { warden, aero, kestrel, basilisk } = checkWorkshopBudgets(assets);
   const scoutFile=readGLB(path.join(assets,'ashigaru.glb')),scout=validate(scoutFile);
   if(!scout.ok)throw Error(scout.errors.join(', '));
   const scoutWeapons=Object.fromEntries(['carbine','scatter','knife'].map(name=>[name,subtreeTriangles(scoutFile,'module.'+name)]));
@@ -146,7 +146,7 @@ async function main() {
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
-  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero, kestrel, basilisk, ashigaru,
+  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, warden, aero, kestrel, basilisk, ashigaru,
     lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) },
     hellbreaker: { triangles: hellbreaker.total }, shogun, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');

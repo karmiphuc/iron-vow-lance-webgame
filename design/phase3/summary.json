@@ -358,6 +358,14 @@
           "signal-knife"
         ],
         "disposal": true
+      },
+      "warden": {
+        "coldLoadDeferred": true,
+        "paint": true,
+        "shields": true,
+        "workshopDisposedOnDeploy": true,
+        "sortieDisposedOnWithdraw": true,
+        "benchClips": true
       }
     },
     "touch": {
@@ -461,6 +469,14 @@
           "signal-knife"
         ],
         "disposal": true
+      },
+      "warden": {
+        "coldLoadDeferred": true,
+        "paint": true,
+        "shields": true,
+        "workshopDisposedOnDeploy": true,
+        "sortieDisposedOnWithdraw": true,
+        "benchClips": true
       }
     }
   },
@@ -481,5 +497,13 @@
       "scatter": 554,
       "knife": 308
     }
+  },
+  "warden": {
+    "triangles": 50316,
+    "equipped": 59872,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
   }
 }

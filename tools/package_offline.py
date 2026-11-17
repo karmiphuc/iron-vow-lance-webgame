@@ -23,6 +23,7 @@ for asset in (
     "rig-bench/weapons.glb",
     "rig-bench/expansion-weapons.glb",
     "rig-bench/shields.glb",
+    "rig-bench/rig-v2/warden.glb",
     "rig-bench/rig-v2/gatecrasher-r2-reference.glb",
     "rig-bench/rig-v2/hellbreaker.glb",
     "rig-bench/rig-v2/shogun.glb",

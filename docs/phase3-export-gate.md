@@ -1,6 +1,6 @@
 # Phase 3 asset export gate
 
-Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, Hellbreaker, Shogun, Ashigaru, the Lion trial, the tank and the gunship use live meshes.
+Issue #13 starts with Gatecrasher. Painted Warden, Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, Hellbreaker, Shogun, Ashigaru, the Lion trial, the tank and the gunship use live meshes.
 
 ## Editable source coverage
 
@@ -63,3 +63,6 @@ Static gate updates, 12 November 2026 Singapore time: required rig nodes must be
 
 
 `tools/export_ashigaru_v2.py` exposes `export_ashigaru(source, output)` for Blender MCP. Use `Scout-Clay/Grip-Stride/IV-S07-Scout-Rigged.blend` with SHA-256 `6d8d14ecc0513a87a29e28e26c64d267ef0a3bf7645ec6232a7dedffc7f2fa23`. The export measures the authored floor for both the pelvis and ankle heights. It retains the Needle carbine and Signal knife, and reconstructs the Flechette from the recovered authoring recipe. The live rig draws 54,354 triangles with Needle and knife, or 53,892 with Flechette and knife. Range-based attacks switch between the right-hand modules, and arm damage removes gear on the affected side.
+
+
+`tools/authoring/warden/export-v2.sh` exports the recovered `warden-hands/warden-painted-game-rig.blend`, SHA-256 `0d98b3bfb24ffb2c367d3bf84aa4a4f520106e440bedb2fbd5121502c46008de`. It uses the published Aim bind and exact evaluated armor, then packs the normalized hierarchy into a meshopt GLB. The source geometry draws 50,316 triangles and the Hailstorm plus Citadel shield bring it to 59,872. The shared loader owns the Workshop and sortie lifetimes. The released Rig Bench keeps the seven original pose clips.

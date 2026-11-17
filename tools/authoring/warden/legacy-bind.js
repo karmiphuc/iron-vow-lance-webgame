@@ -1,8 +1,4 @@
-/* The painted Warden, re-rigged for live combat on the Foundry skeleton.
-   The authored GLB is a rigid hierarchy (pelvis, hips, knees, feet, torso, optics, pauldrons, shoulders, elbows,
-   hands). This builds a Foundry-convention skeleton at the same pivots, poses it to the GLB, and attaches every
-   armour part to its new joint without moving it. IronVowFoundryRig.animateMech then drives it: leg IK, gait,
-   carry poses, firing stance and melee keys from the dims below. */
+/* Source-export reference for the original measured Warden bind. */
 (function(){
 'use strict';
 if(!window.THREE||!window.IronVowFoundryRig||!window.VowChassis)return;

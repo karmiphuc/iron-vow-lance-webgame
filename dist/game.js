@@ -1706,7 +1706,14 @@ function wardenVisual(frame,loadout,direction,stock=false,hull){
  return failedArt.has(modular?.key)?legacy:modular||legacy;
 }
 function chassisArt(i,loadout,direction=-1,stock=false,hull){
- if(window.IronVowScene?.isLive({frame:i})){const entry=window.IronVowFoundry.preview({...hull,frame:i,weapon:loadout},foundryModel(i),i===0?'warden':i===10?'bastion':undefined,direction>0?1:0);return entry?.url||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22640%22/%3E';}
+ if(window.IronVowScene?.isLive({frame:i})){
+  const scope=battle?'battle':'preview',unit={...hull,frame:i,weapon:loadout};
+  if(i!==0||window.IronVowRigV2.status(unit,scope)==='ready'){
+   const custom=i===0?'rig-v2':i===10?'bastion':undefined;
+   const entry=window.IronVowFoundry.preview(unit,foundryModel(i),custom,direction>0?1:0,scope);
+   if(entry?.url)return entry.url;
+  }
+ }
  if(i===BASTION_FRAME)return art('bastion-bst04');
  if(i===ASHIGARU_FRAME)return art('ashigaru');
  const model=foundryModel(i);if(model!=null)return art('foundry-'+model);
@@ -1724,6 +1731,8 @@ function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>$
 function render(){
   nav(); $('#hangar-art').style.objectPosition=['28% center','62% center','95% center'][selected]; if(battle){renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=unitWeapon({...u,frame}),training=trainingEffects(selected);
+  const previewOpen=page==='workshop'&&workshopView==='assigned'||page==='hangar'&&hangarDeck==='mechs';
+  window.IronVowFoundry?.retainPreview?.(previewOpen?frame:undefined);
   if(page==='ship')$('#ui').innerHTML=shipPage();
   if(page==='hangar'&&hangarDeck==='base')$('#ui').innerHTML=hangarPage();
   if(page==='hangar'&&hangarDeck==='mechs'){
@@ -3271,7 +3280,7 @@ window.addEventListener?.('bastion-art-ready',()=>{if(battle)refreshTargetPortra
 function drawFoundryPreview(canvas,u,model,angle){
  const frame=u.frame??pilotFrame(selected);
  if(window.IronVowScene?.isLive({frame})){
-  const entry=window.IronVowFoundry.preview({...u,frame},model,frame===0?'warden':frame===10?'bastion':undefined,angle);
+  const entry=window.IronVowFoundry.preview({...u,frame},model,window.IronVowRigV2?.applies({frame})?'rig-v2':frame===10?'bastion':undefined,angle);
   const g=canvas.getContext('2d');g.clearRect(0,0,canvas.width,canvas.height);if(entry)g.drawImage(entry.surface,0,0,canvas.width,canvas.height);return;
  }
  window.IronVowBillboards.preview(canvas,{...u,frame},model,angle);

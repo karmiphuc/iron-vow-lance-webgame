@@ -16,7 +16,7 @@ const mapping={
  SHOGUN:['rig-bench/prototypes/shogun.glb'],
 };
 const rigV2Mapping={
- GATECRASHER:'gatecrasher-r2-reference',CICADA:'cicada-reference','LINE INFANTRY':'li-01',
+ WARDEN:'warden',GATECRASHER:'gatecrasher-r2-reference',CICADA:'cicada-reference','LINE INFANTRY':'li-01',
  'LINE INFANTRY ELITE':'li-02',GRAVEMAW:'vanguard',REAVER:'reaver',AERO:'aero',LION:'lion',
  KESTREL:'kestrel',BASILISK:'basilisk',HELLBREAKER:'hellbreaker',SHOGUN:'shogun',ASHIGARU:'ashigaru',
 };

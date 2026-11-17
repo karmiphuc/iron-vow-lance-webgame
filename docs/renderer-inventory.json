@@ -5,8 +5,9 @@
       "id": 0,
       "name": "WARDEN",
       "model": "WDN–07",
-      "rig_v2": null,
+      "rig_v2": "rig-bench/rig-v2/warden.glb",
       "glbs": [
+        "rig-bench/rig-v2/warden.glb",
         "rig-bench/warden-painted.glb",
         "rig-bench/warden.glb"
       ],
@@ -6674,6 +6675,166 @@
           "extras": [
             "muzzle.main"
           ]
+        },
+        "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
+      }
+    },
+    {
+      "file": "rig-bench/rig-v2/warden.glb",
+      "bytes": 1075848,
+      "nodes": 47,
+      "meshes": 25,
+      "unique_mesh_triangles": 50316,
+      "rig_v2_gate": {
+        "pass": true,
+        "rendered_triangles": 50316,
+        "errors": []
+      },
+      "skins": 1,
+      "clips": [],
+      "materials": [
+        "Warden / dark structural steel",
+        "paint_secondary",
+        "paint_primary",
+        "Warden / machined alloy",
+        "Warden / rubber and gaskets",
+        "visor",
+        "paint_accent",
+        "Warden / stencil ink",
+        "stack"
+      ],
+      "node_names": [
+        "root",
+        "pelvis",
+        "spine",
+        "neck",
+        "Bench_Optics_armor",
+        "shoulder.L",
+        "elbow.L",
+        "wrist.L",
+        "socket.L",
+        "Bench_Hand_L_armor",
+        "Bench_Elbow_L_armor",
+        "Bench_Shoulder_L_armor",
+        "Pauldron.L",
+        "Bench_Pauldron_L_apron",
+        "Bench_Pauldron_L_armor",
+        "shoulder.R",
+        "elbow.R",
+        "wrist.R",
+        "socket.R",
+        "Bench_Hand_R_armor",
+        "Bench_Elbow_R_armor",
+        "Bench_Shoulder_R_armor",
+        "Pauldron.R",
+        "Bench_Pauldron_R_apron",
+        "Bench_Pauldron_R_armor",
+        "Bench_Torso_armor",
+        "hip.L",
+        "knee.L",
+        "ankle.L",
+        "Bench_Foot_L_armor",
+        "Bench_Knee_L_armor",
+        "kneecap.L",
+        "Bench_GuardLink_0_metal",
+        "Bench_GuardLink_1_metal",
+        "Bench_KneeGuard_L_armor",
+        "Bench_Hip_L_armor",
+        "hip.R",
+        "knee.R",
+        "ankle.R",
+        "Bench_Foot_R_armor",
+        "Bench_Knee_R_armor",
+        "kneecap.R",
+        "Bench_GuardLink_2_metal",
+        "Bench_GuardLink_3_metal",
+        "Bench_KneeGuard_R_armor",
+        "Bench_Hip_R_armor",
+        "Bench_Pelvis_armor"
+      ],
+      "nodes_with_part": 25,
+      "meshes_with_part": 25,
+      "detachable_nodes": 2,
+      "missing_root_dimensions": [],
+      "contract_v2": {
+        "scope": "chassis",
+        "biped_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R",
+            "hip.L",
+            "knee.L",
+            "ankle.L",
+            "hip.R",
+            "knee.R",
+            "ankle.R"
+          ],
+          "missing": []
+        },
+        "quad_bones": {
+          "present": [
+            "root",
+            "pelvis",
+            "spine",
+            "neck",
+            "shoulder.L",
+            "elbow.L",
+            "wrist.L",
+            "socket.L",
+            "shoulder.R",
+            "elbow.R",
+            "wrist.R",
+            "socket.R"
+          ],
+          "missing": [
+            "mount.LF",
+            "hip.LF",
+            "knee.LF",
+            "ankle.LF",
+            "mount.RF",
+            "hip.RF",
+            "knee.RF",
+            "ankle.RF",
+            "mount.LB",
+            "hip.LB",
+            "knee.LB",
+            "ankle.LB",
+            "mount.RB",
+            "hip.RB",
+            "knee.RB",
+            "ankle.RB"
+          ]
+        },
+        "paint_materials": {
+          "present": [
+            "paint_primary",
+            "paint_secondary",
+            "paint_accent",
+            "visor",
+            "stack"
+          ],
+          "missing": []
+        },
+        "mesh_parts": {
+          "tagged": 25,
+          "total": 25,
+          "invalid": []
+        },
+        "detachable_meshes": 2,
+        "sockets": {
+          "right": true,
+          "left": true,
+          "extras": []
         },
         "note": "Exact exported names/tags only. Runtime aliases do not establish the export contract. Quad dimensions and required detach plates still need authoring review."
       }
