@@ -9,6 +9,7 @@ const {
   assertScratchOutsideRepository,
   seedPath,
   scenarioPlan,
+  immobileLanceNeedsExtraction,
   scenarioFingerprint,
   readCompleted,
   writeCompleted,
@@ -16,6 +17,17 @@ const {
   summarize,
   writeCompactSummary,
 } = require('./scene-campaign.cjs');
+
+// A crippled lance must use the normal withdrawal flow instead of ending turns forever.
+const trapped = [
+  { id: 'ally0', team: 'ally', alive: true, hp: { legs: 0 } },
+  { id: 'enemy0', team: 'enemy', alive: true, hp: { legs: 100 } },
+];
+assert.equal(immobileLanceNeedsExtraction(trapped, { ally0: { attacks: [] } }), true);
+assert.equal(immobileLanceNeedsExtraction(trapped, { ally0: { attacks: [{ target: 'enemy0' }] } }), false);
+assert.equal(immobileLanceNeedsExtraction([{ ...trapped[0], hp: { legs: 1 } }, trapped[1]], { ally0: { attacks: [] } }), false);
+assert.equal(immobileLanceNeedsExtraction([trapped[1]], {}), false);
+assert.equal(immobileLanceNeedsExtraction([trapped[0]], { ally0: { attacks: [] } }), false);
 
 const scratch = path.join(os.tmpdir(), `iron-vow-scene-campaign-test-${process.pid}`);
 const liveFrames = [

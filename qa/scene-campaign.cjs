@@ -145,6 +145,13 @@ function writeCompleted(directory, { commit, seed, fingerprint, battle }) {
   return file;
 }
 
+// Call at the start of a player turn, after movement and AP have reset.
+function immobileLanceNeedsExtraction(units, choices) {
+  const allies = units.filter(unit => unit.team === 'ally' && unit.alive);
+  return allies.length > 0 && units.some(unit => unit.team === 'enemy' && unit.alive) &&
+    allies.every(unit => unit.hp.legs === 0 && choices[unit.id].attacks.length === 0);
+}
+
 function compactBattle(battle) {
   const {
     seed, frames, assignedWeapons, workshopAssignedWeapons, shieldAssigned, weapons, observedWeaponIds, observedShields, actualModels,
@@ -297,6 +304,7 @@ module.exports = {
   readCompleted,
   writeCompleted,
   compactBattle,
+  immobileLanceNeedsExtraction,
   coverage,
   summarize,
   writeCompactSummary,

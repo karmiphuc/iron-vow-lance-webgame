@@ -54,12 +54,13 @@ module.exports=async function checkWarMode({page,origin,mobile,out}){
     assert.equal(result.error,undefined,result.error);
     return result.report;
    }
-   await page.clock.fastForward(2000);
+   await page.clock.runFor(2000);
   }
   throw Error(await page.evaluate(()=>JSON.stringify({turn:__bench.state?.turn,events:__bench.eventLog().length,running:__bench.running})));
  }
  const parity=[];
- for(const options of [{seed:42,contract:0,maxTurns:2},{seed:42,contract:2,maxTurns:2}]){
+ // Scattered hits finish Picket in round three; keep corridor bounded at two rounds.
+ for(const options of [{seed:42,contract:0,maxTurns:3},{seed:42,contract:2,maxTurns:2}]){
   const expected=await runWar(options);
   const button=options.contract===0;
   await page.evaluate(options=>__bench.newBattle(options),options);
@@ -80,7 +81,7 @@ module.exports=async function checkWarMode({page,origin,mobile,out}){
   assert.deepEqual(actual.size,{width:18,depth:20});
   assert.ok(Number.isInteger(actual.terrainSeed)&&actual.events.some(action=>action.action==='endTurn'));
   assert.ok(actual.events.some(action=>action.log.some(line=>/returns fire|counters in melee/.test(line))));
-  if(options.contract===0)assert.equal(actual.result.win,true);
+  if(options.contract===0){assert.equal(actual.unfinished,false);assert.equal(actual.result.win,true);}
   else {
    assert.equal(actual.turn,3);
    assert.ok(actual.units.some(unit=>unit.kind==='tank'&&!unit.alive));
