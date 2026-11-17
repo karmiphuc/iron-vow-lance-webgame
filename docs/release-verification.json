@@ -77,5 +77,41 @@
     },
     "status": "local verification passed",
     "report": "design/phase7/summary.json"
+  },
+  "latestPublishedRelease": {
+    "siteVersion": 101,
+    "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+    "sourceCommit": "0753f772870d8379e32c3b48fb0bb7db95a8c19c",
+    "githubCommit": "aa7a01db76f64bad88871b1bed280dabab8c381c",
+    "distTree": "0a86fcda372000ad5bc99d356d332a1c0129c749",
+    "verifiedAt": "2026-11-17T12:51:23.404Z",
+    "localReleaseSourceSha256": "f3c00245752d83dc367a56e96f3b5bc7700d820d425361a1c950b83302ca3bd5",
+    "simulationSuites": 58,
+    "localBrowser": {
+      "desktop": 43,
+      "touch": 43,
+      "result": "passed",
+      "failedAttemptsBeforePass": 0
+    },
+    "liveFilesCompared": 145,
+    "liveBrowser": {
+      "desktop": 43,
+      "touch": 43,
+      "result": "passed",
+      "failedAttemptsBeforePass": 4,
+      "resume": "Retained the completed desktop and touch checks. Continued the unmatched touch cases after waiting for the campaign tooltip scroll to finish, using the same deployed source and runtime tree."
+    },
+    "environment": {
+      "browser": "Chromium",
+      "touch": "iPhone 13 emulation",
+      "graphics": "Software WebGL with the documented behavior-check policy"
+    },
+    "evidenceSha256": {
+      "localBrowser": "5595fcff0c5f260b356d914842664cd5af6a17ca7e3df689457004a4816f6c88",
+      "liveBrowser": "fa85a7b97a172924cacb5d76ce687d9bf29862bbbe9bc05d5736ca64a1beaa86",
+      "liveGateLog": "58d34ca0252591fc116263116ce00a7a25c449953a07ca8b0c54ca5265b571cd",
+      "liveResumeBrowser": "b1147d92c5141802757924b47e00452f2ea8d4f3fec0c81b3c5753c81e2dee37",
+      "liveResumeLog": "e645587530bdfee6596ea5646db553cd72919cd81df2deb82e6a25c83ba56b0c"
+    }
   }
 }

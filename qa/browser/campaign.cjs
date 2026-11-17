@@ -16,14 +16,22 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  assert.equal(await page.locator('#sound').getAttribute('aria-label'),'Mute sound');
  await fit();
  const tip=page.locator('.inn-pilot:has([data-hire="7"]) [data-help]');
- await tip.scrollIntoViewIfNeeded();
  if(mobile){
+  await tip.evaluate(async anchor=>{
+   await document.fonts.ready;
+   anchor.scrollIntoView({behavior:'instant',block:'center',inline:'nearest'});
+   // Drain the scroll event before starting the gesture. Scrolling cancels a long press.
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  });
   const box=await tip.boundingBox(),cdp=await context.newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2}]});
-  await page.locator('#game-help').waitFor({state:'visible'});
+  await page.locator('#game-help').waitFor({state:'visible',timeout:5000});
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   await cdp.detach();
- }else await tip.hover();
+ }else{
+  await tip.scrollIntoViewIfNeeded();
+  await tip.hover();
+ }
  assert.match(await page.locator('#game-help').innerText(),/Revives disabled limbs/);
  await page.evaluate(()=>{save.credits=10000;save.units[0].level=4;save.units[0].xp=47;learnTraining(0,'pathfinder');persist();render()});
  for(let i=0;i<3;i++){
