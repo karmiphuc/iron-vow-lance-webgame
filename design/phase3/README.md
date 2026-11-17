@@ -36,14 +36,20 @@ Bastion's source kept its six clips and 14 piston pairs. The initial export expo
 
 The six procedural chassis passed the live rig contract check and equipped budget with upgrades. Behemoth's four-leg gait and mortar stance were checked after reducing the torso and cockpit mesh. Its maximum equipped total fell to 54,244 triangles.
 
-A one-seed campaign smoke completed 2,240 observed ticks with zero anomalies. A second invocation reused the completed seed. The final 30-seed campaign remains pending.
+The final campaign ran seeds 4242–4271 on application tree `3ad35ac`. All 30 sorties finished with zero anomalies, browser errors, or command errors in 126,284 observed ticks. It saw the actual models of all 21 campaign chassis, every Workshop weapon and both shields. All 16 injected faults were detected. Lion passed its separate authored strike checks. The campaign samples real animation and bones at 30 Hz and omits unobserved GPU work after warmup.
 
 The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in five. The desktop and touch battle checks exercised picking, ground contact, hover, heading, damage, grounded wrecks and fire from the exported muzzles. Leaving the sortie detached the vehicles and disposed their shared geometry once. Both runs used one WebGL context and reported zero WebGL errors. The screenshot arranges both vehicles in a seeded test battle.
 
 The sortie-exit assertion caught a cleanup call unavailable in the vendored Three.js. Cleanup now removes the instance from its parent before disposing shared geometry.
 
-Remaining legacy art cleanup and the final 30-seed campaign are pending. Native iPad performance is unverified. See the [Phase 3 gate](../../docs/phase3-export-gate.md).
+Native iPad performance is unverified. See the [Phase 3 gate](../../docs/phase3-export-gate.md).
 
 The battlefield draws models only after their GLBs are ready. An injected tank load failure kept combat disabled and withdrawal available. On desktop and touch, restoring the actual WebGL context reloaded the rigs, drew the field again, and retained the exact sortie checkpoint. The 10×10 published checkpoint also reopened and accepted legal movement.
 
 Workshop assigned and market cards rendered live 640×640 rig portraits on desktop and touch. The checks verified that the market released its source GLBs after rendering and used a single WebGL context. Armory interactions passed on both device profiles. All 51 simulation suites passed, including the shared live gait, its audio cues, and the existing attack timings.
+
+The final cleanup removed 781 legacy WebP sprites and masks, the billboard and weapon adapters, and the raster preview paths. The Workshop and target panel render the production weapon, shield and vehicle meshes into the shared 640×640 surface. The Warden Bench kept its seven approved clips with the same geometry. The exact native clip check passed 10,790 local transform samples. The Aero review now scrubs the live rig. The single-file campaign package embedded all 21 of its GLBs byte for byte.
+
+The final gate waits for complete scene readiness before injecting faults. Its stock paint check uses the loaded sortie scope, and the infantry carry check steps the actual renderer at a controlled 60 Hz. Model captures include synthetic HP on some test opponents to allow repeated attacks.
+
+The final gate passed 21 desktop and 21 touch Chromium cases with real GPU rendering. All 51 simulation suites passed.
