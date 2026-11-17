@@ -1,0 +1,78 @@
+/* Claude's target/readout hierarchy applies at every combat viewport, including iPad. */
+body[data-view="combat"] #nav{display:none}
+body[data-view="combat"] header{height:60px}
+body[data-view="combat"] main{height:calc(100dvh - 60px)}
+body[data-view="combat"] .target-toggle{display:flex;position:absolute;right:18px;top:24px;width:min(280px,calc(100% - 280px));min-height:64px;align-items:center;gap:12px;padding:12px 14px;background:#15212aee;border:1px solid var(--line);text-align:left;z-index:3}
+body[data-view="combat"] .target-toggle>.ui-icon{height:22px;width:22px;flex:none}
+body[data-view="combat"] .target-toggle>span{min-width:0;flex:1}
+body[data-view="combat"] .target-toggle strong{display:block;font:600 21px Barlow,sans-serif;line-height:1.15}
+body[data-view="combat"] .target-toggle small{display:block;margin-top:5px;color:var(--muted);font-size:11px;line-height:1.4}
+.target-detail-label{display:inline-block;margin-left:8px;color:var(--accent);font-size:10px;letter-spacing:.06em}
+body[data-view="combat"] .combatpanel{display:none}
+body[data-view="combat"][data-target-panel="open"] .combatpanel{display:block;position:absolute;left:auto;right:18px;top:104px;bottom:auto;width:min(300px,calc(100% - 36px));max-height:calc(100% - 280px);overflow:auto;padding:16px;z-index:5;background:#13202afa;border:1px solid #bdc8cc66;box-shadow:0 15px 55px #0009}
+body[data-view="combat"] .close-target{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:10px;flex:none}
+body[data-view="combat"] .combatpanel .inspect-head{gap:8px}
+body[data-view="combat"] .combatpanel h3{font-size:25px;line-height:1.1}
+body[data-view="combat"] .combat-target{height:56px;max-width:66px;flex:0 0 66px}
+body[data-view="combat"] .combat-target img{height:90px;top:0}
+body[data-view="combat"] button,body[data-view="combat"] [role="button"],body[data-view="combat"] header .icon{min-height:44px;min-width:44px;touch-action:manipulation}
+body[data-view="combat"] .battle-top .icon{padding:8px;font-size:11px}
+body[data-view="combat"] .battle-links{display:flex;flex-wrap:wrap;gap:0}
+body[data-view="combat"] .map-tools button:last-child{flex:0 0 44px}
+body[data-view="combat"] .map-tools button{font-size:10px;padding:6px}
+body[data-view="combat"] .map-tools.map-zoom button{flex:1 1 0}
+body[data-view="combat"] .field-navigation{width:152px;bottom:calc(var(--combat-hud-height,136px) + var(--combat-hud-bottom,35px) + 64px)}
+body[data-view="combat"][data-target-panel="open"] .field-navigation{visibility:hidden}
+body[data-view="combat"] .battle-bottom{flex-wrap:wrap;gap:8px}
+body[data-view="combat"] .hint{bottom:calc(var(--combat-hud-height,136px) + var(--combat-hud-bottom,35px) + 12px)}
+body[data-view="combat"] .unitbuttons{flex:1 1 350px}
+body[data-view="combat"] .unitbuttons button{min-height:64px;min-width:0;flex:1;max-width:240px}
+body[data-view="combat"] .actionbuttons{flex-wrap:wrap;gap:5px}
+body[data-view="combat"] .actionbuttons button{min-width:44px}
+body[data-view="combat"] .actionbuttons button span{font-size:12px}
+@media(max-width:1100px){
+ body[data-view="combat"] .battle-bottom{flex-direction:column}
+ body[data-view="combat"] .unitbuttons{flex:0 0 auto}
+ body[data-view="combat"] .actionbuttons{width:100%;justify-content:space-between}
+ body[data-view="combat"] .actionbuttons button{flex:1}
+ body[data-view="combat"] .hint{bottom:calc(var(--combat-hud-height,136px) + var(--combat-hud-bottom,35px) + 12px)}
+ body[data-view="combat"] .log{display:none}
+ body[data-view="combat"] .field-navigation{bottom:calc(var(--combat-hud-height,136px) + var(--combat-hud-bottom,35px) + 64px)}
+}
+@media(max-width:760px){
+ body[data-view="combat"] .target-toggle{right:10px;top:73px;width:145px;padding:10px;gap:7px}
+ body[data-view="combat"] .target-toggle strong{font-size:18px}
+ body[data-view="combat"] .target-toggle small{font-size:10px}
+ .target-detail-label{display:block;margin:4px 0 0;font-size:9px}
+ body[data-view="combat"][data-target-panel="open"] .combatpanel{top:155px;right:10px;width:min(285px,calc(100% - 20px));max-height:calc(100% - 365px);padding:13px}
+ body[data-view="combat"] .combat-target{display:none}
+ body[data-view="combat"] .field-navigation{width:126px;top:162px;bottom:auto;right:10px;left:auto}
+ body[data-view="combat"] .battle-bottom{bottom:10px}
+ body[data-view="combat"] .actionbuttons button{flex:1 0 44px;padding:8px 5px}
+ body[data-view="combat"] .actionbuttons button span{font-size:11px}
+ body[data-view="combat"] .hint{left:12px;transform:none;max-width:calc(100% - 164px);bottom:calc(var(--combat-hud-height,136px) + var(--combat-hud-bottom,10px) + 12px)}
+}
+/* One selected contract, with its terms and actions together. */
+.contract-workspace{display:grid;grid-template-columns:minmax(210px,280px) minmax(0,1fr);gap:24px;align-items:start}
+.contract-choice-list{display:flex;flex-direction:column;gap:8px}
+.contract-choice{display:block;text-align:left;min-height:88px;padding:16px;border-left:3px solid transparent}
+.contract-choice strong{display:block;font:600 24px Barlow,sans-serif;line-height:1.1}
+.contract-choice small{display:block;margin-top:8px;font-size:11px;line-height:1.6;color:var(--muted)}
+.contract-choice[aria-selected="true"]{border-left-color:var(--accent);background:#2b3029}
+.contract-choice[aria-selected="true"] strong{color:var(--accent)}
+.contract-workspace .contract-grid{display:block;min-width:0}
+.contract-workspace .offer-card[hidden]{display:none}
+.contract-workspace .offer-card{min-height:0}
+.contract-workspace .offer-card h2{font-size:36px}
+.page>.pagehead h1{font-size:40px}
+.page button,.page summary,.page select{min-height:44px;min-width:44px}
+header .icon{min-height:44px;min-width:44px}
+@media(max-width:760px){
+ .contract-workspace{display:flex;flex-direction:column;gap:16px}
+ .contract-choice-list{width:100%;flex-direction:row;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px}
+ .contract-choice{flex:0 0 min(230px,85%);scroll-snap-align:start}
+ .contract-choice strong{font-size:22px}
+ .contract-workspace .contract-grid{width:100%}
+ .contract-workspace .offer-card h2{font-size:30px}
+ .page>.pagehead h1{font-size:32px}
+}

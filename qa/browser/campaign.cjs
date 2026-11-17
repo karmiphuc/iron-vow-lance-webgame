@@ -1,3 +1,4 @@
+const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 const paths=[
@@ -102,7 +103,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await page.reload({waitUntil:'domcontentloaded'});await nav('contracts');
  assert.deepEqual(await page.evaluate(()=>save.dispatch.sizes),sizes);
  await page.evaluate(()=>{save.dispatch.sizes[0]=3;persist();render()});
- await tap('[data-deploy="0"]');await tap('#modal-1');await tap('#modal-0');
+ await selectContract(page,{template:0});await tap('[data-deploy="0"]');await tap('#modal-1');await tap('#modal-0');
  assert.deepEqual(await page.evaluate(()=>battle.slots),[0,1,2]);
  await page.evaluate(()=>{
   ruleRandom=()=>0;
@@ -133,7 +134,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await tap('#move');
  await (mobile?page.touchscreen.tap(target.x,target.y):page.mouse.click(target.x,target.y));
  assert.deepEqual(await page.evaluate(()=>[action,current().breach,targetPanelOpen]),['fire',2,false]);
- if(mobile)assert.equal(await page.locator('#target-panel').isVisible(),false);
+ assert.equal(await page.locator('#target-panel').isVisible(),false);
  await (mobile?page.touchscreen.tap(target.x,target.y):page.mouse.click(target.x,target.y));
  await page.waitForFunction(()=>current().breach===1&&!battle.busy);
  // Nobody aims: a charged shot rolls among the live arms and legs and never reaches the body or cockpit.
@@ -157,7 +158,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
   foe.x=foe.vx=actor.x;foe.z=foe.vz=actor.z-1;
   lockedTarget=foe.id;renderBattle();
  });
- if(mobile)await tap('#target-toggle');
+ if(!await page.locator('#target-panel').isVisible())await tap('#target-toggle');
  assert.match(await page.locator('.reaction-status').innerText(),/COUNTER READY \/ FREE HAND/);
  const [damage,reacted]=await page.evaluate(async()=>{
   ruleRandom=()=>0;

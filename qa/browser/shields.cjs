@@ -6,16 +6,19 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  const workshop=new URL('?view=workshop',origin).href;
  const tab='[data-armory-class="shields"]',card=id=>page.locator('[data-shield-card="'+id+'"]');
  const buckler='bulwark-shield',tower='citadel-shield';
- const equip=id=>tap('[data-equip="'+id+'"]');
+ const choose=async id=>{if(await page.locator('[data-refit-choice="'+id+'"]').getAttribute('aria-pressed')!=='true')await tap('[data-refit-choice="'+id+'"]');};
+ const equip=async id=>{await choose(id);await tap('[data-equip="'+id+'"]');};
  await page.goto(workshop,{waitUntil:'domcontentloaded'});
  if(mobile)await page.setViewportSize({width:320,height:700});
  await tap(tab);
  assert.equal(await page.locator('[data-shield-card]').count(),2);
- await waitForLivePortraits(page,'[data-shield-card] .weapon-card-art',2);
  for(const [id,discount] of [[buckler,'−20%'],[tower,'−35%']]){
+  await choose(id);
+  await waitForLivePortraits(page,`[data-shield-card="${id}"] .weapon-card-art`,1);
   assert.deepEqual(await card(id).locator('dd').allTextContents(),['Always',discount,'0']);
  }
  assert.ok(await page.locator('.workshop-armory').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
+ await choose(tower);
  const help=card(tower).locator('[data-help]');
  await help.scrollIntoViewIfNeeded();
  if(mobile){
@@ -28,7 +31,7 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  assert.match(await page.locator('#game-help').innerText(),/whole hit that breaks it/);
  if(mobile)await page.setViewportSize({width:390,height:844});
  const proof=process.env.IRON_VOW_SHIELD_PROOF;
- if(proof)await page.locator('.armory-grid[aria-label="Shields"]').screenshot({path:join(proof,mobile?'shields-touch.png':'shields-desktop.png'),style:'#game-help{visibility:hidden}'});
+ if(proof)await page.locator('.refit-browser').screenshot({path:join(proof,mobile?'shields-touch.png':'shields-desktop.png'),style:'#game-help{visibility:hidden}'});
 
  const preview=page.locator('#paint-preview');
  await preview.waitFor();

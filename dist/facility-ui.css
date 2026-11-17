@@ -1,0 +1,73 @@
+/* Ship and company facilities: one decision at a time, with native disclosure. */
+.facility-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 9px}
+.facility-section-heading h2{font-size:23px}
+.facility-section-heading>.eyebrow{font-size:10px;color:var(--muted)}
+.ship-readiness .ship-seats{margin-bottom:0}
+.ship-readiness .ship-seat{min-height:76px}
+.ship-readiness .ship-seat small:last-child{margin-top:5px}
+.ship-grid.facility-list,.base-grid.facility-list{display:flex;flex-direction:column;gap:8px}
+.facility-list .ship-facility{display:block;background:#162127}
+.facility-disclosure{width:100%}
+.facility-summary,.crew-summary{display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 16px;cursor:pointer;list-style:none}
+.facility-summary::-webkit-details-marker,.crew-summary::-webkit-details-marker{display:none}
+.facility-summary::marker,.crew-summary::marker{content:''}
+.facility-summary>.ui-icon{width:23px;height:23px;flex:none;color:var(--accent)}
+.facility-summary-title{flex:1;min-width:0}
+.facility-summary-title strong,.crew-summary strong{display:block;font-family:Barlow,'Arial Narrow',Impact,sans-serif;font-size:24px;line-height:1.1}
+.facility-summary-title small,.crew-summary small{display:block;margin-top:5px;font-size:11px;color:var(--muted)}
+.facility-summary-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.facility-summary-meta small{color:var(--muted);font-size:10px}
+.facility-chevron{font-size:23px;line-height:1;width:22px;text-align:center;color:var(--accent);flex:none}
+.facility-disclosure[open]>.facility-summary,.crew-disclosure[open]>.crew-summary{background:#243036}
+.facility-disclosure[open]>.facility-summary .facility-chevron,.crew-disclosure[open]>.crew-summary .facility-chevron{transform:rotate(45deg)}
+.facility-disclosure[open]{box-shadow:inset 3px 0 var(--accent)}
+.facility-summary:focus-visible,.crew-summary:focus-visible,.facility-future>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.facility-body .ship-current{padding:12px 16px;line-height:1.5}
+.facility-body .ship-next{padding:16px;gap:6px;max-width:900px}
+.facility-body .ship-next h3{font-size:27px}
+.facility-body .ship-next p{line-height:1.5}
+.facility-body .facility-explanation{color:var(--muted);font-size:11px}
+.facility-body .ship-build{padding-top:9px;gap:12px}
+.facility-body .ship-build span{font-size:11px;white-space:normal;line-height:1.6;color:var(--ink)}
+.facility-body .ship-build button{min-width:180px;min-height:44px;font-size:11px}
+.facility-body .ship-build button:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.facility-future{border-top:1px solid var(--line)}
+.facility-future>summary{min-height:44px;display:list-item;padding:14px 16px;margin-left:18px;cursor:pointer;color:var(--muted);font-size:11px}
+.facility-future .ship-plan{padding:12px 16px;font-size:12px}
+.facility-future .ship-plan div{display:grid;gap:6px}
+.facility-future .ship-plan p{font-size:11px;line-height:1.5;color:var(--muted)}
+.base-page .base-roster.crew-disclosure{padding:0;margin-top:18px}
+.crew-summary>span:first-child{flex:1;min-width:0}
+.crew-summary .tag{white-space:nowrap}
+.crew-body{padding:16px;border-top:1px solid var(--line)}
+.crew-body .base-roster-head h2{font-size:23px}
+.crew-body .base-roster-head .eyebrow{font-size:9px}
+.crew-body .base-pilot{min-height:86px}
+@media(max-width:760px){
+ .facility-summary,.crew-summary{gap:9px;padding:12px;min-height:76px}
+ .facility-summary-title strong,.crew-summary strong{font-size:21px}
+ .facility-summary-title small,.crew-summary small{font-size:10px;line-height:1.5}
+ .facility-summary-meta small{font-size:9px}
+ .facility-summary-meta .tag{font-size:9px}
+ .facility-summary>.ui-icon{width:19px;height:19px}
+ .facility-body .ship-next{padding:14px}
+ .facility-body .ship-build button{min-width:0;width:100%}
+ .facility-body .ship-build span{width:100%}
+ .crew-body{padding:12px}
+ .crew-summary .tag{font-size:9px}
+ .ship-readiness .ship-seat{align-items:flex-start;flex-direction:row;padding:8px;gap:7px}
+ .ship-readiness .ship-seat img{width:42px;height:42px}
+}
+@media(max-width:520px){
+ .ship-readiness .ship-seats{grid-template-columns:1fr}
+ .ship-readiness .ship-seat{min-height:60px;align-items:center}
+ .facility-summary{flex-wrap:wrap;column-gap:8px}
+ .facility-summary-title{flex-basis:calc(100% - 70px)}
+ .facility-summary-meta{flex-direction:row;align-items:center;gap:10px;margin-left:27px;flex:1}
+ .facility-summary>.facility-chevron{align-self:flex-end}
+ .facility-section-heading>.eyebrow{font-size:9px}
+ .crew-summary{flex-wrap:wrap}
+ .crew-summary>.tag{order:3;flex-basis:100%;width:max-content;max-width:max-content}
+ .crew-body .base-pilot{grid-template-columns:35px minmax(0,1fr)}
+ .crew-body .base-pilot-actions{grid-column:1/-1;max-width:none;justify-content:flex-start}
+}

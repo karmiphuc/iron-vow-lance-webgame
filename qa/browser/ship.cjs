@@ -1,13 +1,15 @@
+const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkShip({context,page,mobile,origin,tap}){
  const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const openFacility=async id=>{const details=page.locator('[data-facility="'+id+'"] > details[data-ship-facility-detail]');if(!await details.evaluate(el=>el.open))await tap('[data-facility="'+id+'"] > details > summary');};
  const fit=async(selector)=>assert.ok(await page.locator(selector).evaluate(el=>el.scrollWidth<=el.clientWidth+1),selector+' fits');
  const launch=async()=>{
   await ensureContractOffer(page,0);
   await nav('contracts');
-  await tap('[data-deploy="0"]');
+  await selectContract(page,{template:0});await tap('[data-deploy="0"]');
   await fit('.modalbox');
   await tap('#modal-1');
  };
@@ -18,18 +20,11 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await page.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('.ship-banner h1').waitFor();
  assert.equal(await page.locator('.ship-facility').count(),4);
+ await openFacility('drop');
+ await tap('[data-facility="drop"] .facility-future > summary');
  assert.match(await page.locator('[data-facility="drop"] .ship-plan').innerText(),/\+1 optional reserve mech/i);
  await fit('.ship-page');
- const tip=page.locator('[data-facility="drop"] .ship-next-title [data-help]');
- await tip.scrollIntoViewIfNeeded();
- if(mobile){
-  const box=await tip.boundingBox(),cdp=await context.newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2}]});
-  await page.locator('#game-help').waitFor({state:'visible'});
-  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  await cdp.detach();
- }else await tip.hover();
- assert.match(await page.locator('#game-help').innerText(),/precharge allied reactors/i);
+ assert.match(await page.locator('[data-facility="drop"] .facility-explanation').innerText(),/precharge allied reactors/i);
  await tap('[data-hangar-deck="mechs"]');
  await tap('#inspect');
  await page.locator('.unit-inspect').waitFor();
@@ -53,7 +48,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await ensureContractOffer(page,0);
  await nav('contracts');
  assert.match(await page.locator('.contract-grid article').first().innerText(),/3 MECHS \+ AUX OPTION/);
- await tap('[data-deploy="0"]');
+ await selectContract(page,{template:0});await tap('[data-deploy="0"]');
  await tap('#use-aux');
  assert.equal(await page.locator('#aux-pilot').inputValue(),'scout');
  assert.equal(await page.locator('#aux-frame').inputValue(),'6');

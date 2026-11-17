@@ -1,8 +1,11 @@
+const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const openRoom=async id=>{const details=page.locator('[data-base-room="'+id+'"] > details[data-hangar-room-detail]');if(!await details.evaluate(el=>el.open))await tap('[data-base-room="'+id+'"] > details > summary');};
+ const openCrew=async()=>{if(!await page.locator('details[data-crew-roster]').evaluate(el=>el.open))await tap('details[data-crew-roster] > summary');};
  const baseUrl=new URL('?view=hangar',origin).href;
  const fit=selector=>page.locator(selector).evaluate(el=>el.scrollWidth<=el.clientWidth+1);
  await page.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
@@ -11,36 +14,31 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  assert.equal(await page.locator('.base-room').count(),4);
  assert.ok(await fit('.base-page'));
  assert.ok(await fit('#nav'));
- const tip=page.locator('[data-base-room="personnel"] .ship-next-title [data-help]');
- if(mobile){
-  await tip.scrollIntoViewIfNeeded();
-  const box=await tip.boundingBox(),cdp=await context.newCDPSession(page);
-  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2}]});
-  await page.locator('#game-help').waitFor({state:'visible'});
-  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  await cdp.detach();
- }else await tip.hover();
- assert.match(await page.locator('#game-help').innerText(),/without changing the lance/i);
+ await openRoom('personnel');
+ assert.match(await page.locator('[data-base-room="personnel"] .facility-explanation').innerText(),/without changing the lance/i);
  await tap('[data-hangar-deck="mechs"]');
  assert.equal(await page.locator('#hangar-reserves').count(),0,'No reserves control with empty Storage');
  await tap('#inspect');
  await page.locator('.unit-inspect').waitFor();
  await tap('[data-hangar-deck="base"]');
  await page.evaluate(()=>{save.credits=22000;save.rep=30;save.history=[{name:CONTRACTS[0].name,day:1,win:true,pay:1300}];hirePilot(3);persist();render()});
+ await openRoom('personnel');
  await tap('[data-build-room="personnel"]');
  await nav('ship');
+ await tap('[data-facility="office"] > details > summary');
  await tap('[data-build-facility="office"]');
  await page.goto(baseUrl,{waitUntil:'domcontentloaded'});
  assert.match(await page.locator('.base-queue h2').innerText(),/reserve academy/i);
  assert.ok(await page.locator('[data-build-room="recon"]').isDisabled());
  await ensureContractOffer(page,0);
  await nav('contracts');
- await tap('[data-deploy="0"]');
+ await selectContract(page,{template:0});await tap('[data-deploy="0"]');
  await tap('#modal-1');
  await page.evaluate(()=>{for(const u of battle.units)if(u.team==='enemy'){u.alive=false;u.hp.body=0}finish(true)});
  assert.match(await page.locator('.modalbox').innerText(),/HANGAR FACILITY ONLINE[\s\S]*Reserve Academy/i);
  assert.match(await page.locator('.modalbox').innerText(),/SHIP UPGRADE ONLINE[\s\S]*Broker Uplink/i);
  await page.getByRole('button',{name:'HANGAR',exact:true}).last().click();
+ await openCrew();
  await tap('[data-reserve-training="scout"]');
  await tap('[data-learn="scout-optics"]');
  await tap('#modal-0');
@@ -54,6 +52,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
   save.dispatch={day:save.day,sizes:[1,2,3,2]};
   persist();render();
  });
+ await openCrew();
  await tap('[data-pilot-treatment="scout"]');
  assert.ok(await page.locator('[data-pilot-treatment="rook"]').isDisabled());
  assert.equal(await page.evaluate(()=>woundDays('scout')),0);
@@ -93,7 +92,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  assert.ok(await page.locator('[data-rescan="0"]').isDisabled(),'Only one local scan is available per company day');
  assert.equal(await page.locator('[data-rescan="1"]').count(),0,'Remote contracts cannot charge for a local survey');
  assert.ok(await page.locator('[data-world-offer]').count()>0,'Local board displays available offers');
- await tap('[data-deploy="0"]');
+ await selectContract(page,{template:0});await tap('[data-deploy="0"]');
  assert.ok(await fit('.modalbox'));
  assert.equal(await page.locator('[data-sortie-seat][aria-pressed="true"]').count(),await page.evaluate(()=>save.dispatch.sizes[0]));
 };

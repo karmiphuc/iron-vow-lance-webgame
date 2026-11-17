@@ -4,11 +4,13 @@ const {join}=require('node:path');
 
 module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  const card=id=>page.locator('[data-weapon-card="'+id+'"]');
- const equip=id=>tap('[data-equip="'+id+'"]');
+ const choose=async id=>{const choice=page.locator('[data-refit-choice="'+id+'"]');if(await choice.getAttribute('aria-pressed')!=='true')await tap('[data-refit-choice="'+id+'"]');};
+ const equip=async id=>{await choose(id);await tap('[data-equip="'+id+'"]');};
  const tab=id=>tap('[data-armory-class="'+id+'"]');
  const livePortrait=async image=>{
   await image.scrollIntoViewIfNeeded();
-  await page.waitForFunction(selector=>[...document.querySelectorAll(selector)].every(img=>img.hasAttribute('src')),'.armory-card .weapon-card-art');
+  await image.waitFor({state:'visible'});
+  await page.waitForFunction(img=>img.hasAttribute('src'),await image.elementHandle());
   return image.evaluate(async img=>{
    await img.decode();
    const surface=document.createElement('canvas');surface.width=surface.height=32;
@@ -40,9 +42,11 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   const cards=page.locator('[data-weapon-card]');
   assert.equal(await cards.count(),count);
   for(const item of await cards.all()){
+   const id=await item.getAttribute('data-weapon-card');
+   await choose(id);
+   assert.equal(await page.locator('.refit-detail .armory-card:visible').count(),1);
    const image=item.locator('.weapon-card-art');
    await checkPortrait(image);
-   const id=await item.getAttribute('data-weapon-card');
    seen.push(id);
    const expected=await page.evaluate(id=>{
     const w=weapon(id),training=trainingEffects(selected);
@@ -58,11 +62,13 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  }
  assert.equal(new Set(seen).size,24);
  await tab('shields');
- for(const item of await page.locator('[data-shield-card]').all())await checkPortrait(item.locator('.weapon-card-art'));
+ for(const item of await page.locator('[data-shield-card]').all()){await choose(await item.getAttribute('data-shield-card'));await checkPortrait(item.locator('.weapon-card-art'));}
  if(mobile)await page.setViewportSize({width:390,height:844});
  await tab('strike');
+ await choose('obelisk');
  assert.equal(await card('obelisk').locator('[data-equip]').isDisabled(),true);
  assert.match(await card('obelisk').locator('[data-equip]').innerText(),/4,800 CR REQUIRED/);
+ await choose('cerberus');
  const help=card('cerberus').locator('[data-help]');
  await help.scrollIntoViewIfNeeded();
  if(mobile){
@@ -77,7 +83,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   save.units[1].level=5;
   for(const skill of ['sighter','ballistics','rangefinder'])if(!learnTraining(1,skill))throw Error('Training fixture failed');
  });
- await tap('[data-select="1"]');await tab('assault');
+ await tap('[data-select="1"]');await tab('assault');await choose('trident');
  assert.deepEqual(await card('trident').locator('dd').allTextContents(),['49','6 tiles','3']);
  await tap('[data-select="0"]');
  await equip('sidewinder');
@@ -103,7 +109,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  await checkCerberusSalvo(page,mobile,tap);
  await page.evaluate(()=>{battle=null;page='workshop';save.credits=30000;save.rep=119;render()});
  for(const [id,group,rep,price] of [['rivet','assault',120,'8,600'],['parallax','strike',180,'13,500']]){
-  await tab(group);
+  await tab(group);await choose(id);
   const button=card(id).locator('[data-equip]');
   assert.equal(await button.isDisabled(),true);
   assert.equal(await button.innerText(),'UNLOCKS AT '+rep+' REP');

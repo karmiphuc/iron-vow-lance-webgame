@@ -18,6 +18,10 @@ Playwright uses its Chromium installation or a supported local Chrome. Set `IRON
 | Hangar and Workshop | Fourth seat, reserve selection into Workshop Storage, camera easing and projected HTML controls, workers, condition-driven maintenance, live loadouts and material paint, turntable gestures, and 640×640 mech renders. |
 | Rig Bench | Shared campaign roster and rules, production weapon and shield mounts, articulated kit mixes, original clip scrubber, real seeded War battles, fault injection, and reports. |
 
+## Menu and iPad UI gate
+
+`node qa/check-decision-ui.cjs --out /tmp/iron-vow-ui` checks real player flows at 1024×1366 and 1366×1024 with touch. It verifies one selected facility/refit/contract, preserved preparation and target state, 44-pixel controls, movement-hint clearance and one shared renderer. The maintained browser suite also runs the scenario on desktop and touch. Paint receives an additional 320-pixel overflow check. Evidence is kept compact under `design/decision-ui/`.
+
 ## Overworld gate
 
 `node qa/check-overworld-chart.cjs --out /tmp/iron-vow-overworld` runs the focused chart, living-world and port/event checks on desktop and touch. It records the committed source and working-tree hashes. Pending transit has its own career fixture, including exact reload/import and one-time payment checks. The phase evidence lives in `design/overworld-a/`, `design/overworld-b/` and `design/overworld-c/`. Native iPad performance remains unverified.

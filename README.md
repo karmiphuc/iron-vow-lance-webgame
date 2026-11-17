@@ -32,6 +32,8 @@ After deploying, select a unit, and click highlighted tiles to move. Choose Fire
 
 Keyboard: 1–3 selects a unit; M moves; F fires; Q activates a skill; E ends the turn. Mouse/touch supports every action. Sound is opt-in.
 
+Ship and Hangar show one selected upgrade at a time. Workshop keeps the selected mech beside one weapon refit, with comparison, statistics and paint available on demand. Contracts use a compact offer list with one preparation panel. Combat target details open explicitly on desktop, tablets and phones.
+
 Contract rewards fund weapons, chassis, upgrades, and repairs. Pilot experience unlocks training and improves combat performance. Career state saves to browser localStorage. Career screen supports backup export/import. Free field patches prevent an economy dead end.
 
 ## Verification

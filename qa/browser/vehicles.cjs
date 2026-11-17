@@ -1,11 +1,13 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-module.exports = async function checkVehicles({ page, origin, mobile, out }) {
+module.exports = async function checkVehicles({ page, origin, mobile, out, tap }) {
   await page.goto(origin, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__ironVow);
   await page.evaluate(() => __ironVow.start({ seed: 4242, contract: 0 }));
   await page.waitForFunction(() => IronVowScene.ready, null, { timeout: 120000 });
+  await tap('#target-toggle');
+  assert.equal(await page.locator('#target-panel').isVisible(),true);
   const portraits=[];
   for(const kind of ['tank','helicopter']){
     await page.evaluate(kind=>{
@@ -24,6 +26,7 @@ module.exports = async function checkVehicles({ page, origin, mobile, out }) {
     portraits.push(portrait.src);
   }
   assert.notEqual(...portraits,'Tank and gunship have distinct renders');
+  await tap('#close-target');
   await page.evaluate(() => {
     battle.units.filter(u => u.kind).forEach((u, i) => {
       Object.assign(u, { x: 1 + i * 2, vx: 1 + i * 2, z: 15, vz: 15 });

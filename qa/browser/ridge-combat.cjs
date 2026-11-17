@@ -18,7 +18,7 @@ module.exports=async function checkRidgeCombat({page,mobile,origin,tap}){
  });
  assert.ok(start.dodge>0);
  assert.doesNotMatch(await page.locator('#ui').textContent(),/%\s*DODGE/i);
- const readout=()=>page.locator(mobile?'#target-toggle':'.shot-readout').innerText();
+ const readout=()=>page.locator('#target-toggle').innerText();
  assert.match(await readout(),/RIDGE BLOCK/);
  for(let i=0;i<2;i++)await tap('#map-zoom-out');
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
