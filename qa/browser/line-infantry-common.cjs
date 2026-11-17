@@ -14,7 +14,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  await tap('[data-bay="market"]');
  assert.equal(await page.getByRole('heading',{name,exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(()=>{Math.random=()=>0});
+ await page.evaluate(contract=>{Math.random=()=>0;save.overworld={port:CONTRACTS[contract].id,arrears:0};},contract);
  await tap('#nav [data-page="contracts"]');
  await tap(`[data-deploy="${contract}"]`);
  await tap('#modal-1');

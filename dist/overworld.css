@@ -1,0 +1,95 @@
+.overworld-page{padding:clamp(20px,3vw,42px);background:radial-gradient(ellipse at 5% 0%,#23363a70,transparent 43%),radial-gradient(ellipse at 100% 20%,#5a3b1c28,transparent 45%),#11191deb}
+.overworld-head{max-width:1540px;margin:0 auto 24px;align-items:center}
+.overworld-head h1{font-size:clamp(38px,5vw,58px);margin-top:8px;letter-spacing:1px}
+.overworld-head-status{display:grid;gap:3px;text-align:right;min-width:170px}
+.overworld-head-status span,.overworld-head-status small{color:var(--muted);font-size:9px;letter-spacing:1.3px;text-transform:uppercase}
+.overworld-head-status strong{font:600 19px Barlow,'Arial Narrow',sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.overworld-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,.76fr);gap:17px;max-width:1540px;margin:0 auto;align-items:start}
+.overworld-map-panel,.overworld-detail-panel{min-width:0;background:#131e25dc;border:1px solid var(--line)}
+.overworld-map-panel{padding:16px}
+.overworld-map-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 2px 13px}
+.overworld-map-heading h2{font-size:29px;letter-spacing:.7px;margin-top:5px}
+.overworld-route-count{display:flex;align-items:center;gap:8px;color:#c4ceca;font-size:9px;letter-spacing:1px;white-space:nowrap}
+.overworld-route-count i{width:3px;height:3px;border-radius:50%;background:var(--accent)}
+.overworld-map{position:relative;isolation:isolate;width:100%;aspect-ratio:1.28;min-height:0;max-height:none;overflow:hidden;border:1px solid #9ab2b82c;background-color:#142027;background-image:radial-gradient(ellipse at 52% 43%,#45616633,transparent 56%),linear-gradient(#91b5ba0a 1px,transparent 1px),linear-gradient(90deg,#91b5ba0a 1px,transparent 1px),radial-gradient(circle at 1px 1px,#a5cbcf37 1px,transparent 1.4px);background-size:auto,10% 12.8%,10% 12.8%,5% 6.4%;background-position:center,0 0,0 0,0 0}
+.overworld-map:after{position:absolute;z-index:-1;inset:7px;content:"";border:1px solid #d9e0d70c;pointer-events:none}
+.overworld-route{position:absolute;z-index:0;height:1px;transform-origin:0 50%;background:#86999b47;pointer-events:none}
+.overworld-route:after{position:absolute;inset:-2px 0;content:"";background:repeating-linear-gradient(90deg,transparent 0 7px,#b9c8c246 7px 10px);opacity:.42}
+.overworld-route.is-connected{height:1.5px;background:#8ec1ca88;box-shadow:0 0 8px #8ec1ca38}
+.overworld-route.is-connected:after{background:repeating-linear-gradient(90deg,transparent 0 8px,#a6d5dbb5 8px 11px);opacity:.6}
+.overworld-route.is-planned{height:2px;background:#e9a544c4;box-shadow:0 0 10px #e9a5444d}
+.overworld-route.is-planned:after{background:repeating-linear-gradient(90deg,transparent 0 7px,#ffcc75 7px 11px);opacity:.7}
+.overworld-node{position:absolute;z-index:2;width:48px;height:48px;display:grid;place-items:center;padding:0;border:0;background:transparent;overflow:visible;transform:translate(-50%,-50%);touch-action:manipulation}
+.overworld-node:hover:not(:disabled){background:transparent;border-color:transparent}
+.overworld-node:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+.overworld-node__marker{position:relative;display:block;width:17px;height:17px;border:1px solid #859b9d;background:#142027;transform:rotate(45deg);box-shadow:0 0 0 5px #142027bb,0 0 0 6px #8ec1ca54;transition:background .15s,border-color .15s,box-shadow .15s}
+.overworld-node__marker:before{position:absolute;inset:-7px;content:"";border:1px solid transparent}
+.overworld-node__marker:after{position:absolute;inset:5px;content:"";background:#72888a;transition:background .15s}
+.overworld-node.is-connected .overworld-node__marker{border-color:var(--blue);box-shadow:0 0 0 5px #142027cc,0 0 0 6px #8ec1ca82,0 0 15px #8ec1ca5a}
+.overworld-node.is-current .overworld-node__marker{border-color:var(--blue);background:#284249;box-shadow:0 0 0 5px #142027e6,0 0 0 7px #8ec1ca9c,0 0 18px #8ec1ca8a}
+.overworld-node.is-current .overworld-node__marker:after{background:#c6edf0}
+.overworld-node.is-selected .overworld-node__marker{border-color:var(--accent);background:#42351f;box-shadow:0 0 0 5px #142027e6,0 0 0 7px #e9a544a8,0 0 20px #e9a54480}
+.overworld-node.is-selected .overworld-node__marker:before{inset:-11px;border-color:#e9a5449c}
+.overworld-node.is-selected .overworld-node__marker:after{background:#ffd17e}
+.overworld-node__label{position:absolute;display:grid;gap:3px;width:max-content;max-width:150px;padding:5px 7px;border-left:1px solid #8ec1ca55;background:#11191dcc;text-align:left;pointer-events:none;line-height:1.1}
+.overworld-node__label strong{font:600 15px Barlow,'Arial Narrow',sans-serif;letter-spacing:.35px;text-transform:uppercase;color:#e9e8df;white-space:normal}
+.overworld-node__label small{font:500 8px Inter,Arial,sans-serif;letter-spacing:.8px;color:#9caaa9;text-transform:uppercase}
+.overworld-node.is-current .overworld-node__label{border-color:var(--blue)}
+.overworld-node.is-selected .overworld-node__label{border-color:var(--accent)}
+.overworld-node.label-east .overworld-node__label{left:calc(100% + 8px);top:50%;transform:translateY(-50%)}
+.overworld-node.label-west .overworld-node__label{right:calc(100% + 8px);top:50%;transform:translateY(-50%);border-left:0;border-right:1px solid #8ec1ca55;text-align:right}
+.overworld-node.label-north .overworld-node__label{left:50%;bottom:calc(100% + 5px);transform:translateX(-50%);text-align:center;border-left:0;border-bottom:1px solid #8ec1ca55}
+.overworld-node.label-south .overworld-node__label{left:50%;top:calc(100% + 5px);transform:translateX(-50%);text-align:center;border-left:0;border-top:1px solid #8ec1ca55}
+.overworld-node.label-west.is-current .overworld-node__label,.overworld-node.label-west.is-selected .overworld-node__label{border-right-color:currentColor}
+.overworld-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:11px;letter-spacing:1.6px}
+.overworld-legend{display:flex;flex-wrap:wrap;gap:17px;padding:12px 3px 0;color:#aab6b3;font-size:8px;letter-spacing:1px}
+.overworld-legend span{display:inline-flex;align-items:center;gap:7px}
+.overworld-legend i{display:block;width:8px;height:8px;border:1px solid #94aaaa;transform:rotate(45deg)}
+.overworld-legend i.is-current{border-color:var(--blue);background:#8ec1ca}
+.overworld-legend i.is-selected{border-color:var(--accent);background:#e9a544}
+.overworld-legend i.is-connected{border-color:var(--blue);box-shadow:0 0 6px #8ec1ca}
+.overworld-detail-panel{padding:17px;display:grid;gap:15px;background:linear-gradient(155deg,#1b292eeb,#11191df0 60%)}
+.overworld-destination{padding-bottom:14px;border-bottom:1px solid var(--line)}
+.overworld-destination-meta{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.overworld-destination h2{font-size:clamp(27px,2.5vw,36px);line-height:1.02;margin:12px 0 4px;letter-spacing:.35px}
+.overworld-destination>p{font-size:10px;letter-spacing:1.2px;text-transform:uppercase}
+.overworld-route-status{flex:none;color:#aeb9b6;font-size:8px;letter-spacing:.7px;text-align:right}
+.overworld-route-status.is-direct{color:var(--blue)}
+.overworld-route-copy{margin-top:10px;color:#c4ceca;font-size:10px;line-height:1.5}
+.overworld-contract{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-top:13px;padding:10px;background:#10171bcc;border-left:2px solid var(--accent)}
+.overworld-contract>div:first-child{display:grid;gap:5px}
+.overworld-contract strong{font:500 15px Barlow,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.2px}
+.overworld-payment{text-align:right;white-space:nowrap}
+.overworld-payment small{display:block;color:var(--muted);font-size:7px;letter-spacing:.9px}
+.overworld-payment b{display:block;margin-top:4px;color:var(--accent);font-size:12px;font-weight:600}
+.overworld-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.overworld-section-heading>b{color:#e7e7dd;font-size:11px;font-weight:600;letter-spacing:.4px;white-space:nowrap}
+.overworld-breakdown dl{display:grid;gap:0;margin:0}
+.overworld-breakdown dl>div{display:flex;justify-content:space-between;gap:15px;padding:6px 0;border-bottom:1px solid #c4cbd116;font-size:10px}
+.overworld-breakdown dt{color:var(--muted)}
+.overworld-breakdown dd{margin:0;color:#dfe1da;font-variant-numeric:tabular-nums;white-space:nowrap}
+.overworld-breakdown dl>div.is-total{margin-top:3px;padding-top:9px;border-bottom:0;color:var(--ink)}
+.overworld-breakdown .is-total dt,.overworld-breakdown .is-total dd{color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.7px}
+.overworld-operating{padding-bottom:13px;border-bottom:1px solid var(--line)}
+.overworld-operating .overworld-section-heading>b{color:var(--blue)}
+.overworld-finance{display:grid;gap:8px;padding:11px 12px;background:#10171bbb;border:1px solid #c4cbd11c}
+.overworld-finance>div{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.overworld-finance>div>span{color:var(--muted);font-size:8px;letter-spacing:.9px}
+.overworld-finance>div>b{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.overworld-finance .is-arrears.has-arrears>b{color:var(--red)}
+.overworld-finance .overworld-expense{align-items:start;margin-top:3px;padding-top:8px;border-top:1px solid var(--line)}
+.overworld-expense>span{font-size:7px!important;line-height:1.4}
+.overworld-expense>b{font-size:10px!important}
+.overworld-expense small{grid-column:1/-1;color:#d8a294;font-size:8px;text-align:right}
+.overworld-actions{display:grid;gap:9px}
+.overworld-travel{width:100%;min-height:50px;padding:10px 14px;font-size:15px;letter-spacing:.65px;line-height:1.15;white-space:normal;overflow-wrap:anywhere}
+.overworld-travel-note{margin:0;color:#e5a295;font-size:9px;line-height:1.5;text-align:center;letter-spacing:.4px}
+.overworld-board-actions{display:grid;grid-template-columns:1fr;gap:7px}
+.overworld-board-button{min-height:48px;padding:8px 9px;text-align:left;background:#182329;border-color:#c4cbd12b}
+.overworld-board-button span,.overworld-board-button small{display:block}
+.overworld-board-button span{font-size:8px;font-weight:700;letter-spacing:.6px}
+.overworld-board-button small{margin-top:4px;color:var(--muted);font-size:8px;line-height:1.2}
+@media(min-width:1450px){.overworld-layout{grid-template-columns:minmax(0,1.72fr) minmax(340px,.68fr);gap:22px}.overworld-detail-panel{padding:20px;gap:18px}.overworld-map-panel{padding:19px}}
+@media(max-width:1120px){.overworld-layout{grid-template-columns:minmax(0,1.15fr) minmax(290px,.85fr)}.overworld-page{padding:24px}.overworld-map-panel{padding:12px}.overworld-node__label{max-width:124px}.overworld-node__label strong{font-size:13px}}
+@media(max-width:760px){.overworld-page{padding:18px 14px 24px}.overworld-head{align-items:start;margin-bottom:17px}.overworld-head h1{font-size:39px}.overworld-head-status{min-width:0;padding-top:2px}.overworld-head-status strong{font-size:15px}.overworld-head-status span,.overworld-head-status small{font-size:7px;letter-spacing:.8px}.overworld-layout{grid-template-columns:1fr;gap:12px}.overworld-map-panel{padding:10px}.overworld-map-heading{margin-bottom:9px}.overworld-map-heading h2{font-size:25px}.overworld-route-count{font-size:8px;gap:6px}.overworld-route{transform-origin:0 50%}.overworld-node{width:48px;height:48px}.overworld-node__label{max-width:110px;padding:4px 5px}.overworld-node__label strong{font-size:12px}.overworld-node__label small{font-size:7px;letter-spacing:.55px}.overworld-legend{gap:13px;padding-top:10px;font-size:7px}.overworld-detail-panel{padding:14px;gap:12px}.overworld-destination h2{font-size:30px}.overworld-breakdown dl>div{padding:7px 0}.overworld-finance{padding:10px}.overworld-board-actions{gap:7px}.overworld-board-button{min-height:50px}}
+@media(max-width:380px){.overworld-page{padding-inline:10px}.overworld-head h1{font-size:34px}.overworld-head-status strong{font-size:13px}.overworld-node__label{max-width:92px}.overworld-node__label strong{font-size:11px}.overworld-node__label small{font-size:8px;letter-spacing:.35px}.overworld-node.label-low .overworld-node__label{left:0;right:auto;top:calc(100% + 5px);bottom:auto;transform:none;text-align:left;border-left:1px solid #8ec1ca55;border-right:0;border-top:0}.overworld-route-count{font-size:7px}}

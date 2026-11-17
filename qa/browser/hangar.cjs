@@ -87,7 +87,9 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  assert.equal(await page.locator('.contract-grid article:first-child .contract-intel li').count(),1);
  await tap('[data-rescan="0"]');
  assert.ok([2,3].includes(await page.evaluate(()=>save.dispatch.sizes[0])));
- assert.ok(await page.locator('[data-rescan="1"]').isDisabled());
+ assert.ok(await page.locator('[data-rescan="0"]').isDisabled(),'Only one local scan is available per company day');
+ assert.equal(await page.locator('[data-rescan="1"]').count(),0,'Remote contracts cannot charge for a local survey');
+ assert.match(await page.locator('[data-deploy="1"]').innerText(),/PLOT COURSE/i);
  await tap('[data-deploy="0"]');
  assert.ok(await fit('.modalbox'));
  assert.equal(await page.locator('[data-sortie-seat][aria-pressed="true"]').count(),await page.evaluate(()=>save.dispatch.sizes[0]));

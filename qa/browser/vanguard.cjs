@@ -5,7 +5,7 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
  await tap('[data-bay="market"]');assert.equal(await page.getByRole('heading',{name:'GRAVEMAW',exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(()=>{Math.random=()=>0;save.dispatch={day:save.day,sizes:[1,1,3,3]}});
+ await page.evaluate(()=>{Math.random=()=>0;save.overworld={port:'corridor',arrears:0};save.dispatch={day:save.day,sizes:[1,1,3,3]}});
  await tap('#nav [data-page="contracts"]');await tap('[data-deploy="2"]');await tap('#modal-1');await tap('#modal-0');
  await page.waitForFunction(()=>{const u=battle?.units.find(x=>x.frame===VANGUARD_FRAME),e=u&&IronVowScene.models.get(u.id)?.entry;return Boolean(IronVowScene.ready&&u&&IronVowScene.isLive(u)&&e?.m.nativeV2&&e.primary?.muzzles?.length===6)},null,{timeout:60000});
  const info=await page.evaluate(async()=>{

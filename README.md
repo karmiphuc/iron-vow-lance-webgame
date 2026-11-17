@@ -24,7 +24,9 @@ The current game includes a persistent company and pilot roster, part-based mech
 
 ## Play
 
-Choose a contract, deploy your lance, select a unit, and click highlighted tiles to move. Choose Fire and click an enemy to attack its selected subsystem. Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Actions use the unit's movement and AP allowances. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
+Open the Ship's Star Map to compare ports, routes, and travel costs. Deploy from the port hosting the contract. Travel advances the company calendar and costs fuel, wages, and upkeep. Every finished sortie costs a day of wages and upkeep. Any unpaid operating costs carry forward and are settled from later earnings.
+
+After deploying, select a unit and click highlighted tiles to move. Choose Fire and click an enemy to attack its selected subsystem. Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Actions use the unit's movement and AP allowances. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
 
 Keyboard: 1–3 selects a unit; M moves; F fires; Q activates a skill; E ends the turn. Mouse/touch supports every action. Sound is opt-in.
 
