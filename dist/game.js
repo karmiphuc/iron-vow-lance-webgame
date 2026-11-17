@@ -638,8 +638,8 @@ function seatPilot(i,id){
 const CAREER_STORAGE='iron-vow-career';
 const PENDING_CAREER_STORAGE=CAREER_STORAGE+'-pending';
 const LION_TRIAL_WEAPONS=['cleaver','hatchet','breaker'];
-const benchRig=/(?:^|[?&])bench=rig(?:&|$)/.test(window.location?.search??'');
-const benchWar=/(?:^|[?&])bench=war(?:&|$)/.test(window.location?.search??'');
+const benchMode=/(?:^|[?&])bench=(rig|war)(?:&|$)/.exec(window.location?.search??'')?.[1];
+const benchRig=benchMode==='rig',benchWar=benchMode==='war';
 const lionTrial=/(?:^|[?&])lion=(cleaver|hatchet|breaker)(?:&|$)/.exec(window.location?.search??'')?.[1];
 let save,storedCareer=null,careerStale=false,careerDB=null,databaseCareer;
 let pendingCareerWrite=Promise.resolve();
@@ -2277,7 +2277,7 @@ function renderBattle(){
    ${LION_TRIAL_WEAPONS.map(id=>`<button type="button" data-lion-weapon="${id}" aria-pressed="${u?.melee===id}" ${battle.busy?'disabled':''}>${weapon(id).name}</button>`).join('')}
   </div>`:'';
   const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${JUMPJET_HELP}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+' AP'}</span></span></button>`:'';
-  const warControls=benchWar?`<button type="button" class="icon" id="run-war" ${battle.busy||window.__bench.running?'disabled':''}>RUN WAR</button><a class="icon" href="?bench=rig">RIG BENCH</a>`:'';
+  const warControls=benchWar?`<button type="button" class="icon" id="run-war" ${battle.busy||window.__bench.running?'disabled':''}>RUN WAR</button><button type="button" class="icon" id="war-report">REPORT</button><a class="icon" href="?bench=rig">RIG BENCH</a>`:'';
   $('#ui').innerHTML=`<div class="battle-top"><h2>${battle.contract.name}</h2><p>${battle.lionTrial?'PRACTICE RANGE':contacts+' '+(contacts===1?'HOSTILE':'HOSTILES')}</p><div class="battle-links">${warControls}<button class="icon" id="manual" ${battle.busy?'disabled':''}>JOURNAL</button><button class="icon" id="withdraw" ${battle.busy?'disabled':''}>${battle.lionTrial?'EXIT TRIAL':'WITHDRAW'}</button></div>${lionLoadout}</div>
   ${tacticalMapMarkup()}
   <div class="turn">ROUND ${battle.turn} <small>${battle.phase==='player'?'YOUR TURN':'ENEMY TURN'}</small></div>
@@ -2306,10 +2306,13 @@ function renderBattle(){
   if(missile)$('#missile').onclick=()=>{if(canMissile){action='missile';renderBattle();persist()}};
   $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){startAction(u);u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
   $('#end').onclick=endTurn;$('#manual').onclick=()=>guide();$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
-  if(benchWar)$('#run-war').onclick=()=>{
-   const run=window.__bench.run();renderBattle();
-   run.catch(error=>toast(error.message)).finally(()=>{if(battle)renderBattle();});
-  };
+  if(benchWar){
+   $('#run-war').onclick=()=>{
+    const run=window.__bench.run();renderBattle();
+    run.catch(error=>toast(error.message)).finally(()=>{if(battle)renderBattle();});
+   };
+   $('#war-report').onclick=showWarReport;
+  }
   $('#withdraw').onclick=()=>{if(battle.busy)return;if(battle.lionTrial){window.location.href='?bench=rig&frame=lion';return}modal('BREAK CONTACT?','<p>Withdraw your lance. You retain earned experience, but forfeit payment and salvage. Combat damage persists.</p>',[{text:'STAY & FIGHT',fn:closeModal},{text:'WITHDRAW',fn:()=>{closeModal();finish(false)}}])};
   if(battle.lionTrial){
    $('#end').textContent='RESET TARGET';
@@ -2724,14 +2727,21 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  }
 }
 const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
+function barrageRestriction(attacker,defender,w){
+ if(!launchesMissiles(w)||!hasMechSkill(attacker,CITADEL_FRAME))return null;
+ if(attacker.mechState?.lock?.turn===battle.turn)return 'pending';
+ const marked=barrageTarget(attacker);
+ return marked&&attacker.team==='ally'&&defender!==marked&&distance(attacker,marked)<=combatRange(attacker,marked,w)?'marked':null;
+}
+
 async function engage(attacker,defender,part,w){
  if(attackObstruction(attacker,defender,w))return;
  if(launchesMissiles(w)&&hasMechSkill(attacker,CITADEL_FRAME)){
-  const state=mechState(attacker),lock=state.lock;
-  if(lock&&lock.turn===battle.turn){addLog(attacker.name+' awaits its marked barrage next round.');return}
+  const state=mechState(attacker),restriction=barrageRestriction(attacker,defender,w);
+  if(restriction==='pending'){addLog(attacker.name+' awaits its marked barrage next round.');return}
   const marked=barrageTarget(attacker);
   if(marked&&distance(attacker,marked)<=combatRange(attacker,marked,w)){
-   if(attacker.team==='ally'&&defender!==marked){toast('Fire at the marked tile.');return}
+   if(restriction==='marked'){toast('Fire at the marked tile.');return}
    defender=marked;part=marked.hp[part]>0?part:'body';delete state.lock;
   }else{
    state.lock={x:defender.x,z:defender.z,turn:battle.turn};
@@ -2866,6 +2876,7 @@ function finish(win){
  battle=null;if(selected===AUX_SLOT)selected=0;
  window.IronVowScene?.clear?.();persist();page='career';render();
  const buttons=[{text:'COMPANY RECORD',fn:closeModal},{text:'REPAIR & REFIT',fn:()=>{closeModal();page='workshop';workshopView='assigned';render()}}];
+ if(benchWar)buttons.unshift({text:'WAR REPORT',fn:showWarReport});
  if(recovered.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
  const points=totalTrainingPoints();
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
@@ -3655,8 +3666,9 @@ function drawAttackCamera(t){
  ctx.fillText(sequence.actor.name+' / '+sequence.w.name,38,H-98);
  ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';ctx.fillText(sequence.target.name+' · '+(sequence.result||sequence.part.toUpperCase()),38,H-81);ctx.restore();
 }
-let canvasMode=null,lastHangarPaint=-Infinity;
+let canvasMode=null,lastHangarPaint=-Infinity,warDiagnostics;
 function draw(ts){
+ const warStart=warDiagnostics?performance.now():0;
  window.IronVowPerformance?.begin(ts);
  const elapsed=Math.max(0,(ts-last)/1000||1/60),dt=Math.min(.05,elapsed);last=ts;clock+=elapsed;frameDt=dt;
  window.IronVowRenderer?.observeFrame(elapsed*1000);
@@ -3669,6 +3681,7 @@ function draw(ts){
   else if(mode==='hangar'){hangar(clock);lastHangarPaint=ts}
   canvasMode=mode;
  }
+ if(warDiagnostics&&battle&&window.IronVowScene.ready)warDiagnostics.sample(window.__ironVow.snapshot(),performance.now()-warStart);
  effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.light&&!e.broken?5:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);window.IronVowPerformance?.end(ts);requestAnimationFrame(draw);
 }
 canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();zoomField(e.deltaY<0?1.12:1/1.12)},{passive:false});
@@ -3885,6 +3898,11 @@ window.__ironVow=(()=>{
   if(pending)throw Error('Finish the current game operation before starting another battle');
   skipAttackCamera();closeModal();seed=options.seed??0;ruleRandom=rng(seed);save=fresh();battle=null;effects=[];clock=0;selected=0;page='contracts';
   for(const [i,frame] of (options.frames||[]).entries()){if(!FRAMES[frame]||!save.units[i])throw Error('Invalid scene fixture frame');save.units[i].frame=frame;}
+  for(const [i,loadout] of (options.loadouts||[]).entries()){
+   const frame=pilotFrame(i),owned=[...new Set([...save.owned,...[loadout.weapon,loadout.melee,loadout.shield,loadout.shoulder].filter(id=>id&&(shieldItem(id)||!weapon(id).builtIn))])];
+   if(!save.units[i]||!validHull(loadout,frame,owned))throw Error('Invalid sanctioned War loadout');
+   save.owned=owned;Object.assign(save.units[i],loadout);
+  }
   deploy(options.contract??1);closeModal();
   if(options.weapons)for(const [i,id] of options.weapons.entries()){
    const u=battle.units.find(u=>u.team==='ally'&&u.index===i),w=WEAPONS.find(w=>w.id===id&&!w.builtIn&&!w.shoulder);
@@ -3923,12 +3941,12 @@ window.__ironVow=(()=>{
   checkpoint(){return battle?captureSortie():null;},
   move(id,x,z){return command(async()=>{const u=unit(id);if(u.team!=='ally'||battle.phase!=='player'||battle.busy||!paths(u).get(x+','+z))throw Error('Illegal test move');selected=u.index;battle.busy=true;await moveUnit(u,x,z);battle.busy=false;renderBattle();});},
   attack(id,targetId,part='body',mode='fire'){return command(async()=>{const u=unit(id),target=unit(targetId),w=selectedWeapon(u,mode,target);
-   if(u.team!=='ally'||target.team!=='enemy'||!u.alive||!target.alive||battle.phase!=='player'||battle.busy||!w||!canUseWeapon(u,w)||attackObstruction(u,target,w)||distance(u,target)>combatRange(u,target,w)||!targetParts(target).includes(part)||target.hp[part]<=0)throw Error('Illegal test attack');
+   if(u.team!=='ally'||target.team!=='enemy'||!u.alive||!target.alive||battle.phase!=='player'||battle.busy||!w||!canUseWeapon(u,w)||attackObstruction(u,target,w)||barrageRestriction(u,target,w)||distance(u,target)>combatRange(u,target,w)||!targetParts(target).includes(part)||target.hp[part]<=0)throw Error('Illegal test attack');
    selected=u.index;battle.busy=true;await engage(u,target,part,w);if(!checkEnd()){battle.busy=false;renderBattle();}
   });},
   choices(id){const u=unit(id),enemies=battle.units.filter(t=>t.alive&&t.team!==u.team),w=unitWeapon(u);
    return {attacks:enemies.flatMap(target=>['fire','strike','missile'].flatMap(mode=>{const weapon=selectedWeapon(u,mode,target);
-    return weapon&&canUseWeapon(u,weapon)&&!attackObstruction(u,target,weapon)&&distance(u,target)<=combatRange(u,target,weapon)?[{target:target.id,part:'body',mode,weapon:weapon.id,hp:target.hp.body}]:[];})),
+    return weapon&&canUseWeapon(u,weapon)&&!attackObstruction(u,target,weapon)&&!barrageRestriction(u,target,weapon)&&distance(u,target)<=combatRange(u,target,weapon)?[{target:target.id,part:'body',mode,weapon:weapon.id,hp:target.hp.body}]:[];})),
     moves:[...paths(u)].filter(([,cost])=>cost>0).map(([key,cost])=>{const[x,z]=key.split(',').map(Number);return{x,z,cost,score:Math.min(...enemies.map(t=>Math.max(0,distance({x,z},t)-w.range)*20+(attackObstruction({...u,x,z},t,w)?12+distance({x,z},t)*2:0)))+cost*.5};}),
     currentScore:Math.min(...enemies.map(t=>Math.max(0,distance(u,t)-w.range)*20+(attackObstruction(u,t,w)?12+distance(u,t)*2:0)))};
   },
@@ -3939,15 +3957,78 @@ window.__ironVow=(()=>{
  };
 })();
 
+function showWarReport(){
+ const bench=window.__bench;
+ modal('WAR REPORT','<pre id="war-report-data"></pre><label>Fault probe<select id="war-probe"></select></label><output id="war-probe-result"></output>',[
+  {text:'CLOSE',fn:closeModal},
+  {text:'COPY REPORT',fn:()=>{void navigator.clipboard.writeText(bench.report()).then(()=>toast('War report copied'),()=>toast('Copy unavailable'));}},
+  {text:'RUN PROBE',fn:()=>{
+   try{const result=bench.inject($('#war-probe').value);$('#war-probe-result').textContent=result?result.type+' detected':'Probe produced no anomaly';}
+   catch(error){$('#war-probe-result').textContent=error.message;}
+  }},
+  {text:'SOAK 10',fn:()=>{closeModal();void bench.runSoak(10,bench.state.seed).then(report=>toast(report.battles+' battles · '+report.anomalies.length+' anomalies'),error=>toast(error.message));}}
+ ]);
+ $('#war-report-data').textContent=bench.report();
+ const picker=$('#war-probe');
+ for(const [id,label] of Object.entries(bench.checks))picker.add(new Option(label,id));
+}
 if(benchWar){
  attackCameraEnabled=false;
- window.__bench=window.IRON_VOW_SIM.createWarDriver(window.__ironVow,{
+ const diagnostics=window.IronVowSceneDiagnostics;
+ warDiagnostics=diagnostics.createObserver(window.IronVowScene);
+ const driver=window.IRON_VOW_SIM.createWarDriver(window.__ironVow,{
+  reset:()=>warDiagnostics.reset(),
   async ready(){while(!window.IronVowScene.ready)await new Promise(requestAnimationFrame);}
  });
- window.__bench.newBattle({seed:42});
+ let soaking=false,stop=false,lastSoak;
+ const owned=[...WEAPONS.filter(w=>!w.builtIn).map(w=>w.id),...SHIELDS.map(shield=>shield.id)];
+ const playable=FRAMES.map((_,id)=>id).filter(playerHull);
+ function fixtures(index){
+  const frames=LANCE_SLOTS.map((_,slot)=>playable[(index*LANCE_SLOTS.length+slot)%playable.length]);
+  const loadouts=frames.map((frame,slot)=>{
+   const stock=stockHull(frame),candidates=[stock,
+    ...RANGED.map(w=>({...stock,weapon:w.id})),...MELEE.map(w=>({...stock,melee:w.id})),
+    ...SHIELDS.map(shield=>({...stock,melee:null,shield:shield.id})),
+    {...stock,shoulder:'vesper-shoulder'}
+   ].filter(hull=>validHull(hull,frame,owned));
+   return candidates[(index*5+slot*3)%candidates.length];
+  });
+  return {frames,loadouts};
+ }
+
+ async function runSoak(count=10,seed=42,options={}){
+  if(soaking||driver.running)throw Error('A War run is already in progress');
+  if(!Number.isInteger(count)||count<1)throw Error('Soak count must be a positive integer');
+  const result={battles:0,ticks:0,seeds:[],winners:{},anomalies:[],chassisWeapon:{},legsWeapon:{},theaterChassis:{}};
+  const add=(matrix,key)=>{matrix[key]=(matrix[key]??0)+1;};
+  soaking=true;stop=false;
+  try{
+   for(let i=0;i<count&&!stop;i++){
+    const fit=options.frames||options.weapons||options.loadouts?{}:fixtures(i);
+    const report=await driver.runBattle({...fit,...options,seed:(seed+i*7919)>>>0,
+     contract:options.contract??i%window.__ironVow.contractCount});
+    const measured=warDiagnostics.report();
+    result.seeds.push(report.seed);result.battles++;result.ticks+=measured.ticks;
+    add(result.winners,report.result?report.result.win?'ally':'enemy':'unfinished');
+    for(const anomaly of measured.anomalies)result.anomalies.push({seed:report.seed,...anomaly});
+    for(const rig of measured.rigs){
+     const legs=rig.legs??rig.frame;
+     for(const id of new Set([rig.weapon,rig.melee].filter(Boolean))){
+      add(result.chassisWeapon,rig.frame+'|'+id);add(result.legsWeapon,legs+'|'+id);
+     }
+     add(result.theaterChassis,report.theater+'|'+rig.frame);
+    }
+   }
+   lastSoak=result;
+   return result;
+  }finally{soaking=false;}
+ }
+ window.__bench=Object.assign(driver,{checks:diagnostics.checks,inject:warDiagnostics.inject,
+  diagnostics:warDiagnostics.report,runSoak,stopSoak:()=>{stop=true;},
+  report:()=>JSON.stringify({state:driver.state,diagnostics:warDiagnostics.report(),soak:lastSoak},null,2)});
+ driver.newBattle({seed:42});
  requestAnimationFrame(draw);
 }
-
 
 if(benchRig){
  const prototypeArchives={3:'gatecrasher',4:'cicada',[HELLBREAKER]:'hellbreaker',[BULWARK_FRAME]:'bulwark',[ASHIGARU_FRAME]:'scout',[SHOGUN_FRAME]:'shogun'};

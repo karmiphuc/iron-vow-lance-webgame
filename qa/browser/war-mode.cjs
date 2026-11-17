@@ -24,9 +24,26 @@ module.exports=async function checkWarMode({page,origin}){
  }));
  assert.deepEqual([scene.contexts,scene.ready,scene.dbOpens,scene.storage],[1,true,0,'war-browser-fixture']);
  assert.ok(scene.objects>=6,JSON.stringify(scene));
+ const probes=await page.evaluate(()=>{
+  const checkpoint=JSON.stringify(__ironVow.checkpoint()),checks=Object.keys(__bench.checks);
+  return {checks,detected:checks.map(key=>__bench.inject(key)?.type),unchanged:checkpoint===JSON.stringify(__ironVow.checkpoint())};
+ });
+ assert.equal(probes.checks.length,19);
+ assert.deepEqual(probes.detected,probes.checks);
+ assert.equal(probes.unchanged,true);
+ await page.getByRole('button',{name:'REPORT',exact:true}).click();
+ await page.locator('#war-probe').selectOption('muzzleFar');
+ await page.getByRole('button',{name:'RUN PROBE'}).click();
+ assert.equal(await page.locator('#war-probe-result').textContent(),'muzzleFar detected');
+ await page.context().grantPermissions(['clipboard-read','clipboard-write']);
+ await page.getByRole('button',{name:'COPY REPORT'}).click();
+ const copied=await page.waitForFunction(async()=>Boolean(await navigator.clipboard.readText()));
+ assert.ok(await copied.jsonValue());
+ assert.ok(await page.evaluate(async()=>JSON.parse(await navigator.clipboard.readText()).diagnostics.ticks)>0);
+ await page.getByRole('button',{name:'CLOSE',exact:true}).click();
  await page.clock.install({time:new Date('2026-11-16T12:00:00Z')});
- async function waitForReport(button){
-  for(let tick=0;tick<=320;tick++){
+ async function waitForReport(button,frames=320){
+  for(let tick=0;tick<=frames;tick++){
    const result=await page.evaluate(button=>button
     ? (!__bench.running&&__bench.eventLog().length?{report:__bench.state}:null)
     : window.warResult??null,button);
@@ -51,6 +68,9 @@ module.exports=async function checkWarMode({page,origin}){
    }).then(report=>window.warResult={report},error=>window.warResult={error:error.message});
   });
   const actual=await waitForReport(button);
+  const diagnostics=await page.evaluate(()=>__bench.diagnostics());
+  assert.ok(diagnostics.ticks>0&&diagnostics.combat.impact>0,JSON.stringify(diagnostics));
+  assert.deepEqual(diagnostics.anomalies,[],JSON.stringify(diagnostics.anomalies));
   assert.deepEqual(actual,JSON.parse(JSON.stringify(expected)),`seed ${options.seed} theater contract ${options.contract}`);
   assert.deepEqual(actual.size,{width:18,depth:20});
   assert.ok(Number.isInteger(actual.terrainSeed)&&actual.events.some(action=>action.action==='endTurn'));
@@ -63,6 +83,17 @@ module.exports=async function checkWarMode({page,origin}){
    assert.ok(actual.units.some(unit=>unit.team==='ally'&&unit.hp.body<unit.max.body));
   }
  }
+ const count=Number(process.env.IRON_VOW_WAR_SOAK_BATTLES??2);
+ await page.evaluate(count=>{
+  window.warResult=null;
+  void __bench.runSoak(count,42,{maxTurns:1}).then(report=>window.warResult={report},error=>window.warResult={error:error.message});
+ },count);
+ const soak=await waitForReport(false,Math.max(320,count*200));
+ assert.deepEqual(soak.seeds,Array.from({length:count},(_,i)=>42+i*7919));
+ assert.equal(soak.battles,count);
+ assert.deepEqual(soak.anomalies,[],JSON.stringify(soak.anomalies));
+ assert.ok(soak.ticks>5&&Object.keys(soak.chassisWeapon).length&&Object.keys(soak.legsWeapon).length&&Object.keys(soak.theaterChassis).length);
  assert.equal(await page.evaluate(()=>localStorage.getItem('iron-vow-career')),'war-browser-fixture');
+ console.log(`PASS 19 War fault probes and ${count} seeded one-turn soak encounters · ${soak.ticks} observed frames · zero anomalies`);
  console.log('PASS War mode uses game commands on two theaters with matching results, reactions, tank and gunship damage and untouched career storage');
 };

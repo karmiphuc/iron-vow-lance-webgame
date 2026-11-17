@@ -17,6 +17,13 @@ const runWar=require('./war-driver.cjs');
  assert.ok(round.units.find(u=>u.id==='ally0').hp.pilot<70,'enemy turn must damage an ally');
  assert.ok(round.units.some(u=>u.kind==='tank'&&!u.alive),'production vehicle must take damage');
  assert.ok(round.units.find(u=>u.id==='enemy0').z>10,'enemy turn must move an enemy');
+ const citadel=await runWar({seed:31718,contract:0,maxTurns:1,frames:[12,15,16],
+  loadouts:[{weapon:'missile',condition:100,upgrade:0},{weapon:'hailstorm',melee:'piledriver',condition:100,upgrade:0},
+   {weapon:'rifle',condition:100,upgrade:0}]});
+ const barrage=citadel.events.filter(event=>event.actor==='ally0'&&event.action==='attack');
+ assert.equal(barrage.length,1);
+ assert.ok(barrage[0].log.some(line=>line.includes('marks tile')));
+ assert.equal(citadel.turn,2);
  await assert.rejects(runWar({seed:-1}),/uint32/);
  await assert.rejects(runWar({contract:999}),/Invalid contract/);
  await assert.rejects(runWar({maxTurns:0}),/positive integer/);

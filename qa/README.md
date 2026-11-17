@@ -57,7 +57,9 @@ Barrel aim is checked at actual firing beats using the physical muzzle axis and 
 
 ## Rig Bench War
 
-The Rig Bench War link opens a temporary encounter on the game board. Run War issues the game's legal move, attack and end-turn commands. The same runner drives `qa/war-driver.cjs`. Browser automation can use `window.__bench.newBattle(options)`, `step()`, `run()`, `runBattle(options)`, `state` and `eventLog()`.
+The Rig Bench War link opens a temporary encounter on the game board. Run War issues the game's legal move, attack and end-turn commands. The same runner drives `qa/war-driver.cjs`. Browser automation can use `window.__bench.newBattle(options)`, `step()`, `run()`, `runBattle(options)`, `state`, `eventLog()`, `runSoak(count, seed, options)`, `diagnostics()`, `inject(check, unit)` and `report()`. Soak rotates real theaters and checks loadouts through the same hull validation used by the campaign. The report includes chassis × weapon, legs × weapon and theater × chassis counts.
+
+The shared observer samples the live rig and combat events after rendering. War's 19 isolated fault probes pass perturbed copies of those observations through the same predicates. The existing scene checker also exercises 16 physical negative controls.
 
 `node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
 

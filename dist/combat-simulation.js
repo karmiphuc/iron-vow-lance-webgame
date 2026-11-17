@@ -173,7 +173,7 @@ async function runEnemyTurn(){
  // War's autonomous target/movement policy follows the Rig Bench reference
  // (docs/reference/claude/rig-bench.html:2680-2701). All legal choices,
  // effects on combat state and reactions come from the host's game commands.
- function createWarDriver(game,{ready}={}){
+ function createWarDriver(game,{ready,reset}={}){
   let settings,board,state,sequence,events=[],working=false;
   function report(){
    return state?{...settings,...state,...board,unfinished:state.units.length>0,events:events.slice()}:null;
@@ -212,7 +212,7 @@ async function runEnemyTurn(){
    if(!Number.isInteger(seed)||seed<0||seed>0xffffffff)throw Error('seed must be a uint32');
    if(!Number.isInteger(contract)||contract<0||contract>=game.contractCount)throw Error('Invalid contract');
    if(!Number.isInteger(maxTurns)||maxTurns<1)throw Error('maxTurns must be a positive integer');
-   game.start({...loadout,seed,contract});
+   reset?.();game.start({...loadout,seed,contract});
    settings={seed,contract,maxTurns};
    state=game.rulesSnapshot();
    const {terrainSeed,size,theater}=state;

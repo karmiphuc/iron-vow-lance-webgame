@@ -31,3 +31,5 @@ body.rig-bench-v3 { background:#152128; }
 @media(max-width:690px) {
  .bench-controls { top:auto; bottom:max(10px,env(safe-area-inset-bottom)); left:10px; width:calc(100vw - 20px); max-height:45dvh; }
 }
+
+#war-report-data { max-height:42vh; overflow:auto; white-space:pre-wrap; }
