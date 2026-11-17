@@ -1,0 +1,56 @@
+{
+  "started": "2026-11-17T05:54:39.428Z",
+  "commit": "93a7e2a3670add8ab158d340c753ca0f120cb985",
+  "distTree": "351c029b6f3aa3be2bd1efb35e92b4e650d14bb2",
+  "distDirty": false,
+  "runnerSha256": "85774c1b4e6cfa66727ed96a727fe07541aa9cee94908d5653e3cecec07bd526",
+  "softwareBehaviorDPR": null,
+  "scenarios": [
+    {
+      "name": "checkHangar",
+      "sha256": "7c38b99461b50800f23723d776b8ac5dd474848ec0a7bd880a528296e73cbcb8"
+    },
+    {
+      "name": "checkHangarLive",
+      "sha256": "b23a693701d65a8106df7c42c0b0826f97c6f4536c247e0031b4036adf191c00"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkHangar",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkHangar",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkHangarLive",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkHangarLive",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-17T05:54:50.870Z",
+  "integration": {
+    "commit": "672177556b38a67fd0f16da1043cc006fc4f4b03",
+    "distTree": "351c029b6f3aa3be2bd1efb35e92b4e650d14bb2",
+    "simulationSuitesPassed": 54,
+    "nativeIPadPerformance": "unverified"
+  }
+}

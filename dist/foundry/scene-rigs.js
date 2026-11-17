@@ -7,7 +7,7 @@ const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemoth
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer,scene,camera,failed=false;
-const combat=new Map(),previews=new Map(),objectPortraits=new Map();
+const combat=new Map(),previews=new Map(),hangarModels=new Map(),objectPortraits=new Map();
 function clearPreviews(scope){
  for(const [key,entry] of previews)if(!scope||entry.previewScope===scope){disposeEntry(entry);previews.delete(key);}
 }
@@ -41,11 +41,14 @@ function init(){
  try{
   renderer=window.IronVowRenderer.get();
   configure(renderer,pixels);
-  window.IronVowRenderer.subscribe(({type})=>{if(type==='restored'){
-   clearCombat();clearPreviews();
-   previewTarget?.dispose();previewTarget=null;
-   studioTarget?.dispose();scene.environment=studioEnvironment(renderer);
-  }});
+  window.IronVowRenderer.subscribe(({type})=>{
+   if(type==='lost'){
+    clearCombat();clearPreviews();
+    previewTarget?.dispose();previewTarget=null;
+    studioTarget?.dispose();studioTarget=null;
+   }
+   if(type==='restored')scene.environment=studioEnvironment(renderer);
+  });
   scene=new T.Scene();
   for(const [color,x,y,z] of studioLights){
    const light=new T.DirectionalLight(C(color),x<0?2.5:1.7);light.position.set(x,y,z);scene.add(light);
@@ -211,17 +214,17 @@ function aimMounted(m,weapon,target,weight,node){
 }
 function draw(u,t,pose,scope,model,custom){
  if(!init())return null;
- if(!pose.preview&&combatScope!==scope){clearCombat();combatScope=scope;}
- const cache=pose.preview?previews:combat;
+ if(!pose.preview&&!pose.hangar&&combatScope!==scope){clearCombat();combatScope=scope;}
+ const cache=pose.hangar?hangarModels:pose.preview?previews:combat;
 
- const facing=u.face??(u.team==='enemy'?1:-1),key=pose.preview?u.id:u.id+(pose.cinematic?'|shot|'+facing:'|field');
+ const facing=u.face??(u.team==='enemy'?1:-1),key=pose.preview||pose.hangar?u.id:u.id+(pose.cinematic?'|shot|'+facing:'|field');
  let entry=cache.get(key);
 
  if(!entry){
-  const m=custom==='rig-v2'?rigV2.build(u,pose.previewScope||'battle'):
+  const m=custom==='rig-v2'?rigV2.build(u,pose.hangar?'hangar':pose.previewScope||'battle'):
    buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
   if(!m)return null;
-  entry={m,surface:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
+  entry={m,surface:pose.hangar?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
@@ -323,6 +326,7 @@ function draw(u,t,pose,scope,model,custom){
  v2?.sync();
  m.cont.updateMatrixWorld(true);
  const span=m.previewSpan,groundRow=span?(ground-(1-span)/2)/span:ground;
+ if(pose.hangar)return entry;
  if(!world){
   setCamera(.46);
   if(span){camera.left=camera.bottom=-worldSpan*span/2;camera.right=camera.top=worldSpan*span/2;camera.updateProjectionMatrix();}
@@ -411,6 +415,10 @@ function previewAnimated(u,t,pose,model,custom,angle=0){
  const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
  return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,previewScope:'preview',heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
 }
-window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),
+function releaseHangarRig(id){
+ const entry=hangarModels.get(id);
+ if(entry){entry.m.cont.parent?.remove(entry.m.cont);disposeEntry(entry);hangarModels.delete(id);}
+}
+window.IronVowFoundry={releaseHangarRig,metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),
  equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
 })();

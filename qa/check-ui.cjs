@@ -9,7 +9,42 @@ class LocalImage extends Image{set src(v){super.src=fs.readFileSync(path.join(ro
 class NativeSurface{constructor(w,h){return createCanvas(w,h)}}
 const storage=new Map(),warnings=[];const context={document,Image:LocalImage,OffscreenCanvas:NativeSurface,console:{log:console.log,warn:(...a)=>warnings.push(a.join(' ')),error:console.error},window:{addEventListener:()=>{},matchMedia:()=>({matches:false})},innerWidth:1440,innerHeight:1024,devicePixelRatio:1,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},requestAnimationFrame:()=>{},setTimeout:r=>{queueMicrotask(r);return 1},clearTimeout:()=>{},URL,Blob,Math:Object.create(Math)};
 vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/theater-layouts.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
-(async()=>{assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,8);assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.hangar-hotspots button').length,3);
+function checkHangarNavigation(){
+ const navigation=context.window.IronVowHangarNavigation;
+ assert.ok(navigation);
+ assert.deepEqual(Array.from(navigation.routes),['ship','facilities','crew-cabin']);
+ const careerBeforeRoutes=run('JSON.stringify({save,selected})');
+ let destinations=navigation.hotspots();
+ assert.equal(destinations.facilities,get('[data-hangar-hotspot="facilities"]'));
+ assert.equal(destinations.ship,get('[data-hangar-hotspot="ship"]'));
+ assert.deepEqual(Object.keys(destinations).sort(),['crew-cabin','facilities','ship']);
+
+ const projected=[];
+ const unproject=navigation.project({setHotspots:items=>projected.push(items)},
+  {facilities:[1,2,3],ship:[4,5,6],'crew-cabin':[7,8,9]});
+ assert.deepEqual(Array.from(projected[0],item=>Array.from(item.position)),[[1,2,3],[4,5,6],[7,8,9]]);
+ assert.equal(projected[0][0].element,get('[data-hangar-hotspot="facilities"]'));
+ assert.ok(get('[data-hangar-hotspot="facilities"]').classList.contains('hangar-scene-hotspot'));
+ unproject();
+ assert.deepEqual(JSON.parse(JSON.stringify(projected[1])),[]);
+ assert.equal(get('[data-hangar-hotspot="facilities"]').classList.contains('hangar-scene-hotspot'),false);
+ assert.throws(()=>navigation.project({setHotspots(){}},{ship:[1,2]}),/Invalid hangar hotspot position/);
+
+ assert.equal(navigation.go('crew-cabin'),true);
+ assert.equal(document.body.dataset.view,'hangar');
+ assert.ok(get('[data-base-room="cabins"]'));
+ assert.equal(navigation.hotspots()['crew-cabin'],undefined);
+ assert.equal(run('JSON.stringify({save,selected})'),careerBeforeRoutes);
+ click('[data-hangar-deck="mechs"]');
+ click('.hangar-top-right [data-page="ship"]');
+ assert.equal(document.body.dataset.view,'ship');
+ assert.equal(run('JSON.stringify({save,selected})'),careerBeforeRoutes);
+ click('#nav [data-page="hangar"]');
+ assert.equal(document.querySelectorAll('.base-room').length,4);
+ assert.equal(run('JSON.stringify({save,selected})'),careerBeforeRoutes);
+}
+(async()=>{assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,8);assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.command-deck [data-select]').length,2);assert.equal(document.querySelectorAll('[data-hangar-hotspot]').length,3);
+checkHangarNavigation();
 click('[data-page="journal"]');assert.equal(document.body.dataset.view,'journal');
 assert.equal(document.querySelectorAll('.manual-topics > div').length,9);
 assert.match(document.querySelector('.manual-topics').textContent,/all hits go to the left arm/);

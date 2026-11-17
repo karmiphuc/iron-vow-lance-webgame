@@ -1140,7 +1140,7 @@ function chassisAssignments(i,training){
   const salvaged=view==='salvage',hull=salvaged?stockHull(index):slot>=0?save.units[slot]:reserve??stockHull(index);
   const {body,right,legs}=chassisParts(frame,hull,training);
   const loadout={...hull,frame:index},primary=unitWeapon(loadout),melee=meleeWeapon(loadout),shield=equippedShield(loadout);
-  return `<article class="bay-card">
+  return `<article class="bay-card"${view==='storage'?` data-stored-hull-card="${index}" tabindex="-1" aria-label="${frame.name}"`:''}>
    <img ${chassisPicture(index,hull,1)} alt="" loading="lazy">
    <span class="eyebrow">${frame.model} / ${frame.role}</span><h3>${frame.name}</h3>
    <p>${salvaged?bodies+' recovered '+(bodies===1?'body':'bodies')+' · '+rebuildIntegrity()+'% rebuilt':hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
@@ -1564,6 +1564,26 @@ function bindShip(){
   if(queueShipUpgrade(id)){render();$('.ship-queue h2')?.scrollIntoView({block:'nearest'});toast(name+' queued.')}
  };
 }
+function openStoredHull(frame){
+ if(battle||careerStale||!Number.isInteger(frame)||!Object.hasOwn(save.reserve??{},frame))return false;
+ if(!$('#modal').hidden)closeModal();
+ page='workshop';workshopView='storage';render();
+ const card=$(`[data-stored-hull-card="${frame}"]`);
+ card?.scrollIntoView({block:'nearest'});
+ card?.focus({preventScroll:true});
+ return true;
+}
+function chooseStoredHull(){
+ if(battle||careerStale)return;
+ const hulls=Object.entries(save.reserve??{});
+ if(!hulls.length)return;
+ const choices=hulls.map(([frame,hull])=>`<button type="button" data-open-stored-hull="${frame}"><b>${FRAMES[frame].name}</b><small>${hull.condition}% integrity</small></button>`).join('');
+ modal('RESERVE HULLS',`<div class="seat-choices">${choices}</div>`,[{text:'CANCEL',fn:closeModal}]);
+ for(const button of document.querySelectorAll('[data-open-stored-hull]'))button.onclick=()=>{
+  if(openStoredHull(Number(button.dataset.openStoredHull)))sound('click');
+ };
+ $('[data-open-stored-hull]').focus();
+}
 function hangarRoster(){
  const level=hangarLevel('personnel'),used=save.hangar?.treatmentDay===save.day;
  const active=dutyRoster(),full=activeRosterIds().length>=activeCapacity();
@@ -1599,7 +1619,7 @@ function hangarPage(){
    const level=hangarLevel(id),current=room.tiers[level-1],next=room.tiers[level],later=room.tiers[level+1];
    const building=project?.room===id;
    const blocked=project?'CREW BUSY':next&&save.rep<next.rep?'REPUTATION TOO LOW':next&&save.credits<next.cost?'INSUFFICIENT CREDITS':'';
-   return `<article class="ship-facility base-room" data-base-room="${id}">
+   return `<article class="ship-facility base-room" data-base-room="${id}"${id==='cabins'?' tabindex="-1"':''}>
     <div class="ship-facility-head">${icon(room.glyph)}<h2>${room.name}</h2><span class="tag">TIER ${level} / ${room.tiers.length}</span></div>
     <div class="ship-current"><small>${current?current.name+' ONLINE':'STANDARD FACILITY'}</small><span>${current?.perk??'Ready for expansion'}</span></div>
     ${next?`<div class="ship-next"><div class="ship-next-title"><h3>${next.name}</h3>${infoTip(next.name,next.detail)}</div><p>${next.perk}</p>
@@ -1613,9 +1633,12 @@ function hangarPage(){
  </div></div>`;
 }
 function bindHangar(){
+ const reserves=$('#hangar-reserves');
+ if(reserves)reserves.onclick=chooseStoredHull;
  for(const button of document.querySelectorAll('[data-hangar-deck]'))button.onclick=()=>{
+  if(button.dataset.hangarDeck==='base'){navigateHangarRoute('facilities');return;}
   page='hangar';hangarDeck=button.dataset.hangarDeck;render();sound('click');
-  $(hangarDeck==='mechs'?'#inspect':'[data-hangar-deck="mechs"]')?.focus();
+  $('#inspect')?.focus();
  };
  for(const button of document.querySelectorAll('[data-build-room]'))button.onclick=()=>{
   const room=button.dataset.buildRoom,name=HANGAR_ROOMS[room].tiers[hangarLevel(room)].name;
@@ -1688,18 +1711,17 @@ window.addEventListener?.('rig-portrait-ready',e=>{
 function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['ship','hangar','contracts','inn','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p==='inn'?'INN':p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
-  nav(); $('#hangar-art').style.objectPosition=['28% center','62% center','95% center'][selected]; if(battle){renderBattle();return}
+  nav(); if(battle){syncHangar();renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=unitWeapon({...u,frame}),training=trainingEffects(selected);
-  const previewOpen=page==='workshop'&&workshopView==='assigned'||page==='hangar'&&hangarDeck==='mechs';
+  const previewOpen=page==='workshop'&&workshopView==='assigned';
   window.IronVowFoundry?.retainPreview?.(previewOpen?frame:undefined);
   if(page==='ship')$('#ui').innerHTML=shipPage();
   if(page==='hangar'&&hangarDeck==='base')$('#ui').innerHTML=hangarPage();
   if(page==='hangar'&&hangarDeck==='mechs'){
     const lineup=PILOTS.map((_,i)=>({m:FRAMES[pilotFrame(i)],i}));
     const others=lineup.filter(v=>v.i!==selected);
-    $('#ui').innerHTML=`<div class="prototype-hangar" aria-hidden="true"><canvas id="foundry-hangar" width="640" height="640"></canvas></div><div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
-    <div class="hangar-top-right"><button class="icon" data-hangar-deck="base">FACILITIES</button><button class="icon" data-page="ship">SHIP</button><button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button></div>
-    <div class="hangar-hotspots" aria-label="Select a mech in the hangar">${lineup.map(({m,i})=>`<button data-select="${i}" aria-label="Select ${m.name}" aria-pressed="${i===selected}"><span>${m.name} / ${m.role}</span></button>`).join('')}</div>
+    $('#ui').innerHTML=`<div class="hangar-status"><span class="status-dot"></span><span>HANGAR 04 / LANCE ONLINE</span><span>HALCYON · LOCAL TIME 19:42</span></div>
+    <div class="hangar-top-right"><button class="icon" data-hangar-hotspot="facilities" data-hangar-deck="base">FACILITIES</button><button class="icon" data-hangar-hotspot="ship" data-page="ship">SHIP</button><button class="icon" id="hangar-crew" data-hangar-hotspot="crew-cabin">CREW CABINS</button><button class="icon" id="hangar-overview">OVERVIEW</button>${Object.keys(save.reserve??{}).length?'<button class="icon" id="hangar-reserves">RESERVES</button>':''}<button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button></div>
     ${inspectOpen?`<aside class="unit-inspect"><div class="inspect-head"><span class="eyebrow">CHASSIS 0${selected+1} / ${f.model}</span><button id="close-inspect" class="icon" aria-label="Close unit details">${icon('x')}</button></div><h2>${f.name}</h2><p class="note">${f.role} · PILOT LEVEL ${u.level}</p><div class="rule"></div>${stat('BODY INTEGRITY',chassisParts(f,u,training).body+' HP')}${stat('ARMOR',chassisArmor(f,u,training))}${stat('MOBILITY',(chassisMobility(f,false,training))+' TILES')}${stat('WEAPON',w.name)}${stat('CONDITION',u.condition+'%',u.condition)}<div class="pilot">${pilotMark(pilotClass(selected),'pilot-thumb')}<div>${p.name}<small>${p.call} / ${p.skill}</small></div></div><button class="full" data-page="workshop">${icon('wrench')} OPEN WORKSHOP</button><p class="note">${skillDescription(selected,training)}</p></aside>`:''}
     ${!inspectOpen?`<a class="hangar-rig-preview" href="rig-bench/"><img ${chassisPicture(0,stockHull(0))} alt="" width="66" height="66"><span><strong>WARDEN MARK II</strong><small>VIEW RIG IN MOTION</small></span></a>`:''}
     <div class="command-deck"><div class="selected-chassis"><h1>${f.name}</h1><p>${p.name} / ${f.role} / ${u.condition>=90?'COMBAT READY':u.condition>=30?'OPERATIONAL':'REPAIR REQUIRED'}</p></div>${others.map(({m,i})=>`<button class="deck-unit" data-select="${i}" aria-label="Select ${m.name}"><h3>${m.name}</h3><small>${pilotProfile(i).call} / ${m.role}</small></button>`).join('')}<button class="primary deck-cta" data-page="contracts">SELECT CONTRACT ${icon('arrow-right')}</button></div>
@@ -1743,11 +1765,89 @@ function render(){
    const i=Number(button.dataset.rescan);
    if(rerollDispatch(i)){render();$(`[data-deploy="${i}"]`)?.focus();toast('New approach surveyed. Dispatch updated.')}
   };
-  if(page==='hangar'&&hangarDeck==='mechs'){drawFoundryHangar();$('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
+  if(page==='hangar'&&hangarDeck==='mechs'){
+   $('#hangar-overview').onclick=()=>window.IronVowHangarRuntime?.overview();
+   $('#hangar-crew').onclick=()=>navigateHangarRoute('crew-cabin');
+   $('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
   if(page==='journal')bindJournal($('#ui'));
+  syncHangar();
+}
+function syncHangar(){
+ const active=!battle&&(page==='hangar'||page==='ship');
+ window.IronVowHangarRuntime?.sync(active?{
+  career:save,selected,mechBay:page==='hangar'&&hangarDeck==='mechs',model:foundryModel,
+  onSelect(slot){if(careerStale||!LANCE_SLOTS.includes(slot))return;selected=slot;render();sound('click');},
+  onReserve(frame){if(openStoredHull(frame))sound('click');},
+  project:projectHangarHotspots
+ }:null);
 }
 function repairCost(i){return Math.ceil((100-save.units[i].condition)*14*[100,80,70][shipLevel('repair')]/100)}
-function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(!battle){page=b.dataset.page;if(page==='workshop')workshopView='assigned';if(page==='hangar')hangarDeck='base';render();sound('click')}});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();persist();closeModal();render()}}]);
+function navigateHangarRoute(route){
+ const targets={
+  ship:{page:'ship'},
+  facilities:{page:'hangar',deck:'base',focus:'[data-hangar-deck="mechs"]'},
+  'crew-cabin':{page:'hangar',deck:'base',focus:'[data-base-room="cabins"]'}
+ };
+ if(!Object.hasOwn(targets,route)||battle||careerStale)return false;
+ const target=targets[route];
+ page=target.page;if(target.deck)hangarDeck=target.deck;
+ render();sound('click');
+ if(target.focus){
+  const focus=$(target.focus);
+  focus?.scrollIntoView?.({block:route==='crew-cabin'?'center':'nearest'});
+  focus?.focus?.({preventScroll:true});
+ }
+ return true;
+}
+function hangarHotspots(root=document){
+ const elements=Object.create(null);
+ for(const element of root.querySelectorAll('[data-hangar-hotspot]')){
+  const id=element.dataset.hangarHotspot;
+  if(Object.hasOwn(elements,id))throw Error('Duplicate hangar hotspot: '+id);
+  elements[id]=element;
+ }
+ return elements;
+}
+function projectHangarHotspots(controller,positions,root=document){
+ if(!controller||typeof controller.setHotspots!=='function')throw Error('A hangar scene controller is required');
+ if(!positions||typeof positions!=='object'||Array.isArray(positions))throw Error('Hangar hotspot positions are required');
+ const elements=hangarHotspots(root),items=[];
+ for(const [id,position] of Object.entries(positions)){
+  if(!Array.isArray(position)||position.length!==3||!position.every(Number.isFinite))throw Error('Invalid hangar hotspot position: '+id);
+  const element=elements[id];if(!element)continue;
+  items.push({element,position:[...position]});
+ }
+ const previous=items.map(({element})=>({
+  element,projected:element.classList.contains('hangar-scene-hotspot'),
+  hidden:element.hidden,left:element.style.left,top:element.style.top
+ }));
+ const restore=()=>{
+  for(const {element,projected,hidden,left,top} of previous){
+   if(!projected)element.classList.remove('hangar-scene-hotspot');
+   element.hidden=hidden;element.style.left=left??'';element.style.top=top??'';
+  }
+ };
+ try{
+  for(const item of items)item.element.classList.add('hangar-scene-hotspot');
+  controller.setHotspots(items);
+ }catch(error){
+  restore();
+  try{controller.setHotspots([])}catch{}
+  throw error;
+ }
+ let connected=true;
+ return ()=>{
+  if(!connected)return;
+  connected=false;restore();controller.setHotspots([]);
+ };
+}
+window.IronVowHangarNavigation=Object.freeze({
+ routes:Object.freeze(['ship','facilities','crew-cabin']),
+ go:navigateHangarRoute,
+ hotspots:hangarHotspots,
+ project:projectHangarHotspots
+});
+function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();persist();closeModal();render()}}]);
  $('#attack-camera').onclick=()=>{attackCameraEnabled=!attackCameraEnabled;try{localStorage.setItem('iron-vow-attack-camera',attackCameraEnabled?'on':'off')}catch{}render()};
  }}
 function validHull(u,frame,owned=[]){
@@ -2903,8 +3003,8 @@ function finish(win){
  if(recovered.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
  const points=totalTrainingPoints();
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
- if(online)buttons.push({text:'SHIP DECK',fn:()=>{closeModal();page='ship';render()}});
- if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();page='hangar';hangarDeck='base';render()}});
+ if(online)buttons.push({text:'SHIP DECK',fn:()=>{closeModal();navigateHangarRoute('ship')}});
+ if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();navigateHangarRoute('facilities')}});
  modal(win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'The field is yours. Your pilots return with experience and recovered enemy components.':'Your pilots have been recovered. Combat damage persists.'}</p>
   ${stat('CONTRACT PAYMENT',money(reward))}${c.fixedPay?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
   ${premium?stat('SHIP PREMIUM INCLUDED','+'+money(premium)):''}${serviced?stat('HULLS SERVICED',serviced):''}${online?stat('SHIP UPGRADE ONLINE',online):''}
@@ -2942,10 +3042,8 @@ function targetingTile(x,z,locked=false){
  tile(x,z,locked?'#ef9b4266':'#e7a34c3d','#291a14b8',y,width+1.5);
  tile(x,z,null,locked?'#ffe5a5':'#f1bf72c9',y,width);
 }
-function background(){ctx.clearRect(0,0,W,H);}
-function rain(t,combat=false){if(reducedMotion)return;ctx.save();ctx.strokeStyle=combat?'#b9d3e316':'#d1e0e323';ctx.lineWidth=.7;ctx.beginPath();const count=W<760?35:90;for(let i=0;i<count;i++){const x=(i*191.33+t*22)%(W+40)-20,y=(i*103.7+t*(145+i%5*15))%H;if(!combat&&x<W*.46)continue;ctx.moveTo(x,y);ctx.lineTo(x-2,y+13)}ctx.stroke();ctx.restore()}
+function coverImage(im,x,y,w,h){const r=Math.max(w/im.naturalWidth,h/im.naturalHeight),iw=im.naturalWidth*r,ih=im.naturalHeight*r;ctx.drawImage(im,x+(w-iw)/2,y+(h-ih)/2,iw,ih)}
 
-function hangar(t){rain(t);}
 
 function drawCoverMarker(x,z){
  const p=project(x,0,z),r=Math.max(2,scale*.070),y=p.y+scale*.13;
@@ -3135,10 +3233,6 @@ function testBastionGrip(melee){
   if(entry){const g=canvas.getContext('2d');g.clearRect(0,0,canvas.width,canvas.height);g.drawImage(entry.surface,0,0,canvas.width,canvas.height);canvas.dataset.rigTime=t.toFixed(3);}
   if(t<duration)requestAnimationFrame(tick);
  };requestAnimationFrame(tick);
-}
-function drawFoundryHangar(){
- const canvas=$('#foundry-hangar');
- if(canvas?.getContext)drawFoundryPreview(canvas,save.units[selected],0);
 }
 function drawWorkshopPreview(){
  const canvas=$('#paint-preview');
@@ -3526,20 +3620,21 @@ function drawAttackCamera(t){
  ctx.fillText(sequence.actor.name+' / '+sequence.w.name,38,H-98);
  ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';ctx.fillText(sequence.target.name+' · '+(sequence.result||sequence.part.toUpperCase()),38,H-81);ctx.restore();
 }
-let canvasMode=null,lastHangarPaint=-Infinity;
+let canvasMode=null;
 function draw(ts){
  window.IronVowPerformance?.begin(ts);
  const elapsed=Math.max(0,(ts-last)/1000||1/60),dt=Math.min(.05,elapsed);last=ts;clock+=elapsed;frameDt=dt;
  window.IronVowRenderer?.observeFrame(elapsed*1000);
- const mode=battle?'battle':page==='hangar'&&!reducedMotion?'hangar':'static';
- const repaint=mode==='battle'||mode!==canvasMode||(mode==='hangar'&&ts-lastHangarPaint>=32);
- if(repaint){
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-  if(battle)ctx.clearRect(0,0,W,H);else{window.IronVowRenderer?.show(false);background();}
-  if(battle){battlefield(clock);if(activeCinematic)drawAttackCamera(clock)}
-  else if(mode==='hangar'){hangar(clock);lastHangarPaint=ts}
-  canvasMode=mode;
+ const mode=battle?'battle':page==='hangar'||page==='ship'?'hangar':'static';
+ if(mode==='battle'||mode!==canvasMode){
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
  }
+ if(mode==='battle'){
+  if(canvasMode!=='battle')syncHangar();
+  battlefield(clock);if(activeCinematic)drawAttackCamera(clock);
+ }else if(mode==='hangar')window.IronVowHangarRuntime?.render(clock,dt,canvas.getBoundingClientRect(),reducedMotion);
+ else if(mode!==canvasMode)window.IronVowRenderer?.show(false);
+ canvasMode=mode;
  effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.light&&!e.broken?5:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);window.IronVowPerformance?.end(ts);requestAnimationFrame(draw);
 }
 canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefault();zoomField(e.deltaY<0?1.12:1/1.12)},{passive:false});
@@ -3549,6 +3644,17 @@ function screenTile(x,y){return window.IronVowScene.screenTile(x,y);}
 function pick(x,y){return window.IronVowScene.pick(x,y);}
 let pointerGesture=null,drawerTap=null,pinchGesture=null;
 const fieldPointers=new Map();
+let hangarTap;
+canvas.addEventListener('pointerdown',e=>{
+ if(!battle&&!careerStale&&$('#modal').hidden&&page==='hangar'&&hangarDeck==='mechs'&&e.isPrimary&&e.button===0)
+  hangarTap={id:e.pointerId,x:e.clientX,y:e.clientY};
+});
+canvas.addEventListener('pointercancel',()=>{hangarTap=null;});
+canvas.addEventListener('pointerup',e=>{
+ const tap=hangarTap;hangarTap=null;
+ if(!tap||tap.id!==e.pointerId||Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>8||!$('#modal').hidden)return;
+ window.IronVowHangarRuntime?.pick(e.clientX,e.clientY,canvas.getBoundingClientRect());
+});
 canvas.addEventListener('pointerdown',e=>{
  drawerTap=null;
  if(!battle||battle.busy||window.IronVowScene?.ready===false||!$('#modal').hidden||e.button>0)return;
@@ -3669,7 +3775,7 @@ document.addEventListener('keydown',e=>{
  renderBattle();persist();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(activeCinematic){skipAttackCamera();return}if(!$('#modal').hidden){closeModal();return}if(targetPanelOpen){targetPanelOpen=false;renderBattle();$('#target-toggle').focus();return}moveTap=null}if(e.key==='Tab'&&!$('#modal').hidden){let btns=[...$('#modal').querySelectorAll('button')],first=btns[0],last=btns.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
-$('.brand').onclick=e=>{e.preventDefault();if(!battle){page='ship';render()}};
+$('.brand').onclick=e=>{e.preventDefault();if(!battle)navigateHangarRoute('ship')};
 $('#skip-shot').onclick=skipAttackCamera;
 let helpAnchor=null,helpPress=null,helpTimer;
 function cancelHelpPress(){clearTimeout(helpTimer);helpPress=null}
