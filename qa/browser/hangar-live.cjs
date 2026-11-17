@@ -30,6 +30,54 @@ module.exports=async function checkHangarLive({page,mobile,origin,tap}){
  assert.equal(await page.locator('.hangar-scene-hotspot:visible').count(),3);
  assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0})),undefined,'The hangar releases and loads its own assets independently of sorties');
  assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0},'hangar')),'ready');
+ // Inspect the real neck driver over one selected nine-second look-around cycle.
+ const look=await page.evaluate(()=>{
+  const stage=IronVowHangarRuntime.scene,record=stage.records.find(r=>r.unit?.id==='seat:0');
+  stage.select('seat:0',false,false);
+  const necks=[];record.rig.object.traverse(node=>{if(node.name==='neck')necks.push(node);});
+  const start=Math.ceil((clock+1)/9)*9,samples=[];
+  const renderer=IronVowRenderer.get(),draw=renderer.render;
+  try{renderer.render=()=>{};
+   for(let i=0;i<=180;i++){
+    stage.render(start+i/20,.05,innerWidth,innerHeight);
+    samples.push(necks.map(neck=>neck.quaternion.toArray()));
+   }
+   stage.render(start+9.5,.05,innerWidth,innerHeight);
+   const selected=necks.map(neck=>neck.quaternion.clone());
+   stage.select('seat:1',false,false);stage.render(start+9.5,.05,innerWidth,innerHeight);
+   var selectedDifference=necks.map((neck,index)=>selected[index].angleTo(neck.quaternion));
+  }finally{renderer.render=draw;}
+  stage.select('seat:0',false,false);
+  return {count:necks.length,selectedDifference,change:necks.map((_,index)=>{
+   const initial=new THREE.Quaternion().fromArray(samples[0][index]);
+   return Math.max(...samples.map(sample=>initial.angleTo(new THREE.Quaternion().fromArray(sample[index]))));
+  })};
+ });
+ assert.ok(look.count>0&&Math.max(...look.change)>.01,'selected live rig neck moves through its look-around cycle');
+ assert.ok(Math.max(...look.selectedDifference)>.005,'selected look-around changes the live neck beyond its idle pose');
+ // Recreate the same Warden in place on either side of the threshold.
+ const originalCondition=await page.evaluate(()=>save.units[0].condition);
+ await page.evaluate(()=>{save.units[0].condition=30;render();});await ready();
+ const intact=await page.evaluate(()=>{
+  const stage=IronVowHangarRuntime.scene,record=stage.records.find(r=>r.unit?.id==='seat:0'),mesh=[];
+  record.rig.object.traverse(node=>{if(node.isMesh&&node.material?.userData?.paint)mesh.push([node.name,node.material.color.toArray()]);});
+  return {mesh,camera:stage.cameraState(),gantry:Boolean(record.group.getObjectByName('maintenance gantry'))};
+ });
+ assert.ok(intact.mesh.length>0,'live hull contains painted meshes');
+ assert.equal(intact.gantry,false,'30% is above the maintenance threshold');
+ await page.evaluate(()=>{save.units[0].condition=29;render();});await ready();
+ const damaged=await page.evaluate(()=>{
+  const stage=IronVowHangarRuntime.scene,record=stage.records.find(r=>r.unit?.id==='seat:0'),mesh=[];
+  record.rig.object.traverse(node=>{if(node.isMesh&&node.userData.base?.userData?.paint)mesh.push([node.name,node.material.color.toArray(),node.userData.base.color.toArray()]);});
+  return {mesh,gantry:Boolean(record.group.getObjectByName('maintenance gantry')),camera:stage.cameraState()};
+ });
+ assert.ok(damaged.gantry,'below 30% adds the maintenance gantry');
+ assert.ok(damaged.mesh.every(([name,,base])=>intact.mesh.some(([other,color])=>name===other&&color.every((v,i)=>Math.abs(v-base[i])<1e-6))),
+  'same hull retains its underlying paint at both conditions');
+ assert.ok(damaged.mesh.length>0&&damaged.mesh.every(([,color,base])=>color.every((v,i)=>Math.abs(v-base[i]*.62)<1e-6)),
+  'below 30% changes the actual hull paint to the Foundry scorch material');
+ assert.deepEqual(damaged.camera,intact.camera,'condition change keeps the same mech camera');
+ await page.evaluate(condition=>{save.units[0].condition=condition;render();},originalCondition);await ready();
  const activity=await page.evaluate(()=>{
   const stage=IronVowHangarRuntime.scene,scene=stage.scene;
   const walking=scene.getObjectByName('walking technician'),consoleWorker=scene.getObjectByName('console technician'),welder=scene.getObjectByName('welding technician');
