@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "day": 2,
+  "credits": 3970,
+  "rep": 0,
+  "wins": 0,
+  "kills": 0,
+  "owned": [
+    "rifle",
+    "missile"
+  ],
+  "units": [
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "missile",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    }
+  ],
+  "history": [],
+  "world": {
+    "version": 1,
+    "seed": 2,
+    "day": 2,
+    "consumed": [],
+    "scouted": [],
+    "pendingEvents": [
+      "event:1:1:0:picket:ridge"
+    ],
+    "resolvedEvents": [],
+    "standings": {}
+  },
+  "transit": {
+    "path": [
+      "picket",
+      "ridge"
+    ],
+    "departureDay": 1,
+    "arrivalDay": 2,
+    "choices": {}
+  },
+  "overworld": {
+    "port": "ridge",
+    "arrears": 0,
+    "lastExpense": {
+      "kind": "travel",
+      "day": 2,
+      "destination": "ridge",
+      "days": 1,
+      "fuel": 140,
+      "wages": 210,
+      "ship": 75,
+      "hulls": 105,
+      "total": 530,
+      "paid": 530,
+      "arrearsPaid": 0
+    }
+  }
+}

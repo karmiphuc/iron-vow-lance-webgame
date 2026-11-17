@@ -1,10 +1,10 @@
 # Overworld design guide
 
-Status: Phases A and B implemented, 2026-11-18. The owner approved transit-day hull service and wound rest, and 0–3 pooled contracts per port for Phase B. Phase C remains in progress.
+Status: Phases A–C implemented, 2026-11-18. The owner approved transit-day hull service and wound rest, and 0–3 pooled contracts per port for Phase B.
 
-The overworld should create decisions, not only price them. Today's Star Map shows what a trip costs. The target is a chart table aboard the Halyard where the player weighs time, money, lance readiness and opportunity on one screen, with the map visible the whole time.
+The Halyard's bridge chart puts time, money, lance readiness and opportunity in one view. The map stays visible while the player compares courses, confirms departure, uses port services and responds to transit reports.
 
-## 1. What exists today (verified on `main` at 081f51b)
+## 1. Baseline before this work (`main` at 081f51b)
 
 | Area | Current behavior | Source |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ The overworld should create decisions, not only price them. Today's Star Map sho
 | Lore | Thin. Only the "STAR MAP" label, "IVS" and a "recovery shuttle" line suggest space. Every battlefield is on the ground (Karst Basin, Vanta Industrial, Halcyon Outskirts) with tanks and helicopters. | `CONTRACTS`, ship page |
 | Presentation | Flat HTML chart on the left, text-heavy cost panel on the right. A modal hides the map on confirm. | `overworld-view.js`, `bindOverworld` |
 
-So the map is a cost calculator over a 4-node line. With one contract pinned to each port and nothing changing over time, the only question it asks is "can I afford this hop?"
+The baseline map priced hops across four nodes. The phases below added route choices, time-sensitive opportunities and distinct reasons to visit each mooring.
 
 ## 2. Lore: the Halyard is a heavy-lift airship carrier
 
@@ -77,7 +77,11 @@ The owner mostly plays on iPad Pro in Safari or Chrome.
 
 The Phase B implementation adds Ridge Mast and Haven Reach, branching courses, four-day contract postings with 0–3 unique offers per port, inclusive expiry forecasts, paid scouting, live sensor coverage and day-indexed storm/patrol movement. An accepted offer keeps its original terms in the sortie checkpoint. A paid one-day hold advances dispatch and maintenance, with unpaid upkeep carried as arrears.
 
-**Phase C: port identity and events.** Pillars 3 and 5. Per-port market stock, repair rates, faction standing and en-route event cards.
+**Phase C: port identity and events.** Pillars 3 and 5. Tap the selected mooring name to open Services or Market over the chart. Each port stocks four weapons and three chassis, with its own repair rate and faction. Company inventory and owned equipment remain shared. The carrier Workshop keeps its existing catalogue; visiting a local market offers a 10% base discount, adjusted from 0% to 20% by local standing from −100 to +100. Local repairs combine the installed Repair Deck discount, the port's 85–115% rate and a standing modifier from 120% to 80%. The displayed quote is the amount charged, including for stored hulls. Remote ports offer a read-only preview.
+
+Approximately one-third of route legs generate a deterministic incident. Storm and patrol incidents correspond to markers on that leg's scheduled day; other incidents are distress calls, salvage or tolls. Each has two or three responses and at least one choice requiring no cash. Hull wear, payment, local standing and delay upkeep appear beside each response. A delay incurs one day of operating costs and applies service/rest once, carrying unpaid costs as arrears.
+
+The crossing and its base costs commit atomically. Reports appear after the ship reaches its mast and reopen after a reload. An optional itinerary-and-choice checkpoint binds the pending incidents to that crossing and enforces route order. Each response saves its effects and updated pending list together. New travel, port purchases and sorties wait until the reports close. Incident delays do not reschedule the remaining encounters from the original crossing. Existing version-1 careers and published sortie checkpoints retain their IDs and terms.
 
 Out of scope for now: procedural world generation, real-time travel, and multiple ships.
 

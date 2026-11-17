@@ -1,0 +1,61 @@
+/* Deliberately opened mooring sheet: the chart and departure forecast stay visible. */
+.port-services{position:absolute;z-index:8;top:104px;right:28px;width:min(410px,calc(100% - 56px));max-height:min(55vh,calc(100% - 270px));display:flex;flex-direction:column;overflow:hidden;pointer-events:auto;color:#e9e8dc;background:#152023fa;border:1px solid #81989066;border-left:2px solid #e5b66d;box-shadow:0 12px 36px #07101380;font-family:Inter,sans-serif}
+.port-services,.port-services *{box-sizing:border-box}
+.port-services-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px 7px 16px;flex:none}
+.port-services-header h2{font:500 23px Barlow,sans-serif;letter-spacing:.3px;margin:0;min-width:0}
+.port-services button,.port-services select{min-height:44px;min-width:44px;border:1px solid #81989066;border-radius:0;background:#213238;color:#e9e8dc;font:500 12px Inter,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer;touch-action:manipulation}
+.port-services button{padding:9px 13px}
+.port-services button:disabled,.port-services select:disabled{cursor:default;opacity:1;color:#a5b0aa;background:#1a262a;border-color:#64797640}
+.port-services button:focus-visible,.port-services select:focus-visible{outline:2px solid #e5b66d;outline-offset:2px}
+.port-services-header button{flex:none;background:transparent;border-color:transparent;font-size:11px}
+.port-services-tabs{display:flex;gap:0;padding:0 16px;border-bottom:1px solid #81989040;flex:none}
+.port-services-tabs button{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;color:#aebfb8;font:500 17px Barlow,sans-serif}
+.port-services-tabs button[aria-selected="true"]{color:#f2ce92;border-bottom-color:#e5b66d}
+.port-services-body{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-color:#60746f #152023;padding:16px;touch-action:pan-y}
+.port-services-repair label{display:block;font-size:11px;color:#b8c6bd;margin-bottom:7px}
+.port-services-repair select{display:block;width:100%;padding:8px 10px;font-size:13px}
+.port-services-quote{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+.port-services-quote dt{font-size:10px;color:#b8c6bd}
+.port-services-quote dd{font:500 24px Barlow,sans-serif;font-variant-numeric:tabular-nums;margin:5px 0 0}
+.port-services .port-services-primary{width:100%;background:#e5b66d;color:#172124;border-color:#e5b66d;font:600 17px Barlow,sans-serif}
+.port-services .port-services-primary:disabled{background:#263331;color:#acb7af;border-color:#6e807566}
+.port-services-reason{font-size:11px;line-height:1.4;color:#bac7bf;margin:9px 0 0}
+.port-services-standing{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px 12px;margin:0;padding:10px 16px;border-top:1px solid #81989030;color:#a9bab2;font-size:10px;flex:none}
+.port-services-stock h3{font:500 16px Barlow,sans-serif;color:#b9c9c0;margin:0 0 4px;letter-spacing:.4px}
+.port-services-stock+.port-services-stock{margin-top:20px}
+.port-services-stock ul{list-style:none;margin:0;padding:0}
+.port-services-stock li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #81989030}
+.port-services-item{min-width:0;display:grid;gap:5px}
+.port-services-item b{font:500 17px Barlow,sans-serif;overflow-wrap:anywhere}
+.port-services-item span{font-size:11px;color:#d6c69f;font-variant-numeric:tabular-nums}
+.port-services-item small{font-size:10px;color:#a9bab2;line-height:1.4}
+.port-services-stock button{flex:none;min-width:84px;font-size:11px}
+.port-services-empty{font-size:12px;color:#b8c6bd;margin:4px 0}
+@media(max-width:1000px){.port-services{right:18px;width:min(390px,calc(100% - 36px))}}
+@media(max-width:760px){.port-services{top:156px;left:13px;right:13px;width:auto;max-height:min(55vh,calc(100% - 370px))}.port-services-header{padding:7px 9px 4px 13px}.port-services-header h2{font-size:21px}.port-services-tabs{padding:0 13px}.port-services-body{padding:12px 13px}.port-services-quote{margin:14px 0}.port-services-standing{padding:9px 13px}}
+@media(max-height:650px) and (min-width:761px){.port-services{top:85px;max-height:min(55vh,calc(100% - 230px))}.port-services-body{padding:12px 16px}}
+@media(max-width:760px){
+ .port-services{top:auto;bottom:210px;left:auto;width:min(330px,calc(100% - 26px));max-height:min(42vh,calc(100% - 370px))}
+ .port-services-repair label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0}
+ .port-services-quote{display:flex;justify-content:space-between;gap:10px;margin:10px 0}
+ .port-services-quote>div{display:flex;align-items:baseline;gap:7px}
+ .port-services-quote dt{font-size:9px}
+ .port-services-quote dd{font-size:21px;line-height:1.2;margin:0}
+ .port-services-standing{line-height:1.3;padding-block:8px}
+}
+.chart-port-card .chart-port-services-open{min-height:44px;min-width:44px;width:auto;margin:-6px 0;padding:6px 0;background:transparent;border:0;border-bottom:1px solid #9ec8c366;font:inherit;color:inherit;text-align:left;white-space:normal;line-height:1.2}
+.chart-port-card .chart-port-services-open:focus-visible{outline:2px solid #e5b66d;outline-offset:3px}
+.chart-port-card .chart-port-services-open:disabled{opacity:.65;cursor:default}
+.transit-report .port-services-header{padding-top:15px;padding-bottom:4px}
+.transit-report .port-services-body>p{font-size:12px;line-height:1.6;color:#c2cec4;margin:0 0 14px}
+.transit-report-choices{display:grid;gap:9px}
+.transit-report-choices button{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;min-height:52px;text-align:left;padding:11px 12px}
+.transit-report-choices b{font:500 18px Barlow,sans-serif}
+.transit-report-choices span{font-size:11px;line-height:1.4;color:#c2cec4}
+.transit-report-choices button:disabled span{color:#96a69e}
+@media(max-width:760px){.transit-report .port-services-header{padding-top:12px}.transit-report .port-services-body>p{font-size:11px;margin-bottom:12px}.transit-report-choices button{min-height:48px;padding:9px 10px}.transit-report-choices b{font-size:17px}.transit-report-choices span{font-size:10px}}
+.transit-report-label{display:block;font:400 10px Inter,sans-serif;letter-spacing:.7px;color:#aebfb8;margin-bottom:7px}
+.chart-forecast-complete{grid-template-columns:1fr auto auto;gap:32px}
+.chart-forecast-complete p{font:500 19px Barlow,sans-serif;margin:0}
+@media(max-width:760px){.chart-forecast-complete{min-height:92px;gap:16px}.chart-forecast-complete p{font-size:17px}.chart-forecast-complete strong{font-size:18px}}
+.port-services-rate{font-size:10px;line-height:1.4;color:#a9bab2;margin:0 0 14px}

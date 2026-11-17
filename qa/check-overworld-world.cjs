@@ -78,11 +78,13 @@ assert.deepEqual(W.PORTS.map(port=>W.portProfile(12345,port.id).faction),
  ['Karst Wardens','Relay Union','Vanta Combine','Halcyon Guard','Ridge Freeholders','Haven Salvors']);
 assert.equal(W.portProfile(1,'unknown'),null);
 const route=['picket','relay','corridor'];
-const forecast=W.transitEvents(world,route);
+const eventWorld=Array.from({length:500},(_,seed)=>W.createWorld(seed,1)).find(state=>W.transitEvents(state,route).length===2);
+assert(eventWorld);
+const forecast=W.transitEvents(eventWorld,route);
 assert.equal(forecast.length,2);
 assert(forecast.every(e=>e.choices.length>=2&&e.choices.length<=3));
-assert.equal(W.resolveEvent(world,forecast[0].id,forecast[0].choices[0].id),null);
-const queued=W.queueTransitEvents(world,route);
+assert.equal(W.resolveEvent(eventWorld,forecast[0].id,forecast[0].choices[0].id),null);
+const queued=W.queueTransitEvents(eventWorld,route);
 assert.deepEqual(W.pendingEvents(queued),forecast);
 assert.equal(W.queueTransitEvents(queued,route),null);
 assert.equal(W.resolveEvent(queued,forecast[0].id,'unknown'),null);
@@ -100,6 +102,30 @@ assert(W.validWorld(remaining.world));
 assert.equal(W.resolveEvent(remaining.world,forecast[1].id,forecast[1].choices[0].id),null);
 assert.equal(W.advanceWorld(remaining.world,1),null);
 assert(!W.transitEvents(remaining.world,route).some(event=>event.id===forecast[0].id));
+const kinds=new Set();let eligible=0,total=0,nonTrigger;
+for(let seed=0;seed<100;seed++)for(let day=1;day<=30;day++){
+ const state=W.createWorld(seed,day);
+ for(const leg of W.ROUTES){
+  total++;
+  const events=W.transitEvents(state,[leg.from,leg.to]);
+  if(!events.length){nonTrigger??={state,leg};continue;}
+  eligible++;
+  const event=events[0];kinds.add(event.kind);
+  assert(event.choices.length>=2&&event.choices.length<=3);
+  assert(event.choices.some(choice=>choice.credits>=0));
+  if(event.kind==='weather'||event.kind==='patrol'){
+   const markerKind=event.kind==='weather'?'storm':'patrol';
+   assert(W.markersAt(state,event.legDay).some(marker=>marker.kind===markerKind&&marker.from===leg.from&&marker.to===leg.to));
+  }
+ }
+}
+assert.deepEqual([...kinds].sort(),['distress','patrol','salvage','toll','weather']);
+assert(eligible/total>.28&&eligible/total<.38);
+const invalidId=`event:${nonTrigger.state.day}:${nonTrigger.state.day}:0:${nonTrigger.leg.from}:${nonTrigger.leg.to}`;
+assert.equal(W.validWorld({...nonTrigger.state,pendingEvents:[invalidId]}),false);
+assert.equal(W.resolveEvent(nonTrigger.state,invalidId,'pass'),null);
+assert.deepEqual(W.pendingEvents(W.queueTransitEvents(nonTrigger.state,[nonTrigger.leg.from,nonTrigger.leg.to])),[]);
+assert.equal(forecast[1].legDay,forecast[0].legDay+1);
 assert.equal(W.transitEvents(world,['picket','frontier']),null);
 assert.equal(W.transitEvents(world,['picket','relay','picket']),null);
 assert.equal(W.validWorld({...world,seed:-1}),false);
