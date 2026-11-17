@@ -179,6 +179,23 @@ const DIMS=[
    melee:{wind:{sx:-2.3,sz:-.3,el:-.6,wr:1.27,yaw:-.25,lean:-.1},hit:{sx:-1.3,sz:.1,el:-.12,wr:1.77,yaw:.28,lean:.2},offArm:-.3}},
   {quad:true,py:2.7,spY:.6,neck:[0,1.52716,1.15736],shX:1.86,shY:1.55,shZ:0,up:1.0,fo:1.05,so:.26,hipX:.95,hipY:-.05,hipZ:1.05,legA:1.55,legB:1.9,ankleH:.315,reach:1.45,lift:.55,reverse:false,scale:.8,phases:[.25,.75,0,.5],duty:.75,stride:.65,walkDrop:.14,sway:.05}
 ];
+// Existing Warden kit plates, reused on Workshop mounts fitted to authored hull surfaces.
+function reinforcementShoulder(p,s2,a,side){
+ S(p,s2,.12,.55,1.1,side*.98,.4,.02);
+ S(p,a,.13,.08,1.12,side*.985,.7,.02,0,0,0,{bev:.01});
+ bolts(p,[[side*1.045,.2,-.4],[side*1.045,.2,.4],[side*1.045,.6,-.4],[side*1.045,.6,.4]],'x');
+}
+function reinforcementShin(p,s2){
+ P(p,s2,[[.5,-.42],[.7,-.6],[.66,-1.18],[.56,-1.2],[.58,-.6]],.7,'x');
+ bolts(p,[[.2,-.6,.68],[-.2,-.6,.68],[.2,-1.05,.66],[-.2,-1.05,.66]],'z');
+}
+function reinforcementChest(p,s2,a){
+ for(const side of [1,-1]){
+  S(p,s2,.7,.5,.12,side*.55,1.42,1.03);
+  bolts(p,[[side*.32,1.6,1.1],[side*.78,1.6,1.1]],'z');
+ }
+ S(p,a,1.5,.08,.13,0,1.7,1.03,0,0,0,{bev:.01});
+}
 function warden(K,M){
   const {pelvis,spine,neck,arms,legs}=K,{p,s,a,frame,joint,steel}=M,s2=M.s;
   /* pelvis */
@@ -260,10 +277,10 @@ function warden(K,M){
     P(L.an,frame,[[-.55,-.3],[-.95,-.36],[-.9,-.22],[-.5,-.05]],.4,'x');
   });
   /* reinforcement kits */
-  B.kit(1,()=>{for(const x of [1,-1]){const A=arms[x>0?'L':'R'];S(A.paul,s2,.12,.55,1.1,x*.98,.4,.02);S(A.paul,M.a,.13,.08,1.12,x*.985,.7,.02,0,0,0,{bev:.01});bolts(A.paul,[[x*1.045,.2,-.4],[x*1.045,.2,.4],[x*1.045,.6,-.4],[x*1.045,.6,.4]],'x');}});
+  B.kit(1,()=>{for(const x of [1,-1])reinforcementShoulder(arms[x>0?'L':'R'].paul,s2,M.a,x);});
   legs.forEach(L=>greave(L,M,{w:1.0,fz:.56,bz:-.58,top:-.16,bot:-1.38}));
-  B.kit(2,()=>legs.forEach(L=>{P(L.kn,s2,[[.5,-.42],[.7,-.6],[.66,-1.18],[.56,-1.2],[.58,-.6]],.7,'x');bolts(L.kn,[[.2,-.6,.68],[-.2,-.6,.68],[.2,-1.05,.66],[-.2,-1.05,.66]],'z');}));
-  B.kit(3,()=>{for(const x of [1,-1]){S(spine,s2,.7,.5,.12,x*.55,1.42,1.03);bolts(spine,[[x*.32,1.6,1.1],[x*.78,1.6,1.1]],'z');}S(spine,M.a,1.5,.08,.13,0,1.7,1.03,0,0,0,{bev:.01});});
+  B.kit(2,()=>legs.forEach(L=>reinforcementShin(L.kn,s2)));
+  B.kit(3,()=>reinforcementChest(spine,s2,M.a));
   /* shield */
   B.part='left';const sh=new T.Group();sh.position.set(.62,-.55,.12);arms.L.el.add(sh);
   S(sh,p,.16,1.95,1.5,0,0,0,0,0,0,{bev:.06});S(sh,s2,.18,1.7,.14,.02,0,.7);S(sh,M.a,.06,.18,1.4,.1,.82,0);
@@ -1070,6 +1087,58 @@ function build(frame,team,tag,paintOverride,mods){
   B=null;return out;
 }
 
+// Fit unchanged plate profiles to the visible authored shell in its posed joint
+// coordinates. Limit samples per primitive so changing livery stays responsive.
+function reinforcementSurface(mech,part,pivot,inRegion){
+ const box=new T.Box3(),point=V3(),inverse=new T.Matrix4().copy(pivot.matrixWorld).invert(),local=new T.Matrix4();
+ for(const {m:mesh} of mech.build.parts[part]){
+  let shown=true;
+  for(let node=mesh;node&&node!==mech.cont;node=node.parent)if(!node.visible){shown=false;break;}
+  if(!shown||!mesh.material.userData.paint)continue;
+  const positions=mesh.geometry.attributes.position;
+  local.multiplyMatrices(inverse,mesh.matrixWorld);
+  for(let index=0;index<positions.count;index+=Math.max(1,Math.floor(positions.count/96))){
+   point.fromBufferAttribute(positions,index);
+   if(mesh.isSkinnedMesh)mesh.boneTransform(index,point);
+   point.applyMatrix4(local);
+   if(inRegion(point))box.expandByPoint(point);
+  }
+ }
+ return box;
+}
+
+function fitReinforcement(mech,level){
+ const {arms,legs,spine,neck}=mech.rig,parts=[[],[],[]];
+ const palette=new Map(mech.build.ownedMaterials.map(material=>[material.name,material]));
+ const secondary=palette.get('paint_secondary'),accent=palette.get('paint_accent');
+ mech.cont.updateWorldMatrix(true,true);
+ function mount(tier,part,pivot,axis,direction,inRegion,buildPlate){
+  const surface=reinforcementSurface(mech,part,pivot,inRegion);
+  if(surface.isEmpty())return;
+  const assembly=new T.Group();
+  assembly.name='reinforcement.'+tier+'.'+part;
+  const finish=paint=>mech.partState[part]?damagedOf(paint):paint;
+  buildPlate(assembly,finish(secondary),finish(accent));
+  const plate=new T.Box3().setFromObject(assembly),size=surface.getSize(V3()),profile=plate.getSize(V3()),center=surface.getCenter(V3()),source=plate.getCenter(V3());
+  for(const coord of ['x','y','z'])if(coord!==axis)assembly.scale[coord]=Math.max(.6,Math.min(1.2,size[coord]*.64/profile[coord]));
+  assembly.position.copy(center.sub(source.multiply(assembly.scale)));
+  assembly.position[axis]=direction>0?surface.max[axis]-plate.min[axis]-.025:surface.min[axis]-plate.max[axis]+.025;
+  pivot.add(assembly);
+  assembly.traverse(mesh=>{if(mesh.isMesh)parts[tier-1].push(mesh);});
+ }
+ if(level>=1)for(const [side,arm] of Object.entries(arms)){
+  const direction=side==='L'?1:-1,anchor=arm.paul.parent?arm.paul:arm.sh;
+  mount(1,side==='L'?'left':'right',anchor,'x',direction,p=>p.y>-.72&&p.y<.82&&Math.abs(p.z)<1.3,
+   (group,s,a)=>reinforcementShoulder(group,s,a,direction));
+ }
+ if(level>=2)for(const leg of legs){
+  const length=leg.legB??mech.dims.legB;
+  mount(2,'legs',leg.kn,'z',1,p=>p.y<-.28*length&&p.y>-.87*length&&Math.abs(p.x)<.65,reinforcementShin);
+ }
+ if(level>=3)mount(3,'body',spine,'z',1,p=>p.y>.2&&p.y<Math.max(.8,neck.position.y)&&Math.abs(p.x)<1.35,reinforcementChest);
+ mech.build.kits=parts;
+}
+
 /* ======================= WEAPONS ======================= */
 function weapon(id,team,mp){
   const pal=PAL[team][0],g=new T.Group(),acc=paint(mp?mp.a:team==='ally'?0xe0621a:0xc4352a,.5,.2),body=paint(mp?mp.s:team==='ally'?0x3b4230:0x2a2b2d,.6,.35),{frame,joint,steel}=SH;
@@ -1119,5 +1188,5 @@ function weapon(id,team,mp){
   return o;
 }
 
-window.VowChassis={skirtPose,composeDims,solveLeg,build,weapon,paint,DIMS,PAL,damagedOf,wreckOf,releaseOwnedMaterials,SH};
+window.VowChassis={skirtPose,composeDims,solveLeg,build,fitReinforcement,weapon,paint,DIMS,PAL,damagedOf,wreckOf,releaseOwnedMaterials,SH};
 })();

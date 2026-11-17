@@ -1,0 +1,190 @@
+{
+  "started": "2026-11-17T06:06:14.008Z",
+  "commit": "b41ecf11ffad161cd369629832d7f29e57f2601e",
+  "distTree": "e5428d16ecaed70c1d68e8e9e1ec2b5c3b627089",
+  "distDirty": false,
+  "runnerSha256": "e79dfcb3a87b2ad67eff1851604d0b6b75846398fdf18812471ccce825598e92",
+  "softwareBehaviorDPR": 0.5,
+  "scenarios": [
+    {
+      "name": "checkWorkshopTurntable",
+      "sha256": "588263e29bdd8987e444621e14556d8dafd219fcfede83778f016eab39095483"
+    },
+    {
+      "name": "checkWorkshopPaint",
+      "sha256": "8f3fd3c9fa2a6cf8472401d6503a775800f5aa3af9d793bc723e20a57591656b"
+    },
+    {
+      "name": "checkWorkshopPortraits",
+      "sha256": "7b56b91ed41814e43b59192188462a990e652fcc07ec3bcc6f1a358b324ad221"
+    }
+  ],
+  "checks": [
+    {
+      "name": "checkWorkshopTurntable",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkWorkshopPaint",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkWorkshopPortraits",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkWorkshopTurntable",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkWorkshopPaint",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkWorkshopPortraits",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    }
+  ],
+  "status": "complete",
+  "ended": "2026-11-17T06:06:28.275Z",
+  "phase": 5,
+  "base": "93a7e2a3670add8ab158d340c753ca0f120cb985",
+  "commands": [
+    "IRON_VOW_SOFTWARE_QA=1 IRON_VOW_QA_SERIAL=1 IRON_VOW_QA_ATTEMPTS=1 IRON_VOW_QA_TIMEOUT_MS=45000 node qa/gate-phase5.cjs --out /private/tmp/iron-vow-phase5-integrated-evidence",
+    "npm --prefix qa test"
+  ],
+  "simulation": {
+    "status": "passed",
+    "suites": 54
+  },
+  "physicalIPadPro": "unverified",
+  "regressions": {
+    "checks": [
+      {
+        "name": "livePaint",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkLivePortraits",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShields",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShip",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkHangarLive",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkDutyRoster",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "bastionSharedRig",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "livePaint",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkLivePortraits",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShields",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShip",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkHangarLive",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkDutyRoster",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "bastionSharedRig",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering"
+      }
+    ],
+    "scenarios": [
+      "livePaint",
+      "checkLivePortraits",
+      "checkShields",
+      "checkShip",
+      "checkHangarLive",
+      "checkDutyRoster",
+      "bastionSharedRig"
+    ]
+  }
+}

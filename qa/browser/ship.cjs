@@ -58,6 +58,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await tap('#modal-1');
  await fit('.unitbuttons');
  assert.equal(await page.locator('.unitbuttons button').count(),4);
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  if(mobile)await tap('[data-unit="3"]');
  else await page.keyboard.press('4');
  assert.equal(await page.evaluate(()=>selected),3);
