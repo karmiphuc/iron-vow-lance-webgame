@@ -13,7 +13,11 @@ function mount(camera){
  hangar.restoreCamera(camera);window.__hangarFixture=hangar;
 }
 mount();
-IronVowRenderer.subscribe(({type})=>{if(type!=='restored')return;const camera=hangar.cameraState();hangar.dispose();catalog.dispose();mount(camera);});
+let lostCamera;
+IronVowRenderer.subscribe(({type})=>{
+ if(type==='lost'){lostCamera=hangar.cameraState();hangar.dispose();catalog.dispose();}
+ if(type==='restored')mount(lostCamera);
+});
 document.querySelector('#overview').onclick=()=>hangar.overview();
 document.querySelector('#seat').onclick=()=>{seats=seats===3?4:3;assign();};
 window.addEventListener('pointerup',e=>{if(e.target.closest('button'))return;hangar.pick(e.clientX,e.clientY,{left:0,top:0,width:innerWidth,height:innerHeight});});

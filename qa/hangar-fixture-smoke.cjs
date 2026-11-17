@@ -34,7 +34,7 @@ const sourceHashes = () => Object.fromEntries(sourceFiles.map(file => [file, cp.
         } finally { renderer.render = draw; }
         __hangarFixture.render(time, 1 / 20, innerWidth, innerHeight);
         __hangarFixture.placeHotspots({ left: 0, top: 0, width: innerWidth, height: innerHeight });
-        renderer.getContext().finish();
+        if(!IronVowRenderer.lost)renderer.getContext().finish();
       }, { time, frames });
     };
     await render();
@@ -110,7 +110,11 @@ const sourceHashes = () => Object.fromEntries(sourceFiles.map(file => [file, cp.
     assert.deepEqual(await page.evaluate(() => __hangarFixture.camera.position.toArray()), preLossCamera, 'Lost context must suspend scene updates');
     await page.evaluate(() => __lossExtension.restoreContext());
     await page.waitForFunction(generation => !IronVowRenderer.lost && IronVowRenderer.generation === generation + 1, state.generation, { timeout: 30000 });
+    report.restoreErrorBeforeRender = await page.evaluate(() => IronVowRenderer.get().getContext().getError());
+    assert.equal(report.restoreErrorBeforeRender,0,'Restoring context must not generate a GL error');
     await render(3);
+    report.restoreErrorAfterRender = await page.evaluate(() => IronVowRenderer.get().getContext().getError());
+    assert.equal(report.restoreErrorAfterRender,0,'Rendering the restored scene must not generate a GL error');
     report.afterRestorePixels = await pixels();
     assert.ok(report.afterRestorePixels.lit > 100 && report.afterRestorePixels.colors > 20, 'Restored framebuffer must redraw nonblank scene content');
     assert.equal(report.afterRestorePixels.error, 0, 'Restored framebuffer readback must have no GL error');

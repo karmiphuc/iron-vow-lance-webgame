@@ -41,11 +41,14 @@ function init(){
  try{
   renderer=window.IronVowRenderer.get();
   configure(renderer,pixels);
-  window.IronVowRenderer.subscribe(({type})=>{if(type==='restored'){
-   clearCombat();clearPreviews();
-   previewTarget?.dispose();previewTarget=null;
-   studioTarget?.dispose();scene.environment=studioEnvironment(renderer);
-  }});
+  window.IronVowRenderer.subscribe(({type})=>{
+   if(type==='lost'){
+    clearCombat();clearPreviews();
+    previewTarget?.dispose();previewTarget=null;
+    studioTarget?.dispose();studioTarget=null;
+   }
+   if(type==='restored')scene.environment=studioEnvironment(renderer);
+  });
   scene=new T.Scene();
   for(const [color,x,y,z] of studioLights){
    const light=new T.DirectionalLight(C(color),x<0?2.5:1.7);light.position.set(x,y,z);scene.add(light);

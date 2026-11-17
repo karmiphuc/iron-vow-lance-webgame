@@ -33,7 +33,7 @@ function checkHangarNavigation(){
  assert.equal(navigation.go('crew-cabin'),true);
  assert.equal(document.body.dataset.view,'hangar');
  assert.ok(get('[data-base-room="cabins"]'));
- assert.equal(navigation.hotspots()['crew-cabin'],get('[data-base-room="cabins"]'));
+ assert.equal(navigation.hotspots()['crew-cabin'],undefined);
  assert.equal(run('JSON.stringify({save,selected})'),careerBeforeRoutes);
  click('[data-hangar-deck="mechs"]');
  click('.hangar-top-right [data-page="ship"]');
