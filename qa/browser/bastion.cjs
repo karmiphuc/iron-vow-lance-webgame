@@ -78,6 +78,7 @@ module.exports=async function bastionSharedRig({page,mobile,origin,tap}){
   Object.assign(target,{x:7,z:13,vx:7,vz:13});
   for(const p of Object.keys(target.hp))target.hp[p]=target.max[p]=10000;
   IronVowScene.render(clock,.016);
+  const launcher=node('mount.shoulderR'),launcherFitted=launcher.visible&&entry.primary.model===launcher;
   const combat=IronVowScene.combat,launch=combat.launch,launches=[];
   combat.launch=function(...args){
    const result=launch.apply(this,args),event=this.history.at(-1);
@@ -90,15 +91,17 @@ module.exports=async function bastionSharedRig({page,mobile,origin,tap}){
   await shoot(unit,target,'body',weapon('missile'),false,null);
   combat.launch=launch;
   unit.ap=20;unit.weapon='rifle';IronVowScene.render(clock,.016);
+  const launcherStowed=!launcher.visible;
   const {muzzle,grip}=entry.primary,receiver=muzzle.getWorldPosition(new THREE.Vector3()).sub(grip.getWorldPosition(new THREE.Vector3()));
   const rifleForward=muzzle.getWorldDirection(new THREE.Vector3()).dot(receiver.normalize());
   await shoot(unit,target,'body',weapon('rifle'),false,null);
   const rifles=combat.history.filter(e=>e.type==='launch'&&e.actor===unit.id&&e.weapon==='rifle');
   IronVowScene.clear();
-  return {damaged,restored,launches,rifles,rifleExpected:weapon('rifle').burst,rifleForward,gait,preview:Boolean(preview?.m.nativeV2),
+  return {damaged,restored,launcherFitted,launcherStowed,launches,rifles,rifleExpected:weapon('rifle').burst,rifleForward,gait,preview:Boolean(preview?.m.nativeV2),
    disposed:disposed.size>0&&[...disposed.values()].every(n=>n===1),
    contexts:IronVowRenderer.metrics().contexts};
  });
+ assert.ok(battleRig.launcherFitted&&battleRig.launcherStowed,'The authored launcher follows the selected primary weapon');
  assert.deepEqual(battleRig.damaged,{rifle:false,plates:[true,true]});
  const {restored,disposed,preview}=battleRig;
  assert.ok(restored&&disposed&&preview,JSON.stringify({restored,disposed,preview}));
