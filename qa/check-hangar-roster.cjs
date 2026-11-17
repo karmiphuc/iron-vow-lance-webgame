@@ -3,13 +3,13 @@ const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const {join,resolve}=require('node:path');
 const vm=require('node:vm');
-const dist=join(__dirname,'../dist'),context=vm.createContext({console});context.window=context;
-for(const path of [join(dist,'scene/hangar-catalog.js'),process.argv[2]?resolve(process.argv[2]):join(dist,'scene/hangar-roster.js')])
+const dist=join(__dirname,'../dist'),context=vm.createContext({console,IronVowRigV2:{applies:({frame})=>[0,1,2,19].includes(frame),clear(){}}});context.window=context;
+for(const path of [join(dist,'scene/hangar-catalog.js'),require.main===module&&process.argv[2]?resolve(process.argv[2]):join(dist,'scene/hangar-roster.js')])
  vm.runInContext(readFileSync(path,'utf8'),context,{filename:path});
 const catalog=context.IronVowHangarCatalog.create();
 // Mapping is allowed to inspect support, but must never allocate a rig or substitute another frame.
-const support={supports:frame=>catalog.supports(frame),create(){throw Error('Roster mapping must not create rigs')}};
-const map=(career,options={})=>context.IronVowHangarRoster.fromCareer(career,{catalog:support,...options});
+const support={supports:(frame,model)=>catalog.supports(frame,model),create(){throw Error('Roster mapping must not create rigs')}};
+const map=(career,options={})=>context.IronVowHangarRoster.fromCareer(career,{catalog:support,model:frame=>({5:3,6:4,9:1})[frame],...options});
 const plain=value=>JSON.parse(JSON.stringify(value));
 const fixture=name=>JSON.parse(readFileSync(join(__dirname,'fixtures',name+'.json'),'utf8'));
 function freeze(value){if(value&&typeof value==='object'){Object.freeze(value);for(const child of Object.values(value))freeze(child);}return value;}
@@ -20,15 +20,15 @@ function checked(career,options){const before=JSON.stringify(career);freeze(care
   ['seat:0',0,1,'rifle'],['seat:1',1,1,'rifle'],['seat:2',2,1,'missile']
  ],'published legacy saves fall back to slot frame IDs and normalize percentages');
  assert.equal(result.seatCount,3);assert.equal(result.reserve.length,0);
- assert.deepEqual(plain(result.unsupportedFrames),[1,2]);
- assert.deepEqual(plain(result.active.map(u=>u.canRender)),[true,false,false],'unsupported legacy frames remain explicit');
+ assert.deepEqual(plain(result.unsupportedFrames),[]);
+ assert.deepEqual(plain(result.active.map(u=>u.canRender)),[true,true,true],'legacy slots use their registered production frames');
 }
 {
  const career=fixture('aero-jumpjet'),result=checked(career);
  assert.equal(result.active[0].frame,19,'stored active frame overrides legacy slot fallback');
- assert.equal(result.active[0].canRender,false,'Aero is reported unsupported without inventing another rig');
+ assert.equal(result.active[0].canRender,true,'Aero uses its registered production rig');
  assert.deepEqual(plain(result.reserve.map(u=>[u.id,u.frame,u.condition])),[['reserve:0',0,1]],'stored Warden remains separate from the active Aero');
- assert.deepEqual(plain(result.unsupportedFrames),[1,2,19]);
+ assert.deepEqual(plain(result.unsupportedFrames),[]);
 }
 {
  const career=fixture('v31-corridor'),result=checked(career);

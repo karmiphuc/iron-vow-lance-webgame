@@ -17,12 +17,12 @@ function checkHangarNavigation(){
  let destinations=navigation.hotspots();
  assert.equal(destinations.facilities,get('[data-hangar-hotspot="facilities"]'));
  assert.equal(destinations.ship,get('[data-hangar-hotspot="ship"]'));
- assert.deepEqual(Object.keys(destinations).sort(),['facilities','ship']);
+ assert.deepEqual(Object.keys(destinations).sort(),['crew-cabin','facilities','ship']);
 
  const projected=[];
  const unproject=navigation.project({setHotspots:items=>projected.push(items)},
   {facilities:[1,2,3],ship:[4,5,6],'crew-cabin':[7,8,9]});
- assert.deepEqual(Array.from(projected[0],item=>Array.from(item.position)),[[1,2,3],[4,5,6]]);
+ assert.deepEqual(Array.from(projected[0],item=>Array.from(item.position)),[[1,2,3],[4,5,6],[7,8,9]]);
  assert.equal(projected[0][0].element,get('[data-hangar-hotspot="facilities"]'));
  assert.ok(get('[data-hangar-hotspot="facilities"]').classList.contains('hangar-scene-hotspot'));
  unproject();
@@ -43,7 +43,7 @@ function checkHangarNavigation(){
  assert.equal(document.querySelectorAll('.base-room').length,4);
  assert.equal(run('JSON.stringify({save,selected})'),careerBeforeRoutes);
 }
-(async()=>{for(let attempt=0;attempt<100;attempt++){if(run('decodedArt.size===Object.keys(artImages).length'))break;await new Promise(r=>setTimeout(r,50))}assert.equal(run("Object.values(artImages).every(imageReady)"),true);assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,8);assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.hangar-hotspots button').length,3);
+(async()=>{for(let attempt=0;attempt<100;attempt++){if(run('decodedArt.size===Object.keys(artImages).length'))break;await new Promise(r=>setTimeout(r,50))}assert.equal(run("Object.values(artImages).every(imageReady)"),true);assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,8);assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.command-deck [data-select]').length,2);assert.equal(document.querySelectorAll('[data-hangar-hotspot]').length,3);
 checkHangarNavigation();
 click('[data-page="journal"]');assert.equal(document.body.dataset.view,'journal');
 assert.equal(document.querySelectorAll('.manual-topics > div').length,9);

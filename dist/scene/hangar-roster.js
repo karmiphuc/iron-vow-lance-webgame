@@ -1,7 +1,7 @@
 /* Read-only bridge from a validated career save to the Phase 4 hangar. */
 (function(root){
 'use strict';
-function fromCareer(career,{catalog,aux}={}){
+function fromCareer(career,{catalog,aux,model=()=>undefined}={}){
  if(!catalog||typeof catalog.supports!=='function')throw Error('A hangar catalog with supports(frame) is required');
  if(!career||!Array.isArray(career.units)||career.units.length!==3)throw Error('A career with three active units is required');
  const stored=career.reserve??{};
@@ -12,9 +12,9 @@ function fromCareer(career,{catalog,aux}={}){
   if(!hull||typeof hull!=='object'||!Number.isInteger(frame)||frame<0||!Number.isFinite(hull.condition)||hull.condition<0||hull.condition>100)throw Error('Invalid hangar hull: '+id);
   if(assigned.has(frame))throw Error('Duplicate hangar frame: '+frame);
   assigned.add(frame);
-  const canRender=Boolean(catalog.supports(frame));if(!canRender)unsupported.add(frame);
+  const modelId=model(frame),canRender=Boolean(catalog.supports(frame,modelId));if(!canRender)unsupported.add(frame);
   const {weapon,melee,shoulder,shield,paint,trim,upgrade}=hull;
-  return {id,frame,weapon,melee,shoulder,shield,paint,trim:trim==null?trim:{...trim},condition:hull.condition/100,upgrade,canRender};
+  return {id,frame,...(modelId!=null?{model:modelId}:{}),weapon,melee,shoulder,shield,paint,trim:trim==null?trim:{...trim},condition:hull.condition/100,upgrade,canRender};
  }
  const active=career.units.map((hull,slot)=>entry(hull,hull?.frame??slot,'seat:'+slot));
  if(aux!=null){

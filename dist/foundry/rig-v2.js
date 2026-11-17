@@ -5,7 +5,7 @@
 'use strict';
 const T=root.THREE,R=root.IronVowFoundryRig,VC=root.VowChassis;
 const V3=R.V3,Q=()=>new T.Quaternion();
-const profiles=new Map(),assets={battle:new Map(),preview:new Map(),portrait:new Map()};
+const profiles=new Map(),assets={battle:new Map(),preview:new Map(),portrait:new Map(),hangar:new Map()};
 const profileKey=u=>u.lionTrial?'lion':u.frame;
 const applies=u=>!u.kind&&profiles.has(profileKey(u));
 
@@ -51,6 +51,13 @@ function clear(scope='battle'){
  const cache=assets[scope];
  for(const asset of cache.values())if(asset.scene)releaseStock(asset.scene);
  cache.clear();
+}
+function retain(units,scope){
+ const cache=assets[scope],wanted=new Set(units.filter(applies).map(profileKey));
+ for(const [key,asset] of cache)if(!wanted.has(key)){
+  cache.delete(key);if(asset.scene)releaseStock(asset.scene);
+ }
+ return load(units,scope);
 }
 function cloneSkin(stock){
  const source=stock.clone(true),nodes=new Map(),skeletons=new Map();
@@ -275,7 +282,7 @@ function build(unit,scope='battle'){
 }
 
 function register(frame,profile){profiles.set(frame,profile);}
-root.IronVowRigV2={applies,register,load,build,clear,status:(unit,scope='battle')=>assets[scope].get(profileKey(unit))?.status};
+root.IronVowRigV2={applies,register,load,retain,build,clear,status:(unit,scope='battle')=>assets[scope].get(profileKey(unit))?.status};
 
 function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
   const slide=driver('Cannon Slide',arms.R.wr),slideRest=slide.position.clone();

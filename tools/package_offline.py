@@ -59,7 +59,6 @@ def script(path):
     return f"<script>{content}</script>"
 
 page = (dist / "index.html").read_text()
-page = re.sub(r'<link rel="preload" as="image" href="assets/hangar.webp">', "", page)
 page = re.sub(r'<link rel="stylesheet" href="([^"]+)">', lambda m: f"<style>{stylesheet(m[1])}</style>", page)
 page = re.sub(r'src="(assets/[^"]+)"', lambda m: f'src="{assets[m[1]]}"', page)
 page = page.replace("</head>", '<script>window.IRON_VOW_INLINE_ASSETS=' + json.dumps(assets, separators=(",", ":")) + ";</script></head>")
