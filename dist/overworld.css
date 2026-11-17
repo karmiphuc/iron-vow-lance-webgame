@@ -117,3 +117,14 @@ body[data-view="overworld"] #ui{overflow:hidden;background:transparent}
 .chart-port-card button{width:auto;min-width:105px;white-space:nowrap}
 @media(max-width:1000px){.chart-port-card{right:116px;max-width:350px}.chart-port-card h2{font-size:17px}}
 @media(max-width:760px){.chart-port-card{top:95px;left:13px;right:13px;max-width:none;padding:7px 10px;justify-content:space-between;gap:10px}.chart-port-card h2{font-size:17px}.chart-port-card button{min-width:105px}}
+
+.chart-expiry-warning{font-size:10px;color:#f0ad98;max-width:110px}
+.offer-terms{margin:18px 0}
+.offer-card>.primary{margin-top:18px}
+.offer-card>[data-scout-offer]{min-height:44px;margin-top:8px}
+.offer-intel{margin:12px 0}
+.offer-intel>summary{cursor:pointer;min-height:44px;padding:12px 0}
+.offer-empty{padding:30px 0;max-width:400px}
+.offer-empty h2{font:500 28px Barlow,sans-serif}
+
+.chart-forecast-idle button{min-height:44px;min-width:90px}

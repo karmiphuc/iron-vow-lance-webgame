@@ -342,8 +342,11 @@ const CONTRACTS=[
   deployment:[[7,12],[12,6],[15,15],[4,4],[14,2],['tank',4,14],['helicopter',10,16],['tank',12,10],['helicopter',9,3]]}
 ];
 const OLD_SORTIE_CONTRACTS=['relay','corridor','frontier'];
-const overworld=window.IronVowOverworld;
-const portName=id=>overworld.PORTS.find(port=>port.id===id)?.name;
+const overworld=window.IronVowOverworld,worldRules=window.IronVowWorld;
+const classicNetwork={ports:overworld.PORTS,routes:overworld.ROUTES};
+const livingNetwork=worldRules?{ports:worldRules.PORTS,routes:worldRules.ROUTES}:classicNetwork;
+const careerNetwork=(career=save)=>career.world?livingNetwork:classicNetwork;
+const portName=id=>livingNetwork.ports.find(port=>port.id===id)?.name;
 function companyPort(career=save){
  if(career.overworld)return career.overworld.port;
  const checkpoint=career.sortie?.contract;
@@ -352,12 +355,88 @@ function companyPort(career=save){
  const last=career.history.at(-1)?.name;
  return CONTRACTS.find(contract=>contract.name===last)?.id??'picket';
 }
+function ensureWorld(){
+ if(!worldRules||careerStale)return null;
+ if(save.world)return save.world;
+ let seed=42;
+ if(window.crypto?.getRandomValues){const values=new Uint32Array(1);window.crypto.getRandomValues(values);seed=values[0];}
+ save.world=worldRules.createWorld(seed,save.day);persist();return save.world;
+}
+function availableOffers(port,arrivalDay=save.day){
+ const world=ensureWorld();
+ return world?worldRules.offersAt(world,port,arrivalDay)??[]:[];
+}
+function worldOfferById(id){
+ const world=ensureWorld();
+ if(!world)return null;
+ for(const port of worldRules.PORTS){const offer=worldRules.offersAt(world,port.id).find(offer=>offer.id===id);if(offer)return offer;}
+ return null;
+}
+function acceptedOffer(offer){
+ const {id,templateIndex,port,postedDay,expiryDay,payPercent}=offer;
+ return Object.freeze({id,templateIndex,port,postedDay,expiryDay,payPercent,acceptedDay:save.day});
+}
+function validAcceptedOffer(offer,career=save){
+ if(!career.world||!offer||typeof offer!=='object'||!Number.isSafeInteger(offer.acceptedDay)||offer.acceptedDay>career.day||offer.acceptedDay<offer.postedDay||offer.acceptedDay>offer.expiryDay)return false;
+ const origin=worldRules.createWorld(career.world.seed,offer.postedDay);
+ const expected=origin&&worldRules.offersAt(origin,offer.port)?.find(item=>item.id===offer.id);
+ return !!expected&&['id','templateIndex','port','postedDay','expiryDay','payPercent'].every(key=>offer[key]===expected[key]);
+}
+function worldContractPay(contract,count,offer,tier=shipLevel('office')){
+ return Math.round(contractPay(contract,count,tier)*(offer?.payPercent??100)/100);
+}
+function scoutWorldOffer(id){
+ if(battle||careerStale||save.credits<90)return false;
+ const world=ensureWorld(),offer=worldOfferById(id);
+ if(!world||!offer)return false;
+ const next=worldRules.scoutOffer(world,id);
+ if(!next)return false;
+ save.credits-=90;save.world=next;persist();return true;
+}
+function holdAtPort(){
+ if(battle||careerStale||!Number.isSafeInteger(save.day+1))return false;
+ const world=ensureWorld(),next=world&&worldRules.advanceWorld(world,save.day+1);
+ if(!next)return false;
+ const rates=overworld.operatingRates(save),rest=overworld.travelRest(save,1);
+ const settled=overworld.settleExpenses(save.credits,save.overworld?.arrears??0,rates.total),port=companyPort();
+ save.units=rest.units;if(save.reserve)save.reserve=rest.reserve;if(save.wounds)save.wounds=rest.wounds;
+ save.day++;save.credits=settled.credits;save.world=next;delete save.dispatch;
+ save.overworld={port,arrears:settled.arrears,lastExpense:{kind:'hold',day:save.day,days:1,fuel:0,...rates,paid:settled.paid,arrearsPaid:settled.arrearsPaid}};
+ persist();return true;
+}
+function prepareWorldOffer(id){
+ const offer=worldOfferById(id);
+ if(!offer||battle||careerStale)return false;
+ if(offer.port!==companyPort()){showOverworld(offer.port);return false;}
+ prepareSortie(offer.templateIndex,offer);return true;
+}
+function bindWorldContracts(){
+ for(const button of document.querySelectorAll('[data-world-offer]'))button.onclick=()=>prepareWorldOffer(button.dataset.worldOffer);
+ for(const button of document.querySelectorAll('[data-scout-offer]'))button.onclick=()=>{
+  if(scoutWorldOffer(button.dataset.scoutOffer)){render();toast('Contact report received.');}
+ };
+}
+function pooledContractsPage(){
+ const port=contractPortSelection??companyPort(),local=port===companyPort(),offers=availableOffers(port),sizes=dispatchSizes();
+ return `<div class="page"><div class="pagehead"><div><div class="eyebrow">${portName(port)} / DISPATCH</div><h1>CONTRACT BOARD</h1></div><button data-page="overworld">CHART TABLE ${icon('arrow-right')}</button></div>
+  <div class="grid contract-grid">${offers.map(offer=>{
+   const contract=CONTRACTS[offer.templateIndex],size=sizes[offer.templateIndex],contacts=sortieSpawns(contract,size).filter(spawn=>spawn.length===2).length;
+   const intel=offer.scouted?contacts+' MECHS':Math.min(contacts,offer.intel.minMechs)+'–'+Math.max(contacts,offer.intel.maxMechs)+' MECHS';
+   return `<article class="card offer-card"><div class="eyebrow">${contract.tag} · ${local?'LOCAL':'REMOTE'}</div><h2>${contract.name}</h2><p>${contract.desc}</p>
+    <div class="offer-terms">${stat('PAYMENT',money(worldContractPay(contract,size,offer)))}${stat('EXPIRES','DAY '+offer.expiryDay)}${stat('LANCE',size+' MECH'+(size===1?'':'S'))}${stat('CONTACTS',intel+(contract.difficulty>=2&&!offer.scouted?' · HEAVY LIKELY':''))}</div>
+    ${offer.scouted?`<details class="offer-intel"><summary>Contact report</summary>${contractIntel(offer.templateIndex,size)}</details>`:`<button type="button" data-scout-offer="${offer.id}" ${save.credits<90?'disabled':''}>SCOUT · 90 CR</button>`}
+    <button class="primary full" data-deploy="${offer.templateIndex}" data-world-offer="${offer.id}">${local?'PREPARE SORTIE':'PLOT COURSE'} ${icon('arrow-right')}</button></article>`;
+  }).join('')||'<div class="offer-empty"><h2>No open offers</h2><p>Check another mooring or hold for the next dispatch.</p><button data-page="overworld">OPEN CHART</button></div>'}</div></div>`;
+}
 function travelTo(destination,from=companyPort(),expectedCost,path=[from,destination]){
  if(battle||careerStale||(!careerDB&&!careerIsCurrent())||from!==companyPort())return false;
  if(!Array.isArray(path)||path[0]!==from||path.at(-1)!==destination)return false;
- const quote=overworld.itineraryQuote(path,overworld.operatingRates(save),save.credits,save.overworld?.arrears??0);
+ const quote=overworld.itineraryQuote(path,overworld.operatingRates(save),save.credits,save.overworld?.arrears??0,careerNetwork());
  if(!quote||quote.total>save.credits||expectedCost!==undefined&&quote.total!==expectedCost||!Number.isSafeInteger(save.day+quote.days))return false;
+ const nextWorld=save.world?worldRules.advanceWorld(save.world,save.day+quote.days):null;
+ if(save.world&&!nextWorld)return false;
  const rest=overworld.travelRest(save,quote.days);
+ if(nextWorld)save.world=nextWorld;
  save.units=rest.units;
  if(save.reserve)save.reserve=rest.reserve;
  if(save.wounds)save.wounds=rest.wounds;
@@ -701,7 +780,7 @@ let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'
 let armoryGroup='assault';
 let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
 let page=entryPage,selected=0,battle=null,action='move',effects=[],hover=null,clock=0,last=0,muted=false,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
-let moveTap=null,overworldSelection=null,overworldRouteKey=null,overworldConfirmation=null,overworldDeparture=null;
+let moveTap=null,overworldSelection=null,overworldRouteKey=null,overworldConfirmation=null,overworldDeparture=null,overworldHoldPreview=false,contractPortSelection=null;
 try{muted=localStorage.getItem('iron-vow-sound')==='off'}catch{}
 function pauseCareer(title,body){
  if(careerStale)return;
@@ -812,6 +891,7 @@ function persist(enemyPending=false){
 }
 function captureSortie(enemyPending=false){
  return{version:battle.aux||battle.launchAP?8:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action:action==='jumpjet'?'move':action==='missile'?'fire':action,part:'body',enemyPending,
+  ...(battle.offer?{offer:{...battle.offer}}:{}),
   ...(battle.aux?{aux:battle.aux}:{}),...(battle.launchAP?{launchAP:battle.launchAP}:{}),
   ...(battle.frontierHellbreaker?{frontierHellbreaker:true}:{}),
   ...(battle.picketLineInfantry?{picketLineInfantry:true}:{}),
@@ -944,8 +1024,10 @@ function restoreSortie(){
  valid=valid&&(saved.relayLead===undefined||saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='relay'&&RELAY_LEADS.includes(saved.relayLead));
  valid=valid&&(saved.terrainSeed===undefined||saved.version>=7&&!legacy&&integer(saved.terrainSeed,0,0xffffffff));
  valid=valid&&(saved.mechComputers===undefined||saved.mechComputers===true&&saved.version>=7&&!legacy);
+ valid=valid&&(saved.offer===undefined||!legacy&&validAcceptedOffer(saved.offer)&&saved.offer.templateIndex===contractIndex);
  if(valid){
   createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true,saved.reaverHostiles===true,saved.bulwarkHostile===true,saved.ashigaruHostile===true,saved.aeroMelee??null,saved.relayLead??0);
+  if(saved.offer)battle.offer=Object.freeze({...saved.offer});
   if(saved.terrainSeed!==undefined)surveyTerrain(saved.terrainSeed);
   if(saved.mechComputers)enableMechComputers();
   valid=saved.units.length===battle.units.length;const occupiedTiles=new Set();
@@ -1607,29 +1689,43 @@ function paymentRange(contract){
 }
 function showOverworld(destination=companyPort(),routeKey=null){
  if(battle||careerStale)return;
- overworldSelection=overworld.PORTS.some(port=>port.id===destination)?destination:companyPort();
+ ensureWorld();
+ overworldSelection=careerNetwork().ports.some(port=>port.id===destination)?destination:companyPort();
+ overworldHoldPreview=false;
  overworldRouteKey=routeKey;overworldConfirmation=null;page='overworld';render();
 }
 function chartRouteOptions(from,destination){
  const rates=overworld.operatingRates(save);
- return overworld.routeOptions(from,destination).map(path=>{
-  const quote=overworld.itineraryQuote(path,rates,save.credits,save.overworld?.arrears??0);
-  const stop=overworld.PORTS.find(port=>port.id===path[1]);
+ const network=careerNetwork();
+ const routes=overworld.routeOptions(from,destination,network).map(path=>{
+  const quote=overworld.itineraryQuote(path,rates,save.credits,save.overworld?.arrears??0,network);
+  const stop=network.ports.find(port=>port.id===path[1]);
   return {...quote,key:path.join('>'),label:path.length===2?'Express':'Via '+stop.name.split(' ')[0]};
  }).sort((a,b)=>a.days-b.days||a.total-b.total);
+ if(routes.length<=3)return routes;
+ const cheapest=[...routes].sort((a,b)=>a.total-b.total||a.days-b.days)[0];
+ const choices=[...new Map([routes[0],cheapest].map(route=>[route.key,route])).values()];
+ if(choices.length===1)choices.push(routes[1]);
+ return choices;
 }
 function chartData(){
- const departure=overworldDeparture;
+ const world=ensureWorld(),network=careerNetwork(),departure=overworldDeparture;
  const current=departure?.from??companyPort(),selected=overworldSelection??current;
  const routeOptions=chartRouteOptions(current,selected);
  const planned=routeOptions.find(route=>route.key===overworldRouteKey)??routeOptions[0];
- const quote=departure?.quote??planned??null;
+ const rates=overworld.operatingRates(save);
+ const holdSettlement=overworldHoldPreview?overworld.settleExpenses(save.credits,save.overworld?.arrears??0,rates.total):null;
+ const quote=overworldHoldPreview?{days:1,fuel:0,...rates,cashAfterArrival:holdSettlement.credits,path:[]}:departure?.quote??planned??null;
  const rest=quote?overworld.travelRest(save,departure?0:quote.days):{units:save.units,wounds:save.wounds??{}};
  const readiness=save.units.map((unit,i)=>({name:FRAMES[pilotFrame(i)].name,pilot:pilotProfile(i).call,
   before:departure?.before[i]??unit.condition,condition:rest.units[i].condition,wound:rest.wounds[pilotId(pilotClass(i))]??0}));
- return {ports:overworld.PORTS,routes:overworld.ROUTES,current,selected,path:quote?.path??[],pathKey:quote?.path.join('>')??'',routeOptions,quote,
+ const sensorRange=4.5+shipLevel('office')*2.5;
+ const origin=network.ports.find(port=>port.id===current);
+ const markers=world?worldRules.markersAt(world).filter(marker=>Math.hypot((marker.x*100-origin.x)*.22,(marker.y*100-origin.y)*.17)<=sensorRange):[];
+ const offers=world?availableOffers(selected,save.day+(quote?.days??0)):[];
+ return {ports:network.ports,routes:network.routes,current,selected,path:quote?.path??[],pathKey:quote?.path.join('>')??'',routeOptions,quote,
   day:departure?.day??save.day,credits:save.credits,arrears:save.overworld?.arrears??0,readiness,
-  confirming:!!overworldConfirmation,departing:!!departure,departure,
+  confirming:!!overworldConfirmation,departing:!!departure,departure,holding:overworldHoldPreview,contractCount:offers.length,arrivingContracts:offers.filter(offer=>offer.availableOnArrival).length,markers,sensorRange,sensorPort:current,holdArrears:holdSettlement?.arrears??0,
   sceneReady:window.IronVowChart?.snapshot().shipReady??false};
 }
 function chartQuoteKey(data){
@@ -1638,7 +1734,7 @@ function chartQuoteKey(data){
 function overworldPage(){return window.IronVowOverworldView.render(chartData());}
 function bindOverworld(){
  const data=chartData();
- window.IronVowChart?.show($('#chart-viewport'),data,{selectPort:showOverworld,selectRoute:key=>showOverworld(overworldSelection,key)});
+ window.IronVowChart?.show($('#chart-viewport'),data,{selectPort:id=>{if(!overworldDeparture)showOverworld(id);},selectRoute:key=>{if(!overworldDeparture)showOverworld(overworldSelection,key);}});
  for(const button of document.querySelectorAll('[data-overworld-port]'))button.onclick=()=>{
   if(overworldDeparture)return;
   const id=button.dataset.overworldPort;
@@ -1651,9 +1747,11 @@ function bindOverworld(){
  };
  if($('[data-chart-reset]'))$('[data-chart-reset]').onclick=()=>window.IronVowChart?.reset();
  const contracts=$('[data-chart-contracts]');
- if(contracts)contracts.onclick=()=>{if(overworldDeparture)return;page='contracts';render();};
+ if(contracts)contracts.onclick=()=>{if(overworldDeparture)return;contractPortSelection=overworldSelection;page='contracts';render();};
+ const hold=$('[data-chart-hold]');
+ if(hold)hold.onclick=()=>{overworldHoldPreview=true;overworldConfirmation=chartQuoteKey(chartData());render();$('[data-overworld-confirm]')?.focus();};
  const cancel=$('[data-overworld-cancel]');
- if(cancel)cancel.onclick=()=>{overworldConfirmation=null;render();$('[data-overworld-travel]')?.focus();};
+ if(cancel)cancel.onclick=()=>{overworldConfirmation=null;overworldHoldPreview=false;render();($('[data-overworld-travel]')||$('[data-chart-hold]'))?.focus();};
  const travel=$('[data-overworld-travel]');
  if(travel)travel.onclick=()=>{
   if(overworldDeparture||battle||careerStale)return;
@@ -1662,6 +1760,10 @@ function bindOverworld(){
   const key=chartQuoteKey(current);
   if(!overworldConfirmation){overworldConfirmation=key;render();$('[data-overworld-confirm]')?.focus();return;}
   if(overworldConfirmation!==key){overworldConfirmation=null;render();toast('Course updated. Review the forecast.');return;}
+  if(overworldHoldPreview){
+   if(holdAtPort()){overworldHoldPreview=false;overworldConfirmation=null;render();toast('One day held at '+portName(companyPort())+'.');}
+   return;
+  }
   const day=save.day,before=save.units.map(unit=>unit.condition),quote=current.quote;
   if(!travelTo(current.selected,current.current,quote.total,current.path)){
    overworldConfirmation=null;render();toast('Transit is no longer available.');return;
@@ -1672,6 +1774,7 @@ function bindOverworld(){
  };
 }
 function contractsPage(){
+ if(worldRules)return pooledContractsPage();
  const current=companyPort(),sizes=dispatchSizes(),rates=overworld.operatingRates(save);
  return `<div class="page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / ${portName(current)}</div><h1>CHOOSE YOUR BATTLE.</h1></div><button data-page="overworld">CHART TABLE ${icon('arrow-right')}</button></div>
   <div class="grid contract-grid">${CONTRACTS.map((contract,i)=>{
@@ -1920,6 +2023,7 @@ function render(){
   if(page==='ship')bindShip();
   if(page==='overworld')bindOverworld();
   if(page==='ship'||page==='hangar')bindHangar();
+  if(page==='contracts'&&worldRules)bindWorldContracts();
   if(page==='contracts')for(const button of document.querySelectorAll('[data-rescan]'))button.onclick=()=>{
    const i=Number(button.dataset.rescan);
    if(rerollDispatch(i)){render();$(`[data-deploy="${i}"]`)?.focus();toast('New approach surveyed. Dispatch updated.')}
@@ -2006,7 +2110,7 @@ window.IronVowHangarNavigation=Object.freeze({
  hotspots:hangarHotspots,
  project:projectHangarHotspots
 });
-function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();overworldSelection=null;persist();closeModal();render()}}]);
+function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}if(destination==='contracts')contractPortSelection=companyPort();page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();overworldSelection=null;persist();closeModal();render()}}]);
  $('#attack-camera').onclick=()=>{attackCameraEnabled=!attackCameraEnabled;try{localStorage.setItem('iron-vow-attack-camera',attackCameraEnabled?'on':'off')}catch{}render()};
  }}
 function validHull(u,frame,owned=[]){
@@ -2039,7 +2143,8 @@ function validSave(s){
   return kind>=0&&!pilots.has(kind)&&p&&Number.isSafeInteger(p.level)&&p.level>0&&p.level<10000&&Number.isFinite(p.xp)&&p.xp>=0&&Array.isArray(p.training);
  }))return false;
  if(s.ship!==undefined&&!validShip(s))return false;
- if(s.overworld!==undefined&&(!overworld.validState(s.overworld)||s.overworld.lastExpense?.day>s.day))return false;
+ if(s.world!==undefined&&(!worldRules?.validWorld(s.world)||s.world.day!==s.day))return false;
+ if(s.overworld!==undefined&&(!overworld.validState(s.overworld,careerNetwork(s).ports)||s.overworld.lastExpense?.day>s.day))return false;
  if(s.hangar!==undefined&&!validHangar(s))return false;
  if(s.duty!==undefined&&(!Array.isArray(s.duty)||s.duty.length>hangarLevel('cabins',s)||
     new Set(s.duty).size!==s.duty.length||!s.duty.every(id=>typeof id==='string'&&Object.hasOwn(s.reservePilots??{},id))))return false;
@@ -2233,10 +2338,10 @@ function auxiliaryChoices(){
   <label>Stored hull<select id="aux-frame">${hulls.map(([frame,h])=>`<option value="${frame}">${FRAMES[frame].name} · ${h.condition}%</option>`).join('')}</select></label>
  </fieldset>`;
 }
-function prepareSortie(i){
- const contract=CONTRACTS[i];
+function prepareSortie(i,offer=null){
+ const contract=CONTRACTS[i],contractPort=offer?.port??contract?.id;
  if(battle||careerStale||!contract)return;
- if(companyPort()!==contract.id){showOverworld(contract.id);return;}
+ if(companyPort()!==contractPort){showOverworld(contractPort);return;}
  const size=dispatchSizes()[i],ready=LANCE_SLOTS.filter(slot=>save.units[slot].condition>=30),chosen=new Set(ready.slice(0,size));
  const active=dutyRoster().length?activeRosterIds():[];
  const draft=new Map(LANCE_SLOTS.map(slot=>[slot,pilotId(pilotClass(slot))]));
@@ -2251,9 +2356,10 @@ function prepareSortie(i){
   ${ready.length>=size?auxiliaryChoices():''}
   <p class="note" id="sortie-count" aria-live="polite"></p>`,
   [{text:'CANCEL',fn:closeModal},...(ready.length<size?[{text:'OPEN WORKSHOP',fn:()=>openRepair(LANCE_SLOTS.find(slot=>!ready.includes(slot)))}]:[
-   {text:'DEPLOY',fn:()=>{if(chosen.size===size&&!battle&&!careerStale&&companyPort()===contract.id){
+   {text:'DEPLOY',fn:()=>{if(chosen.size===size&&!battle&&!careerStale&&companyPort()===contractPort){
+    if(offer&&!worldOfferById(offer.id)){closeModal();render();return toast('That offer has expired.');}
     const aux=$('#use-aux')?.checked?{pilotId:$('#aux-pilot').value,frame:Number($('#aux-frame').value)}:null;
-    closeModal();deploy(i,false,[...chosen].sort(),aux,active.length?selectedCrew():null);
+    closeModal();deploy(i,false,[...chosen].sort(),aux,active.length?selectedCrew():null,offer);
    }}}
   ])]);
  const buttons=[...document.querySelectorAll('[data-sortie-seat]')],launch=ready.length>=size?$('#modal-1'):null;
@@ -2297,7 +2403,7 @@ function prepareSortie(i){
 function openRepair(slot){
  closeModal();page='workshop';workshopView='assigned';selected=slot;render();
 }
-function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null){
+function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null,offer=null){
  if(battle||!CONTRACTS[i]||!validSlots(slots))return;
  if(crew!==null){
   const active=activeRosterIds();
@@ -2309,8 +2415,16 @@ function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null){
  if(damaged!==undefined){
   modal('REPAIR REQUIRED','<p>A selected chassis has less than 30% integrity.</p>',[{text:'OPEN WORKSHOP',fn:()=>openRepair(damaged)}]);return;
  }
+ let nextWorld;
+ if(offer){
+  const current=worldOfferById(offer.id);
+  if(!current||current.templateIndex!==i||current.port!==companyPort())return toast('That offer is no longer available.');
+  offer=acceptedOffer(current);nextWorld=worldRules.consumeOffer(save.world,offer.id);
+  if(!nextWorld)return;
+ }
  if(crew)slots.forEach((slot,index)=>seatPilot(slot,crew[index]));
  createBattle(i,legacy,legacy,slots,true,aux);
+ if(offer){save.world=nextWorld;battle.offer=offer;}
  if(!legacy){surveyTerrain(Math.floor(ruleRandom()*4294967296));enableMechComputers()}
  selected=slots[0];action='move';effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;
  persist();render();sound('click');if(save.history.length===0)guide();
@@ -2902,12 +3016,12 @@ function finish(win){
   .slice(0,1+(retriever?.training?.wreckExtra??0)):[];
  for(const wreck of recovered){const bodies=save.salvage??={};bodies[wreck.frame]=(bodies[wreck.frame]??0)+1}
  const seats=b.slots.filter(slot=>slot!==AUX_SLOT).length;
- const reward=win?contractPay(c,seats):0;
- const premium=win?reward-contractPay(c,seats,0):0;
+ const reward=win?worldContractPay(c,seats,b.offer):0;
+ const premium=win?reward-worldContractPay(c,seats,b.offer,0):0;
  const salvage=win&&!c.fixedPay?450+c.difficulty*200+(b.legacy?0:180*b.units.filter(u=>u.kind).length):0;
  const recoveryBonus=retriever?.training?.wreckBonus??0,pay=reward+salvage+recoveryBonus;
  save.credits+=pay;save.rep+=win?c.difficulty*10:0;if(win)save.wins++;
- const costs=benchWar?null:settleSortieCosts(c.id);
+ const costs=benchWar?null:settleSortieCosts(b.offer?.port??c.id);
  const allies=b.units.filter(u=>u.team==='ally');
  for(const u of allies){
   const hull=sortieHull(u);
@@ -2916,7 +3030,11 @@ function finish(win){
  }
  const {serviced,online}=settleShip(win,allies,promotions);
  const baseOnline=win?advanceHangar():null;
- save.history.push({name:c.name,day:save.day,win,pay});save.history=save.history.slice(-100);save.day++;delete save.dispatch;
+ save.history.push({name:c.name,day:save.day,win,pay,...(b.offer?{offerId:b.offer.id,port:b.offer.port}:{})});save.history=save.history.slice(-100);save.day++;delete save.dispatch;
+ if(save.world){
+  if(b.offer){const standing=save.world.standings[b.offer.port]??0;save.world=worldRules.setStanding(save.world,b.offer.port,Math.max(-100,Math.min(100,standing+(win?2:-1))));}
+  save.world=worldRules.advanceWorld(save.world,save.day);
+ }
  battle=null;if(selected===AUX_SLOT)selected=0;
  window.IronVowScene?.clear?.();persist();page='career';render();
  const buttons=[{text:'COMPANY RECORD',fn:closeModal},{text:'REPAIR & REFIT',fn:()=>{closeModal();page='workshop';workshopView='assigned';render()}}];

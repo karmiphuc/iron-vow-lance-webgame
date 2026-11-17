@@ -10,8 +10,8 @@ window.IronVowOverworldView = (() => {
     const selected = data.ports.find(port => port.id === data.selected);
     const current = data.ports.find(port => port.id === data.current);
     const quote = data.quote;
-    const travelling = selected && selected.id !== data.current;
-    const affordable = quote && quote.cashAfterArrival >= 0;
+    const travelling = selected && selected.id !== data.current || data.holding;
+    const affordable = quote && (quote.cashAfterArrival >= 0 || data.holding);
     const ready = data.readiness.filter(unit => unit.condition >= 30 && !unit.wound).length;
     const routes = data.routeOptions.map(route => `
       <button type="button" data-overworld-route-option="${escapeHtml(route.key)}" aria-pressed="${route.key === data.pathKey}">
@@ -26,7 +26,7 @@ window.IronVowOverworldView = (() => {
       <summary aria-label="Travel cost breakdown"><small>Cost</small><strong data-chart-cost>${credits(quote.total)}</strong></summary>
       <div class="chart-detail-card"><h3>Transit costs</h3><dl>
         ${[['Fuel', quote.fuel], ['Crew wages', quote.wages], ['Ship upkeep', quote.ship], ['Hull upkeep', quote.hulls]].map(([label, amount]) => `<div><dt>${label}</dt><dd>${credits(amount)}</dd></div>`).join('')}
-      </dl>${data.arrears ? `<p class="chart-warning">Existing arrears ${credits(data.arrears)}</p>` : ''}</div>
+      </dl>${data.holdArrears || data.arrears ? `<p class="chart-warning">Arrears ${credits(data.holdArrears || data.arrears)}</p>` : ''}</div>
     </details>` : '';
     const readiness = `<details class="chart-detail chart-lance-detail">
       <summary aria-label="Lance readiness on arrival"><small>Lance</small><strong>${ready}/${data.readiness.length}<span class="chart-ready-pips" aria-hidden="true">${data.readiness.map(unit => `<i class="${unit.wound ? 'is-wounded' : unit.condition < 30 ? 'is-damaged' : 'is-ready'}"></i>`).join('')}</span></strong></summary>
@@ -37,20 +37,20 @@ window.IronVowOverworldView = (() => {
       <section class="chart-forecast" aria-label="Route forecast">
         <div class="chart-arrival"><small>Arrival</small><strong data-chart-arrival>Day ${data.day + quote.days}<span>${quote.days}d transit</span></strong></div>
         ${cost}
-        <div class="chart-cash${affordable ? '' : ' chart-warning'}"><small>Cash left</small><strong data-chart-cash>${credits(quote.cashAfterArrival)}</strong></div>
+        <div class="chart-cash${affordable && !data.holdArrears && !data.arrears ? '' : ' chart-warning'}"><small>Cash left</small><strong data-chart-cash>${credits(quote.cashAfterArrival)}</strong></div>
         ${readiness}
         <div class="chart-departure">
           ${data.confirming ? '<span class="chart-confirm-label" role="status">Course locked</span><button type="button" class="chart-cancel" data-overworld-cancel>Cancel</button>' : ''}
-          <button type="button" class="primary" data-overworld-travel="${data.selected}"${data.confirming ? ' data-overworld-confirm' : ''}${affordable && !data.departing ? '' : ' disabled'}>${data.departing ? 'Under way' : !affordable ? `Need ${credits(-quote.cashAfterArrival)}` : data.confirming ? 'Confirm departure' : 'Depart'}</button>
+          <button type="button" class="primary" data-overworld-travel="${data.selected}"${data.confirming ? ' data-overworld-confirm' : ''}${affordable && !data.departing ? '' : ' disabled'}>${data.departing ? 'Under way' : !affordable ? `Need ${credits(-quote.cashAfterArrival)}` : data.confirming ? data.holding ? 'Confirm hold' : 'Confirm departure' : data.holding ? 'Hold one day' : 'Depart'}</button>
         </div>
-      </section>` : '<section class="chart-forecast chart-forecast-idle"><p>Choose a destination on the chart.</p><span>IVS Halyard · Moored</span></section>';
+      </section>` : '<section class="chart-forecast chart-forecast-idle"><p>Choose a destination on the chart.</p><button type="button" data-chart-hold>Hold 1d</button></section>';
 
     return `<div class="overworld-page chart-page">
       <div id="chart-viewport" class="chart-viewport" tabindex="0" role="group" aria-label="Halyard chart table. Drag to pan, pinch to zoom. Use arrow keys to pan and Home to recenter.">${markers}</div>
       <div class="chart-heading"><span class="eyebrow">IVS HALYARD / BRIDGE</span><h1>CHART TABLE</h1><p>${data.departing ? 'In transit' : 'Moored'} · ${escapeHtml(current.name)}</p></div>
       <button type="button" class="chart-reset" data-chart-reset aria-label="Recenter chart">Recenter</button>
       <aside class="chart-port-card" aria-label="Selected mooring">
-        <h2>${escapeHtml(selected.name)}</h2>
+        <h2>${escapeHtml(selected.name)}</h2>${data.arrivingContracts < data.contractCount && quote ? `<small class="chart-expiry-warning">${data.contractCount - data.arrivingContracts} expire en route</small>` : ''}
         <button type="button" data-chart-contracts="${selected.id}">Contracts ${data.contractCount ?? 1}</button>
       </aside>
       <div class="chart-course">${forecast}</div>

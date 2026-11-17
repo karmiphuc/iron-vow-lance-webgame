@@ -10,9 +10,10 @@
   const linear = hex => new T.Color(hex).convertSRGBToLinear();
   const colors = { steel: 0x20272a, land: 0xb7b29b, upland: 0x777d68, industry: 0x5d6260,
     frontier: 0xaa8560, water: 0x203d46, amber: 0xe5b66d, cyan: 0x9ec8c3 };
-  let host, data, callbacks, stage, events, pinch, routeSignature;
+  let host, data, callbacks, stage, events, pinch, routeSignature, worldSignature;
   let zoom = 1, tilt = .80, yaw = -.04, panX = 0, panZ = 0;
   const pointers = new Map();
+  const catalogKey = ports => JSON.stringify((ports || []).map(({ id, x, y }) => [id, x, y]));
   const portPosition = port => new T.Vector3((port.x - 50) * .22, 0, (port.y - 50) * .17);
   function heightAt(x, z) {
     const coast = 3.1 + Math.sin(x * .66) * .65 + Math.sin(x * 1.7) * .2;
@@ -92,10 +93,10 @@
     skyGeometry.setAttribute('color', new T.Float32BufferAttribute(skyColors, 3));
     const sky = mesh(scene, skyGeometry, new T.MeshBasicMaterial({ vertexColors: true }), 0, 9, -14);
     sky.castShadow = sky.receiveShadow = false;
-    const ports = {};
+    const ports = {}, portHits = [];
     for (const port of data.ports) {
-      const p = portPosition(port), base = heightAt(p.x, p.z) + .08, town = new T.Group(); town.position.set(p.x, base, p.z); scene.add(town);
-      box(town, 1.55, .1, 1.4, dark, 0, 0, 0);
+      const p = portPosition(port), base = heightAt(p.x, p.z) + .08 + (port.id === 'ridge' ? .48 : 0), town = new T.Group(); town.position.set(p.x, base, p.z); scene.add(town);
+      box(town, port.id === 'ridge' ? .8 : 1.55, .1, 1.4, dark, 0, 0, 0);
       if (port.id === 'picket') {
         // Three exposed limestone benches and a quarry crane.
         for (let i = 0; i < 3; i++) box(town, 1.2 - i * .22, .18, .42, pale, -.4, .08 + i * .16, -.65 - i * .18);
@@ -108,6 +109,27 @@
       } else if (port.id === 'corridor') {
         for (const z of [-.65, .1]) { box(town, 1.7, .38, .48, dark, -.2, .22, z); const roof = mesh(town, new T.CylinderGeometry(.25, .25, 1.7, 10, 1, false, 0, Math.PI), dark, -.2, .41, z); roof.rotation.z = Math.PI / 2; }
         for (const x of [-.8, .8]) { box(town, .065, .8, .065, ochre, x, .4, .8); } box(town, 1.75, .06, .08, ochre, 0, .8, .8);
+      } else if (port.id === 'ridge') {
+        // Narrow limestone spur with a service bridge and a small relay head.
+        box(town, .63, .75, 1.25, pale, 0, -.42, -.05);
+        box(town, 1.75, .10, .31, dark, -.42, .11, -.45);
+        for (const z of [-.58, -.32]) {
+          beam(town, new T.Vector3(-1.2, .35, z), new T.Vector3(.42, .35, z), .035, pale);
+          for (const x of [-1.1, -.35, .35]) box(town, .035, .26, .035, dark, x, .22, z);
+        }
+        box(town, .4, .36, .45, dark, -.15, .24, -.1);
+        const relay = mesh(town, new T.ConeGeometry(.18, .25, 10), pale, -.18, .58, -.12);
+        relay.rotation.z = -.6;
+      } else if (port.id === 'haven') {
+        // Coastal carrier cradle and a cantilever loading crane over the water.
+        box(town, 1.8, .2, .55, pale, 0, -.1, -.42);
+        for (const x of [-.65, .65]) {
+          box(town, .10, .48, 1.25, dark, x, .14, .3);
+          beam(town, new T.Vector3(x, .38, -.1), new T.Vector3(x * .5, .12, .65), .07, ochre);
+        }
+        box(town, .11, 1.12, .11, ochre, -.65, .6, -.45);
+        beam(town, new T.Vector3(-.65, 1.16, -.45), new T.Vector3(.74, 1.16, .2), .075, ochre);
+        beam(town, new T.Vector3(.7, 1.16, .18), new T.Vector3(.7, .38, .18), .018, pale);
       } else {
         box(town, 1.75, .25, 1.35, ochre, 0, .1, 0);
         for (const x of [-.65, .65]) for (const z of [-.45, .45]) box(town, .27, .65, .27, ochre, x, .48, z);
@@ -118,10 +140,14 @@
       mesh(town, new T.CylinderGeometry(.065, .13, 1.12, 8), dark, 0, .64, mastZ);
       box(town, .56, .065, .09, pale, 0, 1.13, mastZ);
       mesh(town, new T.SphereGeometry(.10, 10, 6), mat('beacon', colors.amber), 0, 1.25, mastZ);
+      // Native chart taps hit the physical mast before any route underneath it.
+      const mastHit = new T.Mesh(new T.CylinderGeometry(.30, .34, 1.5, 8), new T.MeshBasicMaterial({ visible: false }));
+      mastHit.position.set(0, .7, mastZ); mastHit.userData.portId = port.id; town.add(mastHit); portHits.push(mastHit);
       ports[port.id] = { point: new T.Vector3(p.x, base + 1.3, p.z + mastZ), ground: new T.Vector3(p.x, base, p.z) };
     }
-    const routeGroup = new T.Group(), ship = new T.Group(); scene.add(routeGroup, ship);
-    const state = { renderer, scene, camera, ports, routeGroup, ship, routeHits: [], shipReady: false, light };
+    const routeGroup = new T.Group(), sensorGroup = new T.Group(), markerGroup = new T.Group(), ship = new T.Group();
+    scene.add(routeGroup, sensorGroup, markerGroup, ship);
+    const state = { renderer, scene, camera, ports, portHits, routeGroup, sensorGroup, markerGroup, catalog: catalogKey(data.ports), markerPositions: [], sensorRadius: 0, ship, routeHits: [], shipReady: false, light };
     stage = state;
     new T.GLTFLoader().load('assets/overworld/halyard.glb', gltf => {
       if (stage !== state) { disposeTree(gltf.scene); return; }
@@ -130,6 +156,7 @@
       ship.add(gltf.scene); state.shipReady = true; if (host) host.dataset.halyard = 'ready';
     }, undefined, error => { if (stage === state && host) host.dataset.halyard = 'error'; console.error('Halyard model failed to load', error); });
     updateRoutes();
+    updateWorld();
   }
   function pathPoints(path, offset = 0) {
     const result = [];
@@ -178,7 +205,72 @@
       if (key !== selected) add(path, colors.cyan, .02, true, key, .10);
     }
     if (data.path?.length > 1) add(data.path, colors.amber, .055, false, selected);
-    routeSignature = JSON.stringify([data.path, data.routeOptions]);
+    routeSignature = JSON.stringify([data.routes, data.path, data.routeOptions]);
+  }
+  function worldKey() {
+    return JSON.stringify([data.markers || [], data.sensorRange, data.sensorPort || data.current]);
+  }
+  function updateWorld() {
+    if (!stage) return;
+    for (const group of [stage.markerGroup, stage.sensorGroup]) { disposeTree(group); group.clear(); }
+    stage.markerPositions = [];
+    function stroke(parent, points, color, opacity = 1, dashed = false) {
+      const geometry = new T.BufferGeometry().setFromPoints(points);
+      const material = dashed
+        ? new T.LineDashedMaterial({ color: linear(color), dashSize: .18, gapSize: .15, transparent: true, opacity, depthTest: false, toneMapped: false })
+        : new T.LineBasicMaterial({ color: linear(color), transparent: true, opacity, depthTest: false, toneMapped: false });
+      const line = new T.Line(geometry, material); line.renderOrder = 8;
+      if (dashed) line.computeLineDistances(); parent.add(line); return line;
+    }
+    const sensor = stage.ports[data.sensorPort || data.current]?.ground;
+    const radius = Number.isFinite(data.sensorRange) ? clamp(data.sensorRange, 0, 30) : 0;
+    stage.sensorRadius = radius;
+    if (sensor && radius > 0) {
+      // Split the coverage ring at the physical table edge; it never spills into the room.
+      let points = [];
+      for (let i = 0; i <= 160; i++) {
+        const angle = i / 160 * Math.PI * 2, x = sensor.x + Math.cos(angle) * radius, z = sensor.z + Math.sin(angle) * radius;
+        if (Math.abs(x) > 11.1 || Math.abs(z) > 5.9) { if (points.length > 1) stroke(stage.sensorGroup, points, colors.cyan, .38, true); points = []; continue; }
+        points.push(new T.Vector3(x, heightAt(x, z) + .12, z));
+      }
+      if (points.length > 1) stroke(stage.sensorGroup, points, colors.cyan, .38, true);
+    }
+    for (const marker of data.markers || []) {
+      const a = stage.ports[marker.from]?.ground, b = stage.ports[marker.to]?.ground;
+      if (!a || !b || !['storm', 'patrol'].includes(marker.kind)) continue;
+      // Day-indexed movement is reproducible after reload and independent of frame rate.
+      let hash = 0; for (const c of marker.id || marker.kind) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+      const fraction = Number.isFinite(marker.fraction) ? clamp(marker.fraction, 0, 1)
+        : .2 + ((((marker.day || data.day || 1) % 61) * 17 + hash % 41) % 61) / 100;
+      const point = a.clone().lerp(b, fraction); point.y = heightAt(point.x, point.z) + .55;
+      const group = new T.Group(); group.position.copy(point); group.rotation.y = Math.atan2(b.x - a.x, b.z - a.z);
+      group.userData = { id: marker.id, kind: marker.kind, day: marker.day, fraction };
+      stage.markerGroup.add(group);
+      if (marker.kind === 'storm') {
+        const cloudMaterial = new T.MeshStandardMaterial({ color: linear(0x719397), roughness: 1, transparent: true, opacity: .48, depthWrite: false });
+        for (let i = 0; i < 5; i++) {
+          const cloud = new T.Mesh(new T.SphereGeometry(.38, 12, 7), cloudMaterial);
+          cloud.position.set((i - 2) * .29, .18 + Math.sin(i * 1.9) * .06, 0); cloud.scale.set(1, .42, .7); group.add(cloud);
+        }
+        const front = [];
+        for (let i = 0; i <= 24; i++) { const x = -.95 + i / 24 * 1.9; front.push(new T.Vector3(x, -.18, -.30 + Math.sin(i / 24 * Math.PI) * .17)); }
+        stroke(group, front, colors.cyan, .85);
+        stroke(group, [new T.Vector3(-.08, .24, 0), new T.Vector3(-.22, -.07, 0), new T.Vector3(.03, -.04, 0), new T.Vector3(-.04, -.34, 0)], colors.amber);
+      } else {
+        // Three small swept patrol craft in a clear wedge formation.
+        const patrolMaterial = new T.MeshStandardMaterial({ color: linear(0x9f6a56), roughness: .8 });
+        for (const [x, z] of [[0, -.35], [-.35, .12], [.35, .12]]) {
+          const shape = new T.ConeGeometry(.14, .44, 4); shape.rotateX(Math.PI / 2);
+          const craft = new T.Mesh(shape, patrolMaterial); craft.position.set(x, .1, z); craft.scale.x = .7; group.add(craft);
+        }
+        stroke(group, [new T.Vector3(-.65, -.18, .48), new T.Vector3(0, -.18, -.66), new T.Vector3(.65, -.18, .48)], 0xc38b70, .8);
+      }
+      // A small route hazard diamond connects the scene silhouette to its affected leg.
+      const diamond = [new T.Vector3(0, -.30, -.19), new T.Vector3(.16, -.30, 0), new T.Vector3(0, -.30, .19), new T.Vector3(-.16, -.30, 0), new T.Vector3(0, -.30, -.19)];
+      stroke(group, diamond, marker.kind === 'storm' ? colors.cyan : 0xc38b70);
+      stage.markerPositions.push({ id: marker.id, kind: marker.kind, from: marker.from, to: marker.to, day: marker.day, fraction, x: point.x, y: point.y, z: point.z });
+    }
+    worldSignature = worldKey();
   }
   function reset() { zoom = 1; tilt = .80; yaw = -.04; panX = panZ = 0; }
   function attach(element) {
@@ -201,6 +293,8 @@
       const p = pointers.get(e.pointerId); pointers.delete(e.pointerId); pinch = null;
       if (!p || p.moved || e.type !== 'pointerup' || !stage) return;
       const rect = host.getBoundingClientRect(), ray = new T.Raycaster(); ray.setFromCamera(new T.Vector2((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1), stage.camera);
+      const portHit = ray.intersectObjects(stage.portHits)[0];
+      if (portHit) { callbacks?.selectPort?.(portHit.object.userData.portId); return; }
       const hit = ray.intersectObjects(stage.routeHits)[0]; if (hit) callbacks?.selectRoute?.(hit.object.userData.pathKey);
     }
     for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) host.addEventListener(type, up, options);
@@ -215,17 +309,74 @@
     if (!element) { close(); return; }
     data = next; callbacks = actions;
     if (host !== element) attach(element);
-    if (stage && JSON.stringify([data.path, data.routeOptions]) !== routeSignature) updateRoutes();
+    if (stage && stage.catalog !== catalogKey(data.ports)) dropStage();
+    if (stage && JSON.stringify([data.routes, data.path, data.routeOptions]) !== routeSignature) updateRoutes();
+    if (stage && worldKey() !== worldSignature) updateWorld();
   }
   function projectPorts() {
     if (!host || !stage) return {};
-    const rect = host.getBoundingClientRect(), result = {};
-    for (const [id, port] of Object.entries(stage.ports)) {
-      const p = port.point.clone().project(stage.camera), x = (p.x * .5 + .5) * rect.width, y = (-p.y * .5 + .5) * rect.height;
-      result[id] = { x, y, visible: Math.abs(p.x) < 1 && Math.abs(p.y) < 1 };
+    const frame = host.getBoundingClientRect(), result = {}, placed = [], gap = 5;
+    const intersects = (a, b) => a.left < b.right + gap && a.right + gap > b.left && a.top < b.bottom + gap && a.bottom + gap > b.top;
+    const blocked = [...(host.parentElement?.querySelectorAll('.chart-heading, .chart-port-card, .chart-reset') || [])]
+      .map(element => { const r = element.getBoundingClientRect(); return { left: r.left - frame.left, right: r.right - frame.left, top: r.top - frame.top, bottom: r.bottom - frame.top }; });
+    const labels = Object.entries(stage.ports).map(([id, port], index) => {
+      const projected = port.point.clone().project(stage.camera);
+      const anchor = { x: (projected.x * .5 + .5) * frame.width, y: (-projected.y * .5 + .5) * frame.height };
       const button = host.querySelector('[data-overworld-port="' + id + '"]');
-      if (button) { button.style.left = x + 'px'; button.style.top = y + 'px'; button.style.visibility = result[id].visible ? 'visible' : 'hidden'; }
+      const bounds = button?.getBoundingClientRect();
+      return { id, index, anchor, button, width: Math.max(44, bounds?.width || 44), height: Math.max(44, bounds?.height || 44), visible: Math.abs(projected.x) < 1 && Math.abs(projected.y) < 1 };
+    });
+    const priority = id => id === data.current ? 0 : id === data.selected ? 1 : 2;
+    labels.sort((a, b) => priority(a.id) - priority(b.id) || a.index - b.index);
+    for (const label of labels) {
+      const { id, anchor, button, width, height, visible } = label;
+      const preferred = { left: anchor.x - width / 2, top: anchor.y + (id === data.current ? 10 : -height - 5) };
+      const candidates = [preferred];
+      // Nearby placements first; wider rings are a deterministic fallback when panned.
+      for (const radius of [18, 36, 60, 88, 120, 160]) {
+        for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          candidates.push({ left: preferred.left + dx * radius, top: preferred.top + dy * radius });
+        }
+      }
+      function rectangle(candidate) {
+        const left = clamp(candidate.left, 7, Math.max(7, frame.width - width - 7));
+        const top = clamp(candidate.top, 7, Math.max(7, frame.height - height - 7));
+        return { left, top, right: left + width, bottom: top + height, width, height };
+      }
+      let rect;
+      for (const candidate of candidates) {
+        const next = rectangle(candidate);
+        if (![...blocked, ...placed].some(other => intersects(next, other))) { rect = next; break; }
+      }
+      // A full viewport scan handles dense zoomed/panned views without hiding controls.
+      if (!rect) {
+        const free = [];
+        for (let top = 7; top + height <= frame.height - 7; top += 12) for (let left = 7; left + width <= frame.width - 7; left += 12) {
+          const next = rectangle({ left, top });
+          if (![...blocked, ...placed].some(other => intersects(next, other))) free.push(next);
+        }
+        free.sort((a, b) => Math.hypot(a.left - preferred.left, a.top - preferred.top) - Math.hypot(b.left - preferred.left, b.top - preferred.top));
+        rect = free[0] || rectangle(preferred);
+      }
+      const overlaps = placed.filter(other => intersects(rect, other)).map(other => other.id);
+      const blockedCount = blocked.filter(other => intersects(rect, other)).length;
+      const displacement = Math.hypot(rect.left - preferred.left, rect.top - preferred.top);
+      result[id] = { x: anchor.x, y: anchor.y, visible, rect, displacement, overlaps, blockedCount };
+      if (visible) placed.push({ ...rect, id });
+      if (button) {
+        button.style.transform = 'none'; button.style.left = rect.left + 'px'; button.style.top = rect.top + 'px'; button.style.visibility = visible ? 'visible' : 'hidden';
+        let leader = host.querySelector('[data-chart-port-leader="' + id + '"]');
+        if (!leader && host.ownerDocument) {
+          leader = host.ownerDocument.createElement('span'); leader.dataset.chartPortLeader = id; leader.setAttribute('aria-hidden', 'true');
+          Object.assign(leader.style, { position: 'absolute', height: '1px', background: '#91aaa780', pointerEvents: 'none', transformOrigin: '0 50%', zIndex: '0' }); host.prepend(leader);
+        }
+        if (leader) {
+          const x = clamp(anchor.x, rect.left, rect.right), y = clamp(anchor.y, rect.top, rect.bottom);
+          Object.assign(leader.style, { display: visible && displacement > 8 ? 'block' : 'none', left: anchor.x + 'px', top: anchor.y + 'px', width: Math.hypot(x - anchor.x, y - anchor.y) + 'px', transform: 'rotate(' + Math.atan2(y - anchor.y, x - anchor.x) + 'rad)' });
+        }
+      }
     }
+    stage.labelLayout = result;
     return result;
   }
   function render(time, dt, width, height, reducedMotion) {
@@ -279,8 +430,8 @@
       root.IronVowPerformance?.recordRender(renderer.info);
     } finally { renderer.setRenderTarget(target); renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest); }
   }
-  function dropStage() { if (stage) { disposeTree(stage.scene); stage.light.shadow.map?.dispose(); stage = null; } routeSignature = null; }
+  function dropStage() { if (stage) { disposeTree(stage.scene); stage.light.shadow.map?.dispose(); stage = null; } routeSignature = worldSignature = null; }
   function close() { attach(null); dropStage(); data = callbacks = null; reset(); }
   owner.subscribe(({ type }) => { if (type === 'restored') dropStage(); });
-  root.IronVowChart = { show, render, close, reset, projectPorts, snapshot: () => ({ zoom, tilt, yaw, panX, panZ, ready: !!stage, shipReady: !!stage?.shipReady }) };
+  root.IronVowChart = { show, render, close, reset, projectPorts, snapshot: () => ({ zoom, tilt, yaw, panX, panZ, ready: !!stage, shipReady: !!stage?.shipReady, portCount: Object.keys(stage?.ports || {}).length, markers: (stage?.markerPositions || []).map(marker => ({ ...marker })), sensorRange: stage?.sensorRadius || 0, labelLayout: stage?.labelLayout || {} }) };
 })(window);
