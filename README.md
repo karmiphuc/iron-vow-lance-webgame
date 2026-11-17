@@ -2,7 +2,7 @@
 
 A self-contained, original browser tactical mech game inspired by part-based strategy games such as Front Mission 3. No original game assets are used.
 
-This repository contains the game source, assets, authoring tools, tests and fixtures. The original Site version 98 import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). The latest verified production release is **Site version 104**, recorded in [release verification](docs/release-verification.json). GitHub changes are published through the Sites release workflow.
+This repository contains the game source, assets, authoring tools, tests and fixtures. The original Site version 98 import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). The latest verified production release is **Site version 106**, recorded in [release verification](docs/release-verification.json). GitHub changes are published through the Sites release workflow.
 
 ## Run locally
 

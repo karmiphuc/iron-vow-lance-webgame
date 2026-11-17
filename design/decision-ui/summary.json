@@ -1,13 +1,13 @@
 {
   "status": "passed",
   "source": {
-    "commit": "4bcb105d0a4c49ce8f8dd07a7fb97a60eb225a5a",
-    "distTree": "f18ca45682a1ce9404ed62bf8a6c1c642fc7d545",
+    "commit": "9163c772b50e23592a19c6c911a3b98d6be42a36",
+    "distTree": "8a47cc86ebe0e8be50e00f0cffcfa13c82eb6548",
     "dirty": false
   },
   "sourceAfter": {
-    "commit": "4bcb105d0a4c49ce8f8dd07a7fb97a60eb225a5a",
-    "distTree": "f18ca45682a1ce9404ed62bf8a6c1c642fc7d545",
+    "commit": "9163c772b50e23592a19c6c911a3b98d6be42a36",
+    "distTree": "8a47cc86ebe0e8be50e00f0cffcfa13c82eb6548",
     "dirty": false
   },
   "results": [
@@ -27,15 +27,389 @@
     }
   ],
   "captures": [
-    "contracts-1024x1366.webp",
-    "combat-1366x1024.webp",
     "combat-1024x1366.webp",
-    "workshop-1366x1024.webp",
+    "combat-1366x1024.webp",
+    "contracts-1024x1366.webp",
+    "ship-1024x1366.webp",
     "workshop-1024x1366.webp",
-    "ship-1024x1366.webp"
+    "workshop-1366x1024.webp"
   ],
   "protectedGameplayFunctionsUnchanged": 260,
   "saveSchemaChanged": false,
   "nativeIPadPerformance": "unverified",
-  "review": "Astra reviewed the six actual captures and found no blocking visual issues."
+  "review": "Astra accepted the six actual iPad captures. Both final phone-only clearance and unit-row fixes preserve those layouts.",
+  "release": {
+    "siteVersion": 106,
+    "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+    "sourceCommit": "8bffc7c3967e39dbd2bb6b911e5a9297b9c72237",
+    "githubCommit": "9163c772b50e23592a19c6c911a3b98d6be42a36",
+    "distTree": "8a47cc86ebe0e8be50e00f0cffcfa13c82eb6548",
+    "verifiedAt": "2026-11-17T20:20:50.487490+00:00",
+    "localReleaseSourceSha256": "2649a825818558833a887727d92aef8f5cca996c89a8d6bec5fd962116418459",
+    "simulationSuites": 66,
+    "localBrowser": {
+      "desktop": 23,
+      "touch": 23,
+      "result": "passed",
+      "scenarios": [
+        "checkDecisionUI",
+        "sharedScene",
+        "checkLivePortraits",
+        "checkLionTrial",
+        "checkMechComputer",
+        "checkMovePreview",
+        "checkRidgeCombat",
+        "checkVehicles",
+        "checkShields",
+        "checkArmory",
+        "checkCampaign",
+        "checkShip",
+        "checkOverworld",
+        "checkOverworldLiving",
+        "checkOverworldPortEvents",
+        "checkHangar",
+        "checkHangarLive",
+        "checkWorkshopTurntable",
+        "checkWorkshopPaint",
+        "checkWorkshopPortraits",
+        "checkCareerTabs",
+        "checkDutyRoster",
+        "bastionSharedRig"
+      ],
+      "resumeGuard": "Retained passing scenario hashes match the final suite. Initial runtime differs only by measured phone tactical-map clearance and bounded phone unit rows. Decision UI and Overworld were rerun after the row fix; final production Campaign also passed. Existing scene/portrait/vehicle/equipment cases are retained. All assets, rules and save schema are unchanged.",
+      "retainedDesktopCases": 19,
+      "retainedTouchCases": 6
+    },
+    "liveFilesCompared": 158,
+    "liveBrowser": {
+      "result": "passed",
+      "desktop": 10,
+      "touch": 10,
+      "scenarios": [
+        "checkDecisionUI",
+        "checkCampaign",
+        "checkShip",
+        "checkOverworld",
+        "checkOverworldLiving",
+        "checkOverworldPortEvents",
+        "checkHangar",
+        "checkWorkshopTurntable",
+        "checkWorkshopPaint",
+        "checkWorkshopPortraits"
+      ],
+      "resumeGuard": "14 successful Ship, facility, world-service and Workshop cases retained from v105. The only runtime delta to v106 is four phone combat-row CSS declarations; all JS and assets match. Final v106 Decision UI, Campaign and Overworld passed on desktop and touch, including the three-unit 320px viewport and manual tap. All 158 v106 runtime files matched.",
+      "failedAttemptsBeforePass": 3
+    },
+    "environment": {
+      "browser": "Chromium",
+      "touch": "iPhone 13 emulation; focused 1024x1366 and 1366x1024 iPad touch layouts",
+      "graphics": "Software WebGL with documented behavior-check policy",
+      "nativeIPad": "unverified"
+    },
+    "evidenceSha256": {
+      "retained-browser": "81bfa10ca523907017417a35541a28c4a932b2fa38beb5cc934ff4de4e15a11a",
+      "desktop-retained2": "f2a719348c854000aea1e4405e6093e854b083ce9acecc85ae386efd85011144",
+      "desktop-final": "23d53a7f52d81f749dc0efd91ff80d125081d38012003cd5cd2999f6ff4d217f",
+      "touch-retained": "0238674606caff72449967266451e453e512a452ae6e530b9aaa84d3168737c9",
+      "touch-retained2": "801c4880b1ea302c1ddc14c2958cfb67e872d9790bb7e716370a755b1cdb3e1c",
+      "touch-retained3": "36f675a6d0119d6475554aacfe1a2803a4890fb0ac2db0b6651e6df8cd2987c6",
+      "ridge": "03004559d09dc8819f8c06e83e4e4360c0c3ccc3f13d0a4587d91cc9251278a1",
+      "desktop-decision-final": "91ae41e01ea1dca3926afeabeedba2d921ae9e2388d50b69331372c55dc2ca64",
+      "desktop-paint-final": "be50462f5b36188e7e79256ad8d5747fb908b57ddcd0383e1ed217705acacd36",
+      "touch-remaining": "d27f3a19c26aac4b5ae3d86fca193d873e169bc56e710e534a4553b2f8420905",
+      "row-release": "ee7f6616ca734a3662878497816d9080b9d3eaeeba975f438afdc588ee4d5d61",
+      "liveBrowser": "08ecee4645eb5f406129f87e6d50571fe4a5b252c55a791681769003889b04a5",
+      "liveRetained": "3a2b8288c4724b1499992bafc2b7658bc9a1a60750a4c4158456fe533fb9803e",
+      "liveRemaining": "f48cdbc9e7d94c792ced3925c25f4bb1e961de4bf164028a39130fc2f93eb52c",
+      "liveFinal": "525c3c08f2860537a324826b764faaad4f691734dcbb72172937c971d8492b0d",
+      "packageLog": "8537491c9fa01f3a7d0e7f4d50fdde77e1ffd93b590714fa69c4db5571bbfe0d",
+      "liveGateLog": "0548c29dab15fdd07273870f2380896f72bd475bd073d3be5d9d2024eab3befb"
+    },
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_4bc64dcfc09c81919d7d012704e84186",
+    "deploymentId": "appgdep_6afcb6c693b88191889a1d5be819ed0a",
+    "evidence": "design/decision-ui/summary.json",
+    "supersedes": {
+      "siteVersion": 105,
+      "sourceCommit": "5164bd096c52c27d52e3da046735c7e4b855a732",
+      "reason": "Live narrow-phone verification exposed three-unit combat row overflow. Fixed and checked before final signoff."
+    }
+  },
+  "browserChecks": [
+    {
+      "name": "checkDecisionUI",
+      "device": "desktop",
+      "scenarioSha256": "1b6e395c5bb555df959fe246742b2f51a1d2a3b4e8a725710bd3ae7600b028a0",
+      "report": "row-release"
+    },
+    {
+      "name": "sharedScene",
+      "device": "desktop",
+      "scenarioSha256": "1d1c784931bd28ee1427f6ca82d162d3a841c07dd43cde1515042fc246833634",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkLivePortraits",
+      "device": "desktop",
+      "scenarioSha256": "079b56a8dffda88e3451d8f51054988938608c0c3575bee57400376d5d303e06",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkLionTrial",
+      "device": "desktop",
+      "scenarioSha256": "c26d4573a274124b065a312d8b11b802d9303b5e5128f1154a2d8c832598eec1",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkMechComputer",
+      "device": "desktop",
+      "scenarioSha256": "873ad0edaa5d179ea503e3d1093b2c2276723cc09c6ed550416831851cf2e191",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkMovePreview",
+      "device": "desktop",
+      "scenarioSha256": "23344bf081dbc86ff8fa10283c6807d3a10a1356ec1444f5faae380550b304a1",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkRidgeCombat",
+      "device": "desktop",
+      "scenarioSha256": "144af232ad86e01ba9eedaa46c95b253807762d128229f942bf2cc720db921d2",
+      "report": "ridge"
+    },
+    {
+      "name": "checkVehicles",
+      "device": "desktop",
+      "scenarioSha256": "f5cd1c3c6775ea5530bfe115a995dcf898c77c51ce5a4e060005be665f91b2e4",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkShields",
+      "device": "desktop",
+      "scenarioSha256": "6fec9501abcc3c5420deb0b93c2cf962b12b248565f6db0d0aa2c5c864f6d263",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkArmory",
+      "device": "desktop",
+      "scenarioSha256": "19875ed86e9ac216920bacc9b8deaad53a543390a9699db8e6fa43f84a29954f",
+      "report": "retained-browser"
+    },
+    {
+      "name": "checkCampaign",
+      "device": "desktop",
+      "scenarioSha256": "947c519e6b3562e283b01c88aa61488cf6fb837a0beba879b08fbc6aef1b5563",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkShip",
+      "device": "desktop",
+      "scenarioSha256": "8dcfd10e2b0c4c4ee68cd6a4ce3b720b00887af8d2c91e22884bf4a2c7948344",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkOverworld",
+      "device": "desktop",
+      "scenarioSha256": "4e94d411e5d8a560d7df37863f4d6e33fcd3d45d1e5160c61253e818fb887f05",
+      "report": "row-release"
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "desktop",
+      "scenarioSha256": "2a73d3514c00bbf08f39a7b865b7507ade690e58d450b7ce67ef4ca22743df8f",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "desktop",
+      "scenarioSha256": "af0250bb6de95b5ac76aada88e92e03afc047a821c622eccf78b903570b33665",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkHangar",
+      "device": "desktop",
+      "scenarioSha256": "180d6e950800b047d50a575d4efecb1adc8985f0dabe7666dfb50b908f63fc1e",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkHangarLive",
+      "device": "desktop",
+      "scenarioSha256": "b23a693701d65a8106df7c42c0b0826f97c6f4536c247e0031b4036adf191c00",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkWorkshopTurntable",
+      "device": "desktop",
+      "scenarioSha256": "9216758dd08cebb36cbb8097501b0a37801415cccd88141862f846a7c82cfd2c",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkWorkshopPaint",
+      "device": "desktop",
+      "scenarioSha256": "8db514a8ec4ef3db7d444fd68d443b03fcd2221c88b007d1581eb8f30f5f8756",
+      "report": "desktop-paint-final"
+    },
+    {
+      "name": "checkWorkshopPortraits",
+      "device": "desktop",
+      "scenarioSha256": "8b228efac5249b5372ac2475557088a524050ac99524ceb6ba1a87fb72ab5ec5",
+      "report": "desktop-retained2"
+    },
+    {
+      "name": "checkCareerTabs",
+      "device": "desktop",
+      "scenarioSha256": "7c146c76fcb8b8fd9c24f5ffc05642e6a83319ead91fd7f6616f5c65ea8c6c1f",
+      "report": "desktop-final"
+    },
+    {
+      "name": "checkDutyRoster",
+      "device": "desktop",
+      "scenarioSha256": "34f2d8cccc87e9fb98f3a1539fc971d1cd26d11f824d32fd50131277399f5d82",
+      "report": "desktop-final"
+    },
+    {
+      "name": "bastionSharedRig",
+      "device": "desktop",
+      "scenarioSha256": "ec449619631cb782063b97a46f40a3e3eebe40c8e0b372b5deaedbd80a1cc598",
+      "report": "desktop-final"
+    },
+    {
+      "name": "sharedScene",
+      "device": "touch",
+      "scenarioSha256": "1d1c784931bd28ee1427f6ca82d162d3a841c07dd43cde1515042fc246833634",
+      "report": "touch-retained"
+    },
+    {
+      "name": "checkLivePortraits",
+      "device": "touch",
+      "scenarioSha256": "079b56a8dffda88e3451d8f51054988938608c0c3575bee57400376d5d303e06",
+      "report": "touch-retained"
+    },
+    {
+      "name": "checkLionTrial",
+      "device": "touch",
+      "scenarioSha256": "c26d4573a274124b065a312d8b11b802d9303b5e5128f1154a2d8c832598eec1",
+      "report": "touch-retained"
+    },
+    {
+      "name": "checkVehicles",
+      "device": "touch",
+      "scenarioSha256": "f5cd1c3c6775ea5530bfe115a995dcf898c77c51ce5a4e060005be665f91b2e4",
+      "report": "touch-retained"
+    },
+    {
+      "name": "checkShields",
+      "device": "touch",
+      "scenarioSha256": "6fec9501abcc3c5420deb0b93c2cf962b12b248565f6db0d0aa2c5c864f6d263",
+      "report": "touch-retained"
+    },
+    {
+      "name": "checkArmory",
+      "device": "touch",
+      "scenarioSha256": "19875ed86e9ac216920bacc9b8deaad53a543390a9699db8e6fa43f84a29954f",
+      "report": "touch-retained"
+    },
+    {
+      "name": "checkDecisionUI",
+      "device": "touch",
+      "scenarioSha256": "1b6e395c5bb555df959fe246742b2f51a1d2a3b4e8a725710bd3ae7600b028a0",
+      "report": "row-release"
+    },
+    {
+      "name": "checkMechComputer",
+      "device": "touch",
+      "scenarioSha256": "873ad0edaa5d179ea503e3d1093b2c2276723cc09c6ed550416831851cf2e191",
+      "report": "touch-retained2"
+    },
+    {
+      "name": "checkMovePreview",
+      "device": "touch",
+      "scenarioSha256": "23344bf081dbc86ff8fa10283c6807d3a10a1356ec1444f5faae380550b304a1",
+      "report": "touch-retained2"
+    },
+    {
+      "name": "checkCampaign",
+      "device": "touch",
+      "scenarioSha256": "947c519e6b3562e283b01c88aa61488cf6fb837a0beba879b08fbc6aef1b5563",
+      "report": "touch-retained3"
+    },
+    {
+      "name": "checkShip",
+      "device": "touch",
+      "scenarioSha256": "8dcfd10e2b0c4c4ee68cd6a4ce3b720b00887af8d2c91e22884bf4a2c7948344",
+      "report": "touch-retained3"
+    },
+    {
+      "name": "checkOverworld",
+      "device": "touch",
+      "scenarioSha256": "4e94d411e5d8a560d7df37863f4d6e33fcd3d45d1e5160c61253e818fb887f05",
+      "report": "row-release"
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "touch",
+      "scenarioSha256": "2a73d3514c00bbf08f39a7b865b7507ade690e58d450b7ce67ef4ca22743df8f",
+      "report": "touch-retained3"
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "touch",
+      "scenarioSha256": "af0250bb6de95b5ac76aada88e92e03afc047a821c622eccf78b903570b33665",
+      "report": "touch-retained3"
+    },
+    {
+      "name": "checkHangar",
+      "device": "touch",
+      "scenarioSha256": "180d6e950800b047d50a575d4efecb1adc8985f0dabe7666dfb50b908f63fc1e",
+      "report": "touch-retained3"
+    },
+    {
+      "name": "checkHangarLive",
+      "device": "touch",
+      "scenarioSha256": "b23a693701d65a8106df7c42c0b0826f97c6f4536c247e0031b4036adf191c00",
+      "report": "touch-retained3"
+    },
+    {
+      "name": "checkWorkshopTurntable",
+      "device": "touch",
+      "scenarioSha256": "9216758dd08cebb36cbb8097501b0a37801415cccd88141862f846a7c82cfd2c",
+      "report": "touch-retained3"
+    },
+    {
+      "name": "checkRidgeCombat",
+      "device": "touch",
+      "scenarioSha256": "144af232ad86e01ba9eedaa46c95b253807762d128229f942bf2cc720db921d2",
+      "report": "ridge"
+    },
+    {
+      "name": "checkWorkshopPaint",
+      "device": "touch",
+      "scenarioSha256": "8db514a8ec4ef3db7d444fd68d443b03fcd2221c88b007d1581eb8f30f5f8756",
+      "report": "touch-remaining"
+    },
+    {
+      "name": "checkWorkshopPortraits",
+      "device": "touch",
+      "scenarioSha256": "8b228efac5249b5372ac2475557088a524050ac99524ceb6ba1a87fb72ab5ec5",
+      "report": "touch-remaining"
+    },
+    {
+      "name": "checkCareerTabs",
+      "device": "touch",
+      "scenarioSha256": "7c146c76fcb8b8fd9c24f5ffc05642e6a83319ead91fd7f6616f5c65ea8c6c1f",
+      "report": "touch-remaining"
+    },
+    {
+      "name": "checkDutyRoster",
+      "device": "touch",
+      "scenarioSha256": "34f2d8cccc87e9fb98f3a1539fc971d1cd26d11f824d32fd50131277399f5d82",
+      "report": "touch-remaining"
+    },
+    {
+      "name": "bastionSharedRig",
+      "device": "touch",
+      "scenarioSha256": "ec449619631cb782063b97a46f40a3e3eebe40c8e0b372b5deaedbd80a1cc598",
+      "report": "touch-remaining"
+    }
+  ]
 }
