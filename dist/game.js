@@ -131,7 +131,7 @@ const PILOT_TREES=[
   ]},
   {name:'Saboteur',glyph:'lightning',nodes:[
    {id:'weak-points',name:'Weak Points',label:'+15% power against arms and legs',effects:{limbPower:.15}},
-   {id:'cockpit-read',name:'Cockpit Read',label:'+2 percentage points cockpit hit chance per round',effects:{pilotHit:.10}},
+   {id:'cockpit-read',name:'Cockpit Read',label:'+2 percentage points cockpit hit chance per attack',effects:{pilotHit:.10}},
    {id:'killshot',name:'Killshot',label:'Deadeye doubles attack power',effects:{deadeye:.50}},
    {id:'system-pierce',name:'System Pierce',label:'Hits on arms or legs bypass at least half of armor',effects:{limbPierce:.5}},
    {id:'signal-jam',name:'Signal Jam',label:'Destroy an arm to stop that attack’s counter',effects:{armJam:true}},
@@ -161,7 +161,7 @@ const PILOT_TREES=[
     {id:'scout-optics',name:'Long Glass',label:'+2 tiles Target Paint range',effects:{paintRange:2}},
     {id:'scout-grid',name:'Grid Reference',label:'+10 percentage points Target Paint accuracy',effects:{paintAim:.10}},
     {id:'scout-track',name:'Persistent Track',label:'Target Paint covers 2 allied attacks',effects:{paintShots:2}},
-    {id:'scout-shot',name:'Precision Optics',label:'+2 percentage points cockpit hit chance per round',effects:{pilotHit:.10}},
+    {id:'scout-shot',name:'Precision Optics',label:'+2 percentage points cockpit hit chance per attack',effects:{pilotHit:.10}},
     {id:'scout-breach',name:'Weak Point',label:'Painted targets take 20% more allied weapon damage',effects:{paintPower:.20}},
     {id:'scout-lock',name:'Perfect Track',label:'Target Paint covers 3 allied attacks',effects:{paintShots:3}}
    ]},
