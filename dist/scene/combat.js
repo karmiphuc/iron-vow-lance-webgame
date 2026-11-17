@@ -23,14 +23,24 @@ root.IronVowCombat={create(scene,api){
   const part=guard?'shield':contact?.part||'body',to=point(target,part);
   if(contact&&!contact.hit)to.add(V3(.6,0,.4));
   const mounted=api.models.get(actor.id)?.entry;
-  if(mounted?.primary)root.IronVowFoundry.aimMounted(mounted.m,mounted.primary,to,1,mounted.primarySocket?mounted.primary.mount:null);
+  const native=mounted?.m.nativeV2,shoulder=socket.startsWith('shoulderMuzzle'),alternate=socket.endsWith('2');
+  const weapon=native&&shoulder?mounted.shoulderWeapon:mounted?.primary;
+  if(weapon){
+   const selected=alternate?(weapon.muzzle2||weapon.muzzle):weapon.muzzle;
+   const pivot=native&&shoulder?weapon.mount:mounted.primarySocket?weapon.mount:null;
+   root.IronVowFoundry.aimMounted(mounted.m,native?{muzzle:selected}:weapon,to,1,pivot);
+   native?.sync();
+  }
   const adapter=!mounted?root.IronVowAdapterWeapons.aimAt(actor,to):null;
   const from=point(actor,socket);
   const flight=Math.max(.025,contact?.travel||attackProfile(actor,w.id).travel);
-  const entry=mounted,barrel=entry?.primary||adapter,axis=barrel?.muzzle?.getWorldDirection(V3()),muzzle=barrel?.muzzle?.getWorldPosition(V3());
+  const entry=mounted,barrel=weapon||adapter;
+  const expectedMarker=alternate?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
+  const aimMarker=native?expectedMarker:barrel?.muzzle;
+  const axis=aimMarker?.getWorldDirection(V3()),muzzle=aimMarker?.getWorldPosition(V3());
   const aimError=axis&&muzzle?axis.angleTo(to.clone().sub(muzzle)):null;
-  const expectedMarker=socket==='muzzle2'||socket==='shoulderMuzzle2'?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
-  log('launch',{archetype:kind,expectedOrigin:expectedMarker?.getWorldPosition(V3()).toArray(),actorAlive:actor.alive,aimError,mounted:entry?.m?barrel?.mount.parent===(entry.primarySocket||entry.m.rig.arms.R.so):null,actor:actor.id,target:target.id,weapon:w.id,index,socket,origin:from.toArray(),targetPoint:to.toArray(),flight});
+  const carrier=barrel?.carrier||entry?.primarySocket||entry?.m.rig.arms.R.so;
+  log('launch',{archetype:kind,expectedOrigin:expectedMarker?.getWorldPosition(V3()).toArray(),actorAlive:actor.alive,aimError,mounted:entry?.m?Boolean(barrel&&barrel.mount.parent===carrier):null,actor:actor.id,target:target.id,weapon:w.id,index,socket,origin:from.toArray(),targetPoint:to.toArray(),flight});
   const model=api.models.get(actor.id)?.entry?.m;
   if(model){model.recoil=Math.max(model.recoil,.8);model.s.comp.v-=.28;}
   const targets=(w.scatter?selected:[contact]).filter(Boolean).map(c=>{const p=point(target,guard?'shield':c.part);return c.hit?p:p.add(V3(.5+(c.index%3)*.17,-.3,.2));});

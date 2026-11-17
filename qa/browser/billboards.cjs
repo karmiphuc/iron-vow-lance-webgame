@@ -9,7 +9,7 @@ module.exports=async function temporaryBillboards({page,origin}){
  await page.route(pattern,route=>{sawTank();const pending=(async()=>{await new Promise(resolve=>held.push(resolve));await route.continue();})();inFlight.push(pending);return pending;});
  try{
   await page.goto(origin,{waitUntil:'domcontentloaded',timeout:120000});await page.waitForFunction(()=>window.__ironVow&&document.querySelector('#nav button'));
-  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[1,2,3]}));
+  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[1,2,11]}));
   await Promise.race([requested,new Promise((_,reject)=>setTimeout(()=>reject(Error('Delayed tank image was never requested')),30000))]);
   await page.waitForFunction(()=>battle.units.filter(IronVowScene.isLive).every(u=>IronVowScene.models.get(u.id)?.entry.armed),null,{timeout:120000});
   assert.equal(await page.evaluate(()=>IronVowScene.ready),false,'A pending vehicle image keeps the battlefield in its loading state');
@@ -24,7 +24,7 @@ module.exports=async function temporaryBillboards({page,origin}){
   });
   assert.ok(tank.body>200,'A delayed vehicle must redraw its body; a cached floor shadow alone fails this regression');
   assert.equal(tank.uploaded,tank.version,'The updated canvas texture actually reached WebGL');
-  for(const frames of [[1,2,3],[4,11,13],[14,15,16],[17,18,19],[20,3,1]]){
+  for(const frames of [[1,2,11],[4,11,13],[14,15,16],[17,18,19],[20,2,1]]){
    await page.evaluate(frames=>__ironVow.start({seed:4242,frames}),frames);await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
    assert.equal(await page.locator('#end').isEnabled(),true,'Cached assets in a new battle re-enable its actual action controls');
    const records=await page.evaluate(()=>battle.units.filter(u=>u.team==='ally').map(u=>{

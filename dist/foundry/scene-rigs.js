@@ -78,6 +78,7 @@ function setCamera(elevation,azimuth=0){
  camera.updateMatrixWorld(true);
 }
 function disposeRig(m){
+ m.nativeV2?.dispose();
  const unique=new Set([m.build.visorMat,m.build.stackMat,...(m.build.ownedMaterials||[])]);
  if(m.live)for(const entries of Object.values(m.build.parts))
   for(const entry of entries)unique.add(entry.m.material);
@@ -176,12 +177,12 @@ function draw(u,t,pose,scope,model,custom){
  let entry=cache.get(key);
 
  if(!entry){
-  const m=custom==='warden'?window.IronVowWardenRig?.build(u.team,u.paint,{trim:u.trim}):custom==='bastion'?bastion.buildRuntime(u.team,u.paint,u.trim):buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
+  const m=custom==='rig-v2'?window.IronVowRigV2.build(u):custom==='warden'?window.IronVowWardenRig?.build(u.team,u.paint,{trim:u.trim}):custom==='bastion'?bastion.buildRuntime(u.team,u.paint,u.trim):buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
   if(!m)return null;
   entry={m,surface:makeSurface(),stamp:null,anchors:{}};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
- const m=entry.m,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
+ const m=entry.m,v2=m.nativeV2,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
@@ -226,7 +227,7 @@ function draw(u,t,pose,scope,model,custom){
  else if(pose.land>0)m.s.comp.x=Math.min(m.s.comp.x,-pose.land*.23);
  // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
  m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
- m.primaryWeapon=entry.primary&&u.hp.right>0&&!entry.primarySocket?entry.primary:null;
+ m.primaryWeapon=!v2&&entry.primary&&u.hp.right>0&&!entry.primarySocket?entry.primary:null;
  animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?world.airborne:!step,airborne:world?.airborne,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
@@ -239,7 +240,13 @@ function draw(u,t,pose,scope,model,custom){
  }
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
- if(armory&&!entry.armed){
+ if(v2){
+  entry.primary=v2.primary;
+  entry.secondary=u.melee==='cleaver'&&!u.shield?v2.cleaver:null;
+  entry.shoulderWeapon=u.shoulder==='vesper-shoulder'?v2.vesper:null;
+  entry.armed=!u.shield||Boolean(armory);
+  v2.pose(u,pose);
+ }else if(armory&&!entry.armed){
   const profile=window.IronVowWeaponFX?.get(u.weapon);
   if(profile?.socket?.startsWith('shoulder')){
    const socket=new T.Object3D();socket.name='mount.shoulderR';socket.position.set(m.dims.shX,m.dims.shY+.55,-.25);m.rig.spine.add(socket);entry.primarySocket=socket;
@@ -257,18 +264,21 @@ function draw(u,t,pose,scope,model,custom){
   if(custom==='warden'||custom==='bastion')entry.shield?.mount.scale.setScalar(.62);
   if(!entry.shield)delete entry.anchors.shield;
  }
- m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:entry.primary||{};
+ const shoulderAttack=u.attack?.kind==='missile'&&entry.shoulderWeapon;
+ const barrel=shoulderAttack||entry.primary;
+ m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:barrel||{};
  arsenal.poseShield(entry.shield,u,face);
- if(entry.primary){
+ if(!v2&&entry.primary){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
   if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
   else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
  }
- if(entry.secondary){
+ if(!v2&&entry.secondary){
   entry.secondary.mount.visible=u.alive&&u.hp.left>0;
   arsenal.animate(entry.secondary,pose);
  }
- if(world&&u.alive&&u.hp.right>0&&!melee&&aim>.01)aimMounted(m,entry.primary,world.aim,Math.min(1,aim),entry.primarySocket?entry.primary.mount:null);
+ if(world&&u.alive&&u.hp[shoulderAttack?'body':'right']>0&&!melee&&aim>.01)aimMounted(m,barrel,world.aim,Math.min(1,aim),shoulderAttack?.mount||(entry.primarySocket?entry.primary.mount:null));
+ v2?.sync();
  m.cont.updateMatrixWorld(true);
  if(!world){
   setCamera(.46);

@@ -11,7 +11,10 @@ const dampAngle=(a,b,k,dt)=>a+wrapA(b-a)*(1-Math.exp(-k*dt));
 function spr(s,k,d,dt){s.v+=(-k*s.x-d*s.v)*dt;s.x+=s.v*dt;}
 const VC=window.VowChassis;
 function makeMech(frame,team,upgrade,tag,paint){
-  const b=VC.build(frame,team,tag,paint),cont=new T.Group();cont.rotation.order='YXZ';cont.add(b.root);const r=b.rig;
+  return createMech(VC.build(frame,team,tag,paint),frame,team,upgrade);
+}
+function createMech(b,frame,team,upgrade){
+  const cont=new T.Group();cont.rotation.order='YXZ';cont.add(b.root);const r=b.rig;
   const m={cont,body:b.root,rig:r,dims:b.dims,build:b,frame,team,yaw:0,scale:1,
     gait:{phase:0,w:0},legs:r.legs.map(()=>({planted:V3(),from:V3(),to:V3(),swing:false,settle:null,foot:V3()})),
     s:{comp:{x:0,v:0},pitch:{x:0,v:0},roll:{x:0,v:0},arm:{x:0,v:0},kx:{x:0,v:0},kz:{x:0,v:0}},
@@ -395,5 +398,5 @@ function mountPoints(m){
  }
  return m.mountPoints;
 }
-window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,MORTAR,behemothBrace,setPartState,wreckMech,mountPoints};
+window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,createMech,animateMech,lungeK,MEL,MORTAR,behemothBrace,setPartState,wreckMech,mountPoints};
 })();

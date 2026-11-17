@@ -4,6 +4,7 @@ const path = require('node:path');
 const { previewRig } = require('./preview-rig-v2.cjs');
 const checkBrowser = require('./check-browser.cjs');
 const checkVehicleScene = require('./browser/vehicles.cjs');
+const checkGatecrasherScene = require('./browser/gatecrasher-v2.cjs');
 
 async function main() {
   const [flag, directory] = process.argv.slice(2);
@@ -20,13 +21,28 @@ async function main() {
     screenshot: path.join(directory, 'cicada.webp'),
     cicada: true,
   });
+  const infantry = {};
+  for (const name of ['li-01', 'li-02']) {
+    infantry[name] = await previewRig({
+      file: path.join(assets, name + '.glb'),
+      screenshot: path.join(directory, name + '.webp'),
+      rigid: true,
+    });
+  }
   const vehicles = { desktop: null, touch: null };
-  await checkBrowser(undefined, [async function checkVehicles(context) {
-    vehicles[context.mobile ? 'touch' : 'desktop'] = await checkVehicleScene({ ...context, out: directory });
-  }]);
-  const summary = { status: 'pass', seed: 4242, gatecrasher, cicada, vehicles };
+  const liveGatecrasher = { desktop: null, touch: null };
+  await checkBrowser(undefined, [
+    async function checkVehicles(context) {
+      vehicles[context.mobile ? 'touch' : 'desktop'] = await checkVehicleScene({ ...context, out: directory });
+    },
+    async function checkGatecrasherV2(context) {
+      const { gait, ...results } = await checkGatecrasherScene({ ...context, out: directory });
+      liveGatecrasher[context.mobile ? 'touch' : 'desktop'] = { plantedFeet: gait.plantedPairs > 0, ...results };
+    },
+  ]);
+  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, vehicles };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
-  console.log(`PASS Phase 3 checkpoint: ${gatecrasher.loadouts.length} Gatecrasher loadouts, Cicada with ${cicada.triangles} triangles, live tank and gunship`);
+  console.log(`PASS Phase 3 checkpoint: live Gatecrasher, tank and gunship, ${gatecrasher.loadouts.length} Gatecrasher loadouts, Cicada and both Infantry exports`);
 }
 
 main().catch(error => {

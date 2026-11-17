@@ -1088,5 +1088,5 @@ function weapon(id,team,mp){
   return o;
 }
 
-window.VowChassis={skirtPose,composeDims,solveLeg,build,weapon,DIMS,PAL,damagedOf,wreckOf,releaseOwnedMaterials,SH};
+window.VowChassis={skirtPose,composeDims,solveLeg,build,weapon,paint,DIMS,PAL,damagedOf,wreckOf,releaseOwnedMaterials,SH};
 })();

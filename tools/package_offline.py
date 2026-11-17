@@ -19,10 +19,10 @@ assets = {
     if path.suffix in {".webp", ".svg", ".mp3", ".wav", ".woff2", ".glb"}
 }
 
-arsenal = dist / "rig-bench" / "weapons.glb"
-assets["rig-bench/weapons.glb"] = (
-    "data:model/gltf-binary;base64," + base64.b64encode(arsenal.read_bytes()).decode("ascii")
-)
+for asset in ("rig-bench/weapons.glb", "rig-bench/shields.glb", "rig-bench/rig-v2/gatecrasher-r2-reference.glb"):
+    assets[asset] = (
+        "data:model/gltf-binary;base64," + base64.b64encode((dist / asset).read_bytes()).decode("ascii")
+    )
 
 def stylesheet(path):
     path = urlsplit(path).path

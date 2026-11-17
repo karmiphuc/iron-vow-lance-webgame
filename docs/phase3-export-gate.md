@@ -1,6 +1,6 @@
 # Phase 3 asset export gate
 
-Issue #13 starts with Gatecrasher. Blender MCP 5.2.4 produced reference exports from the editable Gatecrasher R2 and Cicada scenes. The tank and gunship now use live battle meshes. Live chassis integration and the remaining exports are pending.
+Issue #13 starts with Gatecrasher. Gatecrasher R2, the tank and the gunship now use live battle meshes. Blender MCP 5.2.4 also produced the Cicada and Line Infantry exports for their upcoming runtime integration.
 
 The legacy Prototype Bay Gatecrasher draws 162,386 triangles. The new `dist/rig-bench/rig-v2/gatecrasher-r2-reference.glb` draws 54,252 triangles with the integral cannon, Arc Cleaver and Vesper pod. It is separate from the Prototype Bay model because that viewer requires its authored motion clips. The reference is equipped as one file, so no extra weapon GLB is passed to the gate for this configuration.
 
@@ -10,7 +10,11 @@ The exported `socket.L` and `mount.shoulderR` subtrees contain 1,040 and 3,330 t
 
 See the [Phase 3 evidence](../design/phase3/README.md) for the Chromium rig and loadout checks. The browser gate also checks shield grip alignment and shield disappearance after left-arm loss.
 
+The sortie loads Gatecrasher's meshopt GLB on demand. A normalized joint hierarchy feeds the existing Foundry animator and transfers its pose to the authored skin. The two Morrow barrels, optional Vesper rack, cleaver tip and shield use the exported anchors. Vesper remains usable after right-arm loss because it draws from the body subsystem. Gatecrasher keeps the authored paint textures and the battle scene releases its geometry on sortie exit.
+
 `tools/export_cicada_v2.py` exposes `export_cicada(source, output)` for Blender MCP. The input is the recovered `native-mask-source/cicada.blend`, SHA-256 `80e31189e9e072cc2c9c06514c3223a7f9dbd38a2770898896a1b1db21957023`. The meshopt export retains both integrated Locust racks and the Pulse Bash housing, with 49,978 triangles in the factory loadout. The isolated export restored the active scene and the input hash matched after export.
+
+`tools/export_infantry_v2.py` exposes `export_infantry(source, output)` for Blender MCP. Use `Line-Infantry/R32/Line-Infantry-R32-Service.blend` (SHA-256 `66b8429c8a9634b5ab0aa02cb5d0d50cd9ce958d04661481d51b91b9b5beab38`) and `Line-Infantry/Elite/E7/Line-Infantry-Elite.blend` (SHA-256 `4523fb0470d0a297527a332a0590384adabd8a18b66e88e235e254e7091a317e`). Each export retains the right carbine and muzzle. Batching joins the pieces on the same bone only when their damage part and detach flag match. Source hashes and the active Blender scene were verified after both exports.
 
 `tools/render_vehicles.py` exposes `export_vehicle_motion(output)` for Blender MCP. It builds the procedural Javelin tank and Kite gunship in a temporary scene with body and muzzle anchors. Each GLB batches the original motion geometry by material. The sortie loads the models it needs and releases the shared geometry on exit. The existing sprites cover failed loads, and the offline package embeds both GLBs.
 

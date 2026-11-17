@@ -61,6 +61,26 @@
     "colors": 1003,
     "glError": 0
   },
+  "liveGatecrasher": {
+    "desktop": {
+      "plantedFeet": true,
+      "morrow": 2,
+      "vesper": 2,
+      "cleaver": true,
+      "damage": true,
+      "disposal": 159,
+      "contexts": 1
+    },
+    "touch": {
+      "plantedFeet": true,
+      "morrow": 2,
+      "vesper": 2,
+      "cleaver": true,
+      "damage": true,
+      "disposal": 159,
+      "contexts": 1
+    }
+  },
   "cicada": {
     "triangles": 49978,
     "skinned": 116,
@@ -80,6 +100,36 @@
     "loadouts": [],
     "colors": 1047,
     "glError": 0
+  },
+  "infantry": {
+    "li-01": {
+      "triangles": 49790,
+      "skinned": 0,
+      "tagged": 146,
+      "motion": [
+        {
+          "anchor": "muzzle.main",
+          "movement": 0.5559830416895851
+        }
+      ],
+      "loadouts": [],
+      "colors": 737,
+      "glError": 0
+    },
+    "li-02": {
+      "triangles": 50466,
+      "skinned": 0,
+      "tagged": 152,
+      "motion": [
+        {
+          "anchor": "muzzle.main",
+          "movement": 0.3174541251845052
+        }
+      ],
+      "loadouts": [],
+      "colors": 824,
+      "glError": 0
+    }
   },
   "vehicles": {
     "desktop": {

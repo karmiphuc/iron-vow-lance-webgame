@@ -3,12 +3,15 @@
 'use strict';
 const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=7.4,HEIGHT=3.4;
 const LIVE=new Set([0,5,6,7,8,9,10,12]);
+const rigV2=root.IronVowRigV2;
 let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let cameraReady=false,lightningAt=4,lightning=0;
 const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[],coverMeshes=[];
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
 const cameraTarget=V3(),cameraPosition=V3();
-function isLive(u){return !u.kind&&!u.lionTrial&&LIVE.has(u.frame);}
+function isLive(u){
+ return !u.kind&&!u.lionTrial&&(LIVE.has(u.frame)||Boolean(battleRef?.units.includes(u)&&rigV2.applies(u)&&rigV2.status!=='error'));
+}
 function world(x,z,y){
  const size=battle.size;
  return V3((x-(size.width-1)/2)*TILE,y??terrainHeight(x,z)*HEIGHT,(z-(size.depth-1)/2)*TILE);
@@ -41,6 +44,7 @@ function clear(){
  combat?.dispose();combat=null;root.IronVowAdapterWeapons?.clear();
  for(const record of models.values())if(record.vehicle)root.IronVowVehicles.release(record.vehicle);
  root.IronVowFoundry?.clearCombat();root.IronVowBillboards?.clear();root.IronVowVehicles.clear();models.clear();aimTargets.clear();mortarCues.clear();
+ rigV2.clear();
  if(scene){sun?.shadow.map?.dispose();disposeTree(scene);}
  kit?.dispose();kit=null;scene=null;battleRef=null;groundMeshes.length=coverMeshes.length=0;
 }
@@ -56,6 +60,7 @@ function plate(x,z){
 function build(){
  clear();init();battleRef=battle;kit=root.IronVowSceneKit(renderer);kit.setSize(battle.size.width,battle.size.depth);
  root.IronVowVehicles.load(battle.units.map(u=>u.kind).filter(Boolean));
+ rigV2.load(battle.units);
  const index=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3,P=kit.PAL[index];
  scene=new T.Scene();scene.background=kit.C(P.bg);scene.fog=new T.Fog(kit.C(P.fog[0]),P.fog[1],P.fog[2]);scene.environment=kit.envFrom(P.env);
  scene.add(new T.HemisphereLight(kit.C(P.hemi[0]),kit.C(P.hemi[1]),P.hemi[2]));
@@ -116,7 +121,8 @@ function attachmentPoint(unit,part='body',t=clock){
  const mounts=root.IronVowFoundryRig.mountPoints(m),r=m.rig;
  const node=({body:r.spine,pilot:r.neck,right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,
   ...mounts,muzzle:entry.primary?.muzzle||mounts.muzzle,muzzle2:entry.primary?.muzzle2||entry.primary?.muzzle||mounts.muzzle2,
-  shoulderMuzzle:entry.primarySocket?entry.primary?.muzzle:mounts.shoulderMuzzle,shoulderMuzzle2:entry.primarySocket?(entry.primary?.muzzle2||entry.primary?.muzzle):mounts.shoulderMuzzle2,
+  shoulderMuzzle:entry.shoulderWeapon?.muzzle||(entry.primarySocket?entry.primary?.muzzle:mounts.shoulderMuzzle),
+  shoulderMuzzle2:entry.shoulderWeapon?.muzzle2||(entry.primarySocket?(entry.primary?.muzzle2||entry.primary?.muzzle):mounts.shoulderMuzzle2),
   meleeTip:entry.secondary?.tip,mortarMuzzle:m.mortar?.muzzle,shield:entry.shield?.face})[part];
  return node?.getWorldPosition(V3())||partPoint(unit,part);
 }
@@ -161,7 +167,7 @@ function prepareUnit(u,t){
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
   pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face:goal?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
-  const custom=u.frame===0?'warden':u.frame===10?'bastion':undefined;
+  const custom=rigV2.applies(u)?'rig-v2':u.frame===0?'warden':u.frame===10?'bastion':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;
   object=entry.m.cont;
@@ -180,7 +186,8 @@ function prepareUnit(u,t){
  if(!record.proxy){
   const m=record.entry?.m,bounds=m?new T.Box3().setFromObject(m.cont):null,p=world(u.vx,u.vz);
   record.height=bounds?Math.max(2,bounds.max.y-p.y):u.kind?4:7.5;
-  record.headHeight=m?Math.max(0,new T.Box3().setFromObject(m.rig.neck).max.y-m.rig.neck.getWorldPosition(V3()).y):0;
+  const headBounds=m&&(m.nativeV2?.bounds('neck')||new T.Box3().setFromObject(m.rig.neck));
+  record.headHeight=headBounds?Math.max(0,headBounds.max.y-m.rig.neck.getWorldPosition(V3()).y):0;
   record.proxy=new T.Mesh(new T.BoxGeometry(bounds?Math.max(2,bounds.max.x-bounds.min.x):3,record.height,bounds?Math.max(2,bounds.max.z-bounds.min.z):3),new T.MeshBasicMaterial({visible:false}));
   record.proxy.userData.unitId=u.id;units.add(record.proxy);
  }

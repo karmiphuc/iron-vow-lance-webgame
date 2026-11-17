@@ -845,17 +845,17 @@ function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,fron
  const enemies=legacy?Array.from({length:contract.legacyMechs},(_,j)=>[j%3*3+2,Math.floor(j/3)]):sortieSpawns(contract,slots.length,battle.ashigaruHostile);
  battle.units=slots.map((slot,index)=>makeUnit(slot,'ally',...allies[index]));
  if(aux)battle.units.push(makeUnit(AUX_SLOT,'ally',3,18));
- for(const unit of battle.units){unit.ap+=launchAP;resetMovement(unit);preloadNativeMotion(unit.frame,unit.paint,unit)}
+ for(const unit of battle.units){unit.ap+=launchAP;resetMovement(unit);if(!window.IronVowRigV2?.applies(unit))preloadNativeMotion(unit.frame,unit.paint,unit)}
  for(const [index,spawn] of enemies.entries()){
   const [kind,x,z]=spawn.length===3?spawn:[null,...spawn];
   const unit=kind?makeVehicle(kind,index,x,z):makeUnit(index,'enemy',x,z);
-  if(!unit.kind)preloadNativeMotion(unit.frame,unit.paint,unit);
+  if(!unit.kind&&!window.IronVowRigV2?.applies(unit))preloadNativeMotion(unit.frame,unit.paint,unit);
   if(!legacy)unit.face=Math.sign((allies[0][0]-allies[0][1])-(x-z))||-1;
   resetMovement(unit);
   battle.units.push(unit);
  }
  for(const unit of battle.units){
-  preloadTravel(unit);
+  if(!window.IronVowRigV2?.applies(unit))preloadTravel(unit);
   const contact=battle.units.filter(other=>other.team!==unit.team).reduce((near,other)=>!near||distance(unit,other)<distance(unit,near)?other:near,null);
   unit.heading=headingTo(contact.x-unit.x,contact.z-unit.z);unit.face=Math.sign(Math.sin(unit.heading));
  }
@@ -2586,7 +2586,8 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const targetAtlas=window.IRON_VOW_FOUNDRY_ART?.[foundryModel(t.frame)];
  const targetMotion=!window.IronVowScene?.isLive(t)&&targetAtlas?.destruction?readyNativeMotion(t,2400):null;
- if(aeroStrike||!a.kind&&(FRAMES[a.frame].native||power)&&!reducedMotion)await readyNativeMotion(a);
+ const liveRigV2=window.IronVowRigV2?.applies(a)&&window.IronVowScene?.isLive(a);
+ if(!liveRigV2&&(aeroStrike||!a.kind&&(FRAMES[a.frame].native||power)&&!reducedMotion))await readyNativeMotion(a);
  if(lionStrike){
   const missing=lionMotionImages(w.id).filter(image=>!imageReady(image)&&image.decode);
   if(missing.length)await Promise.race([Promise.allSettled(missing.map(image=>image.decode())),delay(1400)]);
@@ -2980,7 +2981,7 @@ function finish(win){
  const baseOnline=win?advanceHangar():null;
  save.history.push({name:c.name,day:save.day,win,pay});save.history=save.history.slice(-100);save.day++;delete save.dispatch;
  battle=null;if(selected===AUX_SLOT)selected=0;
- window.IronVowFoundry?.clearCombat();persist();page='career';render();
+ window.IronVowScene?.clear?.();persist();page='career';render();
  const buttons=[{text:'COMPANY RECORD',fn:closeModal},{text:'REPAIR & REFIT',fn:()=>{closeModal();page='workshop';workshopView='assigned';render()}}];
  if(recovered.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
  const points=totalTrainingPoints();
@@ -4014,17 +4015,17 @@ window.__ironVow=(()=>{
    units:(battle?.units||[]).map(u=>{const record=window.IronVowScene.models.get(u.id),m=record?.entry?.m,feet=[],footprint=[];
     if(m?.rig)for(let i=0;i<m.rig.legs.length;i++){const leg=m.rig.legs[i],state=m.legs[i],p=leg.an.getWorldPosition(new THREE.Vector3());
      const contact=state.kneeContact&&leg.kneeShoe?.localToWorld(new THREE.Vector3(0,-.3155,.035));
-     const box=new THREE.Box3().setFromObject(leg.an);if(!box.isEmpty())for(const x of [box.min.x,box.max.x])for(const z of [box.min.z,box.max.z])footprint.push([x,z]);
+     const box=m.nativeV2?.bounds('ankle.'+leg.side)||new THREE.Box3().setFromObject(leg.an);if(!box.isEmpty())for(const x of [box.min.x,box.max.x])for(const z of [box.min.z,box.max.z])footprint.push([x,z]);
      feet.push({side:leg.side,ankle:p.toArray(),hip:leg.hip.getWorldPosition(new THREE.Vector3()).toArray(),reach:(m.dims.legA+m.dims.legB)*m.scale,target:state.foot.toArray(),plant:state.planted.toArray(),swing:state.swing||state.poseLift,settle:Boolean(state.settle),ankleHeight:m.dims.ankleH*m.scale,ground:window.IronVowScene.groundAt(p.x,p.z),kneeContact:contact?{point:contact.toArray(),ground:window.IronVowScene.groundAt(contact.x,contact.z)}:null});}
     let finite=true;m?.cont.traverse(o=>{if(!o.matrixWorld.elements.every(Number.isFinite))finite=false;});
     const partVisual=m?Object.fromEntries(Object.entries(m.partState).map(([part,state])=>{const detachable=m.build.parts[part].filter(e=>e.detach);return[part,{state,detachable:detachable.length,visible:detachable.filter(e=>e.m.visible).length}];})):null;
-    const primary=record?.entry?.primary;
+    const entry=record?.entry,primary=(u.attack?.kind==='missile'&&entry?.shoulderWeapon)||entry?.primary;
     const muzzle=primary?.muzzle?.getWorldPosition(new THREE.Vector3()),barrel=primary?.muzzle?.getWorldDirection(new THREE.Vector3());
-    const firing=Boolean(u.alive&&u.hp.right>0&&Number.isFinite(u.attack?.fireAt)&&m?.aim.blend>.95);
+    const firing=Boolean(u.alive&&u.hp[primary&&primary===entry?.shoulderWeapon?'body':'right']>0&&Number.isFinite(u.attack?.fireAt)&&m?.aim.blend>.95);
     const weaponAimError=firing&&muzzle&&barrel?barrel.angleTo(m.aim.point.clone().sub(muzzle)):null;
-    const muzzleDistance=firing&&muzzle?new THREE.Box3().setFromObject(primary.model).distanceToPoint(muzzle):null;
+    const muzzleDistance=firing&&muzzle?(primary.bounds?.()||new THREE.Box3().setFromObject(primary.model)).distanceToPoint(muzzle):null;
     const D=m?.dims,radius=D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*m.scale:1;
-    return {id:u.id,frame:u.frame,weapon:u.weapon,melee:u.melee,partVisual,weaponAimError,muzzleDistance,weaponArchetype:primary?window.IronVowWeaponFX.get(u.weapon).archetype:null,weaponMounted:primary?primary.mount.parent===(record.entry.primarySocket||m.rig.arms.R.so):false,armed:record?.entry?.armed,primaryAsset:primary?.id,kind:u.kind,team:u.team,alive:u.alive,hp:{...u.hp},max:{...u.max},ap:u.ap,x:u.x,z:u.z,vx:u.vx,vz:u.vz,moving:Boolean(u.motion),attacking:Boolean(u.attack),motion:u.motion?{fromX:u.motion.fromX,fromZ:u.motion.fromZ,toX:u.motion.toX,toZ:u.motion.toZ,start:u.motion.start,duration:u.motion.duration}:null,live:window.IronVowScene.isLive(u),object:record?.object?.uuid,root:record?.object?.position.toArray(),matrix:m?.cont.matrixWorld.toArray(),finite,radius,footprint,feet};
+    return {id:u.id,frame:u.frame,weapon:u.weapon,melee:u.melee,partVisual,weaponAimError,muzzleDistance,weaponArchetype:primary?window.IronVowWeaponFX.get(primary===entry.shoulderWeapon?'missile':u.weapon).archetype:null,weaponMounted:primary?primary.mount.parent===(primary.carrier||entry.primarySocket||m.rig.arms.R.so):false,armed:entry?.armed,primaryAsset:primary?.id,kind:u.kind,team:u.team,alive:u.alive,hp:{...u.hp},max:{...u.max},ap:u.ap,x:u.x,z:u.z,vx:u.vx,vz:u.vz,moving:Boolean(u.motion),attacking:Boolean(u.attack),motion:u.motion?{fromX:u.motion.fromX,fromZ:u.motion.fromZ,toX:u.motion.toX,toZ:u.motion.toZ,start:u.motion.start,duration:u.motion.duration}:null,live:window.IronVowScene.isLive(u),object:record?.object?.uuid,root:record?.object?.position.toArray(),matrix:m?.cont.matrixWorld.toArray(),finite,radius,footprint,feet};
    })};
  }
  return {start,snapshot,

@@ -12,7 +12,7 @@ function subtreeTriangles(gltf, name) {
   return renderedTriangles({ ...gltf, scenes: [{ nodes: [node] }], scene: 0 });
 }
 
-async function previewRig({ file, screenshot, matrix = false, cicada = false }) {
+async function previewRig({ file, screenshot, matrix = false, cicada = false, rigid = false }) {
   const gltf = readGLB(file);
   const contract = validate(gltf);
   assert.ok(contract.ok, `${file}: ${contract.errors.join(', ')}`);
@@ -151,7 +151,8 @@ async function previewRig({ file, screenshot, matrix = false, cicada = false }) 
       cicada,
     });
     assert.equal(result.triangles, expected, 'WebGL draws all default-scene triangles');
-    assert.ok(result.skinned > 0 && result.tagged > 0, 'Rendered asset includes skinning and part metadata');
+    assert.ok(result.tagged > 0, 'Rendered asset includes part metadata');
+    if (!rigid) assert.ok(result.skinned > 0, 'Rendered asset includes skinning');
     for (const { anchor, movement, oppositeMovement } of result.motion) {
       assert.ok(movement > 0.05, `${anchor} moved with its joint`);
       if (oppositeMovement !== undefined) assert.ok(oppositeMovement < 1e-8, `${anchor} pivots independently`);
