@@ -20,7 +20,7 @@ assert.equal(document.body.dataset.view,'hangar');assert.equal(document.querySel
 click('[data-hangar-deck="mechs"]');
 click('#inspect');assert.ok(get('.unit-inspect'));click('[data-select="1"]');assert.match(get('.selected-chassis').textContent,/KESTREL/);assert.match(get('.unit-inspect').textContent,/Jin Takeda/);click('#close-inspect');assert.equal(get('.unit-inspect'),null);
 click('[data-page="workshop"]');click('[data-select="0"]');
-assert.equal(get('.rig-bench-link').getAttribute('href'),'rig-bench/index.html');
+assert.equal(get('.rig-bench-link').getAttribute('href'),'?bench=rig&frame=0');
 
 run('save.dispatch={day:save.day,sizes:[3,2,1,3]}');click('[data-page="contracts"]');assert.equal(document.querySelectorAll('[data-deploy]').length,4);click('[data-deploy="0"]');assert.equal(run('battle'),null);click('#modal-1');assert.equal(run('battle.units.length'),7);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
 assert.equal(document.querySelectorAll('[data-part]').length,5);assert.equal(document.querySelectorAll('[data-unit]').length,3);

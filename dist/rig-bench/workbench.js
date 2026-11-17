@@ -13,7 +13,7 @@ const SCOUT_ACTIONS={Fire:{weapon:'carbine',flashes:[.29]},Burst:{weapon:'scatte
 const COLOR_DEFAULTS=['#c6bd9f','#343e48','#e19b32'];
 const vector=()=>new T.Vector3();
 const option=(value,label)=>new Option(label,value);
-function mount({frames,weapons,shields,attackProfile,weaponRigPose}){
+function mount({frames,weapons,shields,attackProfile,weaponRigPose,initialFrame,initialArchive}){
  const $=id=>document.getElementById(id),lookup=new Map(frames.map(frame=>[String(frame.id),frame]));
  const inventory=new Map(weapons.map(weapon=>[weapon.id,weapon]));
  const kits=frames.filter(frame=>frame.mix).slice(0,6);
@@ -24,7 +24,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose}){
  const markers=new T.Group(),markerGeometry=new T.SphereGeometry(.077,8,6),markerMaterial=new T.MeshBasicMaterial({color:0x5fd4c4});
  for(let i=0;i<4;i++)markers.add(new T.Mesh(markerGeometry,markerMaterial));
  const health=Object.fromEntries(parts.map(part=>[part,100]));
- let frame=frames[0],unit,modules,entry,entries=[],lastStats,view='orbit',group='all',az=-.52,el=.1,dist=19;
+ let frame=lookup.get(String(initialFrame))??frames[0],unit,modules,entry,entries=[],lastStats,view='orbit',group='all',az=-.52,el=.1,dist=19;
  let time=0,prior,walk=false,advance=0,aim=false,fire=-Infinity,strike=-Infinity,clip='',clipTime=0,clipList='',drag;
  let showMarkers=false,paint={},team='ally',frameRequest,metricsAt=-Infinity;
  let clipSource='current',archive=null,archiveRequest=0,archiveError='',playing=false,lastArchiveSample='',firePod=false;
@@ -32,7 +32,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose}){
  document.body.classList.add('rig-bench-v3');
  $('ui').innerHTML=`
  <section class="bench-controls" aria-label="Rig Bench controls">
-  <div class="bench-heading"><h1>Rig Bench</h1><a href="?bench=war">War</a><a href="?view=workshop">Workshop</a><a href="rig-bench/">Original Bench</a></div>
+  <div class="bench-heading"><h1>Rig Bench</h1><a href="?bench=war">War</a><a href="?view=workshop">Workshop</a></div>
   <label>Chassis<select id="bench-frame"></select></label>
   <details open><summary>Loadout</summary><div class="bench-fields">
    <label>Primary<select id="bench-primary"></select></label><label>Melee<select id="bench-melee"></select></label>
@@ -319,6 +319,7 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
  canvas.onpointerup=canvas.onpointercancel=()=>{drag=null;};
  canvas.onwheel=e=>{e.preventDefault();dist=Math.min(95,Math.max(5,dist*Math.exp(e.deltaY*.001)));};
  selectFrame(frame.id);
+ if(initialArchive&&frame.archive)void setClipSource('archive');
  function sampleArchive(){
   if(!archive)return null;
   const nodes=[];

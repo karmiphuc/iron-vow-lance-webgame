@@ -58,5 +58,12 @@ module.exports=async function checkRigWorkbench({page,origin,mobile}){
   await page.waitForFunction(()=>__bench.state.clipTime>.08);
  }
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
+ await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
+ await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();
+ await page.waitForFunction(()=>window.__bench?.state?.loaded&&__bench.state.frame===0);
+ await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.locator('#nav [data-page="career"]').click();
+ await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();
+ await page.waitForFunction(()=>window.__bench?.state?.loaded);
  console.log(`PASS ${mobile?'touch':'desktop'} Bench roster, native clip, loadout, paint, damage, mixed legs and six-rig lineup`);
 };
