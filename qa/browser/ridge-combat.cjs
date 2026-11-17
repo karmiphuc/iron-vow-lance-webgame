@@ -6,7 +6,7 @@ module.exports=async function checkRidgeCombat({page,mobile,origin,tap}){
  const start=await page.evaluate(()=>{
   createBattle(0,false,false,[0]);surveyTerrain(0);battle.cover.clear();
   const u=current(),foe=battle.units[1];
-  battle.units=[u,foe];action='fire';targetPart='body';lockedTarget=foe.id;
+  battle.units=[u,foe];action='fire';lockedTarget=foe.id;
   Object.assign(u,{x:8,z:10,vx:8,vz:10});
   Object.assign(foe,{x:5,z:10,vx:5,vz:10});
   for(const cell of battle.field.cells)cell.level=0;

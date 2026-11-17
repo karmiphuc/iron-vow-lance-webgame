@@ -24,7 +24,7 @@ The current game includes a persistent company and pilot roster, part-based mech
 
 ## Play
 
-Choose a contract, deploy your lance, select a unit, and click highlighted tiles to move. Choose Fire and click an enemy to attack its selected subsystem. Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Actions use the unit's movement and AP allowances. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
+Choose a contract, deploy your lance, select a unit, and click highlighted tiles to move. Choose Fire and click an enemy to shoot it; there is no part aiming, and every round that hits rolls its own location (about 55% body, 25% arms, 20% legs, plus a 1–5% chance of the cockpit). Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Actions use the unit's movement and AP allowances. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
 
 Keyboard: 1–3 selects a unit; M moves; F fires; Q activates a skill; E ends the turn. Mouse/touch supports every action. Sound is opt-in.
 
@@ -48,7 +48,7 @@ All game assets and fonts are local. Phosphor icon and font licenses are include
 
 Completed actions now checkpoint the active sortie in the career save. Reloading restores positions, part HP, AP, pilot skills and the selected action. An interrupted enemy phase replays from its start; completed mission rewards cannot be paid twice. Invalid sortie checkpoints preserve the valid career record. Existing version-1 career backups still load.
 
-On mobile, tap a hostile to acquire it, open its subsystem details, choose a part, and tap the hostile again to fire. The target drawer has larger controls and closes after choosing a subsystem. Escape closes a manual or target details. Field repair cannot be spent on an already healthy body.
+On mobile, tap a hostile to acquire it and tap it again to fire. The target button opens a read-only drawer with its part health. Escape closes a manual or target details. Field repair cannot be spent on an already healthy body.
 
 Free emergency field patches now restore 50% condition. Seeded recovery tests found the original 35% patch insufficient for a zero-reserve company. Repairs to 100% remain useful for harder contracts.
 

@@ -2,6 +2,13 @@
 // Dependencies supply the host's current combat state and seeded random source.
 (function(root){
  'use strict';
+ // Front Mission 3 style hit location. Every landed round rolls its own location.
+ // Shares are of the live, non-cockpit parts and renormalise when a part is destroyed.
+ const HIT_LOCATION=Object.freeze({body:.55,left:.125,right:.125,legs:.20});
+ // Chance that a landed round strikes the cockpit instead. Training adds pilotHit*PILOT_HIT_TRAINING.
+ const PILOT_HIT_BASE=.03,PILOT_HIT_TRAINING=.2,PILOT_HIT_MIN=.01,PILOT_HIT_MAX=.05;
+ const BREACH_LIMBS=Object.freeze(['right','left','legs']);
+ const pilotHitChance=training=>Math.min(PILOT_HIT_MAX,Math.max(PILOT_HIT_MIN,PILOT_HIT_BASE+(training?.pilotHit??0)*PILOT_HIT_TRAINING));
  function createTerrainRules({getBattle,onBoard,movementLimit,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
   function occupied(x,z){return getBattle().units.some(u=>u.alive&&u.x===x&&u.z===z)}
   const neighborTiles=(x,z)=>[[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
@@ -65,7 +72,10 @@
   return {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
  }
  function createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,FREE_HAND_COUNTER}){
-const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee&&limbPart(part));
+// A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
+const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee);
+// Part whose accuracy a shot uses: charged shots keep the old limb accuracy, every other shot uses the body.
+const shotPart=(a,w,reaction)=>chargedLimbShot(a,w,'body',reaction)?'right':'body';
 function mechAim(a,t,w,reaction){
  const state=a.mechState,spot=t.mechState?.spot,direct=!w.melee&&!launchesMissiles(w);
  return (!reaction&&direct&&hasMechSkill(a,0)&&!state?.fired&&!state?.moved ? .06 : 0)+
@@ -114,45 +124,50 @@ function partDamage(a,t,part,w,reaction=false){
  return part==='pilot'?Math.max(3,Math.round(amount*.5)):amount;
 }
 function attackBudget(a,t,part,w,reaction=false){
- const amount=partDamage(a,t,w.scatter&&part==='pilot'?'body':part,w,reaction);
+ const amount=partDamage(a,t,part,w,reaction);
  return volleyBudget(w,amount);
 }
- return {chargedLimbShot,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget};
+ return {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget};
  }
- function createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom,BURST_AIM_SHARE}){
+ function createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom,chargedLimbShot=()=>false}){
+// Weighted pick from [[part,weight]] using one draw. Callers pass only live parts, so the weights renormalise.
+function pickWeighted(entries,roll){
+ const total=entries.reduce((sum,[,weight])=>sum+weight,0);
+ let edge=0;
+ for(const [part,weight] of entries){edge+=weight/total;if(roll<edge)return part}
+ return entries.at(-1)[0];
+}
 function planVolley(a,t,aimed,w,reaction){
- const chance=hitChance(a,t,aimed,w,reaction),dodge=dodgeChance(t);
- const shield=activeShield(t),parts=targetParts(t).filter(part=>t.hp[part]>0);
- const other=parts.filter(part=>part!==aimed),spread=[aimed,...other],count=w.burst||1;
+ const charged=chargedLimbShot(a,w,aimed,reaction);
+ // Nobody aims: normal shots roll to hit against the body. Charged shots keep limb accuracy.
+ const chance=hitChance(a,t,charged?'right':'body',w,reaction),dodge=dodgeChance(t);
+ const shield=activeShield(t),live=targetParts(t).filter(part=>t.hp[part]>0);
+ const limbs=charged?BREACH_LIMBS.filter(part=>live.includes(part)):[];
+ const frame=(charged?limbs:live.filter(part=>part!=='pilot')).map(part=>[part,HIT_LOCATION[part]??0]).filter(([,weight])=>weight>0);
+ const table=!frame.length?[['body',1]]:frame;
+ const pilotChance=!charged&&live.includes('pilot')?pilotHitChance(a.training):0;
+ const count=w.burst||1;
  const shell=w.scatter?ruleRandom():null;
  const rounds=[],hits=new Map();
  let evades=0,landed=0;
  for(let i=0;i<count;i++){
   const roll=shell??ruleRandom(),dodged=dodge>0&&roll>=1-dodge,hit=!dodged&&roll<=chance;
-  let part=aimed;
-  if(w.scatter)part=spread[i%spread.length];
-  else if(w.burst&&hit&&other.length&&roll>chance*BURST_AIM_SHARE){
-   const spreadIndex=Math.floor((roll/chance-BURST_AIM_SHARE)/(1-BURST_AIM_SHARE)*other.length);
-   part=other[Math.min(other.length-1,spreadIndex)];
-  }
+  let part=table[0][0];
   if(shield&&hit)part='left';
+  else if(hit){
+   // Both draws are taken for every landed round, so the random stream does not depend on where rounds land.
+   const cockpit=pilotChance>0&&ruleRandom()>=1-pilotChance,place=table.length>1?ruleRandom():0;
+   part=cockpit?'pilot':pickWeighted(table,place);
+  }
   rounds.push({part,hit});
   if(dodged)evades++;
   if(hit){landed++;hits.set(part,(hits.get(part)??0)+1)}
  }
- const budget=attackBudget(a,t,aimed,w,reaction);
- const total=landed?Math.max(1,Math.round(budget*landed/count)):0;
- // Round the aggregate once. Armor and the attack's bonuses are charged once
- // per action, and a landed scatter shell reserves a point for every live part.
- const minimum=w.scatter&&landed?1:0;
- const weight=(part,rounds)=>rounds*(w.burst&&part==='pilot'&&aimed!=='pilot'?.5:1);
- const weights=[...hits].reduce((sum,[part,n])=>sum+weight(part,n),0);
- let used=0,passed=0;
+ // Each part is charged its own bonuses (limb training on limbs, halving on the cockpit)
+ // for the rounds that landed on it. A part that was struck always takes at least 1.
  const impacts=[];
  for(const [part,n] of hits){
-  passed+=weight(part,n);
-  const next=Math.round((total-minimum*hits.size)*passed/weights);
-  const amount=minimum+next-used;used=next;
+  const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*n/count));
   if(amount>0)impacts.push({part,amount});
  }
  return {rounds,impacts,landed,dodged:evades===count,guard:Boolean(shield&&landed)};
@@ -182,7 +197,7 @@ function reactionWeapon(defender,attacker){
 }
  return {reactionStatus,reactionWeapon};
  }
- function createEnemyTurn({getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,targetParts,canUseWeapon,attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage,aiPart,checkEnd,isArmed,addLog,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME}){
+ function createEnemyTurn({getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,targetParts,canUseWeapon,attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME}){
 function enemyAttackWeapon(u,t,primary){
  const battle=getBattle();
  if(u.frame===ASHIGARU_FRAME)return scoutWeapon(u,t);
@@ -222,7 +237,7 @@ async function runEnemyTurn(){
   while(enemy.alive&&target.alive){
    const w=enemyAttackWeapon(enemy,target,primary);
    if(!w)break;
-   await engage(enemy,target,aiPart(enemy,target,w),w);renderBattle();
+   await engage(enemy,target,'body',w);renderBattle();
    if(checkEnd())return true;
    if(enemy.kind)break;
   }
@@ -406,5 +421,5 @@ async function runEnemyTurn(){
   }
   return {newBattle,step,run,runBattle,eventLog:()=>events.slice(),get state(){return report();},get running(){return working;}};
  }
- root.IRON_VOW_SIM=Object.freeze({createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
+ root.IRON_VOW_SIM=Object.freeze({HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
 })(typeof window==='undefined'?globalThis:window);

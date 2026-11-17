@@ -10,7 +10,7 @@ const playerTurn=`(async()=>{
    const armed=targets.filter(t=>isArmed(t)),priority=armed.length?armed:targets;
    const available=priority.filter(t=>distance(ally,t)<=w.range&&!attackObstruction(ally,t,w)).sort((a,b)=>Math.min(a.hp.body,a.hp[dangerArm(a)]||Infinity)-Math.min(b.hp.body,b.hp[dangerArm(b)]||Infinity));
    if(available.length&&ally.hp.right>0&&ally.ap>=w.ap){
-    if(ally.index<2&&!ally.skill)skill();const target=available[0],part=target.hp.body<=damage(ally,target)?'body':!target.kind&&target.hp[dangerArm(target)]>0?dangerArm(target):'body';await engage(ally,target,part,w);if(checkEnd())return;continue;
+    if(ally.index<2&&!ally.skill)skill();const target=available[0];await engage(ally,target,'body',w);if(checkEnd())return;continue;
    }
    if(!movementLimit(ally))break;
    const firingScore=(a,t)=>Math.max(0,distance(a,t)-w.range)*20+(attackObstruction(a,t,w)?12+distance(a,t)*2:0);

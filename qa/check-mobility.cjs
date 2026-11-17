@@ -137,7 +137,10 @@ const simulate=require('./sim-harness.cjs');
   exec(`createBattle(0);battle.cover.clear();victim=battle.units[3];victim.x=current().x+1;victim.z=current().z;victim.hp.${part}=1;`);
   exec(part==='right'?'victim.hp.left=0':"victim.hp.right=0;victim.melee='blade'");
   const attackerHP=exec('current().hp.body');
-  await exec(`engage(current(),victim,'${part}',unitWeapon(current()))`);
+  // No part aiming: script every landed round (to-hit, cockpit check, location) onto the weakened part.
+  const draws={body:[0,0,.1],pilot:[0,.999,.1],right:[0,0,.7],left:[0,0,.7]}[part];
+  exec(`Math.random=(()=>{let i=0;const draws=${JSON.stringify(draws)};return()=>draws[i++%3]})()`);
+  await exec(`engage(current(),victim,'body',unitWeapon(current()))`);
   assert.equal(exec('Boolean(victim.reacted)'),false,part+' destroyed before retaliation');
   assert.equal(exec('current().hp.body'),attackerHP);
  }

@@ -4,6 +4,12 @@ const simulate=require('./sim-harness.cjs');
 (async()=>{
  const sim=simulate({random:()=>0,reducedMotion:true}),{run}=sim;
  run("deploy(0,false,[0]);closeModal();const ally=current(),foe=battle.units[1];foe.x=ally.x+1;foe.z=ally.z");
+ // Scripted draws in the order planVolley asks for them. After the to-hit roll(s) every landed round draws a
+ // cockpit check (>=1-pilot chance means cockpit) and then a location. Targets list body, right, left, legs.
+ run("globalThis.script=values=>{let i=0;Math.random=()=>{if(i>=values.length)throw Error('unexpected random draw');return values[i++]};return()=>i};");
+ const LOCATIONS=[[.1,'body'],[.6,'right'],[.7,'left'],[.9,'legs']];
+ const scatterDraws=count=>[0,...Array.from({length:count},(_,i)=>i===4?[.999,.1]:[0,LOCATIONS[i%4][0]]).flat()];
+ const scatterParts=count=>Array.from({length:count},(_,i)=>i===4?'pilot':LOCATIONS[i%4][1]);
  assert.ok(run("RANGED.filter(w=>armoryClass(w)==='assault').every(w=>w.burst)"));
  for(const [id,count,scatter=false] of [['rifle',8],['sidewinder',12],['trident',8],['forge',12,true],['ember',12,true],['hailstorm',12],
   ['shotgun',12,true],['needle-carbine',8],['flechette-scattergun',12,true]]){
@@ -16,7 +22,17 @@ const simulate=require('./sim-harness.cjs');
   assert.equal(profile.beats.length,scatter?1:count);
   if(scatter){
    assert.equal(profile.effect||id,'shotgun');
-   assert.deepEqual(volley.impacts.map(hit=>hit.part).sort(),['body','left','legs','pilot','right']);
+   // With nothing rolled the pellets all land on the body. Each pellet then rolls its own location.
+   assert.deepEqual(volley.impacts.map(hit=>hit.part),['body']);
+   run(`script(${JSON.stringify(scatterDraws(count))})`);
+   const spread=JSON.parse(run(`JSON.stringify(planVolley(ally,foe,'body',weapon('${id}'),false))`));
+   assert.deepEqual(spread.rounds.map(round=>round.part),scatterParts(count));
+   assert.deepEqual(spread.impacts.map(hit=>hit.part).sort(),['body','left','legs','pilot','right']);
+   for(const {part,amount} of spread.impacts){
+    const n=scatterParts(count).filter(p=>p===part).length;
+    assert.equal(amount,Math.max(1,Math.round(run(`attackBudget(ally,foe,'${part}',weapon('${id}'))`)*n/count)),id+' '+part+' is charged for its own pellets only');
+   }
+   run('Math.random=()=>0');
   }
  }
  assert.ok(run("FRAMES.every((_,frame)=>['ally','enemy'].every(team=>dodgeChance({team,frame})===(frame===AERO_FRAME?.15:.08)))"));
@@ -30,16 +46,19 @@ const simulate=require('./sim-harness.cjs');
  assert.ok(run('evadedShell.dodged&&evadedShell.landed===0&&aero.dodged&&!standard.dodged'));
  run(`const gun=weapon('rifle'),chance=hitChance(ally,foe,'body',gun);
   let calls=0;
-  const rng=[0,1,.86*chance,1,.91*chance,.98*chance,0,1];
+  const rng=[0,.1,.1,1,.86*chance,.001,.6,1,.91*chance,.001,.7,.98*chance,.001,.9,0,.001,.1,1];
   Math.random=()=>rng[calls++];const partial=planVolley(ally,foe,'body',gun,false)`);
- assert.equal(run('calls'),8,'each rifle round gets its own roll');
+ assert.equal(run('calls'),18,'each rifle round gets its own to-hit roll and each landed round one cockpit check and one location');
  assert.equal(run('partial.landed'),5);
- assert.ok(run('partial.impacts.length>=3'));
- assert.equal(run('partial.impacts.reduce((n,p)=>n+p.amount,0)'),run("Math.round(attackBudget(ally,foe,'body',gun)*5/8)"));
- run("Math.random=()=>0;foe.armor=900;const blast=planVolley(ally,foe,'body',weapon('shotgun'),false)");
- assert.equal(run('blast.impacts.length'),5,'even the minimum landed shell reaches each live part');
- assert.equal(run('blast.impacts.reduce((n,p)=>n+p.amount,0)'),6);
- run("foe.hp.right=0;Math.random=()=>{calls++;return 1};calls=0;const missed=planVolley(ally,foe,'body',weapon('shotgun'),false)");
+ assert.deepEqual(JSON.parse(run('JSON.stringify(partial.rounds.map(r=>r.hit?r.part:null))')),['body',null,'right',null,'left','legs','body',null]);
+ for(const [part,n] of [['body',2],['right',1],['left',1],['legs',1]]){
+  assert.equal(run(`partial.impacts.find(i=>i.part==='${part}').amount`),run(`Math.max(1,Math.round(attackBudget(ally,foe,'${part}',gun)*${n}/8))`));
+ }
+ run("foe.armor=900;calls=0");
+ run(`script(${JSON.stringify(scatterDraws(12))});const blast=planVolley(ally,foe,'body',weapon('shotgun'),false)`);
+ assert.equal(run('blast.impacts.length'),5,'even the minimum landed shell reaches each part it strikes');
+ assert.ok(run('blast.impacts.every(i=>i.amount>=1)'));
+ run("Math.random=()=>0;foe.hp.right=0;Math.random=()=>{calls++;return 1};calls=0;const missed=planVolley(ally,foe,'body',weapon('shotgun'),false)");
  assert.equal(run('missed.landed'),0);
  assert.equal(run('calls'),1,'shotgun rolls the shell once');
  run("Math.random=()=>0;foe.shield='bulwark-shield';foe.hp.left=1;const shielded={...foe.hp};const ap=ally.ap");
@@ -48,6 +67,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('foe.hp.left'),0);
  assert.ok(run("['body','pilot','right','legs'].every(p=>foe.hp[p]===shielded[p])"));
  run("foe.armor=0;foe.hp={body:1,pilot:1,right:1,left:1,legs:1};delete foe.shield;ally.ap=8;const kills=save.kills;const xp=save.units[0].xp");
+ run(`script(${JSON.stringify(scatterDraws(12))})`);
  await run("shoot(ally,foe,'body',weapon('shotgun'))");
  assert.ok(run('Object.values(foe.hp).every(hp=>hp===0)'));
  assert.equal(run("new Set(effects.filter(e=>e.type==='boom').slice(-12).map(e=>e.part)).size"),5);

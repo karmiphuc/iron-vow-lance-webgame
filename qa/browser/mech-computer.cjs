@@ -37,8 +37,8 @@ module.exports=async function checkMechComputer({page,mobile,origin,tap}){
  if(mobile)await tap('#target-toggle');
  const panel=page.locator('#target-panel');
  assert.deepEqual(await panel.locator('.hp-row').evaluateAll(nodes=>nodes.map(row=>[...row.children].map(button=>button.dataset.part))),rows);
- await tap('#target-panel [data-part="left"]');
- assert.equal(await panel.locator('[data-part="left"]').getAttribute('aria-pressed'),'true');
+ // The panel is a read-only health readout: nothing to press, no aiming state.
+ assert.equal(await panel.locator('button[data-part], [data-part][aria-pressed]').count(),0);
 
  const rebuilt=await page.evaluate(()=>{
   battle=null;save.credits=1000000;page='workshop';workshopView='assigned';

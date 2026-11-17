@@ -113,9 +113,6 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>battle.units[3].blackout.ap),4);
  await unit(0);await tap('#skill');await tap('#fire');
  assert.match(await page.locator('[data-unit="0"]').innerText(),/CHARGE ×2/);
- if(mobile)await tap('#target-toggle');
- await tap('[data-part="legs"]');
- if(mobile)await page.locator('#close-target').waitFor({state:'hidden'});
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  if(mobile){
   await tap('#map-overview');
@@ -132,7 +129,8 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  });
  await (mobile?page.touchscreen.tap(target.x,target.y):page.mouse.click(target.x,target.y));
  await page.waitForFunction(()=>current().breach===1&&!battle.busy);
- assert.equal(await page.evaluate(()=>battle.units[3].hp.legs<battle.units[3].max.legs),true);
+ // Nobody aims: a charged shot rolls among the live arms and legs and never reaches the body or cockpit.
+ assert.equal(await page.evaluate(()=>{const t=battle.units[3];return ['right','left','legs'].some(p=>t.hp[p]<t.max[p])&&t.hp.body===t.max.body&&t.hp.pilot===t.max.pilot}),true);
  await unit(2);await tap('#skill');
  assert.match(await page.locator('[data-support-target="0"]').innerText(),/SELF.*\n.*WEAPON ARM/);
  await support();
