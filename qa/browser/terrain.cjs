@@ -1,8 +1,37 @@
 const assert=require('node:assert/strict');
 
+async function assertTheaterPropsOutsideBoard(page,contractIndex){
+ await page.evaluate(index=>{
+  ruleRandom=()=>.317;
+  createBattle(index,false,false);
+  surveyTerrain(0x51a7);
+  selected=0;
+  IronVowScene.render(clock,1/60);
+ },contractIndex);
+ await page.waitForFunction(()=>Boolean(IronVowScene.scene?.getObjectByName('theater-props')),null,{timeout:15000});
+ const overlap=await page.evaluate(()=>{
+  const props=IronVowScene.scene.getObjectByName('theater-props');
+  if(!props)return {count:-1,examples:['missing theater props group']};
+  const {width,depth}=battle.size,a=IronVowScene.world(0,0,0),b=IronVowScene.world(width-1,depth-1,0);
+  const stepX=IronVowScene.world(1,0,0).x-a.x,stepZ=IronVowScene.world(0,1,0).z-a.z;
+  const bounds={minX:a.x-stepX/2,maxX:b.x+stepX/2,minZ:a.z-stepZ/2,maxZ:b.z+stepZ/2},examples=[];
+  props.updateMatrixWorld(true);
+  props.traverse(object=>{
+   if(!object.isMesh)return;
+   const box=new THREE.Box3().setFromObject(object);
+   if(box.max.x>bounds.minX&&box.min.x<bounds.maxX&&box.max.z>bounds.minZ&&box.min.z<bounds.maxZ)
+    examples.push({name:object.name,bounds:[box.min.x,box.min.z,box.max.x,box.max.z]});
+  });
+  return {count:examples.length,examples:examples.slice(0,4)};
+ });
+ assert.equal(overlap.count,0,`contract ${contractIndex} scene dressing overlaps the playable board: ${JSON.stringify(overlap.examples)}`);
+ await page.evaluate(()=>{battle=null});
+}
+
 module.exports=async function checkTerrain({page,mobile,origin,tap}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
+ for(const contractIndex of [0,2,3])await assertTheaterPropsOutsideBoard(page,contractIndex);
  await page.evaluate(()=>{
   ruleRandom=()=>.317;
   deploy(3,false,[0]);

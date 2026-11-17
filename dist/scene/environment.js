@@ -52,9 +52,18 @@ const PAL=[ // relay, corridor, frontier
   {bg:0x16222a,fog:[0x1c2c33,70,190],sun:[0xb9e4ea,1.7],hemi:[0x8fb8c0,0x14191c,.55],ground:0x67706f,wet:.5,env:[0x18232a,0xa8d8e0,0x7aa8b0,0x46606a,0x2c3438],dir:[-22,38,24]}
 ];
 function buildProps(s,ci){
-  const g=new T.Group();s.add(g);const H=Math.max(width,depth)*TILE/2;
+  const g=new T.Group();g.name='theater-props';s.add(g);const H=Math.max(width,depth)*TILE/2;
   const rock=MS({color:C(ci===1?0x5a4c3f:0x434a4d),roughness:1,metalness:0,flatShading:true,map:wearTex('#bdbdbd',[1,1])});
-  const ring=(n,rad,fn)=>{for(let i=0;i<n;i++){const a=i/n*PI*2+rnd(-.1,.1),r=rad+rnd(0,10);fn(Math.cos(a)*r,Math.sin(a)*r,a,i);}};
+  const outsideBoard=(x,z,clearance=7)=>{
+    const edgeX=(width/2)*TILE+clearance,edgeZ=(depth/2)*TILE+clearance;
+    if(Math.abs(x)<=edgeX&&Math.abs(z)<=edgeZ){
+      const scaleX=Math.abs(x)>0?edgeX/Math.abs(x):Infinity,scaleZ=Math.abs(z)>0?edgeZ/Math.abs(z):Infinity;
+      const scale=Math.min(scaleX,scaleZ);
+      if(Number.isFinite(scale)){x*=scale*1.001;z*=scale*1.001;}
+    }
+    return [x,z];
+  };
+  const ring=(n,rad,fn)=>{for(let i=0;i<n;i++){const a=i/n*PI*2+rnd(-.1,.1),r=rad+rnd(0,10);const [x,z]=outsideBoard(Math.cos(a)*r,Math.sin(a)*r);fn(x,z,a,i);}};
   if(ci===0){ // karst relay: boulders, lattice tower, puddles
     ring(26,H+7,(x,z)=>{const geo=new T.DodecahedronGeometry(rnd(1.4,3.6),0);const pa=geo.attributes.position;for(let k=0;k<pa.count;k++)pa.setXYZ(k,pa.getX(k)*rnd(.85,1.15),pa.getY(k)*rnd(.8,1.1),pa.getZ(k)*rnd(.85,1.15));geo.computeVertexNormals();const m=mesh(g,geo,rock,x,rnd(.1,.6),z,rnd(0,3),rnd(0,3),0);m.scale.y=rnd(.45,.9);});
     const tw=new T.Group();tw.position.set(-H-9,0,-H-6);g.add(tw);
@@ -73,7 +82,7 @@ function buildProps(s,ci){
     for(let i=-3;i<=3;i++)bx(g,1.1,3.2,TILE*1.2,MAT.concrete,H+6,1.6,i*TILE*1.25);
     const tw=new T.Group();tw.position.set(H+7,0,-H-7);g.add(tw);for(const [x,z] of [[-1.5,-1.5],[1.5,-1.5],[1.5,1.5],[-1.5,1.5]])cy(tw,.18,.18,12,MAT.graphite,x,6,z,0,0,0,6);
     bx(tw,4.4,2.4,4.4,MAT.oliveDark,0,13,0);bx(tw,5,.3,5,MAT.graphite,0,14.4,0);mesh(tw,new T.SphereGeometry(.3,10,8),MAT.beaconRed,0,15,0,0,0,0,false);
-    const sb=MS({color:C(0x7d7258),roughness:.95});for(let i=0;i<30;i++){const a=i/30*PI*2;mesh(g,T.CapsuleGeometry?new T.CapsuleGeometry(.35,.6,4,8):new T.SphereGeometry(.5,8,6),sb,Math.cos(a)*(H+3.5),.35,Math.sin(a)*(H+3.5),0,a,PI/2);}
+    const sb=MS({color:C(0x7d7258),roughness:.95});for(let i=0;i<30;i++){const a=i/30*PI*2,[x,z]=outsideBoard(Math.cos(a)*(H+3.5),Math.sin(a)*(H+3.5),1);mesh(g,T.CapsuleGeometry?new T.CapsuleGeometry(.35,.6,4,8):new T.SphereGeometry(.5,8,6),sb,x,.35,z,0,a,PI/2);}
     ring(16,H+12,(x,z)=>{const geo=new T.DodecahedronGeometry(rnd(1.2,3),0);mesh(g,geo,rock,x,.5,z,rnd(0,3),rnd(0,3),0);});
   }
   g.traverse(o=>{if(o.isMesh){o.castShadow=o.position.length()<H+12;}});

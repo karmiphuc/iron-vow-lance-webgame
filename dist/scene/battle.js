@@ -153,9 +153,12 @@ function updateCamera(t,dt){
  const position=target.clone().add(V3(Math.sin(az)*Math.cos(el),Math.sin(el),Math.cos(az)*Math.cos(el)).multiplyScalar(distance));
  const shot=activeCinematic;
  if(shot&&!reducedMotion){
-  const actor=unitRoot(shot.actor),victim=partPoint(shot.target,shot.part),direction=victim.clone().sub(actor).setY(0).normalize(),side=V3(direction.z,0,-direction.x);
+  const actor=unitRoot(shot.actor),victim=partPoint(shot.target,shot.part),direction=victim.clone().sub(actor).setY(0);
+  // On a close shot, move outside the attacker's shoulder so the defender stays visible.
+  const close=1-smoothRange(TILE*2,TILE*4,direction.length());
+  direction.normalize();const side=V3(direction.z,0,-direction.x);
   target.copy(shot.phase==='result'?victim:victim.clone().lerp(actor,.12));
-  position.copy(actor).addScaledVector(direction,-6.5).addScaledVector(side,3.4);position.y=actor.y+6;
+  position.copy(actor).addScaledVector(direction,-6.5).addScaledVector(side,3.4+3.2*close);position.y=actor.y+6+1.2*close;
  }
  const blend=cameraReady?1-Math.exp(-dt*6):1;cameraTarget.lerp(target,blend);cameraPosition.lerp(position,blend);camera.position.copy(cameraPosition);
  if(!reducedMotion&&shake>.15)camera.position.add(V3(Math.sin(t*110),Math.cos(t*93)*.5,0).multiplyScalar(Math.min(1.4,shake*.03)));
@@ -176,18 +179,26 @@ function prepareUnit(u,t){
   if(airborne)p.y+=jumpjetHeight(u,t);
   const mortar=mortarCues.get(u.id);if(mortar){pose.mortarAge=t-mortar.at;if(pose.mortarAge>=2.1)mortarCues.delete(u.id);}
   const motion=u.motion,heading=motion?Math.atan2(motion.toX-motion.fromX,motion.toZ-motion.fromZ):(displayedHeading(u)+Math.PI/4);
+  const defending=u.alive&&!u.attack&&!motion&&!reducedMotion&&activeCinematic?.target===u;
+  const guardPoint=defending?unitRoot(activeCinematic.actor):null;
+  const elapsed=record?Math.max(0,Math.min(.05,t-record.previousTime)):1/60;
+  const lastGuard=record?.guard??0;
+  // The cinematic guard uses the rig's brace pose without changing the unit's Brace action.
+  const guard=u.alive&&!reducedMotion?lastGuard+((defending ? .76 : 0)-lastGuard)*(1-Math.exp(-elapsed*12)):0;
+  pose.brace=Math.max(pose.brace,guard);
   const speed=record?.previousPosition&&t>record.previousTime?p.distanceTo(record.previousPosition)/(t-record.previousTime):0;
   const aim=goal&&goal.target.alive?partPoint(goal.target,goal.part):p.clone().add(V3(Math.sin(heading)*20,4,Math.cos(heading)*20));
   const targetRoot=goal?unitRoot(goal.target):p.clone();
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
-  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face:goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
+  const face=guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
+  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face,heading,aim,groundAt,speed};
   const custom=rigV2.applies(u)?'rig-v2':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;
   object=entry.m.cont;
   if(!record){record={entry};models.set(u.id,record);}else record.entry=entry;
-  record.previousPosition=p;record.previousTime=t;
+  record.previousPosition=p;record.previousTime=t;record.guard=guard;
  }
  if(object.parent!==units)units.add(object);record.object=object;
  if(!record.proxy){
