@@ -123,6 +123,7 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
  assert.equal(await state(),before,'Escape preserves the selection, career and AP');
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
  await capture(`combat-${viewport.width}x${viewport.height}.webp`);
+ await page.evaluate(()=>{createBattle(1,false,false,[0,1,2]);selected=0;renderBattle();});
  for(const width of [390,320]){
   await page.setViewportSize({width,height:844});
   await page.locator('#target-toggle strong').evaluate(el=>el.textContent='HELLBREAKER ASSAULT');
@@ -133,5 +134,10 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
   });
   const overview=page.locator('#map-overview');
   await overview.click({trial:true});
+  const sizes=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,row:document.querySelector('.unitbuttons').getBoundingClientRect().right}));
+  assert.ok(sizes.width<=width+1&&sizes.scroll<=width+1&&sizes.row<=width+1,'Three-unit row fits the actual phone viewport: '+JSON.stringify(sizes));
+  await tap('#manual');
+  await tap('#modal-0');
+  assert.equal(await page.locator('#modal').isVisible(),false,'Phone manual closes through its visible action');
  }
 }
