@@ -76,6 +76,7 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await waitSaved([null,null,null]);
  assert.deepEqual(values(await saved()),[null,null,null]);
  assert.equal(await page.locator(factoryButton).getAttribute('aria-pressed'),'true');
+ await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
  assert.deepEqual(await factoryColors(),originalFactory,'Factory restores the native material colors');
  await page.reload({waitUntil:'domcontentloaded'});
