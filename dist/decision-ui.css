@@ -46,7 +46,7 @@ body[data-view="combat"] .actionbuttons button span{font-size:12px}
  .target-detail-label{display:block;margin:4px 0 0;font-size:9px}
  body[data-view="combat"][data-target-panel="open"] .combatpanel{top:155px;right:10px;width:min(285px,calc(100% - 20px));max-height:calc(100% - 365px);padding:13px}
  body[data-view="combat"] .combat-target{display:none}
- body[data-view="combat"] .field-navigation{width:126px;top:162px;bottom:auto;right:10px;left:auto}
+ body[data-view="combat"] .field-navigation{width:126px;top:calc(var(--combat-target-bottom,150px) + 12px);bottom:auto;right:10px;left:auto}
  body[data-view="combat"] .battle-bottom{bottom:10px}
  body[data-view="combat"] .actionbuttons button{flex:1 0 44px;padding:8px 5px}
  body[data-view="combat"] .actionbuttons button span{font-size:11px}

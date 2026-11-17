@@ -123,4 +123,15 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
  assert.equal(await state(),before,'Escape preserves the selection, career and AP');
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
  await capture(`combat-${viewport.width}x${viewport.height}.webp`);
+ for(const width of [390,320]){
+  await page.setViewportSize({width,height:844});
+  await page.locator('#target-toggle strong').evaluate(el=>el.textContent='HELLBREAKER ASSAULT');
+  await page.waitForFunction(()=>{
+   const target=document.querySelector('#target-toggle').getBoundingClientRect();
+   const map=document.querySelector('.field-navigation').getBoundingClientRect();
+   return map.top>=target.bottom+10;
+  });
+  const overview=page.locator('#map-overview');
+  await overview.click({trial:true});
+ }
 }

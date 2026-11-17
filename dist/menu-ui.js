@@ -5,15 +5,17 @@ window.IronVowMenus=(()=>{
  function combatLayout(root){
   hudObserver?.disconnect();
   const hud=root.querySelector('.battle-bottom');
+  const target=root.querySelector('#target-toggle');
   if(!hud)return;
   const measure=()=>{
    if(!hud.isConnected)return;
    const bottom=parseFloat(getComputedStyle(hud).bottom);
    document.body.style.setProperty('--combat-hud-height',hud.getBoundingClientRect().height+'px');
    document.body.style.setProperty('--combat-hud-bottom',(Number.isFinite(bottom)?bottom:16)+'px');
+   if(target)document.body.style.setProperty('--combat-target-bottom',(target.offsetTop+target.offsetHeight)+'px');
   };
   measure();
-  if(window.ResizeObserver){hudObserver=new ResizeObserver(measure);hudObserver.observe(hud);}
+  if(window.ResizeObserver){hudObserver=new ResizeObserver(measure);hudObserver.observe(hud);if(target)hudObserver.observe(target);}
  }
  function contracts(root){
   const grid=root.querySelector('#ui .contract-grid');
