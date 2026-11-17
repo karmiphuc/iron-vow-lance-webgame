@@ -25,8 +25,13 @@ module.exports=async function checkRidgeCombat({page,mobile,origin,tap}){
  const fire=async()=>{
   const p=await page.evaluate(()=>{
    const {foe}=ridgeQA;
-   const tile=project(foe.x,0,foe.z);
-   return {x:Math.round(tile.x),y:Math.round(tile.y)};
+   IronVowScene.render(clock,1);
+   const center=IronVowScene.projectWorld(IronVowScene.partPoint(foe));
+   for(const dx of [0,-6,6,-12,12])for(const dy of [0,-6,6,-12,12]){
+    const x=Math.round(center.x)+dx,y=Math.round(center.y)+dy;
+    if(document.elementFromPoint(x,y)===canvas&&IronVowScene.pick(x,y)===foe)return {x,y};
+   }
+   throw Error('No exposed raycastable Ridge target');
   });
   if(mobile)await page.touchscreen.tap(p.x,p.y);
   else await page.mouse.click(p.x,p.y);
