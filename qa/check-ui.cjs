@@ -8,7 +8,7 @@ const {document}=parseHTML(fs.readFileSync(root+'/dist/index.html','utf8'));cons
 class LocalImage extends Image{set src(v){super.src=fs.readFileSync(path.join(root,'dist',v))}get src(){return super.src}}
 class NativeSurface{constructor(w,h){return createCanvas(w,h)}}
 const storage=new Map(),warnings=[];const context={document,Image:LocalImage,OffscreenCanvas:NativeSurface,console:{log:console.log,warn:(...a)=>warnings.push(a.join(' ')),error:console.error},window:{addEventListener:()=>{},matchMedia:()=>({matches:false})},innerWidth:1440,innerHeight:1024,devicePixelRatio:1,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},requestAnimationFrame:()=>{},setTimeout:r=>{queueMicrotask(r);return 1},clearTimeout:()=>{},URL,Blob,Math:Object.create(Math)};
-vm.createContext(context);for(const file of ['theater-layouts.js','combat-simulation.js','overworld.js','overworld-view.js','game.js'])vm.runInContext(fs.readFileSync(path.join(root,'dist',file),'utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
+vm.createContext(context);for(const file of ['theater-layouts.js','combat-simulation.js','overworld-world.js','overworld.js','overworld-view.js','game.js'])vm.runInContext(fs.readFileSync(path.join(root,'dist',file),'utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
 function checkHangarNavigation(){
  const navigation=context.window.IronVowHangarNavigation;
  assert.ok(navigation);
@@ -57,7 +57,7 @@ click('#inspect');assert.ok(get('.unit-inspect'));click('[data-select="1"]');ass
 click('[data-page="workshop"]');click('[data-select="0"]');
 assert.equal(get('.rig-bench-link').getAttribute('href'),'?bench=rig&frame=0');
 
-run('save.dispatch={day:save.day,sizes:[3,2,1,3]}');click('[data-page="contracts"]');assert.equal(document.querySelectorAll('[data-deploy]').length,4);click('[data-deploy="0"]');assert.equal(run('battle'),null);click('#modal-1');assert.equal(run('battle.units.length'),7);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
+run('save.dispatch={day:save.day,sizes:[3,2,1,3]}');click('[data-page="contracts"]');assert.equal(document.querySelectorAll('[data-world-offer]').length,2);click('[data-deploy="0"]');assert.equal(run('battle'),null);click('#modal-1');assert.equal(run('battle.units.length'),7);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
 assert.equal(document.querySelectorAll('[data-part]').length,5);assert.equal(document.querySelectorAll('.parts button, .parts [aria-pressed]').length,0,'target part health is read-only: nothing to aim');assert.equal(document.querySelectorAll('[data-unit]').length,3);
 click('[data-unit="0"]');click('#skill');assert.equal(run('current().ap'),10);assert.equal(get('#skill').disabled,true);click('#brace');assert.equal(run('current().ap'),8);assert.equal(run('current().brace'),true);click('#fire');assert.equal(run('action'),'fire');assert.equal(run("typeof targetPart"),'undefined','no player part selection state');
 // UI and game-command assertions only. Real scene rendering and captures run in Chromium.

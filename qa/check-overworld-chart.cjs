@@ -4,6 +4,7 @@ const {spawnSync}=require('node:child_process');
 const fs=require('node:fs');
 const path=require('node:path');
 const checkOverworld=require('./browser/overworld.cjs');
+const checkOverworldLiving=require('./browser/overworld-living.cjs');
 
 const root=path.resolve(__dirname,'..');
 
@@ -63,6 +64,7 @@ async function main(){
  try{
   summary.checks.push(runScript('overworld rules','check-overworld-rules.cjs'));
   summary.checks.push(runScript('career travel and save fixtures','check-overworld-career.cjs'));
+  summary.checks.push(runScript('living-world offers and career integration','check-overworld-living.cjs'));
 
   previousBrowserReport=process.env.IRON_VOW_QA_REPORT;
   previousDevices=process.env.IRON_VOW_QA_DEVICES;
@@ -76,10 +78,10 @@ async function main(){
   process.env.IRON_VOW_QA_SERIAL='1';
   try{
    const checkBrowser=require('./check-browser.cjs');
-   await checkBrowser(undefined,[checkOverworld]);
-   summary.checks.push({name:'overworld browser desktop and touch',status:'passed'});
+   await checkBrowser(undefined,[checkOverworld,checkOverworldLiving]);
+   summary.checks.push({name:'overworld and living-world browser desktop and touch',status:'passed'});
   }catch(error){
-   summary.checks.push({name:'overworld browser desktop and touch',status:'failed'});
+   summary.checks.push({name:'overworld and living-world browser desktop and touch',status:'failed'});
    throw error;
   }finally{
    if(previousBrowserReport===undefined)delete process.env.IRON_VOW_QA_REPORT;else process.env.IRON_VOW_QA_REPORT=previousBrowserReport;
@@ -87,7 +89,7 @@ async function main(){
    if(previousSerial===undefined)delete process.env.IRON_VOW_QA_SERIAL;else process.env.IRON_VOW_QA_SERIAL=previousSerial;
   }
   summary.status='passed';
-  console.log('PASS overworld chart gate: route forecast, inline departure, transit rest, save reload and touch layout');
+  console.log('PASS overworld chart gate: six-port layout, forecasts, paid hold, scouting, transit rest and offer checkpoint payout');
  }catch(error){
   if(error.check){
    const existing=summary.checks.find(check=>check.name===error.check.name);

@@ -57,26 +57,33 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  if(mobile)await page.setViewportSize({width:320,height:735});
  await page.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('[data-page="overworld"]').first().waitFor();
- const initial=await page.evaluate(()=>({credits:save.credits,day:save.day,overworld:save.overworld}));
+ await page.evaluate(async()=>{save.world=worldRules.createWorld(0,save.day);persist();await pendingCareerWrite});
+ const initial=await page.evaluate(()=>({credits:save.credits,day:save.day,overworld:save.overworld,world:save.world}));
  assert.equal(initial.credits,4500);
  assert.equal(initial.day,1);
  assert.equal(initial.overworld?.port||'picket','picket');
+ assert.equal(initial.world.seed,0);
+ assert.equal(initial.world.day,1);
+ assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),initial.world),true);
 
- // Local contracts still start an assignment. A remote contract opens the chart without spending time.
+ // The deterministic local pool starts with template zero. A remote job is reached through the chart.
  await nav('contracts');
- await tap('[data-deploy="0"]');
+ await page.locator('[data-world-offer][data-deploy="0"]').waitFor();
+ await tap('[data-world-offer][data-deploy="0"]');
  await page.getByRole('dialog',{name:'SORTIE ASSIGNMENT'}).waitFor();
  await noOverflow('.modalbox');
  await tap('#modal-0');
- await tap('[data-deploy="1"]');
+ await tap('.pagehead [data-page="overworld"]');
  await page.locator('#chart-viewport').waitFor();
  await page.locator('[data-overworld-port="relay"]').waitFor();
+ await tap('[data-overworld-port="relay"]');
  assert.equal(await page.getByRole('dialog',{name:'SORTIE ASSIGNMENT'}).count(),0);
  assert.equal(await page.evaluate(()=>!!battle),false);
  let state=await snapshot();
  assert.equal(state.day,1);
  assert.equal(state.credits,4500);
  assert.equal(state.overworld?.port||'picket','picket');
+ assert.deepEqual(state.world,initial.world,'opening the chart keeps the seeded world unchanged');
  await forecast({cost:510,cash:3990,day:2});
  await noOverflow('#ui');
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1,'chart uses the shared WebGL context');
@@ -99,7 +106,11 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  state=await snapshot();
  assert.equal(state.day,2);
  assert.equal(state.credits,3990);
- assert.deepEqual(state,arrived,'one-hop Relay travel keeps its existing saved shape');
+ const {world:relayWorld,...relayLegacyFields}=state;
+ assert.deepEqual(relayLegacyFields,arrived,'one-hop Relay travel keeps its existing career fields');
+ assert.deepEqual(relayWorld,await page.evaluate(()=>worldRules.createWorld(0,2)),'travel advances the seeded world by one day');
+ assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),relayWorld),true);
+ const relayArrival=JSON.parse(JSON.stringify(state));
  assert.equal(state.overworld.lastExpense.total,510);
  assert.equal(state.overworld.lastExpense.days,1);
  assert.equal(state.overworld.lastExpense.fuel,120);
@@ -110,13 +121,15 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('.ship-banner').waitFor();
  state=await snapshot();
- assert.deepEqual(state,arrived);
+ assert.deepEqual(state,relayArrival,'the Relay arrival including its world reloads exactly');
  assert.match(await page.locator('#ui').innerText(),/relay/i);
  await tap('[data-page="overworld"]');
  await page.locator('#chart-viewport').waitFor();
  await tap('[data-chart-contracts="relay"]');
  await page.locator('.contract-grid').waitFor();
- await tap('[data-deploy="1"]');
+ const relayOffer=await page.evaluate(()=>availableOffers('relay').find(offer=>offer.templateIndex===1));
+ assert(relayOffer,'seed zero posts the template-one Relay offer on day two');
+ await tap(`[data-world-offer="${relayOffer.id}"]`);
  await page.getByRole('dialog',{name:'SORTIE ASSIGNMENT'}).waitFor();
  await tap('#modal-1');
  await tap('#modal-0');
@@ -130,11 +143,16 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  assert.equal(afterWithdrawal.overworld.lastExpense.kind,'sortie');
  assert.equal(afterWithdrawal.overworld.lastExpense.paid,390);
  assert.equal(afterWithdrawal.overworld.port,'relay');
+ assert.equal(afterWithdrawal.world.day,3);
+ assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),afterWithdrawal.world),true);
+ assert(afterWithdrawal.world.consumed.includes(relayOffer.id),'the accepted Relay offer stays consumed after withdrawal');
+ assert.equal(afterWithdrawal.history.at(-1).offerId,relayOffer.id);
+ assert.equal(afterWithdrawal.history.at(-1).port,'relay');
  await tap('#modal-0');
 
  // Reset to a fresh company for the Vanta choice and arrival-readiness forecast.
  await page.evaluate(async()=>{
-  save=fresh();overworldSelection=null;persist();await pendingCareerWrite;showOverworld('picket');
+  save=fresh();save.world=worldRules.createWorld(0,save.day);overworldSelection=null;persist();await pendingCareerWrite;showOverworld('picket');
  });
  await page.locator('#chart-viewport').waitFor();
  await tap('[data-overworld-port="corridor"]');
@@ -216,13 +234,17 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  await tap('[data-overworld-confirm]');
  await page.waitForFunction(()=>save.overworld?.port==='corridor');
  state=await snapshot();
- assert.deepEqual(state,restedArrival,'successful two-day travel services active and reserve hulls once');
+ const {world:restedWorld,...restedLegacyFields}=state;
+ assert.deepEqual(restedLegacyFields,restedArrival,'two-day transit preserves the existing rest and expense values');
+ assert.deepEqual(restedWorld,await page.evaluate(()=>worldRules.createWorld(0,3)),'successful two-day travel advances the world exactly once');
+ assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),restedWorld),true);
+ const restedWorldArrival=JSON.parse(JSON.stringify(state));
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1,'chart and hangar share one WebGL context');
 
  // Reopening validates the new fixture through the normal career migration path.
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('.ship-banner').waitFor();
- assert.deepEqual(await snapshot(),restedArrival);
+ assert.deepEqual(await snapshot(),restedWorldArrival,'the serviced arrival and world reload exactly');
  await tap('[data-page="overworld"]');
  await page.locator('#chart-viewport').waitFor();
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);

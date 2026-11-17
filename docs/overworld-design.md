@@ -1,6 +1,6 @@
 # Overworld design guide
 
-Status: Phase A first playable implementation, 2026-11-18. The owner approved transit-day hull service and wound rest, and 0–3 pooled contracts per port for Phase B. Phases B and C remain in progress.
+Status: Phases A and B implemented, 2026-11-18. The owner approved transit-day hull service and wound rest, and 0–3 pooled contracts per port for Phase B. Phase C remains in progress.
 
 The overworld should create decisions, not only price them. Today's Star Map shows what a trip costs. The target is a chart table aboard the Halyard where the player weighs time, money, lance readiness and opportunity on one screen, with the map visible the whole time.
 
@@ -74,6 +74,8 @@ The owner mostly plays on iPad Pro in Safari or Chrome.
 - Fast gate `node qa/check-overworld-chart.cjs`: forecast numbers match `travelQuote`, the map stays visible on confirm, touch targets meet the minimum, and saves round-trip.
 
 **Phase B: living world.** Pillars 1 and 4. Contracts are decoupled from ports into a pool with expiry days, plus drifting storm and patrol markers. Intel ranges. Add 2–4 more mooring towers so routes branch and more than one real route choice exists.
+
+The Phase B implementation adds Ridge Mast and Haven Reach, branching courses, four-day contract postings with 0–3 unique offers per port, inclusive expiry forecasts, paid scouting, live sensor coverage and day-indexed storm/patrol movement. An accepted offer keeps its original terms in the sortie checkpoint. A paid one-day hold advances dispatch and maintenance, with unpaid upkeep carried as arrears.
 
 **Phase C: port identity and events.** Pillars 3 and 5. Per-port market stock, repair rates, faction standing and en-route event cards.
 

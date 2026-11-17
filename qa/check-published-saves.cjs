@@ -5,7 +5,7 @@ const simulate=require('./sim-harness.cjs');
 const key='iron-vow-career';
 
 // Synthetic careers exported by the deployed builds.
-for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v53-picket.json','v55-corridor.json','ashigaru-picket.json']){
+for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v53-picket.json','v55-corridor.json','ashigaru-picket.json','world-active-offer.json']){
  const raw=readFileSync(join(__dirname,'fixtures',file),'utf8'),{sortie:expected,...career}=JSON.parse(raw);
  const sim=simulate({storage:new Map([[key,raw]]),random:()=>0,reducedMotion:true});
  function check(){

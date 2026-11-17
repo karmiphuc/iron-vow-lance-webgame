@@ -9,6 +9,7 @@ const load=record=>simulate({storage:new Map([[key,JSON.stringify(record)]]),ran
 const saved=sim=>JSON.parse(sim.storage.get(key));
 const snapshot=sim=>JSON.parse(sim.run('JSON.stringify(save)'));
 const roundTrip=sim=>load(saved(sim));
+const withoutWorld=record=>{const {world,...legacyFields}=record;return legacyFields};
 const quote=(sim,path)=>JSON.parse(sim.run(`JSON.stringify(window.IronVowOverworld.itineraryQuote(${JSON.stringify(path)},window.IronVowOverworld.operatingRates(save),save.credits,save.overworld?.arrears??0))`));
 const travel=(sim,destination,from,cost,path)=>sim.run(`travelTo(${JSON.stringify(destination)},${JSON.stringify(from)},${cost===undefined?'undefined':cost},${JSON.stringify(path)})`);
 
@@ -45,14 +46,21 @@ assert.equal(relaySaved.overworld.lastExpense.total,510);
 assert.equal(relaySaved.overworld.lastExpense.destination,'relay');
 assert.equal(Object.hasOwn(relaySaved,'reserve'),false,'travel preserves absent reserve data');
 assert.equal(Object.hasOwn(relaySaved,'wounds'),false,'travel preserves absent wound data');
+assert.deepEqual(withoutWorld(relaySaved),arrived,'the original Relay save fields remain unchanged');
+assert.deepEqual(relaySaved.world,JSON.parse(company.run('JSON.stringify(window.IronVowWorld.createWorld(42,2))')),'chart entry created the fixed test world and transit advanced it');
 assert.equal(company.run('travelTo("relay","picket",510)'),false,'a stale confirmation cannot debit twice');
 assert.deepEqual(saved(company),relaySaved);
-assert.deepEqual(relaySaved,arrived);
-assert.deepEqual(saved(roundTrip(company)),arrived);
+assert.deepEqual(saved(roundTrip(company)),relaySaved,'the full world survives a save reload');
 
 const imported=simulate();
 assert.equal(imported.run(`importCareer(${JSON.stringify(arrived)})`),false,'travel fixture has no active sortie');
 assert.deepEqual(saved(imported),arrived);
+assert.equal(Object.hasOwn(saved(imported),'world'),false,'legacy import does not create a world before chart entry');
+imported.run('showOverworld("relay")');
+const importedOnChart=saved(imported);
+assert.deepEqual(withoutWorld(importedOnChart),arrived,'opening the chart leaves legacy fields byte-for-byte intact');
+assert.deepEqual(importedOnChart.world,JSON.parse(imported.run('JSON.stringify(window.IronVowWorld.createWorld(42,2))')));
+assert.deepEqual(saved(roundTrip(imported)),importedOnChart,'the lazily added world round-trips exactly');
 
 // Apply two transit days of repair and wound rest once, including stored hulls.
 const rested=simulate({random:()=>0});
@@ -60,6 +68,7 @@ rested.run(`save.units[0].condition=25;save.units[1].condition=95;save.units[2].
  save.ship={levels:{repair:1,crew:1}};save.owned.push('blade');
  save.reserve={'6':{weapon:'rifle',melee:'blade',condition:40,upgrade:0}};
  save.wounds={rook:2,ghost:1};persist()`);
+rested.run('ensureWorld()');
 const viaPath=['picket','relay','corridor'];
 const restQuote=quote(rested,viaPath);
 assert.deepEqual(restQuote,{
@@ -70,19 +79,23 @@ assert.equal(travel(rested,'corridor','picket',restQuote.total+1,viaPath),false,
 assert.equal(travel(rested,'corridor','picket',restQuote.total,['picket','relay','picket','corridor']),false,'a repeated-port itinerary is rejected');
 assert.equal(JSON.stringify(saved(rested)),beforeRejectedTravel,'failed route attempts do not apply rest or charges');
 assert.equal(travel(rested,'corridor','picket',restQuote.total,viaPath),true);
-assert.deepEqual(saved(rested),restedArrival,'two travel days service active and reserve hulls and clear rested wounds');
+const restedWithWorld=saved(rested);
+assert.deepEqual(withoutWorld(restedWithWorld),restedArrival,'two travel days retain the old rest, charge and hull values');
+assert.deepEqual(restedWithWorld.world,JSON.parse(rested.run('JSON.stringify(window.IronVowWorld.createWorld(42,3))')),'the world advances by the itinerary duration');
 assert.equal(travel(rested,'corridor','picket',restQuote.total,viaPath),false,'the same itinerary cannot be charged or rested twice');
-assert.deepEqual(saved(rested),restedArrival);
-assert.deepEqual(saved(roundTrip(rested)),restedArrival,'the repaired arrival survives a save round trip');
+assert.deepEqual(saved(rested),restedWithWorld);
+assert.deepEqual(saved(roundTrip(rested)),restedWithWorld,'the repaired arrival and world survive a save round trip');
 
 // Repair Deck tier two applies its per-day service, capped at full condition.
 const tierTwo=simulate({random:()=>0});
 tierTwo.run(`save.units[0].condition=40;save.units[1].condition=95;save.wounds={rook:2,ghost:1};
  save.ship={levels:{repair:2}};persist()`);
+tierTwo.run('ensureWorld()');
 const tierTwoQuote=quote(tierTwo,viaPath);
 assert.equal(tierTwoQuote.total,1160);
 assert.equal(travel(tierTwo,'corridor','picket',tierTwoQuote.total,viaPath),true);
 const tierTwoArrival=saved(tierTwo);
+assert.equal(tierTwoArrival.world.day,tierTwoArrival.day,'Repair Deck transit advances the world and career together');
 assert.equal(tierTwoArrival.units[0].condition,88,'tier two repairs 24 integrity per travel day');
 assert.equal(tierTwoArrival.units[1].condition,100,'service cannot exceed full condition');
 assert.deepEqual(tierTwoArrival.wounds,{});

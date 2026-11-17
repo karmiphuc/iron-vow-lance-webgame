@@ -1,7 +1,9 @@
 const assert=require('node:assert/strict');
 global.window={};
 require('../dist/overworld.js');
+require('../dist/overworld-world.js');
 const {PORTS,ROUTES,operatingRates,travelQuote,routeOptions,itineraryQuote,travelRest,settleExpenses,validState}=window.IronVowOverworld;
+const network={ports:window.IronVowWorld.PORTS,routes:window.IronVowWorld.ROUTES};
 
 const fresh={units:Array.from({length:3},()=>({level:1,upgrade:0}))};
 assert.deepEqual(operatingRates(fresh),{wages:210,ship:75,hulls:105,total:390});
@@ -26,6 +28,14 @@ assert.equal(itineraryQuote(['picket','corridor'],rates,1000,100).cashAfterArriv
 assert(Object.isFrozen(via)&&Object.isFrozen(via.path));
 for(const path of [[],['picket'],['picket','frontier'],['picket','relay','picket'],['picket','unknown']])assert.equal(itineraryQuote(path,rates,2000),null);
 assert.equal(itineraryQuote(['picket','relay'],{...rates,wages:-1},2000),null);
+assert.equal(travelQuote('picket','ridge',rates),null);
+assert.deepEqual(travelQuote('picket','ridge',rates,network.routes),{days:1,fuel:140,wages:210,ship:75,hulls:105,total:530});
+assert.deepEqual(routeOptions('picket','haven'),[]);
+assert(routeOptions('picket','haven',network).some(path=>path.join('/')==='picket/ridge/haven'));
+assert.equal(itineraryQuote(['picket','ridge','haven'],rates,2000),null);
+assert.deepEqual(itineraryQuote(['picket','ridge','haven'],rates,2000,100,network),
+ {path:['picket','ridge','haven'],days:3,fuel:360,wages:630,ship:225,hulls:315,total:1530,cashAfterArrival:470,arrears:100});
+assert.equal(itineraryQuote(['picket','ridge','picket'],rates,2000,0,network),null);
 const career={units:[{condition:25,level:1},{condition:95,level:1}],reserve:{4:{condition:40,upgrade:0}},wounds:{ace:2,rook:1},ship:{levels:{repair:1,crew:0}}};
 const before=JSON.stringify(career),rested=travelRest(career,2);
 assert.deepEqual(rested,{units:[{condition:49,level:1},{condition:100,level:1}],reserve:{4:{condition:64,upgrade:0}},wounds:{}});
@@ -40,6 +50,9 @@ assert.deepEqual(settleExpenses(0.75,Number.MAX_SAFE_INTEGER,390),{credits:0.75,
 const expense={kind:'travel',day:1,days:1,fuel:120,wages:210,ship:75,hulls:105,total:510,paid:510,arrearsPaid:0,destination:'relay'};
 assert.equal(validState({port:'picket',arrears:0}),true);
 assert.equal(validState({port:'relay',arrears:0,lastExpense:expense}),true);
+const havenExpense={kind:'travel',day:4,days:3,fuel:360,wages:630,ship:225,hulls:315,total:1530,paid:1530,arrearsPaid:0,destination:'haven'};
+assert.equal(validState({port:'haven',arrears:0,lastExpense:havenExpense}),false);
+assert.equal(validState({port:'haven',arrears:0,lastExpense:havenExpense},network.ports),true);
 const sortie={...expense,kind:'sortie',fuel:0,total:390,paid:100,destination:undefined};
 assert.equal(validState({port:'picket',arrears:0,lastExpense:sortie}),true);
 for(const bad of [{...expense,destination:undefined},{...expense,paid:509},{...expense,arrearsPaid:1},{...expense,total:511},{...sortie,days:2},{...sortie,fuel:1},{...sortie,paid:391},{...sortie,destination:'relay'}])assert.equal(validState({port:'picket',arrears:0,lastExpense:bad}),false);

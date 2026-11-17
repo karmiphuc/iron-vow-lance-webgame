@@ -12,7 +12,8 @@ window.IronVowOverworld=(()=>{
   Object.freeze({from:'corridor',to:'frontier',days:2,fuel:260}),
   Object.freeze({from:'picket',to:'corridor',days:1,fuel:850})
  ]);
- const knownPort=id=>PORTS.some(port=>port.id===id);
+ const DEFAULT_NETWORK=Object.freeze({ports:PORTS,routes:ROUTES});
+ const knownPort=(id,ports=PORTS)=>Array.isArray(ports)&&ports.some(port=>port?.id===id);
  function operatingRates(career){
   const units=career.units??[],reservePilots=Object.values(career.reservePilots??{}),reserveHulls=Object.values(career.reserve??{});
   const wages=[...units,...reservePilots].reduce((sum,pilot)=>sum+70+10*(pilot.level-1),0);
@@ -20,33 +21,33 @@ window.IronVowOverworld=(()=>{
   const ship=75+20*Object.values(career.ship?.levels??{}).reduce((sum,level)=>sum+level,0);
   return{wages,ship,hulls,total:wages+ship+hulls};
  }
- function travelQuote(from,to,rates){
-  const route=ROUTES.find(route=>route.from===from&&route.to===to||route.from===to&&route.to===from);
+ function travelQuote(from,to,rates,routes=ROUTES){
+  const route=Array.isArray(routes)&&routes.find(route=>route.from===from&&route.to===to||route.from===to&&route.to===from);
   if(!route)return null;
   const {days,fuel}=route,wages=rates.wages*days,ship=rates.ship*days,hulls=rates.hulls*days;
   return{days,fuel,wages,ship,hulls,total:fuel+wages+ship+hulls};
  }
- // Enumerate each simple route once, in the stable order of ROUTES.
- function routeOptions(from,to){
-  if(!knownPort(from)||!knownPort(to)||from===to)return [];
+ // Enumerate each simple route once, in the stable order of the network's routes.
+ function routeOptions(from,to,network=DEFAULT_NETWORK){
+  if(!network||!Array.isArray(network.routes)||!knownPort(from,network.ports)||!knownPort(to,network.ports)||from===to)return [];
   const paths=[];
   function visit(port,path){
    if(port===to){paths.push(path);return;}
-   for(const route of ROUTES){
+   for(const route of network.routes){
     const next=route.from===port?route.to:route.to===port?route.from:null;
-    if(next&&!path.includes(next))visit(next,[...path,next]);
+    if(next&&knownPort(next,network.ports)&&!path.includes(next))visit(next,[...path,next]);
    }
   }
   visit(from,[from]);
   return paths;
  }
- function itineraryQuote(path,rates,credits,arrears=0){
+ function itineraryQuote(path,rates,credits,arrears=0,network=DEFAULT_NETWORK){
   if(!Array.isArray(path)||path.length<2||new Set(path).size!==path.length||
-   !path.every(knownPort)||!record(rates)||!['wages','ship','hulls'].every(key=>nonnegative(rates[key]))||
+   !network||!Array.isArray(network.routes)||!path.every(id=>knownPort(id,network.ports))||!record(rates)||!['wages','ship','hulls'].every(key=>nonnegative(rates[key]))||
    !Number.isFinite(credits)||credits<0||!nonnegative(arrears))return null;
   let days=0,fuel=0;
   for(let i=1;i<path.length;i++){
-   const leg=travelQuote(path[i-1],path[i],rates);
+   const leg=travelQuote(path[i-1],path[i],rates,network.routes);
    if(!leg)return null;
    days+=leg.days;fuel+=leg.fuel;
   }
@@ -76,11 +77,11 @@ window.IronVowOverworld=(()=>{
  const nonnegative=value=>Number.isSafeInteger(value)&&value>=0;
  const positive=value=>Number.isSafeInteger(value)&&value>0;
  const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
- function validState(state){
-  if(!record(state)||!knownPort(state.port)||!nonnegative(state.arrears))return false;
+ function validState(state,ports=PORTS){
+  if(!record(state)||!knownPort(state.port,ports)||!nonnegative(state.arrears))return false;
   if(state.lastExpense===undefined)return true;
   const expense=state.lastExpense;
-  if(!record(expense)||!['travel','sortie'].includes(expense.kind)||!positive(expense.day)||!positive(expense.days)||
+  if(!record(expense)||!['travel','sortie','hold'].includes(expense.kind)||!positive(expense.day)||!positive(expense.days)||
    !['fuel','wages','ship','hulls','total','paid','arrearsPaid'].every(key=>nonnegative(expense[key])))return false;
   if(expense.total!==expense.fuel+expense.wages+expense.ship+expense.hulls||expense.paid>expense.total)return false;
   return expense.kind==='travel'
