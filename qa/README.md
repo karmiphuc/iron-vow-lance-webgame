@@ -61,7 +61,7 @@ The Rig Bench War link opens a temporary encounter on the game board. Run War is
 
 The shared observer samples the live rig and combat events after rendering. War's 19 isolated fault probes pass perturbed copies of those observations through the same predicates. The existing scene checker also exercises 16 physical negative controls.
 
-`node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
+`node qa/gate-phase6.cjs --out /tmp/iron-vow-phase6` runs the focused desktop and touch Bench/War gate and writes one summary and two real WebP captures. `node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
 
 ## Package and verify the Site
 

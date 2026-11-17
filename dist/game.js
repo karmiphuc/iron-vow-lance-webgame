@@ -3973,6 +3973,7 @@ function showWarReport(){
  for(const [id,label] of Object.entries(bench.checks))picker.add(new Option(label,id));
 }
 if(benchWar){
+ document.body.classList.add('rig-bench-war');
  attackCameraEnabled=false;
  const diagnostics=window.IronVowSceneDiagnostics;
  warDiagnostics=diagnostics.createObserver(window.IronVowScene);

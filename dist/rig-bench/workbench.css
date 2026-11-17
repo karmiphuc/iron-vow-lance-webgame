@@ -33,3 +33,5 @@ body.rig-bench-v3 { background:#152128; }
 }
 
 #war-report-data { max-height:42vh; overflow:auto; white-space:pre-wrap; }
+
+.rig-bench-war .battle-links { flex-wrap:wrap; gap:2px 10px; }

@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const {join}=require('node:path');
 const {readGLB}=require('../check-rig-v2.cjs');
-module.exports=async function checkRigWorkbench({page,origin,mobile}){
+module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.goto(new URL('rig-bench/',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('a[href="../?bench=rig"]').click();
  await page.waitForURL('**/?bench=rig');
@@ -19,6 +19,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile}){
  assert.equal(new Set(models).size,22);
  await page.evaluate(()=>__bench.selectFrame(10));
  await page.waitForFunction(()=>__bench.state.clips.length===6);
+ if(out&&!mobile)await require('./save-webp.cjs')(page,join(out,'rig-bench.webp'));
  await page.evaluate(()=>__bench.setClip('Walk',0));
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(resolve)));
  const before=await page.evaluate(()=>__bench.state.authoredAnkles);
@@ -81,4 +82,5 @@ module.exports=async function checkRigWorkbench({page,origin,mobile}){
  await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();
  await page.waitForFunction(()=>window.__bench?.state?.loaded);
  console.log(`PASS ${mobile?'touch':'desktop'} Bench roster, native clip, loadout, paint, damage, mixed legs and six-rig lineup`);
+ return {frames:entries.length,prototypeArchives:Object.values(archives),wardenClips,contexts:1};
 };

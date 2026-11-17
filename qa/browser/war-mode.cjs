@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const runWar=require('../war-driver.cjs');
 
-module.exports=async function checkWarMode({page,origin}){
+module.exports=async function checkWarMode({page,origin,mobile,out}){
  await page.addInitScript(()=>{
   localStorage.setItem('iron-vow-career','war-browser-fixture');
   window.careerDBOpens=0;
@@ -20,10 +20,13 @@ module.exports=async function checkWarMode({page,origin}){
   ready:IronVowScene.ready,
   objects:IronVowScene.models.size,
   dbOpens:window.careerDBOpens,
-  storage:localStorage.getItem('iron-vow-career')
+  storage:localStorage.getItem('iron-vow-career'),
+  controlsFit:[...document.querySelectorAll('.battle-links > *')].every(control=>
+   control.getBoundingClientRect().right<=document.querySelector('.battle-top').getBoundingClientRect().right)
  }));
  assert.deepEqual([scene.contexts,scene.ready,scene.dbOpens,scene.storage],[1,true,0,'war-browser-fixture']);
- assert.ok(scene.objects>=6,JSON.stringify(scene));
+ assert.ok(scene.objects>=6&&scene.controlsFit,JSON.stringify(scene));
+ if(out&&!mobile)await require('./save-webp.cjs')(page,require('node:path').join(out,'war.webp'));
  const probes=await page.evaluate(()=>{
   const checkpoint=JSON.stringify(__ironVow.checkpoint()),checks=Object.keys(__bench.checks);
   return {checks,detected:checks.map(key=>__bench.inject(key)?.type),unchanged:checkpoint===JSON.stringify(__ironVow.checkpoint())};
@@ -55,6 +58,7 @@ module.exports=async function checkWarMode({page,origin}){
   }
   throw Error(await page.evaluate(()=>JSON.stringify({turn:__bench.state?.turn,events:__bench.eventLog().length,running:__bench.running})));
  }
+ const parity=[];
  for(const options of [{seed:42,contract:0,maxTurns:2},{seed:42,contract:2,maxTurns:2}]){
   const expected=await runWar(options);
   const button=options.contract===0;
@@ -72,6 +76,7 @@ module.exports=async function checkWarMode({page,origin}){
   assert.ok(diagnostics.ticks>0&&diagnostics.combat.impact>0,JSON.stringify(diagnostics));
   assert.deepEqual(diagnostics.anomalies,[],JSON.stringify(diagnostics.anomalies));
   assert.deepEqual(actual,JSON.parse(JSON.stringify(expected)),`seed ${options.seed} theater contract ${options.contract}`);
+  parity.push({seed:options.seed,contract:options.contract,actions:actual.events.length,ticks:diagnostics.ticks});
   assert.deepEqual(actual.size,{width:18,depth:20});
   assert.ok(Number.isInteger(actual.terrainSeed)&&actual.events.some(action=>action.action==='endTurn'));
   assert.ok(actual.events.some(action=>action.log.some(line=>/returns fire|counters in melee/.test(line))));
@@ -96,4 +101,5 @@ module.exports=async function checkWarMode({page,origin}){
  assert.equal(await page.evaluate(()=>localStorage.getItem('iron-vow-career')),'war-browser-fixture');
  console.log(`PASS 19 War fault probes and ${count} seeded one-turn soak encounters · ${soak.ticks} observed frames · zero anomalies`);
  console.log('PASS War mode uses game commands on two theaters with matching results, reactions, tank and gunship damage and untouched career storage');
+ return {parity,probes:probes.checks,contexts:1,soak};
 };
