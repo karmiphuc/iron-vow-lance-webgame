@@ -507,7 +507,7 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 .combatpanel .parts .part-health{align-items:center;gap:2px;min-height:31px;padding:4px 4px 6px;border:1px solid #3b5060;border-radius:3px;background:#263a46;color:#d3dee4;text-align:left;font-size:9px;white-space:nowrap}
 .combatpanel .parts .part-health b{color:#f0f5f3;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
 .combatpanel .parts .part-health:before{top:auto;bottom:0;height:2px;background:var(--hp-ink)}
-.combatpanel .combatpanel .parts .part-health[data-health="down"]{background:#3a292c}
+.combatpanel .parts .part-health[data-health="down"]{background:#3a292c}
 .combatpanel .parts .part-health[data-health="down"] b{color:#f7a69a}
 .combatpanel .shot-readout{margin-top:6px}
 @media(pointer:coarse){.combatpanel .parts .part-health{min-height:36px}}

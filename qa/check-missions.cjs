@@ -1,6 +1,5 @@
 const assert=require('node:assert/strict'),createSimulation=require('./sim-harness.cjs');
 const playerTurn=`(async()=>{
- const dangerArm=t=>(t.frame===VANGUARD_FRAME||t.frame===AERO_FRAME)&&t.hp.left>0?'left':'right';
  for(const ally of battle.units.filter(u=>u.team==='ally'&&u.alive)){
   selected=ally.index;
   if(!ally.skill&&ally.index===2&&ally.hp.body<=ally.max.body-30)skill();
@@ -8,7 +7,7 @@ const playerTurn=`(async()=>{
    let targets=battle.units.filter(t=>t.team==='enemy'&&t.alive),w=weapon(ally.weapon);
    if(!targets.length)break;
    const armed=targets.filter(t=>isArmed(t)),priority=armed.length?armed:targets;
-   const available=priority.filter(t=>distance(ally,t)<=w.range&&!attackObstruction(ally,t,w)).sort((a,b)=>Math.min(a.hp.body,a.hp[dangerArm(a)]||Infinity)-Math.min(b.hp.body,b.hp[dangerArm(b)]||Infinity));
+   const available=priority.filter(t=>distance(ally,t)<=w.range&&!attackObstruction(ally,t,w)).sort((a,b)=>a.hp.body-b.hp.body);
    if(available.length&&ally.hp.right>0&&ally.ap>=w.ap){
     if(ally.index<2&&!ally.skill)skill();const target=available[0];await engage(ally,target,'body',w);if(checkEnd())return;continue;
    }
@@ -46,7 +45,8 @@ if(require.main===module)(async()=>{
     if(save.credits>=cost){save.credits-=cost;u.condition=100}
     else u.condition=Math.max(u.condition,FIELD_PATCH);
    }
-   for(const [slot,id] of [[0,'rail'],[1,'watchman']]){
+   // Burst fire spreads its damage across rolled locations; prioritize live bodies above disabled limbs.
+   for(const [slot,id] of [[0,'trident'],[1,'watchman']]){
     const {price}=weapon(id);
     if(save.owned.includes(id)||save.credits<price)continue;
     save.credits-=price;save.owned.push(id);save.units[slot].weapon=id;

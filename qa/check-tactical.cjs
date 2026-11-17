@@ -22,7 +22,7 @@ const create=require('./sim-harness.cjs');
  assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,mech,tank,helicopter');
  assert.equal(restored.run("CONTRACTS[1].id"),'relay');
  assert.equal(restored.run("CONTRACTS[1].deployment.length"),5);
- assert.equal(restored.run("const reserve=save.credits;finish(true);save.credits-reserve"),2000);
+ assert.equal(restored.run("const reserve=save.credits;finish(true);save.credits-reserve"),1610,'payout less the company’s operating costs');
  assert.equal(restored.run('save.history.at(-1).pay'),2000);
 
  for(const [oldIndex,id] of ['relay','corridor','frontier'].entries()){

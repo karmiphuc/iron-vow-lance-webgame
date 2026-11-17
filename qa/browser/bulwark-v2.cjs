@@ -4,7 +4,7 @@ module.exports=async function checkBulwark({page,origin,tap}){
  await page.addInitScript(()=>localStorage.setItem('iron-vow-attack-camera','off'));
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(()=>{save.dispatch={day:save.day,sizes:[1,1,3,3]}});
+ await page.evaluate(()=>{save.overworld={port:'frontier',arrears:0};save.dispatch={day:save.day,sizes:[1,1,3,3]}});
  await tap('#nav [data-page="contracts"]');await tap('[data-deploy="3"]');await tap('#modal-1');await tap('#modal-0');
  await page.waitForFunction(()=>{const u=battle?.units.find(x=>x.frame===BULWARK_FRAME),e=u&&IronVowScene.models.get(u.id)?.entry;return Boolean(IronVowScene.ready&&u&&IronVowScene.isLive(u)&&e?.m.nativeV2&&e.shield)},null,{timeout:15000});
  const info=await page.evaluate(async()=>{

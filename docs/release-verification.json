@@ -79,31 +79,44 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 102,
+    "siteVersion": 103,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "ce53cc5c40747131dd4c4628feed2fc0ec54de01",
-    "githubCommit": "4c91e0cb76ad8c5948ed23264784ed19401a1ee8",
-    "distTree": "57c41023d9565fa966c60a2ba2bb5d5045fb3add",
-    "verifiedAt": "2026-11-17T14:03:15.093Z",
-    "localReleaseSourceSha256": "ca23c6d3bde11377d431fd68a9e5e3a70e0db91c313afa4e134d39f0b5f48f43",
-    "simulationSuites": 59,
+    "sourceCommit": "2799953fc30fe7f0963de35bc4ec6f1bb806eedf",
+    "githubCommit": "eae8135641871212ac1b48b827e9fc4b1e26cc63",
+    "distTree": "61515b2de8e73b74a246f35a91c28bed50cfce38",
+    "verifiedAt": "2026-11-17T15:12:06.501Z",
+    "localReleaseSourceSha256": "76760df965c10b566860ada3d65f94917b6c7d04b4ec033b001d4d40c5e1b0c1",
+    "simulationSuites": 61,
     "localBrowser": {
+      "desktop": 44,
+      "touch": 44,
       "result": "passed",
-      "desktop": 43,
-      "touch": 43,
-      "failedAttemptsBeforePass": 2
+      "resumedScenarios": [
+        "checkHangar",
+        "checkHangarLive",
+        "checkWorkshopTurntable",
+        "checkWorkshopPaint",
+        "checkWorkshopPortraits",
+        "checkCareerTabs",
+        "checkDutyRoster",
+        "bastionSharedRig",
+        "checkWarMode",
+        "checkRigWorkbench"
+      ],
+      "failedAttemptsBeforePass": 9,
+      "initialSourceCommit": "903d3b39fc39a010a9dae4455df9f1c21d980f8b",
+      "resume": "Retained passing browser cases on the identical runtime. Updated the Hangar assertion for docked-port surveys and ran the remaining cases on the release source."
     },
-    "liveFilesCompared": 145,
+    "liveFilesCompared": 148,
     "liveBrowser": {
       "result": "passed",
-      "desktop": 4,
-      "touch": 4,
-      "failedAttemptsBeforePass": 1,
+      "desktop": 3,
+      "touch": 3,
+      "failedAttemptsBeforePass": 0,
       "scenarios": [
-        "sharedScene",
-        "checkTerrain",
-        "checkHangarLive",
-        "checkInfantryCarry"
+        "checkOverworld",
+        "checkShip",
+        "checkCampaign"
       ]
     },
     "environment": {
@@ -112,9 +125,10 @@
       "graphics": "Software WebGL with the documented behavior-check policy"
     },
     "evidenceSha256": {
-      "localBrowser": "a92033583a195ea93faf23760d445269b2ecd84c9bf2a559dafec65e5b906ed7",
-      "liveBrowser": "d818478e0e5f8b874fcf88031c15f18358241d5f66540bcc2e2b9280366c685d",
-      "liveGateLog": "784b653079b9a1c3ac464eb4d454a7a8a11c66d904d823f015a076649ba654f4"
+      "localBrowser": "8c94a980770ad175d9c8c1b808738f50932559c1f6dda284f6dd6cde97363c0c",
+      "resumedLocalBrowser": "e376e9ab8e6496056c3c70b53930921271306d773c57c25c6b4cbafbfcf7293e",
+      "liveBrowser": "85729a19ada6dde2946bf7552662cd7d63227a8cce048a07997dc0cb371a0968",
+      "liveGateLog": "eb76a72ebc085f0032fb5b550f40fbe95a854945cab314c5ef4df0f750a98add"
     }
   }
 }
