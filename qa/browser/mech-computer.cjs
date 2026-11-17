@@ -39,6 +39,11 @@ module.exports=async function checkMechComputer({page,mobile,origin,tap}){
  assert.deepEqual(await panel.locator('.hp-row').evaluateAll(nodes=>nodes.map(row=>[...row.children].map(button=>button.dataset.part))),rows);
  // The panel is a read-only health readout: nothing to press, no aiming state.
  assert.equal(await panel.locator('button[data-part], [data-part][aria-pressed]').count(),0);
+ await page.evaluate(()=>{
+  const target=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+  lockedTarget=target.id;target.hp.right=0;renderBattle();
+ });
+ assert.equal(await panel.locator('[data-part="right"]').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(58, 41, 44)','a destroyed subsystem retains its damage background');
 
  const rebuilt=await page.evaluate(()=>{
   battle=null;save.credits=1000000;page='workshop';workshopView='assigned';

@@ -115,4 +115,33 @@ const quickSummary = summarize({ ...report, battles: [report.battles[0]] }, { co
 assert.equal(quickSummary.status, 'passed', 'A passed quick smoke is not failed for intentionally unassigned campaign coverage');
 assert.equal(quickSummary.counts.failures, 0);
 
+// Citadel can appear as an additional live frame while every required Phase 3 frame remains mandatory.
+const { spawnSync } = require('node:child_process');
+const faultTypes = ['nan', 'footGround', 'footSlide', 'bounds', 'overlap', 'stuck', 'ikReach', 'aimOff', 'weaponMount', 'muzzleFar', 'noDamage', 'deadPartDamage', 'hpRange', 'wreckActs', 'partVisual', 'popSwap'];
+const shardFiles = [0, 15].map(start => {
+  const file = path.join(scratch, `shard-${start}.json`);
+  fs.writeFileSync(file, JSON.stringify({
+    ...report, source: { ...source, distDirty: false }, liveFrames,
+    skipProbes: false, rasterPair: false, tileOverride: null,
+    weaponCatalog: { workshop: workshopWeapons.map(item => item.id), shields },
+    faultProbes: faultTypes.map(type => ({ type })),
+    battles: report.battles.slice(start, start + 15).map(item => ({
+      ...item, maximumLaunchAimError: 0, combatCounts: {}, rasterOmitted: 0,
+      aimClearance: { calls: 1, infeasibleCount: 0, minimumTravel: 1, minimumDiscriminant: 1 },
+    })),
+  }));
+  return file;
+});
+const combine = () => spawnSync(process.execPath, [path.join(__dirname, 'combine-scene.cjs'), path.join(scratch, 'combined.json'), ...shardFiles], { encoding: 'utf8' });
+const optionalFrame = combine();
+assert.equal(optionalFrame.status, 0, optionalFrame.stderr);
+for (const file of shardFiles) {
+  const shard = JSON.parse(fs.readFileSync(file, 'utf8'));
+  for (const item of shard.battles) item.frames = item.frames.filter(frame => frame !== 14);
+  fs.writeFileSync(file, JSON.stringify(shard));
+}
+const missingRequired = combine();
+assert.notEqual(missingRequired.status, 0, 'An optional frame cannot replace a required Phase 3 frame');
+assert.match(missingRequired.stderr, /Every Phase 3 chassis/);
+
 console.log('PASS scene campaign planning, all-catalog coverage, resume keying and compact summary fixtures');
