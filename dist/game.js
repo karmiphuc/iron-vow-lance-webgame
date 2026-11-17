@@ -2705,12 +2705,13 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  }
 }
 const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
-const {barrageRestriction,engage,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound}=window.IRON_VOW_SIM.createCombatTransactions({
+const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound}=window.IRON_VOW_SIM.createCombatTransactions({
  getBattle:()=>battle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
  attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
  beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,roundAP,resetMovement,highGroundAim
 });
+function engage(attacker,defender,part,weapon){return resolveExchange(attacker,defender,part,weapon)}
 function checkEnd(){if(!battle)return true;if(!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
 const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
