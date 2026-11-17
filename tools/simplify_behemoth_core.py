@@ -1,0 +1,134 @@
+"""Simplify the extracted Behemoth core without changing its source or active scene."""
+import array
+import base64
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import bpy
+
+SOURCE_SHA = '89b67654e4a3157ba715f21cc3f6d743bd484e710af5f6a62d0a2bed82ee8b16'
+PAYLOAD = 'window.IronVowBehemothCore='
+
+
+def unpack(encoded, typecode):
+    data = array.array(typecode)
+    data.frombytes(base64.b64decode(encoded))
+    return data
+
+
+def reduce_mesh(spec, collection):
+    positions = unpack(spec['positions'], 'h')
+    normals = unpack(spec['normals'], 'b')
+    uvs = unpack(spec['uvs'], 'f')
+    indices = unpack(spec['index'], 'H')
+
+    # Weld equal positions for decimation. Preserve each corner's UV and
+    # normal, including the discontinuities at UV seams and hard edges.
+    points, welded, remap = [], {}, []
+    for offset in range(0, len(positions), 3):
+        point = tuple(positions[offset:offset + 3])
+        if point not in welded:
+            welded[point] = len(points)
+            points.append(tuple(value / 4096 for value in point))
+        remap.append(welded[point])
+
+    faces, corner_uv, corner_normal = [], [], []
+    for offset in range(0, len(indices), 3):
+        source = indices[offset:offset + 3]
+        face = tuple(remap[index] for index in source)
+        if len(set(face)) != 3:
+            continue
+        faces.append(face)
+        corner_uv.extend((uvs[index * 2], uvs[index * 2 + 1]) for index in source)
+        corner_normal.extend(tuple(normals[index * 3 + axis] / 127 for axis in range(3)) for index in source)
+
+    mesh = bpy.data.meshes.new('source')
+    mesh.from_pydata(points, [], faces)
+    mesh.update()
+    uv = mesh.uv_layers.new(name='UVMap')
+    for loop, value in zip(uv.data, corner_uv, strict=True):
+        loop.uv = value
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    mesh.normals_split_custom_set(corner_normal)
+
+    reference = bpy.data.objects.new('reference', mesh.copy())
+    obj = bpy.data.objects.new('core', mesh)
+    collection.objects.link(reference)
+    collection.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    modifier = obj.modifiers.new('Budget reduction', 'DECIMATE')
+    modifier.ratio = .58
+    bpy.ops.object.modifier_apply(modifier=modifier.name)
+    transfer = obj.modifiers.new('Original corner normals', 'DATA_TRANSFER')
+    transfer.object = reference
+    transfer.use_loop_data = True
+    transfer.data_types_loops = {'CUSTOM_NORMAL'}
+    transfer.loop_mapping = 'POLYINTERP_NEAREST'
+    bpy.ops.object.modifier_apply(modifier=transfer.name)
+
+    mesh = obj.data
+    mesh.calc_loop_triangles()
+    uv = mesh.uv_layers.active.data
+    result = {
+        'positions': array.array('h'),
+        'normals': array.array('b'),
+        'uvs': array.array('f'),
+        'index': array.array('H'),
+    }
+    packed_vertices = {}
+    for tri in mesh.loop_triangles:
+        for loop_index in tri.loops:
+            loop = mesh.loops[loop_index]
+            vertex = mesh.vertices[loop.vertex_index]
+            point = tuple(round(value * 4096) for value in vertex.co)
+            normal = tuple(max(-127, min(127, round(value * 127))) for value in loop.normal)
+            tex = tuple(uv[loop_index].uv)
+            key = (point, normal, tex)
+            if key not in packed_vertices:
+                packed_vertices[key] = len(packed_vertices)
+                result['positions'].extend(point)
+                result['normals'].extend(normal)
+                result['uvs'].extend(tex)
+            result['index'].append(packed_vertices[key])
+    print(spec['part'], spec['material'], len(indices) // 3, '->', len(result['index']) // 3)
+    spec.update({key: base64.b64encode(values.tobytes()).decode('ascii') for key, values in result.items()})
+    bpy.data.objects.remove(obj, do_unlink=True)
+    bpy.data.objects.remove(reference, do_unlink=True)
+
+
+def simplify_core(source, output):
+    source, output = Path(source).expanduser().resolve(strict=True), Path(output).expanduser().resolve()
+    raw = source.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != SOURCE_SHA:
+        raise ValueError('Expected the original payload from extract_behemoth_core.cjs')
+    if output.exists():
+        raise ValueError('Choose a new path for the optimized payload')
+    data = json.loads(raw.decode().split(PAYLOAD, 1)[1].strip().removesuffix(';'))
+    window = bpy.context.window
+    if not window or bpy.context.mode != 'OBJECT':
+        raise RuntimeError('Run Blender in Object Mode')
+    previous = window.scene
+    types = ('scenes', 'objects', 'meshes')
+    original = {name: set(getattr(bpy.data, name)) for name in types}
+    try:
+        scene = bpy.data.scenes.new('Behemoth core staging')
+        window.scene = scene
+        for spec in data['meshes']:
+            if spec['material'] != 'mark':
+                reduce_mesh(spec, scene.collection)
+        with output.open('x') as file:
+            file.write('/* Generated by tools/extract_behemoth_core.cjs and tools/simplify_behemoth_core.py. */\n')
+            file.write(PAYLOAD + json.dumps(data, separators=(',', ':')) + ';\n')
+    finally:
+        window.scene = previous
+        bpy.data.batch_remove(ids=[
+            item for name in types for item in getattr(bpy.data, name) if item not in original[name]
+        ])
+
+
+if __name__ == '__main__':
+    simplify_core(*sys.argv[sys.argv.index('--') + 1:])

@@ -77,7 +77,7 @@ const PAL={
          {p:0x4d4a3e,s:0x2a2823,a:0xc4352a,deco:0xc4352a,eye:0xff3424}]
 };
 const matCache=new Map();
-function paint(hex,rough=.58,metal=.34){const k='p'+hex+rough;if(matCache.has(k))return matCache.get(k);const c0=C(hex),lum=c0.r*.3+c0.g*.59+c0.b*.11,ns=lum>.45?.35:lum>.25?.6:.9;const m=MS({color:c0,map:grime,normalMap:panelNormal,normalScale:new T.Vector2(ns,ns),roughness:rough,metalness:metal,envMapIntensity:1.0});m.userData.paint=true;matCache.set(k,m);return m;}
+function paint(hex,rough=.58,metal=.34,name=''){const k='p'+hex+rough+name;if(matCache.has(k))return matCache.get(k);const c0=C(hex),lum=c0.r*.3+c0.g*.59+c0.b*.11,ns=lum>.45?.35:lum>.25?.6:.9;const m=MS({name,color:c0,map:grime,normalMap:panelNormal,normalScale:new T.Vector2(ns,ns),roughness:rough,metalness:metal,envMapIntensity:1.0});m.userData.paint=true;matCache.set(k,m);return m;}
 function hazardMat(rep){const k='hz'+rep;if(matCache.has(k))return matCache.get(k);const t=hazardTex.clone();t.needsUpdate=true;t.repeat.set(rep,1);const m=MS({map:t,roughness:.62,metalness:.2});matCache.set(k,m);return m;}
 function damagedOf(m){const k='dmg'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;d.color=m.color.clone().multiplyScalar(.62);d.roughness=.85;matCache.set(k,d);return d;}
 function wreckOf(m){const k='wr'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;d.color=C(0x2a2622);d.roughness=.95;d.metalness=.2;if(d.emissive)d.emissive.setHex(0);matCache.set(k,d);return d;}
@@ -127,10 +127,11 @@ function lamp(p,mat,r,x,y,z){const m=new T.Mesh(new T.SphereGeometry(r,10,8),mat
 function J(name,parent,x,y,z){const g=new T.Group();g.name=name;g.position.set(x,y,z);parent.add(g);return g;}
 function skeleton(D){
   const root=new T.Group(),pelvis=J('pelvis',root,0,D.py,0),spine=J('spine',pelvis,0,D.spY,0),neck=J('neck',spine,...D.neck);
+  root.name='root';
   const arms={},legs=[];
   for(const s of [1,-1]){const L=s>0?'L':'R';const sh=J('shoulder.'+L,spine,s*D.shX,D.shY,D.shZ||0);const paul=new T.Group();paul.position.copy(sh.position);spine.add(paul);
     const el=J('elbow.'+L,sh,0,-D.up,0),wr=J('wrist.'+L,el,0,-D.fo,0),so=J('socket.'+L,wr,0,-(D.so||.26),0);arms[L]={sh,el,wr,so,paul};}
-  if(D.quad){[[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sz],i)=>{const L=(sx>0?'L':'R')+(sz>0?'F':'B'),mount=new T.Group();mount.position.set(sx*D.hipX,D.hipY,sz*D.hipZ);mount.rotation.y=Math.atan2(sx,sz);pelvis.add(mount);
+  if(D.quad){[[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sz],i)=>{const L=(sx>0?'L':'R')+(sz>0?'F':'B'),mount=J('mount.'+L,pelvis,sx*D.hipX,D.hipY,sz*D.hipZ);mount.rotation.y=Math.atan2(sx,sz);
       const hip=J('hip.'+L,mount,0,0,0),kn=J('knee.'+L,hip,0,-D.legA,0),an=J('ankle.'+L,kn,0,-D.legB,0),r=D.reach*Math.SQRT1_2;legs.push({hip,kn,an,restX:sx*(D.hipX+r),restZ:sz*(D.hipZ+r),side:L,phase:D.phases[i]});});}
   else for(const s of [1,-1]){const L=s>0?'L':'R';const hip=J('hip.'+L,pelvis,s*D.hipX,D.hipY??-.1,0),kn=J('knee.'+L,hip,0,-D.legA,0),an=J('ankle.'+L,kn,0,-D.legB,0);legs.push({hip,kn,an,restX:s*D.restX,restZ:s*D.restZ,side:L,phase:s>0?0:.5,toe:s*(D.toe||0)});}
   return {root,pelvis,spine,neck,arms,legs};
@@ -1005,12 +1006,41 @@ function composeDims(l,c,a){const D={};for(const [src,keys] of [[l,LEG_KEYS],[c,
   // combat stance: biped feet planted wider than the shoulders, toes turned out, limited by what the legs can reach with a bent knee
   if(!D.quad){const vert=D.py+(D.hipY??-.1)-D.ankleH,maxH=Math.sqrt(Math.max(0,(.95*(D.legA+D.legB))**2-vert*vert));D.restX=Math.max(D.restX,Math.min(D.shX*(D.stance??1.1),D.hipX+maxH));D.toe=D.toe??.17;}
   return D;}
+
+function labelRig(K,D,parts){
+  // Expose the same fields as a GLB root without changing the dimensions the
+  // shared motion code already uses for these procedural assemblies.
+  const {py,spY,legA,legB,ankleH,lift,stance=1.1,toe=0,reverse=false,quad=false,reach=0,sway=.16}=D;
+  const {restX,restZ}=K.legs[0];
+  K.root.userData={py,spY,legA,legB,ankleH,restX,restZ,lift,stance,toe,reverse,quad,reach,sway,
+    phases:K.legs.map(leg=>leg.phase)};
+  const roots=new Map([[K.neck,'pilot']]);
+  for(const [side,arm] of Object.entries(K.arms)){
+    const part=side==='L'?'left':'right';
+    roots.set(arm.sh,part);roots.set(arm.paul,part);
+  }
+  for(const leg of K.legs)roots.set(D.quad?leg.hip.parent:leg.hip,'legs');
+  const explicit=new Map();
+  for(const [part,entries] of Object.entries(parts))for(const {m,detach} of entries){
+    explicit.set(m,{part,detach});
+  }
+  for(const [anchor,part] of roots)anchor.userData.part=part;
+  K.root.traverse(mesh=>{
+    if(!mesh.isMesh)return;
+    let parent=mesh.parent;
+    while(parent&&!roots.has(parent))parent=parent.parent;
+    const tags=explicit.get(mesh);
+    mesh.userData.part=tags?.part??roots.get(parent)??'body';
+    if(tags?.detach)mesh.userData.detach=true;
+  });
+}
+
 function build(frame,team,tag,paintOverride,mods){
   const mo=Object.assign({legs:frame,core:frame,arms:frame},mods||{});
   const base=PAL[team][mo.core],pal=paintOverride?Object.assign({},base,paintOverride):base,D=composeDims(mo.legs,mo.core,mo.arms);
-  const visor=MS({color:0x0a0503,emissive:C(pal.eye),emissiveIntensity:3,roughness:.3});
-  const stack=MS({color:0x0a0503,emissive:C(0xff6a1a),emissiveIntensity:.5,roughness:.9});
-  const M={p:paint(pal.p),s:paint(pal.s,.64,.34),a:paint(pal.a,.5,.2),frame:SH.frame,joint:SH.joint,steel:SH.steel,visor,stack,
+  const visor=MS({name:'visor',color:0x0a0503,emissive:C(pal.eye),emissiveIntensity:3,roughness:.3});
+  const stack=MS({name:'stack',color:0x0a0503,emissive:C(0xff6a1a),emissiveIntensity:.5,roughness:.9});
+  const M={p:paint(pal.p,.58,.34,'paint_primary'),s:paint(pal.s,.64,.34,'paint_secondary'),a:paint(pal.a,.5,.2,'paint_accent'),frame:SH.frame,joint:SH.joint,steel:SH.steel,visor,stack,
     numTex:team==='ally'?numTex(pal.num,'#e6dfca'):numTex(tag||'X','#c4352a')};
   if(team==='enemy')M.numTex=numTex(tag||'??','#d6cfc0');
   const K=skeleton(D);
@@ -1034,6 +1064,7 @@ function build(frame,team,tag,paintOverride,mods){
   K.root.traverse(o=>{if(o.isMesh&&o.castShadow===undefined)o.castShadow=true;});
   {const an=new Set([K.root,K.pelvis,K.spine,K.neck]);for(const k in K.arms)for(const n of Object.values(K.arms[k]))an.add(n);for(const L of K.legs){an.add(L.hip);an.add(L.kn);an.add(L.an);}
    B.motionAnchors.forEach(o=>an.add(o));B.skirts.forEach(q=>an.add(q.g));B.spinners.forEach(o=>an.add(o));pistons.forEach(([a,b])=>{an.add(a);an.add(b);});mergeStatic(K.root,B,an);}
+  labelRig(K,D,B.parts);
   const out={root:K.root,rig:{pelvis:K.pelvis,spine:K.spine,neck:K.neck,arms:K.arms,legs:K.legs,pistons,skirts:B.skirts,stackTops:B.stackTops,spinners:B.spinners,beacons:B.beacons},
     dims:D,mods:mo,parts:B.parts,kits:B.kits,shield:null,visor:B.visor,visorMat:visor,stackMat:stack,pal};
   B=null;return out;

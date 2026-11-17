@@ -5,6 +5,8 @@ const { previewRig, subtreeTriangles } = require('./preview-rig-v2.cjs');
 const { readGLB, validate } = require('./check-rig-v2.cjs');
 const createSimulation = require('./sim-harness.cjs');
 const checkBrowser = require('./check-browser.cjs');
+const checkKitBudgets = require('./check-kit-budgets.cjs');
+const checkBehemothBudget = require('./browser/behemoth-budget.cjs');
 const checkVehicleScene = require('./browser/vehicles.cjs');
 const checkGatecrasherScene = require('./browser/gatecrasher-v2.cjs');
 const checkCicadaV2 = require('./browser/cicada-v2.cjs');
@@ -16,6 +18,8 @@ const checkStockV2 = require('./browser/stock-v2.cjs');
 const checkAshigaruV2 = require('./browser/ashigaru-v2.cjs');
 const checkHellbreakerV2 = require('./browser/hellbreaker-v2.cjs');
 const checkShogunV2 = require('./browser/shogun-v2.cjs');
+const checkBastionV2 = require('./browser/bastion.cjs');
+const checkBulwark = require('./browser/bulwark-v2.cjs');
 const checkLineInfantry = require('./browser/line-infantry.cjs');
 const checkLineElite = require('./browser/line-elite.cjs');
 const checkInfantryCarry = require('./browser/infantry-carry.cjs');
@@ -40,7 +44,7 @@ function checkWorkshopBudgets(assets) {
     offhand.push({ id, triangles: subtreeTriangles(armory[2], id) });
   }
   const budgets = {};
-  for (const frame of ['warden', 'aero', 'kestrel', 'basilisk']) {
+  for (const frame of ['warden', 'aero', 'kestrel', 'basilisk', 'bastion']) {
     const gltf = readGLB(path.join(assets, frame + '.glb'));
     const contract = validate(gltf);
     if (!contract.ok) throw Error(contract.errors.join(', '));
@@ -49,8 +53,17 @@ function checkWorkshopBudgets(assets) {
       weapons.set('rifle', subtreeTriangles(gltf, 'MODULE | Kestrel scout carbine'));
       for (const id of sim.run('AERO_MELEE')) weapons.set(id, subtreeTriangles(gltf, 'melee.' + id));
     }
+    if (frame === 'bastion') {
+      const joint = name => gltf.nodes.find(node => node.name === name);
+      const { legA, legB, py } = joint('root').extras;
+      for (const [name, length] of [['pelvis', py], ['knee.L', legA], ['ankle.L', legB]]) {
+        const measured = Math.hypot(...(joint(name).translation || [0, 0, 0]));
+        if (Math.abs(measured - length) > .001) throw Error(`Bastion bind pivot ${name} is ${measured}, expected ${length}`);
+      }
+      for (const id of ['rifle', 'cleaver', 'breaker', 'piledriver']) weapons.set(id, subtreeTriangles(gltf, 'weapon.' + id));
+    }
     const hull = contract.total - [...weapons.values()].reduce((total, count) => total + count, 0);
-    if (frame === 'basilisk') weapons.set('missile', 0);
+    if (frame === 'basilisk' || frame === 'bastion') weapons.set('missile', 0);
     const largest = items => items.map(item => ({ ...item, triangles: weapons.get(item.id) ?? item.triangles }))
       .reduce((a, b) => a.triangles > b.triangles ? a : b);
     const gun = largest(main), left = largest(offhand), equipped = hull + gun.triangles + left.triangles;
@@ -65,7 +78,8 @@ async function main() {
   if (flag !== '--out' || !directory) throw Error('Usage: node qa/gate-phase3.cjs --out directory');
   require('./check-rig-v2-test.cjs');
   const assets = path.join(__dirname, '../dist/rig-bench/rig-v2');
-  const { warden, aero, kestrel, basilisk } = checkWorkshopBudgets(assets);
+  const kits = await checkKitBudgets();
+  const { warden, aero, kestrel, basilisk, bastion } = checkWorkshopBudgets(assets);
   const scoutFile=readGLB(path.join(assets,'ashigaru.glb')),scout=validate(scoutFile);
   if(!scout.ok)throw Error(scout.errors.join(', '));
   const scoutWeapons=Object.fromEntries(['carbine','scatter','knife'].map(name=>[name,subtreeTriangles(scoutFile,'module.'+name)]));
@@ -76,6 +90,8 @@ async function main() {
   const lionFile = readGLB(path.join(assets, 'lion.glb'));
   const lion = validate(lionFile);
   if (!lion.ok) throw Error(lion.errors.join(', '));
+  const bulwark = validate(readGLB(path.join(assets, 'bulwark.glb')));
+  if (!bulwark.ok) throw Error(bulwark.errors.join(', '));
   const hellbreaker = validate(readGLB(path.join(assets, 'hellbreaker.glb')));
   if (!hellbreaker.ok) throw Error(hellbreaker.errors.join(', '));
   const gatecrasher = await previewRig({
@@ -141,14 +157,17 @@ async function main() {
     capture(checkAshigaruV2),
     capture(checkHellbreakerV2),
     capture(checkShogunV2),
+    capture(checkBastionV2),
+    capture(checkBulwark),
+    capture(checkBehemothBudget),
     capture(checkLionTrial),
     capture(checkLineInfantry),
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
-  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, warden, aero, kestrel, basilisk, ashigaru,
+  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, warden, aero, kestrel, basilisk, bastion, ashigaru,
     lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) },
-    hellbreaker: { triangles: hellbreaker.total }, shogun, vehicles, live };
+    kits, hellbreaker: { triangles: hellbreaker.total }, bulwark: { triangles: bulwark.total }, shogun, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
   console.log('PASS Phase 3 checkpoint: authored sortie rigs, Lion trial, tank and gunship');
 }

@@ -74,9 +74,9 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  await page.locator('.armory-mounted').waitFor();
  assert.deepEqual(await page.locator('.armory-mounted b').allTextContents(),['Sidewinder SM-2','Pilum Pike']);
  assert.equal(await page.evaluate(()=>save.credits),1850);
- await page.waitForFunction(()=>IronVowFoundry.preview({frame:10,weapon:'sidewinder',melee:'pike'},2,'bastion')?.secondary?.tip,null,{timeout:120000});
+ await page.waitForFunction(()=>IronVowFoundry.preview({frame:10,weapon:'sidewinder',melee:'pike'},2)?.secondary?.tip,null,{timeout:120000});
  const fittings=await page.evaluate(()=>Object.keys(IRON_VOW_EXPANSION_ART).map(id=>{
-  const melee=weapon(id).melee,entry=IronVowFoundry.preview({frame:10,weapon:melee?'sidewinder':id,melee:melee?id:'pike'},2,'bastion'),mount=melee?entry.secondary:entry.primary;
+  const melee=weapon(id).melee,entry=IronVowFoundry.preview({frame:10,weapon:melee?'sidewinder':id,melee:melee?id:'pike'},2),mount=melee?entry.secondary:entry.primary;
   const point=node=>node.getWorldPosition(new THREE.Vector3()),socket=entry.m.rig.arms[melee?'L':'R'].so;
   return{id,seated:point(mount.grip).distanceTo(point(socket)),tip:point(melee?mount.tip:mount.muzzle).distanceTo(point(mount.grip)),pixels:entry.surface.width};
  }));
@@ -109,13 +109,7 @@ async function checkCerberusSalvo(page,mobile,tap){
   [foe.x,foe.z]=[foe.vx,foe.vz]=[spot[0]+2,spot[1]-1];
   foe.reacted=true;lockedTarget=foe.id;
   focusBattleCamera(actor,true);renderBattle();
-  window.armoryQA={actor,foe,origins:[]};
-  const frame=draw;
-  draw=time=>{
-   frame(time);
-   const shot=effects.find(e=>e.type==='shot'&&e.kind==='cerberus');
-   if(shot?.origins.length===2)armoryQA.origins=shot.origins;
-  };
+  window.armoryQA={actor,foe};
   return {hp:foe.hp.body,ap:actor.ap,damage:partDamage(actor,foe,'body',weapon('cerberus'))};
  });
  await tap('#fire');
@@ -130,10 +124,15 @@ async function checkCerberusSalvo(page,mobile,tap){
  });
  if(mobile)await page.touchscreen.tap(target.x,target.y);else await page.mouse.click(target.x,target.y);
  await page.waitForFunction(hp=>armoryQA.foe.hp.body<hp&&!battle.busy,before.hp);
- const result=await page.evaluate(()=>({hp:armoryQA.foe.hp.body,ap:armoryQA.actor.ap,origins:armoryQA.origins}));
+ const result=await page.evaluate(()=>({hp:armoryQA.foe.hp.body,ap:armoryQA.actor.ap,
+  launches:IronVowScene.combat.history.filter(e=>e.type==='launch'&&e.actor===armoryQA.actor.id&&e.weapon==='cerberus')}));
  assert.equal(result.hp,before.hp-before.damage);
  assert.equal(result.ap,before.ap-5);
- assert.equal(result.origins.length,2);
- const [a,b]=result.origins;
- assert.ok(Math.hypot(a.ox-b.ox,a.oy-b.oy)>.015,'both rockets use distinct launch points');
+ assert.deepEqual(result.launches.map(e=>e.socket),['muzzle','muzzle2']);
+ for(const e of result.launches){
+  assert.ok(e.mounted&&e.aimError<8*Math.PI/180,JSON.stringify(e));
+  assert.ok(Math.hypot(...e.origin.map((n,i)=>n-e.expectedOrigin[i]))<1e-5,JSON.stringify(e));
+ }
+ const [a,b]=result.launches.map(e=>e.origin);
+ assert.ok(Math.hypot(...a.map((n,i)=>n-b[i]))>.015,'both rockets use distinct world launch points');
 }

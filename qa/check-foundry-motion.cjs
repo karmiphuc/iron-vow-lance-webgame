@@ -24,6 +24,41 @@ for(const file of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.
 const T=sandbox.THREE,R=sandbox.IronVowFoundryRig,V3=R.V3,dt=1/60;
 const NAMES=['Aegis','Shrike','Bastion','Valkyrie','Oni','Behemoth'];
 
+// The kit is built in JavaScript, so validate the actual runtime hierarchy and
+// materials instead of expecting an intermediate GLB for these assemblies.
+for (const [index, name] of NAMES.entries()) {
+ const kit=sandbox.VowChassis.build(index,'ally'),root=kit.root;
+ const {quad,phases}=root.userData;
+ const sides=quad?['LF','RF','LB','RB']:['L','R'];
+ assert.equal(root.name,'root',name);
+ assert.deepEqual(Object.keys(root.userData).sort(),[
+  'py','spY','legA','legB','ankleH','restX','restZ','lift','stance','toe','reverse','quad','reach','phases','sway',
+ ].sort(),name+' publishes all rig dimensions');
+ assert.equal(phases.length,sides.length,name+' has a phase for each leg');
+ function exactChain(parent,names){
+  for (const label of names) {
+   const child=root.getObjectByName(label);
+   assert.ok(child&&child.parent===parent,name+' parent of '+label);
+   parent=child;
+  }
+ }
+ exactChain(root,['pelvis','spine','neck']);
+ for (const side of ['L','R']) exactChain(kit.rig.spine,['shoulder','elbow','wrist','socket'].map(n=>n+'.'+side));
+ for (const side of sides) exactChain(kit.rig.pelvis,[...(quad?['mount']:[]),'hip','knee','ankle'].map(n=>n+'.'+side));
+ const materials=new Set(),parts=new Set(Object.keys(kit.parts));
+ let detachable=0;
+ root.traverse(mesh=>{
+  if(!mesh.isMesh)return;
+  assert.ok(parts.has(mesh.userData.part),name+' has an assembly without a damage group');
+  if(mesh.userData.detach)detachable++;
+  materials.add(mesh.material.name);
+ });
+ for (const role of ['paint_primary','paint_secondary','paint_accent','visor','stack']) {
+  assert.ok(materials.has(role),name+' has the '+role+' material');
+ }
+ assert.ok(detachable>0,name+' retains its blow-off plates');
+}
+
 function settle(m,input={},frames=40){let t=0;for(let i=0;i<frames;i++){t+=dt;R.animateMech(m,{pos:V3(),face:0,heading:0,alive:true,brace:0,...input},dt,t);}return t;}
 
 // Walking: every stance frame keeps the ankle on its IK goal and the foot fixed on the ground.

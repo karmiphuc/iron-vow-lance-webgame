@@ -343,8 +343,9 @@ function animateMech(m,I,dt,t){
     if(sup>.01&&m.primaryWeapon?.muzzle&&!I.armDead)supportGrip(m,aL,sup*(1-bl));
   }
   if(m.melee&&!dead){const K=meleeKeys(m.melee.age,m.melee.thrust,D.melee);
-    if(K){const wv=K.w;aL.sh.rotation.x=lerp(aL.sh.rotation.x,K.sx,wv);aL.sh.rotation.z=lerp(aL.sh.rotation.z,-K.sz,wv);aL.el.rotation.x=lerp(aL.el.rotation.x,K.el,wv);aL.wr.rotation.x=lerp(0,K.wr,wv);
-      r.spine.rotation.y-=K.yaw*wv;r.spine.rotation.x+=K.lean*wv;aR.sh.rotation.x=lerp(aR.sh.rotation.x,D.melee?.offArm??-.7,wv*.5);}
+    if(K){const wv=K.w,right=m.melee.side==='R',active=right?aR:aL,other=right?aL:aR,sign=right?1:-1;
+      active.sh.rotation.x=lerp(active.sh.rotation.x,K.sx,wv);active.sh.rotation.z=lerp(active.sh.rotation.z,sign*K.sz,wv);active.el.rotation.x=lerp(active.el.rotation.x,K.el,wv);active.wr.rotation.x=lerp(0,K.wr,wv);
+      r.spine.rotation.y+=sign*K.yaw*wv;r.spine.rotation.x+=K.lean*wv;other.sh.rotation.x=lerp(other.sh.rotation.x,D.melee?.offArm??-.7,wv*.5);}
     else m.melee=null;}
   if(m.shield)m.shield.visible=!I.shieldDead;
   for(const a of [aL,aR]){a.paul.rotation.x=a.sh.rotation.x*.28;a.paul.rotation.z=a.sh.rotation.z*.4;}

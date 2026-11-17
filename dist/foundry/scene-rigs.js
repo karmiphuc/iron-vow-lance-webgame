@@ -12,7 +12,7 @@ function clearPreviews(scope){
  for(const [key,entry] of previews)if(!scope||entry.previewScope===scope){disposeEntry(entry);previews.delete(key);}
 }
 let previewTarget,studioTarget;
-const arsenal=window.IronVowProductionArsenal,bastion=window.IronVowBastion,rigV2=window.IronVowRigV2;
+const arsenal=window.IronVowProductionArsenal,rigV2=window.IronVowRigV2;
 
 let armory,armoryRequested=false;
 const clearCombat=()=>{for(const entry of combat.values()){entry.m.cont.parent?.remove(entry.m.cont);disposeEntry(entry);}combat.clear();clearPreviews('battle');};
@@ -56,7 +56,7 @@ function init(){
    armoryRequested=true;
    const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path.split('?')[0]]||path;
    arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),url('rig-bench/shields.glb'))
-    .then(scene=>{armory=scene;clearPreviews();if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
+    .then(scene=>{armory=scene;clearPreviews();if(window.Event)window.dispatchEvent?.(new window.Event('rig-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
   return true;
@@ -177,12 +177,12 @@ function draw(u,t,pose,scope,model,custom){
 
  if(!entry){
   const m=custom==='rig-v2'?rigV2.build(u,pose.previewScope||'battle'):
-   custom==='bastion'?bastion.buildRuntime(u.team,u.paint,u.trim):buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
+   buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
   if(!m)return null;
   entry={m,surface:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
- const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??(custom==='bastion'?.62:1),dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
+ const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
@@ -220,7 +220,7 @@ function draw(u,t,pose,scope,model,custom){
  m.recoil=world?Math.max(m.recoil,Math.abs(pose.recoil)*.58):Math.abs(pose.recoil)*.58;
  if(melee){
   if(!m.melee||m.melee.action!==u.attack)m.melee={action:u.attack,age:meleeAge,prev:null};
-  m.melee.age=meleeAge;m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
+  m.melee.age=meleeAge;m.melee.side=v2?.meleeSide?.(pose.strikeKind)||'L';m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
  }else m.melee=null;
  v2?.beforeAnimate?.(m,pose.strikeKind||u.melee);
  if(!world){m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;m.s.arm.x=pose.impact*.75;}
@@ -231,7 +231,6 @@ function draw(u,t,pose,scope,model,custom){
  animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?world.airborne:!step,airborne:world?.airborne,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
- if(custom==='bastion')bastion.afterAnimate(m);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
   const lead=m.rig.legs[1];
@@ -252,17 +251,17 @@ function draw(u,t,pose,scope,model,custom){
   entry.armed=true;
   if(equipmentScale!==1)for(const weapon of [entry.primary,entry.secondary])weapon?.model.scale.setScalar(equipmentScale);
  }
- if(armory&&entry.shieldId!==u.shield){
+ if(!v2?.nativeShield&&armory&&entry.shieldId!==u.shield){
   entry.shieldId=u.shield;
   if(entry.shield)entry.shield.mount.parent?.remove(entry.shield.mount);
   entry.shield=arsenal.mountShield(armory,u.shield,v2?.shieldSocket||m.rig.arms.L.so);
-  if(equipmentScale!==1)entry.shield?.mount.scale.setScalar(equipmentScale);
+  entry.shield?.mount.scale.setScalar(v2?.shieldScale??equipmentScale);
   if(!entry.shield)delete entry.anchors.shield;
  }
  const shoulderAttack=u.attack?.kind==='missile'&&entry.shoulderWeapon;
  const barrel=shoulderAttack||entry.primary;
  m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:barrel||{};
- arsenal.poseShield(entry.shield,u,face);
+ if(!v2?.nativeShield)arsenal.poseShield(entry.shield,u,face);
  if(standardEquipment&&entry.primary){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
   if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
@@ -315,12 +314,13 @@ function retainPreview(frame){
 function requestPreview(unit){
  const status=rigV2.status(unit,'preview');
  if(!status)rigV2.load([unit],'preview').then(([loaded])=>{
-  if(loaded)window.dispatchEvent?.(new window.Event('bastion-art-ready'));
+  if(loaded)window.dispatchEvent?.(new window.Event('rig-art-ready'));
  });
  return status==='ready';
 }
 function metrics(){return window.IronVowRenderer.metrics();}
 function preview(u,model,custom,angle=0,scope='preview'){
+ if(rigV2?.applies(u))custom='rig-v2';
  if(custom==='rig-v2'&&!(scope==='battle'?rigV2.status(u)==='ready':requestPreview(u)))return null;
  const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
  const key=JSON.stringify([scope,u.frame,u.team,u.paint,u.trim,u.weapon,u.melee,u.shield,u.upgrade,hp,max,angle]);
@@ -332,8 +332,9 @@ function preview(u,model,custom,angle=0,scope='preview'){
  return entry;
 }
 function previewAnimated(u,t,pose,model,custom,angle=0){
+ if(rigV2?.applies(u)){custom='rig-v2';if(!requestPreview(u))return null;}
  const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
- return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
+ return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,previewScope:'preview',heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
 }
 window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),previewAnimated:withFallback(previewAnimated),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
 })();

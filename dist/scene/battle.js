@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=7.4,HEIGHT=3.4;
-const LIVE=new Set([5,6,7,8,9,10,12]);
+const LIVE=new Set([5,6,7,8,9,12]);
 const rigV2=root.IronVowRigV2;
 let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let cameraReady=false,lightningAt=4,lightning=0;
@@ -11,7 +11,7 @@ const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0
 const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){
  if(u.kind)return false;
- if(rigV2.applies(u))return battleRef?.units.includes(u)?rigV2.status(u)!=='error':u.frame===0;
+ if(rigV2.applies(u))return battleRef?.units.includes(u)?rigV2.status(u)!=='error':u.frame===0||u.frame===10;
  return !u.lionTrial&&LIVE.has(u.frame);
 }
 function world(x,z,y){
@@ -177,7 +177,7 @@ function prepareUnit(u,t){
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
   pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face:goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
-  const custom=rigV2.applies(u)?'rig-v2':u.frame===10?'bastion':undefined;
+  const custom=rigV2.applies(u)?'rig-v2':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;
   object=entry.m.cont;
