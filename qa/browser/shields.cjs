@@ -31,11 +31,14 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
 
  const preview=page.locator('#paint-preview');
  await preview.waitFor();
- await page.waitForFunction(()=>IronVowRigV2.status({frame:0},'preview')==='ready',null,{timeout:120000});
- const bare=await preview.evaluate(node=>node.toDataURL());
+ await page.waitForFunction(()=>IronVowRigV2.status({frame:0},'workshop')==='ready',null,{timeout:120000});
+ await preview.scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
+ assert.equal(await page.evaluate(()=>Boolean(IronVowWorkshop.snapshot().entry.shield)),false);
  await equip(buckler);
  assert.match(await page.locator('.armory-mounted').innerText(),/Bulwark B-2/);
- await page.waitForFunction(before=>document.querySelector('#paint-preview').toDataURL()!==before,bare);
+ await preview.scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.shield?.mount.visible);
  if(proof)await preview.screenshot({path:join(proof,mobile?'bulwark-mobile.png':'bulwark-mounted.png')});
  await equip(tower);
  assert.equal(await page.evaluate(()=>save.credits),1350);
@@ -66,8 +69,7 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  assert.ok(rig.records.every(sample=>sample.visible&&sample.grip<1e-5&&sample.offset>.1));assert.equal(rig.broken,true,'The actual shield mesh hides with its arm');
 
  const trackWardenAssets=(preview)=>page.evaluate(preview=>{
-  const unit={frame:0,weapon:'rifle'};
-  const m=preview?IronVowFoundry.preview(unit,0,'rig-v2').m:IronVowScene.models.get(current().id).entry.m;
+  const m=preview?IronVowWorkshop.snapshot().entry.m:IronVowScene.models.get(current().id).entry.m;
   const counts=new Map();
   // Rigid gear attaches beneath the authored wrist. Its catalogue geometry
   // is shared with other chassis, so measure only the Warden armor buffers.
@@ -80,6 +82,8 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
   return counts.size;
  },preview);
  const disposed=()=>page.evaluate(()=>[...window.wardenGeometryCounts.values()].every(count=>count===1));
+ await preview.scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
  assert.ok(await trackWardenAssets(true)>0);
  await page.evaluate(()=>{
   deploy(0,false,[0]);Math.random=()=>0;
@@ -94,7 +98,7 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  await tap('#modal-0');
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  assert.ok(await disposed(),'Starting a sortie disposes each Workshop Warden geometry once');
- assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0},'preview')),undefined);
+ assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0},'workshop')),undefined);
  assert.equal(await page.locator('#strike').isDisabled(),true);
  assert.match(await page.locator('.shield-status').innerText(),/SHIELD 1\/92 ARM HP/);
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});

@@ -7,8 +7,7 @@
 
 .ui-icon,.icon img,.pilot-skill img{filter:brightness(0) invert(.88)}.primary .ui-icon{filter:brightness(0) invert(.08)}
 @media(max-width:760px){.combat-target{display:none}.combatpanel .note{font-size:7px}.combatpanel h3{margin:7px 0}.parts button{padding:8px 0}}
-
-.art-stage img{transition:object-position .8s ease,opacity .7s,filter .7s}.workshop-chassis{min-height:695px}@media(max-width:760px){.hangar-hotspots{display:none}.workshop-chassis{min-height:650px}.workshop-chassis .unit-render{height:360px}}
+.workshop-chassis{min-height:695px}@media(max-width:760px){.workshop-chassis{min-height:650px}.workshop-chassis .unit-render{height:360px}}
 /* Mobile combat uses an explicit target drawer, preserving the battlefield. */
 .target-toggle,.close-target{display:none}.combatpanel{pointer-events:auto}
 @media(max-width:760px){
@@ -97,14 +96,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
 @media(min-width:1240px){.contract-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(min-width:761px) and (max-width:1239px){.contract-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
-.prototype-hangar {
- position:absolute;inset:0;pointer-events:none;overflow:hidden;
- background:radial-gradient(ellipse at 54% 43%,#1d2933ca,#0c141bec 75%);
-}
-.prototype-hangar img,.prototype-hangar canvas {
- position:absolute;left:50%;top:42%;width:min(77vh,90vw);height:min(77vh,90vw);
- transform:translate(-50%,-50%);object-fit:contain;filter:drop-shadow(0 22px 30px #070d15);
-}
+
 .lance-tabs button small{display:block;color:var(--muted);font:600 9px Inter,sans-serif;letter-spacing:1.3px;margin-bottom:3px}
 .workshop-stats{margin:0 0 15px;padding:14px 15px;background:#131d24bb;border:1px solid var(--line)}
 .workshop-stats dl{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;margin:9px 0}
@@ -157,7 +149,7 @@ body[data-shot=active] #ui{visibility:hidden;pointer-events:none}
  .chassis-choices button{padding:7px 6px;min-height:62px}
  .chassis-choices small,.chassis-choices span{font-size:8px}
  .lance-tabs button{min-width:0;overflow-wrap:anywhere}
- .prototype-hangar img,.prototype-hangar canvas{top:41%;width:min(108vw,70vh);height:min(108vw,70vh)}
+
 }
 
 @media(pointer:coarse){
@@ -350,7 +342,7 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 @media(max-width:370px){#nav button,.bay-tabs button{font-size:8px}.bay-tabs button{gap:3px}}
 
 .ship-content{max-width:1180px;margin-inline:auto}
-.ship-banner{min-height:168px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px;border:1px solid var(--line);background:linear-gradient(90deg,#11191df5,#11191db8 54%,#11191d6e),url('assets/hangar.webp') center 43%/cover}
+.ship-banner{min-height:168px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:24px;border:1px solid var(--line);background:linear-gradient(90deg,#11191df5,#11191db8 54%,#11191d6e)}
 .ship-banner h1{font-size:clamp(36px,5vw,62px);margin:8px 0}
 .ship-banner p{font-size:12px;color:#d1dbdc}
 .ship-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -387,7 +379,7 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 .aux-enable input{width:18px;height:18px;accent-color:var(--accent)}
 .auxiliary-choices select{width:100%;min-width:0;min-height:40px;padding:5px;background:#111b20;border:1px solid var(--line);color:var(--ink);font:inherit}
 .wound-status{color:var(--accent)}
-.base-banner{background-image:linear-gradient(90deg,#101b20f2,#1028319e 58%,#0f24394d),url('assets/hangar.webp');border-left:3px solid var(--blue)}
+.base-banner{background-image:linear-gradient(90deg,#101b20f2,#1028319e 58%,#0f24394d);border-left:3px solid var(--blue)}
 .base-queue{border-left-color:var(--blue)}
 .base-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .base-room .ship-facility-head h2{font-size:21px}
@@ -523,4 +515,48 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 @media(pointer:coarse){.combatpanel .parts button{min-height:36px}}
 @media(max-width:760px){
  body[data-target-panel="open"] .combatpanel{left:auto;right:12px;width:min(206px,calc(100% - 24px));padding:10px}
+}
+
+
+.hangar-scene-hotspot{
+ position:fixed;z-index:2;transform:translate(-50%,-50%);pointer-events:auto;white-space:nowrap;
+ background:#172025ed;padding:.65rem .8rem;
+}
+.hangar-scene-hotspot[hidden]{display:none}
+body[data-view="ship"] main>.page,body[data-view="hangar"] main>.page{background:#11191ddc}
+
+
+/* The shared scene draws only the visible turntable bounds above this HTML pane. */
+body[data-view="workshop"] #world-scene{z-index:3}
+.workshop-chassis #paint-preview{
+ height:min(38vw,390px);min-height:245px;max-height:none;aspect-ratio:auto;
+ margin:0 auto 5px;border:1px solid var(--line);background:radial-gradient(ellipse at 52% 38%,#263839,#111b20 72%);
+ cursor:grab;touch-action:none;pointer-events:auto;
+}
+.workshop-chassis #paint-preview:active{cursor:grabbing}
+@media(max-width:760px){.workshop-chassis #paint-preview{height:clamp(260px,64vw,365px)}}
+
+
+.livery-presets,.paint-channel{min-width:0;margin:0 0 12px;padding:8px;border:1px solid var(--line)}
+.livery-presets legend,.paint-channel legend{padding:0 5px;color:var(--muted);font-size:11px}
+.paint-swatch .livery-colors{display:flex;width:25px;height:14px;border-radius:2px;overflow:hidden}
+.livery-colors i{flex:1;background:var(--swatch)}
+.channel-swatches{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-bottom:6px}
+.channel-swatches button{height:32px;padding:0;border:1px solid #aaa4;background:var(--swatch)}
+.channel-swatches button:hover:not(:disabled){background:var(--swatch);border-color:#ddd}
+.channel-swatches button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px #f1dcae;border-color:#101519}
+
+/* Shared-renderer mech portraits on the Ship, duty roster and shot camera. */
+.ship-seats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 16px}
+.ship-seat{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--line);background:#121b20}
+.ship-seat img,.duty-mech,#shot-inset img{display:block;object-fit:contain}
+.ship-seat small,.ship-seat b{display:block}
+.ship-seat small{color:var(--muted);font-size:9px}
+#shot-inset{display:none;position:fixed;right:max(16px,9.5vw);top:124px;pointer-events:none;z-index:8}
+body[data-shot=active] #shot-inset:has(img[src]){display:block;border:1px solid var(--line);background:#12212ceb}
+@media(max-width:760px){
+ .ship-seat{flex-direction:column;align-items:flex-start;gap:1px}
+ .ship-seat img{width:48px;height:48px}
+ #shot-inset{right:12px;top:98px}
+ #shot-inset img{width:58px;height:58px}
 }

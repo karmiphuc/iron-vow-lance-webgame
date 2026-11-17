@@ -4,10 +4,11 @@ const simulate=require('./sim-harness.cjs');
 (async()=>{
  const sim=simulate({random:()=>0,reducedMotion:true}),{run}=sim;
  const control=(dataset={})=>({dataset,setAttribute(){},focus(){},onclick:null,oninput:null,onchange:null,value:''});
- const paintPreset=control({paint:'#577eac'}),custom=control(),equip=control(),removeMelee=control();
+ const paintPreset=control({livery:12}),custom=control({customChannel:'p'}),equip=control(),removeMelee=control();
  const controls=new Map([['#custom-paint',custom],['#remove-melee',removeMelee]]);
  sim.sandbox.document.querySelector=selector=>controls.get(selector)||sim.node(selector);
- sim.sandbox.document.querySelectorAll=selector=>selector==='[data-paint]'?[paintPreset]:selector==='[data-equip]'?[equip]:[];
+ const lists={'[data-livery]':[paintPreset],'[data-custom-channel]':[custom],'[data-equip]':[equip]};
+ sim.sandbox.document.querySelectorAll=selector=>lists[selector]??[];
 
  const renderWorkshop=()=>run("page='workshop';workshopView='assigned';render()");
  const html=()=>sim.node('#ui').innerHTML;
@@ -37,7 +38,9 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(typeof paintPreset.onclick,'function','Preset paint has a bound action');
  paintPreset.onclick();
  assert.equal(run('save.units[0].paint'),'#577eac');
- assert.equal(JSON.parse(sim.storage.get('iron-vow-career')).units[0].paint,'#577eac');
+ const painted=JSON.parse(sim.storage.get('iron-vow-career')).units[0];
+ assert.equal(painted.paint,'#577eac');
+ assert.deepEqual(painted.trim,{s:'#303a4b',a:'#d09450'});
  equipItem('hailstorm');equipItem('cleaver');
  assert.equal(run("save.units[0].weapon+' '+save.units[0].melee"),'hailstorm cleaver');
 
