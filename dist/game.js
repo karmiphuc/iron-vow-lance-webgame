@@ -2511,13 +2511,13 @@ async function moveUnit(u,x,z){
  if(steps.length>free){startAction(u);u.extraStep=true;u.ap-=EXTRA_MOVE_AP}
  const liveStride=window.IronVowScene?.isLive(u),grounded=liveStride?null:travelAtlas(u)?.grounded;
  const twoStep=!u.kind&&!reducedMotion&&(liveStride||!grounded&&u.frame>3);
- if(!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion)await readyNativeMotion(u);
- const walk=twoStep&&foundryWalk(u);
+ if(!liveStride&&!grounded&&!u.kind&&FRAMES[u.frame].native&&!reducedMotion)await readyNativeMotion(u);
+ const walk=!liveStride&&twoStep&&foundryWalk(u);
  if(walk){
   const images=[motionImage(walk),(u.paint||u.trim)&&walk.paint&&moduleImage(walk.key+'-paint')].filter(image=>image?.decode&&!imageReady(image));
   if(images.length)await Promise.race([Promise.allSettled(images.map(image=>image.decode())),delay(900)]);
  }
- const travel=preloadTravel(u);
+ const travel=liveStride?null:preloadTravel(u);
  if(travel&&!imageReady(travel)&&travel.decode)await Promise.race([travel.decode().catch(()=>{}),delay(900)]);
  const paintedGait=!liveStride&&upgradedWardenTravel(travelAtlas(u));
  const duration=reducedMotion?.12:grounded?1.40:paintedGait?1.06:u.kind?VEHICLES[u.kind].step:
@@ -4021,7 +4021,7 @@ window.__ironVow=(()=>{
     const partVisual=m?Object.fromEntries(Object.entries(m.partState).map(([part,state])=>{const detachable=m.build.parts[part].filter(e=>e.detach);return[part,{state,detachable:detachable.length,visible:detachable.filter(e=>e.m.visible).length}];})):null;
     const entry=record?.entry,primary=(u.attack?.kind==='missile'&&entry?.shoulderWeapon)||entry?.primary;
     const muzzle=primary?.muzzle?.getWorldPosition(new THREE.Vector3()),barrel=primary?.muzzle?.getWorldDirection(new THREE.Vector3());
-    const firing=Boolean(u.alive&&u.hp[primary&&primary===entry?.shoulderWeapon?'body':'right']>0&&Number.isFinite(u.attack?.fireAt)&&m?.aim.blend>.95);
+    const firing=Boolean(u.alive&&u.hp[primary?.subsystem||'right']>0&&Number.isFinite(u.attack?.fireAt)&&m?.aim.blend>.95);
     const weaponAimError=firing&&muzzle&&barrel?barrel.angleTo(m.aim.point.clone().sub(muzzle)):null;
     const muzzleDistance=firing&&muzzle?(primary.bounds?.()||new THREE.Box3().setFromObject(primary.model)).distanceToPoint(muzzle):null;
     const D=m?.dims,radius=D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*m.scale:1;

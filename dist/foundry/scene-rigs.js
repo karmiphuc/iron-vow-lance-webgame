@@ -241,11 +241,8 @@ function draw(u,t,pose,scope,model,custom){
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
  if(v2){
-  entry.primary=v2.primary;
-  entry.secondary=u.melee==='cleaver'&&!u.shield?v2.cleaver:null;
-  entry.shoulderWeapon=u.shoulder==='vesper-shoulder'?v2.vesper:null;
+  v2.pose(entry,u,pose);
   entry.armed=!u.shield||Boolean(armory);
-  v2.pose(u,pose);
  }else if(armory&&!entry.armed){
   const profile=window.IronVowWeaponFX?.get(u.weapon);
   if(profile?.socket?.startsWith('shoulder')){
@@ -277,7 +274,13 @@ function draw(u,t,pose,scope,model,custom){
   entry.secondary.mount.visible=u.alive&&u.hp.left>0;
   arsenal.animate(entry.secondary,pose);
  }
- if(world&&u.alive&&u.hp[shoulderAttack?'body':'right']>0&&!melee&&aim>.01)aimMounted(m,barrel,world.aim,Math.min(1,aim),shoulderAttack?.mount||(entry.primarySocket?entry.primary.mount:null));
+ if(world&&u.alive&&u.hp[barrel?.subsystem||'right']>0&&!melee&&aim>.01){
+  const pivot=barrel?.aimPivot?.(barrel.muzzle)||(entry.primarySocket?entry.primary.mount:null);
+  aimMounted(m,barrel,world.aim,Math.min(1,aim),pivot);
+  if(v2&&barrel?.muzzle2&&barrel.aimPivot&&barrel.aimPivot(barrel.muzzle2)!==pivot){
+   aimMounted(m,{muzzle:barrel.muzzle2},world.aim,Math.min(1,aim),barrel.aimPivot(barrel.muzzle2));
+  }
+ }
  v2?.sync();
  m.cont.updateMatrixWorld(true);
  if(!world){

@@ -131,6 +131,20 @@
       "glError": 0
     }
   },
+  "reaver": {
+    "triangles": 16340,
+    "skinned": 0,
+    "tagged": 109,
+    "motion": [
+      {
+        "anchor": "muzzle.R",
+        "movement": 0.612428695943239
+      }
+    ],
+    "loadouts": [],
+    "colors": 420,
+    "glError": 0
+  },
   "vehicles": {
     "desktop": {
       "vehicles": [
@@ -191,6 +205,20 @@
       "glError": 0,
       "disposedOnce": true,
       "detached": true
+    }
+  },
+  "live": {
+    "desktop": {
+      "checkCicadaV2": 2,
+      "checkLineInfantry": 16,
+      "checkLineElite": 16,
+      "checkInfantryCarry": true
+    },
+    "touch": {
+      "checkCicadaV2": 2,
+      "checkLineInfantry": 16,
+      "checkLineElite": 16,
+      "checkInfantryCarry": true
     }
   }
 }

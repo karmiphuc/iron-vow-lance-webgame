@@ -27,7 +27,7 @@ root.IronVowCombat={create(scene,api){
   const weapon=native&&shoulder?mounted.shoulderWeapon:mounted?.primary;
   if(weapon){
    const selected=alternate?(weapon.muzzle2||weapon.muzzle):weapon.muzzle;
-   const pivot=native&&shoulder?weapon.mount:mounted.primarySocket?weapon.mount:null;
+   const pivot=weapon.aimPivot?.(selected)||(mounted.primarySocket?weapon.mount:null);
    root.IronVowFoundry.aimMounted(mounted.m,native?{muzzle:selected}:weapon,to,1,pivot);
    native?.sync();
   }

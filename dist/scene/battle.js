@@ -10,7 +10,7 @@ const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[]
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
 const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){
- return !u.kind&&!u.lionTrial&&(LIVE.has(u.frame)||Boolean(battleRef?.units.includes(u)&&rigV2.applies(u)&&rigV2.status!=='error'));
+ return !u.kind&&!u.lionTrial&&(LIVE.has(u.frame)||Boolean(battleRef?.units.includes(u)&&rigV2.applies(u)&&rigV2.status(u)!=='error'));
 }
 function world(x,z,y){
  const size=battle.size;

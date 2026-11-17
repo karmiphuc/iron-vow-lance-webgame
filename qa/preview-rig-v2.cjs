@@ -12,7 +12,7 @@ function subtreeTriangles(gltf, name) {
   return renderedTriangles({ ...gltf, scenes: [{ nodes: [node] }], scene: 0 });
 }
 
-async function previewRig({ file, screenshot, matrix = false, cicada = false, rigid = false }) {
+async function previewRig({ file, screenshot, matrix = false, cicada = false, rigid = false, primaryAnchor = 'muzzle.main', fit = false }) {
   const gltf = readGLB(file);
   const contract = validate(gltf);
   assert.ok(contract.ok, `${file}: ${contract.errors.join(', ')}`);
@@ -38,7 +38,7 @@ async function previewRig({ file, screenshot, matrix = false, cicada = false, ri
       await page.addScriptTag({ path: path.join(vendor, name) });
     }
     if (matrix) await page.addScriptTag({ path: path.join(root, 'foundry/production-arsenal.js') });
-    const result = await page.evaluate(async ({ source, shields, shieldIds, cicada }) => {
+    const result = await page.evaluate(async ({ source, shields, shieldIds, cicada, primaryAnchor, fit }) => {
       const T = window.THREE;
       const canvas = document.querySelector('#view');
       const renderer = new T.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
@@ -60,7 +60,12 @@ async function previewRig({ file, screenshot, matrix = false, cicada = false, ri
       rim.position.set(-4, 3, -5);
       scene.add(key, rim);
       const camera = new T.PerspectiveCamera(33, 780 / 650, 0.1, 50);
-      camera.position.copy(center).add(cicada ? new T.Vector3(3.4, 1.5, 11) : new T.Vector3(4.0, 2.1, 11.0));
+      const viewOffset = cicada ? new T.Vector3(3.4, 1.5, 11) : new T.Vector3(4.0, 2.1, 11.0);
+      if (fit) {
+        const radius = bounds.getBoundingSphere(new T.Sphere()).radius;
+        viewOffset.setLength(radius / Math.sin(T.MathUtils.degToRad(camera.fov / 2)));
+      }
+      camera.position.copy(center).add(viewOffset);
       camera.lookAt(center);
       let skinned = 0, tagged = 0;
       model.traverse(node => {
@@ -87,7 +92,7 @@ async function previewRig({ file, screenshot, matrix = false, cicada = false, ri
       const motion = cicada ? [
         probe('Pod.L', 'muzzle.locust.L', 'muzzle.locust.R'),
         probe('Pod.R', 'muzzle.locust.R', 'muzzle.locust.L'),
-      ] : [probe('elbow.R', 'muzzle.main')];
+      ] : [probe('elbow.R', primaryAnchor)];
       renderer.render(scene, camera);
       const triangles = renderer.info.render.triangles;
       const loadouts = [];
@@ -149,6 +154,8 @@ async function previewRig({ file, screenshot, matrix = false, cicada = false, ri
       shields: matrix ? fs.readFileSync(shieldFile).toString('base64') : null,
       shieldIds,
       cicada,
+      primaryAnchor,
+      fit,
     });
     assert.equal(result.triangles, expected, 'WebGL draws all default-scene triangles');
     assert.ok(result.tagged > 0, 'Rendered asset includes part metadata');
