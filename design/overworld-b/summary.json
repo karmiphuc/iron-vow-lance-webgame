@@ -1,0 +1,46 @@
+{
+  "source": {
+    "commit": "0a407ba2337206961b1639c82813f96ef06ca2f8",
+    "committedDistTree": "145e7833d7f91127e30993a36fdcef699a892a4e",
+    "worktreeDistSha256": "023caeb0a50e9bd374df13034491316af14dd918b5592fbc5618170a813bca97",
+    "worktreeQaSha256": "06edfe92c4ad062d7dfcbde4af8414a04e452ca5c0b673faef14b7668000ae01",
+    "dirty": false
+  },
+  "started": "2026-11-17T17:32:09.558Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "overworld rules",
+      "status": "passed"
+    },
+    {
+      "name": "career travel and save fixtures",
+      "status": "passed"
+    },
+    {
+      "name": "living-world offers and career integration",
+      "status": "passed"
+    },
+    {
+      "name": "overworld and living-world browser desktop and touch",
+      "status": "passed"
+    }
+  ],
+  "sourceAfter": {
+    "commit": "0a407ba2337206961b1639c82813f96ef06ca2f8",
+    "committedDistTree": "145e7833d7f91127e30993a36fdcef699a892a4e",
+    "worktreeDistSha256": "023caeb0a50e9bd374df13034491316af14dd918b5592fbc5618170a813bca97",
+    "worktreeQaSha256": "06edfe92c4ad062d7dfcbde4af8414a04e452ca5c0b673faef14b7668000ae01",
+    "dirty": false
+  },
+  "ended": "2026-11-17T17:32:24.384Z",
+  "simulationSuites": 64,
+  "saveFixtures": "Published legacy sorties and world-active-offer.json passed restore, import and exact checkpoint checks.",
+  "captures": [
+    "desktop.webp",
+    "ipad.webp",
+    "phone.webp",
+    "contracts.webp"
+  ],
+  "nativeIPad": "unverified"
+}
