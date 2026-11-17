@@ -524,3 +524,14 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 }
 .hangar-scene-hotspot[hidden]{display:none}
 body[data-view="ship"] main>.page,body[data-view="hangar"] main>.page{background:#11191ddc}
+
+
+/* The shared scene draws only the visible turntable bounds above this HTML pane. */
+body[data-view="workshop"] #world-scene{z-index:3}
+.workshop-chassis #paint-preview{
+ height:min(38vw,390px);min-height:245px;max-height:none;aspect-ratio:auto;
+ margin:0 auto 5px;border:1px solid var(--line);background:radial-gradient(ellipse at 52% 38%,#263839,#111b20 72%);
+ cursor:grab;touch-action:none;pointer-events:auto;
+}
+.workshop-chassis #paint-preview:active{cursor:grabbing}
+@media(max-width:760px){.workshop-chassis #paint-preview{height:clamp(260px,64vw,365px)}}

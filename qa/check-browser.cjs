@@ -14,6 +14,7 @@ const checkScoutBench=require('./browser/scout-bench.cjs');
 const checkShip=require('./browser/ship.cjs');
 const checkHangar=require('./browser/hangar.cjs');
 const checkHangarLive=require('./browser/hangar-live.cjs');
+const checkWorkshopTurntable=require('./browser/workshop.cjs');
 const checkCareerTabs=require('./browser/career-tabs.cjs');
 const checkDutyRoster=require('./browser/duty-roster.cjs');
 const checkBastionGrips=require('./browser/bastion.cjs');
@@ -78,7 +79,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkStockV2,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkHangarLive,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
+async function checkBrowser(origin,scenarios=[sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkStockV2,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkHangarLive,checkWorkshopTurntable,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
  const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
  const cpuFlows=new Set(['checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);

@@ -1711,9 +1711,10 @@ window.addEventListener?.('rig-portrait-ready',e=>{
 function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['ship','hangar','contracts','inn','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p==='inn'?'INN':p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
-  nav(); if(battle){syncHangar();renderBattle();return}
+  nav(); if(battle){window.IronVowWorkshop?.close();syncHangar();renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=unitWeapon({...u,frame}),training=trainingEffects(selected);
   const previewOpen=page==='workshop'&&workshopView==='assigned';
+  if(!previewOpen)window.IronVowWorkshop?.close();
   window.IronVowFoundry?.retainPreview?.(previewOpen?frame:undefined);
   if(page==='ship')$('#ui').innerHTML=shipPage();
   if(page==='hangar'&&hangarDeck==='base')$('#ui').innerHTML=hangarPage();
@@ -1738,8 +1739,8 @@ function render(){
   <div class="split workshop-refit">
   ${f.native||f.fixedWeapons?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
   <section class="workshop-chassis" tabindex="-1"><div class="workshop-preview-heading"><span class="eyebrow">${f.model} / ${f.role} / MK ${u.upgrade+1}</span>${f.native||f.fixedWeapons?'':'<button type="button" id="armory-back" class="armory-jump">↑ WEAPONS</button>'}</div>
-  <canvas class="unit-render" id="paint-preview" width="640" height="640" role="img" aria-label="${f.name} paint and loadout preview"></canvas>
-  <div class="workshop-meta"><h2>${f.name}</h2>${f.foundry!=null?'<button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>':''}${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}${workshopPaint(u)}
+  <div class="unit-render" id="paint-preview" tabindex="0" role="group" aria-label="${f.name} turntable. Drag or use arrow keys to rotate. Pinch, plus or minus to zoom. Double tap or Home to reset."></div>
+  <div class="workshop-meta"><h2>${f.name}</h2><button class="rotate-foundry" id="rotate-foundry" type="button">ROTATE PREVIEW</button>${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}${workshopPaint(u)}
   ${frame===0?'<a class="rig-bench-link" href="rig-bench/index.html">OPEN 3D RIG BENCH</a>':''}<a class="rig-bench-link" href="rig-bench/prototypes/">OPEN PROTOTYPE BAY</a><a class="rig-bench-link" href="?lion=cleaver">LION WEAPONS TRIAL</a>${stat('CONDITION',u.condition+'%',u.condition)}
   <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button></div><div class="inline-help"><small>+25 BODY HP · +2 ARMOR PER MK</small>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div></div></section>
   </div>`:''}</div>`;
@@ -3206,37 +3207,28 @@ function refreshTargetPortrait(){
  if(url&&image.src!==url)image.src=url;
 }
 
-let foundryPreviewAngle=0;
-let bastionPreviewDemo=0;
-window.addEventListener?.('rig-art-ready',()=>{if(battle)refreshTargetPortrait();else render();});
-function drawFoundryPreview(canvas,unit,angle){
- const frame=unit.frame??pilotFrame(selected);
- const entry=window.IronVowFoundry?.preview({...unit,frame},foundryModel(frame),undefined,angle);
- const g=canvas.getContext('2d');
- if(!g)return;
- g.clearRect(0,0,canvas.width,canvas.height);
- if(entry)g.drawImage(entry.surface,0,0,canvas.width,canvas.height);
-}
+window.addEventListener?.('rig-art-ready',()=>{
+ if(battle){refreshTargetPortrait();return;}
+ const offset=$('#ui .page')?.scrollTop;
+ render();
+ const view=$('#ui .page');if(view&&offset)view.scrollTop=offset;
+});
 function testBastionGrip(melee){
- const canvas=$('#paint-preview'),serial=++bastionPreviewDemo;if(!canvas)return;
- const hp={body:100,pilot:100,right:100,left:100,legs:100};
- const unit={...save.units[selected],id:'grip-demo/'+serial,frame:BASTION_FRAME,index:selected,team:'ally',alive:true,hp,max:{...hp},ap:8,x:0,z:0,vx:0,vz:0};
- if(melee){unit.melee??='cleaver';delete unit.shield;}
+ const unit={...save.units[selected],frame:BASTION_FRAME,index:selected,team:'ally',alive:true,ap:8,x:0,z:0,vx:0,vz:0};
+ if(melee){unit.melee??='cleaver';unit.shield=null;}
  const kind=melee?unit.melee:unit.weapon,profile=attackProfile(unit,kind),fireAt=.6+profile.raise,releaseAt=fireAt+profile.travel;
- const duration=releaseAt+profile.recover+ATTACK_STEP.returnDuration;let start;
- const tick=time=>{
-  if(serial!==bastionPreviewDemo||battle||page!=='workshop'||canvas!==$('#paint-preview'))return;
-  start??=time;const t=Math.min(duration,(time-start)/1000);
-  unit.attack={kind,start:0,primeDuration:.6,windup:profile.raise,fireAt:t>=fireAt?fireAt:null,releaseAt:t>=releaseAt?releaseAt:undefined};
-  unit.fireTime=t>=fireAt?fireAt:undefined;
-  const entry=window.IronVowFoundry.previewAnimated(unit,t,animationPose(unit,t),2,'rig-v2',foundryPreviewAngle);
-  if(entry){const g=canvas.getContext('2d');g.clearRect(0,0,canvas.width,canvas.height);g.drawImage(entry.surface,0,0,canvas.width,canvas.height);canvas.dataset.rigTime=t.toFixed(3);}
-  if(t<duration)requestAnimationFrame(tick);
- };requestAnimationFrame(tick);
+ const duration=releaseAt+profile.recover+ATTACK_STEP.returnDuration;
+ window.IronVowWorkshop?.play(unit,(actor,t)=>{
+  actor.attack={kind,start:0,primeDuration:.6,windup:profile.raise,fireAt:t>=fireAt?fireAt:null,releaseAt:t>=releaseAt?releaseAt:undefined};
+  actor.fireTime=t>=fireAt?fireAt:undefined;
+  return animationPose(actor,t);
+ },duration);
 }
 function drawWorkshopPreview(){
- const canvas=$('#paint-preview');
- if(canvas?.getContext)drawFoundryPreview(canvas,save.units[selected],foundryPreviewAngle);
+ const host=$('#paint-preview');
+ if(!host)return;
+ const frame=pilotFrame(selected);
+ window.IronVowWorkshop?.show(host,{...save.units[selected],frame,index:selected},foundryModel(frame));
 }
 function refreshArmory(focus){
  const top=$('#ui .page')?.scrollTop||0;
@@ -3300,7 +3292,7 @@ function bindWorkshop(){
   if(resetTrim)resetTrim.onclick=()=>{delete u.trim;persist();render()};
  }
  const rotate=$('#rotate-foundry');
- if(rotate)rotate.onclick=()=>{foundryPreviewAngle=(foundryPreviewAngle+1)%4;drawWorkshopPreview()};
+ if(rotate)rotate.onclick=()=>window.IronVowWorkshop?.rotate();
  const testRifle=$('#bastion-test-rifle'),testMelee=$('#bastion-test-melee');
  if(testRifle)testRifle.onclick=()=>testBastionGrip(false);
  if(testMelee)testMelee.onclick=()=>testBastionGrip(true);
@@ -3625,7 +3617,8 @@ function draw(ts){
  window.IronVowPerformance?.begin(ts);
  const elapsed=Math.max(0,(ts-last)/1000||1/60),dt=Math.min(.05,elapsed);last=ts;clock+=elapsed;frameDt=dt;
  window.IronVowRenderer?.observeFrame(elapsed*1000);
- const mode=battle?'battle':page==='hangar'||page==='ship'?'hangar':'static';
+ const mode=battle?'battle':page==='hangar'||page==='ship'?'hangar':page==='workshop'&&workshopView==='assigned'?'workshop':'static';
+ if(mode!=='workshop'&&canvasMode==='workshop')window.IronVowWorkshop?.close();
  if(mode==='battle'||mode!==canvasMode){
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
  }
@@ -3633,6 +3626,7 @@ function draw(ts){
   if(canvasMode!=='battle')syncHangar();
   battlefield(clock);if(activeCinematic)drawAttackCamera(clock);
  }else if(mode==='hangar')window.IronVowHangarRuntime?.render(clock,dt,canvas.getBoundingClientRect(),reducedMotion);
+ else if(mode==='workshop')window.IronVowWorkshop?.paint(clock,dt,W,H,reducedMotion);
  else if(mode!==canvasMode)window.IronVowRenderer?.show(false);
  canvasMode=mode;
  effects.forEach(e=>e.t-=elapsed*(e.type==='shot'?1/(e.life||.4):e.type==='detonation'?1/.85:e.light&&!e.broken?5:e.type==='step'?1.8:e.type==='skill'?1.2:1.6));effects=effects.filter(e=>e.t>0);shake*=Math.exp(-dt*13);window.IronVowPerformance?.end(ts);requestAnimationFrame(draw);

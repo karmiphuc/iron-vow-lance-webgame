@@ -20,12 +20,26 @@ module.exports=async function bastionSharedRig({page,mobile,origin,tap}){
  }));
  for(const sample of fittings){assert.ok(sample.left<1e-6&&sample.right<1e-6&&sample.tip,'Production weapons remain on the shared rig sockets');assert.equal(sample.width,640);assert.equal(sample.pistons,14,'Both halves of every native piston are bound');}
  console.log('Bastion fittings checked');
- await page.evaluate(()=>{const render=IronVowFoundry.previewAnimated;window.bastionPoseQA={first:null,changed:false};IronVowFoundry.previewAnimated=(...args)=>{const entry=render(...args);if(entry&&args[1]>.05){const image=entry.surface.toDataURL();bastionPoseQA.first??=image;bastionPoseQA.changed||=image!==bastionPoseQA.first;}return entry;};});
+ await page.locator('#paint-preview').scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
+ await page.evaluate(()=>{
+  const draw=IronVowFoundry.draw;
+  window.bastionPoseQA={first:null,changed:false};
+  IronVowFoundry.draw=(...args)=>{
+   const entry=draw(...args);
+   if(args[2].stage==='workshop'&&entry?.secondary?.tip){
+    const tip=entry.secondary.tip.getWorldPosition(new THREE.Vector3());
+    bastionPoseQA.first??=tip;
+    bastionPoseQA.changed||=tip.distanceTo(bastionPoseQA.first)>.1;
+   }
+   return entry;
+  };
+ });
  await page.evaluate(()=>__stopBastionFrames());const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
- await page.evaluate(()=>document.querySelector('#bastion-test-melee').click());
+ await page.evaluate(()=>{last=performance.now();requestAnimationFrame(draw);document.querySelector('#bastion-test-melee').click();});
  for(let i=0;i<20&&!await page.evaluate(()=>bastionPoseQA.changed);i++)await page.clock.fastForward(100);
- assert.equal(await page.evaluate(()=>bastionPoseQA.changed),true,'Test Strike visibly redraws its real render-target image');
- await page.clock.resume();await page.evaluate(()=>{last=performance.now();requestAnimationFrame(draw);});
+ assert.equal(await page.evaluate(()=>bastionPoseQA.changed),true,'Test Strike moves the equipped tip in the live turntable');
+ await page.clock.resume();
  console.log('Bastion Test Strike animated');
  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[10,8,7]}));await page.waitForFunction(()=>IronVowScene.ready&&IronVowScene.models.get('ally0')?.entry?.m.nativeV2,null,{timeout:120000});
  await page.evaluate(()=>{selected=1;action='fire';renderBattle();});

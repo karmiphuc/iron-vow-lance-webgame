@@ -5,7 +5,7 @@
 'use strict';
 const T=root.THREE,R=root.IronVowFoundryRig,VC=root.VowChassis;
 const V3=R.V3,Q=()=>new T.Quaternion();
-const profiles=new Map(),assets={battle:new Map(),preview:new Map(),portrait:new Map(),hangar:new Map()};
+const profiles=new Map(),assets={battle:new Map(),preview:new Map(),portrait:new Map(),hangar:new Map(),workshop:new Map()};
 const profileKey=u=>u.lionTrial?'lion':u.frame;
 const applies=u=>!u.kind&&profiles.has(profileKey(u));
 
