@@ -2708,7 +2708,8 @@ const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({i
 const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound}=window.IRON_VOW_SIM.createCombatTransactions({
  getBattle:()=>battle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
  attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
- beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
+ beginAttackCamera:(...args)=>beginAttackCamera(...args),closeAttackCamera,shoot,
+ BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,roundAP,resetMovement,highGroundAim
 });
 function engage(attacker,defender,part,weapon){return resolveExchange(attacker,defender,part,weapon)}
