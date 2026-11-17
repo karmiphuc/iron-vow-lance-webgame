@@ -38,5 +38,23 @@
     "package-resume.log": "85e65b373cd4812b38eedc65e42e2443cf1a6a9734860bca768cd3314be9ccdc",
     "live-partial.log": "f5ffc081ff4a32417d87c3758e72cd4e7ab2ded3e28fe30b57058e0352da5861",
     "live-resume.log": "868928cb42d5cb1f377199449d2459cab7fb3ed902fb4774c06a9fa727232946"
+  },
+  "rendererNativeIPadPro": {
+    "status": "unverified",
+    "safari": {
+      "battleFps": null,
+      "battleFrameTimeP95Ms": null,
+      "hangarFps": null,
+      "workshopFps": null,
+      "contextLossesIn20Minutes": null
+    },
+    "chrome": {
+      "battleFps": null,
+      "battleFrameTimeP95Ms": null,
+      "hangarFps": null,
+      "workshopFps": null,
+      "contextLossesIn20Minutes": null
+    },
+    "ownerSignOff": null
   }
 }
