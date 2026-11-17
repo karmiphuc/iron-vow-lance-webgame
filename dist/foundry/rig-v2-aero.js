@@ -5,7 +5,7 @@ const T=root.THREE,V3=root.IronVowFoundryRig.V3;
 const arsenal=root.IronVowProductionArsenal;
 root.IronVowRigV2.register(19,{
  id:'aero',assetPath:'rig-bench/rig-v2/aero.glb',factoryLivery:true,
- setup({bone,driver,marker,bounds,rig}){
+ setup({bone,driver,marker,bounds,rig,workshopMounts}){
   const sockets={};
   for(const side of ['L','R']){
    const wrist=rig.arms[side].wr;
@@ -19,23 +19,7 @@ root.IronVowRigV2.register(19,{
    const name='melee.'+id,model=bone(name),mount=driver(name,sockets.L);
    blades.set(id,{id,model,mount,tip:marker('strike.tip.'+id,mount),bounds:()=>bounds(name)});
   }
-  const alternate={};
-  function unmount(slot){
-   const weapon=alternate[slot];
-   if(!weapon)return;
-   weapon.carrier.remove(weapon.mount);
-   for(const material of weapon.chargeMaterials)material.dispose();
-   delete alternate[slot];
-  }
-  function fit(slot,id,armory){
-   if(alternate[slot]?.fitId!==id)unmount(slot);
-   if(id&&armory&&!alternate[slot]){
-    const asset=root.IronVowWeaponFX?.get(id).asset??id;
-    const weapon=arsenal.mount(armory,asset,sockets[slot]);
-    if(weapon)alternate[slot]={...weapon,carrier:sockets[slot],fitId:id};
-   }
-   return alternate[slot];
-  }
+  const {fit,dispose}=workshopMounts(sockets);
   const spine=rig.spine,spineRest=spine.position.clone(),worldRight=V3();
   const rotation=new T.Quaternion();
   let dodgeAt=-Infinity,dodgeSide=1;
@@ -68,7 +52,7 @@ root.IronVowRigV2.register(19,{
     spine.rotation.z-=.32*evade;
     return Boolean(entry.primary&&(!melee||entry.secondary));
    },
-   dispose(){unmount('L');unmount('R');}
+   dispose
   };
  }
 });

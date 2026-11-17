@@ -1,6 +1,17 @@
 # Phase 3 asset export gate
 
-Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, both Line Infantry variants, the Lion trial, the tank and the gunship use live meshes.
+Issue #13 starts with Gatecrasher. Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, the Lion trial, the tank and the gunship use live meshes.
+
+## Editable source coverage
+
+| Source status | Roster |
+| --- | --- |
+| Verified original Blender projects | Gatecrasher R2, Cicada, LI-01 R32 Service, LI-02 E7, Gravemaw R10, Reaver R14 Hostile, Aero R10 Melee and Lion Extended Follow Through |
+| Rebuilt from tracked Blender generators | Kestrel and Basilisk. Keep the editable scenes and atlas images together. Original scene recovery is tracked separately. |
+| Tracked procedural kit | Valkyrie, Oni, Behemoth, Aegis, Shrike and Citadel |
+| Original Blender projects still to recover | Painted Warden and its bake script, Hellbreaker HV-09X, Shogun HV-12, Bulwark-Aegis M02, Ashigaru IV-S07 Grip-Stride and Bastion BST-04 |
+
+Reconcile the production roster against the transfer manifest before signing off on source coverage. Record the chosen version, linked libraries, unpacked textures, animation actions and authoring sidecars for each rig. Check the actual scene in Blender and compare hashes after transfer. The first manifest lists 23 unresolved external references across archived revisions, so check whether the selected production versions use them.
 
 The legacy Prototype Bay Gatecrasher draws 162,386 triangles. The new `dist/rig-bench/rig-v2/gatecrasher-r2-reference.glb` draws 54,252 triangles with the integral cannon, Arc Cleaver and Vesper pod. It is separate from the Prototype Bay model because that viewer requires its authored motion clips. The reference is equipped as one file, so no extra weapon GLB is passed to the gate for this configuration.
 
@@ -25,6 +36,8 @@ Cicada uses independent Locust rack pivots and the authored left Pulse Bash emit
 `tools/export_aero_v2.py` exposes `export_aero(source, output)` for Blender MCP. Use `IronVow-Aero-Melee/Skirmisher-Aero-R10-Melee.blend` with SHA-256 `d80d6c9088622251b5124b032dd2372a3f3e66411bbf9a15d3c3861f557ee159`. The 52,798-triangle file includes the Kestrel carbine and all four Relay melee groups. The sortie shows only the equipped weapons. The gate checks the production arsenal's legal slot combinations. Hailstorm and the Citadel shield form the heaviest loadout at 59,592 triangles. Jumpjet plumes use both authored exhaust anchors, and successful dodges use the game's existing hit result.
 
 `tools/export_lion_v2.py` exposes `export_lion(source, output)` for Blender MCP. Use `Lion-Clay/Extended-Follow-Through/Lion-Rigged.blend` with SHA-256 `f58a636c677f1b78bac248ddf8280df737d7d9d4db21df5e11792a4e2e9e268a`, which matches the approved bake fixture. The 58,753-triangle GLB contains separate left-hand Cleaver, Hatchet and Breaker meshes, their authored tips and three 32-frame strike clips. The trial moves the practice target's rendered position within its tile to give the weapons reach. Its pick proxy, markers and damage effects follow the rendered position. The source file hash matched after export.
+
+`tools/export_rebuilt_stock_v2.py` exposes `export_stock(source, output, model)` for Blender MCP. The sources were rebuilt in isolated Blender processes from `tools/authoring/kestrel/build_kestrel.py` and `tools/authoring/basilisk/build_basilisk.py`. The rebuilt legacy Basilisk has 59 more triangles than the previously published GLB before simplification. Both rig-v2 files retain the atlas and piston pivots. The heaviest equipped loadouts draw 38,421 triangles for Kestrel and 46,321 for Basilisk. Basilisk's default missiles launch from the integrated right and left pods. Alternate ranged weapons use its hand grip.
 
 `tools/render_vehicles.py` exposes `export_vehicle_motion(output)` for Blender MCP. It builds the procedural Javelin tank and Kite gunship in a temporary scene with body and muzzle anchors. Each GLB batches the original motion geometry by material. The sortie loads the models it needs and releases the shared geometry on exit. The existing sprites cover failed loads, and the offline package embeds both GLBs.
 

@@ -67,6 +67,28 @@ function cloneSkin(stock){
  return {source,skeletons};
 }
 
+function workshopMounts(sockets){
+ const arsenal=root.IronVowProductionArsenal,workshop=root.IronVowWeaponFX,fitted={};
+ function remove(side){
+  const weapon=fitted[side];
+  if(!weapon)return;
+  weapon.carrier.remove(weapon.mount);
+  for(const material of weapon.ownedMaterials)material.dispose();
+  delete fitted[side];
+ }
+ return {
+  fit(side,id,armory){
+   if(fitted[side]?.fitId!==id)remove(side);
+   if(id&&armory&&!fitted[side]){
+    const weapon=arsenal.mount(armory,workshop.get(id).asset??id,sockets[side]);
+    if(weapon)fitted[side]={...weapon,carrier:sockets[side],fitId:id};
+   }
+   return fitted[side];
+  },
+  dispose(){for(const side of Object.keys(fitted))remove(side);}
+ };
+}
+
 function build(unit){
  const key=profileKey(unit),asset=assets.get(key);
  if(!asset?.scene)return null;
@@ -113,7 +135,7 @@ function build(unit){
  const dims={...rest,shX:Math.abs(at('shoulder.L').x),hipY:hipRest.y-at('pelvis').y,
   hipX:Math.abs(hipRest.x),hipZ:Math.abs(hipRest.z),
   up:at('shoulder.L').distanceTo(at('elbow.L')),fo:at('elbow.L').distanceTo(at('wrist.L')),
-  so:at('wrist.L').distanceTo(at('socket.L')),walkDrop:.14};
+  so:at('wrist.L').distanceTo(at('socket.L')),walkDrop:.14,...profile.dimensions};
  const pelvis=driver('pelvis',body),spine=driver('spine',pelvis),neck=driver('neck',spine);
  const arms={},legs=[];
  for(const side of ['L','R']){
@@ -144,7 +166,7 @@ function build(unit){
    toe:rest.quad?0:sign*dims.toe,phase:dims.phases[i],legA:hipPoint.distanceTo(kneePoint),legB:kneePoint.distanceTo(foot)});
  }
  const rig={pelvis,spine,neck,arms,legs,pistons:[],spinners:[]};
- const equipment=profile.setup({source,bone,find,driver,marker,bounds,rig,animations:asset.animations});
+ const equipment=profile.setup({source,bone,find,driver,marker,bounds,rig,workshopMounts,animations:asset.animations});
  const parts=Object.fromEntries(R.parts.map(part=>[part,[]])),materials=new Map();
  const boxes=new Map(['neck',...legSides.map(side=>'ankle.'+side),...(equipment.boundsNames||[])].map(name=>[bone(name),new T.Box3()]));
  function bounds(name){

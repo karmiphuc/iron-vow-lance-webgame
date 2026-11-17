@@ -168,6 +168,24 @@
       "citadel-shield"
     ]
   },
+  "kestrel": {
+    "triangles": 28865,
+    "hull": 28865,
+    "equipped": 38421,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
+  },
+  "basilisk": {
+    "triangles": 36765,
+    "hull": 36765,
+    "equipped": 46321,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
+  },
   "lion": {
     "triangles": 58753,
     "clips": [
@@ -246,13 +264,13 @@
         "damage": true
       },
       "checkReaver": {
-        "planted": 19,
+        "planted": 24,
         "dualReports": 6,
         "rightOnlyReports": 6,
         "geometries": 109
       },
       "checkVanguard": {
-        "planted": 34,
+        "planted": 27,
         "launches": 24
       },
       "checkAero": {
@@ -268,14 +286,28 @@
         },
         "jetBursts": 28,
         "dodges": 2,
-        "planted": 68
+        "planted": 54
+      },
+      "checkStockV2": {
+        "railReports": [
+          {
+            "frame": 1,
+            "reports": 1
+          },
+          {
+            "frame": 2,
+            "reports": 1
+          }
+        ],
+        "basiliskPodReports": 2,
+        "disposedGeometries": 125
       },
       "checkLionTrial": {
         "cleaver": {
           "poseError": 0.04099169528381584,
           "rearDrift": 0.0001061154391792449,
           "leadDrift": 0.00008419113733874271,
-          "contactGap": 0.1300021138933885,
+          "contactGap": 0.12837075748516447,
           "bodyIntersections": 0,
           "damage": 35
         },
@@ -283,7 +315,7 @@
           "poseError": 0.044027681358058846,
           "rearDrift": 0.0001061154391792449,
           "leadDrift": 0.00008419113733874271,
-          "contactGap": 0.06287236909750998,
+          "contactGap": 0.06287237130746132,
           "bodyIntersections": 0,
           "damage": 42
         },
@@ -291,14 +323,14 @@
           "poseError": 0.042523399255164254,
           "rearDrift": 0.0001061154391792449,
           "leadDrift": 0.00008419113733874271,
-          "contactGap": 0.03037836187296832,
+          "contactGap": 0.03037835895340506,
           "bodyIntersections": 0,
           "damage": 61
         }
       },
       "checkLineInfantry": {
         "launches": 16,
-        "worstAimDegrees": 8.537736462515939e-7,
+        "worstAimDegrees": 0,
         "detachedPlates": 3
       },
       "checkLineElite": {
@@ -309,11 +341,11 @@
       "checkInfantryCarry": {
         "li-01": {
           "traversals": 2,
-          "plantedPairs": 26
+          "plantedPairs": 16
         },
         "li-02": {
           "traversals": 2,
-          "plantedPairs": 31
+          "plantedPairs": 36
         }
       }
     },
@@ -324,13 +356,13 @@
         "damage": true
       },
       "checkReaver": {
-        "planted": 24,
+        "planted": 25,
         "dualReports": 6,
         "rightOnlyReports": 6,
         "geometries": 109
       },
       "checkVanguard": {
-        "planted": 31,
+        "planted": 24,
         "launches": 24
       },
       "checkAero": {
@@ -346,14 +378,28 @@
         },
         "jetBursts": 28,
         "dodges": 2,
-        "planted": 50
+        "planted": 15
+      },
+      "checkStockV2": {
+        "railReports": [
+          {
+            "frame": 1,
+            "reports": 1
+          },
+          {
+            "frame": 2,
+            "reports": 1
+          }
+        ],
+        "basiliskPodReports": 2,
+        "disposedGeometries": 125
       },
       "checkLionTrial": {
         "cleaver": {
           "poseError": 0.04099169528381584,
           "rearDrift": 0.0001061154391792449,
           "leadDrift": 0.00008419113733874271,
-          "contactGap": 0.13006382615851556,
+          "contactGap": 0.12907325119364377,
           "bodyIntersections": 0,
           "damage": 35
         },
@@ -361,7 +407,7 @@
           "poseError": 0.044027681358058846,
           "rearDrift": 0.0001061154391792449,
           "leadDrift": 0.00008419113733874271,
-          "contactGap": 0.06287236899811216,
+          "contactGap": 0.0628723704232122,
           "bodyIntersections": 0,
           "damage": 42
         },
@@ -369,7 +415,7 @@
           "poseError": 0.042523399255164254,
           "rearDrift": 0.0001061154391792449,
           "leadDrift": 0.00008419113733874271,
-          "contactGap": 0.030378362013527883,
+          "contactGap": 0.030378360081746925,
           "bodyIntersections": 0,
           "damage": 61
         }
@@ -387,11 +433,11 @@
       "checkInfantryCarry": {
         "li-01": {
           "traversals": 2,
-          "plantedPairs": 14
+          "plantedPairs": 17
         },
         "li-02": {
           "traversals": 2,
-          "plantedPairs": 31
+          "plantedPairs": 36
         }
       }
     }

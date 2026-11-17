@@ -52,7 +52,7 @@ function mount(scene,id,socket){
  if(!name)return null;
  const original=scene.getObjectByName(name);
  if(!original)return null;
- const model=original.clone(true),mount=new T.Group(),recoil=new T.Group();
+ const model=original.clone(true),mount=new T.Group(),recoil=new T.Group(),ownedMaterials=[];
  const marker=part=>added?(model.getObjectByName(id+'.'+part)??model.getObjectByName(T.PropertyBinding.sanitizeNodeName(id+'.'+part))):model.getObjectByName(part);
  const sword=['breaker','cleaver','blade'].includes(id);
  mount.rotation.x=sword?0:Math.PI/2;
@@ -60,6 +60,7 @@ function mount(scene,id,socket){
   model.traverse(o=>{
    if(o.isMesh&&o.material.name==='emissive_edge'){
     o.material=o.material.clone();
+    ownedMaterials.push(o.material);
     o.material.color.set(0xff7435);o.material.emissive.set(0xff5122);o.material.emissiveIntensity=2.1;
    }
   });
@@ -70,6 +71,7 @@ function mount(scene,id,socket){
   if(o.isMesh&&o.material.name==='armory_charge'){
    o.material=o.material.clone();
    chargeMaterials.push(o.material);
+   ownedMaterials.push(o.material);
   }
  });
  if(added&&grip){
@@ -79,7 +81,7 @@ function mount(scene,id,socket){
  recoil.add(model);mount.add(recoil);socket.add(mount);
  return {id,model,mount,recoil,grip,axis:marker('axis'),muzzle:marker('muzzle'),
   muzzle2:marker('muzzle2'),tip:marker('tip'),base:marker('base'),spike,spikeRest:spike?.position.z,
-  pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0,belt,chargeMaterials};
+  pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0,belt,chargeMaterials,ownedMaterials};
 }
 function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,strikeProgress=0}={}){
  if(weapon.spike)weapon.spike.position.z=weapon.spikeRest+(strikeProgress>=.61&&strikeProgress<=.81?.5:0);

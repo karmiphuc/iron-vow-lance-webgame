@@ -18,6 +18,7 @@ const mapping={
 const rigV2Mapping={
  GATECRASHER:'gatecrasher-r2-reference',CICADA:'cicada-reference','LINE INFANTRY':'li-01',
  'LINE INFANTRY ELITE':'li-02',GRAVEMAW:'vanguard',REAVER:'reaver',AERO:'aero',LION:'lion',
+ KESTREL:'kestrel',BASILISK:'basilisk',
 };
 const rigV2File=name=>rigV2Mapping[name]&&'rig-bench/rig-v2/'+rigV2Mapping[name]+'.glb';
 const rigV2Files=new Set(Object.keys(rigV2Mapping).map(rigV2File));

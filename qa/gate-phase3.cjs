@@ -12,11 +12,12 @@ const checkReaver = require('./browser/reaver.cjs');
 const checkVanguard = require('./browser/vanguard.cjs');
 const checkAero = require('./browser/aero.cjs');
 const checkLionTrial = require('./browser/lion-trial.cjs');
+const checkStockV2 = require('./browser/stock-v2.cjs');
 const checkLineInfantry = require('./browser/line-infantry.cjs');
 const checkLineElite = require('./browser/line-elite.cjs');
 const checkInfantryCarry = require('./browser/infantry-carry.cjs');
 
-function checkAeroBudget(assets) {
+function checkWorkshopBudgets(assets) {
   const dir = path.resolve(assets, '../..');
   const sim = createSimulation();
   sim.sandbox.window.THREE = { GLTFLoader: true };
@@ -25,27 +26,35 @@ function checkAeroBudget(assets) {
   }
   const { IronVowProductionArsenal: arsenal, IronVowWeaponFX: effects } = sim.sandbox.window;
   const armory = ['weapons.glb', 'expansion-weapons.glb', 'shields.glb'].map(file => readGLB(path.join(dir, 'rig-bench', file)));
-  const aero = readGLB(path.join(assets, 'aero.glb'));
-  const contract = validate(aero);
-  if (!contract.ok) throw Error(contract.errors.join(', '));
-  const native = new Map([['rifle', subtreeTriangles(aero, 'MODULE | Kestrel scout carbine')]]);
-  for (const id of sim.run('AERO_MELEE')) native.set(id, subtreeTriangles(aero, 'melee.' + id));
-  const hull = contract.total - [...native.values()].reduce((total, count) => total + count, 0);
   const main = [], offhand = [{ id: 'empty', triangles: 0 }];
   for (const { id, melee } of sim.run('WEAPONS.filter(weapon => !weapon.builtIn && !weapon.shoulder)')) {
     const name = arsenal.assetNodeName(effects.get(id).asset ?? id);
     const stock = armory.find(file => file.nodes.some(node => node.name === name));
-    if (!native.has(id) && !stock) throw Error(`Missing Aero equipment asset for ${id}`);
-    const triangles = native.get(id) ?? subtreeTriangles(stock, name);
-    (melee ? offhand : main).push({ id, triangles });
+    if (!stock) throw Error(`Missing Workshop equipment asset for ${id}`);
+    (melee ? offhand : main).push({ id, triangles: subtreeTriangles(stock, name) });
   }
   for (const { id } of sim.run('SHIELDS')) {
     offhand.push({ id, triangles: subtreeTriangles(armory[2], id) });
   }
-  const largest = items => items.reduce((a, b) => a.triangles > b.triangles ? a : b);
-  const gun = largest(main), left = largest(offhand), equipped = hull + gun.triangles + left.triangles;
-  if (equipped > 60000) throw Error(`Aero ${gun.id} and ${left.id} draw ${equipped} triangles`);
-  return { triangles: contract.total, hull, equipped, heaviestLoadout: [gun.id, left.id] };
+  const budgets = {};
+  for (const frame of ['aero', 'kestrel', 'basilisk']) {
+    const gltf = readGLB(path.join(assets, frame + '.glb'));
+    const contract = validate(gltf);
+    if (!contract.ok) throw Error(contract.errors.join(', '));
+    const weapons = new Map();
+    if (frame === 'aero') {
+      weapons.set('rifle', subtreeTriangles(gltf, 'MODULE | Kestrel scout carbine'));
+      for (const id of sim.run('AERO_MELEE')) weapons.set(id, subtreeTriangles(gltf, 'melee.' + id));
+    }
+    const hull = contract.total - [...weapons.values()].reduce((total, count) => total + count, 0);
+    if (frame === 'basilisk') weapons.set('missile', 0);
+    const largest = items => items.map(item => ({ ...item, triangles: weapons.get(item.id) ?? item.triangles }))
+      .reduce((a, b) => a.triangles > b.triangles ? a : b);
+    const gun = largest(main), left = largest(offhand), equipped = hull + gun.triangles + left.triangles;
+    if (equipped > 60000) throw Error(`${frame} ${gun.id} and ${left.id} draw ${equipped} triangles`);
+    budgets[frame] = { triangles: contract.total, hull, equipped, heaviestLoadout: [gun.id, left.id] };
+  }
+  return budgets;
 }
 
 async function main() {
@@ -53,7 +62,7 @@ async function main() {
   if (flag !== '--out' || !directory) throw Error('Usage: node qa/gate-phase3.cjs --out directory');
   require('./check-rig-v2-test.cjs');
   const assets = path.join(__dirname, '../dist/rig-bench/rig-v2');
-  const aero = checkAeroBudget(assets);
+  const { aero, kestrel, basilisk } = checkWorkshopBudgets(assets);
   const lionFile = readGLB(path.join(assets, 'lion.glb'));
   const lion = validate(lionFile);
   if (!lion.ok) throw Error(lion.errors.join(', '));
@@ -110,15 +119,16 @@ async function main() {
     capture(checkReaver),
     capture(checkVanguard),
     capture(checkAero),
+    capture(checkStockV2),
     capture(checkLionTrial),
     capture(checkLineInfantry),
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
-  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero,
+  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero, kestrel, basilisk,
     lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) }, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
-  console.log('PASS Phase 3 checkpoint: live Gatecrasher, Cicada, Reaver, Gravemaw, Aero, Infantry, Lion trial, tank and gunship');
+  console.log('PASS Phase 3 checkpoint: authored sortie rigs, Lion trial, tank and gunship');
 }
 
 main().catch(error => {

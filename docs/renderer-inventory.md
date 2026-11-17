@@ -7,6 +7,8 @@ The regenerated [file audit](renderer-inventory.json) covers all 21 frame IDs, t
 | Asset | Default-scene triangles | Sortie status |
 | --- | ---: | --- |
 | Gatecrasher R2 | 54,252 | Live. Up to 56,608 with Vesper and the Citadel shield. |
+| Kestrel | 28,865 | Live. Heaviest equipped loadout draws 38,421. |
+| Basilisk | 36,765 | Live. Heaviest equipped loadout draws 46,321. |
 | Cicada | 49,978 | Live. |
 | LI-01 | 49,790 | Live. |
 | LI-02 | 50,466 | Live. |

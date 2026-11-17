@@ -22,6 +22,10 @@ Aero passed desktop and touch checks for all four Relay strikes, rail and carbin
 
 Lion's Cleaver, Hatchet and Breaker strikes retained their AP costs, authored contact timing and damage on desktop and touch. Sampled runtime joint and tip positions differed from the approved source by at most 0.044 source units. Planted foot drift stayed below 0.00011 world units. The practice target sits closer within its original tile, with a 0.030–0.131 world-unit tip gap at the contact frame and zero grip-to-tip intersections with Lion's torso. The trial left the saved career intact.
 
+Kestrel and Basilisk passed desktop and touch checks for planted feet, alignment of all ten piston pairs, atlas paint channels, arm damage, Workshop weapon and shield fit, rail attacks and asset disposal. Basilisk's default volley used both authored pod positions. Their heaviest loadouts draw 38,421 and 46,321 triangles.
+
+A one-seed campaign smoke completed 2,240 observed ticks with zero anomalies. A second invocation reused the completed seed. The final 30-seed campaign remains pending.
+
 The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in five. The desktop and touch battle checks exercised picking, ground contact, hover, heading, damage, grounded wrecks and fire from the exported muzzles. Leaving the sortie detached the vehicles and disposed their shared geometry once. Both runs used one WebGL context and reported zero WebGL errors. The screenshot arranges both vehicles in a seeded test battle.
 
 The sortie-exit assertion caught a cleanup call unavailable in the vendored Three.js. Cleanup now removes the instance from its parent before disposing shared geometry.
