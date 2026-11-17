@@ -1,3 +1,4 @@
+const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 const {join}=require('node:path');
 
@@ -15,6 +16,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  assert.equal(await page.getByRole('heading',{name,exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.evaluate(contract=>{Math.random=()=>0;save.overworld={port:CONTRACTS[contract].id,arrears:0};},contract);
+ await ensureContractOffer(page,contract);
  await tap('#nav [data-page="contracts"]');
  await tap(`[data-deploy="${contract}"]`);
  await tap('#modal-1');

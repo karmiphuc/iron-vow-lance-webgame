@@ -1,3 +1,4 @@
+const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkHangar({context,page,mobile,origin,tap}){
@@ -32,6 +33,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  await page.goto(baseUrl,{waitUntil:'domcontentloaded'});
  assert.match(await page.locator('.base-queue h2').innerText(),/reserve academy/i);
  assert.ok(await page.locator('[data-build-room="recon"]').isDisabled());
+ await ensureContractOffer(page,0);
  await nav('contracts');
  await tap('[data-deploy="0"]');
  await tap('#modal-1');
@@ -82,6 +84,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>JSON.stringify({save,selected})),beforeNavigation,'Browsing a reserve never reassigns a seat or changes the career');
  await tap('[data-patch-storage="6"]');
  assert.equal(await page.evaluate(()=>save.reserve[6].condition),65);
+ await ensureContractOffer(page,0);
  await nav('contracts');
  await tap('.contract-grid article:first-child .contract-intel summary');
  assert.equal(await page.locator('.contract-grid article:first-child .contract-intel li').count(),1);
@@ -89,7 +92,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  assert.ok([2,3].includes(await page.evaluate(()=>save.dispatch.sizes[0])));
  assert.ok(await page.locator('[data-rescan="0"]').isDisabled(),'Only one local scan is available per company day');
  assert.equal(await page.locator('[data-rescan="1"]').count(),0,'Remote contracts cannot charge for a local survey');
- assert.match(await page.locator('[data-deploy="1"]').innerText(),/PLOT COURSE/i);
+ assert.ok(await page.locator('[data-world-offer]').count()>0,'Local board displays available offers');
  await tap('[data-deploy="0"]');
  assert.ok(await fit('.modalbox'));
  assert.equal(await page.locator('[data-sortie-seat][aria-pressed="true"]').count(),await page.evaluate(()=>save.dispatch.sizes[0]));

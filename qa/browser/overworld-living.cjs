@@ -73,6 +73,9 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  await page.waitForFunction(({id,credits})=>save.world.scouted.includes(id)&&save.credits===credits-90,{id:scoutOffer.id,credits:scoutCredits});
  assert.equal(await page.locator(`[data-scout-offer="${scoutOffer.id}"]`).count(),0,'successful scouting removes its paid action');
  assert.equal(await page.locator('.offer-intel').count(),1,'the local contact report appears');
+ const contactControl=await page.locator('.offer-intel .contract-intel summary').boundingBox();
+ assert(contactControl&&contactControl.height>=44&&contactControl.width>=44,'the restored contact disclosure meets the 44-pixel touch target');
+ assert(await page.locator('.offer-intel .contract-intel li').count()>0,'paid scouting reveals actual hostile names');
  const scouted=await page.evaluate(async()=>{await pendingCareerWrite;return JSON.parse(JSON.stringify(save));});
 
  await page.reload({waitUntil:'domcontentloaded'});

@@ -1,9 +1,11 @@
+const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkShip({context,page,mobile,origin,tap}){
  const nav=view=>tap('#nav [data-page="'+view+'"]');
  const fit=async(selector)=>assert.ok(await page.locator(selector).evaluate(el=>el.scrollWidth<=el.clientWidth+1),selector+' fits');
  const launch=async()=>{
+  await ensureContractOffer(page,0);
   await nav('contracts');
   await tap('[data-deploy="0"]');
   await fit('.modalbox');
@@ -48,6 +50,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  assert.match(await page.locator('.ship-queue .tag').innerText(),/1 WIN LEFT/i);
  await launch();await win();
  await page.evaluate(()=>{save.dispatch={day:save.day,sizes:[3,2,1,3]};persist()});
+ await ensureContractOffer(page,0);
  await nav('contracts');
  assert.match(await page.locator('.contract-grid article').first().innerText(),/3 MECHS \+ AUX OPTION/);
  await tap('[data-deploy="0"]');
