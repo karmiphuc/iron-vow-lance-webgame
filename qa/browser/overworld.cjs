@@ -233,7 +233,16 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  await tap('[data-overworld-travel]');
  await tap('[data-overworld-confirm]');
  await page.waitForFunction(()=>save.overworld?.port==='corridor');
+ // This fixed crossing encounters a distress call. Passing preserves the original
+ // transit-rest fixture while exercising the native report rather than bypassing it.
+ await page.waitForFunction(()=>!overworldDeparture);
+ assert.equal(await page.evaluate(()=>worldRules.pendingEvents(save.world)[0]?.kind),'distress');
+ const beforePassing=await snapshot();
+ await tap('[data-transit-choice="pass"]');
+ await page.waitForFunction(()=>!save.transit);
  state=await snapshot();
+ assert.equal(state.credits,beforePassing.credits,'passing the call adds no charge');
+ assert.equal(state.day,beforePassing.day,'passing the call adds no delay');
  const {world:restedWorld,...restedLegacyFields}=state;
  assert.deepEqual(restedLegacyFields,restedArrival,'two-day transit preserves the existing rest and expense values');
  assert.deepEqual(restedWorld,await page.evaluate(()=>worldRules.createWorld(0,3)),'successful two-day travel advances the world exactly once');

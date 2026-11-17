@@ -72,10 +72,9 @@ window.IronVowWorld=(()=>{
   if(!validWorld(world)||!pool(world.seed,world.day).some(o=>o.id===id)||world.consumed.includes(id))return null;
   return {...world,consumed:[...world.consumed,id],scouted:world.scouted.filter(offerId=>offerId!==id),pendingEvents:[...world.pendingEvents],resolvedEvents:[...world.resolvedEvents],standings:{...world.standings}};
  }
- function markersAt(world,day=world?.day){
-  if(!validWorld(world)||!integer(day)||day<world.day)return null;
+ function markersFor(seed,day){
   return ['storm','patrol'].map((kind,i)=>{
-   const route=ROUTES[(hash(world.seed,kind)%ROUTES.length+(day%ROUTES.length)*(i+1))%ROUTES.length];
+   const route=ROUTES[(hash(seed,kind)%ROUTES.length+(day%ROUTES.length)*(i+1))%ROUTES.length];
    let idHash=0;
    for(const c of kind)idHash=(Math.imul(idHash,31)+c.charCodeAt(0))>>>0;
    const fraction=.2+(((day%61)*17+idHash%41)%61)/100;
@@ -83,6 +82,10 @@ window.IronVowWorld=(()=>{
    const x=(from.x+(to.x-from.x)*fraction)/100,y=(from.y+(to.y-from.y)*fraction)/100;
    return {id:kind,kind,from:route.from,to:route.to,day,fraction,x,y};
   });
+ }
+ function markersAt(world,day=world?.day){
+  if(!validWorld(world)||!integer(day)||day<world.day)return null;
+  return markersFor(world.seed,day);
  }
  const MARKET={
   picket:{faction:'Karst Wardens',frames:[0,1,2],weapons:['rifle','sidewinder','trident','cleaver']},
@@ -105,25 +108,33 @@ window.IronVowWorld=(()=>{
  const EVENTS=[
   {kind:'distress',choices:[{id:'help',credits:-150,hullCondition:0,delayDays:0,rep:2},{id:'pass',credits:0,hullCondition:0,delayDays:0,rep:0}]},
   {kind:'salvage',choices:[{id:'recover',credits:250,hullCondition:-5,delayDays:0,rep:0},{id:'leave',credits:0,hullCondition:0,delayDays:0,rep:0}]},
-  {kind:'toll',choices:[{id:'pay',credits:-200,hullCondition:0,delayDays:0,rep:1},{id:'detour',credits:0,hullCondition:0,delayDays:1,rep:0}]}
+  {kind:'toll',choices:[{id:'pay',credits:-200,hullCondition:0,delayDays:0,rep:1},{id:'detour',credits:0,hullCondition:0,delayDays:1,rep:0}]},
+  {kind:'weather',choices:[{id:'supplies',credits:-180,hullCondition:0,delayDays:0,rep:0},{id:'brace',credits:0,hullCondition:-5,delayDays:0,rep:0},{id:'wait',credits:0,hullCondition:0,delayDays:1,rep:0}]},
+  {kind:'patrol',choices:[{id:'bribe',credits:-200,hullCondition:0,delayDays:0,rep:0},{id:'run',credits:0,hullCondition:-5,delayDays:0,rep:0},{id:'detour',credits:0,hullCondition:0,delayDays:1,rep:0}]}
  ];
  function eventFromId(seed,id,maxDay){
   if(typeof id!=='string')return null;
-  const m=/^event:(\d+):(\d+):([a-z]+):([a-z]+)$/.exec(id);
+  const m=/^event:(\d+):(\d+):(\d+):([a-z]+):([a-z]+)$/.exec(id);
   if(!m)return null;
-  const day=Number(m[1]),index=Number(m[2]),from=m[3],to=m[4];
-  if(!integer(day)||day<1||day>maxDay||!integer(index)||index>=PORTS.length-1||!edge(from,to)||String(day)!==m[1]||String(index)!==m[2])return null;
-  const e=EVENTS[hash(seed,day,index,from,to)%EVENTS.length];
-  return {id,day,from,to,kind:e.kind,choices:e.choices.map(choice=>({...choice}))};
+  const day=Number(m[1]),legDay=Number(m[2]),index=Number(m[3]),from=m[4],to=m[5];
+  if(!integer(day)||day<1||day>maxDay||!integer(legDay)||legDay<day||!integer(index)||index>=PORTS.length-1||!edge(from,to)||
+   String(day)!==m[1]||String(legDay)!==m[2]||String(index)!==m[3]||hash(seed,day,legDay,index,from,to,'incident')%3!==0)return null;
+  const hazards=markersFor(seed,legDay).filter(marker=>marker.from===from&&marker.to===to||marker.from===to&&marker.to===from);
+  const kind=hazards.some(marker=>marker.kind==='storm')?'weather':hazards.some(marker=>marker.kind==='patrol')?'patrol':null;
+  const e=kind?EVENTS.find(event=>event.kind===kind):EVENTS[hash(seed,day,legDay,index,from,to,'kind')%3];
+  return {id,day,legDay,from,to,kind:e.kind,choices:e.choices.map(choice=>({...choice}))};
  }
  function transitEvents(world,path,departureDay=world?.day){
   if(!validWorld(world)||!Array.isArray(path)||path.length<2||path.length>PORTS.length||new Set(path).size!==path.length||
    !path.every(known)||!integer(departureDay)||departureDay<world.day)return null;
-  const result=[];
+  const result=[];let legDay=departureDay;
   for(let i=1;i<path.length;i++){
-   if(!edge(path[i-1],path[i]))return null;
-   const id=`event:${departureDay}:${i-1}:${path[i-1]}:${path[i]}`;
-   if(!world.resolvedEvents.includes(id))result.push(eventFromId(world.seed,id,departureDay));
+   const leg=edge(path[i-1],path[i]);
+   if(!leg)return null;
+   const id=`event:${departureDay}:${legDay}:${i-1}:${path[i-1]}:${path[i]}`;
+   const event=eventFromId(world.seed,id,departureDay);
+   if(event&&!world.resolvedEvents.includes(id))result.push(event);
+   if(i<path.length-1){legDay+=leg.days;if(!integer(legDay))return null;}
   }
   return result;
  }

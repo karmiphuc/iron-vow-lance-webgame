@@ -1,0 +1,137 @@
+{
+  "source": {
+    "commit": "f284d5e5dcb5777034ea96449a1d7df2db04f7c8",
+    "committedDistTree": "3c80848a582c6f844e0c62273aab40f8a86a9bf9",
+    "worktreeDistSha256": "7ce3b317f9b9ae72309e0f0038e8235bb8dfbaa41950e29cbab865cdf9b3b6fa",
+    "worktreeQaSha256": "488f02e6e3ab770a328151ce908dbee04b5e0ce2f2770f80c4c6b734d309b98c",
+    "dirty": false
+  },
+  "started": "2026-11-17T18:01:18.630Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "overworld rules",
+      "status": "passed"
+    },
+    {
+      "name": "career travel and save fixtures",
+      "status": "passed"
+    },
+    {
+      "name": "living-world offers and career integration",
+      "status": "passed"
+    },
+    {
+      "name": "seeded world event model",
+      "status": "passed"
+    },
+    {
+      "name": "port services and transit event integration",
+      "status": "passed"
+    },
+    {
+      "name": "published save restoration",
+      "status": "passed"
+    },
+    {
+      "name": "overworld and port services browser desktop and touch",
+      "status": "passed"
+    }
+  ],
+  "sourceAfter": {
+    "commit": "f284d5e5dcb5777034ea96449a1d7df2db04f7c8",
+    "committedDistTree": "3c80848a582c6f844e0c62273aab40f8a86a9bf9",
+    "worktreeDistSha256": "7ce3b317f9b9ae72309e0f0038e8235bb8dfbaa41950e29cbab865cdf9b3b6fa",
+    "worktreeQaSha256": "488f02e6e3ab770a328151ce908dbee04b5e0ce2f2770f80c4c6b734d309b98c",
+    "dirty": false
+  },
+  "ended": "2026-11-17T18:01:37.567Z",
+  "commands": [
+    "NODE_PATH=/private/tmp/iron-vow-qa-deps/node_modules npm test",
+    "NODE_PATH=/private/tmp/iron-vow-qa-deps/node_modules node qa/check-overworld-chart.cjs --out /private/tmp/iron-vow-overworld-c-final"
+  ],
+  "browserChecks": [
+    {
+      "name": "checkOverworld",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "desktop",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkOverworld",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkOverworldLiving",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    },
+    {
+      "name": "checkOverworldPortEvents",
+      "device": "touch",
+      "attempt": 1,
+      "status": "passed",
+      "renderPolicy": "Full GPU rendering"
+    }
+  ],
+  "simulationSuites": 65,
+  "saveFixtures": 8,
+  "nativeIPad": "unverified",
+  "captures": [
+    {
+      "file": "phone-event.webp",
+      "bytes": 26946
+    },
+    {
+      "file": "ipad-portrait-market.webp",
+      "bytes": 61196
+    },
+    {
+      "file": "landscape-services.webp",
+      "bytes": 68506
+    }
+  ],
+  "captureChecks": {
+    "viewports": [
+      [
+        390,
+        844
+      ],
+      [
+        1024,
+        1366
+      ],
+      [
+        1366,
+        1024
+      ]
+    ],
+    "minimumControlPx": 44,
+    "maximumPanelVh": 55,
+    "forecastOverlap": false,
+    "webglContexts": 1,
+    "pageErrors": 0,
+    "seed": 12,
+    "event": "toll"
+  }
+}
