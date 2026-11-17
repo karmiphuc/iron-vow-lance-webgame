@@ -1,5 +1,7 @@
 # Focused Hangar fixture smoke — 2026-11-11
 
+Historical preparation record: the referenced report and screenshots are not present in this checkout. The integrated fixture and current Phase 4 evidence are documented in [Phase 4 evidence](../design/phase4/README.md).
+
 Final result: **PASS** on immutable revision `a11ddcca4620c9cf75116a398290fe54e6fdca57` (source includes `7435c30` and `842f081`). Exact input file hashes and assertion results are in `report.json`.
 
 Run from repository root:
