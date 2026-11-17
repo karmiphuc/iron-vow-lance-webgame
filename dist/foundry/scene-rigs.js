@@ -76,6 +76,7 @@ function setCamera(elevation,azimuth=0){
  camera.updateMatrixWorld(true);
 }
 function disposeEntry({m,primary,secondary}){
+ m.cont.parent?.remove(m.cont);
  m.nativeV2?.dispose();
  if(!m.nativeV2?.pose)for(const weapon of [primary,secondary])for(const material of weapon?.ownedMaterials||[])material.dispose();
  const unique=new Set([m.build.visorMat,m.build.stackMat,...(m.build.ownedMaterials||[])]);
@@ -219,9 +220,9 @@ function draw(u,t,pose,scope,model,custom){
 
  if(!entry){
   const m=custom==='rig-v2'?rigV2.build(u,pose.previewScope||'battle'):
-   buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
+   buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim,pose.modules);
   if(!m)return null;
-  entry={m,surface:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
+  entry={m,surface:pose.inspect?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
@@ -321,7 +322,9 @@ function draw(u,t,pose,scope,model,custom){
   }
  }
  v2?.sync();
+ if(pose.inspect&&pose.clip)v2?.scrub?.(pose.clip,pose.clipTime);
  m.cont.updateMatrixWorld(true);
+ if(pose.inspect)return entry;
  const span=m.previewSpan,groundRow=span?(ground-(1-span)/2)/span:ground;
  if(!world){
   setCamera(.46);
@@ -411,6 +414,27 @@ function previewAnimated(u,t,pose,model,custom,angle=0){
  const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
  return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,previewScope:'preview',heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
 }
-window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),
- equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
+function inspect(unit,model,time,pose){
+ if(!init()||!armory)return null;
+ const authored=rigV2.applies(unit),status=rigV2.status(unit,'bench');
+ if(authored&&status!=='ready'){
+  if(!status)void rigV2.load([unit],'bench');
+  return null;
+ }
+ return draw(unit,time,{...pose,inspect:true,preview:true,previewScope:'bench'},null,model,authored?'rig-v2':undefined);
+}
+function clearInspection(frameChanged){
+ clearPreviews('bench');
+ if(frameChanged)rigV2.clear('bench');
+}
+function renderInspection(objects,view){
+ if(!init()||window.IronVowRenderer.lost)return;
+ window.IronVowRenderer.resize(innerWidth,innerHeight);
+ window.IronVowRenderer.show(true);
+ for(const object of objects)scene.add(object);
+ scene.background=new T.Color(0x152128);
+ try{renderer.render(scene,view);return {...renderer.info.render};}
+ finally{scene.background=null;for(const object of objects)scene.remove(object);}
+}
+window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),previewAnimated:withFallback(previewAnimated),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview,inspect:withFallback(inspect),clearInspection,renderInspection:withFallback(renderInspection)};
 })();

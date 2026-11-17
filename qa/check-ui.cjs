@@ -8,7 +8,7 @@ const {document}=parseHTML(fs.readFileSync(root+'/dist/index.html','utf8'));cons
 class LocalImage extends Image{set src(v){super.src=fs.readFileSync(path.join(root,'dist',v))}get src(){return super.src}}
 class NativeSurface{constructor(w,h){return createCanvas(w,h)}}
 const storage=new Map(),warnings=[];const context={document,Image:LocalImage,OffscreenCanvas:NativeSurface,console:{log:console.log,warn:(...a)=>warnings.push(a.join(' ')),error:console.error},window:{addEventListener:()=>{},matchMedia:()=>({matches:false})},innerWidth:1440,innerHeight:1024,devicePixelRatio:1,localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},requestAnimationFrame:()=>{},setTimeout:r=>{queueMicrotask(r);return 1},clearTimeout:()=>{},URL,Blob,Math:Object.create(Math)};
-vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/theater-layouts.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
+vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/dist/theater-layouts.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/combat-simulation.js','utf8'),context);vm.runInContext(fs.readFileSync(root+'/dist/game.js','utf8'),context);const run=c=>vm.runInContext(c,context),get=s=>document.querySelector(s),click=s=>{let b=get(s);assert.ok(b,'Missing '+s);assert.ok(!b.disabled,'Disabled '+s);b.click()};
 (async()=>{assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,8);assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.hangar-hotspots button').length,3);
 click('[data-page="journal"]');assert.equal(document.body.dataset.view,'journal');
 assert.equal(document.querySelectorAll('.manual-topics > div').length,9);
@@ -20,7 +20,7 @@ assert.equal(document.body.dataset.view,'hangar');assert.equal(document.querySel
 click('[data-hangar-deck="mechs"]');
 click('#inspect');assert.ok(get('.unit-inspect'));click('[data-select="1"]');assert.match(get('.selected-chassis').textContent,/KESTREL/);assert.match(get('.unit-inspect').textContent,/Jin Takeda/);click('#close-inspect');assert.equal(get('.unit-inspect'),null);
 click('[data-page="workshop"]');click('[data-select="0"]');
-assert.equal(get('.rig-bench-link').getAttribute('href'),'rig-bench/index.html');
+assert.equal(get('.rig-bench-link').getAttribute('href'),'?bench=rig&frame=0');
 
 run('save.dispatch={day:save.day,sizes:[3,2,1,3]}');click('[data-page="contracts"]');assert.equal(document.querySelectorAll('[data-deploy]').length,4);click('[data-deploy="0"]');assert.equal(run('battle'),null);click('#modal-1');assert.equal(run('battle.units.length'),7);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
 assert.equal(document.querySelectorAll('[data-part]').length,5);assert.equal(document.querySelectorAll('[data-unit]').length,3);

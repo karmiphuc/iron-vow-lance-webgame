@@ -54,6 +54,15 @@ Barrel aim is checked at actual firing beats using the physical muzzle axis and 
 
 `npm test --prefix qa` runs the simulation suites. New `qa/check-*.cjs` files are picked up automatically. `npm run test:browser --prefix qa` runs the local browser suite. Browser failures save a screenshot in the temporary directory. Set `IRON_VOW_QA_OUTPUT` when running the simulation alone to request native canvas captures in a separate folder.
 
+
+## Rig Bench War
+
+The Rig Bench War link opens a temporary encounter on the game board. Run War issues the game's legal move, attack and end-turn commands. The same runner drives `qa/war-driver.cjs`. Browser automation can use `window.__bench.newBattle(options)`, `step()`, `run()`, `runBattle(options)`, `state`, `eventLog()`, `runSoak(count, seed, options)`, `diagnostics()`, `inject(check, unit)` and `report()`. Soak rotates real theaters and checks loadouts through the same hull validation used by the campaign. The report includes chassis × weapon, legs × weapon and theater × chassis counts.
+
+The shared observer samples the live rig and combat events after rendering. War's 19 isolated fault probes pass perturbed copies of those observations through the same predicates. The existing scene checker also exercises 16 physical negative controls.
+
+`node qa/gate-phase6.cjs --out /tmp/iron-vow-phase6` runs the focused desktop and touch Bench/War gate and writes one summary and two real WebP captures. `node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
+
 ## Package and verify the Site
 
 Open the current Site with the installed Sites helper and retain its opening result. Install the QA dependencies, then launch the repository's packaging entry point with a terminal.
