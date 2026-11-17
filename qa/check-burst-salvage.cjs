@@ -4,12 +4,13 @@ const simulate=require('./sim-harness.cjs');
 (async()=>{
  const sim=simulate({random:()=>0,reducedMotion:true}),{run}=sim;
  run("deploy(0,false,[0]);closeModal();const ally=current(),foe=battle.units[1];foe.x=ally.x+1;foe.z=ally.z");
- // Scripted draws in the order planVolley asks for them. After the to-hit roll(s) every landed round draws a
- // cockpit check (>=1-pilot chance means cockpit) and then a location. Targets list body, right, left, legs.
+ // Scripted draws in the order planVolley asks for them: a to-hit roll per round (one per shell), a location per
+ // landed round, then ONE cockpit check per attack when a body round landed (>=1-pilot chance turns the first body round into the cockpit).
+ // Targets list body, right, left, legs.
  run("globalThis.script=values=>{let i=0;Math.random=()=>{if(i>=values.length)throw Error('unexpected random draw');return values[i++]};return()=>i};");
  const LOCATIONS=[[.1,'body'],[.6,'right'],[.7,'left'],[.9,'legs']];
- const scatterDraws=count=>[0,...Array.from({length:count},(_,i)=>i===4?[.999,.1]:[0,LOCATIONS[i%4][0]]).flat()];
- const scatterParts=count=>Array.from({length:count},(_,i)=>i===4?'pilot':LOCATIONS[i%4][1]);
+ const scatterDraws=count=>[0,...Array.from({length:count},(_,i)=>LOCATIONS[i%4][0]),.999];
+ const scatterParts=count=>Array.from({length:count},(_,i)=>i===0?'pilot':LOCATIONS[i%4][1]);
  assert.ok(run("RANGED.filter(w=>armoryClass(w)==='assault').every(w=>w.burst)"));
  for(const [id,count,scatter=false] of [['rifle',8],['sidewinder',12],['trident',8],['forge',12,true],['ember',12,true],['hailstorm',12],
   ['shotgun',12,true],['needle-carbine',8],['flechette-scattergun',12,true]]){
@@ -46,9 +47,9 @@ const simulate=require('./sim-harness.cjs');
  assert.ok(run('evadedShell.dodged&&evadedShell.landed===0&&aero.dodged&&!standard.dodged'));
  run(`const gun=weapon('rifle'),chance=hitChance(ally,foe,'body',gun);
   let calls=0;
-  const rng=[0,.1,.1,1,.86*chance,.001,.6,1,.91*chance,.001,.7,.98*chance,.001,.9,0,.001,.1,1];
+  const rng=[0,.1,1,.86*chance,.6,1,.91*chance,.7,.98*chance,.9,0,.1,1,.001];
   Math.random=()=>rng[calls++];const partial=planVolley(ally,foe,'body',gun,false)`);
- assert.equal(run('calls'),18,'each rifle round gets its own to-hit roll and each landed round one cockpit check and one location');
+ assert.equal(run('calls'),14,'each rifle round gets its own to-hit roll, each landed round one location and the attack one cockpit check');
  assert.equal(run('partial.landed'),5);
  assert.deepEqual(JSON.parse(run('JSON.stringify(partial.rounds.map(r=>r.hit?r.part:null))')),['body',null,'right',null,'left','legs','body',null]);
  for(const [part,n] of [['body',2],['right',1],['left',1],['legs',1]]){

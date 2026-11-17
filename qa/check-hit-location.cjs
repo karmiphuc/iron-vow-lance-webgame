@@ -1,5 +1,5 @@
 // Front Mission 3 style hit location: nobody aims, every landed round rolls its own location.
-// Shares: body 55 / arms 12.5 each / legs 20 among live non-cockpit parts, cockpit 1-5% of landed rounds.
+// Shares: body 55 / arms 12.5 each / legs 20 among live non-cockpit parts, cockpit 1-5% per attack that strikes the body (one round at most).
 const assert=require('node:assert/strict');
 const simulate=require('./sim-harness.cjs');
 
@@ -20,14 +20,15 @@ const LANDED=24000,TOLERANCE=.015;
   var ally=current(),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind),tank=battle.units.find(u=>u.kind==='tank'),rifle=weapon('rifle');
   foe.x=ally.x+1;foe.z=ally.z;
   globalThis.tally=(attacker,target,w,landedGoal)=>{
-   const counts={body:0,pilot:0,left:0,right:0,legs:0},guards=[];let landed=0,rounds=0,volleys=0,guard=0;
+   const counts={body:0,pilot:0,left:0,right:0,legs:0},guards=[];let landed=0,rounds=0,volleys=0,guard=0,bodyVolleys=0,cockpitVolleys=0;
    while(landed<landedGoal){
     const v=planVolley(attacker,target,'body',w,false);volleys++;rounds+=v.rounds.length;
-    for(const r of v.rounds)if(r.hit){counts[r.part]++;landed++}
+    let cp=0,bd=0;for(const r of v.rounds)if(r.hit){counts[r.part]++;landed++;if(r.part==='pilot')cp++;if(r.part==='body')bd++}
+    if(cp>1)throw Error('more than one cockpit round in one attack');if(cp||bd)bodyVolleys++;if(cp)cockpitVolleys++;
     guard+=v.guard?1:0;
     for(const i of v.impacts)if(!(i.part in counts)||i.amount<1)throw Error('bad impact '+JSON.stringify(i));
    }
-   return JSON.stringify({counts,landed,rounds,volleys,guard});
+   return JSON.stringify({counts,landed,rounds,volleys,guard,bodyVolleys,cockpitVolleys});
   }`);
  const tally=(attacker,target,weapon='rifle')=>JSON.parse(run(`tally(${attacker},${target},weapon('${weapon}'),${LANDED})`));
  const shares=({counts,landed})=>Object.fromEntries(Object.entries(counts).map(([part,n])=>[part,n/landed]));
@@ -40,17 +41,18 @@ const LANDED=24000,TOLERANCE=.015;
  assert.ok(fresh.landed>=20000);
  let f=frame(fresh);
  near(f.body,.55,'body');near(f.left,.125,'left arm');near(f.right,.125,'right arm');near(f.legs,.20,'legs');
- const cockpit=fresh.counts.pilot/fresh.landed;
- assert.ok(cockpit>=.01&&cockpit<=.05,'cockpit share '+(100*cockpit).toFixed(2)+'%');
- assert.ok(Math.abs(cockpit-.03)<.006,'default cockpit share is about 3%');
+ // Cockpit is rolled once per attack that strikes the body, not per round.
+ const cockpit=fresh.cockpitVolleys/fresh.bodyVolleys;
+ assert.ok(fresh.bodyVolleys>=2000,'enough attacks: '+fresh.bodyVolleys);
+ assert.ok(Math.abs(cockpit-.03)<.012,'default cockpit chance per body-hitting attack is about 3%: '+(100*cockpit).toFixed(2)+'%');
  assert.equal(fresh.guard,0);
 
  // 2. Training raises the cockpit chance but never past 5%.
  run("ally.training={pilotHit:.10}");
  const trained=tally('ally','foe');
- assert.ok(Math.abs(trained.counts.pilot/trained.landed-.05)<.006,'Cockpit Read lifts the cockpit chance to 5%');
+ assert.ok(Math.abs(trained.cockpitVolleys/trained.bodyVolleys-.05)<.014,'Cockpit Read lifts the cockpit chance to 5% per attack');
  run("ally.training={pilotHit:.5}");
- assert.ok(tally('ally','foe').counts.pilot/fresh.landed<=.056,'the cockpit chance is clamped at 5%');
+ {const c=tally('ally','foe');assert.ok(c.cockpitVolleys/c.bodyVolleys<=.064,'the cockpit chance is clamped at 5% per attack');}
  run("delete ally.training");
 
  // 3. Destroyed parts never take hits and the remaining weights renormalise.
@@ -113,5 +115,5 @@ const LANDED=24000,TOLERANCE=.015;
 
  // 8. The preview and the volley agree that nothing is aimed: the body chance is used for normal shots.
  assert.equal(run("shotPart(ally,rifle,false)"),'body');
- console.log('PASS hit location: '+fresh.landed+' landed rounds at 55/12.5/12.5/20 with a '+(100*cockpit).toFixed(1)+'% cockpit share, renormalised weights, shields, vehicles and Breach charges');
+ console.log('PASS hit location: '+fresh.landed+' landed rounds at 55/12.5/12.5/20 with cockpit hits on '+(100*cockpit).toFixed(1)+'% of body-hitting attacks, renormalised weights, shields, vehicles and Breach charges');
 })().catch(error=>{console.error(error);process.exitCode=1});

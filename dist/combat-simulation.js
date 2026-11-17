@@ -5,7 +5,7 @@
  // Front Mission 3 style hit location. Every landed round rolls its own location.
  // Shares are of the live, non-cockpit parts and renormalise when a part is destroyed.
  const HIT_LOCATION=Object.freeze({body:.55,left:.125,right:.125,legs:.20});
- // Chance that a landed round strikes the cockpit instead. Training adds pilotHit*PILOT_HIT_TRAINING.
+ // Chance per attack that strikes the body that one of its body rounds hits the cockpit instead. Training adds pilotHit*PILOT_HIT_TRAINING.
  const PILOT_HIT_BASE=.03,PILOT_HIT_TRAINING=.2,PILOT_HIT_MIN=.01,PILOT_HIT_MAX=.05;
  const BREACH_LIMBS=Object.freeze(['right','left','legs']);
  const pilotHitChance=training=>Math.min(PILOT_HIT_MAX,Math.max(PILOT_HIT_MIN,PILOT_HIT_BASE+(training?.pilotHit??0)*PILOT_HIT_TRAINING));
@@ -154,14 +154,15 @@ function planVolley(a,t,aimed,w,reaction){
   const roll=shell??ruleRandom(),dodged=dodge>0&&roll>=1-dodge,hit=!dodged&&roll<=chance;
   let part=table[0][0];
   if(shield&&hit)part='left';
-  else if(hit){
-   // Both draws are taken for every landed round, so the random stream does not depend on where rounds land.
-   const cockpit=pilotChance>0&&ruleRandom()>=1-pilotChance,place=table.length>1?ruleRandom():0;
-   part=cockpit?'pilot':pickWeighted(table,place);
-  }
+  else if(hit&&table.length>1)part=pickWeighted(table,ruleRandom());
   rounds.push({part,hit});
   if(dodged)evades++;
   if(hit){landed++;hits.set(part,(hits.get(part)??0)+1)}
+ }
+ // Cockpit: one check per attack, only when the attack struck the body. On a hit, one body round becomes a cockpit round.
+ if(pilotChance>0&&hits.get('body')&&ruleRandom()>=1-pilotChance){
+  const r=rounds.find(r=>r.hit&&r.part==='body');r.part='pilot';
+  hits.set('body',hits.get('body')-1);if(!hits.get('body'))hits.delete('body');hits.set('pilot',1);
  }
  // Each part is charged its own bonuses (limb training on limbs, halving on the cockpit)
  // for the rounds that landed on it. A part that was struck always takes at least 1.

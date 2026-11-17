@@ -78,8 +78,8 @@ async function salvo(id,miss){
  if(id==='rifle'){
   sim.run(`const shooter=current(),target=battle.units[3],w=weapon('rifle');
    const chance=hitChance(shooter,target,'body',w);
-   // Each landed round also draws a cockpit check (0 = no cockpit) and a location: body, right arm, left arm, legs, body.
-   const rolls=[0,0,.1,.999,.86*chance,0,.6,.999,.93*chance,0,.7,0,0,.9,.999,0,0,.1];
+   // Each landed round draws a location (body, right arm, left arm, legs, body); one cockpit check (0 = none) ends the attack.
+   const rolls=[0,.1,.999,.86*chance,.6,.999,.93*chance,.7,0,.9,0,.1,.999,0,0];
    let index=0;
    Math.random=()=>rolls[index++]??0;
    const riflePlan=planVolley(shooter,target,'body',w,false);

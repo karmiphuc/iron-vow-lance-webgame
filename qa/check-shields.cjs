@@ -58,12 +58,12 @@ const simulate=require('./sim-harness.cjs');
  assert.match(run('battle.log.at(-1)'),/shield arm lost/);
  assert.equal(run('target.alive'),true);
  assert.equal(run(`reactionWeapon(target,foe).id`),'rifle','loss of left arm leaves the primary gun');
- // With the shield arm gone nothing diverts the volley. Script every round: to-hit, cockpit check (.999 = cockpit), location.
- run('Math.random=(()=>{let i=0;const draws=[0,.999,.1];return()=>draws[i++%3]})()');
+ // With the shield arm gone nothing diverts the volley. Script eight body rounds (to-hit 0, location .1) then the one cockpit check (.999 = cockpit).
+ run('Math.random=(()=>{let i=0;return()=>{const n=i++;return n===16?.999:n<16?(n%2?.1:0):0}})()');
  await run(`shootAt('body','rifle')`);
  run('Math.random=()=>0');
  assert.ok(run('target.hp.pilot<original.pilot'),'once the shield arm is gone the next hit rolls its own part');
- assert.equal(run('target.hitPart'),'pilot');
+ assert.ok(run("effects.some(e=>e.type==='boom'&&e.part==='pilot')"),'one body round became a cockpit hit');
  run(`recoverLimbs(target,{});target.brace=false`);
  assert.equal(run('target.hp.left'),30);
  const pilot=run('target.hp.pilot');
