@@ -12,6 +12,11 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
    return entry?.armed&&Number(pilotFrame(selected))===frame;
   },frame,{timeout:60000});
  };
+ const watchRelease=()=>page.evaluate(()=>{
+  document.querySelector('#paint-preview').addEventListener('pointerup',()=>{
+   const {yaw,zoom,velocity}=IronVowWorkshop.snapshot();window.workshopRelease={yaw,zoom,velocity};
+  },{once:true});
+ });
  const view=()=>page.evaluate(()=>{const {yaw,zoom,velocity}=IronVowWorkshop.snapshot();return {yaw,zoom,velocity};});
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
@@ -29,17 +34,19 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
   await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:fingers(65)});
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   await page.waitForFunction(()=>IronVowWorkshop.snapshot().zoom>1.25);
+  await watchRelease();
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:3,x:x-42,y}]});
   for(let i=1;i<6;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{id:3,x:x-42+i*13,y}]});
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   await cdp.detach();
  }else{
+  await watchRelease();
   await page.mouse.move(x-42,y);await page.mouse.down();
   await page.mouse.move(x+32,y,{steps:5});await page.mouse.up();
  }
- const released=await view();
+ const released=await page.evaluate(()=>window.workshopRelease);
  assert.ok(Math.abs(released.yaw-initial.yaw)>.3,JSON.stringify({initial,released}));
- await page.waitForFunction(yaw=>Math.abs(IronVowWorkshop.snapshot().yaw-yaw)>.06,released.yaw);
+ await page.waitForFunction(yaw=>Math.abs(IronVowWorkshop.snapshot().yaw-yaw)>.045,released.yaw);
  if(mobile){await page.touchscreen.tap(x,y);await page.touchscreen.tap(x,y);}
  else await page.mouse.dblclick(x,y);
  await page.waitForFunction(({yaw,zoom})=>{
@@ -63,7 +70,7 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
  // Refit the actual authored Breach hull. Its integral cannon and factory
  // launcher use the same content and mounts the sortie will use.
  await page.evaluate(()=>{
-  save.credits+=FRAMES[3].cost+6000;if(!acquireHull(3)||!assignChassis(0,3))throw Error('Cannot assign Breach fixture');
+  save.credits+=FRAMES[3].cost+18000;if(!acquireHull(3)||!assignChassis(0,3))throw Error('Cannot assign Breach fixture');
   equipWeapon('cleaver');equipWeapon('vesper-shoulder');render();
  });
  await ready(3);
@@ -75,6 +82,17 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
  await page.evaluate(()=>{equipWeapon('citadel-shield');render();});
  await ready(3);
  assert.deepEqual(await gear(),['morrow',undefined,'vesper',true,true]);
+ for(let tier=1;tier<=3;tier++){
+  await tap('[data-upgrade="0"]');await ready(3);
+  const fitted=await kits();
+  assert.ok(fitted.slice(0,tier).every(count=>count>0)&&fitted.slice(tier).every(count=>count===0),JSON.stringify({tier,fitted}));
+ }
+ const anchorFit=await page.evaluate(()=>{
+  const entry=IronVowWorkshop.snapshot().entry,{rig}=entry.m;
+  const anchors=new Set([rig.spine,...rig.legs.map(leg=>leg.kn),...Object.values(rig.arms).map(arm=>arm.paul.parent?arm.paul:arm.sh)]);
+  return entry.m.build.kits.flat().every(mesh=>anchors.has(mesh.parent.parent)&&mesh.parent.position.toArray().every(Number.isFinite));
+ });
+ assert.ok(anchorFit,'Existing plate assemblies mount to the authored shoulder, knee and spine drivers');
 
  if(process.env.IRON_VOW_WORKSHOP_PROOF&&!mobile){
   const picture=await page.screenshot({type:'png'});

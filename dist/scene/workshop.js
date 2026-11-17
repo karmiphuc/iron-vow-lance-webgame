@@ -41,7 +41,8 @@ function pointerUp(e){
  if(!p)return;
  pointers.delete(e.pointerId);
  pinch=null;
- if(e.type!=='pointerup'||e.timeStamp-p.time>90)velocity=0;
+ if(e.type!=='pointerup')velocity=0;
+ else velocity*=Math.exp(-4*Math.max(0,(e.timeStamp-p.time)/1000));
  if(e.type==='pointerup'&&!p.moved&&pointers.size===0){
   const tap={time:e.timeStamp,x:e.clientX,y:e.clientY};
   if(lastTap&&tap.time-lastTap.time<360&&Math.hypot(tap.x-lastTap.x,tap.y-lastTap.y)<28)reset();
@@ -128,7 +129,10 @@ function paint(t,dt,width,height,reducedMotion){
   const pose={stage:VIEW,phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,
    ...overrides,reducedMotion,world:{x:0,y:.4,z:0,aim:new T.Vector3(0,4,20),face:0,heading:0,speed:0,noPlant:true}};
   entry=foundry.draw(demo?.actor||unit,t,pose,null,model,native?'rig-v2':undefined);
-  if(entry&&entry.m.cont.parent!==pad)pad.add(entry.m.cont);
+  if(entry&&entry.m.cont.parent!==pad){
+   pad.add(entry.m.cont);
+   if(entry.m.nativeV2&&unit.upgrade)root.VowChassis.fitReinforcement(entry.m,unit.upgrade);
+  }
   if(demo&&entry)host.dataset.rigTime=age.toFixed(3);
   else delete host.dataset.rigTime;
  }
