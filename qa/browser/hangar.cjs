@@ -21,6 +21,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  }else await tip.hover();
  assert.match(await page.locator('#game-help').innerText(),/without changing the lance/i);
  await tap('[data-hangar-deck="mechs"]');
+ assert.equal(await page.locator('#hangar-reserves').count(),0,'No reserves control with empty Storage');
  await tap('#inspect');
  await page.locator('.unit-inspect').waitFor();
  await tap('[data-hangar-deck="base"]');
@@ -47,7 +48,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  await page.evaluate(()=>{
   save.hangar.levels={personnel:2,fabrication:2,recon:2};
   save.wounds={rook:2,scout:2};
-  save.credits+=FRAMES[6].cost;acquireHull(6);save.reserve[6].condition=30;
+  save.credits+=FRAMES[6].cost+FRAMES[7].cost;acquireHull(6);acquireHull(7);save.reserve[6].condition=30;
   save.dispatch={day:save.day,sizes:[1,2,3,2]};
   persist();render();
  });
@@ -56,8 +57,29 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>woundDays('scout')),0);
  await page.goto(baseUrl,{waitUntil:'domcontentloaded'});
  assert.ok(await page.locator('[data-pilot-treatment="rook"]').isDisabled());
- await nav('workshop');
- await tap('[data-bay="storage"]');
+ const beforeNavigation=await page.evaluate(()=>JSON.stringify({save,selected}));
+ await tap('[data-hangar-deck="mechs"]');
+ await tap('#hangar-reserves');
+ assert.equal(await page.locator('[data-open-stored-hull]').count(),2);
+ await page.keyboard.press('Escape');
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'hangar-reserves','Dismissal returns focus to Reserves');
+ if(mobile){
+  await tap('#hangar-reserves');
+  await tap('[data-open-stored-hull="7"]');
+ }else{
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(()=>document.activeElement.dataset.openStoredHull),'6');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Enter');
+ }
+ assert.equal(await page.locator('[data-bay="storage"]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.evaluate(()=>document.activeElement.dataset.storedHullCard),'7','Focus lands on the exact stored hull');
+ const visibleHeading=await page.locator('[data-stored-hull-card="7"] h3').evaluate(heading=>{
+  const cardTitle=heading.getBoundingClientRect(),viewport=heading.closest('.page').getBoundingClientRect();
+  return cardTitle.top>=viewport.top&&cardTitle.bottom<=viewport.bottom;
+ });
+ assert.ok(visibleHeading,'The focused hull name scrolls into view');
+ assert.equal(await page.evaluate(()=>JSON.stringify({save,selected})),beforeNavigation,'Browsing a reserve never reassigns a seat or changes the career');
  await tap('[data-patch-storage="6"]');
  assert.equal(await page.evaluate(()=>save.reserve[6].condition),65);
  await nav('contracts');
