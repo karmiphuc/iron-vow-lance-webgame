@@ -36,7 +36,7 @@ Run `npm run setup:qa`, then `npm test` for the simulation suites. `npm run test
 
 The same release gate runs through `qa/site-package.cjs` before a Sites publication. `.openai/hosting.json` retains the existing Site identity. GitHub pushes do not automatically deploy the Site; use the Sites source and publication workflow when a deployment is requested.
 
-The latest published source and local/live verification results are recorded in [docs/release-verification.json](docs/release-verification.json).
+The Sites v98 verification and the local renderer release results are recorded in [docs/release-verification.json](docs/release-verification.json).
 
 ## Scope
 

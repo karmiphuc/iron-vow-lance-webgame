@@ -56,5 +56,26 @@
       "contextLossesIn20Minutes": null
     },
     "ownerSignOff": null
+  },
+  "rendererCandidate": {
+    "sourceCommit": "7f9d473caad11d3b12441e9f90fc5d4603e03661",
+    "distTree": "0a86fcda372000ad5bc99d356d332a1c0129c749",
+    "releaseSourceSha256": "90442b3ac26ad1bea6da937546ee3f556c4e6dfa6af3e4716be97b31105e509e",
+    "simulationSuites": 58,
+    "desktopChromiumCases": 43,
+    "touchChromiumCases": 43,
+    "seededCampaign": {
+      "expectedBattles": 30,
+      "completedBattles": 30,
+      "actualTicks": 126288,
+      "anomalies": 0,
+      "commandErrors": 0,
+      "browserErrors": 0,
+      "faultControls": 16,
+      "failures": 0,
+      "sourceCommit": "7d820af56a450cab3e65daa2b926a6bba69a769e"
+    },
+    "status": "local verification passed",
+    "report": "design/phase7/summary.json"
   }
 }
