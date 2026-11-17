@@ -68,43 +68,15 @@ Free emergency field patches now restore 50% condition. Seeded recovery tests fo
 
 `npm test --prefix qa` now also plays complete seeded missions, an earned-money career through all three contracts, zero-reserve recovery, exact sortie reloads, interrupted enemy phases, corrupt checkpoint recovery, single victory payouts and level-100 save compatibility. It does not provide browser layout or visual certification.
 
-## Mech animation update
+## Live rig rendering
 
-Movement now uses frame-independent timed steps, alternating foot lift and torso motion, weight-specific stride durations, landing splashes and synchronized footfalls. The existing raster chassis are articulated through a small skinned 2.5D mesh; they are not real-time 3D models. Weapon-specific recoil moves the upper body while the feet remain planted. Muzzles and subsystem impact points follow the same deformation. Hit reactions, bracing, pilot-skill pulses, collapse and wreck smoke are animated. Facing is retained in new sortie checkpoints; older checkpoints remain compatible.
+The battlefield renders all 21 campaign chassis, tanks, gunships, and cover with three.js. Mechs use their rig-v2 GLBs or the procedural kit. The shared animator drives the planted gait, weapon priming and recoil, bracing, part damage, and destruction. Shots and strikes use the actual muzzle and contact anchors. Existing career saves and in-progress sorties retain their format.
 
-The motion tests cover 30/60/144 Hz stepping, landing/AP timing, recoil recovery, foot planting, collapse and reduced-motion preferences. `node qa/render-animation.cjs <output-folder>` produces native canvas animation frames, and `design/animation-preview.mp4` records that renderer output. This is animation evidence, not a browser capture or UI/layout certification.
+Workshop cards, equipment portraits, and combat target images are 640×640 renders from the same WebGL renderer. Workshop paint and trim change the model materials. Kestrel and Basilisk have editable Blender generators under `tools/authoring/`. Basilisk's factory Vesper shots launch from its integral pod sockets.
 
-## Arms, attacks and destruction
+The Warden Rig Bench plays all seven approved motions from `warden-painted.glb` using the vendored three.js. It retains the original armor, grip fits, and weapon controls. The Aero review uses the live sortie rig and lets you scrub all four Relay strikes. The Lion trial plays the three approved strike clips.
 
-Upper-body animation now uses rigid arm, shoulder-pad and weapon layers over clean torso plates. Shoulder/elbow joints aim and absorb recoil while the weapon remains rigid. Existing leg/foot motion is retained, with 90 approved foot samples checked against the previous release. The clean torso plates are original generated edits; visible source torso pixels and original lower-leg artwork are retained when building the rig cache.
-
-Attacks prepare before firing: rifle bursts, shotgun discharge, rail charging/release, and alternating missile pods have separate timing. Muzzle origins and impact points use camera-relative attachment coordinates so they remain aligned during combat zooms.
-
-Destroyed chassis buckle into a supported kneel or fall. The knee impact precedes secondary reactor bursts, the main detonation, flying armor and a scorched debris pile. The final kill waits for the destruction sequence before showing the contract result. Reduced-motion behavior and existing career/sortie saves remain supported.
-
-`qa/check-upper-animation.cjs` checks preserved feet, rigid weapon geometry, independent arm aim, knee contact, supported stance, fall rotation and one-shot explosion cues. The refreshed native preview demonstrates the three weapon styles and both death variants. Browser visual QA is still pending.
-
-## Warden production rig
-
-The Workshop links to `dist/rig-bench/index.html`, the interactive WebGL bench with the original Warden and six weapon modules. Both GLBs and the exact three.js r128 scripts are served beside the bench. When WebGL is unavailable, the bench plays a short baked Warden loop. Reduced-motion mode shows a still.
-
-Combat remains on the existing canvas renderer. `tools/render_warden.py` reads those same GLBs and bakes two independently rendered facings for each of the game's matching weapon IDs, `rifle` (Kestrel) and `rail` (Longbow). The script projects the muzzle, body, arms, legs and floor registration into sprite coordinates. It also bakes twelve gait poses and three recoil levels per facing. Both the bake and the live bench use `dist/rig-bench/rig-motion.js` for leg IK, gait and weapon recoil. The battlefield selects poses from the same atlas it uses to resolve muzzle and subsystem effects. Workshop displays the matching weapon on Warden when its render is ready.
-
-The legacy art remains the fallback for load failures, Warden's Breacher and Vesper loadouts, and the other two chassis. The hangar illustration remains separate. Combat AP, damage, mission pacing, controls and career/checkpoint data use the existing game code. The main game loads stills up front and requests the motion sheets on demand in combat. WebGL scripts and GLBs are loaded only by the bench.
-
-To refresh the renders after updating the bench GLBs, run `blender -b -t 6 -P tools/render_warden.py` with Node.js on the path and Pillow installed for Blender. Run the same command with `-- --loop-only` for the higher-resolution bench preview. Commit the resulting stills, motion sheets, fallback loop and `dist/warden-visuals.js` together. The bench's original asset and runtime credits are in `dist/rig-bench/CREDITS.md`.
-
-The Mark II armor and upgraded rifle/rail meshes have editable Blender generators under `tools/authoring/`. Run `blender -b -P tools/authoring/warden/build_warden.py` and `blender -b -P tools/authoring/weapons/source/build_weapons.py` to rebuild the source GLBs. Keep `clearance_profile.json` beside the Warden script. Copy the rebuilt GLBs to `dist/rig-bench/` before baking. A rebuild also writes the editable Blender files.
-
-The merged Warden rig now adds three ready/aim poses and five authored kneeling poses per weapon/facing. Recoil uses shorter socket travel and smaller counter-rotating shoulder/elbow angles. The twelve approved gait samples retain their original leg kinematics. Death poses and effects share the projected hardpoints. Legacy Kestrel/Basilisk and other Warden loadouts use the layered 2.5D upper rig described above.
-
-## Workshop arsenal and chassis paint
-
-The Workshop saves a free ceramic plate color and separate primary and melee slots for each chassis. Weapons unlock across the company. Strike (X) spends AP to attack an adjacent hostile with the left arm. Hailstorm and Rampart join the ranged catalogue. Breaker, Arc Cleaver and Piledriver use the bench's existing melee poses. Hostiles use red identification paint.
-
-The Kestrel and Basilisk model sources are under `tools/authoring/`. Their body pivots match Warden's shared rig. Kestrel has a slimmer recon profile and Basilisk launches Vesper missiles from its integral pod sockets. The game uses separately rendered chassis sheets and weapon modules, with UV-derived paint masks. It loads the model pose sheets during combat and keeps the GLBs alongside the 3D bench.
-
-To refresh the game renders, run `blender -b --python-exit-code 1 -t 6 -P tools/render_arsenal.py -- <model>` once per model (`warden`, `kestrel`, `basilisk`, `weapons`). Then run `node tools/assemble_arsenal.cjs`. Commit the generated WebPs and `dist/arsenal-visuals.js` together. The intermediate JSON files stay local.
+See the [export gate and source inventory](docs/phase3-export-gate.md) and [runtime verification](design/phase3/README.md).
 
 ## Battlefield and armory visual pass
 

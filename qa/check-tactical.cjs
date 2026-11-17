@@ -43,15 +43,16 @@ const create=require('./sim-harness.cjs');
 
  const crashes=create();
  crashes.run("createBattle(0);globalThis.gunship=battle.units.find(u=>u.kind==='helicopter');gunship.hp.body=0;beginDestruction(gunship)");
- assert.equal(crashes.run("vehicleWreckVisible(gunship,.2)"),false);
- assert.equal(crashes.run("vehicleWreckVisible(gunship,.5)"),true);
+ crashes.run('updateDestruction(gunship,.2)');
+ assert.equal(crashes.run("effects.filter(e=>e.type==='detonation').length"),0);
  crashes.run('updateDestruction(gunship,.5);updateDestruction(gunship,.6);persist()');
  assert.equal(crashes.run("effects.filter(e=>e.type==='detonation').length"),1);
  const resumedWreck=create({storage:new Map(crashes.storage)});
  assert.ok(resumedWreck.run(`(()=>{
-  const wreck=battle.units.find(u=>u.kind==='helicopter'), bounds=vehicleBounds(wreck,0), ground=project(wreck.vx,0,wreck.vz);
-  return vehicleWreckVisible(wreck,0)&&Math.abs(bounds.y+bounds.h*.72-ground.y)<1e-6;
- })()`));
+  const wreck=battle.units.find(u=>u.kind==='helicopter');
+  updateDestruction(wreck,1);
+  return !wreck.alive&&wreck.hp.body===0&&!Number.isFinite(wreck.deathTime)&&!effects.some(e=>e.type==='detonation');
+ })()`),'The wreck restores settled without replaying its detonation');
 
  sim.run("createBattle(0);selected=0;battle.units[0].x=17;battle.units[0].z=19");
  assert.equal(sim.run("onBoard(17,19)&&!onBoard(18,19)&&!onBoard(17,20)"),true);

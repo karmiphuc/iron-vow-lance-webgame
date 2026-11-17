@@ -57,14 +57,13 @@ async function salvo(id,miss){
  if(id==='rifle'){
   sim.run(`const walker=battle.units[0],gaitStart=clock;
    walker.motion={fromX:walker.x,fromZ:walker.z,toX:walker.x+1,toZ:walker.z,
-    start:clock,duration:1,gaitBase:0,segment:{index:0,length:1,paces:wardenPaces(1,0,true)}};
-   walker.motion.gaitCues=walkSoundMarkers(walker.motion,false,false);`);
+    start:clock,duration:1,gaitBase:0,totalSteps:1,stepIndex:0,stepBeats:0,segment:{index:0,length:1}};
+   walker.motion.gaitCues=walkSoundMarkers(walker.motion,true);`);
   const first=plays.length;
   for(let tick=0;tick<=60;tick++)sim.run(`clock=gaitStart+${tick}/60;advanceUnitAnimation(walker,clock,1/60)`);
   sim.run('walker.motion=null');
   const gait=plays.slice(first);
   assert.deepEqual(gait.map(entry=>entry.cue),[
-   'mech-servo','mech-foot-heavy','mech-vent','mech-servo','mech-foot-heavy','mech-vent',
    'mech-servo','mech-foot-heavy','mech-vent','mech-servo','mech-foot-heavy','mech-vent'
   ]);
   for(let i=1;i<gait.length;i+=3)assert.ok(Math.abs(gait[i+1].at-gait[i].at-.085)<1e-6);

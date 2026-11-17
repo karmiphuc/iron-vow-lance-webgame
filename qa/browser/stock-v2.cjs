@@ -42,7 +42,7 @@ module.exports=async function checkStockV2({page,origin}){
  }
  const colors=await page.evaluate(()=>[1,2].map(frame=>{
   const unit={frame,team:'ally',paint:'#617caa',trim:{s:'#303a44',a:'#d58837'},weapon:'rifle',melee:'cleaver',upgrade:0};
-  const entry=IronVowFoundry.preview(unit,foundryModel(frame),'rig-v2'),materials=[];
+  const entry=IronVowFoundry.preview(unit,foundryModel(frame),'rig-v2',0,'battle'),materials=[];
   entry.m.nativeV2.source.traverse(o=>{if(o.isMesh&&o.material?.color)materials.push(o.material)});
   const match=(name,hex)=>{const want=new THREE.Color(hex).convertSRGBToLinear();return materials.some(m=>m.name===name&&m.map&&Math.hypot(m.color.r-want.r,m.color.g-want.g,m.color.b-want.b)<1e-6)};
   const data=entry.surface.getContext('2d').getImageData(0,0,640,640).data;let opaque=0;for(let i=3;i<data.length;i+=4)if(data[i]>100)opaque++;

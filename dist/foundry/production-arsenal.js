@@ -18,9 +18,9 @@ function load(source,expansionSource,shieldSource){
   const read=source=>typeof source==='string'?loader.loadAsync(source):
    new Promise((resolve,reject)=>loader.parse(source,'',resolve,reject));
   arsenal=Promise.all([read(source),expansionSource?read(expansionSource).catch(error=>{
-   console.warn('Expanded arsenal using baked weapon art',error);
+   console.warn('Expanded arsenal GLB failed to load',error);
   }):null,shieldSource?read(shieldSource).catch(error=>{
-   console.warn('Shield arsenal using baked art',error);
+   console.warn('Shield arsenal GLB failed to load',error);
   }):null]).then(([{scene},extra,shields])=>{
    if(extra)scene.add(extra.scene);
    if(shields)scene.add(shields.scene);
