@@ -4,7 +4,7 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
  await page.goto(origin,{waitUntil:'domcontentloaded'});
  await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.evaluate(()=>{
-  Math.random=()=>.317;
+  ruleRandom=()=>.317;
   deploy(3,false,[0]);
   closeModal();
   const u=current();
@@ -50,7 +50,7 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
   Object.assign(foe,t,{vx:t.x,vz:t.z});
   battle.units=[u,foe];
   action='fire';closeModal();focusBattleCamera(u,true);renderBattle();
-  Math.random=()=>0;
+  ruleRandom=()=>0;
   window.terrainQA={foe,hp:foe.hp.body};
  });
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
