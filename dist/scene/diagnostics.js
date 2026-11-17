@@ -28,11 +28,13 @@ function observe(q,s,scene){
    const key=type+'|'+(u?.id??'scene');if(q.keys.has(key))return;
    q.keys.add(key);q.anomalies.push({type,unit:u?.id,frame:u?.frame,time:s.time,detail});
   };
-  if(q.durations&&Number.isFinite(q.frameMs)&&q.frameMs>0){
-   const times=q.durations,reference=[...times].sort((a,b)=>a-b)[times.length>>1];
-   if(times.length>=24&&q.frameMs>Math.max(32,reference*3,reference+20))fail('frameSpike',null,{milliseconds:q.frameMs,reference});
-   if(times.length>=60)times.shift();
-   times.push(q.frameMs);
+  // Match the reference Bench's 40-frame warmup and moving average (rig-bench.html:2890–2892).
+  if(q.extra&&Number.isFinite(q.frameMs)&&q.frameMs>0){
+   if(++q.measuredFrames<40)q.frameEMA=q.frameEMA?q.frameEMA*.9+q.frameMs*.1:q.frameMs;
+   else{
+    if(q.frameMs>Math.max(50,q.frameEMA*5))fail('frameSpike',null,{milliseconds:q.frameMs,reference:q.frameEMA});
+    q.frameEMA=q.frameEMA*.97+Math.min(q.frameMs,q.frameEMA*3)*.03;
+   }
   }
   for(const u of s.units.filter(u=>u.live)){
    q.frames.add(u.frame);
@@ -50,7 +52,7 @@ function observe(q,s,scene){
    }
    if(q.extra&&u.inspection){
     const prior=q.extra.get(u.id),current=u.inspection;
-    for(const leg of current.knees)if(Math.abs(leg.offset)>.06&&leg.offset*(leg.reverse?-1:1)<0)fail('kneeDir',u,leg);
+    for(const leg of current.knees)if(Math.abs(leg.offset)>.06*current.scale&&leg.offset*(leg.reverse?-1:1)<0)fail('kneeDir',u,leg);
     if(prior){
      const hurt=Object.keys(u.hp).some(k=>u.hp[k]<prior.hp[k]);
      if(hurt&&(current.triangles>prior.triangles*1.02||current.calls>prior.calls+2))fail('triJump',u,{triangles:current.triangles,prior:prior.triangles});
@@ -116,13 +118,13 @@ function inspection(mech,entry){
   triangles+=(mesh.geometry.index?.count??mesh.geometry.attributes.position.count)/3;
   signature.push([mesh.uuid,mesh.geometry.uuid,...[mesh.material].flat().map(material=>material.uuid)].join('|'));
  });
- return {knees,calls,triangles,signature:signature.join(';'),
+ return {knees,scale:mech.scale,calls,triangles,signature:signature.join(';'),
   loadout:[entry.primary?.id,entry.secondary?.id,entry.shoulderWeapon?.id,entry.shieldId].join('|'),
   legs:mech.build.mods.legs};
 }
 function observerState(){
  return {ticks:0,keys:new Set(),anomalies:[],feet:new Map(),motion:new Map(),frames:new Set(),objects:new Map(),
-  combatSeen:0,combatGate:true,combatCounts:{},circleCandidates:0,extra:new Map(),durations:[]};
+  combatSeen:0,combatGate:true,combatCounts:{},circleCandidates:0,extra:new Map(),measuredFrames:0,frameEMA:0};
 }
 function createObserver(scene){
  let q=observerState(),last;
@@ -168,7 +170,7 @@ function createObserver(scene){
    case 'wreckActs':unit.alive=false;unit.attacking=true;break;
    case 'partVisual':unit.partVisual.body.state=unit.hp.body?2:0;break;
    case 'triJump':probe.extra.set(unit.id,{hp:{...unit.hp,body:unit.hp.body+1},triangles:0,calls:0});break;
-   case 'frameSpike':probe.durations=Array(24).fill(12);probe.frameMs=120;break;
+   case 'frameSpike':probe.measuredFrames=39;probe.frameEMA=12;probe.frameMs=120;break;
    case 'aimOff':probe.events=[{...event,aimError:.8}];break;
    case 'popSwap':probe.objects.set(unit.id,'displaced-model');break;
   }
