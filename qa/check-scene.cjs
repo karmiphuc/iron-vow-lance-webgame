@@ -156,17 +156,19 @@ function browserPath(){
    window.requestAnimationFrame=schedule;
    schedule(draw);
   });
-  async function readyForProbe(){
-   for(let attempt=0;attempt<120;attempt++){
-    await page.clock.runFor(100);
+  async function waitForProbeScene(){
+   const deadline=Date.now()+120000;
+   do{
+    await page.clock.runFor(34);
     if(await page.evaluate(()=>IronVowScene.ready))return;
-   }
+    await new Promise(resolve=>setTimeout(resolve,20));
+   }while(Date.now()<deadline);
    throw Error('Disposable probe scene did not finish loading');
   }
   // Validate the observer against real bone/state corruption in separate disposable scenes.
   // These anomalies are evidence that the checks work, never part of the ordinary campaign result.
   for(const type of skipProbes?[]:['nan','footGround','footSlide','bounds','overlap','stuck','ikReach']){
-   await page.evaluate(()=>{__ironVow.start({seed:4242,frames:[5,8,0]});});await readyForProbe();
+   await page.evaluate(()=>{__ironVow.start({seed:4242,frames:[5,8,0]});});await waitForProbeScene();
    const probe=await page.evaluate(type=>{
     const q=__qa;q.anomalies=[];q.keys.clear();q.feet.clear();q.motion.clear();
     if(type==='stuck'){battle.cover.clear();for(const cell of battle.field.cells)cell.level=0;IronVowScene.clear();IronVowScene.render(clock,1);}
@@ -214,8 +216,7 @@ function browserPath(){
     IronVowScene.clear();IronVowScene.render(clock,1);
     __qa.anomalies=[];__qa.keys.clear();__qa.objects.clear();__qa.combatSeen=0;__qa.combatGate=true;
    });
-   const readyBy=Date.now()+120000;
-   while(!await page.evaluate(()=>IronVowScene.ready)){assert.ok(Date.now()<readyBy,'Combat fault fixture assets');await page.clock.runFor(34);await new Promise(resolve=>setTimeout(resolve,20));}
+   await waitForProbeScene();
    const probe=await page.evaluate(type=>{
     const q=__qa,u=current(),target=battle.units.find(u=>u.team==='enemy'),record=IronVowScene.models.get(u.id),m=record.entry.m,weapon=record.entry.primary;
     IronVowScene.aimAt(u,target,'body');u.fireTime=clock-.1;u.attack={kind:'rifle',start:clock-1,fireAt:clock-.1,releaseAt:null,primeDuration:0,windup:.23};
