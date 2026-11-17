@@ -88,18 +88,18 @@ module.exports=async function checkWarMode({page,origin,mobile,out}){
    assert.ok(actual.units.some(unit=>unit.team==='ally'&&unit.hp.body<unit.max.body));
   }
  }
- const count=Number(process.env.IRON_VOW_WAR_SOAK_BATTLES??2);
- await page.evaluate(count=>{
+ const count=Number(process.env.IRON_VOW_WAR_SOAK_BATTLES??2),turns=Number(process.env.IRON_VOW_WAR_SOAK_TURNS??1);
+ await page.evaluate(({count,turns})=>{
   window.warResult=null;
-  void __bench.runSoak(count,42,{maxTurns:1}).then(report=>window.warResult={report},error=>window.warResult={error:error.message});
- },count);
- const soak=await waitForReport(false,Math.max(320,count*200));
+  void __bench.runSoak(count,42,{maxTurns:turns}).then(report=>window.warResult={report},error=>window.warResult={error:error.message});
+ },{count,turns});
+ const soak=await waitForReport(false,Math.max(320,count*turns*200));
  assert.deepEqual(soak.seeds,Array.from({length:count},(_,i)=>42+i*7919));
  assert.equal(soak.battles,count);
  assert.deepEqual(soak.anomalies,[],JSON.stringify(soak.anomalies));
  assert.ok(soak.ticks>5&&Object.keys(soak.chassisWeapon).length&&Object.keys(soak.legsWeapon).length&&Object.keys(soak.theaterChassis).length);
  assert.equal(await page.evaluate(()=>localStorage.getItem('iron-vow-career')),'war-browser-fixture');
- console.log(`PASS 19 War fault probes and ${count} seeded one-turn soak encounters · ${soak.ticks} observed frames · zero anomalies`);
+ console.log(`PASS 19 War fault probes and ${count} seeded soak encounters, up to ${turns} turns · ${soak.ticks} observed frames · zero anomalies · outcomes ${JSON.stringify(soak.winners)}`);
  console.log('PASS War mode uses game commands on two theaters with matching results, reactions, tank and gunship damage and untouched career storage');
  return {parity,probes:probes.checks,contexts:1,soak};
 };
