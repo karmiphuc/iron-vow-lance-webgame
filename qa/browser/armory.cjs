@@ -117,7 +117,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
 async function checkCerberusSalvo(page,mobile,tap){
  const before=await page.evaluate(()=>{
   save.credits=6000;equipWeapon('cerberus');attackCameraEnabled=false;
-  createBattle(0,false,false,[0]);selected=0;action='move';targetPart='body';Math.random=()=>0;
+  createBattle(0,false,false,[0]);selected=0;action='move';Math.random=()=>0;
   const actor=current(),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind);
   const valid=(x,z)=>onBoard(x,z)&&!battle.cover.has(x+','+z)&&!battle.units.some(u=>u!==actor&&u!==foe&&u.x===x&&u.z===z);
   let spot;

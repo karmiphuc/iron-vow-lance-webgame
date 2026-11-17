@@ -1,0 +1,4434 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "source": {
+    "commit": "c460ed6759b47a019e10ccc9bf8f344f53c66a3c",
+    "distTree": "c0628512615d73ca3e2a54064d4fe8725487a57d"
+  },
+  "simulation": {
+    "suites": 62,
+    "status": "passed",
+    "command": "NODE_PATH=/private/tmp/iron-vow-qa-deps/node_modules npm test",
+    "logSha256": "5936f02b921c1fa6fec85bdcb181f700d9ea06ca5c5e805ab03a7b35ec747334",
+    "additionalRunnerRegression": "qa/check-scene-campaign.cjs"
+  },
+  "browser": {
+    "scenarios": 44,
+    "checksPassed": 88,
+    "checks": [
+      {
+        "name": "sharedScene",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "1d1c784931bd28ee1427f6ca82d162d3a841c07dd43cde1515042fc246833634",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "sharedScene",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "1d1c784931bd28ee1427f6ca82d162d3a841c07dd43cde1515042fc246833634",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "livePaint",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "2ef3da32cba5bd433992d2a5a8fcb6b8d7b3b197d1d88485d5a73fd6ba61caed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "livePaint",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "2ef3da32cba5bd433992d2a5a8fcb6b8d7b3b197d1d88485d5a73fd6ba61caed",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "vehicleLoading",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "a5edf35bedfee08fbb09ebc2dac7350c4449878487153194e65467c8827e5352",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "vehicleLoading",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "a5edf35bedfee08fbb09ebc2dac7350c4449878487153194e65467c8827e5352",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkLivePortraits",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "079b56a8dffda88e3451d8f51054988938608c0c3575bee57400376d5d303e06",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkLivePortraits",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "079b56a8dffda88e3451d8f51054988938608c0c3575bee57400376d5d303e06",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkLionTrial",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "c26d4573a274124b065a312d8b11b802d9303b5e5128f1154a2d8c832598eec1",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkLionTrial",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "c26d4573a274124b065a312d8b11b802d9303b5e5128f1154a2d8c832598eec1",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkPairedWalk",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "159c21a8bd962b78e4b972f136250b45511257fcfd341d0ac1a28fe467d9045b",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkPairedWalk",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "159c21a8bd962b78e4b972f136250b45511257fcfd341d0ac1a28fe467d9045b",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkMechComputer",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "da13a96eccf75c22e3210dfb839e0877e6c58ad23473f138c96edc61a444ebc7",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkMechComputer",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "da13a96eccf75c22e3210dfb839e0877e6c58ad23473f138c96edc61a444ebc7",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkMovePreview",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "23344bf081dbc86ff8fa10283c6807d3a10a1356ec1444f5faae380550b304a1",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkMovePreview",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "23344bf081dbc86ff8fa10283c6807d3a10a1356ec1444f5faae380550b304a1",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkRidgeCombat",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "693f1ae4ab904007d61837183f895dc7bb29d299c1d9088c67e2141e82001d5f",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkRidgeCombat",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "693f1ae4ab904007d61837183f895dc7bb29d299c1d9088c67e2141e82001d5f",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkTerrain",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "4d51a41f028b3d48f63edf3ea0f980afb09b5d71f1375a0e58723f485ef536c1",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkTerrain",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "4d51a41f028b3d48f63edf3ea0f980afb09b5d71f1375a0e58723f485ef536c1",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkVehicles",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "97c3af8a1d2fabbd834dcbed8ebe14e013d30e435f0802dd2c368f2ef81af9c0",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkVehicles",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "97c3af8a1d2fabbd834dcbed8ebe14e013d30e435f0802dd2c368f2ef81af9c0",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkGatecrasherV2",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "8066e2af7df631ef3855dc9f2ff168d128abac7bafcf0ad7385077ecbd48e7ae",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkGatecrasherV2",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "8066e2af7df631ef3855dc9f2ff168d128abac7bafcf0ad7385077ecbd48e7ae",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkCicadaV2",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "c3bf739966a6ae36eaf6eabe4802703500c860312c8f0e8dc788585043d9f2f1",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkCicadaV2",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "c3bf739966a6ae36eaf6eabe4802703500c860312c8f0e8dc788585043d9f2f1",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkHellbreakerV2",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "ec73efdba0d6d04d13464c067216ceec5e1f6df44667aaa7dad85a5c056bb298",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkHellbreakerV2",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "ec73efdba0d6d04d13464c067216ceec5e1f6df44667aaa7dad85a5c056bb298",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShogunV2",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "c27a40ace4820d5a9700c24dc9a87b7f814af31066b45717de09ec499e6e6548",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShogunV2",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "c27a40ace4820d5a9700c24dc9a87b7f814af31066b45717de09ec499e6e6548",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShields",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "29315508c5fddc0db394421fe5704209dcc631091e337a2fa388309e57dfdd5f",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShields",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "29315508c5fddc0db394421fe5704209dcc631091e337a2fa388309e57dfdd5f",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkLineInfantry",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "c2b10f1e52b7836d8963b1786a13dd4c7c7689d23f11e22b5b174b9aecdcfe3d",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkLineInfantry",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "c2b10f1e52b7836d8963b1786a13dd4c7c7689d23f11e22b5b174b9aecdcfe3d",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkLineElite",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "382943369bd3cd0e181b3836977ce5cd9c4f96244d7d73e4c69311a97aa32d5c",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkLineElite",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "382943369bd3cd0e181b3836977ce5cd9c4f96244d7d73e4c69311a97aa32d5c",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkInfantryCarry",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "af3692441d8cf92bd2ebafecfe996dfe2db38376ab82a3f3007611d91b3b1401",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkInfantryCarry",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "af3692441d8cf92bd2ebafecfe996dfe2db38376ab82a3f3007611d91b3b1401",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkVanguard",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "39dd895814d4c38a8e0e5f65f7f328763f44a45965258af711315ca2c6fc4c7d",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkVanguard",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "39dd895814d4c38a8e0e5f65f7f328763f44a45965258af711315ca2c6fc4c7d",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkReaver",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "6c5981d2e92483df798b3e3cdcfe6f3104b7b4b80e1889390fbc66c3f8945d75",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkReaver",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "6c5981d2e92483df798b3e3cdcfe6f3104b7b4b80e1889390fbc66c3f8945d75",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkAero",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "6015b197c522280f2ee2ad0a924ed8eeac7d442af00d9f79d5a6075a50a34cef",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkAero",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "6015b197c522280f2ee2ad0a924ed8eeac7d442af00d9f79d5a6075a50a34cef",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkAeroReview",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "b6b9bc27ead3772fa277d7d74f27d5d1e495858aa30ad227bb4bbac7fa6d943e",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkAeroReview",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "b6b9bc27ead3772fa277d7d74f27d5d1e495858aa30ad227bb4bbac7fa6d943e",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkStockV2",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "023d9ba6fa3e37cdc5470391f509b89c40a1df1b054c860bc3323b542fb386e8",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkStockV2",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "023d9ba6fa3e37cdc5470391f509b89c40a1df1b054c860bc3323b542fb386e8",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkAshigaruV2",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "6943b95a64613725f738953d188f6cc2ed719157c8f80db777238101879adf2d",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkAshigaruV2",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "6943b95a64613725f738953d188f6cc2ed719157c8f80db777238101879adf2d",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkBulwark",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "65008a4123a6a5c40fe79bbbe32669957a800e3348cfd44b05f84c167eb2fd2d",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkBulwark",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "65008a4123a6a5c40fe79bbbe32669957a800e3348cfd44b05f84c167eb2fd2d",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkBehemothBudget",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "ea5b9a7d8a8f3b4a19ec01f30bc1192ce677b5e549ee533f383b4cfe740b272a",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkBehemothBudget",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "ea5b9a7d8a8f3b4a19ec01f30bc1192ce677b5e549ee533f383b4cfe740b272a",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkArmory",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "e0c4f60638bd256954769ce2d385700ab65674f41a7c48e8d08920c9ac3d8d99",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkArmory",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "e0c4f60638bd256954769ce2d385700ab65674f41a7c48e8d08920c9ac3d8d99",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkCampaign",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "1f285fb7e2bad6a69c472854f89dc909b64386b4b4ec051d67f9c4ce8318da1e",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkCampaign",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "1f285fb7e2bad6a69c472854f89dc909b64386b4b4ec051d67f9c4ce8318da1e",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkWardenRigBench",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "bfad04bc99e1d9ca4c2050176a1e68350bceddb5ff38f7e0676733868c786e9f",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWardenRigBench",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "bfad04bc99e1d9ca4c2050176a1e68350bceddb5ff38f7e0676733868c786e9f",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkBulwarkBench",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "24fd2d3237c696838ddd36faed763e4c35fa6e090328772d42b0b9c9a03e2ebe",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkBulwarkBench",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "24fd2d3237c696838ddd36faed763e4c35fa6e090328772d42b0b9c9a03e2ebe",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkScoutBench",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "32768e333617aeb830e9a2b5fdf4fdb735d6cbf90be516fe611083ec14fdacdf",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkScoutBench",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "32768e333617aeb830e9a2b5fdf4fdb735d6cbf90be516fe611083ec14fdacdf",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkShip",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "84947384f8a49294c962994b21ee24770bc94b2cd606d8fb6a7a3073f5e7a9b0",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkShip",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "84947384f8a49294c962994b21ee24770bc94b2cd606d8fb6a7a3073f5e7a9b0",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkOverworld",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "ec2c72d819db25910ddd04705e179a12586f4dd41d0b4aad4c844b5d7a1822dd",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkOverworld",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "ec2c72d819db25910ddd04705e179a12586f4dd41d0b4aad4c844b5d7a1822dd",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkHangar",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "6840db681d0f22db596cbe9a3491a048ae2a2833ff4ab5f5ed9e303903168f1a",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkHangar",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "6840db681d0f22db596cbe9a3491a048ae2a2833ff4ab5f5ed9e303903168f1a",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkHangarLive",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "b23a693701d65a8106df7c42c0b0826f97c6f4536c247e0031b4036adf191c00",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkHangarLive",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "b23a693701d65a8106df7c42c0b0826f97c6f4536c247e0031b4036adf191c00",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWorkshopTurntable",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "588263e29bdd8987e444621e14556d8dafd219fcfede83778f016eab39095483",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWorkshopTurntable",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "588263e29bdd8987e444621e14556d8dafd219fcfede83778f016eab39095483",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWorkshopPaint",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "8f3fd3c9fa2a6cf8472401d6503a775800f5aa3af9d793bc723e20a57591656b",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWorkshopPaint",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "8f3fd3c9fa2a6cf8472401d6503a775800f5aa3af9d793bc723e20a57591656b",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWorkshopPortraits",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "64b848417a21501fc7f69adbaa9c09a1e9489369b2ec3ce3b0fb839239d09504",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWorkshopPortraits",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "64b848417a21501fc7f69adbaa9c09a1e9489369b2ec3ce3b0fb839239d09504",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkCareerTabs",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "52c3ad9fb1482fe5ce8927ee32c2c3fce6cb22c8f0c336e497b0e45a96c96111",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkCareerTabs",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "52c3ad9fb1482fe5ce8927ee32c2c3fce6cb22c8f0c336e497b0e45a96c96111",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkDutyRoster",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "93a7c441df947769c31061dc406497a2a3c1a4595bb04a931190d900fd5fe0b6",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "checkDutyRoster",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "93a7c441df947769c31061dc406497a2a3c1a4595bb04a931190d900fd5fe0b6",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted."
+      },
+      {
+        "name": "bastionSharedRig",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "42d6218e0767f02c7a7f84f0828319e2f9e18a0e66b5dc267ac95680b5eb5ee3",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "bastionSharedRig",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "42d6218e0767f02c7a7f84f0828319e2f9e18a0e66b5dc267ac95680b5eb5ee3",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWarMode",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "b2743678e97541cf54b2702b4d417e3f37ad4aeba608c0450a7f57a4c6cb6192",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkWarMode",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "b2743678e97541cf54b2702b4d417e3f37ad4aeba608c0450a7f57a4c6cb6192",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkRigWorkbench",
+        "device": "desktop",
+        "status": "passed",
+        "scenarioSha256": "74922c0cdc83ff34324205ce9db95cc105160685a989e008df3f51e440a7b4f9",
+        "renderPolicy": "Full GPU rendering"
+      },
+      {
+        "name": "checkRigWorkbench",
+        "device": "touch",
+        "status": "passed",
+        "scenarioSha256": "74922c0cdc83ff34324205ce9db95cc105160685a989e008df3f51e440a7b4f9",
+        "renderPolicy": "Full GPU rendering"
+      }
+    ],
+    "policy": "Passing scenarios from the full desktop/touch run, with focused reruns of the corrected War scenario and destroyed-health styling assertion. All runs used this application tree."
+  },
+  "campaign": {
+    "schema": 3,
+    "status": "passed",
+    "source": {
+      "distTree": "c0628512615d73ca3e2a54064d4fe8725487a57d",
+      "checkerSha256": "ebd9b3f0d779e81f0d7a38c048f81cdcecf852c40e7a8e4ba66dd6bc249e6777",
+      "campaignSha256": "63272a3c509f2dd246499ca0cd5192140c6731782008f44e70542b06bdfb95dc"
+    },
+    "policy": "4 disjoint formal shards. Each includes all sixteen real-state negative controls and immutable application/checker guards. Full Phase 3 FRAMES expectations exclude Citadel and are verified against real snapshots and IronVowScene.models; runtime Workshop and shield catalogs are dynamically compared. Assignments, observed loadouts and commanded attacks are separate. Lion remains in its dedicated checker and is required only when the final-ready flag is enabled. All-weapon landed-contact evidence remains in scene-combat reports. No device performance claim.",
+    "shards": [
+      {
+        "sha256": "19eb2a62d39f0d642208248113d58a580ebc6dca994768f79db4e905cab3f3be",
+        "source": {
+          "commit": "c460ed6759b47a019e10ccc9bf8f344f53c66a3c",
+          "distTree": "c0628512615d73ca3e2a54064d4fe8725487a57d",
+          "url": "http://127.0.0.1:5193/",
+          "distDirty": false,
+          "qaDirty": false,
+          "checkerSha256": "ebd9b3f0d779e81f0d7a38c048f81cdcecf852c40e7a8e4ba66dd6bc249e6777",
+          "campaignSha256": "63272a3c509f2dd246499ca0cd5192140c6731782008f44e70542b06bdfb95dc"
+        },
+        "seeds": [
+          4242,
+          4243,
+          4244,
+          4245,
+          4246,
+          4247,
+          4248,
+          4249
+        ],
+        "negativeControls": [
+          "nan",
+          "footGround",
+          "footSlide",
+          "bounds",
+          "overlap",
+          "stuck",
+          "ikReach",
+          "aimOff",
+          "weaponMount",
+          "muzzleFar",
+          "noDamage",
+          "deadPartDamage",
+          "hpRange",
+          "wreckActs",
+          "partVisual",
+          "popSwap"
+        ]
+      },
+      {
+        "sha256": "bb702fa1a34411b1079bfe0f7b76f2d75d2c24571bb66ad353bf69ac7c59e8e7",
+        "source": {
+          "commit": "c460ed6759b47a019e10ccc9bf8f344f53c66a3c",
+          "distTree": "c0628512615d73ca3e2a54064d4fe8725487a57d",
+          "url": "http://127.0.0.1:5193/",
+          "distDirty": false,
+          "qaDirty": false,
+          "checkerSha256": "ebd9b3f0d779e81f0d7a38c048f81cdcecf852c40e7a8e4ba66dd6bc249e6777",
+          "campaignSha256": "63272a3c509f2dd246499ca0cd5192140c6731782008f44e70542b06bdfb95dc"
+        },
+        "seeds": [
+          4250,
+          4251,
+          4252,
+          4253,
+          4254,
+          4255,
+          4256,
+          4257
+        ],
+        "negativeControls": [
+          "nan",
+          "footGround",
+          "footSlide",
+          "bounds",
+          "overlap",
+          "stuck",
+          "ikReach",
+          "aimOff",
+          "weaponMount",
+          "muzzleFar",
+          "noDamage",
+          "deadPartDamage",
+          "hpRange",
+          "wreckActs",
+          "partVisual",
+          "popSwap"
+        ]
+      },
+      {
+        "sha256": "b31389652568f18511b15366aa7bdeeba12c0a4d60a11d9e0a98f71313e73395",
+        "source": {
+          "commit": "c460ed6759b47a019e10ccc9bf8f344f53c66a3c",
+          "distTree": "c0628512615d73ca3e2a54064d4fe8725487a57d",
+          "url": "http://127.0.0.1:5193/",
+          "distDirty": false,
+          "qaDirty": false,
+          "checkerSha256": "ebd9b3f0d779e81f0d7a38c048f81cdcecf852c40e7a8e4ba66dd6bc249e6777",
+          "campaignSha256": "63272a3c509f2dd246499ca0cd5192140c6731782008f44e70542b06bdfb95dc"
+        },
+        "seeds": [
+          4258,
+          4259,
+          4260,
+          4261,
+          4262,
+          4263,
+          4264
+        ],
+        "negativeControls": [
+          "nan",
+          "footGround",
+          "footSlide",
+          "bounds",
+          "overlap",
+          "stuck",
+          "ikReach",
+          "aimOff",
+          "weaponMount",
+          "muzzleFar",
+          "noDamage",
+          "deadPartDamage",
+          "hpRange",
+          "wreckActs",
+          "partVisual",
+          "popSwap"
+        ]
+      },
+      {
+        "sha256": "c52e853c8db781d9752055673d8209548459d4b9077438e30141f5a134b880d3",
+        "source": {
+          "commit": "c460ed6759b47a019e10ccc9bf8f344f53c66a3c",
+          "distTree": "c0628512615d73ca3e2a54064d4fe8725487a57d",
+          "url": "http://127.0.0.1:5193/",
+          "distDirty": false,
+          "qaDirty": false,
+          "checkerSha256": "ebd9b3f0d779e81f0d7a38c048f81cdcecf852c40e7a8e4ba66dd6bc249e6777",
+          "campaignSha256": "63272a3c509f2dd246499ca0cd5192140c6731782008f44e70542b06bdfb95dc"
+        },
+        "seeds": [
+          4265,
+          4266,
+          4267,
+          4268,
+          4269,
+          4270,
+          4271
+        ],
+        "negativeControls": [
+          "nan",
+          "footGround",
+          "footSlide",
+          "bounds",
+          "overlap",
+          "stuck",
+          "ikReach",
+          "aimOff",
+          "weaponMount",
+          "muzzleFar",
+          "noDamage",
+          "deadPartDamage",
+          "hpRange",
+          "wreckActs",
+          "partVisual",
+          "popSwap"
+        ]
+      }
+    ],
+    "seeds": [
+      4242,
+      4243,
+      4244,
+      4245,
+      4246,
+      4247,
+      4248,
+      4249,
+      4250,
+      4251,
+      4252,
+      4253,
+      4254,
+      4255,
+      4256,
+      4257,
+      4258,
+      4259,
+      4260,
+      4261,
+      4262,
+      4263,
+      4264,
+      4265,
+      4266,
+      4267,
+      4268,
+      4269,
+      4270,
+      4271
+    ],
+    "battleCount": 30,
+    "ticks": 167778,
+    "rasterOmitted": 13783310,
+    "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "actualModelFrames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "frameNames": [
+      {
+        "frame": 0,
+        "name": "WARDEN"
+      },
+      {
+        "frame": 1,
+        "name": "KESTREL"
+      },
+      {
+        "frame": 2,
+        "name": "BASILISK"
+      },
+      {
+        "frame": 3,
+        "name": "GATECRASHER"
+      },
+      {
+        "frame": 4,
+        "name": "CICADA"
+      },
+      {
+        "frame": 5,
+        "name": "VALKYRIE"
+      },
+      {
+        "frame": 6,
+        "name": "ONI"
+      },
+      {
+        "frame": 7,
+        "name": "BEHEMOTH"
+      },
+      {
+        "frame": 8,
+        "name": "AEGIS"
+      },
+      {
+        "frame": 9,
+        "name": "SHRIKE"
+      },
+      {
+        "frame": 10,
+        "name": "BASTION"
+      },
+      {
+        "frame": 11,
+        "name": "HELLBREAKER"
+      },
+      {
+        "frame": 13,
+        "name": "LINE INFANTRY"
+      },
+      {
+        "frame": 14,
+        "name": "LINE INFANTRY ELITE"
+      },
+      {
+        "frame": 15,
+        "name": "GRAVEMAW"
+      },
+      {
+        "frame": 16,
+        "name": "REAVER"
+      },
+      {
+        "frame": 17,
+        "name": "BULWARK-AEGIS"
+      },
+      {
+        "frame": 18,
+        "name": "ASHIGARU"
+      },
+      {
+        "frame": 19,
+        "name": "AERO"
+      },
+      {
+        "frame": 20,
+        "name": "SHOGUN"
+      }
+    ],
+    "assignedWeapons": [
+      "anchor-hammer",
+      "blade",
+      "breaker",
+      "cerberus",
+      "cleaver",
+      "ember",
+      "falcon",
+      "forge",
+      "hailstorm",
+      "hatchet",
+      "missile",
+      "obelisk",
+      "parallax",
+      "pike",
+      "piledriver",
+      "rail",
+      "rampart",
+      "rifle",
+      "rivet",
+      "shotgun",
+      "sidewinder",
+      "tonfa",
+      "trident",
+      "watchman"
+    ],
+    "observedWeapons": [
+      "aegis-bash",
+      "aegis-cleave",
+      "anchor-hammer",
+      "blade",
+      "breach-gauntlet",
+      "breaker",
+      "cerberus",
+      "cleaver",
+      "ember",
+      "falcon",
+      "forge",
+      "hailstorm",
+      "hatchet",
+      "locust",
+      "missile",
+      "morrow",
+      "needle-carbine",
+      "obelisk",
+      "parallax",
+      "pike",
+      "piledriver",
+      "pulse-bash",
+      "rail",
+      "rampart",
+      "rifle",
+      "rivet",
+      "shotgun",
+      "sidewinder",
+      "signal-knife",
+      "tonfa",
+      "trident",
+      "watchman"
+    ],
+    "expectedWeapons": [
+      "anchor-hammer",
+      "blade",
+      "breaker",
+      "cerberus",
+      "cleaver",
+      "ember",
+      "falcon",
+      "forge",
+      "hailstorm",
+      "hatchet",
+      "missile",
+      "obelisk",
+      "parallax",
+      "pike",
+      "piledriver",
+      "rail",
+      "rampart",
+      "rifle",
+      "rivet",
+      "shotgun",
+      "sidewinder",
+      "tonfa",
+      "trident",
+      "watchman"
+    ],
+    "commandedWeapons": [
+      "aegis-cleave",
+      "blade",
+      "breaker",
+      "cerberus",
+      "ember",
+      "falcon",
+      "flechette-scattergun",
+      "forge",
+      "hailstorm",
+      "hatchet",
+      "locust",
+      "missile",
+      "morrow",
+      "needle-carbine",
+      "obelisk",
+      "parallax",
+      "rail",
+      "rampart",
+      "rifle",
+      "rivet",
+      "shotgun",
+      "sidewinder",
+      "tonfa",
+      "trident",
+      "watchman"
+    ],
+    "expectedShields": [
+      "bulwark-shield",
+      "citadel-shield"
+    ],
+    "assignedShields": [
+      "bulwark-shield",
+      "citadel-shield"
+    ],
+    "observedShields": [
+      "aegis-tower",
+      "bulwark-shield",
+      "citadel-shield"
+    ],
+    "combatCounts": {
+      "launch": 6169,
+      "impact": 5840,
+      "arrival": 388,
+      "dodge": 9
+    },
+    "maximumLaunchAimError": 2.580956827951785e-8,
+    "aimClearance": {
+      "calls": 6102,
+      "infeasibleCount": 4,
+      "minimumTravel": -0.9481394302049289,
+      "minimumDiscriminant": 11.955162090392827
+    },
+    "anomalies": [],
+    "errors": [],
+    "battles": [
+      {
+        "seed": 4242,
+        "frames": [
+          0,
+          1,
+          2,
+          13,
+          18
+        ],
+        "actualModels": [
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "rifle",
+          "shotgun",
+          "missile"
+        ],
+        "workshopAssignedWeapons": [
+          "rifle",
+          "shotgun",
+          "missile"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "rifle",
+          "shotgun",
+          "missile"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "shotgun",
+          "missile",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 2809,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4243,
+        "frames": [
+          3,
+          4,
+          5,
+          0,
+          19,
+          2
+        ],
+        "actualModels": [
+          {
+            "id": "ally2",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "cleaver",
+          "locust",
+          "rail"
+        ],
+        "workshopAssignedWeapons": [
+          "cleaver",
+          "rail"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "morrow",
+          "locust",
+          "rail"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "cleaver",
+          "locust",
+          "pulse-bash",
+          "rail",
+          "rifle",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 5522,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        }
+      },
+      {
+        "seed": 4244,
+        "frames": [
+          6,
+          7,
+          8,
+          14,
+          15,
+          16,
+          9
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "workshopAssignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "hailstorm",
+          "rampart",
+          "rifle",
+          "breaker"
+        ],
+        "observedWeaponIds": [
+          "hailstorm",
+          "blade",
+          "rampart",
+          "rifle",
+          "breaker",
+          "piledriver",
+          "shotgun"
+        ],
+        "observedShields": [],
+        "ticks": 7991,
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4245,
+        "frames": [
+          9,
+          10,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "cleaver",
+          "piledriver",
+          "morrow"
+        ],
+        "workshopAssignedWeapons": [
+          "cleaver",
+          "piledriver"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "shotgun",
+          "rifle",
+          "morrow"
+        ],
+        "observedWeaponIds": [
+          "shotgun",
+          "cleaver",
+          "rifle",
+          "piledriver",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "aegis-cleave",
+          "aegis-bash",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 5253,
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4246,
+        "frames": [
+          12,
+          15,
+          16,
+          13,
+          18
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 3577,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4247,
+        "frames": [
+          17,
+          18,
+          19,
+          0,
+          2
+        ],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "blade"
+        ],
+        "workshopAssignedWeapons": [
+          "blade"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "rifle",
+          "flechette-scattergun"
+        ],
+        "observedWeaponIds": [
+          "aegis-cleave",
+          "aegis-bash",
+          "needle-carbine",
+          "signal-knife",
+          "rifle",
+          "blade",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 7114,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        }
+      },
+      {
+        "seed": 4248,
+        "frames": [
+          20,
+          0,
+          1,
+          14,
+          15,
+          16,
+          9
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "bulwark-shield",
+          "sidewinder",
+          "trident"
+        ],
+        "workshopAssignedWeapons": [
+          "sidewinder",
+          "trident"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "commandedWeapons": [
+          "morrow",
+          "sidewinder",
+          "trident"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "sidewinder",
+          "trident",
+          "rifle",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "ticks": 6910,
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4249,
+        "frames": [
+          2,
+          3,
+          4,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "forge",
+          "citadel-shield",
+          "locust"
+        ],
+        "workshopAssignedWeapons": [
+          "forge"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "commandedWeapons": [
+          "forge",
+          "morrow",
+          "locust"
+        ],
+        "observedWeaponIds": [
+          "forge",
+          "morrow",
+          "locust",
+          "pulse-bash",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "missile",
+          "rifle",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield",
+          "aegis-tower"
+        ],
+        "ticks": 6481,
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4250,
+        "frames": [
+          5,
+          6,
+          7,
+          13,
+          18
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "ember",
+          "watchman",
+          "falcon"
+        ],
+        "workshopAssignedWeapons": [
+          "ember",
+          "watchman",
+          "falcon"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "ember",
+          "watchman",
+          "falcon"
+        ],
+        "observedWeaponIds": [
+          "ember",
+          "watchman",
+          "blade",
+          "falcon",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 1834,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4251,
+        "frames": [
+          8,
+          9,
+          10,
+          0,
+          19,
+          2
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "cerberus",
+          "obelisk",
+          "rivet"
+        ],
+        "workshopAssignedWeapons": [
+          "cerberus",
+          "obelisk",
+          "rivet"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "cerberus",
+          "obelisk",
+          "rivet"
+        ],
+        "observedWeaponIds": [
+          "cerberus",
+          "obelisk",
+          "rivet",
+          "rifle",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 6027,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        }
+      },
+      {
+        "seed": 4252,
+        "frames": [
+          11,
+          12,
+          15,
+          14,
+          16,
+          9
+        ],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "breach-gauntlet",
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 6519,
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4253,
+        "frames": [
+          16,
+          17,
+          18,
+          11,
+          15,
+          12
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "rifle",
+          "aegis-cleave",
+          "needle-carbine"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "rifle",
+          "aegis-cleave",
+          "needle-carbine",
+          "flechette-scattergun"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "aegis-cleave",
+          "aegis-bash",
+          "needle-carbine",
+          "signal-knife",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 5586,
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4254,
+        "frames": [
+          19,
+          20,
+          0,
+          13,
+          18
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "parallax",
+          "cleaver",
+          "hatchet"
+        ],
+        "workshopAssignedWeapons": [
+          "parallax",
+          "cleaver",
+          "hatchet"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "parallax",
+          "morrow",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "parallax",
+          "blade",
+          "morrow",
+          "cleaver",
+          "rifle",
+          "hatchet",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 2302,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4255,
+        "frames": [
+          1,
+          2,
+          3,
+          0,
+          19
+        ],
+        "actualModels": [
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "pike",
+          "tonfa",
+          "bulwark-shield"
+        ],
+        "workshopAssignedWeapons": [
+          "pike",
+          "tonfa"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "commandedWeapons": [
+          "rifle",
+          "missile",
+          "morrow"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "pike",
+          "missile",
+          "tonfa",
+          "morrow",
+          "cleaver",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "ticks": 7202,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        }
+      },
+      {
+        "seed": 4256,
+        "frames": [
+          4,
+          5,
+          6,
+          14,
+          15,
+          16,
+          9
+        ],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "locust",
+          "anchor-hammer",
+          "bulwark-shield"
+        ],
+        "workshopAssignedWeapons": [
+          "anchor-hammer"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "commandedWeapons": [
+          "locust",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "locust",
+          "pulse-bash",
+          "rifle",
+          "anchor-hammer",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "ticks": 6997,
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4257,
+        "frames": [
+          7,
+          8,
+          9,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "citadel-shield",
+          "rifle",
+          "shotgun"
+        ],
+        "workshopAssignedWeapons": [
+          "rifle",
+          "shotgun"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "commandedWeapons": [
+          "missile",
+          "rifle",
+          "shotgun"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "rifle",
+          "shotgun",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield",
+          "aegis-tower"
+        ],
+        "ticks": 7480,
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4258,
+        "frames": [
+          10,
+          11,
+          12,
+          13,
+          18
+        ],
+        "actualModels": [
+          {
+            "id": "ally2",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "missile",
+          "morrow",
+          "missile"
+        ],
+        "workshopAssignedWeapons": [
+          "missile"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "missile",
+          "morrow"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "morrow",
+          "breach-gauntlet",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 2989,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4259,
+        "frames": [
+          15,
+          16,
+          17,
+          0,
+          19,
+          2
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "hailstorm",
+          "rifle",
+          "aegis-cleave"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "hailstorm",
+          "rifle",
+          "aegis-cleave"
+        ],
+        "observedWeaponIds": [
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "aegis-cleave",
+          "aegis-bash",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 7443,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        }
+      },
+      {
+        "seed": 4260,
+        "frames": [
+          18,
+          19,
+          20,
+          14,
+          15,
+          16,
+          9
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "needle-carbine",
+          "rail",
+          "citadel-shield"
+        ],
+        "workshopAssignedWeapons": [
+          "rail"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "commandedWeapons": [
+          "needle-carbine",
+          "rail",
+          "morrow",
+          "blade"
+        ],
+        "observedWeaponIds": [
+          "needle-carbine",
+          "signal-knife",
+          "rail",
+          "blade",
+          "morrow",
+          "rifle",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield"
+        ],
+        "ticks": 6334,
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4261,
+        "frames": [
+          0,
+          1,
+          2,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "workshopAssignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "hailstorm",
+          "rampart",
+          "missile"
+        ],
+        "observedWeaponIds": [
+          "hailstorm",
+          "rampart",
+          "missile",
+          "breaker",
+          "morrow",
+          "breach-gauntlet",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "rifle"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 5362,
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4262,
+        "frames": [
+          3,
+          4,
+          5,
+          13,
+          18
+        ],
+        "actualModels": [
+          {
+            "id": "ally2",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "cleaver",
+          "locust",
+          "cleaver"
+        ],
+        "workshopAssignedWeapons": [
+          "cleaver",
+          "cleaver"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "morrow",
+          "locust",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "cleaver",
+          "locust",
+          "pulse-bash",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 2583,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4263,
+        "frames": [
+          6,
+          7,
+          8,
+          0,
+          19,
+          2
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "piledriver",
+          "blade",
+          "sidewinder"
+        ],
+        "workshopAssignedWeapons": [
+          "piledriver",
+          "blade",
+          "sidewinder"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "rifle",
+          "missile",
+          "sidewinder"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "piledriver",
+          "missile",
+          "blade",
+          "sidewinder",
+          "cleaver",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 8577,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4264,
+        "frames": [
+          6,
+          7,
+          8,
+          14,
+          15,
+          16,
+          9
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "workshopAssignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "rivet",
+          "parallax",
+          "rifle",
+          "hatchet"
+        ],
+        "observedWeaponIds": [
+          "rivet",
+          "blade",
+          "parallax",
+          "rifle",
+          "hatchet",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 6977,
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": true,
+          "pay": 5990
+        }
+      },
+      {
+        "seed": 4265,
+        "frames": [
+          12,
+          15,
+          16,
+          11,
+          17
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "morrow",
+          "breach-gauntlet",
+          "aegis-cleave",
+          "aegis-bash",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 5552,
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4266,
+        "frames": [
+          17,
+          18,
+          19,
+          13
+        ],
+        "actualModels": [
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "watchman"
+        ],
+        "workshopAssignedWeapons": [
+          "watchman"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "watchman"
+        ],
+        "observedWeaponIds": [
+          "aegis-cleave",
+          "aegis-bash",
+          "needle-carbine",
+          "signal-knife",
+          "watchman",
+          "blade",
+          "rifle",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 4024,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4267,
+        "frames": [
+          20,
+          0,
+          1,
+          19,
+          2
+        ],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "bulwark-shield",
+          "falcon",
+          "cerberus"
+        ],
+        "workshopAssignedWeapons": [
+          "falcon",
+          "cerberus"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "commandedWeapons": [
+          "morrow",
+          "falcon",
+          "cerberus"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "falcon",
+          "cerberus",
+          "rifle",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "ticks": 6305,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        }
+      },
+      {
+        "seed": 4268,
+        "frames": [
+          2,
+          3,
+          4,
+          14,
+          15,
+          16,
+          9
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "obelisk",
+          "citadel-shield",
+          "locust"
+        ],
+        "workshopAssignedWeapons": [
+          "obelisk"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "commandedWeapons": [
+          "obelisk",
+          "morrow",
+          "locust"
+        ],
+        "observedWeaponIds": [
+          "obelisk",
+          "morrow",
+          "locust",
+          "pulse-bash",
+          "rifle",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield"
+        ],
+        "ticks": 8013,
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": true,
+          "pay": 5990
+        }
+      },
+      {
+        "seed": 4269,
+        "frames": [
+          5,
+          6,
+          7,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "workshopAssignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "rivet",
+          "parallax",
+          "missile"
+        ],
+        "observedWeaponIds": [
+          "rivet",
+          "parallax",
+          "blade",
+          "missile",
+          "hatchet",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "rifle",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "ticks": 4712,
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        }
+      },
+      {
+        "seed": 4270,
+        "frames": [
+          8,
+          9,
+          10,
+          13,
+          18
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "pike",
+          "tonfa",
+          "anchor-hammer"
+        ],
+        "workshopAssignedWeapons": [
+          "pike",
+          "tonfa",
+          "anchor-hammer"
+        ],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "rifle",
+          "shotgun",
+          "tonfa"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "pike",
+          "shotgun",
+          "tonfa",
+          "anchor-hammer",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 3068,
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        }
+      },
+      {
+        "seed": 4271,
+        "frames": [
+          11,
+          12,
+          15,
+          0,
+          19,
+          2
+        ],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "assignedWeapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "commandedWeapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "breach-gauntlet",
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "cleaver",
+          "rampart"
+        ],
+        "observedShields": [],
+        "ticks": 6235,
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        }
+      }
+    ]
+  },
+  "reviewFindings": {
+    "automatedCareerSample": {
+      "policy": "Current body-priority targeting and earned Trident/Watchman refits",
+      "careers": 24,
+      "fullLadderWins": 3,
+      "botTurnLimit": 30,
+      "turnLimitReached": 3,
+      "results": [
+        {
+          "seed": 1,
+          "completed": 4,
+          "timedOut": false
+        },
+        {
+          "seed": 2,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 3,
+          "completed": 4,
+          "timedOut": false
+        },
+        {
+          "seed": 4,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 5,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 6,
+          "completed": 4,
+          "timedOut": false
+        },
+        {
+          "seed": 7,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 8,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 9,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 10,
+          "completed": 4,
+          "timedOut": false
+        },
+        {
+          "seed": 11,
+          "completed": 5,
+          "timedOut": false
+        },
+        {
+          "seed": 12,
+          "completed": 4,
+          "timedOut": false
+        },
+        {
+          "seed": 13,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 14,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 15,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 16,
+          "completed": 4,
+          "timedOut": false
+        },
+        {
+          "seed": 17,
+          "completed": 2,
+          "timedOut": true
+        },
+        {
+          "seed": 18,
+          "completed": 4,
+          "timedOut": true
+        },
+        {
+          "seed": 19,
+          "completed": 5,
+          "timedOut": false
+        },
+        {
+          "seed": 20,
+          "completed": 4,
+          "timedOut": true
+        },
+        {
+          "seed": 21,
+          "completed": 4,
+          "timedOut": false
+        },
+        {
+          "seed": 22,
+          "completed": 2,
+          "timedOut": false
+        },
+        {
+          "seed": 23,
+          "completed": 5,
+          "timedOut": false
+        },
+        {
+          "seed": 24,
+          "completed": 2,
+          "timedOut": false
+        }
+      ]
+    },
+    "parallaxClearance": {
+      "seed": 4264,
+      "infeasibleSamples": 4,
+      "minimumTravel": -0.9481394302049289,
+      "maximumLaunchAimError": 2.580956827951785e-8
+    }
+  },
+  "captures": [
+    "desktop-target.webp",
+    "touch-collapsed.webp",
+    "touch-details.webp"
+  ],
+  "limits": {
+    "nativeIPad": "unverified",
+    "performance": "Software-rendered behavioral and geometry checks provide no native-device performance measurement"
+  }
+}

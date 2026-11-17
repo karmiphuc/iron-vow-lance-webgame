@@ -137,7 +137,10 @@ const simulate=require('./sim-harness.cjs');
   exec(`createBattle(0);battle.cover.clear();victim=battle.units[3];victim.x=current().x+1;victim.z=current().z;victim.hp.${part}=1;`);
   exec(part==='right'?'victim.hp.left=0':"victim.hp.right=0;victim.melee='blade'");
   const attackerHP=exec('current().hp.body');
-  await exec(`engage(current(),victim,'${part}',unitWeapon(current()))`);
+  // No part aiming: every round hits (0) and rolls a location; the single cockpit check (draw 17 after eight rifle rounds) is .999 only for the cockpit case.
+  const place={body:.1,pilot:.1,right:.7,left:.7}[part];
+  exec(`Math.random=(()=>{let i=0;return()=>{const n=i++;return n===16?${part==='pilot'?.999:0}:n<16?(n%2?${place}:0):0}})()`);
+  await exec(`engage(current(),victim,'body',unitWeapon(current()))`);
   assert.equal(exec('Boolean(victim.reacted)'),false,part+' destroyed before retaliation');
   assert.equal(exec('current().hp.body'),attackerHP);
  }

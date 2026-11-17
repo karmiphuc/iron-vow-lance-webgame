@@ -69,12 +69,15 @@ function doctrine(i,path){
  const saboteur=doctrine(1,1),s=saboteur.run;
  s("hostile.x=pilot.x+1;hostile.z=pilot.z;hostile.melee='blade';hostile.hp.right=1;hostile.hp.legs=1;skill()");
  assert.ok(s("partDamage(pilot,hostile,'legs',unitWeapon(pilot))>partDamage({...pilot,training:{...pilot.training,limbPierce:0}},hostile,'legs',unitWeapon(pilot))"));
- await s("engage(pilot,hostile,'right',unitWeapon(pilot))");
+ // Nobody aims. Script every round to hit (0) and roll the right arm (.6); the single cockpit check then reads 0 (no cockpit).
+ s("Math.random=(()=>{let i=0;const draws=[0,.6];return()=>draws[i++%2]})()");
+ await s("engage(pilot,hostile,'body',unitWeapon(pilot))");
  assert.equal(s('hostile.hp.right'),0);
  assert.equal(s('Boolean(hostile.reacted)'),false);
  assert.equal(s('pilot.boost'),true);
  assert.match(s('battle.log.at(-1)'),/counter jammed/);
- await s("engage(pilot,hostile,'legs',unitWeapon(pilot))");
+ s("Math.random=(()=>{let i=0;const draws=[0,.9];return()=>draws[i++%2]})()");
+ await s("engage(pilot,hostile,'body',unitWeapon(pilot))");
  assert.equal(s('hostile.reacted'),true,'jam does not consume or disable a later counter');
  assert.equal(s('pilot.boost'),true,'a destroyed limb retains Deadeye');
  console.log('PASS: Marksman cover, counter reach and refunds; Saboteur limb penetration, jam and Deadeye chaining.');

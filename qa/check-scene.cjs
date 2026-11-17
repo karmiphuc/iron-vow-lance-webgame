@@ -302,7 +302,16 @@ function browserPath(){
     assert.ok(s.ready,'Live rig failed to load');assert.ok(s.turn<=40,'Campaign battle stalled');
     if(s.pending){await page.clock.runFor(1000);continue;}
     if(rasterPair){await page.clock.runFor(2000);s=await page.evaluate(()=>__ironVow.snapshot());}
-    if(s.turn!==turn){turn=s.turn;used.clear();}
+    if(s.turn!==turn){
+     turn=s.turn;used.clear();
+     const choices=await page.evaluate(()=>Object.fromEntries(battle.units.filter(u=>u.team==='ally'&&u.alive).map(u=>[u.id,__ironVow.choices(u.id)])));
+     if(campaign.immobileLanceNeedsExtraction(s.units,choices)){
+      // Use the player's existing retreat action when no surviving mech can close or fire.
+      await page.locator('#withdraw').click();await page.locator('#modal-1').click();
+      await page.evaluate(()=>__qa.commands.push({type:'withdraw',reason:'immobile and out of range'}));
+      continue;
+     }
+    }
     const ally=s.units.find(u=>u.team==='ally'&&u.alive&&!used.has(u.id));
     if(!ally){await page.evaluate(()=>{void __ironVow.endTurn().catch(e=>__qa.commandErrors.push(String(e)));});await page.clock.runFor(1000);continue;}
     const choices=await page.evaluate(id=>{const u=battle.units.find(u=>u.id===id),choices=__ironVow.choices(id);choices.attacks=choices.attacks.filter(a=>!['BARRAGE NEXT ROUND','FIRE AT MARKER'].includes(barrageStatus(u,battle.units.find(t=>t.id===a.target),weapon(a.weapon))));return choices;},ally.id),attack=choices.attacks.sort((a,b)=>a.hp-b.hp)[0],move=choices.moves.sort((a,b)=>a.score-b.score)[0];

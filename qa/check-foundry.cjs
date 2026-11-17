@@ -144,6 +144,8 @@ async function exerciseRigAdapter(){
  run("createBattle(3);selected=1;const target=battle.units.find(u=>u.team==='enemy'&&foundryModel(u.frame)!=null);target.hp.pilot=1;target.x=current().x+1;target.z=current().z;");
  const targetId=run('target.id'),targetFrame=run('target.frame');
  const body=run('target.hp.body');
+ // Force a landed body round followed by the per-attack cockpit conversion.
+ run('let cockpitDraw=0;ruleRandom=()=>[0,0,.999][cockpitDraw++]??0');
  await run("shoot(current(),target,'pilot',weapon('blade'))");
  assert.equal(run('target.alive'),false);
  assert.equal(run('target.downReason'),'pilot');

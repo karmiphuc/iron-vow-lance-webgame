@@ -9,6 +9,7 @@ const {
   assertScratchOutsideRepository,
   seedPath,
   scenarioPlan,
+  immobileLanceNeedsExtraction,
   scenarioFingerprint,
   readCompleted,
   writeCompleted,
@@ -16,6 +17,17 @@ const {
   summarize,
   writeCompactSummary,
 } = require('./scene-campaign.cjs');
+
+// A crippled lance must use the normal withdrawal flow instead of ending turns forever.
+const trapped = [
+  { id: 'ally0', team: 'ally', alive: true, hp: { legs: 0 } },
+  { id: 'enemy0', team: 'enemy', alive: true, hp: { legs: 100 } },
+];
+assert.equal(immobileLanceNeedsExtraction(trapped, { ally0: { attacks: [] } }), true);
+assert.equal(immobileLanceNeedsExtraction(trapped, { ally0: { attacks: [{ target: 'enemy0' }] } }), false);
+assert.equal(immobileLanceNeedsExtraction([{ ...trapped[0], hp: { legs: 1 } }, trapped[1]], { ally0: { attacks: [] } }), false);
+assert.equal(immobileLanceNeedsExtraction([trapped[1]], {}), false);
+assert.equal(immobileLanceNeedsExtraction([trapped[0]], { ally0: { attacks: [] } }), false);
 
 const scratch = path.join(os.tmpdir(), `iron-vow-scene-campaign-test-${process.pid}`);
 const liveFrames = [
@@ -102,5 +114,34 @@ assert.ok(missingModelSummary.failures.some(failure => failure.type === 'missing
 const quickSummary = summarize({ ...report, battles: [report.battles[0]] }, { count: 1, startIndex: 0, liveFrames, workshopWeapons, command: 'node qa/check-scene.cjs', status: 'passed' });
 assert.equal(quickSummary.status, 'passed', 'A passed quick smoke is not failed for intentionally unassigned campaign coverage');
 assert.equal(quickSummary.counts.failures, 0);
+
+// Citadel can appear as an additional live frame while every required Phase 3 frame remains mandatory.
+const { spawnSync } = require('node:child_process');
+const faultTypes = ['nan', 'footGround', 'footSlide', 'bounds', 'overlap', 'stuck', 'ikReach', 'aimOff', 'weaponMount', 'muzzleFar', 'noDamage', 'deadPartDamage', 'hpRange', 'wreckActs', 'partVisual', 'popSwap'];
+const shardFiles = [0, 15].map(start => {
+  const file = path.join(scratch, `shard-${start}.json`);
+  fs.writeFileSync(file, JSON.stringify({
+    ...report, source: { ...source, distDirty: false }, liveFrames,
+    skipProbes: false, rasterPair: false, tileOverride: null,
+    weaponCatalog: { workshop: workshopWeapons.map(item => item.id), shields },
+    faultProbes: faultTypes.map(type => ({ type })),
+    battles: report.battles.slice(start, start + 15).map(item => ({
+      ...item, maximumLaunchAimError: 0, combatCounts: {}, rasterOmitted: 0,
+      aimClearance: { calls: 1, infeasibleCount: 0, minimumTravel: 1, minimumDiscriminant: 1 },
+    })),
+  }));
+  return file;
+});
+const combine = () => spawnSync(process.execPath, [path.join(__dirname, 'combine-scene.cjs'), path.join(scratch, 'combined.json'), ...shardFiles], { encoding: 'utf8' });
+const optionalFrame = combine();
+assert.equal(optionalFrame.status, 0, optionalFrame.stderr);
+for (const file of shardFiles) {
+  const shard = JSON.parse(fs.readFileSync(file, 'utf8'));
+  for (const item of shard.battles) item.frames = item.frames.filter(frame => frame !== 14);
+  fs.writeFileSync(file, JSON.stringify(shard));
+}
+const missingRequired = combine();
+assert.notEqual(missingRequired.status, 0, 'An optional frame cannot replace a required Phase 3 frame');
+assert.match(missingRequired.stderr, /Every Phase 3 chassis/);
 
 console.log('PASS scene campaign planning, all-catalog coverage, resume keying and compact summary fixtures');

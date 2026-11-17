@@ -13,7 +13,7 @@ module.exports=async function checkMovePreview({page,mobile,origin,tap}){
   foes.forEach((foe,i)=>place(foe,...positions[i]));
   for(const cell of battle.field.cells)cell.level=0;
   terrainCell(7,10).level=1;terrainCell(7,13).level=1;terrainCell(7,9).level=2;
-  action='move';targetPart='pilot';focusBattleCamera(u,true);renderBattle();
+  action='move';focusBattleCamera(u,true);renderBattle();
   window.movePreviewQA={u,ap:u.ap,move:u.moveLeft};
   return {names:foes.map(foe=>foe.name),ap:u.ap};
  });
@@ -29,8 +29,8 @@ module.exports=async function checkMovePreview({page,mobile,origin,tap}){
  }
  assert.equal(await preview.locator('.move-contact').count(),3,'only contacts within range appear');
  const projectedHit=await preview.locator('[data-shot="high"] .move-hit').innerText();
- assert.equal(projectedHit,'73%','the projected rifle chance uses the selected cockpit and the higher tile');
- assert.equal(await preview.locator('[data-shot="clear"] .move-hit').innerText(),'59%','Aero dodge is included in the projected chance');
+ assert.equal(projectedHit,'90%','the projected rifle chance is rolled against the body from the higher tile');
+ assert.equal(await preview.locator('[data-shot="clear"] .move-hit').innerText(),'82%','Aero dodge is included in the projected chance');
  assert.equal(await preview.locator('[data-shot="blocked"] .move-hit').innerText(),'—');
  assert.equal(await page.locator(mobile?'#target-toggle small':'.shot-readout').isVisible(),false,'the current-position shot readout yields to the preview');
  assert.deepEqual(await page.evaluate(()=>[current().x,current().z,current().ap]),[8,10,fixture.ap]);

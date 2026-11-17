@@ -10,26 +10,35 @@ function planner(rolls,{shield=false,chance=.8,dodge=0,budget=30}={}){
  let calls=0;
  const plan=create({hitChance:()=>chance,dodgeChance:()=>dodge,activeShield:()=>shield,
   targetParts:()=>['body','pilot','right'],attackBudget:()=>budget,
-  ruleRandom:()=>{assert.ok(calls<rolls.length,'unexpected random draw');return rolls[calls++]},BURST_AIM_SHARE:.85});
+  ruleRandom:()=>{assert.ok(calls<rolls.length,'unexpected random draw');return rolls[calls++]}});
  return {plan,calls:()=>calls};
 }
 const target={hp:{body:10,pilot:10,right:10}};
-let p=planner([.1,.7,.95]);
+// Draw order: one to-hit roll per round and a location roll for each landed round (body below .815 here, right above),
+// then one cockpit check per attack that struck the body (>=0.97 turns one body round into a cockpit round).
+let p=planner([.1,.1,.7,.999,.95,.999]);
 let result=p.plan({},target,'body',{burst:3},false);
-assert.equal(p.calls(),3);assert.equal(result.landed,2);assert.equal(result.impacts.reduce((n,x)=>n+x.amount,0),20);
-assert.deepEqual(Array.from(result.rounds,x=>x.part),['body','pilot','body']);
-p=planner([.2]);result=p.plan({},target,'body',{scatter:true,burst:3},false);
-assert.equal(p.calls(),1);assert.equal(result.landed,3);assert.deepEqual(Array.from(result.impacts,x=>x.amount),[12,6,12]);
+assert.equal(p.calls(),6);assert.equal(result.landed,2);assert.equal(result.impacts.reduce((n,x)=>n+x.amount,0),20);
+assert.deepEqual(Array.from(result.rounds,x=>x.part),['pilot','right','body']);
+// No cockpit check when nothing struck the body.
+p=planner([.1,.999,.95]);result=p.plan({},target,'body',{burst:2},false);
+assert.equal(p.calls(),3,'no cockpit check without a body hit');assert.deepEqual(Array.from(result.rounds,x=>x.part),['right','body']);
+// A scatter shell rolls to hit once, then every pellet rolls its own location; one cockpit check for the shell.
+p=planner([.2,0,.9,.1,.5]);result=p.plan({},target,'body',{scatter:true,burst:3},false);
+assert.equal(p.calls(),5);assert.equal(result.landed,3);assert.deepEqual(Array.from(result.rounds,x=>x.part),['body','right','body']);
+assert.deepEqual(Array.from(result.impacts,x=>[x.part,x.amount]),[['body',20],['right',10]]);
 p=planner([.95],{dodge:.1});result=p.plan({},target,'body',{},false);
 assert.equal(result.dodged,true);assert.equal(result.impacts.length,0);
 p=planner([.1],{shield:true});result=p.plan({},target,'body',{},false);
+assert.equal(p.calls(),1,'a shield takes the hit without location draws');
 assert.equal(result.guard,true);assert.equal(result.impacts[0].part,'left');
 const host=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
 assert.ok(host.indexOf('src="combat-simulation.js"')>0&&host.indexOf('src="combat-simulation.js"')<host.indexOf('src="game.js'));
 const bench=fs.readFileSync(path.join(root,'dist/rig-bench/index.html'),'utf8');
 assert.match(bench,/bench\.searchParams\.set\('bench','rig'\)/,'Rig Bench opens the same engine host');
-// Golden result captured from the pre-extraction game with seed 42: includes a
-// braced target, reaction bonus, aircraft target and the production volley path.
+// Golden result for seed 42: includes a braced target, reaction bonus, aircraft target and the production
+// volley path. The volley was re-recorded when hit location moved to a roll per landed round and the cockpit check to one per body-hitting attack (the first
+// four values are unchanged from the pre-extraction game).
 const sim=require('./sim-harness.cjs')({seed:42});
 sim.run(`createBattle(0);var a=current(),t=battle.units[3],v=battle.units.find(u=>u.kind==='helicopter');
  a.x=5;a.z=5;t.x=6;t.z=5;v.x=7;v.z=5;a.weapon='rifle';
@@ -38,8 +47,8 @@ const actual=JSON.parse(sim.run(`JSON.stringify([hitChance(a,t,'body'),damage(a,
  partDamage(a,t,'pilot',weapon('rifle')),attackBudget(a,t,'body',weapon('rifle'),true),
  hitChance(a,v,'body',weapon('rifle'),true),planVolley(a,t,'body',weapon('rifle'),false)])`));
 assert.deepEqual(actual,[.9016000000000001,20,10,25,.98,{
- rounds:Array.from({length:8},()=>({part:'body',hit:true})),
- impacts:[{part:'body',amount:23}],landed:8,dodged:false,guard:false
+ rounds:[['body',true],['body',true],['body',true],['body',true],['legs',true],['body',true],['legs',true],['body',true]].map(([part,hit])=>({part,hit})),
+ impacts:[{part:'body',amount:17},{part:'legs',amount:6}],landed:8,dodged:false,guard:false
 }]);
 // Exercise reaction selection through the reusable API, including blocked shots,
 // broken arms, shields, ranged counters and the two specialized frames.

@@ -37,19 +37,24 @@ function recruit(kind,path=null,slot=0){
  assert.equal(b('a.breach'),2);
  assert.ok(b('partDamage(a,t,"legs",unitWeapon(a))>plain'));
  assert.equal(b('partDamage(a,t,"legs",unitWeapon(a),true)'),b('plain'));
- await b('engage(a,t,"legs",unitWeapon(a))');
+ b('globalThis.untouched=JSON.stringify([t.hp.body,t.hp.pilot])');
+ await b('engage(a,t,"body",unitWeapon(a))');
  assert.equal(b('Boolean(t.reacted)'),false,'a surviving defender cannot counter a charged hit');
  assert.equal(b('a.breach'),1);
+ assert.equal(b('JSON.stringify([t.hp.body,t.hp.pilot])'),b('untouched'),'a charged shot strikes arms and legs, never the body or cockpit');
+ assert.ok(b('t.hp.legs<t.max.legs||t.hp.left<t.max.left||t.hp.right<t.max.right'),'the charged shot landed on a limb');
  b('t.hp.legs=t.max.legs=legs;persist()');
  const charged=resume(sapper);
  assert.equal(charged.run('current().breach'),1);
  assert.equal(charged.run('current().skill'),true);
  await charged.run('shoot(current(),battle.units[1],"body")');
- assert.equal(charged.run('current().breach'),1,'body shots do not use the limb charge');
+ assert.equal(charged.run('current().breach'),undefined,'the final charge is spent by the next ranged shot whatever part is passed');
  const mobile=recruit(5,1),m=mobile.run;
  m('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1];t.hp.legs=1;let free=freeMovement(a);skill()');
  assert.equal(m('a.brace&&freeMovement(a)===free'),true);
- await m('engage(a,t,"legs",unitWeapon(a))');
+ // Charged rounds draw to-hit then a location among the limbs; script every round onto the legs.
+ m('Math.random=(()=>{let i=0;const draws=[0,.99];return()=>draws[i++%2]})()');
+ await m('engage(a,t,"body",unitWeapon(a))');
  assert.equal(m('a.ap'),7,'a lethal limb shot refunds only the attack cost');
  assert.equal(m('freeMovement(a)===free&&t.hp.legs===0&&a.breach===undefined'),true);
 
