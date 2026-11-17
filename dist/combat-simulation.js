@@ -2,6 +2,68 @@
 // Dependencies supply the host's current combat state and seeded random source.
 (function(root){
  'use strict';
+ function createTerrainRules({getBattle,onBoard,movementLimit,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
+  function occupied(x,z){return getBattle().units.some(u=>u.alive&&u.x===x&&u.z===z)}
+  const neighborTiles=(x,z)=>[[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
+  function paths(u,flight=false){
+   const {cover}=getBattle();
+   const max=movementLimit(u),costs=new Map([[u.x+','+u.z,0]]),queue=[[u.x,u.z]];
+   for(let k=0;k<queue.length;k++){
+    const [x,z]=queue[k],cost=costs.get(x+','+z);
+    if(cost>=max)continue;
+    for(const [a,b] of neighborTiles(x,z)){
+     const key=a+','+b;
+     if(!onBoard(a,b)||costs.has(key)||occupied(a,b)||(u.kind!=='helicopter'&&cover.has(key)))continue;
+     costs.set(key,cost+1);queue.push([a,b]);
+    }
+   }
+   if(u.kind==='helicopter'&&!flight)for(const key of cover)costs.delete(key);
+   return costs;
+  }
+  function route(u,x,z){
+   const costs=paths(u,true),end=x+','+z;
+   if(!costs.has(end)||getBattle().cover.has(end))return [];
+   const steps=[];
+   let a=x,b=z;
+   while(a!==u.x||b!==u.z){
+    steps.unshift({x:a,z:b});
+    const previous=neighborTiles(a,b).find(([q,r])=>costs.get(q+','+r)===costs.get(a+','+b)-1);
+    if(!previous)return [];
+    [a,b]=previous;
+   }
+   return steps;
+  }
+  function distance(a,b){return Math.abs(a.x-b.x)+Math.abs(a.z-b.z)}
+  function inCover(t){return t.kind!=='helicopter'&&neighborTiles(t.x,t.z).some(([x,z])=>getBattle().cover.has(x+','+z))}
+  const HIGH_GROUND_AIM=.10;
+  const terrainLevel=u=>getBattle()?.field.cells?(terrainCell(u.x,u.z)?.level??0):0;
+  const fireLevel=u=>terrainLevel(u)+(u.kind==='helicopter'?helicopterHeight():0);
+  function ridgeBlocks(a,t){
+   if(!getBattle()?.field.cells||a.x===t.x&&a.z===t.z)return false;
+   const dx=t.x-a.x,dz=t.z-a.z,nx=Math.abs(dx),nz=Math.abs(dz),sx=Math.sign(dx),sz=Math.sign(dz);
+   const from=fireLevel(a),start=from+.5,rise=fireLevel(t)-from;
+   let x=a.x,z=a.z,ix=0,iz=0;
+   // Cross each tile between the endpoints. A ray touching only a corner passes.
+   while(x!==t.x||z!==t.z){
+    const tx=(ix+.5)/nx,tz=(iz+.5)/nz;
+    const enter=Math.min(tx,tz);
+    if(tx<=tz){x+=sx;ix++}
+    if(tz<=tx){z+=sz;iz++}
+    if(x===t.x&&z===t.z)break;
+    const exit=Math.min((ix+.5)/nx,(iz+.5)/nz);
+    if(terrainCell(x,z)?.level>start+rise*(rise>0?enter:exit)+1e-9)return true;
+   }
+   return false;
+  }
+  function attackObstruction(a,t,w){
+   if(!canReachTarget(w,t))return 'AIRBORNE';
+   return !w.melee&&!launchesMissiles(w)&&ridgeBlocks(a,t)?'RIDGE BLOCK':'';
+  }
+  function highGroundAim(a,t,w){
+   return !a.kind&&t.kind!=='helicopter'&&!w.melee&&!launchesMissiles(w)&&terrainLevel(a)>terrainLevel(t)?HIGH_GROUND_AIM:0;
+  }
+  return {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
+ }
  function createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,FREE_HAND_COUNTER}){
 const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee&&limbPart(part));
 function mechAim(a,t,w,reaction){
@@ -170,6 +232,108 @@ async function runEnemyTurn(){
 }
  return {enemyAttackWeapon,runEnemyTurn};
  }
+ // Commands own gameplay mutations. The host supplies presentation, persistence and the current board.
+ function createCombatTransactions({
+  getBattle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
+  attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
+  beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
+  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,roundAP,resetMovement,highGroundAim
+ }){
+  function barrageRestriction(attacker,defender,w){
+   if(!launchesMissiles(w)||!hasMechSkill(attacker,CITADEL_FRAME))return null;
+   if(attacker.mechState?.lock?.turn===getBattle().turn)return 'pending';
+   const marked=barrageTarget(attacker);
+   return marked&&attacker.team==='ally'&&defender!==marked&&distance(attacker,marked)<=combatRange(attacker,marked,w)?'marked':null;
+  }
+
+  async function engage(attacker,defender,part,w){
+   if(attackObstruction(attacker,defender,w))return;
+   if(launchesMissiles(w)&&hasMechSkill(attacker,CITADEL_FRAME)){
+    const state=mechState(attacker),restriction=barrageRestriction(attacker,defender,w);
+    if(restriction==='pending'){addLog(attacker.name+' awaits its marked barrage next round.');return}
+    const marked=barrageTarget(attacker);
+    if(marked&&distance(attacker,marked)<=combatRange(attacker,marked,w)){
+     if(restriction==='marked'){toast('Fire at the marked tile.');return}
+     defender=marked;part=marked.hp[part]>0?part:'body';delete state.lock;
+    }else{
+     state.lock={x:defender.x,z:defender.z,turn:getBattle().turn};
+     attacker.ap-=paidAttackAP(attacker,w);startAction(attacker);
+     addLog(attacker.name+' marks tile '+defender.x+', '+defender.z+' for a missile barrage next round.');return;
+    }
+   }
+   const sequence=beginAttackCamera(attacker,defender,w,part);
+   const before=Object.values(defender.hp).reduce((sum,hp)=>sum+hp,0);
+   try{
+    const jammed=await shoot(attacker,defender,part,w,false,sequence);
+    if(Object.values(defender.hp).reduce((sum,hp)=>sum+hp,0)<before){
+     for(const guardian of getBattle().units){
+      if(!attacker.alive)break;
+      if(guardian===defender||guardian.team!==defender.team||!hasMechSkill(guardian,BASTION_FRAME)||distance(guardian,defender)!==1)continue;
+      const ranged=unitWeapon(guardian),reach=counterRange(ranged,guardian.training,guardian.brace);
+      if(reactionStatus(guardian)!=='READY'||guardian.hp.right<=0||ranged.melee||!reach||distance(guardian,attacker)>reach||attackObstruction(guardian,attacker,ranged))continue;
+      guardian.reacted=true;addLog(guardian.name+' covers its adjacent ally.');
+      await shoot(guardian,attacker,'body',ranged,true,sequence);
+     }
+    }
+    if(jammed){addLog(defender.name+' counter jammed.');return}
+    const counter=reactionWeapon(defender,attacker);
+    if(!counter)return;
+    defender.reacted=true;
+    addLog(defender.name+(counter===FREE_HAND_COUNTER?' counters with a free hand.':counter.melee?' counters in melee.':' returns fire.'));
+    await shoot(defender,attacker,'body',counter,true,sequence);
+    if(defender.training?.counterBrace)braceUnit(defender);
+   }finally{
+    if(defender.mechState)delete defender.mechState.basilisk;
+    if(sequence)closeAttackCamera(sequence);
+   }
+  }
+  function spendMovement(u,tiles){
+   if(u.mechSkills)mechState(u).moved=(u.mechState.moved??0)+tiles;
+   const free=Math.min(freeMovement(u),tiles);
+   u.moveLeft=freeMovement(u)-free;
+   if(u.mechState?.valkyrieStep){delete u.mechState.valkyrieStep;u.moveLeft=0}
+   if(tiles>free){startAction(u);u.extraStep=true;u.ap-=EXTRA_MOVE_AP}
+  }
+  function spendAttack(a,w,part,reaction){
+   const paid=reaction?0:paidAttackAP(a,w),charged=chargedLimbShot(a,w,part,reaction);
+   if(!reaction){if(!a.order?.keepMove&&!(charged&&a.training?.breachMove))startAction(a);a.ap-=paid}
+   return {paid,charged};
+  }
+  function recordVolley(a,t,w,reaction,guard){
+   if(!reaction&&!w.melee&&a.mechSkills){
+    const state=mechState(a);
+    if(!launchesMissiles(w))state.fired=true;
+    if(hasMechSkill(a,5)&&!state.valkyrieUsed){state.valkyrieUsed=true;state.valkyrieStep=true}
+   }
+   if(!w.melee&&!launchesMissiles(w)&&a.mechState)delete a.mechState.disrupted;
+   if(a.brace&&launchesMissiles(w)&&hasMechSkill(a,7))mechState(a).behemothUsed=true;
+   if(!w.melee&&t.mechState?.spot?.team===a.team&&t.mechState.spot.source!==a.id)delete t.mechState.spot;
+   if(guard&&t.brace&&hasMechSkill(t,8))mechState(t).aegisUsed=true;
+  }
+  function applyImpact(t,event){
+    const before=t.hp[event.part];
+    t.hp[event.part]=Math.max(0,before-event.amount);
+    event.before=before;event.after=t.hp[event.part];event.damage=before-t.hp[event.part];
+   return before>0&&event.after===0;
+  }
+  function recordHit(a,t,w,hit,impacts,charged,reaction){
+   if(hit){
+    if(!w.melee&&highGroundAim(a,t,w)>0&&hasMechSkill(a,1))mechState(t).spot={source:a.id,team:a.team};
+    if(!reaction&&launchesMissiles(w)&&hasMechSkill(a,2))mechState(t).basilisk=true;
+    if(!w.melee&&!launchesMissiles(w)&&impacts.some(impact=>impact.part==='right')&&hasMechSkill(a,REAVER_FRAME))mechState(t).disrupted=true;
+    if(w.melee&&hasMechSkill(a,HELLBREAKER))t.brace=false;
+   }
+   if(charged&&--a.breach===0)delete a.breach;
+   if(!reaction&&a.order&&--a.order.shots===0)delete a.order;
+   if(a.team==='ally'&&t.painted&&(--t.painted.shots===0||!t.alive))delete t.painted;
+  }
+  function completeRound(){
+   const battle=getBattle();
+   battle.turn++;battle.phase='player';battle.busy=false;
+   battle.units.forEach(u=>{u.reacted=false;delete u.order;delete u.blackout;if(u.team==='ally'&&u.alive){u.ap=roundAP(u.training);u.brace=false;resetMovement(u)}});
+  }
+  return {barrageRestriction,engage,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound};
+ }
  // War's autonomous target/movement policy follows the Rig Bench reference
  // (docs/reference/claude/rig-bench.html:2680-2701). All legal choices,
  // effects on combat state and reactions come from the host's game commands.
@@ -242,5 +406,5 @@ async function runEnemyTurn(){
   }
   return {newBattle,step,run,runBattle,eventLog:()=>events.slice(),get state(){return report();},get running(){return working;}};
  }
- root.IRON_VOW_SIM=Object.freeze({createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createWarDriver});
+ root.IRON_VOW_SIM=Object.freeze({createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
 })(typeof window==='undefined'?globalThis:window);
