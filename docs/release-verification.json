@@ -79,27 +79,32 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 101,
+    "siteVersion": 102,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "0753f772870d8379e32c3b48fb0bb7db95a8c19c",
-    "githubCommit": "aa7a01db76f64bad88871b1bed280dabab8c381c",
-    "distTree": "0a86fcda372000ad5bc99d356d332a1c0129c749",
-    "verifiedAt": "2026-11-17T12:51:23.404Z",
-    "localReleaseSourceSha256": "f3c00245752d83dc367a56e96f3b5bc7700d820d425361a1c950b83302ca3bd5",
-    "simulationSuites": 58,
+    "sourceCommit": "ce53cc5c40747131dd4c4628feed2fc0ec54de01",
+    "githubCommit": "4c91e0cb76ad8c5948ed23264784ed19401a1ee8",
+    "distTree": "57c41023d9565fa966c60a2ba2bb5d5045fb3add",
+    "verifiedAt": "2026-11-17T14:03:15.093Z",
+    "localReleaseSourceSha256": "ca23c6d3bde11377d431fd68a9e5e3a70e0db91c313afa4e134d39f0b5f48f43",
+    "simulationSuites": 59,
     "localBrowser": {
+      "result": "passed",
       "desktop": 43,
       "touch": 43,
-      "result": "passed",
-      "failedAttemptsBeforePass": 0
+      "failedAttemptsBeforePass": 2
     },
     "liveFilesCompared": 145,
     "liveBrowser": {
-      "desktop": 43,
-      "touch": 43,
       "result": "passed",
-      "failedAttemptsBeforePass": 4,
-      "resume": "Retained the completed desktop and touch checks. Continued the unmatched touch cases after waiting for the campaign tooltip scroll to finish, using the same deployed source and runtime tree."
+      "desktop": 4,
+      "touch": 4,
+      "failedAttemptsBeforePass": 1,
+      "scenarios": [
+        "sharedScene",
+        "checkTerrain",
+        "checkHangarLive",
+        "checkInfantryCarry"
+      ]
     },
     "environment": {
       "browser": "Chromium",
@@ -107,11 +112,9 @@
       "graphics": "Software WebGL with the documented behavior-check policy"
     },
     "evidenceSha256": {
-      "localBrowser": "5595fcff0c5f260b356d914842664cd5af6a17ca7e3df689457004a4816f6c88",
-      "liveBrowser": "fa85a7b97a172924cacb5d76ce687d9bf29862bbbe9bc05d5736ca64a1beaa86",
-      "liveGateLog": "58d34ca0252591fc116263116ce00a7a25c449953a07ca8b0c54ca5265b571cd",
-      "liveResumeBrowser": "b1147d92c5141802757924b47e00452f2ea8d4f3fec0c81b3c5753c81e2dee37",
-      "liveResumeLog": "e645587530bdfee6596ea5646db553cd72919cd81df2deb82e6a25c83ba56b0c"
+      "localBrowser": "a92033583a195ea93faf23760d445269b2ecd84c9bf2a559dafec65e5b906ed7",
+      "liveBrowser": "d818478e0e5f8b874fcf88031c15f18358241d5f66540bcc2e2b9280366c685d",
+      "liveGateLog": "784b653079b9a1c3ac464eb4d454a7a8a11c66d904d823f015a076649ba654f4"
     }
   }
 }
