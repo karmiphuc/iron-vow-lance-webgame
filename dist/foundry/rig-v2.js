@@ -91,15 +91,48 @@ function workshopMounts(sockets){
  };
 }
 
+function createScrubber(source,clips){
+ const rest=[];
+ source.traverse(node=>rest.push([node,node.position.clone(),node.quaternion.clone(),node.scale.clone()]));
+ let mixer;
+ function dispose(){
+  if(!mixer)return;
+  mixer.stopAllAction();mixer.uncacheRoot(source);mixer=null;
+ }
+ function sample(name,time){
+  const clip=clips.find(candidate=>candidate.name===name);
+  if(!clip){dispose();return;}
+  mixer??=new T.AnimationMixer(source);
+  mixer.stopAllAction();
+  for(const [node,position,rotation,scale] of rest){
+   node.position.copy(position);node.quaternion.copy(rotation);node.scale.copy(scale);
+  }
+  const action=mixer.clipAction(clip).setLoop(T.LoopOnce,1);
+  action.reset().play();action.paused=true;action.time=Math.min(clip.duration,Math.max(0,time));
+  mixer.update(0);source.updateMatrixWorld(true);
+ }
+ return {sample,dispose};
+}
+async function loadClipArchive(file){
+ const {scene,animations}=await new T.GLTFLoader().setMeshoptDecoder(root.MeshoptDecoder)
+  .loadAsync(root.IRON_VOW_INLINE_ASSETS?.[file]||file);
+ const scrubber=createScrubber(scene,animations);
+ scene.traverse(node=>{if(node.isSkinnedMesh)node.frustumCulled=false;});
+ return {source:scene,clips:animations,sample:scrubber.sample,dispose(){
+  scrubber.dispose();
+  const skeletons=new Set();
+  scene.traverse(node=>{if(node.isSkinnedMesh)skeletons.add(node.skeleton);});
+  for(const skeleton of skeletons)skeleton.boneTexture?.dispose();
+  releaseStock(scene);
+ }};
+}
+
 function build(unit,scope='battle'){
  const key=profileKey(unit),asset=assets[scope].get(key);
  if(!asset?.scene)return null;
  const profile=profiles.get(key);
  const {source,skeletons}=cloneSkin(asset.scene);
- const clipBind=[];
- if(scope==='bench'&&asset.animations.length)source.traverse(node=>{
-  clipBind.push([node,node.position.clone(),node.quaternion.clone(),node.scale.clone()]);
- });
+ const scrubber=scope==='bench'&&asset.animations.length?createScrubber(source,asset.animations):null;
  const body=new T.Group();
  body.name=profile.id+' rig v2';body.add(source);body.updateMatrixWorld(true);
  const nodes=new Map(),drivers=new Map();
@@ -266,31 +299,12 @@ function build(unit,scope='battle'){
   equipment.afterSync?.();
   source.updateMatrixWorld(true);
  }
- let scrubber;
- function scrub(name,time){
-  if(!clipBind.length)return;
-  const clip=asset.animations.find(candidate=>candidate.name===name);
-  if(!clip){
-   if(!scrubber)return;
-   scrubber.stopAllAction();scrubber.uncacheRoot(source);scrubber=null;
-   return;
-  }
-  scrubber??=new T.AnimationMixer(source);
-  scrubber.stopAllAction();
-  for(const [node,position,rotation,scale] of clipBind){
-   node.position.copy(position);node.quaternion.copy(rotation);node.scale.copy(scale);
-  }
-  const action=scrubber.clipAction(clip).setLoop(T.LoopOnce,1);
-  action.reset().play();action.paused=true;action.time=Math.min(clip.duration,Math.max(0,time));
-  scrubber.update(0);
-  source.updateMatrixWorld(true);
- }
  mech.nativeV2={
-  source,sync,bounds,clips:asset.animations,scrub,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
+  source,sync,bounds,clips:asset.animations,scrub:scrubber?.sample,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
   jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
   anchors:equipment.anchors,nativeShield:equipment.nativeShield,meleeSide:equipment.meleeSide,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){
-   scrub();equipment.dispose?.();
+   scrubber?.dispose();equipment.dispose?.();
    for(const skeleton of skeletons.values())skeleton.boneTexture?.dispose();
   }
  };
@@ -298,7 +312,7 @@ function build(unit,scope='battle'){
 }
 
 function register(frame,profile){profiles.set(frame,profile);}
-root.IronVowRigV2={applies,register,load,build,clear,status:(unit,scope='battle')=>assets[scope].get(profileKey(unit))?.status};
+root.IronVowRigV2={applies,register,load,build,clear,loadClipArchive,status:(unit,scope='battle')=>assets[scope].get(profileKey(unit))?.status};
 
 function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
   const slide=driver('Cannon Slide',arms.R.wr),slideRest=slide.position.clone();

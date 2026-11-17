@@ -1,4 +1,6 @@
 const assert=require('node:assert/strict');
+const {join}=require('node:path');
+const {readGLB}=require('../check-rig-v2.cjs');
 module.exports=async function checkRigWorkbench({page,origin,mobile}){
  await page.goto(new URL('rig-bench/',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('a[href="../?bench=rig"]').click();
@@ -43,6 +45,18 @@ module.exports=async function checkRigWorkbench({page,origin,mobile}){
  await page.waitForFunction(other=>__bench.state.metrics?.mods.legs===Number(other),other);
  await page.evaluate(()=>__bench.setView('lineup'));
  await page.waitForFunction(()=>__bench.state.loaded===6);
+ const archives={3:'gatecrasher',4:'cicada',11:'hellbreaker',17:'bulwark',18:'scout',20:'shogun'};
+ for(const [frame,file] of Object.entries(archives)){
+  await page.evaluate(frame=>__bench.selectFrame(frame),frame);
+  const expected=readGLB(join(__dirname,'../../dist/rig-bench/prototypes',file+'.glb')).animations.map(c=>c.name);
+  await page.locator('#bench-clip-source').selectOption('archive');
+  await page.waitForFunction(()=>__bench.state.clipSource==='archive'&&__bench.state.loaded&&__bench.state.metrics?.triangles,null,{timeout:25000});
+  const actual=await page.evaluate(()=>__bench.state.clips.map(c=>c.name));
+  assert.deepEqual(actual,expected,file+' exposes every original clip');
+  await page.locator('#bench-clip').selectOption(actual.at(-1));
+  await page.locator('#bench-play-clip').click();
+  await page.waitForFunction(()=>__bench.state.clipTime>.08);
+ }
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
  console.log(`PASS ${mobile?'touch':'desktop'} Bench roster, native clip, loadout, paint, damage, mixed legs and six-rig lineup`);
 };

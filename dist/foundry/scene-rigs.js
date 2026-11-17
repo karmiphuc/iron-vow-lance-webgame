@@ -280,7 +280,7 @@ function draw(u,t,pose,scope,model,custom){
   }
  }
  v2?.sync();
- if(pose.inspect&&pose.clip)v2?.scrub(pose.clip,pose.clipTime);
+ if(pose.inspect&&pose.clip)v2?.scrub?.(pose.clip,pose.clipTime);
  m.cont.updateMatrixWorld(true);
  if(pose.inspect)return entry;
  const span=m.previewSpan,groundRow=span?(ground-(1-span)/2)/span:ground;

@@ -3950,12 +3950,14 @@ if(benchWar){
 
 
 if(benchRig){
+ const prototypeArchives={3:'gatecrasher',4:'cicada',[HELLBREAKER]:'hellbreaker',[BULWARK_FRAME]:'bulwark',[ASHIGARU_FRAME]:'scout',[SHOGUN_FRAME]:'shogun'};
  const frames=FRAMES.map((frame,id)=>({
   id,frame:id,name:frame.name,model:frame.foundry,
   mix:frame.foundry!=null&&!window.IronVowRigV2.applies({frame:id}),
-  stock:stockHull(id),fixed:Boolean(frame.fixedWeapons||id===VANGUARD_FRAME||id===HELLBREAKER||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
-  melees:id===AERO_FRAME?AERO_MELEE:undefined,
-  shield:canFitShield(id),pod:breachLoadout(id)
+  stock:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
+  primaries:id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:undefined,
+  melees:breachLoadout(id)?['cleaver']:undefined,
+  shield:canFitShield(id),pod:breachLoadout(id),archive:prototypeArchives[id]
  }));
  frames.push({id:'lion',frame:0,lionTrial:true,name:'LION',fixed:true,stock:{weapon:'rifle',melee:'cleaver',upgrade:0},melees:LION_TRIAL_WEAPONS});
  window.IronVowBench.mount({frames,weapons:WEAPONS,shields:SHIELDS,attackProfile,weaponRigPose});
