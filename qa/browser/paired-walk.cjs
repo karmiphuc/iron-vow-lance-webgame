@@ -34,7 +34,8 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
      const watch=window.pairedWalkQA,m=unit.motion;
      if(unit===watch?.u&&m?.stepIndex===1&&m.segment?.length===2){
       const p=fieldStepProgress(.02,m.segment);
-      watch.seam=p>.019&&p<.022&&animationPose(unit,m.start).stride===0;
+      const cycleAtSeam=animationPose(unit,m.start).cycle;
+      watch.seam=p>.019&&p<.022&&cycleAtSeam===m.gaitBase;
      }
      return advance(unit,time,dt);
     };
