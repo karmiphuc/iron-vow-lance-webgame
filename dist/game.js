@@ -56,7 +56,26 @@ const HOSTILE_LIVERIES=[
  ['#383b3e','#56634b'],['#3e4142','#6c4046'],
  ['#6f3d43','#404641'],['#683a40','#676c69']
 ];
-const PAINT_PRESETS=[['Factory',null],['Bone','#c6bd9f'],['Olive','#708657'],['Slate','#577eac'],['Sand','#c19960'],['Graphite','#555e69'],['Ivory','#d9ddd5']];
+// Three-channel reference liveries and swatches from mercenary-command.html:76–77.
+const PAINT_SWATCHES=['#4f5839','#7a7556','#9a8b68','#c9d0d4','#d9dcd8','#52606a','#2b4f9e','#1f2a3a','#2c2d33','#18191c','#7a3428','#c0283a','#e0621a','#f0b030','#c99a2a','#5fd4c4'];
+const PAINT_PRESETS=[
+ ['Factory',null,null,null],
+ ['Field Olive','#4f5839','#343a28','#e0621a'],['Dune','#9a8b68','#5c5446','#d0702a'],
+ ['Slate','#52606a','#323c43','#f0b030'],['Arctic','#c9d0d4','#6c7880','#2f9fd0'],
+ ['Federation','#d9dcd8','#2b4f9e','#c8302a'],['Oni Crimson','#474a51','#1e1f23','#c0283a'],
+ ['Midnight','#1f2a3a','#0f141c','#5fd4c4'],['Hazard','#c99a2a','#2a2a28','#1e1e1c'],['Rust','#7a3428','#3a2420','#d9b45a'],
+ ['Bone plates','#c6bd9f','#534c43','#e08e3b'],['Olive plates','#708657','#39432c','#d7a458'],
+ ['Slate plates','#577eac','#303a4b','#d09450'],['Sand plates','#c19960','#5c4936','#f0b030'],
+ ['Graphite plates','#555e69','#2c3036','#79bac8'],['Ivory plates','#d9ddd5','#6c7880','#c8302a']
+];
+const PAINT_CHANNELS=[['p','Primary','#c6bd9f'],['s','Secondary','#343b42'],['a','Accent','#e08e3b']];
+const paintChannel=(u,channel)=>(channel==='p'?u.paint:u.trim?.[channel])?.toLowerCase()??null;
+const activeLivery=(u,preset)=>PAINT_CHANNELS.every(([channel],index)=>paintChannel(u,channel)===preset[index+1]);
+function setPaintChannel(u,channel,color){
+ if(channel==='p'){if(color)u.paint=color;else delete u.paint;return;}
+ if(color)(u.trim??={})[channel]=color;
+ else if(u.trim){delete u.trim[channel];if(!Object.keys(u.trim).length)delete u.trim;}
+}
 const RANGED=WEAPONS.filter(w=>!w.melee&&!w.builtIn&&!w.shoulder),MELEE=WEAPONS.filter(w=>w.melee&&!w.builtIn);
 const ARMORY_CLASSES={assault:'Assault',strike:'Strike',melee:'Melee',shields:'Shields'};
 const armoryClass=w=>w.melee?'melee':w.range>=6?'strike':'assault';
@@ -1200,8 +1219,19 @@ function builtInLoadout(u,training,frame){
 }
 function workshopPaint(u){
  if(FRAMES[pilotFrame(selected)].fixedLivery)return '<div class="paint-panel"><div class="eyebrow">FACTORY LIVERY</div><small>Black, green and crimson</small></div>';
- const trim=foundryModel(pilotFrame(selected))!=null?'<div class="foundry-trim">'+[['s','Secondary','#343b42'],['a','Accent','#e08e3b']].map(([k,label,color])=>`<label class="paint-custom">${label} <input data-trim="${k}" type="color" aria-label="${label} paint" value="${u.trim?.[k]||color}"></label>`).join('')+'<button id="reset-trim" type="button">FACTORY TRIM</button></div>':'';
- return `<div class="paint-panel"><div class="eyebrow">CERAMIC PLATE PAINT</div><div class="paint-swatches">${PAINT_PRESETS.map(([name,color])=>`<button class="paint-swatch" data-paint="${color||''}" aria-pressed="${(u.paint||null)===color}" style="--swatch:${color||'#b0a88d'}"><span></span>${name}</button>`).join('')}<label class="paint-custom">Custom <input id="custom-paint" type="color" aria-label="Custom plate paint" value="${u.paint||'#c6bd9f'}"></label></div><div class="inline-help"><small>FREE · SAVED PER CHASSIS</small>${infoTip('plate paint','Repaint your armor plates. Factory restores the chassis finish.')}</div>${trim}</div>`;
+ const presets=PAINT_PRESETS.map((preset,index)=>{
+  const [name,p,s,a]=preset;
+  const chips=[p||'#b0a88d',s||'#343b42',a||'#e08e3b'].map(color=>`<i style="--swatch:${color}"></i>`).join('');
+  return `<button type="button" class="paint-swatch livery-swatch" data-paint="${p||''}" data-livery="${index}" aria-pressed="${activeLivery(u,preset)}"><span class="livery-colors" aria-hidden="true">${chips}</span>${name}</button>`;
+ }).join('');
+ const channels=PAINT_CHANNELS.map(([channel,label,factory])=>{
+  const chosen=paintChannel(u,channel);
+  const swatches=PAINT_SWATCHES.map(hex=>`<button type="button" data-paint-channel="${channel}" data-paint-color="${hex}" aria-label="${label} ${hex}" title="${hex}" aria-pressed="${chosen===hex}" style="--swatch:${hex}"></button>`).join('');
+  return `<fieldset class="paint-channel"><legend>${label}</legend><div class="channel-swatches">${swatches}</div>
+   <label class="paint-custom">Custom <input ${channel==='p'?'id="custom-paint"':`data-trim="${channel}"`} data-custom-channel="${channel}" type="color" aria-label="${label} paint" value="${chosen||factory}"></label></fieldset>`;
+ }).join('');
+ return `<div class="paint-panel"><fieldset class="livery-presets"><legend>Livery</legend><div class="paint-swatches">${presets}</div></fieldset>
+  ${channels}<div class="inline-help"><small>FREE · SAVED PER CHASSIS</small>${infoTip('plate paint','Factory restores the chassis finish. Choose a livery or tune each armor channel.')}</div></div>`;
 }
 let noiseBuffer=null,attackCameraEnabled=true;
 try{attackCameraEnabled=localStorage.getItem('iron-vow-attack-camera')!=='off'}catch{}
@@ -3238,7 +3268,7 @@ function refreshArmory(focus){
  $(focus)?.focus({preventScroll:true});
 }
 function bindWorkshop(){
- const buttons=[...document.querySelectorAll('[data-paint]')],custom=$('#custom-paint'),u=save.units[selected];
+ const u=save.units[selected];
  for(const button of document.querySelectorAll('[data-armory-class]'))button.onclick=()=>{
   armoryGroup=button.dataset.armoryClass;
   refreshArmory(`[data-armory-class="${armoryGroup}"]`);
@@ -3275,21 +3305,29 @@ function bindWorkshop(){
    $(`.lance-tabs [data-select="${selected}"]`)?.focus({preventScroll:true});
   }else if(FRAMES[frame].cost>save.credits)toast('Insufficient credits');
  };
- if(custom){
-  const mark=()=>buttons.forEach(button=>button.setAttribute('aria-pressed',String((u.paint||'')===button.dataset.paint)));
-  for(const button of buttons)button.onclick=()=>{
-   const color=button.dataset.paint;
-   if(color){u.paint=color;custom.value=color}else{delete u.paint;custom.value='#c6bd9f'}
-   mark();persist();drawWorkshopPreview();
-  };
-  custom.oninput=()=>{if(validPaint(custom.value)){u.paint=custom.value;mark();drawWorkshopPreview()}};
-  custom.onchange=()=>{if(validPaint(custom.value)){u.paint=custom.value;mark();persist();drawWorkshopPreview()}};
-  for(const input of document.querySelectorAll('[data-trim]')){
-   const update=()=>{if(validPaint(input.value)){(u.trim??={})[input.dataset.trim]=input.value;drawWorkshopPreview()}};
-   input.oninput=update;input.onchange=()=>{update();persist()};
+ const presets=[...document.querySelectorAll('[data-livery]')];
+ const swatches=[...document.querySelectorAll('[data-paint-channel]')];
+ const pickers=[...document.querySelectorAll('[data-custom-channel]')];
+ const showPaint=()=>{
+  for(const button of presets)button.setAttribute('aria-pressed',String(activeLivery(u,PAINT_PRESETS[button.dataset.livery])));
+  for(const button of swatches)button.setAttribute('aria-pressed',String(paintChannel(u,button.dataset.paintChannel)===button.dataset.paintColor));
+  for(const picker of pickers){
+   const channel=picker.dataset.customChannel;
+   picker.value=paintChannel(u,channel)??PAINT_CHANNELS.find(([key])=>key===channel)[2];
   }
-  const resetTrim=$('#reset-trim');
-  if(resetTrim)resetTrim.onclick=()=>{delete u.trim;persist();render()};
+  drawWorkshopPreview();
+ };
+ for(const button of presets)button.onclick=()=>{
+  const preset=PAINT_PRESETS[button.dataset.livery];
+  PAINT_CHANNELS.forEach(([channel],index)=>setPaintChannel(u,channel,preset[index+1]));
+  showPaint();persist();
+ };
+ for(const button of swatches)button.onclick=()=>{
+  setPaintChannel(u,button.dataset.paintChannel,button.dataset.paintColor);showPaint();persist();
+ };
+ for(const picker of pickers){
+  const update=()=>{if(validPaint(picker.value)){setPaintChannel(u,picker.dataset.customChannel,picker.value);showPaint();}};
+  picker.oninput=update;picker.onchange=()=>{update();persist();};
  }
  const rotate=$('#rotate-foundry');
  if(rotate)rotate.onclick=()=>window.IronVowWorkshop?.rotate();

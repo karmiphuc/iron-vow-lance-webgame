@@ -535,3 +535,13 @@ body[data-view="workshop"] #world-scene{z-index:3}
 }
 .workshop-chassis #paint-preview:active{cursor:grabbing}
 @media(max-width:760px){.workshop-chassis #paint-preview{height:clamp(260px,64vw,365px)}}
+
+
+.livery-presets,.paint-channel{min-width:0;margin:0 0 12px;padding:8px;border:1px solid var(--line)}
+.livery-presets legend,.paint-channel legend{padding:0 5px;color:var(--muted);font-size:11px}
+.paint-swatch .livery-colors{display:flex;width:25px;height:14px;border-radius:2px;overflow:hidden}
+.livery-colors i{flex:1;background:var(--swatch)}
+.channel-swatches{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-bottom:6px}
+.channel-swatches button{height:32px;padding:0;border:1px solid #aaa4;background:var(--swatch)}
+.channel-swatches button:hover:not(:disabled){background:var(--swatch);border-color:#ddd}
+.channel-swatches button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px #f1dcae;border-color:#101519}
