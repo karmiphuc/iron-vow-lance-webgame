@@ -11,6 +11,7 @@ const checkCicadaV2 = require('./browser/cicada-v2.cjs');
 const checkReaver = require('./browser/reaver.cjs');
 const checkVanguard = require('./browser/vanguard.cjs');
 const checkAero = require('./browser/aero.cjs');
+const checkLionTrial = require('./browser/lion-trial.cjs');
 const checkLineInfantry = require('./browser/line-infantry.cjs');
 const checkLineElite = require('./browser/line-elite.cjs');
 const checkInfantryCarry = require('./browser/infantry-carry.cjs');
@@ -53,6 +54,9 @@ async function main() {
   require('./check-rig-v2-test.cjs');
   const assets = path.join(__dirname, '../dist/rig-bench/rig-v2');
   const aero = checkAeroBudget(assets);
+  const lionFile = readGLB(path.join(assets, 'lion.glb'));
+  const lion = validate(lionFile);
+  if (!lion.ok) throw Error(lion.errors.join(', '));
   const gatecrasher = await previewRig({
     file: path.join(assets, 'gatecrasher-r2-reference.glb'),
     screenshot: path.join(directory, 'gatecrasher.webp'),
@@ -106,13 +110,15 @@ async function main() {
     capture(checkReaver),
     capture(checkVanguard),
     capture(checkAero),
+    capture(checkLionTrial),
     capture(checkLineInfantry),
     capture(checkLineElite),
     capture(checkInfantryCarry),
   ]);
-  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero, vehicles, live };
+  const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, aero,
+    lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) }, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
-  console.log('PASS Phase 3 checkpoint: live Gatecrasher, Cicada, Reaver, Gravemaw, Aero, Infantry, tank and gunship');
+  console.log('PASS Phase 3 checkpoint: live Gatecrasher, Cicada, Reaver, Gravemaw, Aero, Infantry, Lion trial, tank and gunship');
 }
 
 main().catch(error => {

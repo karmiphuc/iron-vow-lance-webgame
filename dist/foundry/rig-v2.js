@@ -6,7 +6,8 @@
 const T=root.THREE,R=root.IronVowFoundryRig,VC=root.VowChassis;
 const V3=R.V3,Q=()=>new T.Quaternion();
 const profiles=new Map(),assets=new Map();
-const applies=u=>!u.kind&&!u.lionTrial&&profiles.has(u.frame);
+const profileKey=u=>u.lionTrial?'lion':u.frame;
+const applies=u=>!u.kind&&profiles.has(profileKey(u));
 let generation=0;
 
 function releaseStock(source){
@@ -22,11 +23,11 @@ function releaseStock(source){
 function load(units){
  const current=generation;
  const loader=new T.GLTFLoader().setMeshoptDecoder(root.MeshoptDecoder);
- for(const frame of new Set(units.filter(applies).map(unit=>unit.frame))){
+ for(const frame of new Set(units.filter(applies).map(profileKey))){
   if(assets.has(frame))continue;
   const {id,assetPath}=profiles.get(frame),asset={status:'loading'};
   assets.set(frame,asset);
-  loader.loadAsync(root.IRON_VOW_INLINE_ASSETS?.[assetPath]||assetPath).then(({scene,parser})=>{
+  loader.loadAsync(root.IRON_VOW_INLINE_ASSETS?.[assetPath]||assetPath).then(({scene,parser,animations})=>{
    if(current!==generation){releaseStock(scene);return;}
    // The vendored renderer samples all color maps through the primary attribute.
    scene.traverse(mesh=>{
@@ -37,7 +38,7 @@ function load(units){
      mesh.geometry.setAttribute('uv',mesh.geometry.attributes.uv2);
     }
    });
-   asset.scene=scene;asset.status='ready';
+   asset.scene=scene;asset.animations=animations;asset.status='ready';
   }).catch(error=>{
    if(current!==generation)return;
    asset.status='error';console.warn(id+' rig-v2 load failed',error);
@@ -67,10 +68,10 @@ function cloneSkin(stock){
 }
 
 function build(unit){
- const stock=assets.get(unit.frame)?.scene;
- if(!stock)return null;
- const profile=profiles.get(unit.frame);
- const {source,skeletons}=cloneSkin(stock);
+ const key=profileKey(unit),asset=assets.get(key);
+ if(!asset?.scene)return null;
+ const profile=profiles.get(key);
+ const {source,skeletons}=cloneSkin(asset.scene);
  const body=new T.Group();
  body.name=profile.id+' rig v2';body.add(source);body.updateMatrixWorld(true);
  const nodes=new Map(),drivers=new Map();
@@ -143,7 +144,7 @@ function build(unit){
    toe:rest.quad?0:sign*dims.toe,phase:dims.phases[i],legA:hipPoint.distanceTo(kneePoint),legB:kneePoint.distanceTo(foot)});
  }
  const rig={pelvis,spine,neck,arms,legs,pistons:[],spinners:[]};
- const equipment=profile.setup({bone,find,driver,marker,bounds,rig});
+ const equipment=profile.setup({source,bone,find,driver,marker,bounds,rig,animations:asset.animations});
  const parts=Object.fromEntries(R.parts.map(part=>[part,[]])),materials=new Map();
  const boxes=new Map(['neck',...legSides.map(side=>'ankle.'+side),...(equipment.boundsNames||[])].map(name=>[bone(name),new T.Box3()]));
  function bounds(name){
@@ -228,6 +229,7 @@ function build(unit){
  mech.nativeV2={
   source,sync,bounds,pose:equipment.pose,shieldSocket:equipment.shieldSocket,
   jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
+  anchors:equipment.anchors,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){
    equipment.dispose?.();
    for(const skeleton of skeletons.values())skeleton.boneTexture?.dispose();
@@ -237,7 +239,7 @@ function build(unit){
 }
 
 function register(frame,profile){profiles.set(frame,profile);}
-root.IronVowRigV2={applies,register,load,build,clear,status:unit=>assets.get(unit.frame)?.status};
+root.IronVowRigV2={applies,register,load,build,clear,status:unit=>assets.get(profileKey(unit))?.status};
 
 register(3,{
  id:'gatecrasher',assetPath:'rig-bench/rig-v2/gatecrasher-r2-reference.glb',

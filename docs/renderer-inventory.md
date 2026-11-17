@@ -1,8 +1,27 @@
-# Renderer inventory — issue #6, Phase 0
+# Renderer inventory — issue #6
+
+## Phase 3 checkpoint
+
+The regenerated [file audit](renderer-inventory.json) covers all 21 frame IDs, the Lion trial, both vehicle GLBs and the shared arsenal. Its `rig_v2_gate` entries use the default-scene triangle and contract checks from `qa/check-rig-v2.cjs`. The [Phase 3 evidence](../design/phase3/README.md) records live behavior and the heaviest validated configurations.
+
+| Asset | Default-scene triangles | Sortie status |
+| --- | ---: | --- |
+| Gatecrasher R2 | 54,252 | Live. Up to 56,608 with Vesper and the Citadel shield. |
+| Cicada | 49,978 | Live. |
+| LI-01 | 49,790 | Live. |
+| LI-02 | 50,466 | Live. |
+| Gravemaw | 20,158 | Live. |
+| Reaver | 16,340 | Live. |
+| Aero | 52,798 | Live. The file includes all Relay melee variants; the heaviest equipped loadout is 59,592. |
+| Lion | 58,753 | Live in the trial with three authored strikes. |
+
+The rest of the roster still uses the earlier live kits, adapters or temporary billboards. The Citadel kit remains outside the GLB requirement.
+
+## Phase 0 baseline
 
 Baseline: GitHub `f264567f01d0501b11f40e1ffdc15a314f47993d` / Sites v98. References entered main through PR #5 (`2034d9b`). No presentation paths have been replaced or deleted in this phase.
 
-`renderer-inventory.json` is the reproducible file-level audit. Regenerate with `node qa/renderer-inventory.cjs docs/renderer-inventory.json`. It enumerates all 20 `FRAMES`, all 15 GLBs, mesh triangle counts, node names, paint material names, part tags, optional clips and missing root dimensions. These are static file facts; no GLB is certified as rig contract v2 by its presence. Triangle counts exclude node instancing and cannot stand in for `renderer.info`.
+`renderer-inventory.json` is the reproducible file-level audit. Regenerate with `node qa/renderer-inventory.cjs docs/renderer-inventory.json`. The tables below record the original baseline before live-scene migration.
 
 ## Chassis and runtime paths
 

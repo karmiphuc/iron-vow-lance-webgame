@@ -53,7 +53,11 @@ root.IronVowCombat={create(scene,api){
  }
  function landed(actor,target,w,contact,guard){
   api.sync(actor);api.sync(target);
-  const profile=profileFor(actor,w),part=guard?'shield':contact.part,p=point(target,part),back=point(actor,'body').sub(p).normalize();
+  const native=api.models.get(actor.id)?.entry?.m.nativeV2;
+  const tip=!guard&&native?.strikeContact?.(w.id);
+  if(tip)native.sync();
+  const profile=profileFor(actor,w),part=guard?'shield':contact.part;
+  const p=tip?tip.getWorldPosition(V3()):point(target,part),back=point(actor,'body').sub(p).normalize();
   effect.impact(p,back,profile.archetype);
   if(contact.before>0&&contact.after===0){fx.debris(p,low()?3:6,4);fx.smoke(p,3,1.7,0x817b73,.4,.7,1.3,.25);}
   log('impact',{actor:actor.id,target:target.id,weapon:w.id,index:contact.index,part:contact.part,shield:guard,point:p.toArray(),back:back.toArray(),planned:contact.amount,damage:contact.damage,before:contact.before,after:contact.after,actorAlive:actor.alive});

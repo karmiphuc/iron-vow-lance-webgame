@@ -10,11 +10,18 @@ const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[]
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
 const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){
- return !u.kind&&!u.lionTrial&&(LIVE.has(u.frame)||Boolean(battleRef?.units.includes(u)&&rigV2.applies(u)&&rigV2.status(u)!=='error'));
+ return !u.kind&&((!u.lionTrial&&LIVE.has(u.frame))||Boolean(battleRef?.units.includes(u)&&rigV2.applies(u)&&rigV2.status(u)!=='error'));
 }
 function world(x,z,y){
  const size=battle.size;
  return V3((x-(size.width-1)/2)*TILE,y??terrainHeight(x,z)*HEIGHT,(z-(size.depth-1)/2)*TILE);
+}
+function unitRoot(u){
+ const point=world(u.vx??u.x,u.vz??u.z);
+ // The fixed practice target sits near its tile's edge so the authored Lion
+ // strike reaches the target while the feet follow the original floor contacts.
+ if(battle.lionTrial&&!u.lionTrial&&rigV2.applies(battle.units[0])&&rigV2.status(battle.units[0])!=='error')point.add(V3(battle.units[0].melee==='cleaver'?-3.12:-3.55,0,-.92));
+ return point;
 }
 function groundAt(x,z){
  const fx=x/TILE+(battle.size.width-1)/2,fz=z/TILE+(battle.size.depth-1)/2,tx=Math.round(fx),tz=Math.round(fz);
@@ -105,11 +112,11 @@ function partPoint(unit,part='body'){
  if(!isLive(unit))return root.IronVowAdapterWeapons.attachment(unit,part)||root.IronVowBillboards.worldAttachment(unit,part);
  const entry=models.get(unit.id)?.entry,m=entry?.m;
  if(m?.rig){
-  const r=m.rig,node=part==='pilot'?r.neck:part==='right'?r.arms.R.el:part==='left'?r.arms.L.el:part==='legs'?r.legs[0].kn:r.spine;
+  const r=m.rig,node=m.nativeV2?.anchors?.[part]||(part==='pilot'?r.neck:part==='right'?r.arms.R.el:part==='left'?r.arms.L.el:part==='legs'?r.legs[0].kn:r.spine);
   const p=node.getWorldPosition(V3());if(part==='body')p.y+=1.2*(m.scale||1);return p;
  }
  const node=m?.anchors?.[part];if(node)return node.getWorldPosition(V3());
- return world(unit.vx??unit.x,unit.vz??unit.z).add(V3(0,part==='legs'?1:part==='pilot'?5.7:3.8,0));
+ return unitRoot(unit).add(V3(0,part==='legs'?1:part==='pilot'?5.7:3.8,0));
 }
 function attachmentPoint(unit,part='body',t=clock){
  if(!scene||battleRef!==battle)build();
@@ -120,7 +127,7 @@ function attachmentPoint(unit,part='body',t=clock){
  if(!m)return partPoint(unit,part);
  const mounts=root.IronVowFoundryRig.mountPoints(m),r=m.rig;
  const node=({body:r.spine,pilot:r.neck,right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,
-  ...mounts,muzzle:entry.primary?.muzzle||mounts.muzzle,muzzle2:entry.primary?.muzzle2||entry.primary?.muzzle||mounts.muzzle2,
+  ...m.nativeV2?.anchors,...mounts,muzzle:entry.primary?.muzzle||mounts.muzzle,muzzle2:entry.primary?.muzzle2||entry.primary?.muzzle||mounts.muzzle2,
   shoulderMuzzle:entry.shoulderWeapon?.muzzle||(entry.primarySocket?entry.primary?.muzzle:mounts.shoulderMuzzle),
   shoulderMuzzle2:entry.shoulderWeapon?.muzzle2||(entry.primarySocket?(entry.primary?.muzzle2||entry.primary?.muzzle):mounts.shoulderMuzzle2),
   meleeTip:entry.secondary?.tip,mortarMuzzle:m.mortar?.muzzle,shield:entry.shield?.face})[part];
@@ -131,7 +138,7 @@ function labelPoint(unit){
  const record=models.get(unit.id),m=record?.entry?.m;
  if(record?.vehicle)return projectWorld(attachmentPoint(unit,'body').add(V3(0,1.2,0)));
  if(!m){const p=root.IronVowBillboards.worldAttachment(unit,unit.kind?'body':'pilot');return projectWorld(p.addScaledVector(V3(0,1,0).applyQuaternion(camera.quaternion),.9));}
- const neck=m.rig.neck.getWorldPosition(V3());
+ const neck=(m.nativeV2?.anchors?.pilot||m.rig.neck).getWorldPosition(V3());
  return projectWorld(neck.add(V3(0,record.headHeight+.7,0)));
 }
 function updateCamera(t,dt){
@@ -144,7 +151,7 @@ function updateCamera(t,dt){
  const position=target.clone().add(V3(Math.sin(az)*Math.cos(el),Math.sin(el),Math.cos(az)*Math.cos(el)).multiplyScalar(distance));
  const shot=activeCinematic;
  if(shot&&!reducedMotion){
-  const actor=world(shot.actor.vx,shot.actor.vz),victim=partPoint(shot.target,shot.part),direction=victim.clone().sub(actor).setY(0).normalize(),side=V3(direction.z,0,-direction.x);
+  const actor=unitRoot(shot.actor),victim=partPoint(shot.target,shot.part),direction=victim.clone().sub(actor).setY(0).normalize(),side=V3(direction.z,0,-direction.x);
   target.copy(shot.phase==='result'?victim:victim.clone().lerp(actor,.12));
   position.copy(actor).addScaledVector(direction,-6.5).addScaledVector(side,3.4);position.y=actor.y+6;
  }
@@ -157,16 +164,16 @@ function goalFor(u){const goal=aimTargets.get(u.id);return goal?partPoint(goal.t
 function prepareUnit(u,t){
  let record=models.get(u.id),object;
  if(isLive(u)){
-  const pose=animationPose(u,hitstopTime(u,t)),p=world(u.vx,u.vz),goal=aimTargets.get(u.id),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
+  const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),goal=aimTargets.get(u.id),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
   if(airborne)p.y+=jumpjetHeight(u,t);
   const mortar=mortarCues.get(u.id);if(mortar){pose.mortarAge=t-mortar.at;if(pose.mortarAge>=2.1)mortarCues.delete(u.id);}
   const motion=u.motion,heading=motion?Math.atan2(motion.toX-motion.fromX,motion.toZ-motion.fromZ):(displayedHeading(u)+Math.PI/4);
   const speed=record?.previousPosition&&t>record.previousTime?p.distanceTo(record.previousPosition)/(t-record.previousTime):0;
   const aim=goal&&goal.target.alive?partPoint(goal.target,goal.part):p.clone().add(V3(Math.sin(heading)*20,4,Math.cos(heading)*20));
-  const targetRoot=goal?world(goal.target.vx,goal.target.vz):p.clone();
+  const targetRoot=goal?unitRoot(goal.target):p.clone();
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
-  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face:goal?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
+  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face:goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading,heading,aim,groundAt,speed};
   const custom=rigV2.applies(u)?'rig-v2':u.frame===0?'warden':u.frame===10?'bastion':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;
@@ -184,14 +191,14 @@ function prepareUnit(u,t){
  }
  if(object.parent!==units)units.add(object);record.object=object;
  if(!record.proxy){
-  const m=record.entry?.m,bounds=m?new T.Box3().setFromObject(m.cont):null,p=world(u.vx,u.vz);
+  const m=record.entry?.m,bounds=m?new T.Box3().setFromObject(m.cont):null,p=unitRoot(u);
   record.height=bounds?Math.max(2,bounds.max.y-p.y):u.kind?4:7.5;
   const headBounds=m&&(m.nativeV2?.bounds('neck')||new T.Box3().setFromObject(m.rig.neck));
-  record.headHeight=headBounds?Math.max(0,headBounds.max.y-m.rig.neck.getWorldPosition(V3()).y):0;
+  record.headHeight=headBounds?Math.max(0,headBounds.max.y-(m.nativeV2?.anchors?.pilot||m.rig.neck).getWorldPosition(V3()).y):0;
   record.proxy=new T.Mesh(new T.BoxGeometry(bounds?Math.max(2,bounds.max.x-bounds.min.x):3,record.height,bounds?Math.max(2,bounds.max.z-bounds.min.z):3),new T.MeshBasicMaterial({visible:false}));
   record.proxy.userData.unitId=u.id;units.add(record.proxy);
  }
- const p=world(u.vx,u.vz);record.proxy.position.copy(p).add(V3(0,record.height/2,0));record.proxy.visible=u.alive;record.proxy.updateMatrixWorld(true);
+ const p=unitRoot(u);record.proxy.position.copy(p).add(V3(0,record.height/2,0));record.proxy.visible=u.alive;record.proxy.updateMatrixWorld(true);
  if(record.vehicle){const bounds=record.vehicle.bounds.clone().applyMatrix4(object.matrixWorld);if(!record.billboardProxy){record.proxy.geometry.dispose();record.proxy.geometry=new T.BoxGeometry(1,1,1);record.billboardProxy=true;}bounds.getCenter(record.proxy.position);bounds.getSize(record.proxy.scale);record.proxy.updateMatrixWorld(true);}
  else if(!isLive(u))updateBillboardProxy(u,record);
 }
@@ -213,7 +220,7 @@ function updateOverlays(){
   if(color!==undefined){const c=new T.Color(color);for(const i of new Set(overlays.userData.indices[index]))colors.setXYZ(i,c.r,c.g,c.b);indices.push(...overlays.userData.indices[index]);}
  }
  colors.needsUpdate=true;overlays.geometry.setIndex(indices);
- for(const [ring,u] of [[selection,selectedUnit],[targetRing,battle.units.find(u=>u.alive&&u.id===lockedTarget)]]){ring.visible=Boolean(u);if(u)ring.position.copy(world(u.vx,u.vz)).add(V3(0,.04,0));}
+ for(const [ring,u] of [[selection,selectedUnit],[targetRing,battle.units.find(u=>u.alive&&u.id===lockedTarget)]]){ring.visible=Boolean(u);if(u)ring.position.copy(unitRoot(u)).add(V3(0,.04,0));}
  const spot=moveTap??hover,path=selectedUnit&&reach?.get(spot?.x+','+spot?.z)>0?route(selectedUnit,spot.x,spot.z):[];
  let previous=selectedUnit;
  pathGroup.children.forEach((mesh,i)=>{const tile=path[i];mesh.visible=Boolean(tile);if(!tile)return;

@@ -2102,7 +2102,7 @@ function startLionTrial(id){
  battle.log=['Training range ready. Select Strike, then tap the adjacent target.'];
  selected=0;action='strike';targetPart='body';effects=[];hover=null;lockedTarget=target.id;targetPanelOpen=false;
  focusBattleCamera(lion,true);
- lionMotionImages(id);
+ if(!window.IronVowRigV2?.applies(lion))lionMotionImages(id);
  render();
 }
 function occupied(x,z){return battle.units.some(u=>u.alive&&u.x===x&&u.z===z)}
@@ -2588,7 +2588,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const targetMotion=!window.IronVowScene?.isLive(t)&&targetAtlas?.destruction?readyNativeMotion(t,2400):null;
  const liveRigV2=window.IronVowRigV2?.applies(a)&&window.IronVowScene?.isLive(a);
  if(!liveRigV2&&(aeroStrike||!a.kind&&(FRAMES[a.frame].native||power)&&!reducedMotion))await readyNativeMotion(a);
- if(lionStrike){
+ if(lionStrike&&!liveRigV2){
   const missing=lionMotionImages(w.id).filter(image=>!imageReady(image)&&image.decode);
   if(missing.length)await Promise.race([Promise.allSettled(missing.map(image=>image.decode())),delay(1400)]);
  }

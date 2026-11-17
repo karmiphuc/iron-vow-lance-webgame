@@ -168,6 +168,14 @@
       "citadel-shield"
     ]
   },
+  "lion": {
+    "triangles": 58753,
+    "clips": [
+      "lion.cleaver",
+      "lion.hatchet",
+      "lion.breaker"
+    ]
+  },
   "vehicles": {
     "desktop": {
       "vehicles": [
@@ -244,6 +252,84 @@
         "geometries": 109
       },
       "checkVanguard": {
+        "planted": 34,
+        "launches": 24
+      },
+      "checkAero": {
+        "relay": {
+          "cleaver": 4,
+          "breaker": 2,
+          "piledriver": 2,
+          "blade": 2
+        },
+        "ranged": {
+          "rifle": 8,
+          "rail": 1
+        },
+        "jetBursts": 28,
+        "dodges": 2,
+        "planted": 68
+      },
+      "checkLionTrial": {
+        "cleaver": {
+          "poseError": 0.04099169528381584,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 0.00008419113733874271,
+          "contactGap": 0.1300021138933885,
+          "bodyIntersections": 0,
+          "damage": 35
+        },
+        "hatchet": {
+          "poseError": 0.044027681358058846,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 0.00008419113733874271,
+          "contactGap": 0.06287236909750998,
+          "bodyIntersections": 0,
+          "damage": 42
+        },
+        "breaker": {
+          "poseError": 0.042523399255164254,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 0.00008419113733874271,
+          "contactGap": 0.03037836187296832,
+          "bodyIntersections": 0,
+          "damage": 61
+        }
+      },
+      "checkLineInfantry": {
+        "launches": 16,
+        "worstAimDegrees": 8.537736462515939e-7,
+        "detachedPlates": 3
+      },
+      "checkLineElite": {
+        "launches": 16,
+        "worstAimDegrees": 0.0000012074182697257333,
+        "detachedPlates": 4
+      },
+      "checkInfantryCarry": {
+        "li-01": {
+          "traversals": 2,
+          "plantedPairs": 26
+        },
+        "li-02": {
+          "traversals": 2,
+          "plantedPairs": 31
+        }
+      }
+    },
+    "touch": {
+      "checkCicadaV2": {
+        "launches": 2,
+        "pulseBash": true,
+        "damage": true
+      },
+      "checkReaver": {
+        "planted": 24,
+        "dualReports": 6,
+        "rightOnlyReports": 6,
+        "geometries": 109
+      },
+      "checkVanguard": {
         "planted": 31,
         "launches": 24
       },
@@ -260,59 +346,33 @@
         },
         "jetBursts": 28,
         "dodges": 2,
-        "planted": 68
+        "planted": 50
       },
-      "checkLineInfantry": {
-        "launches": 16,
-        "worstAimDegrees": 8.537736462515939e-7,
-        "detachedPlates": 3
-      },
-      "checkLineElite": {
-        "launches": 16,
-        "worstAimDegrees": 0.0000012074182697257333,
-        "detachedPlates": 4
-      },
-      "checkInfantryCarry": {
-        "li-01": {
-          "traversals": 2,
-          "plantedPairs": 17
+      "checkLionTrial": {
+        "cleaver": {
+          "poseError": 0.04099169528381584,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 0.00008419113733874271,
+          "contactGap": 0.13006382615851556,
+          "bodyIntersections": 0,
+          "damage": 35
         },
-        "li-02": {
-          "traversals": 2,
-          "plantedPairs": 24
+        "hatchet": {
+          "poseError": 0.044027681358058846,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 0.00008419113733874271,
+          "contactGap": 0.06287236899811216,
+          "bodyIntersections": 0,
+          "damage": 42
+        },
+        "breaker": {
+          "poseError": 0.042523399255164254,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 0.00008419113733874271,
+          "contactGap": 0.030378362013527883,
+          "bodyIntersections": 0,
+          "damage": 61
         }
-      }
-    },
-    "touch": {
-      "checkCicadaV2": {
-        "launches": 2,
-        "pulseBash": true,
-        "damage": true
-      },
-      "checkReaver": {
-        "planted": 25,
-        "dualReports": 6,
-        "rightOnlyReports": 6,
-        "geometries": 109
-      },
-      "checkVanguard": {
-        "planted": 33,
-        "launches": 24
-      },
-      "checkAero": {
-        "relay": {
-          "cleaver": 4,
-          "breaker": 2,
-          "piledriver": 2,
-          "blade": 2
-        },
-        "ranged": {
-          "rifle": 8,
-          "rail": 1
-        },
-        "jetBursts": 28,
-        "dodges": 2,
-        "planted": 68
       },
       "checkLineInfantry": {
         "launches": 16,
@@ -327,11 +387,11 @@
       "checkInfantryCarry": {
         "li-01": {
           "traversals": 2,
-          "plantedPairs": 18
+          "plantedPairs": 14
         },
         "li-02": {
           "traversals": 2,
-          "plantedPairs": 32
+          "plantedPairs": 31
         }
       }
     }

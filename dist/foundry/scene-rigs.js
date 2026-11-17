@@ -201,13 +201,13 @@ function draw(u,t,pose,scope,model,custom){
  const step=!pose.reducedMotion&&Boolean(world?u.motion&&!world.airborne:paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;
- const melee=Boolean(pose.strikeKind), meleeAge=pose.strikeProgress<=.7
+ const melee=Boolean(pose.strikeKind),authoredStrike=v2?.authoredStrike?.(pose.strikeKind),meleeAge=pose.strikeProgress<=.7
   ?pose.strikeProgress/.7*MEL.hit:MEL.hit+(pose.strikeProgress-.7)/.3*(MEL.end-MEL.hit);
- const lunge=melee?lungeK(meleeAge)*1.25:0;
+ const lunge=melee&&!authoredStrike?lungeK(meleeAge)*1.25:0;
  const travel=step?(pose.phase-.5)*1.8:0;
  const pos=world?V3(world.x,0,world.z):paired?V3((u.vx-u.vz)*1.8*Math.SQRT1_2,0,(u.vx+u.vz)*1.8*Math.SQRT1_2):
   V3(Math.sin(face)*(lunge+travel),0,Math.cos(face)*(lunge+travel));
- if(world&&melee&&world.lungeLimit){const direction=world.targetRoot.clone().sub(pos).setY(0).normalize();pos.addScaledVector(direction,lungeK(meleeAge)*world.lungeLimit);}
+ if(world&&melee&&!authoredStrike&&world.lungeLimit){const direction=world.targetRoot.clone().sub(pos).setY(0).normalize();pos.addScaledVector(direction,lungeK(meleeAge)*world.lungeLimit);}
  if(paired&&!m.wasMoving)m.init=false;
  if(!world&&!step&&m.wasMoving){
   for(const L of m.legs){L.swing=false;L.settle=null;L.planted.sub(m.travelRoot??m.cont.position);L.foot.copy(L.planted)}
