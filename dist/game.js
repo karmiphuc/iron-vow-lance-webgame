@@ -352,13 +352,19 @@ function companyPort(career=save){
  const last=career.history.at(-1)?.name;
  return CONTRACTS.find(contract=>contract.name===last)?.id??'picket';
 }
-function travelTo(destination,from=companyPort(),expectedCost){
+function travelTo(destination,from=companyPort(),expectedCost,path=[from,destination]){
  if(battle||careerStale||(!careerDB&&!careerIsCurrent())||from!==companyPort())return false;
- const quote=overworld.travelQuote(from,destination,overworld.operatingRates(save));
+ if(!Array.isArray(path)||path[0]!==from||path.at(-1)!==destination)return false;
+ const quote=overworld.itineraryQuote(path,overworld.operatingRates(save),save.credits,save.overworld?.arrears??0);
  if(!quote||quote.total>save.credits||expectedCost!==undefined&&quote.total!==expectedCost||!Number.isSafeInteger(save.day+quote.days))return false;
+ const rest=overworld.travelRest(save,quote.days);
+ save.units=rest.units;
+ if(save.reserve)save.reserve=rest.reserve;
+ if(save.wounds)save.wounds=rest.wounds;
  save.credits-=quote.total;save.day+=quote.days;delete save.dispatch;
+ const {days,fuel,wages,ship,hulls,total}=quote;
  save.overworld={port:destination,arrears:save.overworld?.arrears??0,
-  lastExpense:{kind:'travel',day:save.day,destination,...quote,paid:quote.total,arrearsPaid:0}};
+  lastExpense:{kind:'travel',day:save.day,destination,days,fuel,wages,ship,hulls,total,paid:total,arrearsPaid:0}};
  persist();return true;
 }
 function settleSortieCosts(port){
@@ -379,11 +385,11 @@ const SHIP_DECK={
   {name:'Letters of Marque',cost:5300,wins:2,rep:20,perk:'+25% base contract pay total',detail:'Certified recovery rights give the company leverage at the bargaining table.'}
  ]},
  repair:{name:'Repair Deck',glyph:'wrench',tiers:[
-  {name:'Service Gantry',cost:2000,wins:1,rep:0,perk:'Parked hulls +12 integrity after wins · repairs −20%',detail:'Maintenance crews service hulls that stay aboard during a sortie.'},
-  {name:'Machine Shop',cost:4800,wins:2,rep:20,perk:'Parked +24 · deployed +8 after wins · repairs −30%',detail:'The fabrication line stages replacement armor before the recovery shuttle returns.'}
+  {name:'Service Gantry',cost:2000,wins:1,rep:0,perk:'Parked hulls +12 integrity per transit day or win · repairs −20%',detail:'Maintenance crews service hulls that stay aboard during a sortie.'},
+  {name:'Machine Shop',cost:4800,wins:2,rep:20,perk:'Transit and parked +24 · deployed +8 after wins · repairs −30%',detail:'The fabrication line stages replacement armor before the recovery shuttle returns.'}
  ]},
  crew:{name:'Crew Deck',glyph:'first-aid-kit',tiers:[
-  {name:'Medbay',cost:1900,wins:1,rep:0,perk:'Wounded pilots recover after 1 rested sortie',detail:'Incapacitated pilots start with 65% pilot HP until rested. Medbay halves the normal two-sortie rest.'},
+  {name:'Medbay',cost:1900,wins:1,rep:0,perk:'Wounded pilots recover after 1 rest day or sortie',detail:'Incapacitated pilots start with 65% pilot HP until rested. Medbay halves the normal two-sortie rest.'},
   {name:'Simulator Pods',cost:4000,wins:2,rep:20,perk:'Benched pilots +25 XP per win · field recovery',detail:'Reserves drill aboard ship. A wounded pilot also recovers after a sortie if they return conscious.'}
  ]}
 };
@@ -391,7 +397,7 @@ const shipLevel=(facility,career=save)=>career.ship?.levels?.[facility]??0;
 const woundDays=(id,career=save)=>career.wounds?.[id]??0;
 function woundLabel(id){
  const days=Math.ceil(woundDays(id)/(shipLevel('crew')?2:1));
- return days?'WOUNDED · '+days+' REST '+(days===1?'SORTIE':'SORTIES'):'';
+ return days?'WOUNDED · '+days+' REST '+(days===1?'DAY':'DAYS'):'';
 }
 function queueShipUpgrade(facility){
  if(battle||!Object.hasOwn(SHIP_DECK,facility)||save.ship?.project)return false;
@@ -695,7 +701,7 @@ let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'
 let armoryGroup='assault';
 let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
 let page=entryPage,selected=0,battle=null,action='move',effects=[],hover=null,clock=0,last=0,muted=false,audio=null,toastTimer,inspectOpen=false,lockedTarget=null,targetPanelOpen=false,modalReturnFocus=null;
-let moveTap=null,overworldSelection=null;
+let moveTap=null,overworldSelection=null,overworldRouteKey=null,overworldConfirmation=null,overworldDeparture=null;
 try{muted=localStorage.getItem('iron-vow-sound')==='off'}catch{}
 function pauseCareer(title,body){
  if(careerStale)return;
@@ -1599,41 +1605,75 @@ function paymentRange(contract){
  const low=contractPay(contract,1),high=contractPay(contract,3);
  return low===high?money(low):low.toLocaleString()+'–'+money(high);
 }
-function showOverworld(destination=companyPort()){
+function showOverworld(destination=companyPort(),routeKey=null){
  if(battle||careerStale)return;
- overworldSelection=destination;page='overworld';render();
+ overworldSelection=overworld.PORTS.some(port=>port.id===destination)?destination:companyPort();
+ overworldRouteKey=routeKey;overworldConfirmation=null;page='overworld';render();
 }
-function overworldPage(){
- const current=companyPort(),selected=overworldSelection??current;
- const index=CONTRACTS.findIndex(contract=>contract.id===selected),contract=CONTRACTS[index];
- const rates=overworld.operatingRates(save),quote=overworld.travelQuote(current,selected,rates);
- const seats=save.dispatch?.day===save.day?save.dispatch.sizes[index]:null;
- return window.IronVowOverworldView.render({ports:overworld.PORTS,routes:overworld.ROUTES,current,selected,quote,rates,
-  credits:save.credits,arrears:save.overworld?.arrears??0,lastExpense:save.overworld?.lastExpense,contract:contract.name,
-  payment:current===selected&&seats?money(contractPay(contract,seats)):paymentRange(contract)});
+function chartRouteOptions(from,destination){
+ const rates=overworld.operatingRates(save);
+ return overworld.routeOptions(from,destination).map(path=>{
+  const quote=overworld.itineraryQuote(path,rates,save.credits,save.overworld?.arrears??0);
+  const stop=overworld.PORTS.find(port=>port.id===path[1]);
+  return {...quote,key:path.join('>'),label:path.length===2?'Express':'Via '+stop.name.split(' ')[0]};
+ }).sort((a,b)=>a.days-b.days||a.total-b.total);
 }
+function chartData(){
+ const departure=overworldDeparture;
+ const current=departure?.from??companyPort(),selected=overworldSelection??current;
+ const routeOptions=chartRouteOptions(current,selected);
+ const planned=routeOptions.find(route=>route.key===overworldRouteKey)??routeOptions[0];
+ const quote=departure?.quote??planned??null;
+ const rest=quote?overworld.travelRest(save,departure?0:quote.days):{units:save.units,wounds:save.wounds??{}};
+ const readiness=save.units.map((unit,i)=>({name:FRAMES[pilotFrame(i)].name,pilot:pilotProfile(i).call,
+  before:departure?.before[i]??unit.condition,condition:rest.units[i].condition,wound:rest.wounds[pilotId(pilotClass(i))]??0}));
+ return {ports:overworld.PORTS,routes:overworld.ROUTES,current,selected,path:quote?.path??[],pathKey:quote?.path.join('>')??'',routeOptions,quote,
+  day:departure?.day??save.day,credits:save.credits,arrears:save.overworld?.arrears??0,readiness,
+  confirming:!!overworldConfirmation,departing:!!departure,departure,
+  sceneReady:window.IronVowChart?.snapshot().shipReady??false};
+}
+function chartQuoteKey(data){
+ return JSON.stringify([data.path,save.day,save.credits,save.overworld,save.units,save.reserve,save.wounds,overworld.operatingRates(save)]);
+}
+function overworldPage(){return window.IronVowOverworldView.render(chartData());}
 function bindOverworld(){
+ const data=chartData();
+ window.IronVowChart?.show($('#chart-viewport'),data,{selectPort:showOverworld,selectRoute:key=>showOverworld(overworldSelection,key)});
  for(const button of document.querySelectorAll('[data-overworld-port]'))button.onclick=()=>{
+  if(overworldDeparture)return;
   const id=button.dataset.overworldPort;
   showOverworld(id);$(`[data-overworld-port="${id}"]`)?.focus({preventScroll:true});
  };
+ for(const button of document.querySelectorAll('[data-overworld-route-option]'))button.onclick=()=>{
+  if(overworldDeparture)return;
+  showOverworld(overworldSelection,button.dataset.overworldRouteOption);
+  $(`[data-overworld-route-option="${button.dataset.overworldRouteOption}"]`)?.focus({preventScroll:true});
+ };
+ if($('[data-chart-reset]'))$('[data-chart-reset]').onclick=()=>window.IronVowChart?.reset();
+ const contracts=$('[data-chart-contracts]');
+ if(contracts)contracts.onclick=()=>{if(overworldDeparture)return;page='contracts';render();};
+ const cancel=$('[data-overworld-cancel]');
+ if(cancel)cancel.onclick=()=>{overworldConfirmation=null;render();$('[data-overworld-travel]')?.focus();};
  const travel=$('[data-overworld-travel]');
  if(travel)travel.onclick=()=>{
-  const from=companyPort(),destination=overworldSelection;
-  const quote=overworld.travelQuote(from,destination,overworld.operatingRates(save));
-  if(!quote||quote.total>save.credits||battle||careerStale)return;
-  modal('CONFIRM TRANSIT',`<p>${portName(from)} → ${portName(destination)} · ${quote.days} day${quote.days===1?'':'s'}</p>
-   ${stat('FUEL',money(quote.fuel))}${stat('CREW WAGES',money(quote.wages))}
-   ${stat('SHIP UPKEEP',money(quote.ship))}${stat('HULL UPKEEP',money(quote.hulls))}${stat('TOTAL',money(quote.total))}`,
-  [{text:'CANCEL',fn:closeModal},{text:'DEPART',fn:()=>{
-   if(!travelTo(destination,from,quote.total)){if(!careerStale){closeModal();render();toast('Transit is no longer available.')}return;}
-   closeModal();showOverworld(destination);toast('Docked at '+portName(destination)+'.');
-  }}]);
+  if(overworldDeparture||battle||careerStale)return;
+  const current=chartData();
+  if(!current.quote||current.quote.cashAfterArrival<0)return;
+  const key=chartQuoteKey(current);
+  if(!overworldConfirmation){overworldConfirmation=key;render();$('[data-overworld-confirm]')?.focus();return;}
+  if(overworldConfirmation!==key){overworldConfirmation=null;render();toast('Course updated. Review the forecast.');return;}
+  const day=save.day,before=save.units.map(unit=>unit.condition),quote=current.quote;
+  if(!travelTo(current.selected,current.current,quote.total,current.path)){
+   overworldConfirmation=null;render();toast('Transit is no longer available.');return;
+  }
+  overworldConfirmation=null;
+  overworldDeparture={from:current.current,path:current.path,quote,day,before,startedAt:performance.now(),duration:reducedMotion?200:1400};
+  render();
  };
 }
 function contractsPage(){
  const current=companyPort(),sizes=dispatchSizes(),rates=overworld.operatingRates(save);
- return `<div class="page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / ${portName(current)}</div><h1>CHOOSE YOUR BATTLE.</h1></div><button data-page="overworld">STAR MAP ${icon('arrow-right')}</button></div>
+ return `<div class="page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / ${portName(current)}</div><h1>CHOOSE YOUR BATTLE.</h1></div><button data-page="overworld">CHART TABLE ${icon('arrow-right')}</button></div>
   <div class="grid contract-grid">${CONTRACTS.map((contract,i)=>{
    const local=current===contract.id,size=sizes[i],payment=contractPay(contract,size);
    return `<article class="card"><div class="contract-map"><img src="${art('contract-'+FIELDS[contract.field].ground)}" alt="${['Rain-soaked mountain relay station','Industrial refinery corridor at dusk','Storm-lit frontier military outpost'][contract.field]}"><span class="contract-number">0${i+1}</span><span class="tag">${local?'DOCKED HERE':'REMOTE CONTRACT'}</span></div>
@@ -1651,8 +1691,8 @@ function shipPage(){
   return `<article class="ship-seat"><img ${chassisPicture(frame,hull)} alt="" width="60" height="60" loading="lazy"><div><small>SEAT 0${slot+1} · ${pilotProfile(slot).call}</small><b>${FRAMES[frame].name}</b></div></article>`;
  }).join('');
  return `<div class="page ship-page"><div class="ship-content">
-  <div class="ship-banner"><div><div class="eyebrow">MERCENARY CARRIER</div><h1>IVS HALYARD.</h1><p>Docked at ${portName(companyPort())} · ${money(overworld.operatingRates(save).total)} per day · ${save.rep} reputation</p></div>
-   <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button data-page="contracts">CONTRACTS</button><button class="primary" data-page="overworld">STAR MAP ${icon('arrow-right')}</button></div>
+  <div class="ship-banner"><div><div class="eyebrow">HEAVY-LIFT AIRSHIP</div><h1>IVS HALYARD.</h1><p>Docked at ${portName(companyPort())} · ${money(overworld.operatingRates(save).total)} per day · ${save.rep} reputation</p></div>
+   <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button data-page="contracts">CONTRACTS</button><button class="primary" data-page="overworld">CHART TABLE ${icon('arrow-right')}</button></div>
   </div>
   <section class="ship-queue" aria-label="Engineering queue"><div><span class="eyebrow">ENGINEERING QUEUE</span><h2>${queued?queued.name:'Bay available'}</h2></div>
    <div class="ship-progress"><span class="tag">${queued?project.wins+' WIN'+(project.wins===1?'':'S')+' LEFT':'0 / 1 PROJECTS'}</span>${queued?`<progress aria-label="Construction progress" max="${queued.wins}" value="${queued.wins-project.wins}"></progress>`:infoTip('Engineering queue','The ship can work on one project at a time. Fulfilled contracts advance construction.')}</div>
@@ -1826,6 +1866,7 @@ function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
  if(benchRig)return;
+  if(page!=='overworld'||battle){window.IronVowChart?.close();overworldDeparture=null;overworldConfirmation=null;}
   nav(); if(battle){window.IronVowWorkshop?.close();syncHangar();renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=unitWeapon({...u,frame}),training=trainingEffects(selected);
   const previewOpen=page==='workshop'&&workshopView==='assigned';
@@ -3518,7 +3559,7 @@ function draw(ts){
  window.IronVowPerformance?.begin(ts);
  const elapsed=Math.max(0,(ts-last)/1000||1/60),dt=Math.min(.05,elapsed);last=ts;clock+=elapsed;frameDt=dt;
  window.IronVowRenderer?.observeFrame(elapsed*1000);
- const mode=battle?'battle':page==='hangar'||page==='ship'?'hangar':page==='workshop'&&workshopView==='assigned'?'workshop':'static';
+ const mode=battle?'battle':page==='overworld'?'chart':page==='hangar'||page==='ship'?'hangar':page==='workshop'&&workshopView==='assigned'?'workshop':'static';
  if(mode!=='workshop'&&canvasMode==='workshop')window.IronVowWorkshop?.close();
  if(mode==='battle'||mode!==canvasMode){
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
@@ -3526,6 +3567,12 @@ function draw(ts){
  if(mode==='battle'){
   if(canvasMode!=='battle')syncHangar();
   battlefield(clock);if(activeCinematic)drawAttackCamera(clock);
+ }else if(mode==='chart'){
+  window.IronVowChart?.render(clock,dt,W,H,reducedMotion);
+  if(window.IronVowChart?.snapshot().shipReady){const status=$('.chart-load-status');if(status)status.textContent='';}
+  if(overworldDeparture&&performance.now()-overworldDeparture.startedAt>=overworldDeparture.duration){
+   overworldDeparture=null;render();toast('Moored at '+portName(companyPort())+'.');
+  }
  }else if(mode==='hangar')window.IronVowHangarRuntime?.render(clock,dt,canvas.getBoundingClientRect(),reducedMotion);
  else if(mode==='workshop')window.IronVowWorkshop?.paint(clock,dt,W,H,reducedMotion);
  else if(mode!==canvasMode)window.IronVowRenderer?.show(false);
