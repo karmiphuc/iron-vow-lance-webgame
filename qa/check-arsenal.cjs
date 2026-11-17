@@ -27,7 +27,7 @@ vm.createContext(context);
 const run=source=>vm.runInContext(source,context);
 const click=selector=>{const node=document.querySelector(selector);assert.ok(node&&!node.disabled,selector);node.click()};
 const ready=async condition=>{for(let i=0;i<100;i++){if(run(condition))return;await new Promise(resolve=>setTimeout(resolve,25))}assert.fail(condition)};
-for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js','theater-layouts.js','prototype-combat.js','scene/billboards.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
+for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js','theater-layouts.js','prototype-combat.js','scene/billboards.js','combat-simulation.js','game.js'])run(fs.readFileSync(path.join(dist,file),'utf8'));
 
 (async()=>{
  await ready('decodedArt.size===Object.keys(artImages).length');
