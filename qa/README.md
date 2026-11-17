@@ -55,7 +55,18 @@ Barrel aim is checked at actual firing beats using the physical muzzle axis and 
 `npm test --prefix qa` runs the simulation suites. New `qa/check-*.cjs` files are picked up automatically. `npm run test:browser --prefix qa` runs the local browser suite. Browser failures save a screenshot in the temporary directory. Set `IRON_VOW_QA_OUTPUT` when running the simulation alone to request native canvas captures in a separate folder.
 
 
-## Rig Bench War
+## Rig Bench and War
+
+The [Phase 6 acceptance criteria](https://github.com/karmiphuc/iron-vow-lance-webgame/issues/16) are exercised through the shared Workbench and production game board.
+
+| Area | Implementation and verification |
+| --- | --- |
+| Reference Bench | `/rig-bench/` opens the shared Workbench using the vendored Three.js. Workshop opens the selected chassis, Career opens the Bench directly, and the Bench links to War. |
+| Chassis and modules | The 21 campaign frames and Lion Trial appear in the roster. Kit frames mix leg, core and arm assemblies. Compatible authored bipeds combine separately animated upper and lower meshes at the source pelvis, preserving the lower rig's skin and IK. Reaver retains its own quadruped assembly. |
+| Controls | The gate checks all 34 catalog weapon entries, Vesper, both shields, three kit levels, material paint channels, per-part state and shield visibility, all cameras and the six-frame lineup, live specifications, per-foot IK and target markers. It also checks Warden rig lines, sound, hand/socket fit, weapon fire and strike contact. |
+| Authored clips | The shared clip scrubber opens the six Prototype Bay GLBs and the seven Warden clips. Bulwark and Scout browser checks verify the original grip, pose and attachment cues, and the Warden archive test compares all 10,790 sampled local transforms against the approved poses. |
+| Combat parity | The game and War use `dist/combat-simulation.js` for hit/damage calculations, volleys, reactions, enemy decisions and seeded command driving. War calls the game's move, attack and turn transactions. The VM and Chromium checks compare the same two real boards, including reactions, tank and gunship damage and career storage isolation. |
+| Diagnostics and soak | The desktop and touch gate validates all 19 War probes, event reporting, coverage matrices and clean final frame samples. The 10-battle gate completed 20 encounters across the two devices with seven allied wins and three enemy wins per device. The report counts observed coverage by matrix cell. |
 
 The Rig Bench War link opens a temporary encounter on the game board. Run War issues the game's legal move, attack and end-turn commands. The same runner drives `qa/war-driver.cjs`. Browser automation can use `window.__bench.newBattle(options)`, `step()`, `run()`, `runBattle(options)`, `state`, `eventLog()`, `runSoak(count, seed, options)`, `diagnostics()`, `inject(check, unit)` and `report()`. Soak rotates real theaters and checks loadouts through the same hull validation used by the campaign. The report includes chassis × weapon, legs × weapon and theater × chassis counts.
 
