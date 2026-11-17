@@ -1,6 +1,6 @@
 const motion = require('./authoring/warden/legacy-kinematics.cjs');
 const fs = require('node:fs');
-const vm = require('node:vm');
+const {createHash} = require('node:crypto');
 const path = require('node:path');
 const gaitFrames = 12;
 const kickLevels = [.22, .48, .8];
@@ -47,12 +47,11 @@ function attackSample(prime=1, recoil=0, elevation=.10, melee=null, leadSide='L'
 }
 
 function sampleStrikes(sampler=pose=>sample(0,0,0,0,0,pose)){
-  const bench=fs.readFileSync(path.join(__dirname,'../dist/rig-bench/index.html'),'utf8');
+  const keysFile=fs.readFileSync(path.join(__dirname,'authoring/warden/bench-strikes.json'));
+  if(createHash('sha256').update(keysFile).digest('hex')!=='80e54f241b46d8d3e61af3a9968a378aebb37a19c00560fc2f10f6318d39371e')throw Error('Approved Warden strike keys changed');
+  const bench=JSON.parse(keysFile);
   const idle={lsx:-.35,lsz:.18,lel:-1.15,lwr:.15,ty:0,tp:0,lunge:0};
-  return Object.fromEntries(['breaker','cleaver','piledriver'].map(id=>{
-    const block=bench.slice(bench.indexOf("id:'"+id+"'"));
-    const keys=vm.runInNewContext(block.match(/profile:\{keys:(.+),\n/)[1]);
-    const impact=Number(block.match(/impact:(\.[0-9]+)/)[1]);
+  return Object.fromEntries(Object.entries(bench).map(([id,{keys,impact}])=>{
     const end=keys.at(-1)[0];
     const selected=keys.slice(0,-1).map(([t,pose])=>({
       level:t<=impact?.7*t/impact:.7+.3*(t-impact)/(end-impact),

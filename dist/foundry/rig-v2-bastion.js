@@ -44,7 +44,7 @@ root.IronVowRigV2.register(10,{
     const nativeRifle=u.weapon==='rifle',nativeMissile=u.weapon==='missile',nativeBlade=blades.get(melee);
     rifleModel.visible=rifleMount.visible=right&&nativeRifle;
     rifleMount.position.copy(rifleRest).addScaledVector(rifleAxis,-Math.abs(pose.recoil||0)*.22);
-    rack.visible=right&&nativeMissile;
+    launcher.visible=rack.visible=right&&nativeMissile;
     rack.quaternion.copy(rackRest);
     for(const blade of blades.values())blade.model.visible=blade.mount.visible=left&&blade===nativeBlade;
     if(nativeBlade?.auger){

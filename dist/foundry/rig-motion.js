@@ -10,8 +10,8 @@ const wrapA=a=>((a+PI)%(2*PI)+2*PI)%(2*PI)-PI;
 const dampAngle=(a,b,k,dt)=>a+wrapA(b-a)*(1-Math.exp(-k*dt));
 function spr(s,k,d,dt){s.v+=(-k*s.x-d*s.v)*dt;s.x+=s.v*dt;}
 const VC=window.VowChassis;
-function makeMech(frame,team,upgrade,tag,paint){
-  return createMech(VC.build(frame,team,tag,paint),frame,team,upgrade);
+function makeMech(frame,team,upgrade,tag,paint,modules){
+  return createMech(VC.build(frame,team,tag,paint,modules),frame,team,upgrade);
 }
 function createMech(b,frame,team,upgrade){
   const cont=new T.Group();cont.rotation.order='YXZ';cont.add(b.root);const r=b.rig;
@@ -387,8 +387,8 @@ function palette(model,team,paint,trim){
  for(const part of ['s','a'])if(trim?.[part])color[part]=parseInt(trim[part].slice(1),16);
  return color;
 }
-function buildRig(model,team,paint,tag,upgrade,trim){
- return makeMech(model,team,upgrade,tag,palette(model,team,paint,trim));
+function buildRig(model,team,paint,tag,upgrade,trim,modules){
+ return makeMech(model,team,upgrade,tag,palette(modules?.core??model,team,paint,trim),modules);
 }
 function mountPoints(m){
  const r=m.rig;
