@@ -42,6 +42,8 @@ The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in 
 
 The sortie-exit assertion caught a cleanup call unavailable in the vendored Three.js. Cleanup now removes the instance from its parent before disposing shared geometry.
 
-See the [Phase 3 gate](../../docs/phase3-export-gate.md) for commands. Remaining chassis conversion and the final 30-seed campaign are pending. Native iPad performance is unverified.
+Remaining legacy art cleanup and the final 30-seed campaign are pending. Native iPad performance is unverified. See the [Phase 3 gate](../../docs/phase3-export-gate.md).
 
 The battlefield draws models only after their GLBs are ready. An injected tank load failure kept combat disabled and withdrawal available. On desktop and touch, restoring the actual WebGL context reloaded the rigs, drew the field again, and retained the exact sortie checkpoint. The 10×10 published checkpoint also reopened and accepted legal movement.
+
+Workshop assigned and market cards rendered live 640×640 rig portraits on desktop and touch. The checks verified that the market released its source GLBs after rendering and used a single WebGL context. Armory interactions passed on both device profiles. All 51 simulation suites passed, including the shared live gait, its audio cues, and the existing attack timings.

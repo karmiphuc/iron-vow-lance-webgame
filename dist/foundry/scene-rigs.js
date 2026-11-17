@@ -14,7 +14,7 @@ function clearPreviews(scope){
 let previewTarget,studioTarget;
 const arsenal=window.IronVowProductionArsenal,rigV2=window.IronVowRigV2;
 
-let armory,armoryRequested=false;
+let armory,armoryLoading;
 const clearCombat=()=>{for(const entry of combat.values()){entry.m.cont.parent?.remove(entry.m.cont);disposeEntry(entry);}combat.clear();clearPreviews('battle');};
 let combatScope;
 const studioLights=[[0xffe6bf,-5,7,5],[0x9fc9e0,6,5,-5]];
@@ -52,10 +52,9 @@ function init(){
   }
   scene.add(new T.HemisphereLight(C(0xd6e4eb),C(0x42434a),1.0));
   scene.environment=studioEnvironment(renderer);
-  if(arsenal&&!armoryRequested){
-   armoryRequested=true;
+  if(arsenal&&!armoryLoading){
    const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path.split('?')[0]]||path;
-   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),url('rig-bench/shields.glb'))
+   armoryLoading=arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),url('rig-bench/shields.glb'))
     .then(scene=>{armory=scene;clearPreviews();if(window.Event)window.dispatchEvent?.(new window.Event('rig-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
@@ -319,11 +318,20 @@ function requestPreview(unit){
  return status==='ready';
 }
 function metrics(){return window.IronVowRenderer.metrics();}
+function previewHealth(unit){
+ const max=unit.max||{body:100,pilot:100,right:100,left:100,legs:100};
+ const condition=unit.condition??100;
+ const hp=unit.hp||Object.fromEntries(parts.map(part=>[part,part==='pilot'?max[part]:max[part]*condition/100]));
+ return {hp,max};
+}
+function previewKey(u,scope,angle){
+ const {hp,max}=previewHealth(u);
+ return JSON.stringify([scope,u.frame,u.team||'ally',Boolean(u.lionTrial),u.paint,u.trim,u.weapon,u.melee,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
+}
 function preview(u,model,custom,angle=0,scope='preview'){
  if(rigV2?.applies(u))custom='rig-v2';
- if(custom==='rig-v2'&&!(scope==='battle'?rigV2.status(u)==='ready':requestPreview(u)))return null;
- const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
- const key=JSON.stringify([scope,u.frame,u.team,u.paint,u.trim,u.weapon,u.melee,u.shield,u.upgrade,hp,max,angle]);
+ if(custom==='rig-v2'&&!(scope==='preview'?requestPreview(u):rigV2.status(u,scope)==='ready'))return null;
+ const {hp,max}=previewHealth(u),key=previewKey(u,scope,angle);
  if(previews.has(key))return previews.get(key);
  const unit={...u,id:key,index:u.index||0,team:u.team||'ally',alive:true,hp,max};
  const pose={preview:true,previewScope:scope,heading:[-.68,.68,2.46,-2.46][angle]||-.68,reducedMotion:true,phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0};
@@ -331,10 +339,34 @@ function preview(u,model,custom,angle=0,scope='preview'){
  if(entry){entry.url=entry.surface.toDataURL('image/png');if(previews.size>16){const [first,value]=previews.entries().next().value;disposeEntry(value);previews.delete(first);}}
  return entry;
 }
+
+const portraitImages=new Map(),portraitPending=new Set();
+let portraitQueue=Promise.resolve();
+function portrait(unit,model,angle=0){
+ const key=encodeURIComponent(previewKey(unit,'portrait',angle));
+ const url=portraitImages.get(key);
+ if(url||portraitPending.has(key))return {key,url};
+ portraitPending.add(key);
+ // Keep at most one catalog rig resident, even when the market opens many cards.
+ portraitQueue=portraitQueue.then(()=>new Promise(done=>requestAnimationFrame(done))).then(async()=>{
+  if(!init()||window.IronVowRenderer.lost)return;
+  await armoryLoading;
+  if(rigV2.applies(unit)&&!(await rigV2.load([unit],'portrait'))[0])return;
+  if(window.IronVowRenderer.lost)return;
+  const image=preview(unit,model,undefined,angle,'portrait')?.url;
+  if(!image)return;
+  portraitImages.set(key,image);
+  if(portraitImages.size>48)portraitImages.delete(portraitImages.keys().next().value);
+  window.dispatchEvent(new CustomEvent('rig-portrait-ready',{detail:{key,url:image}}));
+ }).catch(error=>console.warn('Mech portrait unavailable',error)).finally(()=>{
+  clearPreviews('portrait');rigV2.clear('portrait');portraitPending.delete(key);
+ });
+ return {key};
+}
 function previewAnimated(u,t,pose,model,custom,angle=0){
  if(rigV2?.applies(u)){custom='rig-v2';if(!requestPreview(u))return null;}
  const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
  return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,previewScope:'preview',heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
 }
-window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),previewAnimated:withFallback(previewAnimated),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
+window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
 })();

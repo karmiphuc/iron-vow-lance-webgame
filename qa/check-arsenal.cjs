@@ -45,21 +45,21 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
   }
  }
  assert.equal(listed.size,24);
- click('[data-paint="#577eac"]');await ready("decoded.has('assets/warden-chassis-left-paint.webp')");
+ click('[data-paint="#577eac"]');
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).units[0].paint"),'#577eac');
- assert.ok(run("paintedImages.has('warden-chassis-left#577eac')"));
+ assert.equal(decoded.has('assets/warden-chassis-left-paint.webp'),false,'Paint changes use the live preview');
  tab('assault');click('[data-equip="hailstorm"]');tab('melee');click('[data-equip="cleaver"]');
  assert.equal(run("save.units[0].weapon+' '+save.units[0].melee"),'hailstorm cleaver');
  click('[data-select="1"]');assert.equal(run('save.units[1].paint'),undefined);
  const custom=document.querySelector('#custom-paint');custom.value='#335544';custom.oninput();custom.onchange();
  assert.equal(run('save.units[1].paint'),'#335544');
- click('[data-select="2"]');assert.ok(run("wardenVisual(selected,'missile',-1).podR"));
+ click('[data-select="2"]');
  run('save.credits=20000;render()');
  for(const id of ['breaker','piledriver'])click('[data-equip="'+id+'"]');
  tab('strike');click('[data-equip="rampart"]');
  click('#remove-melee');assert.equal(run('save.units[2].melee'),undefined);
  run("createBattle(0,false,true);selected=0;action='move';renderBattle();Math.random=()=>0");
- assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>HOSTILE_LIVERIES.some(([p,s])=>u.paint===p&&u.trim.s===s)&&activeWardenVisual(u).modular)"));
+ assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>HOSTILE_LIVERIES.some(([p,s])=>u.paint===p&&u.trim.s===s))"));
  click('#strike');assert.equal(run('action'),'strike');
  run('persist()');
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).sortie.action"),'strike');
@@ -72,29 +72,15 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
     effects.slice(effectStart).some(effect=>effect.type==='shot'&&effect.kind===w.id);
   })()`),id);
  }
- // Piledriver extension now uses the real 3D spike; check-production-weapons covers it.
- assert.ok(run("arsenal.chassis.every(views=>Object.values(views).every(v=>MELEE.every(w=>v.motion[w.id==='blade'?'cleaver':weaponMotion(w.id)].some(p=>p.level===.7))))"));
- for(const [frame,views] of JSON.parse(run('JSON.stringify(arsenal.chassis)')).entries()){
-  if(frame===0)continue; // Warden's sprite assertions are replaced by actual-bone checks.
-  for(const [view,visual] of Object.entries(views)){
-   const {attackMotion:atlas}=visual;
-   const {prime,aim,kick,breaker,cleaver,piledriver}=atlas;
-   assert.equal(prime.length,9);
-   for(const suffix of ['', '-paint'])assert.ok(fs.existsSync(path.join(dist,'assets',atlas.key+suffix+'.webp')));
-   const start=prime[0],plant=prime.at(-1);
-   assert.ok((plant.leadFoot[0]-start.leadFoot[0])*(view==='right'?1:-1)>.04,atlas.key);
-   assert.ok(Math.min(...prime.map(f=>f.leadFoot[1]))<Math.min(start.leadFoot[1],plant.leadFoot[1])-.03,atlas.key);
-   for(const f of [...prime,...aim,...kick,...breaker,...cleaver,...piledriver])assert.deepEqual(f.rearFoot,start.rearFoot,atlas.key);
-   for(const f of [...aim,...kick,...breaker,...cleaver,...piledriver])assert.deepEqual(f.leadFoot,plant.leadFoot,atlas.key);
-   assert.ok([breaker,cleaver,piledriver].every(m=>m.some(f=>f.level===.7)),atlas.key);
-   run(`selected=${frame};current().face=${view==='right'?1:-1};current().attack={kind:'rifle',start:0,primeDuration:.60};drawUnitBody(current(),.3)`);
-   await ready(`decoded.has('assets/${atlas.key}.webp')`);
-   assert.equal(run("wardenMotionFrame(current(),activeWardenVisual(current()),animationPose(current(),.3)).frame.level"),.5);
-   run("current().attack.fireAt=.9;current().attack.releaseAt=1.1");
-   assert.equal(run("animationPose(current(),1.25).primePhase"),'planted');
-   assert.equal(run("animationPose(current(),1.6).primePhase"),'return');
-   run("current().attack=null");
-  }
+ // The live rig uses these shared phase boundaries for the prime and return.
+ for(const frame of [0,1,2]){
+  run(`selected=${frame};current().attack={kind:'rifle',start:0,primeDuration:.60}`);
+  assert.equal(run("animationPose(current(),.3).primePhase"),'step');
+  assert.equal(run("animationPose(current(),.3).primeProgress"),.5);
+  run("current().attack.fireAt=.9;current().attack.releaseAt=1.1");
+  assert.equal(run("animationPose(current(),1.25).primePhase"),'planted');
+  assert.equal(run("animationPose(current(),1.6).primePhase"),'return');
+  run("current().attack=null");
  }
  for(const [index,name] of ['relay','corridor','frontier'].entries()){
   run(`effects=[];createBattle(${index+1});fieldCamera.overview=true;action='move'`);
@@ -105,5 +91,5 @@ for(const file of ['warden-visuals.js','arsenal-visuals.js','armory-visuals.js',
    return !paths(current()).has(key)&&inCover({x:x-1,z});
   })`));
  }
- console.log('PASS: remaining billboard attack atlases, 24 classified weapon previews, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and three theater rules with cover and pathing.');
+ console.log('PASS: live attack phase timing, 24 classified weapon options, chassis paint and hostile liveries, independent loadouts, strike saves, attack AP/damage, Piledriver extension, and three theater rules with cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});

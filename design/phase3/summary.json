@@ -559,5 +559,16 @@
       "hull": 44436,
       "equippedWithUpgrades": 54244
     }
+  },
+  "livePortraits": {
+    "desktop": {
+      "checkLivePortraits": "passed",
+      "checkArmory": "passed"
+    },
+    "touch": {
+      "checkLivePortraits": "passed",
+      "checkArmory": "passed"
+    },
+    "simulationSuitesPassed": 51
   }
 }

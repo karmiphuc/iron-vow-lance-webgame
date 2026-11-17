@@ -8,10 +8,10 @@ const assert=require('node:assert/strict'),create=require('./sim-harness.cjs');
  assert.ok(sim.run('current().turning&&displayedHeading(current())===headingTo(0,-1)'));
  assert.equal(sim.run('current().motion'),undefined);
  sim.run(`clock=${scheduled[0].ms/1000}`);scheduled[0].fn();await sim.flush();
- assert.equal(scheduled[1].ms,310);assert.equal(sim.run('current().ap'),8);
+ assert.equal(scheduled[1].ms,623,'A live Warden tile uses its two-step travel timing');assert.equal(sim.run('current().ap'),8);
  assert.equal(sim.run('current().heading'),sim.run('headingTo(0,-1)'));
- sim.run('advanceUnitAnimation(current(),clock+.155,1/60)');assert.ok(Math.abs(sim.run('current().vz')-7.5)<1e-8);assert.equal(sim.run('current().motion.fromZ'),8);
- sim.run('clock+=.31');scheduled[1].fn();await movement;assert.equal(sim.run('current().motion'),null);assert.equal(sim.run('current().vz'),7);assert.equal(sim.run('current().walkCount'),1);assert.equal(sim.run("effects.at(-1).type"),'step');
+ sim.run('advanceUnitAnimation(current(),clock+.623/2,1/60)');assert.ok(Math.abs(sim.run('current().vz')-7.5)<1e-8);assert.equal(sim.run('current().motion.fromZ'),8);
+ sim.run('clock+=.623');scheduled[1].fn();await movement;assert.equal(sim.run('current().motion'),null);assert.equal(sim.run('current().vz'),7);assert.equal(sim.run('current().walkCount'),1);assert.equal(sim.run("effects.filter(e=>e.type==='step').length"),2);
  for(const fps of[30,60,144]){sim.run('current().motion={fromX:1,fromZ:7,toX:2,toZ:7,start:0,duration:.31,gaitBase:0,stepIndex:0,totalSteps:1}');for(let f=0;f<=Math.ceil(fps*.31);f++)sim.run(`advanceUnitAnimation(current(),${Math.min(.31,f/fps)},${1/fps})`);assert.equal(sim.run('current().vx'),2);assert.equal(sim.run('current().vz'),7)}
  sim.run("current().motion=null;current().fireTime=0;current().weapon='rail';current().brace=false;current().braceBlend=0");
  assert.ok(sim.run('Math.abs(animationPose(current(),.04).recoil)')>.1);assert.equal(sim.run('animationPose(current(),1).recoil'),0);
