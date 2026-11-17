@@ -117,18 +117,10 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,vehicleLoadi
     const withoutGPU=fn=>function(...args){const r=IronVowRenderer.get(),render=r.render,read=r.readRenderTargetPixels;r.render=(scene,camera)=>{scene.updateMatrixWorld();camera.updateMatrixWorld();};r.readRenderTargetPixels=()=>{};try{return fn.apply(this,args);}finally{r.render=render;r.readRenderTargetPixels=read;}};
     for(const name of ['IronVowScene','IronVowFoundry'])Object.defineProperty(window,name,{configurable:true,set(api){if(name==='IronVowScene'){const render=api.render;let first=true;api.render=function(...args){if(first){first=false;return render.apply(this,args);}return withoutGPU(render).apply(this,args);};}else for(const method of ['preview','previewAnimated'])api[method]=withoutGPU(api[method]);Object.defineProperty(window,name,{value:api,writable:true,configurable:true});}});
    });
-   const benchCPU=Boolean(process.env.IRON_VOW_SOFTWARE_QA&&['checkWardenRigBench','checkBulwarkBench','checkScoutBench'].includes(scenario.name));
-   if(benchCPU)await context.route('**/rig-bench/vendor/three.min.js',async route=>{
-    const response=await route.fetch(),script=await response.text();
-    // Rig Bench assertions inspect actual input, animation and socket matrices.
-    // Submit one real frame after the painted rig loads; omit later unobserved
-    // main-canvas draws while preserving the same matrix updates and RAF clock.
-    const shim=`;(()=>{const Native=THREE.WebGLRenderer;THREE.WebGLRenderer=new Proxy(Native,{construct(Type,args){const renderer=new Type(...args),render=renderer.render;let paintedFrame=false;renderer.render=function(scene,camera){if(!paintedFrame&&(document.body.dataset.rigModel==='painted'||document.querySelector('#status')?.textContent==='Live 3D · Rig online')){paintedFrame=true;window.__qaPaintedBenchFrame=true;return render.apply(this,arguments);}scene.updateMatrixWorld();camera.updateMatrixWorld();};return renderer;}});})();`;
-    await route.fulfill({response,body:script+shim});
-   });
-   const page=await context.newPage(),errors=[];
+   const page=await context.newPage(),errors=[],consoleErrors=[];
    page.setDefaultTimeout(timeout);
    page.on('pageerror',e=>errors.push(e.message));
+   page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
    page.on('response',res=>{
     if(res.status()>=400&&new URL(res.url()).origin===url.origin)errors.push(res.status()+' '+res.url());
    });
@@ -136,14 +128,14 @@ async function checkBrowser(origin,scenarios=[sharedScene,livePaint,vehicleLoadi
    try{
     console.log('START '+label);
     await scenario({context,page,mobile,origin:url.href,tap});
-    if(benchCPU)assert.equal(await page.evaluate(()=>window.__qaPaintedBenchFrame),true,'Ready bench rendered a real GPU frame');
     assert.deepEqual(errors,[],'browser and asset errors');
-    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'passed',renderPolicy:benchCPU?'Bench input/animation/socket correctness; one real ready-rig frame per page submitted, unobserved main-canvas draws omitted while matrices update.':cpuFlow?'UI/rules/sheet correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.':'Full GPU rendering'});
+    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'passed',renderPolicy:cpuFlow?'UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.':'Full GPU rendering'});
     console.log('PASS '+label);
     break;
    }catch(error){
-    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'failed',error:error.message,assetErrors:errors});
+    report.checks.push({name:scenario.name,device:mobile?'touch':'desktop',attempt:attempt+1,status:'failed',error:error.message,assetErrors:errors,consoleErrors});
     console.error(label+' failed: '+error.stack);
+    if(consoleErrors.length)console.error('Browser console errors: '+consoleErrors.join('\n'));
     const capture=join(mkdtempSync(join(tmpdir(),'iron-vow-qa-')),'failure.png');
     try{await page.screenshot({path:capture,timeout:3000});console.error('Browser failure screenshot '+capture)}catch{}
     if(attempt<attempts-1)console.error('RETRY '+label+' ('+(attempt+1)+'/'+(attempts-1)+'): '+error.message);
