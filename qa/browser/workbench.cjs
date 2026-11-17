@@ -1,0 +1,48 @@
+const assert=require('node:assert/strict');
+module.exports=async function checkRigWorkbench({page,origin,mobile}){
+ await page.goto(new URL('rig-bench/',origin).href,{waitUntil:'domcontentloaded'});
+ await page.locator('a[href="../?bench=rig"]').click();
+ await page.waitForURL('**/?bench=rig');
+ await page.waitForFunction(()=>window.__bench?.state?.metrics);
+ const entries=await page.locator('#bench-frame option').evaluateAll(nodes=>nodes.map(node=>[node.value,node.text]));
+ assert.equal(entries.length,22);
+ const models=[];
+ for(const [id,name] of entries){
+  await page.evaluate(id=>__bench.selectFrame(id),id);
+  await page.waitForFunction(id=>__bench.state.frame.toString()===id&&__bench.state.loaded&&__bench.state.metrics?.triangles,id,{timeout:25000});
+  const state=await page.evaluate(()=>__bench.state);
+  assert.ok(state.metrics.height>1&&state.metrics.feet.every(foot=>Number.isFinite(foot.error)),name);
+  models.push(state.model);
+ }
+ assert.equal(new Set(models).size,22);
+ await page.evaluate(()=>__bench.selectFrame(10));
+ await page.waitForFunction(()=>__bench.state.clips.length===6);
+ await page.evaluate(()=>__bench.setClip('Walk',0));
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(resolve)));
+ const before=await page.evaluate(()=>__bench.state.authoredAnkles);
+ assert.ok(before.every(position=>position?.every(Number.isFinite)));
+ await page.evaluate(()=>__bench.setClip('Walk',1.1));
+ await page.waitForFunction(before=>__bench.state.authoredAnkles.some((p,i)=>Math.hypot(...p.map((v,j)=>v-before[i][j]))>.01),before);
+ await page.evaluate(()=>__bench.setClip(''));
+ await page.locator('#bench-primary').selectOption('parallax');
+ await page.waitForFunction(()=>__bench.state.weapon==='parallax');
+ await page.locator('#bench-melee').selectOption('pike');
+ await page.waitForFunction(()=>__bench.state.melee==='pike');
+ await page.locator('#bench-shield').selectOption('citadel-shield');
+ await page.waitForFunction(()=>__bench.state.shield&&!__bench.state.melee);
+ await page.locator('details').filter({hasText:'Damage'}).locator('summary').click();
+ await page.locator('#bench-part-left').selectOption('0');
+ assert.equal(await page.evaluate(()=>__bench.state.health.left),0);
+ await page.locator('details').filter({hasText:'Paint'}).locator('summary').click();
+ await page.locator('#bench-paint-0').fill('#507f9b');
+ assert.equal(await page.evaluate(()=>__bench.state.paint.p),'#507f9b');
+ await page.evaluate(()=>__bench.selectFrame(5));
+ await page.locator('details').filter({hasText:'Modules'}).locator('summary').click();
+ const other=await page.locator('#bench-legs option').evaluateAll(nodes=>nodes.find(n=>n.value!==n.parentElement.value).value);
+ await page.locator('#bench-legs').selectOption(other);
+ await page.waitForFunction(other=>__bench.state.metrics?.mods.legs===Number(other),other);
+ await page.evaluate(()=>__bench.setView('lineup'));
+ await page.waitForFunction(()=>__bench.state.loaded===6);
+ assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
+ console.log(`PASS ${mobile?'touch':'desktop'} Bench roster, native clip, loadout, paint, damage, mixed legs and six-rig lineup`);
+};

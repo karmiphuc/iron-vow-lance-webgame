@@ -638,17 +638,18 @@ function seatPilot(i,id){
 const CAREER_STORAGE='iron-vow-career';
 const PENDING_CAREER_STORAGE=CAREER_STORAGE+'-pending';
 const LION_TRIAL_WEAPONS=['cleaver','hatchet','breaker'];
+const benchRig=/(?:^|[?&])bench=rig(?:&|$)/.test(window.location?.search??'');
 const benchWar=/(?:^|[?&])bench=war(?:&|$)/.test(window.location?.search??'');
 const lionTrial=/(?:^|[?&])lion=(cleaver|hatchet|breaker)(?:&|$)/.exec(window.location?.search??'')?.[1];
 let save,storedCareer=null,careerStale=false,careerDB=null,databaseCareer;
 let pendingCareerWrite=Promise.resolve();
 const queuedCareerWrites=[];
-if(!benchWar)try{storedCareer=localStorage.getItem(CAREER_STORAGE)}catch{}
+if(!benchWar&&!benchRig)try{storedCareer=localStorage.getItem(CAREER_STORAGE)}catch{}
 function loadStoredCareer(raw){
  try{save=loadCareer(JSON.parse(raw))??fresh()}catch{save=fresh()}
  save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
 }
-if(lionTrial||benchWar)save=fresh();
+if(lionTrial||benchWar||benchRig)save=fresh();
 else loadStoredCareer(storedCareer);
 const entryPage={'?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'ship';
 let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'base';
@@ -752,7 +753,7 @@ async function restorePendingCareer(){
  if(!careerStale&&databaseCareer===raw)loadStoredCareer(raw);
 }
 function persist(enemyPending=false){
- if(lionTrial||benchWar)return;
+ if(lionTrial||benchWar||benchRig)return;
  const warn=()=>toast('Storage unavailable. Keep this tab open to retain your career.');
  try{
   if(careerStale||!careerDB&&!careerIsCurrent())return;
@@ -1730,6 +1731,7 @@ function targetPortraitKey(target){
 function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['ship','hangar','contracts','inn','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p==='inn'?'INN':p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
+ if(benchRig)return;
   nav(); $('#hangar-art').style.objectPosition=['28% center','62% center','95% center'][selected]; if(battle){renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=unitWeapon({...u,frame}),training=trainingEffects(selected);
   const previewOpen=page==='workshop'&&workshopView==='assigned'||page==='hangar'&&hangarDeck==='mechs';
@@ -3864,14 +3866,14 @@ function startGame(){
  });
  window.addEventListener('pageshow',event=>{if(event.persisted)checkExternalCareer()});
 }
-if(window.indexedDB&&!lionTrial&&!benchWar){
+if(window.indexedDB&&!lionTrial&&!benchWar&&!benchRig){
  void openCareerDB().then(async db=>{
   databaseCareer=await readCareerDB(db);
   careerDB=db;
   if(databaseCareer!==undefined)loadStoredCareer(databaseCareer);
   await restorePendingCareer();
  }).then(startGame,()=>pauseCareer('CAREER STORAGE UNAVAILABLE','<p>The saved career could not be opened. Reload to retry before continuing.</p>'));
-}else if(!benchWar)startGame();
+}else if(!benchWar&&!benchRig)startGame();
 
 // Deterministic test seam: commands call the real game operations and snapshots read actual scene bones.
 window.__ironVow=(()=>{
@@ -3944,4 +3946,17 @@ if(benchWar){
  });
  window.__bench.newBattle({seed:42});
  requestAnimationFrame(draw);
+}
+
+
+if(benchRig){
+ const frames=FRAMES.map((frame,id)=>({
+  id,frame:id,name:frame.name,model:frame.foundry,
+  mix:frame.foundry!=null&&!window.IronVowRigV2.applies({frame:id}),
+  stock:stockHull(id),fixed:Boolean(frame.fixedWeapons||id===VANGUARD_FRAME||id===HELLBREAKER||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
+  melees:id===AERO_FRAME?AERO_MELEE:undefined,
+  shield:canFitShield(id),pod:breachLoadout(id)
+ }));
+ frames.push({id:'lion',frame:0,lionTrial:true,name:'LION',fixed:true,stock:{weapon:'rifle',melee:'cleaver',upgrade:0},melees:LION_TRIAL_WEAPONS});
+ window.IronVowBench.mount({frames,weapons:WEAPONS,shields:SHIELDS,attackProfile,weaponRigPose});
 }

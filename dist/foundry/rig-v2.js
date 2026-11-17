@@ -5,7 +5,7 @@
 'use strict';
 const T=root.THREE,R=root.IronVowFoundryRig,VC=root.VowChassis;
 const V3=R.V3,Q=()=>new T.Quaternion();
-const profiles=new Map(),assets={battle:new Map(),preview:new Map()};
+const profiles=new Map(),assets={battle:new Map(),preview:new Map(),bench:new Map()};
 const profileKey=u=>u.lionTrial?'lion':u.frame;
 const applies=u=>!u.kind&&profiles.has(profileKey(u));
 
@@ -96,6 +96,10 @@ function build(unit,scope='battle'){
  if(!asset?.scene)return null;
  const profile=profiles.get(key);
  const {source,skeletons}=cloneSkin(asset.scene);
+ const clipBind=[];
+ if(scope==='bench'&&asset.animations.length)source.traverse(node=>{
+  clipBind.push([node,node.position.clone(),node.quaternion.clone(),node.scale.clone()]);
+ });
  const body=new T.Group();
  body.name=profile.id+' rig v2';body.add(source);body.updateMatrixWorld(true);
  const nodes=new Map(),drivers=new Map();
@@ -262,12 +266,31 @@ function build(unit,scope='battle'){
   equipment.afterSync?.();
   source.updateMatrixWorld(true);
  }
+ let scrubber;
+ function scrub(name,time){
+  if(!clipBind.length)return;
+  const clip=asset.animations.find(candidate=>candidate.name===name);
+  if(!clip){
+   if(!scrubber)return;
+   scrubber.stopAllAction();scrubber.uncacheRoot(source);scrubber=null;
+   return;
+  }
+  scrubber??=new T.AnimationMixer(source);
+  scrubber.stopAllAction();
+  for(const [node,position,rotation,scale] of clipBind){
+   node.position.copy(position);node.quaternion.copy(rotation);node.scale.copy(scale);
+  }
+  const action=scrubber.clipAction(clip).setLoop(T.LoopOnce,1);
+  action.reset().play();action.paused=true;action.time=Math.min(clip.duration,Math.max(0,time));
+  scrubber.update(0);
+  source.updateMatrixWorld(true);
+ }
  mech.nativeV2={
-  source,sync,bounds,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
+  source,sync,bounds,clips:asset.animations,scrub,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
   jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
   anchors:equipment.anchors,nativeShield:equipment.nativeShield,meleeSide:equipment.meleeSide,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){
-   equipment.dispose?.();
+   scrub();equipment.dispose?.();
    for(const skeleton of skeletons.values())skeleton.boneTexture?.dispose();
   }
  };
