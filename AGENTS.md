@@ -19,6 +19,12 @@
 
 See [Release checks](qa/README.md) for setup and covered behavior.
 
+## Screen UX
+
+- Follow the decision hierarchy in `docs/overworld-design.md`. Give the map, mech or selected contract the main space, with the next action and its consequences visible together.
+- Put supporting detail behind deliberate disclosure. Use readouts for status and buttons for actions. Avoid repeated headings and permanent comprehensive breakdowns.
+- Preserve the primary view during confirmation. Check new controls at iPad portrait and landscape sizes, with touch targets of at least 44 CSS pixels. Native-device performance measurements remain nonblocking until supplied.
+
 <!-- pace-rules:start (owner, 2026-11-12; replace this block as a whole when revising) -->
 ## Pace and evidence
 

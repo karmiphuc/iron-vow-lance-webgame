@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 global.window={};
 require('../dist/overworld.js');
-const {PORTS,ROUTES,operatingRates,travelQuote,settleExpenses,validState}=window.IronVowOverworld;
+const {PORTS,ROUTES,operatingRates,travelQuote,routeOptions,itineraryQuote,travelRest,settleExpenses,validState}=window.IronVowOverworld;
 
 const fresh={units:Array.from({length:3},()=>({level:1,upgrade:0}))};
 assert.deepEqual(operatingRates(fresh),{wages:210,ship:75,hulls:105,total:390});
@@ -14,6 +14,24 @@ assert.deepEqual(travelQuote('picket','relay',rates),{days:1,fuel:120,wages:210,
 assert.deepEqual(travelQuote('frontier','corridor',rates),{days:2,fuel:260,wages:420,ship:150,hulls:210,total:1040});
 assert.equal(travelQuote('picket','frontier',rates),null);
 assert.equal(travelQuote('picket','picket',rates),null);
+assert.deepEqual(routeOptions('picket','corridor'),[['picket','relay','corridor'],['picket','corridor']]);
+assert.deepEqual(routeOptions('corridor','picket'),[['corridor','relay','picket'],['corridor','picket']]);
+assert.deepEqual(routeOptions('picket','frontier'),[['picket','relay','corridor','frontier'],['picket','corridor','frontier']]);
+assert.deepEqual(routeOptions('picket','picket'),[]);
+assert.deepEqual(routeOptions('unknown','picket'),[]);
+const via=itineraryQuote(['picket','relay','corridor'],rates,2000,100);
+assert.deepEqual(via,{path:['picket','relay','corridor'],days:2,fuel:300,wages:420,ship:150,hulls:210,total:1080,cashAfterArrival:920,arrears:100});
+assert.deepEqual(itineraryQuote(['picket','corridor'],rates,2000,100),{path:['picket','corridor'],days:1,fuel:850,wages:210,ship:75,hulls:105,total:1240,cashAfterArrival:760,arrears:100});
+assert.equal(itineraryQuote(['picket','corridor'],rates,1000,100).cashAfterArrival,-240);
+assert(Object.isFrozen(via)&&Object.isFrozen(via.path));
+for(const path of [[],['picket'],['picket','frontier'],['picket','relay','picket'],['picket','unknown']])assert.equal(itineraryQuote(path,rates,2000),null);
+assert.equal(itineraryQuote(['picket','relay'],{...rates,wages:-1},2000),null);
+const career={units:[{condition:25,level:1},{condition:95,level:1}],reserve:{4:{condition:40,upgrade:0}},wounds:{ace:2,rook:1},ship:{levels:{repair:1,crew:0}}};
+const before=JSON.stringify(career),rested=travelRest(career,2);
+assert.deepEqual(rested,{units:[{condition:49,level:1},{condition:100,level:1}],reserve:{4:{condition:64,upgrade:0}},wounds:{}});
+assert.equal(JSON.stringify(career),before);
+assert.deepEqual(travelRest({...career,ship:{levels:{repair:2,crew:1}}},1).wounds,{});
+assert.equal(travelRest(career,-1),null);
 assert.deepEqual(settleExpenses(1000,200,390),{credits:410,arrears:0,paid:390,arrearsPaid:200});
 assert.deepEqual(settleExpenses(500,200,390),{credits:0,arrears:90,paid:390,arrearsPaid:110});
 assert.deepEqual(settleExpenses(100,200,390),{credits:0,arrears:490,paid:100,arrearsPaid:0});

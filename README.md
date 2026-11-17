@@ -24,7 +24,7 @@ The current game includes a persistent company and pilot roster, part-based mech
 
 ## Play
 
-Open the Ship's Star Map to compare ports, routes, and travel costs. Deploy from the port hosting the contract. Travel advances the company calendar and costs fuel, wages, and upkeep. Every finished sortie costs a day of wages and upkeep. Any unpaid operating costs carry forward and are settled from later earnings.
+Open the Halyard's Chart Table to compare ports, routes, and travel costs. Deploy from the port hosting the contract. Compare express and stopover courses on the bridge chart. Travel advances the company calendar, costs fuel, wages and upkeep, and gives the parked lance time for Repair Deck service and wound rest. Every finished sortie costs a day of wages and upkeep. Any unpaid operating costs carry forward and are settled from later earnings.
 
 After deploying, select a unit, and click highlighted tiles to move. Choose Fire and click an enemy to shoot it; there is no part aiming, and every round that hits rolls its own location (about 55% body, 25% arms, 20% legs). Each attack that hits the body has a 1–5% chance to redirect one body round into the cockpit. Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Actions use the unit's movement and AP allowances. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
 

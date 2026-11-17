@@ -1,6 +1,6 @@
 # Overworld design guide
 
-Status: proposal for owner review, 2026-11-18. Nothing here is implemented yet.
+Status: Phase A first playable implementation, 2026-11-18. The owner approved transit-day hull service and wound rest, and 0–3 pooled contracts per port for Phase B. Phases B and C remain in progress.
 
 The overworld should create decisions, not only price them. Today's Star Map shows what a trip costs. The target is a chart table aboard the Halyard where the player weighs time, money, lance readiness and opportunity on one screen, with the map visible the whole time.
 
@@ -70,7 +70,7 @@ The owner mostly plays on iPad Pro in Safari or Chrome.
 - Chart table scene: terrain slab, 4 masts, route lines and the Halyard model, in the shared WebGL context.
 - Route forecast strip with both options for picket→corridor, cash on arrival and lance readiness pips.
 - Airship lore copy (section 2).
-- Rule change: transit days apply Repair Deck service to parked hulls and tick wound rest. Behind a save-schema fixture (`AGENTS.md`). **Needs owner approval (section 7).**
+- Rule change: transit days apply Repair Deck service to parked hulls and tick wound rest. Behind a save-schema fixture (`AGENTS.md`). **Approved by the owner, 2026-11-18.**
 - Fast gate `node qa/check-overworld-chart.cjs`: forecast numbers match `travelQuote`, the map stays visible on confirm, touch targets meet the minimum, and saves round-trip.
 
 **Phase B: living world.** Pillars 1 and 4. Contracts are decoupled from ports into a pool with expiry days, plus drifting storm and patrol markers. Intel ranges. Add 2–4 more mooring towers so routes branch and more than one real route choice exists.
@@ -79,8 +79,8 @@ The owner mostly plays on iPad Pro in Safari or Chrome.
 
 Out of scope for now: procedural world generation, real-time travel, and multiple ships.
 
-## 7. Open decisions for the owner
+## 7. Owner decisions
 
-1. **Do transit days count as rest?** This makes long routes heal the lance. It changes economy balance, because today a win is the only way to service hulls without paying.
-2. **Contract count per port in Phase B.** Keep one per port and add expiry, or allow 0–3 per port drawn from a pool?
-3. **Halyard model.** Reuse an existing asset or commission one (through Codex and Blender). No airship model exists in the repo today.
+1. **Transit days count as rest.** Approved by the owner. All hulls aboard receive the installed Repair Deck service per travel day, and pilots recover from wounds. Forecast and commit share the same rule.
+2. **Contract count per port in Phase B.** The owner chose 0–3 offers drawn from a pool.
+3. **Halyard model.** Authored in Blender for the chart table. Runtime asset `dist/assets/overworld/halyard.glb` has 11,928 triangles. Its reproducible source is `tools/authoring/halyard/create_halyard.py`; the editable Blender scene is kept in the private source library.

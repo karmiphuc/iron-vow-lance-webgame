@@ -1,0 +1,55 @@
+{
+  "source": {
+    "commit": "25fbe677d9595214cc0f4e69cf3607d0bbee3988",
+    "committedDistTree": "fdc30ca61c4a07d0132c876bdf5e605b6849a74b",
+    "worktreeDistSha256": "fdc69a879ddd35c72bdc934476a600b248e05d2e3334673894c4c8ba850ecabb",
+    "worktreeQaSha256": "7053cc0716af13dd461bd14345739f38d4a6e3ac506222fc1ccc7cdd111a2478",
+    "dirty": false
+  },
+  "started": "2026-11-17T16:56:26.446Z",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "overworld rules",
+      "status": "passed"
+    },
+    {
+      "name": "career travel and save fixtures",
+      "status": "passed"
+    },
+    {
+      "name": "overworld browser desktop and touch",
+      "status": "passed"
+    }
+  ],
+  "sourceAfter": {
+    "commit": "25fbe677d9595214cc0f4e69cf3607d0bbee3988",
+    "committedDistTree": "fdc30ca61c4a07d0132c876bdf5e605b6849a74b",
+    "worktreeDistSha256": "fdc69a879ddd35c72bdc934476a600b248e05d2e3334673894c4c8ba850ecabb",
+    "worktreeQaSha256": "7053cc0716af13dd461bd14345739f38d4a6e3ac506222fc1ccc7cdd111a2478",
+    "dirty": false
+  },
+  "ended": "2026-11-17T16:56:35.622Z",
+  "asset": {
+    "path": "dist/assets/overworld/halyard.glb",
+    "bytes": 493316,
+    "triangles": 11928,
+    "sha256": "718956348c254a0571df3fb038973405d6bb3722bb02b88dbfffab60f1238e5e",
+    "authoringScript": "tools/authoring/halyard/create_halyard.py",
+    "editableSource": "Private Blender source library"
+  },
+  "captures": [
+    "desktop.webp",
+    "ipad-landscape.webp",
+    "ipad-portrait.webp",
+    "phone.webp"
+  ],
+  "additionalChecks": [
+    "qa/check-ui.cjs",
+    "qa/check-ship.cjs",
+    "qa/check-published-saves.cjs",
+    "qa/check-resume.cjs"
+  ],
+  "nativeIPad": "unverified",
+  "scope": "Phase A chart table and transit rest"
+}
