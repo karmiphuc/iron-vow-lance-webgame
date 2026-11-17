@@ -93,6 +93,7 @@ async function capture(config){
    if(retained){console.log('REUSE '+retained.file);break;}
    console.log('START '+job.source+' '+viewport.width+'x'+viewport.height+' '+job.preset.id);
    const context=await browser.newContext({viewport,deviceScaleFactor:1,reducedMotion:'no-preference',locale:'en-US',timezoneId:'UTC'});
+   await context.route('**/favicon.ico',route=>route.fulfill({status:204}));
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
    page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
    if(config['asset-delay-ms'])await context.route(/-parts\.webp(?:\?|$)/,async route=>{await new Promise(done=>setTimeout(done,Number(config['asset-delay-ms'])));await route.continue();});
@@ -160,7 +161,7 @@ async function capture(config){
      await page.waitForFunction(()=>window.__capturePending===0&&[...window.__captureActiveImages(),...document.images].every(image=>!image.src||image.complete),null,{polling:50,timeout:120000});
     }
     if(job.preset.path&&job.source!=='reference-bench'){
-     await page.waitForFunction(()=>document.body.dataset.rigModel==='painted',null,{polling:50,timeout:120000});
+     await page.waitForFunction(()=>{window.__captureTick();return Boolean(window.__bench?.state?.loaded||document.body.dataset.rigModel==='painted');},null,{polling:50,timeout:120000});
      await page.evaluate(()=>window.__captureTick());
     }
     if(job.preset.weapon)await page.evaluate(()=>{
@@ -207,11 +208,11 @@ async function capture(config){
      if(!controls.length||rect.top<(header?.bottom||0)||rect.bottom>innerHeight||controls.some(node=>{const r=node.getBoundingClientRect();return r.top<(header?.bottom||0)||r.bottom>innerHeight||r.left<0||r.right>innerWidth;}))throw Error('Paint panel controls do not fit the viewport');
      return true;
     });
-    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(isMove=>{
+    if(job.preset.path||battleWebgl)webglSample=await page.evaluate(({isMove,isBench})=>{
      // Sample immediately after a real render: non-preserved WebGL buffers can
      // otherwise clear between tasks even when the compositor retains the frame.
      window.__captureTick(isMove?6100:5000);
-     const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=canvas.id==='c'?'Rig Bench':'Battle';
+     const canvas=document.getElementById('world-scene')?.style.display==='block'?document.getElementById('world-scene'):document.getElementById('c'),gl=window.__captureWebGL.get(canvas),name=isBench?'Rig Bench':'Battle';
      if(!gl||gl.isContextLost())throw Error(name+' WebGL context is unavailable or lost');
      const sample=document.createElement('canvas');sample.width=sample.height=32;
      const g=sample.getContext('2d');g.drawImage(canvas,0,0,32,32);
@@ -219,7 +220,7 @@ async function capture(config){
      for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])>16)bright++;
      if(bright<64)throw Error(name+' WebGL canvas is blank: '+bright+'/1024 non-black samples');
      return {canvas:canvas.id,non_black_samples:bright,total_samples:1024,context_lost:false};
-    },job.preset.id==='selected-move');
+    },{isMove:job.preset.id==='selected-move',isBench:Boolean(job.preset.path)});
     const filename=job.source+'/'+viewport.width+'x'+viewport.height+'/'+job.preset.id+'.png';
     fs.mkdirSync(path.dirname(path.join(output,filename)),{recursive:true});
     await page.screenshot({path:path.join(output,filename),animations:'disabled',timeout:120000});

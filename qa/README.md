@@ -30,6 +30,26 @@ The campaign and selected behavioral browser cases may omit unobserved GPU submi
 
 Desktop and simulated touch runs verify behavior. Record native iPad Safari and Chrome frame times and the 20-minute context result in `docs/release-verification.json` when measured. Leave those measurements unverified until the owner supplies them.
 
+
+## Rig Bench and War
+
+The [Phase 6 acceptance criteria](https://github.com/karmiphuc/iron-vow-lance-webgame/issues/16) are exercised through the shared Workbench and production game board.
+
+| Area | Implementation and verification |
+| --- | --- |
+| Reference Bench | `/rig-bench/` opens the shared Workbench using the vendored Three.js. Workshop opens the selected chassis, Career opens the Bench directly, and the Bench links to War. |
+| Chassis and modules | The 21 campaign frames and Lion Trial appear in the roster. Kit frames mix leg, core and arm assemblies. Compatible authored bipeds combine separately animated upper and lower meshes at the source pelvis, preserving the lower rig's skin and IK. Reaver retains its own quadruped assembly. |
+| Controls | The gate checks all 34 catalog weapon entries, Vesper, both shields, three kit levels, material paint channels, per-part state and shield visibility, all cameras and the six-frame lineup, live specifications, per-foot IK and target markers. It also checks Warden rig lines, sound, hand/socket fit, weapon fire and strike contact. |
+| Authored clips | The shared clip scrubber opens the six Prototype Bay GLBs and the seven Warden clips. Bulwark and Scout browser checks verify the original grip, pose and attachment cues, and the Warden archive test compares all 10,790 sampled local transforms against the approved poses. |
+| Combat parity | The game and War use `dist/combat-simulation.js` for terrain paths and line of fire, movement and attack costs, volleys and HP changes, reactions, round progression, enemy decisions and seeded command driving. The game host supplies the current board, animation timing, UI and career persistence. The VM and Chromium checks compare the same two real boards, including reactions, tank and gunship damage and career storage isolation. |
+| Diagnostics and soak | The desktop and touch gate validates all 19 War probes, event reporting, coverage matrices and clean final frame samples. The 10-battle gate completed 20 encounters across the two devices with seven allied wins and three enemy wins per device. The report counts observed coverage by matrix cell. |
+
+The Rig Bench War link opens a temporary encounter on the game board. Run War issues the game's legal move, attack and end-turn commands. The same runner drives `qa/war-driver.cjs`. Browser automation can use `window.__bench.newBattle(options)`, `step()`, `run()`, `runBattle(options)`, `state`, `eventLog()`, `runSoak(count, seed, options)`, `diagnostics()`, `inject(check, unit)` and `report()`. Soak rotates real theaters and checks loadouts through the same hull validation used by the campaign. The report includes chassis × weapon, legs × weapon and theater × chassis counts.
+
+The shared observer samples the live rig and combat events after rendering. War's 19 isolated fault probes pass perturbed copies of those observations through the same predicates. The existing scene checker also exercises 16 physical negative controls.
+
+`node qa/gate-phase6.cjs --out /tmp/iron-vow-phase6` runs the focused desktop and touch Bench/War gate and writes one summary and two real WebP captures. `node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
+
 ## Package and verify the Site
 
 Open the current Site with the installed Sites helper and retain its opening result. Use the repository packaging entry point to run the release gate before committing the Site source or packaging the archive.
