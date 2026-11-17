@@ -66,7 +66,9 @@ const PAINT_PRESETS=[
  ['Midnight','#1f2a3a','#0f141c','#5fd4c4'],['Hazard','#c99a2a','#2a2a28','#1e1e1c'],['Rust','#7a3428','#3a2420','#d9b45a'],
  ['Bone plates','#c6bd9f','#534c43','#e08e3b'],['Olive plates','#708657','#39432c','#d7a458'],
  ['Slate plates','#577eac','#303a4b','#d09450'],['Sand plates','#c19960','#5c4936','#f0b030'],
- ['Graphite plates','#555e69','#2c3036','#79bac8'],['Ivory plates','#d9ddd5','#6c7880','#c8302a']
+ ['Graphite plates','#555e69','#2c3036','#79bac8'],['Ivory plates','#d9ddd5','#6c7880','#c8302a'],
+ // The original plate picker displayed #b0a88d on its Factory chip.
+ ['Neutral plates','#b0a88d','#343b42','#e08e3b']
 ];
 const PAINT_CHANNELS=[['p','Primary','#c6bd9f'],['s','Secondary','#343b42'],['a','Accent','#e08e3b']];
 const paintChannel=(u,channel)=>(channel==='p'?u.paint:u.trim?.[channel])?.toLowerCase()??null;
@@ -1062,7 +1064,7 @@ const armorySlot=w=>w.shoulder?'shoulder':w.melee?'melee':'weapon';
 const armoryReach=(w,training)=>w.melee?'Adjacent':weaponRange(w,training)+' tiles';
 function equipmentPicture(kind,id){
  const url=window.IronVowFoundry?.equipmentThumbnail(kind,id);
- return `<img class="weapon-card-art" alt=""${url?' src="'+url+'"':''} loading="lazy" decoding="async">`;
+ return `<img class="weapon-card-art" data-equipment-kind="${kind}" data-equipment-id="${id}" alt=""${url?' src="'+url+'"':''} loading="lazy" decoding="async">`;
 }
 function armoryCard(u,w,training){
  const equipped=u[armorySlot(w)]===w.id,owned=save.owned.includes(w.id)||equipped;
@@ -1239,6 +1241,7 @@ let activeCinematic=null;
 function closeAttackCamera(sequence){
  if(activeCinematic!==sequence)return;
  activeCinematic=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
+ $('#shot-inset').textContent='';
 }
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
@@ -1251,6 +1254,7 @@ function beginAttackCamera(actor,target,w,part){
  const sequence={actor,target,w,part,start:clock,phase:'aim',result:'',skipped:false,resume:null};
  activeCinematic=sequence;duckMusic();document.body.dataset.shot='active';$('#skip-shot').hidden=false;
  $('#shot-status').textContent=actor.name+' prepares to attack '+target.name;
+ if(!actor.kind)$('#shot-inset').innerHTML=`<img ${chassisPicture(actor.frame,actor,unitFacing(actor))} alt="" width="84" height="84">`;
  return sequence;
 }
 function waitAttack(ms,sequence){
@@ -1567,6 +1571,10 @@ function pilotCard(kind,u,training,assignment,control,points){
 function shipPage(){
  const project=save.ship?.project;
  const queued=project&&SHIP_DECK[project.facility].tiers[shipLevel(project.facility)];
+ const seats=LANCE_SLOTS.map(slot=>{
+  const frame=pilotFrame(slot),hull=save.units[slot];
+  return `<article class="ship-seat"><img ${chassisPicture(frame,hull)} alt="" width="60" height="60" loading="lazy"><div><small>SEAT 0${slot+1} · ${pilotProfile(slot).call}</small><b>${FRAMES[frame].name}</b></div></article>`;
+ }).join('');
  return `<div class="page ship-page"><div class="ship-content">
   <div class="ship-banner"><div><div class="eyebrow">HALCYON / MERCENARY CARRIER</div><h1>IVS HALYARD.</h1><p>Ship command · ${save.rep} reputation</p></div>
    <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button class="primary" data-page="contracts">CONTRACTS ${icon('arrow-right')}</button></div>
@@ -1574,6 +1582,7 @@ function shipPage(){
   <section class="ship-queue" aria-label="Engineering queue"><div><span class="eyebrow">ENGINEERING QUEUE</span><h2>${queued?queued.name:'Bay available'}</h2></div>
    <div class="ship-progress"><span class="tag">${queued?project.wins+' WIN'+(project.wins===1?'':'S')+' LEFT':'0 / 1 PROJECTS'}</span>${queued?`<progress aria-label="Construction progress" max="${queued.wins}" value="${queued.wins-project.wins}"></progress>`:infoTip('Engineering queue','The ship can work on one project at a time. Fulfilled contracts advance construction.')}</div>
   </section>
+  <section class="ship-seats" aria-label="Lance seats">${seats}</section>
   <div class="ship-grid">${Object.entries(SHIP_DECK).map(([id,facility])=>{
    const rank=shipLevel(id),current=facility.tiers[rank-1],next=facility.tiers[rank],planned=rank===0?facility.tiers[1]:null;
    const building=project?.facility===id;
@@ -1626,9 +1635,10 @@ function hangarRoster(){
   ${level===2?`<p class="base-roster-status">${used?'Trauma Ward · next treatment after a sortie':'Trauma Ward · 1 treatment available'}</p>`:''}
   <div class="base-roster-list">${roster.map(({id,pilot,slot})=>{
    const kind=pilotKind(id),wound=woundLabel(id),unseated=slot===undefined,onDuty=active.includes(id);
+   const mech=unseated?'':`<img class="duty-mech" ${chassisPicture(pilotFrame(slot),save.units[slot])} alt="" width="45" height="45" loading="lazy">`;
    return `<article class="base-pilot" data-duty-pilot="${id}">${pilotMark(kind,'pilot-thumb')}
     <div><strong>${CREW[kind].call}</strong><small>${unseated?(onDuty?'ACTIVE · RELIEF':'RESERVE'):'ACTIVE · '+FRAMES[pilotFrame(slot)].name} / LV ${pilot.level}</small>${wound?`<small class="wound-status">${wound}</small>`:''}</div>
-    <div class="base-pilot-actions">${unseated&&(onDuty||level)?`<button data-reserve-training="${id}">TRAIN · ${reliefTrainingPoints(id)} PT</button>`:''}
+    <div class="base-pilot-actions">${mech}${unseated&&(onDuty||level)?`<button data-reserve-training="${id}">TRAIN · ${reliefTrainingPoints(id)} PT</button>`:''}
      ${unseated&&hangarLevel('cabins')?`<button data-pilot-duty="${id}" data-activate="${!onDuty}" aria-label="${onDuty?'Move '+CREW[kind].call+' to reserve':'Activate '+CREW[kind].call}" ${!onDuty&&full?'disabled':''}>${onDuty?'TO RESERVE':full?'CABINS FULL':'ACTIVATE'}</button>`:''}
      ${wound&&level===2?`<button data-pilot-treatment="${id}" ${used||save.credits<HANGAR_SERVICE_COST?'disabled':''}>TREAT · ${money(HANGAR_SERVICE_COST)}</button>`:''}
     </div></article>`;
@@ -1723,12 +1733,11 @@ function bindInn(){
   workshopView=button.dataset.dock;page='workshop';render();
  };
 }
-function chassisPreview(frame,hull,direction,scope){
- const unit={...hull,frame},angle=direction===1?1:0;
- return window.IronVowFoundry?.preview(unit,foundryModel(frame),undefined,angle,scope);
+function mechPortrait(frame,hull,direction){
+ return window.IronVowFoundry?.portrait({...hull,frame},foundryModel(frame),direction>0?1:0);
 }
 function chassisPicture(frame,hull,direction=-1){
- const portrait=window.IronVowFoundry?.portrait({...hull,frame},foundryModel(frame),direction===1?1:0);
+ const portrait=mechPortrait(frame,hull,direction);
  if(!portrait)return '';
  return 'data-rig-portrait="'+portrait.key+'"'+(portrait.url?' src="'+portrait.url+'"':'');
 }
@@ -3233,15 +3242,26 @@ function refreshTargetPortrait(){
  const target=battle?.units.find(u=>u.id===image?.dataset.targetId);
  if(!target)return;
  const facing=unitFacing(target);
- const url=target.kind?window.IronVowFoundry?.vehicleThumbnail(target.kind,facing):chassisPreview(target.frame,target,facing,'battle')?.url;
- if(url&&image.src!==url)image.src=url;
+ if(target.kind){
+  const url=window.IronVowFoundry?.vehicleThumbnail(target.kind,facing);
+  if(url&&image.src!==url)image.src=url;
+  return;
+ }
+ const portrait=mechPortrait(target.frame,target,facing);
+ if(!portrait)return;
+ if(image.dataset.rigPortrait!==portrait.key){
+  image.dataset.rigPortrait=portrait.key;
+  if(!portrait.url)image.removeAttribute('src');
+ }
+ if(portrait.url&&image.src!==portrait.url)image.src=portrait.url;
 }
 
 window.addEventListener?.('rig-art-ready',()=>{
  if(battle){refreshTargetPortrait();return;}
- const offset=$('#ui .page')?.scrollTop;
- render();
- const view=$('#ui .page');if(view&&offset)view.scrollTop=offset;
+ for(const image of document.querySelectorAll('img[data-equipment-id]:not([src])')){
+  const url=window.IronVowFoundry?.equipmentThumbnail(image.dataset.equipmentKind,image.dataset.equipmentId);
+  if(url)image.src=url;
+ }
 });
 function testBastionGrip(melee){
  const unit={...save.units[selected],frame:BASTION_FRAME,index:selected,team:'ally',alive:true,ap:8,x:0,z:0,vx:0,vz:0};

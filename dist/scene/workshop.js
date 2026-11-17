@@ -129,10 +129,7 @@ function paint(t,dt,width,height,reducedMotion){
   const pose={stage:VIEW,phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,
    ...overrides,reducedMotion,world:{x:0,y:.4,z:0,aim:new T.Vector3(0,4,20),face:0,heading:0,speed:0,noPlant:true}};
   entry=foundry.draw(demo?.actor||unit,t,pose,null,model,native?'rig-v2':undefined);
-  if(entry&&entry.m.cont.parent!==pad){
-   pad.add(entry.m.cont);
-   if(entry.m.nativeV2&&unit.upgrade)root.VowChassis.fitReinforcement(entry.m,unit.upgrade);
-  }
+  if(entry&&entry.m.cont.parent!==pad)pad.add(entry.m.cont);
   if(demo&&entry)host.dataset.rigTime=age.toFixed(3);
   else delete host.dataset.rigTime;
  }

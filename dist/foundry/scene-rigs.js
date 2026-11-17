@@ -324,6 +324,7 @@ function draw(u,t,pose,scope,model,custom){
   }
  }
  v2?.sync();
+ if(v2&&u.upgrade&&!m.build.kits&&(pose.preview||pose.stage))VC.fitReinforcement(m,u.upgrade);
  m.cont.updateMatrixWorld(true);
  const span=m.previewSpan,groundRow=span?(ground-(1-span)/2)/span:ground;
  if(pose.stage)return entry;

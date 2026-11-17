@@ -4,6 +4,7 @@ const path=require('node:path');
 const checkBrowser=require('./check-browser.cjs');
 const checkWorkshopTurntable=require('./browser/workshop.cjs');
 const checkWorkshopPaint=require('./browser/workshop-paint.cjs');
+const checkWorkshopPortraits=require('./browser/workshop-portraits.cjs');
 
 async function main(){
  const [flag,directory]=process.argv.slice(2);
@@ -12,6 +13,6 @@ async function main(){
  fs.mkdirSync(out,{recursive:true});
  process.env.IRON_VOW_WORKSHOP_PROOF=out;
  process.env.IRON_VOW_QA_REPORT=path.join(out,'summary.json');
- await checkBrowser(undefined,[checkWorkshopTurntable,checkWorkshopPaint]);
+ await checkBrowser(undefined,[checkWorkshopTurntable,checkWorkshopPaint,checkWorkshopPortraits]);
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

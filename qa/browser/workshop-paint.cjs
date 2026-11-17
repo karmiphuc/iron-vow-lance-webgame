@@ -9,6 +9,14 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
   return unit&&JSON.stringify([unit.paint??null,unit.trim?.s??null,unit.trim?.a??null])===JSON.stringify(colors);
  },colors);
  const values=unit=>[unit.paint??null,unit.trim?.s??null,unit.trim?.a??null];
+ const factoryColors=()=>page.evaluate(()=>{
+  const materials=new Map();
+  IronVowWorkshop.snapshot().entry.m.cont.traverse(mesh=>{
+   if(/^paint_(primary|secondary|accent)$/.test(mesh.material?.name))
+    materials.set(mesh.material.name,mesh.material.color.toArray());
+  });
+  return [...materials].sort(([a],[b])=>a.localeCompare(b));
+ });
  const matchColors=async(colors,hangar=false)=>{
   if(!hangar)await host.evaluate(element=>element.scrollIntoView({block:'center'}));
   await page.waitForFunction(({colors,hangar})=>{
@@ -31,11 +39,17 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await host.waitFor();
  await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
- assert.equal(await page.locator('[data-livery]').count(),16);
+ const originalFactory=await factoryColors();
+ assert.equal(originalFactory.length,3);
+ assert.equal(await page.locator('[data-livery]').count(),17);
  for(const channel of ['p','s','a']){
   assert.equal(await page.locator('[data-paint-channel="'+channel+'"]').count(),16);
   assert.equal(await page.locator('[data-custom-channel="'+channel+'"]').getAttribute('type'),'color');
  }
+ await tap('[data-livery="16"]');
+ const neutral=['#b0a88d','#343b42','#e08e3b'];
+ await waitSaved(neutral);
+ await matchColors(neutral);
  await tap('[data-livery="1"]');
  let color=['#4f5839','#343a28','#e0621a'];
  await waitSaved(color);
@@ -59,6 +73,8 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await waitSaved([null,null,null]);
  assert.deepEqual(values(await saved()),[null,null,null]);
  assert.equal(await page.locator(factoryButton).getAttribute('aria-pressed'),'true');
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
+ assert.deepEqual(await factoryColors(),originalFactory,'Factory restores the native material colors');
  await page.reload({waitUntil:'domcontentloaded'});
  assert.equal(await page.locator(factoryButton).getAttribute('aria-pressed'),'true');
 
