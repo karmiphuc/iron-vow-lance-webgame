@@ -46,5 +46,11 @@
     }
   ],
   "status": "complete",
-  "ended": "2026-11-17T05:54:50.870Z"
+  "ended": "2026-11-17T05:54:50.870Z",
+  "integration": {
+    "commit": "672177556b38a67fd0f16da1043cc006fc4f4b03",
+    "distTree": "351c029b6f3aa3be2bd1efb35e92b4e650d14bb2",
+    "simulationSuitesPassed": 54,
+    "nativeIPadPerformance": "unverified"
+  }
 }

@@ -11,3 +11,5 @@ IRON_VOW_CHROME='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' I
 The separately preserved development fixture passed its seven physical interaction, restore and disposal checks at `2ea99d5d9f3520414a7e736da743a0aee4fce5d9`, with the same application tree. Its post-restoration framebuffer was nonblank and reported zero GL errors before and after rendering. The initial restored-context run reported `1282`; the assertion now catches the resource-lifecycle fix. [Historical fixture preparation](../../docs/phase4-fixture-history.md) records the earlier scope.
 
 Native iPad Pro frame rate and device-session measurements are **unverified**. Software-rendered browser correctness is not a performance measurement.
+
+The merged-Phase-3 integration retained the verified application tree and passed all 54 simulation suites.
