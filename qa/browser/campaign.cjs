@@ -95,7 +95,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await tap('[data-deploy="0"]');await tap('#modal-1');await tap('#modal-0');
  assert.deepEqual(await page.evaluate(()=>battle.slots),[0,1,2]);
  await page.evaluate(()=>{
-  Math.random=()=>0;
+  ruleRandom=()=>0;
   const foe=battle.units[3],retriever=battle.units[2];
   foe.x=foe.vx=2;foe.z=foe.vz=14;
   retriever.hp.right=retriever.hp.legs=0;
@@ -109,10 +109,18 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await tap('[data-part="legs"]');
  if(mobile)await page.locator('#close-target').waitFor({state:'hidden'});
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ if(mobile){
+  await tap('#map-overview');
+  await page.waitForFunction(()=>fieldCamera.overview);
+  await page.evaluate(()=>IronVowScene.render(clock,1));
+ }
  const target=await page.evaluate(()=>{
-  
-  const foe=battle.units[3],p=IronVowScene.projectWorld(IronVowScene.partPoint(foe));
-  if(IronVowScene.pick(p.x,p.y)!==foe)throw Error('Visible target failed its actual raycast');return p;
+  const foe=battle.units[3],center=IronVowScene.projectWorld(IronVowScene.partPoint(foe));
+  for(const dx of [0,-6,6,-12,12])for(const dy of [0,-6,6,-12,12]){
+   const x=Math.round(center.x)+dx,y=Math.round(center.y)+dy;
+   if(document.elementFromPoint(x,y)===canvas&&IronVowScene.pick(x,y)===foe)return {x,y};
+  }
+  throw Error('No exposed raycastable point for the campaign target');
  });
  await (mobile?page.touchscreen.tap(target.x,target.y):page.mouse.click(target.x,target.y));
  await page.waitForFunction(()=>current().breach===1&&!battle.busy);
@@ -139,7 +147,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  if(mobile)await tap('#target-toggle');
  assert.match(await page.locator('.reaction-status').innerText(),/COUNTER READY \/ FREE HAND/);
  const [damage,reacted]=await page.evaluate(async()=>{
-  Math.random=()=>0;
+  ruleRandom=()=>0;
   const actor=current(),foe=battle.units[3],before=actor.hp.body;
   await engage(actor,foe,'body',unitWeapon(actor));
   return [before-actor.hp.body,foe.reacted];
@@ -157,9 +165,10 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  });
  await page.waitForFunction(()=>{
   const player=battle.units.find(u=>u.team==='ally'),enemy=battle.units.find(u=>u.frame===HELLBREAKER);
-  return player?.frame===3&&enemy?.team==='enemy'&&
-   travelVisual(player,clock)?.atlas.key==='grid-travel-gatecrasher'&&
-   travelVisual(enemy,clock)?.atlas.key==='grid-travel-hellbreaker';
+  if(!IronVowScene.ready||player?.frame!==3||enemy?.team!=='enemy')return false;
+  const [gatecrasher,hellbreaker]=[player,enemy].map(unit=>IronVowScene.models.get(unit.id)?.entry);
+  return gatecrasher?.armed&&hellbreaker?.armed&&gatecrasher.m.nativeV2?.source&&
+   hellbreaker.m.nativeV2?.source&&gatecrasher.m.nativeV2.source!==hellbreaker.m.nativeV2.source;
  });
  await page.evaluate(()=>{
   for(const u of battle.units)if(u.team==='enemy'){u.alive=false;u.hp.body=0}
