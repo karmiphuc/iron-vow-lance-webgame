@@ -30,6 +30,12 @@ Ashigaru's desktop and touch runs exercised Needle from range 8, Flechette from 
 
 Painted Warden uses its original Aim bind, measured joint pivots and standard arsenal. Desktop and touch runs verified that the game only requests the GLB when needed. Launching a sortie releases Workshop instances, and withdrawing releases sortie geometry exactly once. The checks also exercised paint, shield alignment, and the seven Rig Bench clips.
 
+Bulwark-Aegis passed the full Frontier sortie check on desktop and touch. The AI used right-hand cleave and left-hand bash, with impact effects at the two native markers. The bash moved the target one tile. The test also checked both arm losses, shield guard state, planted gait and disposal. The original full shield and blade fit within the 58,009-triangle count.
+
+Bastion's source kept its six clips and 14 piston pairs. The initial export exposed collapsed default leg pivots when Blender exported animated nodes. The exporter restores the native bind transforms and the static gate verifies them against the measured leg dimensions. Desktop and touch checks exercised both fitted guns, the six-port launcher, planted gait, Workshop grip previews, damage and sortie disposal. Hailstorm and the Citadel shield draw 56,495 triangles.
+
+The six procedural chassis passed the live rig contract check and equipped budget with upgrades. Behemoth's four-leg gait and mortar stance were checked after reducing the torso and cockpit mesh. Its maximum equipped total fell to 54,244 triangles.
+
 A one-seed campaign smoke completed 2,240 observed ticks with zero anomalies. A second invocation reused the completed seed. The final 30-seed campaign remains pending.
 
 The tank draws 4,028 triangles in six primitives and the gunship draws 5,156 in five. The desktop and touch battle checks exercised picking, ground contact, hover, heading, damage, grounded wrecks and fire from the exported muzzles. Leaving the sortie detached the vehicles and disposed their shared geometry once. Both runs used one WebGL context and reported zero WebGL errors. The screenshot arranges both vehicles in a seeded test battle.

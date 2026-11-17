@@ -16,7 +16,7 @@ module.exports=async function livePaint({page,origin}){
   },null,{timeout:120000});
   const sample=await page.evaluate(frame=>{
    const unit={frame,team:'enemy',paint:'#617caa',trim:{s:'#303a44',a:'#d58837'},weapon:'rifle',melee:'cleaver',upgrade:0};
-   const custom=frame===0?'rig-v2':frame===10?'bastion':undefined,entry=IronVowFoundry.preview(unit,foundryModel(frame),custom),expected=[unit.paint,unit.trim.s,unit.trim.a];
+   const custom=[0,10].includes(frame)?'rig-v2':undefined,entry=IronVowFoundry.preview(unit,foundryModel(frame),custom),expected=[unit.paint,unit.trim.s,unit.trim.a];
    if(!entry)throw Error('Live preview was not ready for '+frame);
    const colors=[];entry.m.cont.traverse(o=>{if(o.isMesh&&o.material.color)colors.push(o.material.color.toArray());});
    const present=expected.map(hex=>{const wanted=new THREE.Color(hex).convertSRGBToLinear().toArray();return colors.some(rgb=>Math.hypot(...rgb.map((v,i)=>v-wanted[i]))<1e-6);});

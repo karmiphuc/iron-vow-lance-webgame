@@ -1708,8 +1708,8 @@ function wardenVisual(frame,loadout,direction,stock=false,hull){
 function chassisArt(i,loadout,direction=-1,stock=false,hull){
  if(window.IronVowScene?.isLive({frame:i})){
   const scope=battle?'battle':'preview',unit={...hull,frame:i,weapon:loadout};
-  if(i!==0||window.IronVowRigV2.status(unit,scope)==='ready'){
-   const custom=i===0?'rig-v2':i===10?'bastion':undefined;
+  if(!window.IronVowRigV2.applies(unit)||window.IronVowRigV2.status(unit,scope)==='ready'){
+   const custom=window.IronVowRigV2.applies(unit)?'rig-v2':undefined;
    const entry=window.IronVowFoundry.preview(unit,foundryModel(i),custom,direction>0?1:0,scope);
    if(entry?.url)return entry.url;
   }
@@ -3276,11 +3276,11 @@ function refreshTargetPortrait(){
 
 let foundryPreviewAngle=0;
 let bastionPreviewDemo=0;
-window.addEventListener?.('bastion-art-ready',()=>{if(battle)refreshTargetPortrait();else render();});
+window.addEventListener?.('rig-art-ready',()=>{if(battle)refreshTargetPortrait();else render();});
 function drawFoundryPreview(canvas,u,model,angle){
  const frame=u.frame??pilotFrame(selected);
  if(window.IronVowScene?.isLive({frame})){
-  const entry=window.IronVowFoundry.preview({...u,frame},model,window.IronVowRigV2?.applies({frame})?'rig-v2':frame===10?'bastion':undefined,angle);
+  const entry=window.IronVowFoundry.preview({...u,frame},model,window.IronVowRigV2?.applies({frame})?'rig-v2':undefined,angle);
   const g=canvas.getContext('2d');g.clearRect(0,0,canvas.width,canvas.height);if(entry)g.drawImage(entry.surface,0,0,canvas.width,canvas.height);return;
  }
  window.IronVowBillboards.preview(canvas,{...u,frame},model,angle);
@@ -3297,7 +3297,7 @@ function testBastionGrip(melee){
   start??=time;const t=Math.min(duration,(time-start)/1000);
   unit.attack={kind,start:0,primeDuration:.6,windup:profile.raise,fireAt:t>=fireAt?fireAt:null,releaseAt:t>=releaseAt?releaseAt:undefined};
   unit.fireTime=t>=fireAt?fireAt:undefined;
-  const entry=window.IronVowFoundry.previewAnimated(unit,t,animationPose(unit,t),2,'bastion',foundryPreviewAngle);
+  const entry=window.IronVowFoundry.previewAnimated(unit,t,animationPose(unit,t),2,'rig-v2',foundryPreviewAngle);
   if(entry){const g=canvas.getContext('2d');g.clearRect(0,0,canvas.width,canvas.height);g.drawImage(entry.surface,0,0,canvas.width,canvas.height);canvas.dataset.rigTime=t.toFixed(3);}
   if(t<duration)requestAnimationFrame(tick);
  };requestAnimationFrame(tick);

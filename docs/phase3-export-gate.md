@@ -1,6 +1,6 @@
 # Phase 3 asset export gate
 
-Issue #13 starts with Gatecrasher. Painted Warden, Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, Hellbreaker, Shogun, Ashigaru, the Lion trial, the tank and the gunship use live meshes.
+Issue #13 starts with Gatecrasher. Painted Warden, Gatecrasher R2, Cicada, Reaver, Gravemaw, Aero, Kestrel, Basilisk, both Line Infantry variants, Hellbreaker, Shogun, Ashigaru, Bulwark-Aegis, Bastion, the Lion trial, the tank and the gunship use live meshes.
 
 ## Editable source coverage
 
@@ -66,3 +66,10 @@ Static gate updates, 12 November 2026 Singapore time: required rig nodes must be
 
 
 `tools/authoring/warden/export-v2.sh` exports the recovered `warden-hands/warden-painted-game-rig.blend`, SHA-256 `0d98b3bfb24ffb2c367d3bf84aa4a4f520106e440bedb2fbd5121502c46008de`. It uses the published Aim bind and exact evaluated armor, then packs the normalized hierarchy into a meshopt GLB. The source geometry draws 50,316 triangles and the Hailstorm plus Citadel shield bring it to 59,872. The shared loader owns the Workshop and sortie lifetimes. The released Rig Bench keeps the seven original pose clips.
+
+`tools/export_bulwark_v2.py` exposes `export_bulwark(source, output)` for Blender MCP. Use the Default Loadout scene in `Bulwark-Aegis-Combat.blend`, SHA-256 `c0c8444dbd5ebe810d972b72b620b0d95cbdb61835d80c9a7743429e66fc603f`. The exporter reduces the chassis bevels to one segment and retains the full original shield and cleaver. The fully equipped rig draws 58,009 triangles. The shield mounts to the left wrist and the charged cleaver strikes with the right.
+
+`tools/export_bastion_v2.py` exposes `export_bastion(source, output)` for Blender MCP. Use `Game-Playtest/Bastion-Weapon-Sockets.blend`, SHA-256 `52be520adbf7da9e129ad80d54e3208870426e8ad1042cbc95bf18949a654ff8`. The export retains the static bind transforms, six named clips, 14 piston pairs, the fitted Kestrel carbine, three melee assemblies and six launcher ports. The GLB contains 54,160 triangles with all variants. The chassis draws 46,939 triangles and reaches 56,495 with Hailstorm and the Citadel shield. The regression gate checks the bind pivots as well as the exported contract.
+
+
+The procedural Foundry kit exposes the same named joints, root dimensions, paint roles and damage groups in its live scene graph. Behemoth's torso and cockpit use an optimized extraction of the original Gatecrasher core. `tools/extract_behemoth_core.cjs` can write the original payload to a scratch path. `tools/simplify_behemoth_core.py` exposes `simplify_core(source, output)` for Blender MCP. It simplifies each material and damage group independently and transfers the original corner normals. The original core, mixer and authored mortar joints remain available. The upgraded Behemoth with Hailstorm and the Citadel shield draws 54,244 triangles.

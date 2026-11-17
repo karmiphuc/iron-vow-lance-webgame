@@ -366,7 +366,12 @@
         "workshopDisposedOnDeploy": true,
         "sortieDisposedOnWithdraw": true,
         "benchClips": true
-      }
+      },
+      "checkBulwark": true,
+      "vehicleLoading": true,
+      "checkArmory": true,
+      "bastionSharedRig": true,
+      "checkBehemothBudget": true
     },
     "touch": {
       "checkCicadaV2": {
@@ -477,7 +482,12 @@
         "workshopDisposedOnDeploy": true,
         "sortieDisposedOnWithdraw": true,
         "benchClips": true
-      }
+      },
+      "checkBulwark": true,
+      "vehicleLoading": true,
+      "checkArmory": true,
+      "bastionSharedRig": true,
+      "checkBehemothBudget": true
     }
   },
   "hellbreaker": {
@@ -505,5 +515,45 @@
       "hailstorm",
       "citadel-shield"
     ]
+  },
+  "bastion": {
+    "triangles": 54160,
+    "hull": 46939,
+    "equipped": 56495,
+    "nativeClips": 6,
+    "pistonPairs": 14
+  },
+  "bulwark": {
+    "triangles": 58009,
+    "nativeEquipment": [
+      "tower shield",
+      "arc cleaver"
+    ]
+  },
+  "kits": {
+    "Aegis": {
+      "hull": 17316,
+      "equippedWithUpgrades": 27620
+    },
+    "Shrike": {
+      "hull": 9026,
+      "equippedWithUpgrades": 18970
+    },
+    "Citadel": {
+      "hull": 16022,
+      "equippedWithUpgrades": 26034
+    },
+    "Valkyrie": {
+      "hull": 17452,
+      "equippedWithUpgrades": 27340
+    },
+    "Oni": {
+      "hull": 31242,
+      "equippedWithUpgrades": 40982
+    },
+    "Behemoth": {
+      "hull": 44436,
+      "equippedWithUpgrades": 54244
+    }
   }
 }

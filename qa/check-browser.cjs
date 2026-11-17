@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),crypto=require('node:crypto'),{execFileSync}=require('node:child_process');
-const sharedScene=require('./browser/shared-scene.cjs'),livePaint=require('./browser/live-paint.cjs'),billboards=require('./browser/billboards.cjs');
+const sharedScene=require('./browser/shared-scene.cjs'),livePaint=require('./browser/live-paint.cjs'),vehicleLoading=require('./browser/vehicle-loading.cjs');
 const {createReadStream,existsSync,mkdtempSync}=require('node:fs');
 const {stat}=require('node:fs/promises');
 const {createServer}=require('node:http');
@@ -24,6 +24,8 @@ const checkReaver=require('./browser/reaver.cjs');
 const checkAero=require('./browser/aero.cjs');
 const checkStockV2=require('./browser/stock-v2.cjs');
 const checkAshigaruV2=require('./browser/ashigaru-v2.cjs');
+const checkBulwark=require('./browser/bulwark-v2.cjs');
+const checkBehemothBudget=require('./browser/behemoth-budget.cjs');
 const checkLionTrial=require('./browser/lion-trial.cjs');
 const checkShields=require('./browser/shields.cjs');
 const checkTerrain=require('./browser/terrain.cjs');
@@ -73,7 +75,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[sharedScene,livePaint,billboards,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkStockV2,checkAshigaruV2,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
+async function checkBrowser(origin,scenarios=[sharedScene,livePaint,vehicleLoading,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkStockV2,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkHangar,checkCareerTabs,checkDutyRoster,checkBastionGrips]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
  const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
  const cpuFlows=new Set(['checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);

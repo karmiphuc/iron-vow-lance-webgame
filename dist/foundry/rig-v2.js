@@ -263,9 +263,9 @@ function build(unit,scope='battle'){
   source.updateMatrixWorld(true);
  }
  mech.nativeV2={
-  source,sync,bounds,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,
+  source,sync,bounds,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
   jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
-  anchors:equipment.anchors,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
+  anchors:equipment.anchors,nativeShield:equipment.nativeShield,meleeSide:equipment.meleeSide,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){
    equipment.dispose?.();
    for(const skeleton of skeletons.values())skeleton.boneTexture?.dispose();
