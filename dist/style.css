@@ -477,7 +477,6 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 .armory-card-foot button{width:100%;min-height:42px;padding:6px 4px;font-size:10px;font-weight:700}
 .armory-card-foot button:disabled{opacity:1;color:var(--muted);background:#111b20}
 .armory-card-foot button[aria-pressed="true"]{opacity:1;background:#342c21;color:var(--accent)}
-.armory-card[data-weapon-card="blade"] .weapon-card-art{object-fit:cover}
 .armory-kits>div{min-width:0}
 .armory-shields .remove-melee{margin-top:5px}
 .shield-status{color:#a8d0dc}
@@ -509,7 +508,7 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 .combatpanel .combat-status{display:block;margin-top:3px;font-size:9px;line-height:1.2}
 .combatpanel .inspect-head .combat-target{display:block;flex:0 0 32px;width:32px;height:32px;border-radius:3px}
 .combatpanel .inspect-head .combat-target img{height:100%;top:0;object-fit:contain;object-position:center}
-.combatpanel .inspect-head .combat-target .vehicle-target{object-fit:cover;object-position:center 67%}
+.combatpanel .inspect-head .combat-target .vehicle-target{object-fit:contain;object-position:center;transform:scale(1.13)}
 .combatpanel .close-target{flex:none;padding:4px}
 .combatpanel .parts{display:grid;gap:3px}
 .combatpanel .hp-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px}

@@ -5,30 +5,53 @@ import mimetypes
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 dist = Path(__file__).resolve().parents[1] / "dist"
 site = "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site/"
-types = {".woff2": "font/woff2", ".wav": "audio/wav"}
+types = {".glb": "model/gltf-binary", ".woff2": "font/woff2", ".wav": "audio/wav"}
 assets = {
     str(path.relative_to(dist)): (
         f"data:{types.get(path.suffix) or mimetypes.guess_type(path)[0]};base64,"
         + base64.b64encode(path.read_bytes()).decode("ascii")
     )
     for path in sorted((dist / "assets").rglob("*"))
-    if path.suffix in {".webp", ".svg", ".mp3", ".wav", ".woff2"}
+    if path.suffix in {".webp", ".svg", ".mp3", ".wav", ".woff2", ".glb"}
 }
 
-arsenal = dist / "rig-bench" / "weapons.glb"
-assets["rig-bench/weapons.glb"] = (
-    "data:model/gltf-binary;base64," + base64.b64encode(arsenal.read_bytes()).decode("ascii")
-)
+for asset in (
+    "rig-bench/weapons.glb",
+    "rig-bench/expansion-weapons.glb",
+    "rig-bench/shields.glb",
+    "rig-bench/rig-v2/warden.glb",
+    "rig-bench/rig-v2/gatecrasher-r2-reference.glb",
+    "rig-bench/rig-v2/hellbreaker.glb",
+    "rig-bench/rig-v2/shogun.glb",
+    "rig-bench/rig-v2/cicada-reference.glb",
+    "rig-bench/rig-v2/li-01.glb",
+    "rig-bench/rig-v2/li-02.glb",
+    "rig-bench/rig-v2/reaver.glb",
+    "rig-bench/rig-v2/lion.glb",
+    "rig-bench/rig-v2/kestrel.glb",
+    "rig-bench/rig-v2/basilisk.glb",
+    "rig-bench/rig-v2/vanguard.glb",
+    "rig-bench/rig-v2/aero.glb",
+    "rig-bench/rig-v2/ashigaru.glb",
+    "rig-bench/rig-v2/bastion.glb",
+    "rig-bench/rig-v2/bulwark.glb",
+):
+    assets[asset] = (
+        "data:model/gltf-binary;base64," + base64.b64encode((dist / asset).read_bytes()).decode("ascii")
+    )
 
 def stylesheet(path):
+    path = urlsplit(path).path
     css = (dist / path).read_text()
     css = re.sub(r"@import url\(['\"]?([^'\")]+)['\"]?\);", lambda match: stylesheet(match[1]), css)
     return re.sub(r"url\(['\"]?(assets/[^'\")]+)['\"]?\)", lambda match: f"url('{assets[match[1]]}')", css)
 
 def script(path):
+    path = urlsplit(path).path
     content = (dist / path).read_text().replace("</script", "<\\/script")
     if path == "game.js":
         for link in ("rig-bench/index.html", "rig-bench/prototypes/", "foundry/studio.html"):

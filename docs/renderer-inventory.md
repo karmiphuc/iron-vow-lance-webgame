@@ -1,8 +1,48 @@
-# Renderer inventory — issue #6, Phase 0
+# Renderer inventory — issue #6
+
+## Phase 3 checkpoint
+
+The regenerated [file audit](renderer-inventory.json) covers all 21 frame IDs, the Lion trial, both vehicle GLBs and the shared arsenal. Its `rig_v2_gate` entries use the default-scene triangle and contract checks from `qa/check-rig-v2.cjs`. The [Phase 3 evidence](../design/phase3/README.md) records live behavior and the heaviest validated configurations.
+
+| Asset | Default-scene triangles | Sortie status |
+| --- | ---: | --- |
+| Gatecrasher R2 | 54,252 | Live. Up to 56,608 with Vesper and the Citadel shield. |
+| Painted Warden | 50,316 | Live. Heaviest equipped loadout draws 59,872. |
+| Kestrel | 28,865 | Live. Heaviest equipped loadout draws 38,421. |
+| Basilisk | 36,765 | Live. Heaviest equipped loadout draws 46,321. |
+| Cicada | 49,978 | Live. |
+| LI-01 | 49,790 | Live. |
+| LI-02 | 50,466 | Live. |
+| Gravemaw | 20,158 | Live. |
+| Reaver | 16,340 | Live. |
+| Aero | 52,798 | Live. The file includes all Relay melee variants; the heaviest equipped loadout is 59,592. |
+| Hellbreaker | 57,726 | Live with its original Morrow assembly and Breach Gauntlet. |
+| Shogun | 47,116 | Live. Heaviest equipped loadout is 49,472. |
+| Ashigaru | 54,908 | Live. With Needle and knife, 54,354. With Flechette and knife, 53,892. |
+| Bastion | 54,160 | Live. Heaviest equipped loadout is 56,495. |
+| Bulwark-Aegis | 58,009 | Live with the original tower shield and cleaver. |
+| Lion | 58,753 | Live in the trial with three authored strikes. |
+
+The procedural kit publishes the same joints, dimensions, materials and damage groups at runtime. The heaviest production weapon and shield are mounted for the equipment check, with all upgrade meshes enabled.
+
+| Procedural chassis | Hull triangles | Equipped with upgrades |
+| --- | ---: | ---: |
+| Aegis | 17,316 | 27,620 |
+| Shrike | 9,026 | 18,970 |
+| Citadel | 16,022 | 26,034 |
+| Valkyrie | 17,452 | 27,340 |
+| Oni | 31,242 | 40,982 |
+| Behemoth | 44,436 | 54,244 |
+
+The remaining chassis and Lion have rig-v2 GLBs. The Phase 0 tables below retain the historical sources before migration.
+
+The current build has removed the temporary billboard and weapon adapters, sprite atlases, paint masks, and baked fallback stills. Original editable projects and export scripts remain available.
+
+## Phase 0 baseline
 
 Baseline: GitHub `f264567f01d0501b11f40e1ffdc15a314f47993d` / Sites v98. References entered main through PR #5 (`2034d9b`). No presentation paths have been replaced or deleted in this phase.
 
-`renderer-inventory.json` is the reproducible file-level audit. Regenerate with `node qa/renderer-inventory.cjs docs/renderer-inventory.json`. It enumerates all 20 `FRAMES`, all 15 GLBs, mesh triangle counts, node names, paint material names, part tags, optional clips and missing root dimensions. These are static file facts; no GLB is certified as rig contract v2 by its presence. Triangle counts exclude node instancing and cannot stand in for `renderer.info`.
+`renderer-inventory.json` is the reproducible file-level audit. Regenerate with `node qa/renderer-inventory.cjs docs/renderer-inventory.json`. The tables below record the original baseline before live-scene migration.
 
 ## Chassis and runtime paths
 
@@ -34,7 +74,7 @@ Paths in the following tables are relative to `dist/`. GLBs are under `rig-bench
 
 The procedural kit has six source models; Bastion's ordinary live path substitutes its GLB. Citadel retains kit model 2. Kit dimensions live in `VowChassis.DIMS`; current GLBs do not export all 15 required dimensions on a node named `root`.
 
-The static GLB audit also finds several mesh totals above 60k, not just Gatecrasher: Bastion 215,478; Ashigaru/scout 184,382; Gatecrasher 162,386; Bulwark 151,221; Cicada 127,172; Hellbreaker 89,106. These are unique mesh totals, not measured per-frame GPU work. Optimisation and rig export need the prescribed Blender MCP, which is not connected in this session.
+The static GLB audit also finds several mesh totals above 60k, not just Gatecrasher: Bastion 215,478; Ashigaru/scout 184,382; Gatecrasher 162,386; Bulwark 151,221; Cicada 127,172; Hellbreaker 89,106. These are unique mesh totals, not measured per-frame GPU work. Blender MCP was unavailable during the Phase 0 inventory.
 
 ## Rig contract v2 gap table
 

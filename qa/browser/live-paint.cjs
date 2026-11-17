@@ -1,13 +1,22 @@
 const assert=require('node:assert/strict');
 module.exports=async function livePaint({page,origin}){
+ const wardenRequests=[];
+ page.on('request',request=>{if(new URL(request.url()).pathname.endsWith('/rig-v2/warden.glb'))wardenRequests.push(request.url());});
  await page.goto(origin,{waitUntil:'domcontentloaded',timeout:120000});await page.waitForFunction(()=>window.__ironVow&&document.querySelector('#nav button'));
+ assert.equal(wardenRequests.length,0,'Cold campaign defers the Warden GLB');
+ assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0})),undefined);
  for(const frames of [[0,5,6],[10,8,9]]){console.log('warming '+frames.join(','));await page.evaluate(frames=>__ironVow.start({seed:4242,frames}),frames);await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});}
  console.log('live preview assets ready');
  for(const frame of [0,5,6,7,8,9,10,12]){
   console.log('checking live preview '+frame);
+  if(frame===0)await page.waitForFunction(()=>{
+   const unit={frame:0,weapon:'rifle'};
+   IronVowFoundry.preview(unit,foundryModel(0),'rig-v2');
+   return IronVowRigV2.status(unit,'preview')==='ready';
+  },null,{timeout:120000});
   const sample=await page.evaluate(frame=>{
    const unit={frame,team:'enemy',paint:'#617caa',trim:{s:'#303a44',a:'#d58837'},weapon:'rifle',melee:'cleaver',upgrade:0};
-   const custom=frame===0?'warden':frame===10?'bastion':undefined,entry=IronVowFoundry.preview(unit,foundryModel(frame),custom),expected=[unit.paint,unit.trim.s,unit.trim.a];
+   const custom=[0,10].includes(frame)?'rig-v2':undefined,entry=IronVowFoundry.preview(unit,foundryModel(frame),custom),expected=[unit.paint,unit.trim.s,unit.trim.a];
    if(!entry)throw Error('Live preview was not ready for '+frame);
    const colors=[];entry.m.cont.traverse(o=>{if(o.isMesh&&o.material.color)colors.push(o.material.color.toArray());});
    const present=expected.map(hex=>{const wanted=new THREE.Color(hex).convertSRGBToLinear().toArray();return colors.some(rgb=>Math.hypot(...rgb.map((v,i)=>v-wanted[i]))<1e-6);});
@@ -15,8 +24,7 @@ module.exports=async function livePaint({page,origin}){
    const url=entry.url,other=IronVowFoundry.preview({...unit,paint:'#a45533'},foundryModel(frame),custom);
    return{present,expected,opaque,width:entry.surface.width,height:entry.surface.height,changed:other?.url!==url};
   },frame);
-  const required=frame===0?sample.expected.slice(0,2):sample.expected;
-  for(const [i,color] of required.entries())assert.ok(sample.present[i],'Frame '+frame+' applies material color '+color);
+  for(const [i,color] of sample.expected.entries())assert.ok(sample.present[i],'Frame '+frame+' applies material color '+color);
   assert.deepEqual([sample.width,sample.height],[640,640]);assert.ok(sample.opaque>1000,'Frame '+frame+' preview contains real rendered geometry');assert.equal(sample.changed,true,'Paint invalidates the live image cache');
  }
 };

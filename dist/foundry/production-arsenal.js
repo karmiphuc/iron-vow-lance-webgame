@@ -5,9 +5,12 @@ const T=window.THREE;
 if(!T?.GLTFLoader)return;
 const names={rifle:'kestrel',shotgun:'breacher',missile:'vesper',rail:'longbow',
  hailstorm:'hailstorm',rampart:'rampart',breaker:'breaker',cleaver:'cleaver',piledriver:'piledriver',blade:'cleaver'};
-const expansion=window.IRON_VOW_EXPANSION_ART??{};
+// GLB node names are independent of the temporary 2D weapon-art metadata.
+const expansion=new Set(['sidewinder','trident','forge','ember','watchman','falcon',
+ 'cerberus','obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax']);
 const rigs=window.IRON_VOW_EXPANSION_RIG??{};
-const isExpansion=id=>Object.hasOwn(expansion,id);
+const isExpansion=id=>expansion.has(id);
+const assetNodeName=id=>isExpansion(id)?id:Object.hasOwn(names,id)?names[id]:undefined;
 let arsenal;
 function load(source,expansionSource,shieldSource){
  if(!arsenal){
@@ -15,9 +18,9 @@ function load(source,expansionSource,shieldSource){
   const read=source=>typeof source==='string'?loader.loadAsync(source):
    new Promise((resolve,reject)=>loader.parse(source,'',resolve,reject));
   arsenal=Promise.all([read(source),expansionSource?read(expansionSource).catch(error=>{
-   console.warn('Expanded arsenal using baked weapon art',error);
+   console.warn('Expanded arsenal GLB failed to load',error);
   }):null,shieldSource?read(shieldSource).catch(error=>{
-   console.warn('Shield arsenal using baked art',error);
+   console.warn('Shield arsenal GLB failed to load',error);
   }):null]).then(([{scene},extra,shields])=>{
    if(extra)scene.add(extra.scene);
    if(shields)scene.add(shields.scene);
@@ -33,7 +36,8 @@ function mountShield(scene,id,socket){
  if(!original)return null;
  const mount=original.clone(true);
  socket.add(mount);
- const marker=part=>mount.getObjectByName(id+'.'+part);
+ const marker=part=>mount.getObjectByName(id+'.'+part)
+  ??mount.getObjectByName(T.PropertyBinding.sanitizeNodeName(id+'.'+part));
  return {mount,grip:marker('grip'),face:marker('face'),rotation:new T.Quaternion()};
 }
 function poseShield(shield,u,heading){
@@ -46,10 +50,11 @@ function poseShield(shield,u,heading){
 }
 function mount(scene,id,socket){
  const added=isExpansion(id);
- if(!added&&!Object.hasOwn(names,id))return null;
- const original=scene.getObjectByName(added?id:names[id]);
+ const name=assetNodeName(id);
+ if(!name)return null;
+ const original=scene.getObjectByName(name);
  if(!original)return null;
- const model=original.clone(true),mount=new T.Group(),recoil=new T.Group();
+ const model=original.clone(true),mount=new T.Group(),recoil=new T.Group(),ownedMaterials=[];
  const marker=part=>added?(model.getObjectByName(id+'.'+part)??model.getObjectByName(T.PropertyBinding.sanitizeNodeName(id+'.'+part))):model.getObjectByName(part);
  const sword=['breaker','cleaver','blade'].includes(id);
  mount.rotation.x=sword?0:Math.PI/2;
@@ -57,6 +62,7 @@ function mount(scene,id,socket){
   model.traverse(o=>{
    if(o.isMesh&&o.material.name==='emissive_edge'){
     o.material=o.material.clone();
+    ownedMaterials.push(o.material);
     o.material.color.set(0xff7435);o.material.emissive.set(0xff5122);o.material.emissiveIntensity=2.1;
    }
   });
@@ -67,6 +73,7 @@ function mount(scene,id,socket){
   if(o.isMesh&&o.material.name==='armory_charge'){
    o.material=o.material.clone();
    chargeMaterials.push(o.material);
+   ownedMaterials.push(o.material);
   }
  });
  if(added&&grip){
@@ -76,7 +83,7 @@ function mount(scene,id,socket){
  recoil.add(model);mount.add(recoil);socket.add(mount);
  return {id,model,mount,recoil,grip,axis:marker('axis'),muzzle:marker('muzzle'),
   muzzle2:marker('muzzle2'),tip:marker('tip'),base:marker('base'),spike,spikeRest:spike?.position.z,
-  pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0,belt,chargeMaterials};
+  pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0,belt,chargeMaterials,ownedMaterials};
 }
 function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,strikeProgress=0}={}){
  if(weapon.spike)weapon.spike.position.z=weapon.spikeRest+(strikeProgress>=.61&&strikeProgress<=.81?.5:0);
@@ -89,5 +96,5 @@ function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,s
  if(kind==='spin')weapon.pivot.rotation.z=value;
  else weapon.pivot.position.z=value;
 }
-window.IronVowProductionArsenal={load,mount,isExpansion,animate,mountShield,poseShield};
+window.IronVowProductionArsenal={load,mount,isExpansion,assetNodeName,animate,mountShield,poseShield};
 })();

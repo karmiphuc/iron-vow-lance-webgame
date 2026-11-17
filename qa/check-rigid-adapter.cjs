@@ -17,17 +17,34 @@ function context2d(width,height){
 }
 globalThis.window=globalThis;globalThis.self=globalThis;
 globalThis.document={createElement:()=>{const c={width:1,height:1,style:{}};c.getContext=()=>context2d(c.width,c.height);return c;}};
-for(const file of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.js','foundry/production-arsenal.js',
- 'foundry/behemoth-core.js','foundry/chassis.js','foundry/rig-motion.js','foundry/rigid-adapter.js','foundry/warden-live.js'])
+for(const file of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.js','rig-bench/vendor/meshopt-decoder.js','foundry/production-arsenal.js',
+ 'foundry/behemoth-core.js','foundry/chassis.js','foundry/rig-motion.js','foundry/rigid-adapter.js','foundry/rig-v2.js','foundry/rig-v2-warden.js'])
  vm.runInThisContext(readFileSync(join(dist,file),'utf8'),{filename:file});
+vm.runInThisContext(readFileSync(join(__dirname,'../tools/authoring/warden/legacy-bind.js'),'utf8'));
 const T=THREE,R=window.IronVowFoundryRig,W=window.IronVowWardenRig,A=window.IronVowProductionArsenal,V3=R.V3,dt=1/60;
 const buffer=file=>{const b=readFileSync(join(dist,file));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength)};
-const motion=JSON.parse(readFileSync(join(dist,'rig-bench/warden-painted-motion.json'),'utf8'));
+const motion=JSON.parse(readFileSync(join(__dirname,'../tools/authoring/warden/approved-bench-motion.json'),'utf8'));
 
 async function main(){
  await W.load(buffer('rig-bench/warden-painted.glb'),motion);
+ const v2=window.IronVowRigV2,unit={frame:0,team:'ally'};
+ const loadAsync=T.GLTFLoader.prototype.loadAsync;
+ async function loadSource(url){
+  assert.equal(url,'rig-bench/rig-v2/warden.glb');
+  return new Promise((ok,no)=>this.parse(buffer(url),'',ok,no));
+ }
+ T.GLTFLoader.prototype.loadAsync=loadSource;
+ try{assert.deepEqual(await v2.load([unit]),[true]);}finally{T.GLTFLoader.prototype.loadAsync=loadAsync;}
+ const makeWarden=()=>v2.build(unit);
+ const authoredV2=await loadSource.call(new T.GLTFLoader().setMeshoptDecoder(window.MeshoptDecoder),'rig-bench/rig-v2/warden.glb');
+ authoredV2.scene.updateMatrixWorld(true);
  const armory=await A.load(buffer('rig-bench/weapons.glb'));
  const world=o=>o.getWorldPosition(V3());
+ const handBounds=arm=>{
+  const bounds=new T.Box3();
+  for(const child of arm.wr.children)if(child!==arm.so)child.traverse(node=>{if(node.isMesh)bounds.expandByObject(node);});
+  return bounds;
+ };
 
  // 1. The re-rig is exact: every armour part sits where the authored GLB puts it in the bind stance.
  {
@@ -44,32 +61,48 @@ async function main(){
   assert.equal(unmatched.length,0,`${unmatched.length} Warden parts moved during the re-rig`);
  }
 
+ {
+  const previous=W.build('ally',null,{keepBind:true,scale:1}),candidate=makeWarden();
+  previous.cont.updateMatrixWorld(true);candidate.cont.updateMatrixWorld(true);
+  const width=1e-5,names=new Map();
+  previous.body.traverse(node=>{if(!node.isMesh)names.set(T.PropertyBinding.sanitizeNodeName(node.name),node);});
+  for(const joint of [candidate.rig.pelvis,candidate.rig.spine,candidate.rig.neck,...Object.values(candidate.rig.arms).flatMap(arm=>[arm.sh,arm.el,arm.wr,arm.so]),...candidate.rig.legs.flatMap(leg=>[leg.hip,leg.kn,leg.an,leg.cap])]){
+   const old=names.get(joint.name),authored=authoredV2.scene.getObjectByName(joint.name);
+   assert.ok(old&&authored&&old.matrixWorld.elements.every((value,i)=>Math.abs(value-authored.matrixWorld.elements[i])<width),joint.name+' preserves the published Aim bind');
+  }
+  assert.match(candidate.nativeV2.source.getObjectByName('root').userData.provenance.blenderSource,/^[a-f0-9]{64}$/);
+  assert.ok(candidate.build.stackMat.emissive.r>0,'Existing exhaust geometry has a restrained stack emission');
+  for(const part of ['left','right']){
+   assert.ok(candidate.build.parts[part].some(entry=>entry.detach)&&candidate.build.parts[part].some(entry=>!entry.detach),part+' has separate apron and hard parts');
+   R.setPartState(candidate,part,2);
+   assert.ok(candidate.build.parts[part].every(entry=>entry.m.visible!==entry.detach),part+' apron detaches while the mechanism remains');
+  }
+ }
  // 1b. The authored elbows bend ~25 degrees sideways; the live rig folds that into the forward hinge so each hand
  //     armour stays on its weapon socket in every pose.
  {
-  const m=W.build('ally',null);m.cont.updateMatrixWorld(true);
+  const m=makeWarden();m.cont.updateMatrixWorld(true);
   for(const side of ['L','R']){
-   const arm=m.rig.arms[side],hand=new T.Box3();
-   for(const o of arm.wr.children)if(o.isMesh)hand.expandByObject(o);
+   const arm=m.rig.arms[side],hand=handBounds(arm);
    assert.ok(hand.expandByScalar(.05).containsPoint(world(arm.so)),`Warden ${side} hand armour has left its weapon socket`);
   }
  }
 
  const make=(offhand,melee='cleaver')=>{
-  const m=W.build('ally',null);m.offhand=offhand;
+  const m=makeWarden();m.offhand=offhand;
   m.primaryWeapon=A.mount(armory,'rifle',m.rig.arms.R.so);m.primaryWeapon.model.scale.setScalar(.62);
-  if(offhand==='blade'){m.blade=A.mount(armory,melee,m.rig.arms.L.so);m.blade.model.scale.setScalar(.62);W.meleeStyle(m,melee);}
+  if(offhand==='blade'){m.blade=A.mount(armory,melee,m.rig.arms.L.so);m.blade.model.scale.setScalar(.62);m.nativeV2.beforeAnimate(m,melee);}
   return m;
  };
  let t=0;
  const step=(m,frames,input={},each)=>{for(let i=0;i<frames;i++){t+=dt;
-  R.animateMech(m,{pos:V3(),face:0,heading:0,alive:true,brace:0,noPlant:true,...input},dt,t);W.afterAnimate(m);each&&each(i);}};
+  R.animateMech(m,{pos:V3(),face:0,heading:0,alive:true,brace:0,noPlant:true,...input},dt,t);m.nativeV2.sync();each&&each(i);}};
  // Points of the rifle mesh inside the pauldrons or head (local boxes shrunk by 3 cm).
  const clipping=m=>{
   m.cont.updateMatrixWorld(true);
   const boxes=[m.rig.arms.R.paul,m.rig.arms.L.paul,m.rig.neck].map(group=>{
    const box=new T.Box3(),inverse=new T.Matrix4().copy(group.matrixWorld).invert();
-   group.traverse(o=>{if(o.isMesh&&o.parent===group){o.geometry.computeBoundingBox();
+   group.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();
     box.union(o.geometry.boundingBox.clone().applyMatrix4(new T.Matrix4().multiplyMatrices(inverse,o.matrixWorld)));}});
    return {box:box.expandByScalar(-.03),inverse};
   });
@@ -107,7 +140,7 @@ async function main(){
  for(const style of [0,1,2]){
   const m=make('blade');m.carryStyle=style;m.carryMoving=false;step(m,90);m.carryStyle=style;
   assert.equal(clipping(m),0,`Warden guard ${style} drives the rifle into its armour`);
-  const hand=new T.Box3();for(const o of m.rig.arms.L.wr.children)if(o.isMesh)hand.expandByObject(o);
+  const hand=handBounds(m.rig.arms.L);
   assert.ok(hand.expandByScalar(.05).containsPoint(world(m.rig.arms.L.so)),`Warden guard ${style} hand lets go of its weapon`);
  }
  {
@@ -129,7 +162,7 @@ async function main(){
  // 4. Melee families: maul overhead then down in front, sweep raised then out in front, thrust cocked then extended.
  for(const [weapon,family] of [['breaker','maul'],['cleaver','sweep'],['piledriver','thrust']]){
   const m=make('blade',weapon);
-  assert.equal(W.MELEE_FAMILY[weapon],family);
+  assert.equal(m.dims.melee,m.dims.meleeStyles[family]);
   const at=age=>{m.melee={age,thrust:false};step(m,3);m.cont.updateMatrixWorld(true);
    return {tip:world(m.blade.tip||m.blade.muzzle||m.blade.mount),shoulder:world(m.rig.arms.L.sh),head:world(m.rig.neck)};};
   const wind=at(R.MEL.wind),hit=at(R.MEL.hit);m.melee=null;
@@ -157,5 +190,5 @@ async function main(){
 
 }
 
-main().then(()=>console.log('PASS measured rigid adapter: exact GLB binding, planted gait, two-hand carry, clear guards, firing stance, maul/sweep/thrust and preview framing'))
+main().then(()=>console.log('PASS source-backed Warden: published Aim binding, apron damage, planted gait, two-hand carry, clear guards, firing stance, maul/sweep/thrust and preview framing'))
  .catch(error=>{console.error(error);process.exitCode=1;});

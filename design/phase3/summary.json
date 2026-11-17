@@ -1,0 +1,5070 @@
+{
+  "status": "pass",
+  "seed": 4242,
+  "gatecrasher": {
+    "triangles": 54252,
+    "skinned": 140,
+    "tagged": 159,
+    "motion": [
+      {
+        "anchor": "muzzle.main",
+        "movement": 0.6569979165715043
+      }
+    ],
+    "shieldTravel": 0.17211050574813094,
+    "loadouts": [
+      {
+        "offhand": "empty",
+        "vesper": false,
+        "triangles": 49882
+      },
+      {
+        "offhand": "cleaver",
+        "vesper": false,
+        "triangles": 50922
+      },
+      {
+        "offhand": "bulwark-shield",
+        "vesper": false,
+        "triangles": 52226,
+        "gripError": 0
+      },
+      {
+        "offhand": "citadel-shield",
+        "vesper": false,
+        "triangles": 53278,
+        "gripError": 0
+      },
+      {
+        "offhand": "empty",
+        "vesper": true,
+        "triangles": 53212
+      },
+      {
+        "offhand": "cleaver",
+        "vesper": true,
+        "triangles": 54252
+      },
+      {
+        "offhand": "bulwark-shield",
+        "vesper": true,
+        "triangles": 55556,
+        "gripError": 0
+      },
+      {
+        "offhand": "citadel-shield",
+        "vesper": true,
+        "triangles": 56608,
+        "gripError": 0
+      }
+    ],
+    "colors": 1003,
+    "glError": 0
+  },
+  "liveGatecrasher": {
+    "desktop": {
+      "plantedFeet": true,
+      "morrow": 2,
+      "vesper": 2,
+      "cleaver": true,
+      "damage": true,
+      "disposal": 159,
+      "contexts": 1
+    },
+    "touch": {
+      "plantedFeet": true,
+      "morrow": 2,
+      "vesper": 2,
+      "cleaver": true,
+      "damage": true,
+      "disposal": 159,
+      "contexts": 1
+    }
+  },
+  "cicada": {
+    "triangles": 49978,
+    "skinned": 116,
+    "tagged": 116,
+    "motion": [
+      {
+        "anchor": "muzzle.locust.L",
+        "movement": 0.31979760822398345,
+        "oppositeMovement": 0
+      },
+      {
+        "anchor": "muzzle.locust.R",
+        "movement": 0.31979760822398295,
+        "oppositeMovement": 0
+      }
+    ],
+    "loadouts": [],
+    "colors": 1047,
+    "glError": 0
+  },
+  "infantry": {
+    "li-01": {
+      "triangles": 49790,
+      "skinned": 0,
+      "tagged": 146,
+      "motion": [
+        {
+          "anchor": "muzzle.main",
+          "movement": 0.5559830416895851
+        }
+      ],
+      "loadouts": [],
+      "colors": 737,
+      "glError": 0
+    },
+    "li-02": {
+      "triangles": 50466,
+      "skinned": 0,
+      "tagged": 152,
+      "motion": [
+        {
+          "anchor": "muzzle.main",
+          "movement": 0.3174541251845052
+        }
+      ],
+      "loadouts": [],
+      "colors": 824,
+      "glError": 0
+    }
+  },
+  "reaver": {
+    "triangles": 16340,
+    "skinned": 0,
+    "tagged": 109,
+    "motion": [
+      {
+        "anchor": "muzzle.R",
+        "movement": 0.612428695943239
+      }
+    ],
+    "loadouts": [],
+    "colors": 420,
+    "glError": 0
+  },
+  "vanguard": {
+    "triangles": 20158,
+    "skinned": 0,
+    "tagged": 79,
+    "motion": [
+      {
+        "anchor": "muzzle.main",
+        "movement": 0.9210786249477511
+      }
+    ],
+    "loadouts": [],
+    "colors": 643,
+    "glError": 0
+  },
+  "warden": {
+    "triangles": 50316,
+    "hull": 50316,
+    "equipped": 59872,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
+  },
+  "aero": {
+    "triangles": 52798,
+    "hull": 50036,
+    "equipped": 59592,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
+  },
+  "kestrel": {
+    "triangles": 28865,
+    "hull": 28865,
+    "equipped": 38421,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
+  },
+  "basilisk": {
+    "triangles": 36765,
+    "hull": 36765,
+    "equipped": 46321,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
+  },
+  "bastion": {
+    "triangles": 54160,
+    "hull": 46939,
+    "equipped": 56495,
+    "heaviestLoadout": [
+      "hailstorm",
+      "citadel-shield"
+    ]
+  },
+  "ashigaru": {
+    "triangles": 54908,
+    "hull": 53030,
+    "weapons": {
+      "carbine": 1016,
+      "scatter": 554,
+      "knife": 308
+    },
+    "equipped": 54354
+  },
+  "lion": {
+    "triangles": 58753,
+    "clips": [
+      "lion.cleaver",
+      "lion.hatchet",
+      "lion.breaker"
+    ]
+  },
+  "kits": {
+    "Aegis": {
+      "hull": 17316,
+      "equipped": 26872,
+      "upgraded": 27620,
+      "equipment": [
+        "hailstorm",
+        "citadel-shield"
+      ]
+    },
+    "Shrike": {
+      "hull": 9026,
+      "equipped": 18582,
+      "upgraded": 18970,
+      "equipment": [
+        "hailstorm",
+        "citadel-shield"
+      ]
+    },
+    "Citadel": {
+      "hull": 16022,
+      "equipped": 25578,
+      "upgraded": 26034,
+      "equipment": [
+        "hailstorm",
+        "citadel-shield"
+      ]
+    },
+    "Valkyrie": {
+      "hull": 17452,
+      "equipped": 27008,
+      "upgraded": 27340,
+      "equipment": [
+        "hailstorm",
+        "citadel-shield"
+      ]
+    },
+    "Oni": {
+      "hull": 31242,
+      "equipped": 40798,
+      "upgraded": 40982,
+      "equipment": [
+        "hailstorm",
+        "citadel-shield"
+      ]
+    },
+    "Behemoth": {
+      "hull": 44436,
+      "equipped": 53992,
+      "upgraded": 54244,
+      "equipment": [
+        "hailstorm",
+        "citadel-shield"
+      ]
+    }
+  },
+  "hellbreaker": {
+    "triangles": 57726
+  },
+  "bulwark": {
+    "triangles": 58009
+  },
+  "shogun": {
+    "triangles": 47116,
+    "skinned": 176,
+    "tagged": 200,
+    "motion": [
+      {
+        "anchor": "muzzle.main",
+        "movement": 0.677827246181984
+      }
+    ],
+    "shieldTravel": 0.081623900463583,
+    "loadouts": [
+      {
+        "offhand": "empty",
+        "vesper": false,
+        "triangles": 42746
+      },
+      {
+        "offhand": "cleaver",
+        "vesper": false,
+        "triangles": 43786
+      },
+      {
+        "offhand": "bulwark-shield",
+        "vesper": false,
+        "triangles": 45090,
+        "gripError": 0
+      },
+      {
+        "offhand": "citadel-shield",
+        "vesper": false,
+        "triangles": 46142,
+        "gripError": 0
+      },
+      {
+        "offhand": "empty",
+        "vesper": true,
+        "triangles": 46076
+      },
+      {
+        "offhand": "cleaver",
+        "vesper": true,
+        "triangles": 47116
+      },
+      {
+        "offhand": "bulwark-shield",
+        "vesper": true,
+        "triangles": 48420,
+        "gripError": 0
+      },
+      {
+        "offhand": "citadel-shield",
+        "vesper": true,
+        "triangles": 49472,
+        "gripError": 0
+      }
+    ],
+    "colors": 577,
+    "glError": 0
+  },
+  "vehicles": {
+    "desktop": {
+      "vehicles": [
+        {
+          "kind": "tank",
+          "picked": true,
+          "hover": 0,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        },
+        {
+          "kind": "helicopter",
+          "picked": true,
+          "hover": 2.788,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        }
+      ],
+      "contexts": 1,
+      "glError": 0,
+      "disposedOnce": true,
+      "detached": true
+    },
+    "touch": {
+      "vehicles": [
+        {
+          "kind": "tank",
+          "picked": true,
+          "hover": 0,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        },
+        {
+          "kind": "helicopter",
+          "picked": true,
+          "hover": 2.788,
+          "launchError": 0,
+          "bodyError": 0,
+          "moveError": 0,
+          "headingError": 0,
+          "wreckGroundError": 0,
+          "damageVisible": true
+        }
+      ],
+      "contexts": 1,
+      "glError": 0,
+      "disposedOnce": true,
+      "detached": true
+    }
+  },
+  "live": {
+    "desktop": {
+      "checkCicadaV2": {
+        "launches": 2,
+        "pulseBash": true,
+        "damage": true
+      },
+      "checkReaver": {
+        "planted": 25,
+        "dualReports": 6,
+        "rightOnlyReports": 6,
+        "geometries": 109
+      },
+      "checkVanguard": {
+        "planted": 25,
+        "launches": 24
+      },
+      "checkAero": {
+        "relay": {
+          "cleaver": 4,
+          "breaker": 2,
+          "piledriver": 2,
+          "blade": 2
+        },
+        "ranged": {
+          "rifle": 8,
+          "rail": 1
+        },
+        "jetBursts": 28,
+        "dodges": 2,
+        "planted": 34
+      },
+      "checkStockV2": {
+        "railReports": [
+          {
+            "frame": 1,
+            "reports": 1
+          },
+          {
+            "frame": 2,
+            "reports": 1
+          }
+        ],
+        "basiliskPodReports": 2,
+        "disposedGeometries": 125
+      },
+      "checkAshigaruV2": [
+        {
+          "range": 8,
+          "expected": "needle-carbine",
+          "events": 16
+        },
+        {
+          "range": 2,
+          "expected": "flechette-scattergun",
+          "events": 13
+        },
+        {
+          "range": 1,
+          "expected": "signal-knife",
+          "events": 1
+        }
+      ],
+      "checkHellbreakerV2": {
+        "planted": 52,
+        "morrow": 4,
+        "morrowDamage": 126,
+        "maxAimDegrees": 1.2074182697257333e-06,
+        "slideTravel": 0.012052033710088691,
+        "gauntlet": 2,
+        "gauntletDamage": 112,
+        "geometries": 133
+      },
+      "checkShogunV2": {
+        "gait": {
+          "samples": 63,
+          "plantedPairs": 53,
+          "worstBinding": 2.3500041222544366e-14
+        },
+        "morrow": 2,
+        "vesper": 2,
+        "cleaver": true,
+        "damage": true,
+        "disposal": 200,
+        "contexts": 1
+      },
+      "bastionSharedRig": {
+        "fittings": 4,
+        "pistons": 14,
+        "missileReports": 2,
+        "rifleReports": 8,
+        "plantedPairs": 169,
+        "disposed": true
+      },
+      "checkBulwark": {
+        "planted": 29,
+        "impacts": 2
+      },
+      "checkBehemothBudget": {
+        "triangles": 50596,
+        "planted": 107
+      },
+      "checkLionTrial": {
+        "cleaver": {
+          "poseError": 0.04099169528381584,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 8.419113733874271e-05,
+          "contactGap": 0.13081070371841766,
+          "bodyIntersections": 0,
+          "damage": 35
+        },
+        "hatchet": {
+          "poseError": 0.044027681358058846,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 8.419113733874271e-05,
+          "contactGap": 0.06297783197678582,
+          "bodyIntersections": 0,
+          "damage": 42
+        },
+        "breaker": {
+          "poseError": 0.042523399255164254,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 8.419113733874271e-05,
+          "contactGap": 0.030483828908734422,
+          "bodyIntersections": 0,
+          "damage": 61
+        }
+      },
+      "checkLineInfantry": {
+        "launches": 16,
+        "worstAimDegrees": 0,
+        "detachedPlates": 3
+      },
+      "checkLineElite": {
+        "launches": 16,
+        "worstAimDegrees": 1.2074182697257333e-06,
+        "detachedPlates": 4
+      },
+      "checkInfantryCarry": {
+        "li-01": {
+          "traversals": 2,
+          "plantedPairs": 16
+        },
+        "li-02": {
+          "traversals": 2,
+          "plantedPairs": 29
+        }
+      },
+      "checkLivePortraits": true,
+      "checkArmory": true,
+      "checkAeroReview": true,
+      "checkWardenRigBench": true
+    },
+    "touch": {
+      "checkCicadaV2": {
+        "launches": 2,
+        "pulseBash": true,
+        "damage": true
+      },
+      "checkReaver": {
+        "planted": 19,
+        "dualReports": 6,
+        "rightOnlyReports": 6,
+        "geometries": 109
+      },
+      "checkVanguard": {
+        "planted": 25,
+        "launches": 24
+      },
+      "checkAero": {
+        "relay": {
+          "cleaver": 4,
+          "breaker": 2,
+          "piledriver": 2,
+          "blade": 2
+        },
+        "ranged": {
+          "rifle": 8,
+          "rail": 1
+        },
+        "jetBursts": 28,
+        "dodges": 2,
+        "planted": 68
+      },
+      "checkStockV2": {
+        "railReports": [
+          {
+            "frame": 1,
+            "reports": 1
+          },
+          {
+            "frame": 2,
+            "reports": 1
+          }
+        ],
+        "basiliskPodReports": 2,
+        "disposedGeometries": 125
+      },
+      "checkAshigaruV2": [
+        {
+          "range": 8,
+          "expected": "needle-carbine",
+          "events": 16
+        },
+        {
+          "range": 2,
+          "expected": "flechette-scattergun",
+          "events": 13
+        },
+        {
+          "range": 1,
+          "expected": "signal-knife",
+          "events": 1
+        }
+      ],
+      "checkHellbreakerV2": {
+        "planted": 52,
+        "morrow": 4,
+        "morrowDamage": 126,
+        "maxAimDegrees": 1.2074182697257333e-06,
+        "slideTravel": 0.012933474495583377,
+        "gauntlet": 2,
+        "gauntletDamage": 112,
+        "geometries": 133
+      },
+      "checkShogunV2": {
+        "gait": {
+          "samples": 63,
+          "plantedPairs": 53,
+          "worstBinding": 2.3255396241207758e-14
+        },
+        "morrow": 2,
+        "vesper": 2,
+        "cleaver": true,
+        "damage": true,
+        "disposal": 200,
+        "contexts": 1
+      },
+      "bastionSharedRig": {
+        "fittings": 4,
+        "pistons": 14,
+        "missileReports": 2,
+        "rifleReports": 8,
+        "plantedPairs": 169,
+        "disposed": true
+      },
+      "checkBulwark": {
+        "planted": 27,
+        "impacts": 2
+      },
+      "checkBehemothBudget": {
+        "triangles": 50596,
+        "planted": 113
+      },
+      "checkLionTrial": {
+        "cleaver": {
+          "poseError": 0.04099169528381584,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 8.419113733874271e-05,
+          "contactGap": 0.1308052983183102,
+          "bodyIntersections": 0,
+          "damage": 35
+        },
+        "hatchet": {
+          "poseError": 0.044027681358058846,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 8.419113733874271e-05,
+          "contactGap": 0.06297783115180307,
+          "bodyIntersections": 0,
+          "damage": 42
+        },
+        "breaker": {
+          "poseError": 0.042523399255164254,
+          "rearDrift": 0.0001061154391792449,
+          "leadDrift": 8.419113733874271e-05,
+          "contactGap": 0.03048383047646881,
+          "bodyIntersections": 0,
+          "damage": 61
+        }
+      },
+      "checkLineInfantry": {
+        "launches": 16,
+        "worstAimDegrees": 8.537736462515939e-07,
+        "detachedPlates": 3
+      },
+      "checkLineElite": {
+        "launches": 16,
+        "worstAimDegrees": 1.2074182697257333e-06,
+        "detachedPlates": 4
+      },
+      "checkInfantryCarry": {
+        "li-01": {
+          "traversals": 2,
+          "plantedPairs": 4
+        },
+        "li-02": {
+          "traversals": 2,
+          "plantedPairs": 29
+        }
+      },
+      "checkLivePortraits": true,
+      "checkArmory": true,
+      "checkAeroReview": true,
+      "checkWardenRigBench": true
+    }
+  },
+  "source": {
+    "commit": "1521c5d8c3065fc01622a3535d3c2027d0fcf239",
+    "distTree": "3ad35ac891bcb76fcc4b84d4413c9177df79e4c5"
+  },
+  "commands": [
+    "npm test",
+    "node qa/gate-phase3.cjs --out <scratch>/gate",
+    "node qa/check-scene.cjs",
+    "python3 tools/package_offline.py <scratch>/iron-vow.html"
+  ],
+  "browser": {
+    "checks": {
+      "desktop": 21,
+      "touch": 21
+    },
+    "runnerSha256": "4f3a654df6d75b9a983d7adfd7722be3f69467239ea0feb24dbfca3bc820982a",
+    "renderPolicy": "Full GPU rendering on both Chromium profiles"
+  },
+  "simulationSuitesPassed": 51,
+  "campaign": {
+    "schema": 1,
+    "status": "passed",
+    "source": {
+      "commit": "b4024522043e9710d9b231ac605e93bd84e8af2b",
+      "distTree": "3ad35ac891bcb76fcc4b84d4413c9177df79e4c5",
+      "url": "http://127.0.0.1:5193/",
+      "distDirty": false,
+      "qaDirty": false,
+      "checkerSha256": "c05ae5b56a50b5d119a82ab458ab4ca13fa3247ea0b863380c8c3067da3006a3",
+      "campaignSha256": "ae676ea5b148b80dee5cb96f6eb44670bb55d882de43d94799b7ff656341db98"
+    },
+    "command": "IRON_VOW_URL=http://127.0.0.1:5193/ IRON_VOW_SCENE_START_INDEX=0 IRON_VOW_SCENE_BATTLES=30 IRON_VOW_SCENE_COMBAT=1 IRON_VOW_SCENE_FORMAL=1 IRON_VOW_SCENE_RESUME=1 IRON_VOW_SCENE_CAMPAIGN_DIR=/private/tmp/iron-vow-phase3-final-seeds IRON_VOW_SCENE_PHASE3_FINAL_READY=1 node qa/check-scene.cjs",
+    "commands": [
+      "IRON_VOW_URL=http://127.0.0.1:5193/ IRON_VOW_SCENE_START_INDEX=0 IRON_VOW_SCENE_BATTLES=30 IRON_VOW_SCENE_COMBAT=1 IRON_VOW_SCENE_FORMAL=1 IRON_VOW_SCENE_RESUME=1 IRON_VOW_SCENE_CAMPAIGN_DIR=/private/tmp/iron-vow-phase3-final-seeds IRON_VOW_SCENE_PHASE3_FINAL_READY=1 node qa/check-scene.cjs"
+    ],
+    "configuration": {
+      "startIndex": 0,
+      "battleCount": 30,
+      "combatGate": true,
+      "formal": true,
+      "cpuRaster": false,
+      "clockHz": 30
+    },
+    "counts": {
+      "expectedBattles": 30,
+      "completedBattles": 30,
+      "actualTicks": 126284,
+      "anomalies": 0,
+      "commandErrors": 0,
+      "browserErrors": 0,
+      "faultControls": 16,
+      "failures": 0
+    },
+    "seeds": {
+      "expected": [
+        4242,
+        4243,
+        4244,
+        4245,
+        4246,
+        4247,
+        4248,
+        4249,
+        4250,
+        4251,
+        4252,
+        4253,
+        4254,
+        4255,
+        4256,
+        4257,
+        4258,
+        4259,
+        4260,
+        4261,
+        4262,
+        4263,
+        4264,
+        4265,
+        4266,
+        4267,
+        4268,
+        4269,
+        4270,
+        4271
+      ],
+      "completed": [
+        4242,
+        4243,
+        4244,
+        4245,
+        4246,
+        4247,
+        4248,
+        4249,
+        4250,
+        4251,
+        4252,
+        4253,
+        4254,
+        4255,
+        4256,
+        4257,
+        4258,
+        4259,
+        4260,
+        4261,
+        4262,
+        4263,
+        4264,
+        4265,
+        4266,
+        4267,
+        4268,
+        4269,
+        4270,
+        4271
+      ],
+      "missing": []
+    },
+    "coverage": {
+      "chassis": {
+        "expected": [
+          {
+            "frame": 0,
+            "name": "WARDEN"
+          },
+          {
+            "frame": 1,
+            "name": "KESTREL"
+          },
+          {
+            "frame": 2,
+            "name": "BASILISK"
+          },
+          {
+            "frame": 3,
+            "name": "GATECRASHER"
+          },
+          {
+            "frame": 4,
+            "name": "CICADA"
+          },
+          {
+            "frame": 5,
+            "name": "VALKYRIE"
+          },
+          {
+            "frame": 6,
+            "name": "ONI"
+          },
+          {
+            "frame": 7,
+            "name": "BEHEMOTH"
+          },
+          {
+            "frame": 8,
+            "name": "AEGIS"
+          },
+          {
+            "frame": 9,
+            "name": "SHRIKE"
+          },
+          {
+            "frame": 10,
+            "name": "BASTION"
+          },
+          {
+            "frame": 11,
+            "name": "HELLBREAKER"
+          },
+          {
+            "frame": 12,
+            "name": "CITADEL"
+          },
+          {
+            "frame": 13,
+            "name": "LINE INFANTRY"
+          },
+          {
+            "frame": 14,
+            "name": "LINE INFANTRY ELITE"
+          },
+          {
+            "frame": 15,
+            "name": "GRAVEMAW"
+          },
+          {
+            "frame": 16,
+            "name": "REAVER"
+          },
+          {
+            "frame": 17,
+            "name": "BULWARK-AEGIS"
+          },
+          {
+            "frame": 18,
+            "name": "ASHIGARU"
+          },
+          {
+            "frame": 19,
+            "name": "AERO"
+          },
+          {
+            "frame": 20,
+            "name": "SHOGUN"
+          }
+        ],
+        "seen": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "modelSeen": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "missing": [],
+        "missingModels": []
+      },
+      "weapons": {
+        "expected": [
+          "anchor-hammer",
+          "blade",
+          "breaker",
+          "cerberus",
+          "cleaver",
+          "ember",
+          "falcon",
+          "forge",
+          "hailstorm",
+          "hatchet",
+          "missile",
+          "obelisk",
+          "parallax",
+          "pike",
+          "piledriver",
+          "rail",
+          "rampart",
+          "rifle",
+          "rivet",
+          "shotgun",
+          "sidewinder",
+          "tonfa",
+          "trident",
+          "watchman"
+        ],
+        "assigned": [
+          "anchor-hammer",
+          "blade",
+          "breaker",
+          "cerberus",
+          "cleaver",
+          "ember",
+          "falcon",
+          "forge",
+          "hailstorm",
+          "hatchet",
+          "missile",
+          "obelisk",
+          "parallax",
+          "pike",
+          "piledriver",
+          "rail",
+          "rampart",
+          "rifle",
+          "rivet",
+          "shotgun",
+          "sidewinder",
+          "tonfa",
+          "trident",
+          "watchman"
+        ],
+        "commanded": [
+          "aegis-cleave",
+          "cerberus",
+          "ember",
+          "falcon",
+          "flechette-scattergun",
+          "forge",
+          "hailstorm",
+          "locust",
+          "missile",
+          "morrow",
+          "needle-carbine",
+          "obelisk",
+          "parallax",
+          "rail",
+          "rampart",
+          "rifle",
+          "rivet",
+          "shotgun",
+          "sidewinder",
+          "tonfa",
+          "trident",
+          "watchman"
+        ],
+        "observed": [
+          "aegis-bash",
+          "aegis-cleave",
+          "anchor-hammer",
+          "blade",
+          "breach-gauntlet",
+          "breaker",
+          "cerberus",
+          "cleaver",
+          "ember",
+          "falcon",
+          "forge",
+          "hailstorm",
+          "hatchet",
+          "locust",
+          "missile",
+          "morrow",
+          "needle-carbine",
+          "obelisk",
+          "parallax",
+          "pike",
+          "piledriver",
+          "pulse-bash",
+          "rail",
+          "rampart",
+          "rifle",
+          "rivet",
+          "shotgun",
+          "sidewinder",
+          "signal-knife",
+          "tonfa",
+          "trident",
+          "watchman"
+        ],
+        "missingAssigned": [],
+        "missingObserved": [],
+        "expectedShields": [
+          "bulwark-shield",
+          "citadel-shield"
+        ],
+        "assignedShields": [
+          "bulwark-shield",
+          "citadel-shield"
+        ],
+        "observedShields": [
+          "aegis-tower",
+          "bulwark-shield",
+          "citadel-shield"
+        ],
+        "missingShields": [],
+        "missingObservedShields": []
+      }
+    },
+    "runtimeChassis": {
+      "catalog": [
+        {
+          "frame": 0,
+          "name": "WARDEN",
+          "live": true
+        },
+        {
+          "frame": 1,
+          "name": "KESTREL",
+          "live": true
+        },
+        {
+          "frame": 2,
+          "name": "BASILISK",
+          "live": true
+        },
+        {
+          "frame": 3,
+          "name": "GATECRASHER",
+          "live": true
+        },
+        {
+          "frame": 4,
+          "name": "CICADA",
+          "live": true
+        },
+        {
+          "frame": 5,
+          "name": "VALKYRIE",
+          "live": true
+        },
+        {
+          "frame": 6,
+          "name": "ONI",
+          "live": true
+        },
+        {
+          "frame": 7,
+          "name": "BEHEMOTH",
+          "live": true
+        },
+        {
+          "frame": 8,
+          "name": "AEGIS",
+          "live": true
+        },
+        {
+          "frame": 9,
+          "name": "SHRIKE",
+          "live": true
+        },
+        {
+          "frame": 10,
+          "name": "BASTION",
+          "live": true
+        },
+        {
+          "frame": 11,
+          "name": "HELLBREAKER",
+          "live": true
+        },
+        {
+          "frame": 12,
+          "name": "CITADEL",
+          "live": true
+        },
+        {
+          "frame": 13,
+          "name": "LINE INFANTRY",
+          "live": true
+        },
+        {
+          "frame": 14,
+          "name": "LINE INFANTRY ELITE",
+          "live": true
+        },
+        {
+          "frame": 15,
+          "name": "GRAVEMAW",
+          "live": true
+        },
+        {
+          "frame": 16,
+          "name": "REAVER",
+          "live": true
+        },
+        {
+          "frame": 17,
+          "name": "BULWARK-AEGIS",
+          "live": true
+        },
+        {
+          "frame": 18,
+          "name": "ASHIGARU",
+          "live": true
+        },
+        {
+          "frame": 19,
+          "name": "AERO",
+          "live": true
+        },
+        {
+          "frame": 20,
+          "name": "SHOGUN",
+          "live": true
+        }
+      ],
+      "phase3Expected": [
+        {
+          "frame": 0,
+          "name": "WARDEN"
+        },
+        {
+          "frame": 1,
+          "name": "KESTREL"
+        },
+        {
+          "frame": 2,
+          "name": "BASILISK"
+        },
+        {
+          "frame": 3,
+          "name": "GATECRASHER"
+        },
+        {
+          "frame": 4,
+          "name": "CICADA"
+        },
+        {
+          "frame": 5,
+          "name": "VALKYRIE"
+        },
+        {
+          "frame": 6,
+          "name": "ONI"
+        },
+        {
+          "frame": 7,
+          "name": "BEHEMOTH"
+        },
+        {
+          "frame": 8,
+          "name": "AEGIS"
+        },
+        {
+          "frame": 9,
+          "name": "SHRIKE"
+        },
+        {
+          "frame": 10,
+          "name": "BASTION"
+        },
+        {
+          "frame": 11,
+          "name": "HELLBREAKER"
+        },
+        {
+          "frame": 13,
+          "name": "LINE INFANTRY"
+        },
+        {
+          "frame": 14,
+          "name": "LINE INFANTRY ELITE"
+        },
+        {
+          "frame": 15,
+          "name": "GRAVEMAW"
+        },
+        {
+          "frame": 16,
+          "name": "REAVER"
+        },
+        {
+          "frame": 17,
+          "name": "BULWARK-AEGIS"
+        },
+        {
+          "frame": 18,
+          "name": "ASHIGARU"
+        },
+        {
+          "frame": 19,
+          "name": "AERO"
+        },
+        {
+          "frame": 20,
+          "name": "SHOGUN"
+        }
+      ],
+      "phase3MissingRuntime": [],
+      "phase3MissingObserved": [],
+      "phase3MissingSnapshots": [],
+      "notLive": []
+    },
+    "lionTrial": {
+      "finalReady": true,
+      "requiredForPhase3": true,
+      "includedInSeededFrames": false,
+      "checker": [
+        "qa/check-lion-trial.cjs",
+        "qa/browser/lion-trial.cjs"
+      ],
+      "status": "passed",
+      "output": "PASS Lion closed grip export, authored attack phases, playable loadouts, and isolated career state"
+    },
+    "faultControls": [
+      "nan",
+      "footGround",
+      "footSlide",
+      "bounds",
+      "overlap",
+      "stuck",
+      "ikReach",
+      "aimOff",
+      "weaponMount",
+      "muzzleFar",
+      "noDamage",
+      "deadPartDamage",
+      "hpRange",
+      "wreckActs",
+      "partVisual",
+      "popSwap"
+    ],
+    "failures": [],
+    "failureCount": 0,
+    "battles": [
+      {
+        "seed": 4242,
+        "frames": [
+          0,
+          1,
+          2,
+          13,
+          18
+        ],
+        "assignedWeapons": [
+          "rifle",
+          "shotgun",
+          "missile"
+        ],
+        "workshopAssignedWeapons": [
+          "rifle",
+          "shotgun",
+          "missile"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "rifle",
+          "shotgun",
+          "missile"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "shotgun",
+          "missile",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 2241,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 91,
+          "impact": 137,
+          "arrival": 8
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 85,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 36.13639246884575,
+          "minimumTravel": 3.8153552423472075
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 2348084964,
+        "wallMilliseconds": 14991,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4243,
+        "frames": [
+          3,
+          4,
+          5,
+          0,
+          19,
+          2
+        ],
+        "assignedWeapons": [
+          "cleaver",
+          "locust",
+          "rail"
+        ],
+        "workshopAssignedWeapons": [
+          "cleaver",
+          "rail"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "morrow",
+          "locust",
+          "rail"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "cleaver",
+          "locust",
+          "pulse-bash",
+          "rail",
+          "rifle",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally2",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4715,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 61,
+          "impact": 56,
+          "arrival": 14
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 61,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 37.55984536329372,
+          "minimumTravel": 2.789608719544021
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 77049379,
+        "wallMilliseconds": 28648,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4244,
+        "frames": [
+          6,
+          7,
+          8,
+          14,
+          15,
+          16,
+          9
+        ],
+        "assignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "workshopAssignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "hailstorm",
+          "rampart",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "hailstorm",
+          "blade",
+          "rampart",
+          "rifle",
+          "breaker",
+          "piledriver",
+          "shotgun"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4666,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 253,
+          "impact": 201
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.9802322387695312e-08,
+        "aimClearance": {
+          "calls": 252,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 158.0757102847969,
+          "minimumTravel": 9.840951388309753
+        },
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 3387556809,
+        "wallMilliseconds": 28750,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4245,
+        "frames": [
+          9,
+          10,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "assignedWeapons": [
+          "cleaver",
+          "piledriver",
+          "morrow"
+        ],
+        "workshopAssignedWeapons": [
+          "cleaver",
+          "piledriver"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "shotgun",
+          "rifle",
+          "morrow"
+        ],
+        "observedWeaponIds": [
+          "shotgun",
+          "cleaver",
+          "rifle",
+          "piledriver",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "aegis-cleave",
+          "aegis-bash",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4995,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 115,
+          "impact": 155,
+          "arrival": 2
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 115,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 140.00045127970265,
+          "minimumTravel": 9.370948257453714
+        },
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 2748269787,
+        "wallMilliseconds": 31937,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4246,
+        "frames": [
+          12,
+          15,
+          16,
+          13,
+          18
+        ],
+        "assignedWeapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "weapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 2406,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 142,
+          "impact": 127
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 138,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 35.87753142293725,
+          "minimumTravel": 4.21190714443177
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 1759463897,
+        "wallMilliseconds": 14310,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4247,
+        "frames": [
+          17,
+          18,
+          19,
+          0,
+          2
+        ],
+        "assignedWeapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "blade"
+        ],
+        "workshopAssignedWeapons": [
+          "blade"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "rifle",
+          "flechette-scattergun"
+        ],
+        "observedWeaponIds": [
+          "aegis-cleave",
+          "aegis-bash",
+          "needle-carbine",
+          "signal-knife",
+          "rifle",
+          "blade",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5037,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "impact": 160,
+          "launch": 148,
+          "dodge": 2,
+          "arrival": 8
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 145,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 35.75347558220817,
+          "minimumTravel": 3.922006215145168
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 3594849259,
+        "wallMilliseconds": 31604,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4248,
+        "frames": [
+          20,
+          0,
+          1,
+          14,
+          15,
+          16,
+          9
+        ],
+        "assignedWeapons": [
+          "bulwark-shield",
+          "sidewinder",
+          "trident"
+        ],
+        "workshopAssignedWeapons": [
+          "sidewinder",
+          "trident"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "weapons": [
+          "morrow",
+          "sidewinder",
+          "trident"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "sidewinder",
+          "trident",
+          "rifle",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 7287,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 443,
+          "impact": 374
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 442,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 16.067163713210356,
+          "minimumTravel": 2.8094737262035645
+        },
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": true,
+          "pay": 5990
+        },
+        "terrainSeed": 1241177973,
+        "wallMilliseconds": 47352,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4249,
+        "frames": [
+          2,
+          3,
+          4,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "assignedWeapons": [
+          "forge",
+          "citadel-shield",
+          "locust"
+        ],
+        "workshopAssignedWeapons": [
+          "forge"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "weapons": [
+          "forge",
+          "morrow",
+          "locust"
+        ],
+        "observedWeaponIds": [
+          "forge",
+          "morrow",
+          "locust",
+          "pulse-bash",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "missile",
+          "rifle",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield",
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5827,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 108,
+          "impact": 171,
+          "arrival": 22
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 108,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 31.967010566390464,
+          "minimumTravel": 4.247238136742693
+        },
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 3934360121,
+        "wallMilliseconds": 36792,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4250,
+        "frames": [
+          5,
+          6,
+          7,
+          13,
+          18
+        ],
+        "assignedWeapons": [
+          "ember",
+          "watchman",
+          "falcon"
+        ],
+        "workshopAssignedWeapons": [
+          "ember",
+          "watchman",
+          "falcon"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "ember",
+          "watchman",
+          "falcon"
+        ],
+        "observedWeaponIds": [
+          "ember",
+          "watchman",
+          "blade",
+          "falcon",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 1834,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 40,
+          "impact": 69
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 37,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 35.57632742568246,
+          "minimumTravel": 3.3298394427784848
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 4021499127,
+        "wallMilliseconds": 10629,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4251,
+        "frames": [
+          8,
+          9,
+          10,
+          0,
+          19,
+          2
+        ],
+        "assignedWeapons": [
+          "cerberus",
+          "obelisk",
+          "rivet"
+        ],
+        "workshopAssignedWeapons": [
+          "cerberus",
+          "obelisk",
+          "rivet"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "cerberus",
+          "obelisk",
+          "rivet"
+        ],
+        "observedWeaponIds": [
+          "cerberus",
+          "obelisk",
+          "rivet",
+          "rifle",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5577,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 168,
+          "arrival": 32,
+          "impact": 111,
+          "dodge": 1
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 168,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 86.33474594560154,
+          "minimumTravel": 5.601649335888497
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 1743024221,
+        "wallMilliseconds": 36320,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4252,
+        "frames": [
+          11,
+          12,
+          15,
+          14,
+          16,
+          9
+        ],
+        "assignedWeapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "weapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "breach-gauntlet",
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 6266,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 198,
+          "impact": 194,
+          "arrival": 2
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 193,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 32.06398906479422,
+          "minimumTravel": 3.430507286810681
+        },
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": true,
+          "pay": 5990
+        },
+        "terrainSeed": 3692882064,
+        "wallMilliseconds": 40584,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4253,
+        "frames": [
+          16,
+          17,
+          18,
+          11,
+          15,
+          12
+        ],
+        "assignedWeapons": [
+          "rifle",
+          "aegis-cleave",
+          "needle-carbine"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "weapons": [
+          "rifle",
+          "aegis-cleave",
+          "needle-carbine"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "aegis-cleave",
+          "aegis-bash",
+          "needle-carbine",
+          "signal-knife",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4254,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 83,
+          "impact": 79
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 79,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 222.3212819887717,
+          "minimumTravel": 13.191441949243991
+        },
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 2112171690,
+        "wallMilliseconds": 28848,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4254,
+        "frames": [
+          19,
+          20,
+          0,
+          13,
+          18
+        ],
+        "assignedWeapons": [
+          "parallax",
+          "cleaver",
+          "hatchet"
+        ],
+        "workshopAssignedWeapons": [
+          "parallax",
+          "cleaver",
+          "hatchet"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "parallax",
+          "morrow",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "parallax",
+          "blade",
+          "morrow",
+          "cleaver",
+          "rifle",
+          "hatchet",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 1314,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 56,
+          "impact": 51
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 1.4901161193847656e-08,
+        "aimClearance": {
+          "calls": 56,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 174.09517300946672,
+          "minimumTravel": 11.159341480527774
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 1974673458,
+        "wallMilliseconds": 8783,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4255,
+        "frames": [
+          1,
+          2,
+          3,
+          0,
+          19
+        ],
+        "assignedWeapons": [
+          "pike",
+          "tonfa",
+          "bulwark-shield"
+        ],
+        "workshopAssignedWeapons": [
+          "pike",
+          "tonfa"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "weapons": [
+          "rifle",
+          "missile",
+          "morrow"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "pike",
+          "missile",
+          "tonfa",
+          "morrow",
+          "cleaver",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4495,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 92,
+          "impact": 83,
+          "arrival": 18
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 92,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 210.45312669577115,
+          "minimumTravel": 12.449587885744478
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 2019590468,
+        "wallMilliseconds": 26531,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4256,
+        "frames": [
+          4,
+          5,
+          6,
+          14,
+          15,
+          16,
+          9
+        ],
+        "assignedWeapons": [
+          "locust",
+          "anchor-hammer",
+          "bulwark-shield"
+        ],
+        "workshopAssignedWeapons": [
+          "anchor-hammer"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "weapons": [
+          "locust",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "locust",
+          "pulse-bash",
+          "rifle",
+          "anchor-hammer",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5725,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 298,
+          "arrival": 20,
+          "impact": 266
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 297,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 70.63234116112919,
+          "minimumTravel": 5.342045463335509
+        },
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 4155350132,
+        "wallMilliseconds": 37541,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4257,
+        "frames": [
+          7,
+          8,
+          9,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "assignedWeapons": [
+          "citadel-shield",
+          "rifle",
+          "shotgun"
+        ],
+        "workshopAssignedWeapons": [
+          "rifle",
+          "shotgun"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "weapons": [
+          "missile",
+          "rifle",
+          "shotgun"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "rifle",
+          "shotgun",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield",
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4629,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 105,
+          "arrival": 20,
+          "impact": 134
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 1.4901161193847656e-08,
+        "aimClearance": {
+          "calls": 99,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 31.22240152742887,
+          "minimumTravel": 2.4542084880985473
+        },
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 3410022799,
+        "wallMilliseconds": 28028,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4258,
+        "frames": [
+          10,
+          11,
+          12,
+          13,
+          18
+        ],
+        "assignedWeapons": [
+          "missile",
+          "morrow",
+          "missile"
+        ],
+        "workshopAssignedWeapons": [
+          "missile"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "missile",
+          "morrow"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "morrow",
+          "breach-gauntlet",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally2",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 1583,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 43,
+          "impact": 33,
+          "arrival": 8
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 40,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 431.2493472416077,
+          "minimumTravel": 19.539411210985502
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 2084936043,
+        "wallMilliseconds": 9962,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4259,
+        "frames": [
+          15,
+          16,
+          17,
+          0,
+          19,
+          2
+        ],
+        "assignedWeapons": [
+          "hailstorm",
+          "rifle",
+          "aegis-cleave"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "weapons": [
+          "hailstorm",
+          "rifle",
+          "aegis-cleave"
+        ],
+        "observedWeaponIds": [
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "aegis-cleave",
+          "aegis-bash",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5027,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 176,
+          "impact": 144,
+          "arrival": 2
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 176,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 189.8655880643964,
+          "minimumTravel": 12.060172160000095
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 4116916855,
+        "wallMilliseconds": 29497,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4260,
+        "frames": [
+          18,
+          19,
+          20,
+          14,
+          15,
+          16,
+          9
+        ],
+        "assignedWeapons": [
+          "needle-carbine",
+          "rail",
+          "citadel-shield"
+        ],
+        "workshopAssignedWeapons": [
+          "rail"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "weapons": [
+          "needle-carbine",
+          "rail",
+          "morrow"
+        ],
+        "observedWeaponIds": [
+          "needle-carbine",
+          "signal-knife",
+          "rail",
+          "blade",
+          "morrow",
+          "rifle",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5908,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 142,
+          "impact": 164,
+          "dodge": 2
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 138,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 34.008604275595715,
+          "minimumTravel": 3.8002581067162864
+        },
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 1546380506,
+        "wallMilliseconds": 38018,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4261,
+        "frames": [
+          0,
+          1,
+          2,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "assignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "workshopAssignedWeapons": [
+          "hailstorm",
+          "rampart",
+          "breaker"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "hailstorm",
+          "rampart",
+          "missile"
+        ],
+        "observedWeaponIds": [
+          "hailstorm",
+          "rampart",
+          "missile",
+          "breaker",
+          "morrow",
+          "breach-gauntlet",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "rifle"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4207,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 167,
+          "impact": 161,
+          "arrival": 14
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 167,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 46.478272242796116,
+          "minimumTravel": 6.592497505888512
+        },
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 4138851531,
+        "wallMilliseconds": 26029,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4262,
+        "frames": [
+          3,
+          4,
+          5,
+          13,
+          18
+        ],
+        "assignedWeapons": [
+          "cleaver",
+          "locust",
+          "cleaver"
+        ],
+        "workshopAssignedWeapons": [
+          "cleaver",
+          "cleaver"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "morrow",
+          "locust",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "cleaver",
+          "locust",
+          "pulse-bash",
+          "rifle",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally2",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 1503,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 46,
+          "impact": 46,
+          "arrival": 6
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 46,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 36.27816155317879,
+          "minimumTravel": 4.863845526613195
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 2861885478,
+        "wallMilliseconds": 8914,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4263,
+        "frames": [
+          6,
+          7,
+          8,
+          0,
+          19,
+          2
+        ],
+        "assignedWeapons": [
+          "piledriver",
+          "blade",
+          "sidewinder"
+        ],
+        "workshopAssignedWeapons": [
+          "piledriver",
+          "blade",
+          "sidewinder"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "rifle",
+          "missile",
+          "sidewinder"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "piledriver",
+          "missile",
+          "blade",
+          "sidewinder",
+          "cleaver",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5390,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 228,
+          "impact": 182,
+          "arrival": 20
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 228,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 439.900718416254,
+          "minimumTravel": 18.912810323743567
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 1880153167,
+        "wallMilliseconds": 33768,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4264,
+        "frames": [
+          6,
+          7,
+          8,
+          14,
+          15,
+          16,
+          9
+        ],
+        "assignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "workshopAssignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "rivet",
+          "parallax",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "rivet",
+          "blade",
+          "parallax",
+          "rifle",
+          "hatchet",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4499,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 196,
+          "impact": 166
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.580956827951785e-08,
+        "aimClearance": {
+          "calls": 195,
+          "infeasibleCount": 1,
+          "minimumDiscriminant": 38.451105284904855,
+          "minimumTravel": -0.6663207835631786
+        },
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 383816388,
+        "wallMilliseconds": 28262,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4265,
+        "frames": [
+          12,
+          15,
+          16,
+          11,
+          17
+        ],
+        "assignedWeapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "weapons": [
+          "missile",
+          "hailstorm",
+          "rifle"
+        ],
+        "observedWeaponIds": [
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "morrow",
+          "breach-gauntlet",
+          "aegis-cleave",
+          "aegis-bash",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 3199,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 122,
+          "impact": 116
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 119,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 229.7160321715845,
+          "minimumTravel": 13.378507408103932
+        },
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 64035182,
+        "wallMilliseconds": 24119,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4266,
+        "frames": [
+          17,
+          18,
+          19,
+          13
+        ],
+        "assignedWeapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "watchman"
+        ],
+        "workshopAssignedWeapons": [
+          "watchman"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "aegis-cleave",
+          "needle-carbine",
+          "watchman"
+        ],
+        "observedWeaponIds": [
+          "aegis-cleave",
+          "aegis-bash",
+          "needle-carbine",
+          "signal-knife",
+          "watchman",
+          "blade",
+          "rifle",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 2336,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "impact": 72,
+          "launch": 81
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 76,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 37.77325516122343,
+          "minimumTravel": 4.986705052095106
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 4186617061,
+        "wallMilliseconds": 15670,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4267,
+        "frames": [
+          20,
+          0,
+          1,
+          19,
+          2
+        ],
+        "assignedWeapons": [
+          "bulwark-shield",
+          "falcon",
+          "cerberus"
+        ],
+        "workshopAssignedWeapons": [
+          "falcon",
+          "cerberus"
+        ],
+        "shieldAssigned": [
+          "bulwark-shield"
+        ],
+        "weapons": [
+          "morrow",
+          "falcon",
+          "cerberus"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "falcon",
+          "cerberus",
+          "rifle",
+          "cleaver",
+          "missile",
+          "rampart"
+        ],
+        "observedShields": [
+          "bulwark-shield"
+        ],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 20,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 1,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 4682,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 80,
+          "impact": 74,
+          "arrival": 10
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 80,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 46.320189145332854,
+          "minimumTravel": 4.847521334566785
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 2126861607,
+        "wallMilliseconds": 28469,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4268,
+        "frames": [
+          2,
+          3,
+          4,
+          14,
+          15,
+          16,
+          9
+        ],
+        "assignedWeapons": [
+          "obelisk",
+          "citadel-shield",
+          "locust"
+        ],
+        "workshopAssignedWeapons": [
+          "obelisk"
+        ],
+        "shieldAssigned": [
+          "citadel-shield"
+        ],
+        "weapons": [
+          "obelisk",
+          "morrow",
+          "locust"
+        ],
+        "observedWeaponIds": [
+          "obelisk",
+          "morrow",
+          "locust",
+          "pulse-bash",
+          "rifle",
+          "hailstorm",
+          "piledriver",
+          "shotgun",
+          "rampart"
+        ],
+        "observedShields": [
+          "citadel-shield"
+        ],
+        "actualModels": [
+          {
+            "id": "enemy3",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 14,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 3,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 4,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5003,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 81,
+          "impact": 81,
+          "arrival": 12
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 81,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 16.593317684635682,
+          "minimumTravel": 2.874576674133545
+        },
+        "result": {
+          "name": "The iron corridor",
+          "day": 1,
+          "win": true,
+          "pay": 5990
+        },
+        "terrainSeed": 577587770,
+        "wallMilliseconds": 30484,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4269,
+        "frames": [
+          5,
+          6,
+          7,
+          11,
+          15,
+          17,
+          12,
+          16
+        ],
+        "assignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "workshopAssignedWeapons": [
+          "rivet",
+          "parallax",
+          "hatchet"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "rivet",
+          "parallax",
+          "missile"
+        ],
+        "observedWeaponIds": [
+          "rivet",
+          "parallax",
+          "blade",
+          "missile",
+          "hatchet",
+          "morrow",
+          "breach-gauntlet",
+          "hailstorm",
+          "piledriver",
+          "aegis-cleave",
+          "aegis-bash",
+          "rifle",
+          "rampart"
+        ],
+        "observedShields": [
+          "aegis-tower"
+        ],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 5,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 6,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 7,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy3",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy4",
+            "frame": 16,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 17,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 3796,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 130,
+          "impact": 103,
+          "arrival": 8
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 130,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 182.0563254627442,
+          "minimumTravel": 12.034824949406065
+        },
+        "result": {
+          "name": "No quiet frontier",
+          "day": 1,
+          "win": false,
+          "pay": 0
+        },
+        "terrainSeed": 182633807,
+        "wallMilliseconds": 26851,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4270,
+        "frames": [
+          8,
+          9,
+          10,
+          13,
+          18
+        ],
+        "assignedWeapons": [
+          "pike",
+          "tonfa",
+          "anchor-hammer"
+        ],
+        "workshopAssignedWeapons": [
+          "pike",
+          "tonfa",
+          "anchor-hammer"
+        ],
+        "shieldAssigned": [],
+        "weapons": [
+          "rifle",
+          "shotgun",
+          "tonfa"
+        ],
+        "observedWeaponIds": [
+          "rifle",
+          "pike",
+          "shotgun",
+          "tonfa",
+          "anchor-hammer",
+          "needle-carbine",
+          "signal-knife",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally0",
+            "frame": 8,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally1",
+            "frame": 9,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 13,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 10,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 18,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 2541,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 99,
+          "impact": 140
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 92,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 30.918418449759496,
+          "minimumTravel": 3.8458965477830493
+        },
+        "result": {
+          "name": "Picket sweep",
+          "day": 1,
+          "win": true,
+          "pay": 2000
+        },
+        "terrainSeed": 3504814883,
+        "wallMilliseconds": 17794,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      },
+      {
+        "seed": 4271,
+        "frames": [
+          11,
+          12,
+          15,
+          0,
+          19,
+          2
+        ],
+        "assignedWeapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "workshopAssignedWeapons": [],
+        "shieldAssigned": [],
+        "weapons": [
+          "morrow",
+          "missile",
+          "hailstorm"
+        ],
+        "observedWeaponIds": [
+          "morrow",
+          "breach-gauntlet",
+          "missile",
+          "hailstorm",
+          "piledriver",
+          "rifle",
+          "cleaver",
+          "rampart"
+        ],
+        "observedShields": [],
+        "actualModels": [
+          {
+            "id": "ally1",
+            "frame": 12,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally2",
+            "frame": 15,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy0",
+            "frame": 0,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy1",
+            "frame": 19,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "ally0",
+            "frame": 11,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          },
+          {
+            "id": "enemy2",
+            "frame": 2,
+            "live": true,
+            "registered": true,
+            "hasEntry": true,
+            "armed": true,
+            "object": true
+          }
+        ],
+        "ticks": 5342,
+        "circleCandidates": 0,
+        "combatCounts": {
+          "launch": 179,
+          "impact": 137,
+          "dodge": 1,
+          "arrival": 6
+        },
+        "rasterOmitted": 0,
+        "rasterContexts": 0,
+        "maximumLaunchAimError": 2.1073424255447017e-08,
+        "aimClearance": {
+          "calls": 176,
+          "infeasibleCount": 0,
+          "minimumDiscriminant": 83.19607411676937,
+          "minimumTravel": 7.343309750229341
+        },
+        "result": {
+          "name": "Ashes of the relay",
+          "day": 1,
+          "win": true,
+          "pay": 4210
+        },
+        "terrainSeed": 3234232543,
+        "wallMilliseconds": 38497,
+        "anomalyCount": 0,
+        "commandErrorCount": 0
+      }
+    ]
+  },
+  "offline": {
+    "embeddedAssets": 73,
+    "embeddedGLBsByteExact": 21,
+    "sha256": "fea0ee6de9e9f87914be03c6a16794d07f2e25f3924c81e07afc868cc06b80af"
+  },
+  "nativeIPadPerformance": "unverified"
+}

@@ -67,10 +67,9 @@ h2 { font-size: clamp(37px, 4vw, 52px); line-height: 1; letter-spacing: -.035em;
   position: relative; min-height: 530px; overflow: hidden; isolation: isolate;
   border: 1px solid var(--line); background: radial-gradient(ellipse at 50% 44%, #3c464b, #151b20 77%);
 }
-#view, #still { width: 100%; height: 100%; position: absolute; inset: 0; }
+#view { width: 100%; height: 100%; position: absolute; inset: 0; }
 #view { display: block; cursor: grab; touch-action: none; }
 #view:active { cursor: grabbing; }
-#still { padding: 24px 0 45px; object-fit: contain; pointer-events: none; }
 .hud, .view-controls, .view-help { position: absolute; }
 .hud { left: 14px; right: 14px; top: 14px; display: flex; justify-content: space-between; pointer-events: none; }
 .hud span { padding: 7px 9px; background: #14181deb; border: 1px solid var(--line); }

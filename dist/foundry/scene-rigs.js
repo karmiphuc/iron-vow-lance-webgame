@@ -7,13 +7,15 @@ const {V3,pixels,ground,worldSpan,parts,buildRig,animateMech,lungeK,MEL,behemoth
 const C=h=>new T.Color(h).convertSRGBToLinear();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 let renderer,scene,camera,failed=false;
-const combat=new Map(),previews=new Map();
-function clearPreviews(){for(const entry of previews.values())disposeRig(entry.m);previews.clear();}
+const combat=new Map(),previews=new Map(),objectPortraits=new Map();
+function clearPreviews(scope){
+ for(const [key,entry] of previews)if(!scope||entry.previewScope===scope){disposeEntry(entry);previews.delete(key);}
+}
 let previewTarget,studioTarget;
-const arsenal=window.IronVowProductionArsenal,bastion=window.IronVowBastion;
+const arsenal=window.IronVowProductionArsenal,rigV2=window.IronVowRigV2;
 
-let armory,armoryRequested=false;
-const clearCombat=()=>{for(const entry of combat.values()){entry.m.cont.parent?.remove(entry.m.cont);disposeRig(entry.m);}combat.clear()};
+let armory,armoryLoading;
+const clearCombat=()=>{for(const entry of combat.values()){entry.m.cont.parent?.remove(entry.m.cont);disposeEntry(entry);}combat.clear();clearPreviews('battle');};
 let combatScope;
 const studioLights=[[0xffe6bf,-5,7,5],[0x9fc9e0,6,5,-5]];
 function configure(target,size){
@@ -50,14 +52,10 @@ function init(){
   }
   scene.add(new T.HemisphereLight(C(0xd6e4eb),C(0x42434a),1.0));
   scene.environment=studioEnvironment(renderer);
-  if(arsenal&&!armoryRequested){
-   armoryRequested=true;
-   const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
-   // The live Warden and production arsenal load before battle controls are enabled.
-   if(window.IronVowWardenRig)window.IronVowWardenRig.load(url('rig-bench/warden-painted.glb'),url('rig-bench/warden-painted-motion.json'))
-    .then(()=>{if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
-   arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),url('rig-bench/shields.glb'))
-    .then(scene=>{armory=scene;clearPreviews();if(window.Event)window.dispatchEvent?.(new window.Event('bastion-art-ready'))},()=>{});
+  if(arsenal&&!armoryLoading){
+   const url=path=>window.IRON_VOW_INLINE_ASSETS?.[path.split('?')[0]]||path;
+   armoryLoading=arsenal.load(url('rig-bench/weapons.glb'),url('rig-bench/expansion-weapons.glb?rev=heavy-ordnance'),url('rig-bench/shields.glb'))
+    .then(scene=>{armory=scene;clearPreviews();if(window.Event)window.dispatchEvent?.(new window.Event('rig-art-ready'))},()=>{});
   }
   camera=new T.OrthographicCamera(-worldSpan/2,worldSpan/2,worldSpan/2,-worldSpan/2,.1,100);
   return true;
@@ -77,7 +75,9 @@ function setCamera(elevation,azimuth=0){
  camera.lookAt(0,targetY,0);
  camera.updateMatrixWorld(true);
 }
-function disposeRig(m){
+function disposeEntry({m,primary,secondary}){
+ m.nativeV2?.dispose();
+ if(!m.nativeV2?.pose)for(const weapon of [primary,secondary])for(const material of weapon?.ownedMaterials||[])material.dispose();
  const unique=new Set([m.build.visorMat,m.build.stackMat,...(m.build.ownedMaterials||[])]);
  if(m.live)for(const entries of Object.values(m.build.parts))
   for(const entry of entries)unique.add(entry.m.material);
@@ -91,18 +91,61 @@ function makeSurface(){
 }
 function paintRig(m,surface,target=renderer,groundRow=ground){
  const size=surface.width,center=V3().project(camera),offsetY=Math.round(size*(groundRow-(.5-center.y*.5)));
+ paintPreview(m.cont,surface,camera,target,offsetY);
+}
+function paintPreview(object,surface,view,target=renderer,offsetY=0){
+ const size=surface.width;
  if(!previewTarget){previewTarget=new T.WebGLRenderTarget(size,size);previewTarget.texture.encoding=T.sRGBEncoding;}
  if(previewTarget.width!==size)previewTarget.setSize(size,size);
- const pixels=new Uint8Array(size*size*4),previous=target.getRenderTarget(),parent=m.cont.parent;
- scene.add(m.cont);
+ const pixels=new Uint8Array(size*size*4),previous=target.getRenderTarget(),parent=object.parent;
+ scene.add(object);
  try{
-  target.setRenderTarget(previewTarget);target.render(scene,camera);
+  target.setRenderTarget(previewTarget);target.render(scene,view);
   window.IronVowPerformance?.recordRender(target.info);
   target.readRenderTargetPixels(previewTarget,0,0,size,size,pixels);
   const g=surface.getContext('2d'),image=g.createImageData(size,size);
   for(let y=0;y<size;y++)image.data.set(pixels.subarray((size-1-y)*size*4,(size-y)*size*4),y*size*4);
   g.clearRect(0,0,size,size);g.putImageData(image,0,offsetY);
- }finally{target.setRenderTarget(previous);scene.remove(m.cont);if(parent)parent.add(m.cont);}
+ }finally{target.setRenderTarget(previous);scene.remove(object);if(parent)parent.add(object);}
+}
+function objectPortrait(key,object){
+ object.updateMatrixWorld(true);
+ const bounds=new T.Box3().setFromObject(object);
+ if(bounds.isEmpty())return;
+ const center=bounds.getCenter(V3()),radius=Math.max(.05,bounds.getSize(V3()).length()*.5);
+ const half=radius*1.14,view=new T.OrthographicCamera(-half,half,half,-half,radius,radius*7);
+ view.position.copy(center).addScaledVector(V3(4,2.8,6).normalize(),radius*4);
+ view.lookAt(center);
+ const surface=makeSurface();
+ paintPreview(object,surface,view);
+ const url=surface.toDataURL('image/png');
+ objectPortraits.set(key,url);
+ if(objectPortraits.size>32)objectPortraits.delete(objectPortraits.keys().next().value);
+ return url;
+}
+function equipmentThumbnail(kind,id){
+ if(!init()||!armory||window.IronVowRenderer.lost)return;
+ const key=kind+':'+id;
+ if(objectPortraits.has(key))return objectPortraits.get(key);
+ const socket=new T.Group();
+ const item=kind==='shield'?arsenal.mountShield(armory,id,socket):
+  arsenal.mount(armory,window.IronVowWeaponFX?.get(id).asset??id,socket);
+ if(!item)return;
+ try{return objectPortrait(key,socket);}
+ finally{for(const material of item.ownedMaterials||[])material.dispose();}
+}
+function vehicleThumbnail(kind,facing){
+ const vehicles=window.IronVowVehicles;
+ if(vehicles?.status(kind)!=='ready'||!init()||window.IronVowRenderer.lost)return;
+ const key=kind+':'+facing;
+ if(objectPortraits.has(key))return objectPortraits.get(key);
+ const record=vehicles.create(kind);
+ if(!record)return;
+ try{
+  const unit={kind,index:0,alive:true,hp:{body:100},max:{body:100}};
+  vehicles.update(record,unit,0,V3(),facing>0?.68:-.68,true);
+  return objectPortrait(key,record.object);
+ }finally{vehicles.release(record);}
 }
 function projectedAnchor(point){
  const p=point.project(camera);
@@ -110,14 +153,13 @@ function projectedAnchor(point){
  return [.5+(p.x-center.x)*.5,ground-(p.y-center.y)*.5];
 }
 function anchor(o){return projectedAnchor(o.getWorldPosition(V3()));}
-const WARDEN_SPAN=1.3;
-// Project with the Warden's tall frame (camera still enlarged), then map the surface point into the unit's bounds.
-function wardenAnchor(point,groundRow){
- camera.left=camera.bottom=-worldSpan*WARDEN_SPAN/2;camera.right=camera.top=worldSpan*WARDEN_SPAN/2;camera.updateProjectionMatrix();
+// Remap anchors framing a tall chassis back into the nominal UI surface.
+function tallAnchor(point,groundRow,span){
+ camera.left=camera.bottom=-worldSpan*span/2;camera.right=camera.top=worldSpan*span/2;camera.updateProjectionMatrix();
  try{
   const p=point.clone().project(camera),center=V3().project(camera);
   const x=.5+(p.x-center.x)*.5,y=groundRow-(p.y-center.y)*.5;
-  return [.5+(x-.5)*WARDEN_SPAN,(1-WARDEN_SPAN)/2+y*WARDEN_SPAN];
+  return [.5+(x-.5)*span,(1-span)/2+y*span];
  }finally{camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}
 }
 
@@ -128,7 +170,7 @@ function aimMounted(m,weapon,target,weight,node){
  // A long gun can extend past a nearby target. Pull the articulated arm back
  // around its shoulder until the target lies beyond the muzzle's pivot radius;
  // the weapon stays attached to the hand throughout the adjustment.
- const shoulder=!node&&m.rig?.arms.R.sh;
+ const shoulder=wrist===m.rig?.arms.R.wr?m.rig.arms.R.sh:wrist===m.rig?.arms.L.wr?m.rig.arms.L.sh:null;
  if(shoulder){
   m.cont.updateMatrixWorld(true);
   let pivot=wrist.getWorldPosition(V3());const muzzle=weapon.muzzle.getWorldPosition(V3()),radius=muzzle.distanceTo(pivot)+.05;
@@ -176,12 +218,13 @@ function draw(u,t,pose,scope,model,custom){
  let entry=cache.get(key);
 
  if(!entry){
-  const m=custom==='warden'?window.IronVowWardenRig?.build(u.team,u.paint,{trim:u.trim}):custom==='bastion'?bastion.buildRuntime(u.team,u.paint,u.trim):buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
+  const m=custom==='rig-v2'?rigV2.build(u,pose.previewScope||'battle'):
+   buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim);
   if(!m)return null;
-  entry={m,surface:makeSurface(),stamp:null,anchors:{}};cache.set(key,entry);
+  entry={m,surface:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
- const m=entry.m,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
+ const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
@@ -200,13 +243,13 @@ function draw(u,t,pose,scope,model,custom){
  const step=!pose.reducedMotion&&Boolean(world?u.motion&&!world.airborne:paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;
- const melee=Boolean(pose.strikeKind), meleeAge=pose.strikeProgress<=.7
+ const melee=Boolean(pose.strikeKind),authoredStrike=v2?.authoredStrike?.(pose.strikeKind),meleeAge=pose.strikeProgress<=.7
   ?pose.strikeProgress/.7*MEL.hit:MEL.hit+(pose.strikeProgress-.7)/.3*(MEL.end-MEL.hit);
- const lunge=melee?lungeK(meleeAge)*1.25:0;
+ const lunge=melee&&!authoredStrike?lungeK(meleeAge)*1.25:0;
  const travel=step?(pose.phase-.5)*1.8:0;
  const pos=world?V3(world.x,0,world.z):paired?V3((u.vx-u.vz)*1.8*Math.SQRT1_2,0,(u.vx+u.vz)*1.8*Math.SQRT1_2):
   V3(Math.sin(face)*(lunge+travel),0,Math.cos(face)*(lunge+travel));
- if(world&&melee&&world.lungeLimit){const direction=world.targetRoot.clone().sub(pos).setY(0).normalize();pos.addScaledVector(direction,lungeK(meleeAge)*world.lungeLimit);}
+ if(world&&melee&&!authoredStrike&&world.lungeLimit){const direction=world.targetRoot.clone().sub(pos).setY(0).normalize();pos.addScaledVector(direction,lungeK(meleeAge)*world.lungeLimit);}
  if(paired&&!m.wasMoving)m.init=false;
  if(!world&&!step&&m.wasMoving){
   for(const L of m.legs){L.swing=false;L.settle=null;L.planted.sub(m.travelRoot??m.cont.position);L.foot.copy(L.planted)}
@@ -219,18 +262,17 @@ function draw(u,t,pose,scope,model,custom){
  m.recoil=world?Math.max(m.recoil,Math.abs(pose.recoil)*.58):Math.abs(pose.recoil)*.58;
  if(melee){
   if(!m.melee||m.melee.action!==u.attack)m.melee={action:u.attack,age:meleeAge,prev:null};
-  m.melee.age=meleeAge;m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
+  m.melee.age=meleeAge;m.melee.side=v2?.meleeSide?.(pose.strikeKind)||'L';m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
  }else m.melee=null;
- if(custom==='warden')window.IronVowWardenRig.meleeStyle(m,pose.strikeKind||u.melee);
+ v2?.beforeAnimate?.(m,pose.strikeKind||u.melee);
  if(!world){m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;m.s.arm.x=pose.impact*.75;}
  else if(pose.land>0)m.s.comp.x=Math.min(m.s.comp.x,-pose.land*.23);
  // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
  m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
- m.primaryWeapon=entry.primary&&u.hp.right>0&&!entry.primarySocket?entry.primary:null;
+ m.primaryWeapon=standardEquipment&&entry.primary&&u.hp.right>0&&!entry.primarySocket?entry.primary:null;
  animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?world.airborne:!step,airborne:world?.airborne,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
- if(custom==='warden')window.IronVowWardenRig.afterAnimate(m);else if(custom==='bastion')bastion.afterAnimate(m);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
   const lead=m.rig.legs[1];
@@ -239,7 +281,9 @@ function draw(u,t,pose,scope,model,custom){
  }
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
- if(armory&&!entry.armed){
+ if(!standardEquipment){
+  entry.armed=v2.pose(entry,u,pose,t,armory)!==false&&(!u.shield||Boolean(armory));
+ }else if(armory&&!entry.armed){
   const profile=window.IronVowWeaponFX?.get(u.weapon);
   if(profile?.socket?.startsWith('shoulder')){
    const socket=new T.Object3D();socket.name='mount.shoulderR';socket.position.set(m.dims.shX,m.dims.shY+.55,-.25);m.rig.spine.add(socket);entry.primarySocket=socket;
@@ -247,42 +291,49 @@ function draw(u,t,pose,scope,model,custom){
   entry.primary=arsenal.mount(armory,profile?.asset??u.weapon,entry.primarySocket||m.rig.arms.R.so);
   entry.secondary=arsenal.mount(armory,u.melee?(window.IronVowWeaponFX?.get(u.melee).asset??u.melee):null,m.rig.arms.L.so);
   entry.armed=true;
-  // The Warden carries the production arsenal at its Rig Bench scale.
-  if(custom==='warden'||custom==='bastion')for(const w of [entry.primary,entry.secondary])w?.model.scale.setScalar(.62);
+  if(equipmentScale!==1)for(const weapon of [entry.primary,entry.secondary])weapon?.model.scale.setScalar(equipmentScale);
  }
- if(armory&&entry.shieldId!==u.shield){
+ if(!v2?.nativeShield&&armory&&entry.shieldId!==u.shield){
   entry.shieldId=u.shield;
   if(entry.shield)entry.shield.mount.parent?.remove(entry.shield.mount);
-  entry.shield=arsenal.mountShield(armory,u.shield,m.rig.arms.L.so);
-  if(custom==='warden'||custom==='bastion')entry.shield?.mount.scale.setScalar(.62);
+  entry.shield=arsenal.mountShield(armory,u.shield,v2?.shieldSocket||m.rig.arms.L.so);
+  entry.shield?.mount.scale.setScalar(v2?.shieldScale??equipmentScale);
   if(!entry.shield)delete entry.anchors.shield;
  }
- m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:entry.primary||{};
- arsenal.poseShield(entry.shield,u,face);
- if(entry.primary){
+ const shoulderAttack=u.attack?.kind==='missile'&&entry.shoulderWeapon;
+ const barrel=shoulderAttack||entry.primary;
+ m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:barrel||{};
+ if(!v2?.nativeShield)arsenal.poseShield(entry.shield,u,face);
+ if(standardEquipment&&entry.primary){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
   if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
   else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
  }
- if(entry.secondary){
+ if(standardEquipment&&entry.secondary){
   entry.secondary.mount.visible=u.alive&&u.hp.left>0;
   arsenal.animate(entry.secondary,pose);
  }
- if(world&&u.alive&&u.hp.right>0&&!melee&&aim>.01)aimMounted(m,entry.primary,world.aim,Math.min(1,aim),entry.primarySocket?entry.primary.mount:null);
+ if(world&&u.alive&&u.hp[barrel?.subsystem||'right']>0&&!melee&&aim>.01){
+  const pivot=barrel?.aimPivot?.(barrel.muzzle)||(entry.primarySocket?entry.primary.mount:null);
+  aimMounted(m,barrel,world.aim,Math.min(1,aim),pivot);
+  if(v2&&barrel?.muzzle2&&barrel.aimPivot&&barrel.aimPivot(barrel.muzzle2)!==pivot){
+   aimMounted(m,{muzzle:barrel.muzzle2},world.aim,Math.min(1,aim),barrel.aimPivot(barrel.muzzle2));
+  }
+ }
+ v2?.sync();
  m.cont.updateMatrixWorld(true);
+ const span=m.previewSpan,groundRow=span?(ground-(1-span)/2)/span:ground;
  if(!world){
   setCamera(.46);
-  const tall=custom==='warden',target=renderer,groundRow=tall?(ground-(1-WARDEN_SPAN)/2)/WARDEN_SPAN:ground;
-  if(tall){camera.left=camera.bottom=-worldSpan*WARDEN_SPAN/2;camera.right=camera.top=worldSpan*WARDEN_SPAN/2;camera.updateProjectionMatrix();}
-  try{paintRig(m,entry.surface,target,groundRow);}finally{camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}
+  if(span){camera.left=camera.bottom=-worldSpan*span/2;camera.right=camera.top=worldSpan*span/2;camera.updateProjectionMatrix();}
+  try{paintRig(m,entry.surface,renderer,groundRow);}finally{camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}
  }
- const tall=custom==='warden',groundRow=tall?(ground-(1-WARDEN_SPAN)/2)/WARDEN_SPAN:ground;
- entry.span=tall?WARDEN_SPAN:undefined;
+ entry.span=span;
  const r=m.rig,mounts=mountPoints(m),primary=entry.primary,secondary=entry.secondary;
  for(const [name,object] of Object.entries({...mounts,body:r.spine,pilot:r.neck,
   right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,
   muzzle:primary?.muzzle,muzzle2:primary?.muzzle2,meleeTip:secondary?.tip,mortarMuzzle:m.mortar?.muzzle,shield:entry.shield?.face})){
-  if(object)entry.anchors[name]=tall?wardenAnchor(object.getWorldPosition(V3()),groundRow):anchor(object);
+  if(object)entry.anchors[name]=span?tallAnchor(object.getWorldPosition(V3()),groundRow,span):anchor(object);
  }
  if(m.artilleryBrace){
   const shoes=r.legs.filter(leg=>leg.kneeShoe).map(leg=>leg.kneeShoe.localToWorld(V3(0,-.3155,.035)));
@@ -296,22 +347,70 @@ function withFallback(render){
   try{return render(...args)}catch(error){disable(error);return null}
  };
 }
-// The eight live frames require WebGL.
-function wardenReady(){return !failed&&init()&&Boolean(window.IronVowWardenRig?.ready());}
+let previewFrame;
+function retainPreview(frame){
+ if(frame===previewFrame)return;
+ previewFrame=frame;
+ clearPreviews('preview');rigV2.clear('preview');
+}
+function requestPreview(unit){
+ const status=rigV2.status(unit,'preview');
+ if(!status)rigV2.load([unit],'preview').then(([loaded])=>{
+  if(loaded)window.dispatchEvent?.(new window.Event('rig-art-ready'));
+ });
+ return status==='ready';
+}
 function metrics(){return window.IronVowRenderer.metrics();}
-function preview(u,model,custom,angle=0){
- const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
- const key=JSON.stringify([u.frame,u.team,u.paint,u.trim,u.weapon,u.melee,u.shield,u.upgrade,hp,max,angle]);
+function previewHealth(unit){
+ const max=unit.max||{body:100,pilot:100,right:100,left:100,legs:100};
+ const condition=unit.condition??100;
+ const hp=unit.hp||Object.fromEntries(parts.map(part=>[part,part==='pilot'?max[part]:max[part]*condition/100]));
+ return {hp,max};
+}
+function previewKey(u,scope,angle){
+ const {hp,max}=previewHealth(u);
+ return JSON.stringify([scope,u.frame,u.team||'ally',Boolean(u.lionTrial),u.paint,u.trim,u.weapon,u.melee,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
+}
+function preview(u,model,custom,angle=0,scope='preview'){
+ if(rigV2?.applies(u))custom='rig-v2';
+ if(custom==='rig-v2'&&!(scope==='preview'?requestPreview(u):rigV2.status(u,scope)==='ready'))return null;
+ const {hp,max}=previewHealth(u),key=previewKey(u,scope,angle);
  if(previews.has(key))return previews.get(key);
  const unit={...u,id:key,index:u.index||0,team:u.team||'ally',alive:true,hp,max};
- const pose={preview:true,heading:[-.68,.68,2.46,-2.46][angle]||-.68,reducedMotion:true,phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0};
+ const pose={preview:true,previewScope:scope,heading:[-.68,.68,2.46,-2.46][angle]||-.68,reducedMotion:true,phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0};
  const entry=draw(unit,0,pose,null,model,custom);
- if(entry){entry.url=entry.surface.toDataURL('image/png');if(previews.size>16){const [first,value]=previews.entries().next().value;disposeRig(value.m);previews.delete(first);}}
+ if(entry){entry.url=entry.surface.toDataURL('image/png');if(previews.size>16){const [first,value]=previews.entries().next().value;disposeEntry(value);previews.delete(first);}}
  return entry;
 }
-function previewAnimated(u,t,pose,model,custom,angle=0){
- const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
- return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
+
+const portraitImages=new Map(),portraitPending=new Set();
+let portraitQueue=Promise.resolve();
+function portrait(unit,model,angle=0){
+ const key=encodeURIComponent(previewKey(unit,'portrait',angle));
+ const url=portraitImages.get(key);
+ if(url||portraitPending.has(key))return {key,url};
+ portraitPending.add(key);
+ // Keep at most one catalog rig resident, even when the market opens many cards.
+ portraitQueue=portraitQueue.then(()=>new Promise(done=>requestAnimationFrame(done))).then(async()=>{
+  if(!init()||window.IronVowRenderer.lost)return;
+  await armoryLoading;
+  if(rigV2.applies(unit)&&!(await rigV2.load([unit],'portrait'))[0])return;
+  if(window.IronVowRenderer.lost)return;
+  const image=preview(unit,model,undefined,angle,'portrait')?.url;
+  if(!image)return;
+  portraitImages.set(key,image);
+  if(portraitImages.size>48)portraitImages.delete(portraitImages.keys().next().value);
+  window.dispatchEvent(new CustomEvent('rig-portrait-ready',{detail:{key,url:image}}));
+ }).catch(error=>console.warn('Mech portrait unavailable',error)).finally(()=>{
+  clearPreviews('portrait');rigV2.clear('portrait');portraitPending.delete(key);
+ });
+ return {key};
 }
-window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),previewAnimated:withFallback(previewAnimated),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,wardenReady};
+function previewAnimated(u,t,pose,model,custom,angle=0){
+ if(rigV2?.applies(u)){custom='rig-v2';if(!requestPreview(u))return null;}
+ const hp=u.hp||{body:100,pilot:100,right:100,left:100,legs:100},max=u.max||{...hp};
+ return draw({...u,hp,max},t,{phase:0,primeProgress:0,strikeProgress:0,aim:0,recoil:0,impact:0,land:0,brace:0,...pose,preview:true,previewScope:'preview',heading:[-.68,.68,2.46,-2.46][angle]||-.68},null,model,custom);
+}
+window.IronVowFoundry={metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),
+ equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview};
 })();

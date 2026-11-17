@@ -1,4 +1,4 @@
-const motion = require('../dist/rig-bench/rig-motion.js');
+const motion = require('./authoring/warden/legacy-kinematics.cjs');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');

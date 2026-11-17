@@ -108,7 +108,7 @@ async function exerciseRigAdapter(){
 }
 
 (async()=>{
- const sim=simulate({random:()=>0,foundry:true}),{run}=sim;
+ const sim=simulate({random:()=>0}),{run}=sim;
  assert.equal(run('FRAMES.length'),21);
  assert.equal(run('ASHIGARU_FRAME'),18);
  assert.equal(run('BULWARK_FRAME'),17);
@@ -165,19 +165,8 @@ async function exerciseRigAdapter(){
  assert.equal(migrated.run('battle.units[3].frame'),0);
  assert.equal(migrated.run('battle.units[3].hp.pilot'),70);
  assert.equal(migrated.run('captureSortie().stockHostiles'),true);
- const generated={};
- new Function('window',fs.readFileSync(path.join(dist,'foundry/baked.js'),'utf8'))(generated);
- for(const [model,visual] of generated.IRON_VOW_FOUNDRY_ART.entries()){
-  if(model===run('foundryModel(VANGUARD_FRAME)')&&!visual)continue; // Vanguard loads its own atlas.
-  assert.equal(visual.frames.length,19);
-  assert.ok(visual.frames.every(f=>f.pilot.every(Number.isFinite)&&f.gripL.every(Number.isFinite)&&f.axisR.every(Number.isFinite)));
-  const paintedInBake=run('[LINE_INFANTRY_FRAME,REAVER_FRAME].map(foundryModel)').includes(model);
-  const suffixes=paintedInBake?['']:['','-paint'];
-  for(const asset of [visual,...visual.views])for(const suffix of suffixes){
-   assert.ok(fs.existsSync(path.join(dist,'assets',asset.key+suffix+'.webp')));
-  }
- }
- const importedSortie=simulate({foundry:true});
+ // Live rig, weapon socket and planted-foot coverage is in the browser scene and rig suites.
+ const importedSortie=simulate();
  assert.equal(importedSortie.run(`importCareer(${sim.storage.get(savedKey)})`),true);
  assert.equal(importedSortie.run(`battle.units.find(u=>u.id===${JSON.stringify(targetId)}).downReason`),'pilot');
  assert.equal(importedSortie.run('save.sortie.version'),7);
@@ -207,5 +196,5 @@ async function exerciseRigAdapter(){
 
  // Physical Vesper geometry and its two muzzle nodes are checked in check-production-weapons.
  await exerciseRigAdapter();
- console.log('PASS: procurement, swap, paint, pilot disable, donor career migration, four campaign rosters, weapon sockets, Foundry atlases and render-target caching and fatal WebGL error reporting.');
+ console.log('PASS: procurement, swap, paint, pilot disable, donor career migration, four campaign rosters, weapon sockets and render-target caching and fatal WebGL error reporting.');
 })().catch(error=>{console.error(error);process.exitCode=1});

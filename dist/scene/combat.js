@@ -18,19 +18,32 @@ root.IronVowCombat={create(scene,api){
   api.sync(actor);api.sync(target);
   const profile=profileFor(actor,w),kind=profile.archetype;
   if(kind==='blade')return;
-  const socket=profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):shotMuzzle(actor,w.id,index);
+  const mounted=api.models.get(actor.id)?.entry;
+  const socket=profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):
+   mounted?.primary?.alternate&&index%2?'muzzle2':shotMuzzle(actor,w.id,index);
   const selected=contacts.filter(c=>c.index===index||w.scatter&&index===0),contact=selected[0]||contacts[0];
   const part=guard?'shield':contact?.part||'body',to=point(target,part);
   if(contact&&!contact.hit)to.add(V3(.6,0,.4));
-  const mounted=api.models.get(actor.id)?.entry;
-  if(mounted?.primary)root.IronVowFoundry.aimMounted(mounted.m,mounted.primary,to,1,mounted.primarySocket?mounted.primary.mount:null);
-  const adapter=!mounted?root.IronVowAdapterWeapons.aimAt(actor,to):null;
+  const native=mounted?.m.nativeV2,shoulder=socket.startsWith('shoulderMuzzle'),alternate=socket.endsWith('2');
+  const weapon=native&&shoulder?mounted.shoulderWeapon:mounted?.primary;
+  if(weapon){
+   const indexed=weapon.muzzles?.[index%weapon.muzzles.length];
+   if(indexed)weapon.muzzle=indexed;
+   const selected=alternate?(weapon.muzzle2||weapon.muzzle):weapon.muzzle;
+   const pivot=weapon.aimPivot?.(selected)||(mounted.primarySocket?weapon.mount:null);
+   root.IronVowFoundry.aimMounted(mounted.m,native?{muzzle:selected}:weapon,to,1,pivot);
+   native?.sync();
+  }
   const from=point(actor,socket);
   const flight=Math.max(.025,contact?.travel||attackProfile(actor,w.id).travel);
-  const entry=mounted,barrel=entry?.primary||adapter,axis=barrel?.muzzle?.getWorldDirection(V3()),muzzle=barrel?.muzzle?.getWorldPosition(V3());
+  const entry=mounted,barrel=alternate&&weapon?.alternate||weapon;
+  const expectedMarker=alternate?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
+  const aimMarker=native?expectedMarker:barrel?.muzzle;
+  const axis=aimMarker?.getWorldDirection(V3()),muzzle=aimMarker?.getWorldPosition(V3());
   const aimError=axis&&muzzle?axis.angleTo(to.clone().sub(muzzle)):null;
-  const expectedMarker=socket==='muzzle2'||socket==='shoulderMuzzle2'?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
-  log('launch',{archetype:kind,expectedOrigin:expectedMarker?.getWorldPosition(V3()).toArray(),actorAlive:actor.alive,aimError,mounted:entry?.m?barrel?.mount.parent===(entry.primarySocket||entry.m.rig.arms.R.so):null,actor:actor.id,target:target.id,weapon:w.id,index,socket,origin:from.toArray(),targetPoint:to.toArray(),flight});
+  const carrier=barrel?.carrier||entry?.primarySocket||entry?.m.rig.arms.R.so;
+  log('launch',{archetype:kind,expectedOrigin:expectedMarker?.getWorldPosition(V3()).toArray(),actorAlive:actor.alive,aimError,mounted:entry?.m?Boolean(barrel&&barrel.mount.parent===carrier):null,actor:actor.id,target:target.id,weapon:w.id,index,socket,origin:from.toArray(),targetPoint:to.toArray(),flight});
+  barrel?.onLaunch?.(clock);
   const model=api.models.get(actor.id)?.entry?.m;
   if(model){model.recoil=Math.max(model.recoil,.8);model.s.comp.v-=.28;}
   const targets=(w.scatter?selected:[contact]).filter(Boolean).map(c=>{const p=point(target,guard?'shield':c.part);return c.hit?p:p.add(V3(.5+(c.index%3)*.17,-.3,.2));});
@@ -39,13 +52,25 @@ root.IronVowCombat={create(scene,api){
  }
  function landed(actor,target,w,contact,guard){
   api.sync(actor);api.sync(target);
-  const profile=profileFor(actor,w),part=guard?'shield':contact.part,p=point(target,part),back=point(actor,'body').sub(p).normalize();
+  const native=api.models.get(actor.id)?.entry?.m.nativeV2;
+  const tip=!guard&&native?.strikeContact?.(w.id);
+  if(tip)native.sync();
+  const profile=profileFor(actor,w),part=guard?'shield':contact.part;
+  const p=tip?tip.getWorldPosition(V3()):point(target,part),back=point(actor,'body').sub(p).normalize();
   effect.impact(p,back,profile.archetype);
   if(contact.before>0&&contact.after===0){fx.debris(p,low()?3:6,4);fx.smoke(p,3,1.7,0x817b73,.4,.7,1.3,.25);}
   log('impact',{actor:actor.id,target:target.id,weapon:w.id,index:contact.index,part:contact.part,shield:guard,point:p.toArray(),back:back.toArray(),planned:contact.amount,damage:contact.damage,before:contact.before,after:contact.after,actorAlive:actor.alive});
   const m=api.models.get(target.id)?.entry?.m;
   if(m){const kick=profile.archetype==='blade'?3.6:profile.archetype==='rail'?2.4:.7;m.s.kx.v-=back.x*kick;m.s.kz.v-=back.z*kick;m.s.pitch.v-=profile.archetype==='blade'?2:.55;m.s.comp.v-=contact.part==='legs'?1.4:.7;m.s.arm.v+=contact.part==='right'?1.8:.8;m.flicker=contact.part==='pilot'?1:m.flicker;}
   if(profile.archetype==='blade'&&!reducedMotion){actor.hitstop=target.hitstop={at:clock,until:clock+.085};shake=Math.max(shake,6);}
+ }
+ function dodge(unit,actor){
+  if(reducedMotion)return;
+  const entry=api.models.get(unit.id)?.entry;
+  if(!entry?.m.nativeV2?.dodge)return;
+  const from=point(actor,'body'),to=point(unit,'body');
+  entry.m.nativeV2.dodge(clock,from.sub(to));
+  log('dodge',{actor:unit.id,target:actor.id});
  }
  function step(m,p,index,amount){if(!reducedMotion)effect.onStep(m,p,index,amount);}
  function update(t,dt){
@@ -69,10 +94,21 @@ root.IronVowCombat={create(scene,api){
    }
    const age=t-(u.deathTime??t),wreck=!u.alive&&u.downReason!=='pilot'&&age<14,damaged=u.alive&&u.hp.body/u.max.body<.24;
    if((wreck||damaged)&&t>=state.smoke){state.smoke=t+(low()?.25:.12);const p=point(u,'body');fx.smoke(p,1,wreck?3.2:1.8,wreck?0x4b4743:0x817a70,.4,wreck?1.4:.9,2.4,.25);if(wreck&&age<5)fx.fire(p,1.5,.65,null,.9);}
-   if(u.motion?.jumpjet&&t>=state.jet){state.jet=t+.045;const p=point(u,'legs');fx.fire(p,1.8,.2,V3(0,-5,0));fx.smoke(p,low()?1:2,2,0x9faaa9,.45,-.4,.8,.2);}
+   if(u.motion?.jumpjet&&!reducedMotion&&t>=state.jet){
+    state.jet=t+.045;
+    const nozzles=m?.nativeV2?.jetNozzles;
+    if(nozzles)for(const nozzle of nozzles){
+     const origin=nozzle.getWorldPosition(V3());
+     const direction=V3(0,1,0).applyQuaternion(nozzle.getWorldQuaternion(new T.Quaternion()));
+     fx.fire(origin,1.2,.18,direction.multiplyScalar(5));
+     fx.smoke(origin,1,1.2,0x9faaa9,.35,-.4,.7,.18);
+    }else{
+     const p=point(u,'legs');fx.fire(p,1.8,.2,V3(0,-5,0));fx.smoke(p,low()?1:2,2,0x9faaa9,.45,-.4,.8,.2);
+    }
+   }
   }
   effect.update(t,Math.min(.05,dt));
  }
- return {launch,landed,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>effect.clear()};
+ return {launch,landed,dodge,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>effect.clear()};
 }};
 })(window);

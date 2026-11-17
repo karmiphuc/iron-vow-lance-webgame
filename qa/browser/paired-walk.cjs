@@ -7,10 +7,9 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
  await page.locator('#nav button').first().waitFor({state:'attached'});
  await page.evaluate(()=>__stopPairedFrames());const epoch=new Date('2026-11-11T00:00:00Z');await page.clock.install({time:epoch});await page.clock.pauseAt(new Date(epoch.getTime()+10000));
  await page.evaluate(()=>{requestAnimationFrame=fn=>setTimeout(()=>fn(performance.now()),1000/30);last=performance.now();requestAnimationFrame(draw);});
- const ready=async()=>{for(let i=0;i<200;i++){await page.clock.runFor(34);if(await page.evaluate(()=>IronVowScene.ready))return;await new Promise(resolve=>setTimeout(resolve,25));}throw Error('Paired walk art did not load');};
- const baked=['AERO','LINE INFANTRY','LINE INFANTRY ELITE','GRAVEMAW','REAVER','BULWARK-AEGIS','ASHIGARU'];
- // Live gait is checked on actual bones by check-scene.cjs; only temporary sheets remain here.
- for(const name of baked){
+ const ready=async()=>{for(let i=0;i<200;i++){await page.clock.runFor(34);if(await page.evaluate(()=>IronVowScene.ready))return;await new Promise(resolve=>setTimeout(resolve,25));}throw Error('Paired walk live rigs did not load');};
+ const frames=['AERO','LINE INFANTRY','LINE INFANTRY ELITE','GRAVEMAW','REAVER','BULWARK-AEGIS','ASHIGARU'];
+ for(const name of frames){
   const fixture=await page.evaluate(name=>{
    createBattle(0,false,false,[0]);surveyTerrain(0);battle.cover.clear();
    for(const cell of battle.field.cells)cell.level=0;
@@ -19,9 +18,9 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
     heading:headingTo(1,0),face:1,weapon:FRAMES[frame].weapon,melee:FRAMES[frame].melee});
    battle.units.filter(other=>other!==u).forEach((other,i)=>Object.assign(other,{x:17,z:i+1,vx:17,vz:i+1}));
    effects=[];action='move';closeModal();focusBattleCamera(u,true);fieldCamera.x=9.5;IronVowScene.clear();renderBattle();IronVowScene.render(clock,1);
-   const steps=[],sounds=[],renders=new Set(),track={u,steps,sounds,renders,seam:false};
+   const steps=[],sounds=[],bones=[],track={u,steps,sounds,bones,seam:false};
    if(!window.pairedWalkQA){
-    const push=Array.prototype.push,render=foundryRender,advance=advanceUnitAnimation,cue=gaitSound;
+    const push=Array.prototype.push,advance=advanceUnitAnimation,cue=gaitSound;
     gaitSound=(unit,kind,side)=>{
      if(unit===window.pairedWalkQA?.u)window.pairedWalkQA.sounds.push([kind,side]);
      return cue(unit,kind,side);
@@ -31,11 +30,6 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
      if(this===effects&&watch&&battle.busy)for(const item of items)if(item.type==='step')push.call(watch.steps,[item.x,item.z]);
      return push.apply(this,items);
     };
-    foundryRender=(unit,time,liveOnly)=>{
-     const result=render(unit,time,liveOnly),watch=window.pairedWalkQA;
-     if(unit===watch?.u&&unit.motion&&result?.baked&&result.cell)watch.renders.add(result.key+':'+result.index);
-     return result;
-    };
     advanceUnitAnimation=(unit,time,dt)=>{
      const watch=window.pairedWalkQA,m=unit.motion;
      if(unit===watch?.u&&m?.stepIndex===1&&m.segment?.length===2){
@@ -43,6 +37,19 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
       watch.seam=p>.019&&p<.022&&animationPose(unit,m.start).stride===0;
      }
      return advance(unit,time,dt);
+    };
+    const renderScene=IronVowScene.render;
+    IronVowScene.render=function(...args){
+     const result=renderScene.apply(this,args),watch=window.pairedWalkQA;
+     if(watch?.u.motion){
+      const m=IronVowScene.models.get(watch.u.id)?.entry?.m;
+      if(m?.rig?.legs?.length){
+       m.cont.updateMatrixWorld(true);
+       const root=m.cont.getWorldPosition(new THREE.Vector3());
+       watch.bones.push(m.rig.legs.map(leg=>leg.an.getWorldPosition(new THREE.Vector3()).sub(root).toArray()));
+      }
+     }
+     return result;
     };
    }
    window.pairedWalkQA=track;
@@ -63,37 +70,16 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
   for(let i=0;i<400&&await page.evaluate(()=>battle.busy||current().x!==10||current().z!==10);i++)await page.clock.runFor(34);
   const state=await page.evaluate(()=>({x:current().x,z:current().z,busy:battle.busy,ready:IronVowScene.ready,action,moveTap,modal:!document.querySelector('#modal').hidden}));
   assert.equal(!state.busy&&state.x===10&&state.z===10,true,name+' completes its real two-tile move: '+JSON.stringify(state));
-  const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,sounds:pairedWalkQA.sounds,renders:[...pairedWalkQA.renders],seam:pairedWalkQA.seam,
+  const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,sounds:pairedWalkQA.sounds,bones:pairedWalkQA.bones,seam:pairedWalkQA.seam,
    ap:current().ap,move:current().moveLeft,walks:current().walkCount,motion:current().motion}));
   assert.deepEqual(result.steps,[[8.5,10],[9,10],[9.5,10],[10,10]],name+' lands two alternating beats per tile');
   assert.deepEqual(result.sounds,[['lift',1],['land',1],['lift',-1],['land',-1],
    ['lift',1],['land',1],['lift',-1],['land',-1]],name+' cues both feet in walking order');
   assert.ok(result.seam,name+' keeps its speed through the straight tile seam');
   assert.deepEqual([result.ap,result.move,result.walks,result.motion],[fixture.ap,fixture.move-2,2,null]);
-  if(baked.includes(name)){
-   const sheet=result.renders.filter(entry=>name==='ASHIGARU'?entry.startsWith('ashigaru-combat:'):entry.includes('-walk'));
-   assert.ok(sheet.length>=13,name+' draws a dense sequence in the battle canvas: '+sheet.join(', '));
-  }
+  assert.ok(result.bones.length>1,name+' updates live leg bones during its move');
+  const first=result.bones[0],maxBoneMotion=Math.max(...result.bones.flatMap(pose=>pose.map((point,index)=>
+   Math.hypot(...point.map((value,axis)=>value-first[index][axis])))));
+  assert.ok(maxBoneMotion>.05,name+' articulates its actual ankle bones during the walk: '+maxBoneMotion);
  }
- const damage=await page.evaluate(async()=>{
-  const result=[];
-  for(const frame of [LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,REAVER_FRAME,BULWARK_FRAME]){
-   const unit={...current(),frame,hp:{...current().hp,right:0},motion:{start:0,duration:1,
-    gaitBase:0,stepIndex:0,totalSteps:1,stepBeats:0,fromX:2,fromZ:2,toX:3,toZ:2}};
-   for(const heading of frame===BULWARK_FRAME?FIELD_HEADINGS:[FIELD_HEADINGS[0],FIELD_HEADINGS[2]]){
-    Object.assign(unit,{heading,face:Math.sign(Math.sin(heading))});
-    const clip=foundryWalk(unit);
-    await motionImage(clip).decode();
-    const pose=foundryRender(unit,.32,true);
-    result.push([pose.key,pose.partMask,pose.flip]);
-   }
-  }
-  return result;
- });
- assert.deepEqual(damage.map(([key])=>key),[
-  'foundry-6-walk-unarmed','foundry-6-walk-unarmed','foundry-7-walk-unarmed','foundry-7-walk-unarmed',
-  'reaver-walk-left','reaver-walk-left',...Array.from({length:4},(_,i)=>`aegis-walk-d${i}-right-down`)
- ]);
- assert.ok(damage.every(([key,mask])=>mask===key+'-parts'));
- assert.deepEqual(damage.slice(0,6).map(([, ,flip])=>flip),[true,false,true,false,true,false]);
 };

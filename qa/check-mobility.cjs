@@ -1,24 +1,25 @@
 const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const path=require('node:path');
 const simulate=require('./sim-harness.cjs');
 
 (async()=>{
- const sim=simulate({random:()=>0,travel:true,foundry:true}),{run}=sim;
+ const sim=simulate({random:()=>0}),{run}=sim;
  run("createBattle(0);battle.cover.clear();const rook=current();const hostile=battle.units[3];const cues=[];sound=(type)=>cues.push(type)");
  assert.equal(run('freeMovement(rook)'),5);
  assert.equal(run('freeMovement(battle.units[1])'),6);
  assert.equal(run('paths(rook).get("1,11")'),5);
  await run('moveUnit(rook,1,11)');
  assert.equal(run('rook.ap'),8);
+ assert.equal(run('rook.heading'),run('headingTo(0,-1)'),'Facing stays aligned through a multi-tile move');
  assert.equal(run('freeMovement(rook)'),0);
  assert.ok(run('extraMovement(rook)'));
- assert.ok(run("cues.filter(c=>c==='step').length===5&&cues.indexOf('hydraulic')<cues.indexOf('step')"));
+ assert.equal(run("cues.filter(c=>c==='step').length"),10,'Five tiles use two live gait contacts each');
+ assert.ok(run("cues.indexOf('hydraulic')<cues.indexOf('step')"));
  await run('moveUnit(rook,1,10)');
  assert.equal(run('rook.ap'),7);
  assert.equal(run('movementLimit(rook)'),0);
  await run('moveUnit(rook,1,9)');
  assert.equal(run('rook.z'),10);
+ assert.equal(run('rook.heading'),run('headingTo(0,-1)'),'Facing stays continuous across the paid tile');
 
  run("resetMovement(rook);rook.ap=8;hostile.x=rook.x+1;hostile.z=rook.z;hostile.melee='blade';hostile.ap=0");
  assert.equal(run("reactionWeapon(hostile,rook).id"),'blade');
@@ -56,34 +57,15 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('current().ap'),8);
  assert.equal(run('selected'),0);
 
- const keys=run('Object.keys(window.IRON_VOW_TRAVEL)');
- assert.equal(keys.length,14);
- assert.ok(!keys.some(key=>key==='warden'||/^foundry-[0-5]$/.test(key)),'Live-frame travel data is deleted');
- assert.deepEqual(Array.from(keys.filter(key=>key.startsWith('shogun'))).sort(),
-  ['shogun','shogun-bare','shogun-cleaver','shogun-vesper']);
- for(const key of keys){
-  const visual=JSON.parse(run(`JSON.stringify(window.IRON_VOW_TRAVEL['${key}'])`));
-  assert.equal(visual.points[0].length,4);
-  assert.ok(fs.existsSync(path.join(__dirname,'../dist/assets',visual.key+'.webp')));
- }
- const bins=run(`[[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dz])=>{
-  const walker=battle.units.find(u=>u.frame===1);walker.heading=headingTo(dx,dz);return travelVisual(walker,clock).heading;
- })`);
- assert.deepEqual(Array.from(bins),[2,0,1,3]);
- for(const kind of ['tank','helicopter']){
-  const headings=run(`[[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dz])=>{
-   const u=battle.units.find(unit=>unit.kind==='${kind}');
-   u.heading=headingTo(dx,dz);return travelVisual(u,clock).heading;
-  })`);
-  assert.deepEqual(Array.from(headings),[2,0,1,3]);
- }
+ const cardinal=JSON.parse(run(`JSON.stringify([[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dz])=>headingTo(dx,dz)))`));
+ assert.deepEqual(cardinal,JSON.parse(run('JSON.stringify([FIELD_HEADINGS[2],FIELD_HEADINGS[0],FIELD_HEADINGS[1],FIELD_HEADINGS[3]])')));
  assert.ok(run(`[[-7,2],[2,-7],[5,5],[-5,-5],[0,0]].every(([dx,dz])=>FIELD_HEADINGS.includes(headingTo(dx,dz)))`));
  assert.equal(run('headingTo(2,-2,FIELD_HEADINGS[1])'),run('FIELD_HEADINGS[1]'));
  const v24=JSON.parse(sim.storage.get('iron-vow-career'));
  v24.sortie.units[0].heading=0;
  const migrated=simulate({storage:new Map([['iron-vow-career',JSON.stringify(v24)]])});
  assert.ok(migrated.run('FIELD_HEADINGS.includes(battle.units[0].heading)'));
- console.log('PASS: free movement, one paid tile, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and four-facing travel assets.');
+ console.log('PASS: free movement, one paid tile, continuous facing, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and facing save migration.');
 
  const stats=simulate();
  const count=stats.run('FRAMES.length');

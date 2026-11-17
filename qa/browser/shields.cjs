@@ -31,7 +31,7 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
 
  const preview=page.locator('#paint-preview');
  await preview.waitFor();
- await page.waitForFunction(()=>IronVowFoundry.wardenReady(),null,{timeout:120000});
+ await page.waitForFunction(()=>IronVowRigV2.status({frame:0},'preview')==='ready',null,{timeout:120000});
  const bare=await preview.evaluate(node=>node.toDataURL());
  await equip(buckler);
  assert.match(await page.locator('.armory-mounted').innerText(),/Bulwark B-2/);
@@ -53,18 +53,34 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  await equip(tower);
  assert.equal(await page.evaluate(()=>save.credits),150);
 
- await page.waitForFunction(()=>IronVowFoundry.preview({frame:0,weapon:'rifle',shield:'citadel-shield'},0,'warden')?.shield?.grip,null,{timeout:120000});
+ await page.waitForFunction(()=>IronVowFoundry.preview({frame:0,weapon:'rifle',shield:'citadel-shield'},0,'rig-v2')?.shield?.grip,null,{timeout:120000});
  const rig=await page.evaluate(()=>{
   const u={frame:0,weapon:'rifle',shield:'citadel-shield'},point=node=>node.getWorldPosition(new THREE.Vector3()),records=[];
   for(const angle of [0,1,2,3]){
-   const fit=IronVowFoundry.preview(u,0,'warden',angle),shield=fit.shield;
+   const fit=IronVowFoundry.preview(u,0,'rig-v2',angle),shield=fit.shield;
    records.push({grip:point(shield.grip).distanceTo(point(fit.m.rig.arms.L.so)),visible:shield.mount.visible,offset:point(shield.face).distanceTo(point(shield.grip))});
   }
-  const hp={body:100,pilot:100,right:100,left:0,legs:100},lost=IronVowFoundry.preview({...u,hp},0,'warden');
+  const hp={body:100,pilot:100,right:100,left:0,legs:100},lost=IronVowFoundry.preview({...u,hp},0,'rig-v2');
   return{records,broken:!lost.shield.mount.visible};
  });
  assert.ok(rig.records.every(sample=>sample.visible&&sample.grip<1e-5&&sample.offset>.1));assert.equal(rig.broken,true,'The actual shield mesh hides with its arm');
 
+ const trackWardenAssets=(preview)=>page.evaluate(preview=>{
+  const unit={frame:0,weapon:'rifle'};
+  const m=preview?IronVowFoundry.preview(unit,0,'rig-v2').m:IronVowScene.models.get(current().id).entry.m;
+  const counts=new Map();
+  // Rigid gear attaches beneath the authored wrist. Its catalogue geometry
+  // is shared with other chassis, so measure only the Warden armor buffers.
+  for(const {m:node} of Object.values(m.build.parts).flat()){
+   if(counts.has(node.geometry))continue;
+   counts.set(node.geometry,0);
+   node.geometry.addEventListener('dispose',()=>counts.set(node.geometry,counts.get(node.geometry)+1));
+  }
+  window.wardenGeometryCounts=counts;
+  return counts.size;
+ },preview);
+ const disposed=()=>page.evaluate(()=>[...window.wardenGeometryCounts.values()].every(count=>count===1));
+ assert.ok(await trackWardenAssets(true)>0);
  await page.evaluate(()=>{
   deploy(0,false,[0]);Math.random=()=>0;
   const a=current(),enemy=battle.units[1];
@@ -76,6 +92,9 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
   renderBattle();persist();
  });
  await tap('#modal-0');
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ assert.ok(await disposed(),'Starting a sortie disposes each Workshop Warden geometry once');
+ assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0},'preview')),undefined);
  assert.equal(await page.locator('#strike').isDisabled(),true);
  assert.match(await page.locator('.shield-status').innerText(),/SHIELD 1\/92 ARM HP/);
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
@@ -90,4 +109,9 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  await page.locator('.shield-status').waitFor();
  assert.match(await page.locator('.shield-status').innerText(),/SHIELD ARM LOST/);
  assert.equal(await page.evaluate(()=>current().hp.left),0);
+ await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
+ assert.ok(await trackWardenAssets(false)>0);
+ await tap('#withdraw');await tap('#modal-1');
+ await page.waitForFunction(()=>!battle&&!IronVowRigV2.status({frame:0}),null,{timeout:120000});
+ assert.ok(await disposed(),'Withdrawing disposes each sortie Warden geometry once');
 };

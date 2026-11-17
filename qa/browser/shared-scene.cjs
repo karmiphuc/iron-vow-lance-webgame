@@ -92,8 +92,11 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  for(let i=0;i<100&&!await page.evaluate(()=>IronVowRenderer.lost);i++)await new Promise(resolve=>setTimeout(resolve,25));
  assert.equal(await page.evaluate(()=>IronVowRenderer.lost),true,'Actual context-loss event is observed');
  await page.evaluate(()=>__loseContext.restoreContext());
- for(let i=0;i<100&&await page.evaluate(()=>IronVowRenderer.lost);i++)await new Promise(resolve=>setTimeout(resolve,25));
- await page.clock.fastForward(34);
+ // Once the context is back, rebuild and decode the sortie's GLBs as the
+ // controlled animation clock advances.
+ for(let i=0;i<100&&!await page.evaluate(()=>IronVowScene.ready);i++){
+  await new Promise(resolve=>setTimeout(resolve,25));await page.clock.fastForward(34);
+ }
  assert.equal(await page.evaluate(()=>!IronVowRenderer.lost&&IronVowScene.ready),true,'Context restoration rebuilds the live scene');
  const after=await page.evaluate(()=>({checkpoint:__ironVow.checkpoint(),generation:IronVowRenderer.generation,contexts:__webglContextCount}));
  assert.ok(await page.evaluate(()=>__readBattlePixels())>64,'The restored context actually redraws the battlefield');

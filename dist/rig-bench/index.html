@@ -71,9 +71,8 @@ button:focus-visible{outline:2px solid var(--socket);outline-offset:2px}
 .spec p{margin:0;font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--muted);max-width:65ch}
 .spec pre{margin:0;background:var(--ink);border:1px solid var(--line);padding:12px;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--fg);overflow-x:auto}
 .spec pre .s{color:var(--socket)} .spec pre .a{color:var(--accent)} .spec pre .m{color:var(--muted)}
-.fallback{position:fixed;inset:78px 16px 28px;display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;gap:8px;font-family:var(--mono);color:var(--muted);text-align:center;pointer-events:none}
-.fallback img{width:100%;height:100%;max-width:680px;max-height:680px;object-fit:contain;align-self:center}
-.baked-preview .dock,.baked-preview .tools button{display:none}
+.rig-error .dock,.rig-error #btnRig{display:none}
+.rig-unavailable{position:fixed;inset:45% 16px auto;text-align:center;font-family:var(--mono);color:var(--fg)}
 
 </style>
 
@@ -84,13 +83,13 @@ button:focus-visible{outline:2px solid var(--socket);outline-offset:2px}
   <div class="unit">
     <b>WARDEN</b>
     <span class="sub">RIG BENCH · 19 JOINTS · 2 SOCKETS · 10 PISTONS</span>
-    <span class="status" id="status">READY</span>
+    <span class="status" id="status">LOADING</span>
   </div>
 </header>
 
 <div class="tools">
   <a class="tool" href="../?view=workshop" style="text-decoration:none">Workshop</a>
-  <button class="tool" id="btnRig" aria-pressed="false">Rig</button>
+  <button class="tool" id="btnRig" disabled aria-pressed="false">Rig</button>
   <button class="tool" id="btnSound" aria-pressed="true">Sound</button>
   <button class="tool" id="btnSpec">Spec</button>
 </div>
@@ -107,25 +106,25 @@ button:focus-visible{outline:2px solid var(--socket);outline-offset:2px}
   <div class="slot">
     <div class="slot-label"><i></i>SOCKET.R · GUN</div>
     <div class="slot-row">
-      <button class="nav" id="gunPrev" aria-label="Previous gun">‹</button>
+      <button class="nav" id="gunPrev" disabled aria-label="Previous gun">‹</button>
       <div class="slot-name" id="gunName">—</div>
-      <button class="nav" id="gunNext" aria-label="Next gun">›</button>
+      <button class="nav" id="gunNext" disabled aria-label="Next gun">›</button>
     </div>
     <div class="slot-meta" id="gunMeta">—</div>
   </div>
   <div class="slot">
     <div class="slot-label"><i></i>SOCKET.L · MELEE</div>
     <div class="slot-row">
-      <button class="nav" id="meleePrev" aria-label="Previous melee weapon">‹</button>
+      <button class="nav" id="meleePrev" disabled aria-label="Previous melee weapon">‹</button>
       <div class="slot-name" id="meleeName">—</div>
-      <button class="nav" id="meleeNext" aria-label="Next melee weapon">›</button>
+      <button class="nav" id="meleeNext" disabled aria-label="Next melee weapon">›</button>
     </div>
     <div class="slot-meta" id="meleeMeta">—</div>
   </div>
   <div class="actions">
-    <button class="act ghost" id="btnWalk" aria-pressed="false">Walk</button>
-    <button class="act primary" id="btnFire">Fire <small>F</small></button>
-    <button class="act primary" id="btnStrike">Strike <small>E</small></button>
+    <button class="act ghost" id="btnWalk" disabled aria-pressed="false">Walk</button>
+    <button class="act primary" id="btnFire" disabled>Fire <small>F</small></button>
+    <button class="act primary" id="btnStrike" disabled>Strike <small>E</small></button>
   </div>
   <div class="keys">F fire · E strike · W walk · R rig view · M sound · 1 / 2 swap gun / melee · drag to orbit · scroll to zoom</div>
 </footer>
@@ -141,8 +140,8 @@ button:focus-visible{outline:2px solid var(--socket);outline-offset:2px}
    │  ├─ neck
    │  ├─ shoulder.R → elbow.R → wrist.R → <span class="s">socket.R</span>  <span class="a">[GUN]</span>
    │  └─ shoulder.L → elbow.L → wrist.L → <span class="s">socket.L</span>  <span class="a">[MELEE]</span>
-   ├─ hip.L → knee.L → ankle.L   <span class="m">2-bone IK</span>
-   └─ hip.R → knee.R → ankle.R   <span class="m">2-bone IK</span></pre>
+   ├─ hip.L → knee.L → ankle.L   <span class="m">authored gait</span>
+   └─ hip.R → knee.R → ankle.R   <span class="m">authored gait</span></pre>
     </div>
     <div>
       <h3>Weapon module contract</h3>
@@ -160,27 +159,27 @@ button:focus-visible{outline:2px solid var(--socket);outline-offset:2px}
     </div>
     <div>
       <h3>Weight model</h3>
-      <p>Gait runs at 0.42 Hz with a 60% stance. Each foot lifts fast, hangs, then accelerates into the floor. A footfall fires impulses into four springs: pelvis compression, spine pitch, arm dip and camera bump. Melee runs anticipation, a hold, the strike, then a hitstop of 70–130 ms at impact. Recoil kicks the spine back and the railgun shoves the pelvis.</p>
+      <p>The Bench plays the Warden’s authored gait and strike clips. Each melee strike includes a 70–130 ms pause at impact. Ranged fire adds recoil to the spine as the right hand tracks the target.</p>
     </div>
   </div>
 </div>
 
 <script src="./vendor/three.min.js"></script>
 <script src="./vendor/GLTFLoader.js"></script>
-<script src="./rig-motion.js"></script>
-<script src="./painted-warden.js"></script>
 <script>
 (function(){
 'use strict';
-function showBakedPreview(message){
-  document.body.classList.add('baked-preview');
-  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.getElementById('status').textContent=still?'STATIC PREVIEW':'RIG MOTION PREVIEW';
-  const art=still?'warden-rifle-left.webp':'warden-rig-loop.webp';
-  document.body.insertAdjacentHTML('beforeend','<div class="fallback"><img src="../assets/'+art+'" alt="Warden with Kestrel AR-8"><p>'+message+'</p></div>');
+function showRigError(message){
+  document.body.classList.add('rig-error');
+  document.getElementById('status').textContent='UNAVAILABLE';
+  const alert=document.createElement('p');
+  alert.className='rig-unavailable';
+  alert.setAttribute('role','alert');
+  alert.textContent=message;
+  document.body.append(alert);
 }
-if(!window.THREE||!window.IronVowRigMotion){showBakedPreview('The 3D engine could not load.');return;}
-const T=THREE, V3=(x,y,z)=>new T.Vector3(x,y,z), motion=IronVowRigMotion;
+if(!window.THREE||!window.THREE.GLTFLoader){showRigError('The 3D engine could not load.');return;}
+const T=THREE, V3=(x,y,z)=>new T.Vector3(x,y,z);
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const damp=(a,b,k,dt)=>a+(b-a)*(1-Math.exp(-k*dt));
@@ -191,7 +190,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const canvas=document.getElementById('c');
 let renderer;
 try{renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});}
-catch(e){showBakedPreview('WebGL is unavailable. Showing the Warden rig preview.');return;}
+catch(e){showRigError('This browser cannot start WebGL.');return;}
 const mobile=matchMedia('(pointer:coarse)').matches;
 renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.75:2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
@@ -436,8 +435,7 @@ const _v=V3(0,0,0);
 function updatePistons(r){for(const p of r.pistons){p.hb.getWorldPosition(_v);p.ha.lookAt(_v);p.ha.getWorldPosition(_v);p.hb.lookAt(_v);}}
 
 const M=makeMats(false);
-let rig=buildMech(M,true); rig.stackGlow=M.stackGlow; scene.add(rig.root);
-let mainMats=meshMaterials(rig.root);
+let rig,mainMats=[];
 // Parked rigs never animate. Bake each one into material batches to keep
 // hangar geometry from consuming hundreds of draw calls every frame.
 function addParkedMech(r){
@@ -473,80 +471,19 @@ for(const [x,z,ry] of [[13,-13,-.9],[-6,-18,.4]]){const r=buildMech(parkedMats,f
 const glowMat=(c,i)=>new T.MeshStandardMaterial({color:0x111111,emissive:c,emissiveIntensity:i||1,roughness:.4});
 const WEAPONS={gun:[
   {id:'kestrel',name:'KESTREL AR-8',meta:'3-RND BURST · HEAVY',socketRot:[PI/2,0,0],
-   build(){const g=new T.Group();
-     box(g,.32,.45,1.9,M.frame,0,.32,.45); box(g,.36,.2,1.2,M.armor,0,.62,.6); box(g,.37,.11,.45,M.accent,0,.73,1.0);
-     for(let i=0;i<7;i++) box(g,.22,.05,.06,M.joint,0,.75,.15+i*.13);
-     box(g,.2,.55,.25,M.joint,0,-.05,.05,.15); box(g,.26,.66,.36,M.frame,0,-.04,.8,.22); box(g,.28,.08,.38,M.steel,0,-.36,.86,.22);
-     cyl(g,.08,.08,1.6,M.steel,0,.36,2.1,PI/2); cyl(g,.12,.12,.9,M.frame,0,.36,1.6,PI/2,0,0,8);
-     cyl(g,.15,.15,.42,M.frame,0,.36,3.0,PI/2,0,0,8); for(const zz of [2.9,3.06]) box(g,.34,.07,.08,M.joint,0,.36,zz);
-     box(g,.3,.36,.9,M.frame,0,.28,-.82); box(g,.33,.1,.4,M.accent,0,.47,-1.0); box(g,.34,.42,.1,M.joint,0,.24,-1.3);
-     cyl(g,.09,.09,.6,M.joint,0,.92,.35,PI/2); cyl(g,.07,.07,.02,glowMat(0x58d8ff,.8),0,.92,.66,PI/2);
-     const muzzle=new T.Object3D();muzzle.position.set(0,.36,3.25);g.add(muzzle);
-     const eject=new T.Object3D();eject.position.set(-.2,.4,.5);g.add(eject);
-     return {model:g,muzzle,eject};},
    profile:{burst:3,interval:.14,recoil:.6,spread:.35,tracer:0xffc46b,width:.09,shake:.1,cool:.35,sfx:'rifle'}},
   {id:'hailstorm',name:'HAILSTORM M-8',meta:'ROTARY GUN · SPIN-UP',socketRot:[PI/2,0,0],
-   build(){const g=new T.Group();
-     box(g,.58,.58,1.4,M.armor,0,.36,.25); box(g,.6,.1,1.0,M.accent,0,.67,.3);
-     for(let i=0;i<4;i++) box(g,.62,.05,.06,M.joint,0,.5,-.2+i*.18);
-     box(g,.2,.55,.25,M.joint,0,-.05,.05,.15);
-     cyl(g,.4,.4,.5,M.frame,0,-.12,-.25,0,0,PI/2); cyl(g,.42,.42,.08,M.accent,.26,-.12,-.25,0,0,PI/2);
-     const curve=new T.CatmullRomCurve3([V3(-.25,-.12,-.25),V3(-.4,.1,.1),V3(-.32,.3,.4)]);g.add(new T.Mesh(new T.TubeGeometry(curve,10,.06,6),M.hose));
-     const barrels=new T.Group();barrels.position.set(0,.36,1.0);g.add(barrels);
-     cyl(barrels,.3,.3,.32,M.frame,0,0,.1,PI/2);
-     for(let i=0;i<6;i++){const a=i/6*PI*2;cyl(barrels,.065,.065,1.9,M.steel,Math.cos(a)*.17,Math.sin(a)*.17,1.05,PI/2,0,0,8);}
-     for(const zz of [.7,1.2,1.7]) cyl(barrels,.29,.29,.07,M.joint,0,0,zz,PI/2,0,0,12);
-     cyl(barrels,.27,.27,.12,M.frame,0,0,1.95,PI/2);
-     const muzzle=new T.Object3D();muzzle.position.set(0,.36,3.05);g.add(muzzle);
-     const eject=new T.Object3D();eject.position.set(-.3,.3,.4);g.add(eject);
-     return {model:g,muzzle,eject,barrels};},
    profile:{spinup:.55,burst:18,interval:.06,recoil:.22,spread:.6,tracer:0xffd27a,width:.07,shake:.05,cool:.45,sfx:'rotary'}},
   {id:'longbow',name:'LONGBOW R-12',meta:'RAIL CANNON · CHARGED SLUG',socketRot:[PI/2,0,0],
-   build(){const g=new T.Group();const gm=glowMat(0x58d8ff,.5);
-     box(g,.42,.55,1.4,M.frame,0,.36,0); box(g,.52,.32,.7,M.armor,0,.76,-.2); box(g,.54,.08,.4,M.accent,0,.94,-.2);
-     box(g,.2,.55,.25,M.joint,0,-.05,.05,.15);
-     box(g,.14,.12,3.0,M.steel,0,.58,1.9); box(g,.14,.12,3.0,M.steel,0,.14,1.9);
-     box(g,.07,.07,2.9,gm,0,.36,1.85);
-     for(let i=0;i<5;i++){const t=new T.Mesh(new T.TorusGeometry(.3,.06,6,16),i%2?M.frame:gm);t.position.set(0,.36,.8+i*.5);g.add(t);}
-     for(const s of [1,-1]) cyl(g,.08,.08,1.0,M.joint,s*.28,.36,-.1,PI/2,0,0,8);
-     const muzzle=new T.Object3D();muzzle.position.set(0,.36,3.45);g.add(muzzle);
-     return {model:g,muzzle,glowMat:gm};},
    profile:{charge:.9,burst:1,interval:.1,recoil:1.7,spread:0,tracer:0x7fe6ff,width:.34,shake:.6,beam:true,cool:.8,kick:1.6,hitstop:.06,sfx:'rail'}}
 ],melee:[
   {id:'breaker',name:'BREAKER MAUL',meta:'OVERHEAD · SHOCKWAVE',socketRot:[0,0,0],
-   build(){const g=new T.Group();
-     cyl(g,.09,.09,2.3,M.frame,0,0,.8,PI/2); cyl(g,.13,.13,.5,M.joint,0,0,0,PI/2); cyl(g,.15,.15,.12,M.accent,0,0,-.38,PI/2);
-     box(g,.8,1.3,.85,M.armor2,0,0,2.2); box(g,.9,.22,.95,M.steel,0,-.74,2.2); box(g,.5,.32,.5,M.frame,0,.8,2.2);
-     box(g,.82,.14,.87,M.accent,0,.3,2.2); box(g,.82,.14,.87,M.accent,0,-.3,2.2);
-     for(const s of [1,-1]) cyl(g,.07,.07,.9,M.steel,s*.45,0,2.2,0,0,0,8);
-     bolts(g,M.bolt,[[.41,.5,1.95],[.41,.5,2.45],[-.41,.5,1.95],[-.41,.5,2.45]],'x');
-     const tip=new T.Object3D();tip.position.set(0,-.85,2.2);g.add(tip);
-     const base=new T.Object3D();base.position.set(0,0,1.4);g.add(base);
-     return {model:g,tip,base};},
    profile:{keys:[[0,null],[.55,{lsx:-3.2,lsz:.25,lel:-.7,lwr:.45,ty:.3,tp:-.18,lunge:-.25},'out'],[.8,{lsx:-3.38,lsz:.27,lel:-.78,lwr:.52,ty:.36,tp:-.24,lunge:-.32}],[.92,{lsx:-.8,lsz:.06,lel:-.2,lwr:1.35,ty:-.18,tp:.32,lunge:.75},'in'],[1.05,{lsx:-.62,lsz:.05,lel:-.15,lwr:1.45,ty:-.22,tp:.38,lunge:.85},'out'],[1.4,{lsx:-.72,lsz:.06,lel:-.22,lwr:1.3,ty:-.16,tp:.28,lunge:.7}],[2.15,null]],
      impact:.92,trail:[.81,1.0],shake:.75,ring:true,hitstop:.13,trailColor:0xff8a3a,whoosh:.8,servo:.0}},
   {id:'cleaver',name:'ARC CLEAVER',meta:'HORIZONTAL SLASH · FAST',socketRot:[0,0,0],
-   build(){const g=new T.Group();
-     cyl(g,.08,.08,.65,M.joint,0,0,0,PI/2); box(g,.42,.5,.18,M.frame,0,0,.36);
-     box(g,.1,.58,2.6,M.steel,0,-.05,1.75); box(g,.14,.12,2.4,M.frame,0,.27,1.65);
-     for(let i=0;i<4;i++) box(g,.12,.06,.18,M.joint,0,.36,.8+i*.5);
-     box(g,.11,.07,2.6,glowMat(0xff7a1a,1.8),0,-.37,1.75);
-     box(g,.12,.18,.3,M.accent,0,.05,.6);
-     const tip=new T.Object3D();tip.position.set(0,-.2,3.05);g.add(tip);
-     const base=new T.Object3D();base.position.set(0,-.2,.7);g.add(base);
-     return {model:g,tip,base};},
    profile:{keys:[[0,null],[.38,{lsx:-1.3,lsz:1.25,lel:-.9,lwr:.9,ty:.75,tp:0,lunge:-.1},'out'],[.55,{lsx:-1.34,lsz:1.32,lel:-.95,lwr:.92,ty:.85,tp:-.04,lunge:-.15}],[.66,{lsx:-1.5,lsz:-.55,lel:-.25,lwr:1.15,ty:-.8,tp:.1,lunge:.4},'in'],[.86,{lsx:-1.22,lsz:-.8,lel:-.55,lwr:.8,ty:-1.0,tp:.1,lunge:.35},'out'],[1.55,null]],
      impact:.66,trail:[.56,.88],shake:.28,hitstop:.075,trailColor:0xffa040,whoosh:.55,servo:0}},
   {id:'piledriver',name:'PILE DRIVER',meta:'THRUST · PISTON SPIKE',socketRot:[PI/2,0,0],
-   build(){const g=new T.Group();
-     box(g,.6,.55,1.6,M.armor2,0,.58,-.35); box(g,.62,.1,1.0,M.accent,0,.88,-.3);
-     cyl(g,.21,.21,.6,M.frame,0,.58,.7,PI/2); cyl(g,.06,.06,1.3,M.steel,.33,.58,-.3,PI/2); cyl(g,.06,.06,1.3,M.steel,-.33,.58,-.3,PI/2);
-     for(let i=0;i<4;i++) box(g,.64,.04,.06,M.joint,0,.7,-.9+i*.15);
-     const spike=new T.Group();spike.position.set(0,.58,.95);g.add(spike);
-     cyl(spike,.09,.09,1.0,M.steel,0,0,-.2,PI/2);
-     const cone=new T.Mesh(new T.ConeGeometry(.17,1.0,10),M.steel);cone.rotation.x=PI/2;cone.position.z=.7;cone.castShadow=true;spike.add(cone);
-     const tip=new T.Object3D();tip.position.set(0,0,1.2);spike.add(tip);
-     return {model:g,tip,spike};},
    profile:{keys:[[0,null],[.42,{lsx:.35,lsz:.25,lel:-1.95,lwr:0,ty:.45,tp:-.05,lunge:-.2},'out'],[.62,{lsx:.42,lsz:.27,lel:-1.98,lwr:0,ty:.52,tp:-.08,lunge:-.26}],[.7,{lsx:-1.45,lsz:0,lel:-.12,lwr:0,ty:-.25,tp:.15,lunge:.65},'in'],[1.0,{lsx:-1.4,lsz:0,lel:-.15,lwr:0,ty:-.22,tp:.12,lunge:.55}],[1.6,null]],
      impact:.7,shake:.45,spikeAt:.7,hitstop:.1,trailColor:0xffb060,whoosh:.6,servo:0}}
 ]};
@@ -559,7 +496,7 @@ function meshMaterials(root){
 }
 async function loadRigidGLB(url){
   if(!T.GLTFLoader)throw new Error('GLTFLoader r128 is unavailable');
-  const {scene:asset}=await new T.GLTFLoader().loadAsync(url);
+  const {scene:asset,animations}=await new T.GLTFLoader().loadAsync(url);
   asset.traverse(o=>{
     // r128 sanitizes punctuation and uniquifies names in the parsed scene.
     if(typeof o.userData.name==='string')o.name=o.userData.name;
@@ -579,7 +516,7 @@ async function loadRigidGLB(url){
       };
     }
   }
-  return asset;
+  return {asset,animations};
 }
 function requiredNode(root,name,parent){
   const obj=root.getObjectByName(name);
@@ -591,41 +528,103 @@ function requiredMaterial(root,name){
   if(!material)throw new Error('Missing emissive material '+name);
   return material;
 }
-async function loadWardenGLB(){
-  const asset=await loadRigidGLB('./warden.glb');
-  const root=requiredNode(asset,'root');
-  const joints=[],pistons=[],arms={},legs=[],stackTops=[];
-  const joint=(name,group,socket=false)=>{
-    const obj=requiredNode(root,name,group);
-    joints.push({name,obj,parent:group===root?null:group,socket});
-    return obj;
+async function loadPaintedWarden(){
+  const {asset,animations}=await loadRigidGLB('./warden-painted.glb');
+  const root=requiredNode(asset,'Painted_Warden');
+  const arms={};
+  for(const side of ['R','L'])arms[side]={
+    hand:requiredNode(root,'Bench_Hand_'+side),
+    wrist:requiredNode(root,'WristContact_'+side),
+    so:requiredNode(root,'GripContact_'+side),
+    direction:requiredNode(root,side==='R'?'Bench_Rifle':'Bench_Melee'),
   };
-  const pelvis=joint('pelvis',root),spine=joint('spine',pelvis),neck=joint('neck',spine);
-  for(const side of ['L','R']){
-    const sh=joint('shoulder.'+side,spine),el=joint('elbow.'+side,sh);
-    const wr=joint('wrist.'+side,el),so=joint('socket.'+side,wr,true);
-    const paul=requiredNode(root,'pauldron.'+side,spine);
-    arms[side]={sh,el,wr,so,paul};
-    stackTops.push(requiredNode(root,'stackTop.'+side,spine));
-  }
-  for(const side of ['L','R']){
-    const hip=joint('hip.'+side,pelvis),kn=joint('knee.'+side,hip);
-    const an=joint('ankle.'+side,kn),sign=side==='L'?1:-1;
-    legs.push({hip,kn,an,restX:sign*.68,restZ:sign*.18,prevP:0,side});
-  }
-  root.traverse(o=>{
-    const match=/^piston\.(\d+)\.a$/.exec(o.name);
-    if(match){
-      const hb=requiredNode(root,'piston.'+match[1]+'.b');
-      pistons.push({ha:o,hb});
+  root.scale.setScalar(1.18);
+  root.position.y=PAD-.025*1.18;
+  const joints=[];
+  root.traverse(node=>{
+    const socket=node.name.startsWith('GripContact_');
+    if(!node.isMesh&&(socket||node.name.startsWith('Bench_'))&&
+      !['Bench_Rifle','Bench_Melee'].includes(node.name)&&!node.name.startsWith('Bench_GuardLink')){
+      joints.push({obj:node,parent:node.parent===root?null:node.parent,socket});
     }
   });
-  if(!pistons.length)throw new Error('No piston pairs found');
-  const visor=requiredMaterial(root,'emissive_visor'),stackGlow=requiredMaterial(root,'emissive_stack');
-  visor.emissiveIntensity=M.visor.emissiveIntensity;
-  stackGlow.emissiveIntensity=M.stackGlow.emissiveIntensity;
-  return {root,pelvis,spine,neck,arms,legs,joints,pistons,stackTops,stackGlow};
+  const mixer=new T.AnimationMixer(root);
+  const actions={};
+  for(const name of ['Aim','Brace','Melee maul','Melee sweep','Melee thrust','Recoil','Walk']){
+    const clip=T.AnimationClip.findByName(animations,name);
+    if(!clip)throw Error('Missing Warden Bench clip '+name);
+    actions[name]=mixer.clipAction(clip).setLoop(T.LoopOnce,1);
+    actions[name].clampWhenFinished=true;
+  }
+  const spine=requiredNode(root,'Bench_Torso');
+  const overrides=[spine,arms.R.hand,arms.L.hand].map(node=>({
+    node,position:node.position.clone(),rotation:node.quaternion.clone()
+  }));
+  const next={root,arms,joints,spine,mixer,actions,overrides,walkTime:0,aim:0};
+  sampleWarden(next,'Aim',0);
+  return next;
 }
+function sampleWarden(rig,name,progress){
+  // Clear gameplay hand and recoil offsets before the mixer reuses cached samples.
+  for(const {node,position,rotation} of rig.overrides){
+    node.position.copy(position);
+    node.quaternion.copy(rotation);
+  }
+  const action=rig.actions[name];
+  if(rig.action!==action){
+    rig.action?.stop();
+    rig.action=action.reset().play();
+  }
+  action.time=clamp(progress,0,1)*action.getClip().duration;
+  rig.mixer.update(0);
+  for(const {node,position,rotation} of rig.overrides){
+    position.copy(node.position);
+    rotation.copy(node.quaternion);
+  }
+  rig.root.updateMatrixWorld(true);
+}
+const gripBasis = new T.Matrix4();
+const gripForward = V3(0,0,-1); // Blender bone +Y after the glTF axis conversion.
+const gripWidth = V3(1,0,0), gripUp = V3(0,1,0);
+const pistolCenter = V3(0,-.075,.015), shaftCenter = V3();
+const gripScale = .62;
+function mountWardenWeapon(rig,slot,instance,target,recoil){
+  const arm=rig.arms[slot==='gun'?'R':'L'];
+  const pistol=slot==='gun'||instance.def.id==='piledriver';
+  const forward=gripForward.clone().applyQuaternion(arm.direction.getWorldQuaternion(new T.Quaternion())).normalize();
+  if(target&&rig.aim>.001){
+    const aimDirection=target.clone().sub(arm.so.getWorldPosition(V3())).normalize();
+    aimDirection.y+=recoil*.035;
+    forward.lerp(aimDirection.normalize(),rig.aim).normalize();
+  }
+  const across=gripUp.clone().cross(forward);
+  if(across.lengthSq()<.01)across.copy(gripWidth).addScaledVector(forward,-gripWidth.dot(forward));
+  across.normalize();
+  const upright=forward.clone().cross(across).normalize();
+  const weaponRotation=new T.Quaternion().setFromRotationMatrix(gripBasis.makeBasis(across,upright,forward));
+
+  // Align the cylinder of the grip across the curled fingers while the
+  // original wrist joint remains at the end of the forearm.
+  const hand=arm.hand,old=hand.getWorldQuaternion(new T.Quaternion());
+  const fingerAxis=(pistol?upright:forward).clone();
+  if(fingerAxis.dot(gripWidth.clone().applyQuaternion(old))<0)fingerAxis.negate();
+  const wristToPalm=V3(0,0,1).applyQuaternion(old);
+  wristToPalm.addScaledVector(fingerAxis,-wristToPalm.dot(fingerAxis));
+  if(wristToPalm.lengthSq()<.01)wristToPalm.copy(across);
+  wristToPalm.normalize();
+  const palmNormal=wristToPalm.clone().cross(fingerAxis).normalize();
+  const handWorld=new T.Quaternion().setFromRotationMatrix(gripBasis.makeBasis(fingerAxis,palmNormal,wristToPalm));
+  const wrist=hand.parent.worldToLocal(arm.wrist.getWorldPosition(V3()));
+  hand.quaternion.copy(hand.parent.getWorldQuaternion(new T.Quaternion()).invert().multiply(handWorld));
+  hand.position.copy(wrist).sub(arm.wrist.position.clone().multiply(hand.scale).applyQuaternion(hand.quaternion));
+  hand.updateMatrixWorld(true);
+
+  instance.mount.quaternion.copy(arm.so.getWorldQuaternion(new T.Quaternion()).invert().multiply(weaponRotation));
+  instance.model.scale.setScalar(gripScale);
+  instance.model.position.copy(pistol?pistolCenter:shaftCenter).multiplyScalar(-gripScale);
+  instance.mount.updateMatrixWorld(true);
+}
+
 const weaponHooks={
   kestrel:['muzzle','eject'],
   hailstorm:['muzzle','eject','barrels'],
@@ -643,7 +642,7 @@ function bindWeaponModel(id,model){
   return weapon;
 }
 async function loadWeaponsGLB(){
-  const asset=await loadRigidGLB('./weapons.glb');
+  const {asset}=await loadRigidGLB('./weapons.glb');
   const builds=new Map();
   for(const def of [...WEAPONS.gun,...WEAPONS.melee]){
     const model=requiredNode(asset,def.id);
@@ -652,9 +651,6 @@ async function loadWeaponsGLB(){
   }
   return builds;
 }
-const LIDLE={lsx:-.35,lsz:.18,lel:-1.15,lwr:.15,ty:0,tp:0,lunge:0};
-const CH=Object.keys(LIDLE);
-
 /* ---------- audio (procedural, starts on first interaction) ---------- */
 let actx=null, master=null, noiseBuf=null, soundOn=true;
 try{const s=localStorage.getItem('ironvow.sound');if(s==='off')soundOn=false;}catch(e){}
@@ -732,12 +728,9 @@ const trailPts=[]; const trailColor=new T.Color();
 /* ---------- state ---------- */
 const gun={state:'idle',t:0,shots:0,next:0,recoil:0,spin:0,charge:0};
 const melee={active:false,t:0,impactDone:false,spike:0,spikeT:0,whooshed:false};
-let walking=false, shake=0, rigOn=false, hitstop=0, fovKick=0, stackHeat=0;
-const loco={blend:0,phase:0};
-const aim={yaw:0,elev:0};
-const S={comp:{x:0,v:0},pitch:{x:0,v:0},roll:{x:0,v:0},arm:{x:0,v:0},cam:{x:0,v:0},knock:{x:0,v:0}};
+let walking=false, shake=0, rigOn=false, hitstop=0, fovKick=0;
+const cameraSpring={x:0,v:0};
 function spr(s,k,d,dt){s.v+=(-k*s.x-d*s.v)*dt;s.x+=s.v*dt;}
-let mp=Object.assign({},LIDLE);
 const tmp=V3(0,0,0),tmp2=V3(0,0,0),tmp3=V3(0,0,0);
 const qTmp=new T.Quaternion();
 
@@ -761,75 +754,10 @@ function equip(slot,idx,announce){
   if(announce){toast(`SOCKET.${slot==='gun'?'R':'L'} ← ${def.name}`);sfx.swap();}
 }
 
-function triggerFire(){if(gun.state!=='idle')return;if(rig.painted){gun.state='readying';gun.t=0;}else startFire();}
+function triggerFire(){if(gun.state!=='idle')return;gun.state='readying';gun.t=0;}
 function startFire(){const P=inst.gun.def.profile;gun.state=P.charge?'charge':P.spinup?'spin':'burst';gun.t=0;gun.shots=P.burst;gun.next=0;
   if(P.charge)sfx.charge(P.charge);else if(P.spinup)sfx.spin(P.spinup+P.burst*P.interval);}
 function triggerStrike(){if(melee.active)return;melee.active=true;melee.t=0;melee.impactDone=false;melee.whooshed=false;sfx.servo();}
-
-function ease(u,kind){if(kind==='in')return u*u*u*u;if(kind==='out')return 1-Math.pow(1-u,3);return u*u*(3-2*u);}
-function samplePose(keys,t){
-  const pose=k=>k[1]||LIDLE;
-  if(t<=keys[0][0])return Object.assign({},pose(keys[0]));
-  for(let i=0;i<keys.length-1;i++){const a=keys[i],b=keys[i+1];if(t<=b[0]){const u=ease((t-a[0])/(b[0]-a[0]),b[2]);const pa=pose(a),pb=pose(b),o={};for(const c of CH)o[c]=pa[c]+(pb[c]-pa[c])*u;return o;}}
-  return Object.assign({},pose(keys[keys.length-1]));
-}
-
-/* ---------- locomotion + IK ---------- */
-const GAIT_HZ=.42;
-function updateLocomotion(dt,t){
-  loco.blend=damp(loco.blend,walking?1:0,1.6,dt);
-  const w=loco.blend; loco.phase+=dt*GAIT_HZ*w; const g=loco.phase;
-  const p=rig.pelvis;
-  spr(S.comp,80,11,dt); S.comp.x=clamp(S.comp.x,-.38,.1);
-  spr(S.knock,40,9,dt);
-  const breathe=Math.sin(t*1.3)*.035*(1-w);
-  const pelvis=motion.walkPelvis(w,g,breathe,S.comp.x,S.knock.x,mp.lunge);
-  p.position.set(...pelvis.position);
-  p.rotation.z=pelvis.roll;
-  rig.legs.forEach((leg,i)=>{
-    const foot=motion.gaitFoot(g+i*.5);
-    if(w>.45){if(foot.phase<leg.prevP)footfall(leg,w);else if(leg.prevP<motion.stance&&foot.phase>=motion.stance)liftoff(leg);}
-    leg.prevP=foot.phase;
-    const target=[leg.restX,PAD+.3+foot.y*w,leg.restZ*(1-w)+foot.z*w];
-    const pose=motion.solveLeg(pelvis.position,leg.hip.position.toArray(),pelvis.roll,target);
-    leg.hip.rotation.set(...pose.hip);
-    leg.kn.rotation.x=pose.knee;
-    leg.an.rotation.set(...pose.ankle);
-    leg.an.rotation.x+=foot.pitch*w;
-  });
-}
-function footfall(leg,w){
-  leg.an.getWorldPosition(tmp);tmp.y=PAD;
-  spawnPuff(tmp,7,1.8,.5,0x8f8577,.38,.5,1.2); spawnRing(tmp,true);
-  spawnSparks(V3(tmp.x,PAD+.05,tmp.z),3,3,0xc9b89a,.8);
-  S.comp.v-=1.7*w; S.pitch.v+=.55*w; S.arm.v+=1.4*w; S.cam.v-=2.6*w; shake+=.05*w;
-  sfx.step(w);
-  for(const top of rig.stackTops){top.getWorldPosition(tmp2);spawnPuff(tmp2,1,1.0,.05,0x2e2a26,.4,1.6,1.4);}
-}
-function liftoff(leg){sfx.servo();leg.an.getWorldPosition(tmp);tmp.y=PAD;spawnPuff(tmp,2,1.0,.25,0x8f8577,.22,.3,.8);}
-
-/* ---------- upper body ---------- */
-function updateUpperBody(dt,t){
-  const w=loco.blend, g=loco.phase;
-  spr(S.pitch,55,7,dt); spr(S.arm,60,7,dt);
-  const rollTarget=-rig.pelvis.rotation.z*1.4; S.roll.v+=(rollTarget-S.roll.x)*40*dt-S.roll.v*6*dt; S.roll.x+=S.roll.v*dt;
-  const sp=rig.pelvis.position;
-  const sx=sp.x, sy=sp.y+.3+1.6, sz=sp.z;
-  const dx=drone.position.x-sx, dy=drone.position.y-sy, dz=drone.position.z-sz;
-  const horiz=Math.hypot(dx,dz);
-  const yaw=clamp(Math.atan2(dx,dz)+Math.asin(Math.min(.5,1.45/horiz)),-1.1,1.1);
-  const elev=Math.atan2(dy,horiz);
-  aim.yaw=damp(aim.yaw,yaw,3.5,dt); aim.elev=damp(aim.elev,elev,3.5,dt);
-  const R=gun.recoil;
-  rig.spine.rotation.set(mp.tp+S.pitch.x*.18+w*.05-R*.05,aim.yaw+mp.ty,S.roll.x);
-  rig.neck.rotation.set(-aim.elev*.4-S.pitch.x*.1,clamp(Math.atan2(dx,dz)-aim.yaw,-.5,.5)*.6+Math.sin(t*.5)*.05,0);
-  const arR=rig.arms.R, right=motion.gunPose(aim.elev,R,S.arm.x);
-  arR.sh.rotation.set(...right.shoulder); arR.el.rotation.x=right.elbow; arR.wr.rotation.x=right.wrist;
-  const arL=rig.arms.L;
-  arL.sh.rotation.set(mp.lsx+w*.14*Math.sin(2*PI*g-.6)+S.arm.x*.16+Math.sin(t*1.3)*.02,0,mp.lsz);
-  arL.el.rotation.x=Math.min(0,mp.lel-S.arm.x*.08); arL.wr.rotation.x=mp.lwr;
-  for(const a of [arL,arR]){a.paul.rotation.x=a.sh.rotation.x*.28;a.paul.rotation.z=a.sh.rotation.z*.4;}
-}
 
 /* ---------- gun + melee events ---------- */
 function shoot(P){
@@ -842,11 +770,9 @@ function shoot(P){
   flash.position.copy(tmp);flash.scale.setScalar((P.beam?3.4:1.7)*(.8+Math.random()*.5));flash.material.color.setHex(P.beam?0x9fefff:0xffc070);flash.visible=true;flashLife=P.beam?.14:.06;
   muzzleLight.position.copy(tmp);muzzleLight.color.setHex(P.beam?0x7fe6ff:0xffa040);muzzleLight.intensity=P.beam?11:6;
   spawnPuff(tmp,P.beam?5:2,P.beam?1.6:.8,.15,0x6e6862,.3,.4,.9);
-  gun.recoil=Math.min(1.8,gun.recoil+P.recoil); shake+=P.shake; S.pitch.v-=P.recoil*.9;
-  if(P.kick){S.knock.v-=P.kick;S.comp.v-=.8;}
+  gun.recoil=Math.min(1.8,gun.recoil+P.recoil); shake+=P.shake;
   if(P.hitstop)hitstop=Math.max(hitstop,P.hitstop);
   sfx[P.sfx]();
-  stackHeat=Math.min(1,stackHeat+(P.beam?.8:.08));
   if(I.eject){I.eject.getWorldPosition(tmp3);const s=shells[shellI++%shells.length];s.m.position.copy(tmp3);
     rig.spine.getWorldQuaternion(qTmp);s.v.set(-3-Math.random()*2,3+Math.random()*2,-1+Math.random()).applyQuaternion(qTmp);s.w.set(Math.random()*20,Math.random()*20,Math.random()*20);s.life=2.5;s.m.visible=true;}
   if(hit){spawnSparks(target,P.beam?30:8,P.beam?14:8,P.beam?0x9fefff:0xffb04a);droneState.flash=1;droneState.hits++;
@@ -865,13 +791,11 @@ function updateGun(dt){
   if(I.barrels){gun.spin=damp(gun.spin,(gun.state==='spin'||gun.state==='burst')?30:0,gun.state==='idle'?1.2:4,dt);I.barrels.rotation.z+=gun.spin*dt;}
   if(I.glowMat){I.glowMat.emissiveIntensity=.5+gun.charge*5+(gun.state==='cool'?Math.max(0,1-gun.t*3)*4:0);
     if(gun.state==='charge'&&Math.random()<.5){I.muzzle.getWorldPosition(tmp);spawnSparks(tmp,1,2,0x9fefff);}}
-  I.recoil.position.z=rig.painted?0:motion.recoilOffset(gun.recoil);
   grow(I,dt);
 }
 function updateMeleePose(dt){
-  if(!melee.active){mp=Object.assign({},LIDLE);return;}
+  if(!melee.active)return;
   const P=inst.melee.def.profile; melee.t+=dt;
-  mp=samplePose(P.keys,melee.t);
   if(!melee.whooshed&&melee.t>=P.whoosh){melee.whooshed=true;sfx.whoosh(Math.max(.15,P.impact-P.whoosh+.12));}
   if(melee.t>=P.keys[P.keys.length-1][0]){melee.active=false;}
 }
@@ -882,11 +806,10 @@ function updateMeleeEvents(dt){
     melee.impactDone=true; I.tip.getWorldPosition(tmp);
     spawnSparks(tmp,P.ring?50:26,P.ring?12:8,0xffa040,.6); shake+=P.shake; hitstop=Math.max(hitstop,P.hitstop); fovKick=P.ring?4:2.2;
     impactLight.position.copy(tmp);impactLight.intensity=P.ring?14:7;
-    S.comp.v-=P.ring?2.4:1.0; S.pitch.v+=P.ring?1.2:.5; S.cam.v-=P.ring?3:1.2;
+    cameraSpring.v-=P.ring?3:1.2;
     if(P.ring){spawnRing(tmp,false);spawnRing(tmp,true);spawnPuff(V3(tmp.x,PAD,tmp.z),14,2.4,1.2,0x8f8577,.42,.8,1.6);sfx.impact(1);}
     else sfx.impact(.6);
     if(P.spikeAt!==undefined){melee.spike=1;melee.spikeT=0;sfx.piston();}
-    stackHeat=Math.min(1,stackHeat+.4);
   }
   if(I.spike){melee.spikeT+=dt;const target=melee.spike&&melee.spikeT<.35?1:0;if(melee.spikeT>=.35)melee.spike=0;
     const z=I.spike.position.z;I.spike.position.z=damp(z,.95+target*1.25,target?45:5,dt);}
@@ -913,8 +836,7 @@ function updateFX(dt){
   for(const r of rings){if(!r.m.visible)continue;r.life-=dt*r.speed;if(r.life<=0){r.m.visible=false;continue;}const u=1-r.life;r.m.scale.setScalar((r.add?1:.6)+(1-Math.pow(1-u,2))*r.grow);r.m.material.opacity=r.life*r.op;}
   if(flash.visible){flashLife-=dt;if(flashLife<=0)flash.visible=false;}
   muzzleLight.intensity*=Math.exp(-dt*25); impactLight.intensity*=Math.exp(-dt*10);
-  stackHeat=Math.max(0,stackHeat-dt*.25); rig.stackGlow.emissiveIntensity=.35+stackHeat*3.5;
-  if(stackHeat>.3&&Math.random()<stackHeat*.25){for(const top of rig.stackTops){top.getWorldPosition(tmp2);spawnPuff(tmp2,1,1.1,.05,0x3a3430,.35,1.8,1.5);}}
+
 }
 
 /* ---------- rig overlay ---------- */
@@ -931,7 +853,6 @@ function rebuildOverlay(){
   lineGeo.dispose();
   linePos=new Float32Array(pairs.length*6);lineGeo.setAttribute('position',new T.BufferAttribute(linePos,3));
 }
-rebuildOverlay();
 function updateRigOverlay(){if(!rigOn)return;
   rig.joints.forEach((j,i)=>j.obj.getWorldPosition(jMeshes[i].position));
   pairs.forEach((j,i)=>{j.obj.getWorldPosition(tmp);j.parent.getWorldPosition(tmp2);linePos.set([tmp.x,tmp.y,tmp.z,tmp2.x,tmp2.y,tmp2.z],i*6);});
@@ -954,87 +875,48 @@ function applyRigMats(on){
   }
 }
 
-function swapWarden(next){
-  // Copy the live pose, including footfall phase, and transfer the existing mounts.
-  next.root.position.copy(rig.root.position);
-  next.root.quaternion.copy(rig.root.quaternion);
-  next.joints.forEach((j,i)=>{
-    j.obj.position.copy(rig.joints[i].obj.position);
-    j.obj.quaternion.copy(rig.joints[i].obj.quaternion);
-  });
-  for(const side of ['L','R'])next.arms[side].paul.quaternion.copy(rig.arms[side].paul.quaternion);
-  next.legs.forEach((leg,i)=>{leg.prevP=rig.legs[i].prevP;});
-  mainMats=meshMaterials(next.root);
-  for(const slot of ['gun','melee'])weaponSocket(slot,next).add(inst[slot].mount);
-  scene.remove(rig.root);
-  scene.add(next.root);
-  rig=next;
-  pairs=rig.joints.filter(j=>j.parent);
-  applyRigMats(rigOn);
-}
-function swapPainted(next){
-  mainMats=meshMaterials(next.root);
-  for(const slot of ['gun','melee'])weaponSocket(slot,next).add(inst[slot].mount);
-  scene.remove(rig.root);
-  scene.add(next.root);
-  rig=next;
-  rebuildOverlay();
-  applyRigMats(rigOn);
-  document.body.dataset.rigModel='painted';
-  document.querySelector('.unit .sub').textContent='PAINTED CAMPAIGN WARDEN · RIGHT RANGED · LEFT MELEE';
-}
 function updatePaintedPose(dt){
-  const painted=window.IronVowPaintedWarden;
   rig.aim=damp(rig.aim,gun.state==='idle'?0:1,12,dt);
   if(melee.active){
     const def=inst.melee.def,P=def.profile,end=P.keys[P.keys.length-1][0];
     const p=melee.t<P.impact?.7*melee.t/P.impact:.7+.3*(melee.t-P.impact)/(end-P.impact);
     const clip=def.id==='breaker'?'Melee maul':def.id==='piledriver'?'Melee thrust':'Melee sweep';
-    painted.pose(rig,clip,p);
+    sampleWarden(rig,clip,p);
   }else if(gun.state!=='idle'||rig.aim>.001){
-    painted.pose(rig,'Aim',rig.aim);
+    sampleWarden(rig,'Aim',rig.aim);
     rig.spine.rotateX(-gun.recoil*.045);
     rig.root.updateMatrixWorld(true);
   }else if(walking){
-    const clip=rig.tracks.Walk;
-    rig.walkTime=(rig.walkTime+dt*clip.fps/(clip.frames-1))%1;
-    painted.pose(rig,'Walk',rig.walkTime);
+    const duration=rig.actions.Walk.getClip().duration;
+    rig.walkTime=(rig.walkTime+dt/duration)%1;
+    sampleWarden(rig,'Walk',rig.walkTime);
   }else{
     rig.walkTime=0;
-    painted.pose(rig,'Aim',0);
+    sampleWarden(rig,'Aim',0);
   }
-  painted.mount(rig,'gun',inst.gun,drone.position,gun.recoil);
-  painted.mount(rig,'melee',inst.melee);
+  mountWardenWeapon(rig,'gun',inst.gun,drone.position,gun.recoil);
+  mountWardenWeapon(rig,'melee',inst.melee);
 }
-function swapWeaponModels(builds){
-  for(const [def,build] of builds)def.build=build;
-  for(const slot of ['gun','melee']){
-    const current=inst[slot], next=current.def.build();
-    if(next.barrels&&current.barrels)next.barrels.quaternion.copy(current.barrels.quaternion);
-    if(next.spike&&current.spike)next.spike.position.copy(current.spike.position);
-    if(next.glowMat&&current.glowMat)next.glowMat.emissiveIntensity=current.glowMat.emissiveIntensity;
-    current.recoil.remove(current.model);
-    current.recoil.add(next.model);
-    Object.assign(current,next);
+async function loadProductionAssets(){
+  try{
+    const [next,builds]=await Promise.all([loadPaintedWarden(),loadWeaponsGLB()]);
+    for(const [def,build] of builds)def.build=build;
+    rig=next;
+    mainMats=meshMaterials(rig.root);
+    scene.add(rig.root);
+    equip('gun',loadout.gun,false);
+    equip('melee',loadout.melee,false);
+    updatePaintedPose(0);
+    rebuildOverlay();
+    document.body.dataset.rigModel='painted';
+    document.querySelector('.unit .sub').textContent='PAINTED CAMPAIGN WARDEN · RIGHT RANGED · LEFT MELEE';
+    for(const button of document.querySelectorAll('.dock button,#btnRig'))button.disabled=false;
+    last=performance.now();
+    requestAnimationFrame(frame);
+  }catch(error){
+    console.warn('Iron Vow Warden Bench assets could not load.',error);
+    showRigError('The Warden Bench assets could not load.');
   }
-  applyRigMats(rigOn);
-}
-function loadProductionAssets(){
-  const failures=[];
-  const load=(name,promise,swap)=>promise.then(swap).catch(error=>{
-    failures.push(name+': '+(error.message||error.type||'request failed'));
-  });
-  return Promise.all([
-    load('warden.glb',window.IronVowPaintedWarden.load(loadRigidGLB,PAD).catch(error=>{
-      document.body.dataset.rigModel='legacy';
-      document.querySelector('.unit .sub').textContent='LEGACY WARDEN · PAINTED ASSET UNAVAILABLE';
-      console.warn(error);
-      return loadWardenGLB();
-    }),next=>next.painted?swapPainted(next):swapWarden(next)),
-    load('weapons.glb',loadWeaponsGLB(),swapWeaponModels)
-  ]).then(()=>{
-    if(failures.length)console.warn('Iron Vow kept procedural assets. '+failures.join(' | '));
-  });
 }
 
 /* ---------- camera ---------- */
@@ -1049,11 +931,11 @@ function layoutCamera(){
 }
 function updateCamera(dt){
   const d=cam.userDist||cam.baseDist; cam.dist=damp(cam.dist,d,8,dt);
-  spr(S.cam,70,9,dt);
+  spr(cameraSpring,70,9,dt);
   const ce=Math.cos(cam.el);
   camera.position.set(cam.tgt.x+cam.dist*Math.sin(cam.az)*ce,cam.tgt.y+cam.dist*Math.sin(cam.el),cam.tgt.z+cam.dist*Math.cos(cam.az)*ce);
   shake=Math.min(shake,1.2)*Math.exp(-dt*6);
-  const s=reduced?0:shake*.32, b=reduced?0:S.cam.x*.12;
+  const s=reduced?0:shake*.32, b=reduced?0:cameraSpring.x*.12;
   camera.position.x+=(Math.random()-.5)*s;camera.position.y+=(Math.random()-.5)*s+b;camera.position.z+=(Math.random()-.5)*s;
   camera.lookAt(cam.tgt.x,cam.tgt.y+b*.5,cam.tgt.z);
   fovKick*=Math.exp(-dt*7); const f=cam.baseFov-(reduced?0:fovKick);
@@ -1090,8 +972,10 @@ $('spec').addEventListener('click',e=>{if(e.target.id==='spec')$('spec').hidden=
 addEventListener('keydown',e=>{ensureAudio();if(e.repeat&&e.key!=='f')return;const k=e.key.toLowerCase();
   if(k==='escape'){$('spec').hidden=true;return;}
   if(!$('spec').hidden)return;
+  if(k==='m'){setSound(!soundOn);return;}
+  if(!rig)return;
   if(k==='f'||k===' '){e.preventDefault();triggerFire();}
-  else if(k==='e')triggerStrike(); else if(k==='w')setWalk(!walking); else if(k==='r')setRig(!rigOn); else if(k==='m')setSound(!soundOn);
+  else if(k==='e')triggerStrike(); else if(k==='w')setWalk(!walking); else if(k==='r')setRig(!rigOn);
   else if(k==='1')cycle('gun',1); else if(k==='2')cycle('melee',1);});
 
 const statusEl=$('status'); let lastStatus='';
@@ -1109,7 +993,6 @@ function updateStatus(){
 }
 
 /* ---------- boot ---------- */
-equip('gun',loadout.gun,false); equip('melee',loadout.melee,false);
 layoutCamera(); addEventListener('resize',layoutCamera);
 let last=performance.now(), time=0;
 function frame(now){
@@ -1118,10 +1001,8 @@ function frame(now){
   time+=dt;
   updateDrone(dt,time);
   updateMeleePose(dt);
-  if(rig.painted)updatePaintedPose(dt);
-  else{updateLocomotion(dt,time);updateUpperBody(dt,time);}
+  updatePaintedPose(dt);
   scene.updateMatrixWorld(true);
-  updatePistons(rig);
   updateGun(dt);
   updateMeleeEvents(dt);
   updateFX(dt);
@@ -1131,7 +1012,6 @@ function frame(now){
   renderer.render(scene,camera);
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
 loadProductionAssets();
 })();
 </script>
