@@ -2,7 +2,7 @@ const {spawnSync}=require('node:child_process');
 const {readdirSync}=require('node:fs');
 const {join}=require('node:path');
 
-const excluded=new Set(['check-browser.cjs','check-simulation.cjs','check-scene.cjs','check-rig-v2.cjs','check-overworld-chart.cjs','check-decision-ui.cjs','check-combat-readability.cjs']);
+const excluded=new Set(['check-browser.cjs','check-simulation.cjs','check-scene.cjs','check-rig-v2.cjs','check-overworld-chart.cjs','check-decision-ui.cjs','check-combat-readability.cjs','check-walk-weight.cjs']);
 const cases=readdirSync(__dirname).filter(file=>/^check-.*\.cjs$/.test(file)&&!excluded.has(file)).sort();
 if(cases.length===0)throw Error('No simulation checks found.');
 for(const file of cases){

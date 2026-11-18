@@ -248,6 +248,8 @@ function draw(u,t,pose,scope,model,custom){
   const m=custom==='rig-v2'?rigV2.build(u,pose.stage||pose.previewScope||'battle'):
    buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim,pose.modules);
   if(!m)return null;
+  // foundry/walk-tuning.js: approved step length, foot track, toe-out and footfall mass for this hull (the Lion trial rig keeps its own)
+  window.IronVowWalk?.apply(m,u.lionTrial?null:u.frame,typeof MECH_MOTION!=='undefined'?MECH_MOTION[u.frame]?.mass:undefined);
   if(window.IronVowCairn?.applies(u.frame))window.IronVowCairn.fit(m,u,window.IronVowFieldPaint.finish(u));
   const coat=window.IronVowFieldPaint.create(u);
   if(coat)coat(m.body,m.build.ownedMaterials??=[]);

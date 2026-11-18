@@ -74,8 +74,12 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
   const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,sounds:pairedWalkQA.sounds,bones:pairedWalkQA.bones,seam:pairedWalkQA.seam,
    ap:current().ap,move:current().moveLeft,walks:current().walkCount,motion:current().motion}));
   assert.deepEqual(result.steps,[[8.5,10],[9,10],[9.5,10],[10,10]],name+' lands two alternating beats per tile');
-  assert.deepEqual(result.sounds,[['lift',1],['land',1],['lift',-1],['land',-1],
-   ['lift',1],['land',1],['lift',-1],['land',-1]],name+' cues both feet in walking order');
+  // Live rigs sound their real foot plants (fix/heavier-walk): each landing alternates feet and the trailing foot lifts after it.
+  const lands=result.sounds.filter(([kind])=>kind==='land').map(([,side])=>side);
+  assert.ok(lands.length>=4,name+' sounds a footstep at each foot plant over two tiles: '+JSON.stringify(result.sounds));
+  // bipeds alternate; quads land in diagonal pairs (L R R L ...), so no side lands three times running and both sides stay level
+  const balanced=Math.abs(lands.filter(side=>side>0).length-lands.filter(side=>side<0).length)<=1;
+  assert.ok(balanced&&lands.every((side,i)=>i<2||side!==lands[i-1]||side!==lands[i-2]),name+' alternates feet in walking order: '+JSON.stringify(lands));
   assert.ok(result.seam,name+' keeps its speed through the straight tile seam');
   assert.deepEqual([result.ap,result.move,result.walks,result.motion],[fixture.ap,fixture.move-2,2,null]);
   assert.ok(result.bones.length>1,name+' updates live leg bones during its move');

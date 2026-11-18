@@ -1738,6 +1738,12 @@ function syncMachinery(){
  }else gain.gain.linearRampToValueAtTime(mix.idleGain,now+.35);
  machineryVoice={sortie,gain,idle,boot};
 }
+// scene/combat.js calls this on each real foot plant of a live rig: the planted foot lands, then the trailing foot's actuators lift it.
+window.IronVowFootPlant=(u,side,amount=1)=>{
+ if(amount<.9)return;   // settle and catch-up shuffles stay silent
+ gaitSound(u,'land',side);
+ if(u.motion)setTimeout(()=>{if(u.motion)gaitSound(u,'lift',-side);},90);
+};
 function gaitSound(u,kind,side){
  if(muted||document.hidden)return;
  const mix=MACHINERY_MIX,pan=side*.13,now=(audio?.currentTime??0)+.005;
@@ -2894,7 +2900,7 @@ async function moveUnit(u,x,z){
  if(!steps.length)return;
  spendMovement(u,steps.length);
  const twoStep=!u.kind&&!reducedMotion;
- const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:.22+1.3*MECH_MOTION[u.frame].step;
+ const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:walkTileDuration(u);
  const gaitBase=u.walkCount||0;
  const segments=[];
  if(twoStep){
@@ -3589,6 +3595,12 @@ function twoStepContacts(u,progress){
  }
 }
 
+// Seconds per tile for a walking hull on the 7.4 m board (foundry/walk-tuning.js); the bare .22 + 1.3 x step was tuned for 3.4 m tiles.
+function walkTileDuration(u){
+ const base=.22+1.3*MECH_MOTION[u.frame].step,tuning=window.IronVowWalk;
+ if(!tuning)return base;
+ return tuning.tileDuration(u.lionTrial?null:u.frame,base,window.IronVowScene?.models?.get(u.id)?.entry?.m?.dims.stride);
+}
 function walkSoundMarkers(m,doubleStep){
  if(doubleStep)return [{at:0,side:1},{at:.5,side:1,land:true},{at:.5,side:-1},{at:1,side:-1,land:true}];
  const side=m.gaitBase%2?1:-1;
@@ -3597,6 +3609,8 @@ function walkSoundMarkers(m,doubleStep){
 function advanceGaitCues(u,phase){
  const m=u.motion;
  if(!m?.gaitCues?.length)return;
+ // Live 3D rigs sound each real foot plant instead (scene/combat.js step -> IronVowFootPlant); fixed tile fractions drift from the feet.
+ if(!reducedMotion&&window.IronVowScene?.isLive(u)){m.gaitCues.length=0;return;}
  const progress=m.segment&&!reducedMotion?fieldStepProgress(phase,m.segment):phase;
  while(m.gaitCues[0]?.at<=progress+.000001){
   const marker=m.gaitCues.shift();

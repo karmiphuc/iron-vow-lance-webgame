@@ -89,7 +89,13 @@ root.IronVowCombat={create(scene,api){
   entry.m.nativeV2.dodge(clock,from.sub(to));
   log('dodge',{actor:unit.id,target:actor.id});
  }
- function step(m,p,index,amount){if(!reducedMotion)effect.onStep(m,p,index,amount);}
+ function step(m,p,index,amount){
+  if(reducedMotion)return;
+  effect.onStep(m,p,index,amount);
+  // the footstep sound lands with the actual foot plant (game.js gaitSound); a settle step (amount < 1) is a lighter scuff
+  const unit=battle?.units.find(u=>api.models.get(u.id)?.entry?.m===m);
+  if(unit)root.IronVowFootPlant?.(unit,Math.sign(m.rig.legs[index]?.restX)||(index%2?1:-1),amount);
+ }
  function update(t,dt){
   for(const e of effects){
    if(seen.has(e)||['shot','boom','text','heal'].includes(e.type))continue;seen.add(e);
