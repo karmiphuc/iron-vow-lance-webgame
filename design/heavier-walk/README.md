@@ -18,7 +18,7 @@ The results are in `summary.json`.
 
 ## Regressions this gate now catches (measured on main a5b904e before the fix)
 
-- Speed: Warden ran at 11.6 m/s with 7 steps a second, and Kestrel at 13.5 m/s with 13. The move timeline was tuned for 3.4 m tiles, but the board is 7.4 m. Now 2.4–3.8 m/s at about 2.2 steps/s. Assertion: `stepsPerS`.
+- Speed: Warden ran at 11.6 m/s with 7 steps a second, and Kestrel at 13.5 m/s with 13. The move timeline was tuned for 3.4 m tiles, but the board is 7.4 m. Now 2.1–3.8 m/s at 1.5–2.3 steps/s. Assertion: `stepsPerS`.
 - Catch-up steps: LI-01, LI-02, Aero, Gravemaw and Bulwark took more catch-up steps than walking steps. Now 0–2 per 10 s. Assertion: `catchUpsPer10s`.
 - A-framed legs: the foot track was wider than the hips, so the leg solver rolled whole legs outward. Before → after:
   - Aero 16° → 3°
@@ -34,4 +34,4 @@ The results are in `summary.json`.
 
 ## Pending (owner / Blender)
 
-Cicada (about 13°) and Gravemaw (about 19°, plus 3.8 catch-ups per 10 s) are limited by their models. Their hip joints sit too close together for their feet. The gate reports them as warnings. The fix is to move the hip joints outward in the source models.
+Cicada (about 14°) and Gravemaw (about 19°, plus 3.8 catch-ups per 10 s) are limited by their models. Their hip joints sit too close together for their feet. The gate reports them as warnings. The fix is to move the hip joints outward in the source models.
