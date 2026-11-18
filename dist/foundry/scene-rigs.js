@@ -349,7 +349,8 @@ function draw(u,t,pose,scope,model,custom){
  if(playbackRate>1&&previous&&elapsed>0){
   const realTime=Math.min(elapsed,.1),gaitTime=realTime*playbackRate;
   const count=Math.ceil(gaitTime*60),stepTime=gaitTime/count;
-  const sample={...input,pos:V3()};
+  const distance=Math.hypot(pos.x-previous.x,world.y-previous.y,pos.z-previous.z);
+  const sample={...input,pos:V3(),speed:distance/gaitTime};
   for(let i=1;i<=count;i++){
    const fraction=i/count;
    sample.pos.copy(previous).lerp(pos,fraction);

@@ -19,7 +19,7 @@ const PENDING_MODEL={4:'CICADA',15:'GRAVEMAW'};
   catch{res.writeHead(404);res.end();}}).listen(0,'127.0.0.1');
  await new Promise(r=>server.once('listening',r));
  const report={commit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),command:'node qa/check-walk-weight.cjs --out '+args[1],limits:LIMITS,pendingModelFix:PENDING_MODEL,status:'incomplete',hulls:[],failures:[],warnings:[]};
- const browser=await chromium.launch({executablePath:process.env.IRON_VOW_CHROME||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
+ const browser=await chromium.launch({executablePath:process.env.IRON_VOW_CHROME||undefined,args:['--enable-unsafe-swiftshader']});
  try{
   const ctx=await browser.newContext({viewport:{width:320,height:240}});
   await ctx.addInitScript(()=>{try{localStorage.setItem('iron-vow-attack-camera','off')}catch{}});
@@ -42,10 +42,15 @@ const PENDING_MODEL={4:'CICADA',15:'GRAVEMAW'};
      footGap=Math.hypot(Math.max(0,A.min.x-B.max.x,B.min.x-A.max.x),Math.max(0,A.min.y-B.max.y,B.min.y-A.max.y),Math.max(0,A.min.z-B.max.z,B.min.z-A.max.z));}
     const R=IronVowRenderer.get(),draw=R.render;R.render=()=>{};   // skip the GL draw only; the rig still animates every frame
     const lands=[],cue=gaitSound;gaitSound=(unit,kind,side)=>{if(unit===u&&kind==='land')lands.push(side);return cue(unit,kind,side);};
-    const a={t0:0,t1:0,rate:1,steps:0,plants:0,catchUps:0,tilt:0,toe:0,n:0,swing:m.legs.map(L=>!!L.swing),settle:m.legs.map(L=>!!L.settle),from:m.cont.position.clone()};
+    const a={t0:0,t1:0,rate:1,plants:0,catchUps:0,tilt:0,toe:0,n:0,from:m.cont.position.clone()};
+    const combat=IronVowScene.combat,step=combat.step;
+    // More than one foot can plant between rendered frames at 3× playback.
+    combat.step=function(unit,rig,point,index,amount=1){
+     if(unit===u&&u.motion){if(amount>=.9)a.plants++;else a.catchUps++;}
+     return step.call(this,unit,rig,point,index,amount);
+    };
     let on=true;
     const tick=()=>{if(!on)return;requestAnimationFrame(tick);if(!u.motion)return;const now=performance.now();a.t0||=now;a.t1=now;a.rate=u.motion.playbackRate??1;
-     m.legs.forEach((L,j)=>{const s=!!L.swing,c=!!L.settle;if(s&&!a.swing[j])a.steps++;if(!s&&a.swing[j])a.plants++;if(c&&!a.settle[j])a.catchUps++;a.swing[j]=s;a.settle[j]=c;});
      if(quad)return;
      const yaw=m.yaw,fw=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),rt=new THREE.Vector3(fw.z,0,-fw.x),c=m.cont.position;
      for(const l of m.rig.legs){const h=l.hip.getWorldPosition(P()),an=l.an.getWorldPosition(P()),side=Math.sign(h.clone().sub(c).dot(rt))||1;
@@ -54,10 +59,10 @@ const PENDING_MODEL={4:'CICADA',15:'GRAVEMAW'};
       const toe=new THREE.Vector3(0,0,1).applyQuaternion(l.an.getWorldQuaternion(new THREE.Quaternion()));a.toe+=Math.atan2(toe.dot(rt)*side,toe.dot(fw))*180/Math.PI;a.n++;}
     };
     requestAnimationFrame(tick);
-    await V.move(u.id,dest.x,dest.z);await new Promise(r=>setTimeout(r,500));on=false;R.render=draw;gaitSound=cue;
+    await V.move(u.id,dest.x,dest.z);await new Promise(r=>setTimeout(r,500));on=false;R.render=draw;gaitSound=cue;combat.step=step;
     const walkS=Math.max(.01,(a.t1-a.t0)/1000),dist=Math.hypot(m.cont.position.x-a.from.x,m.cont.position.z-a.from.z),n=a.n||1,gaitS=walkS*a.rate;
     return {frame,name:FRAMES[frame].name,rig:m.live||'kit',quad,tiles:dest.cost,metres:+dist.toFixed(1),walkS:+walkS.toFixed(2),speed:+(dist/walkS).toFixed(2),
-     playbackRate:a.rate,stepsPerS:+(a.steps/gaitS/(m.legs.length/2)).toFixed(2),catchUpsPer10s:+(a.catchUps/gaitS*10).toFixed(1),plants:a.plants,landSounds:lands.length,catchUps:a.catchUps,legTiltDeg:quad?null:+(a.tilt/n).toFixed(1),footGapCm:footGap==null?null:Math.round(footGap*100),toeOutDeg:quad?null:+(a.toe/n).toFixed(1),
+     playbackRate:a.rate,stepsPerS:+(a.plants/gaitS/(m.legs.length/2)).toFixed(2),catchUpsPer10s:+(a.catchUps/gaitS*10).toFixed(1),plants:a.plants,landSounds:lands.length,catchUps:a.catchUps,legTiltDeg:quad?null:+(a.tilt/n).toFixed(1),footGapCm:footGap==null?null:Math.round(footGap*100),toeOutDeg:quad?null:+(a.toe/n).toFixed(1),
      stride:m.dims.stride??1,stepMass:m.stepMass??null};
    },frame);
    const fail=[],warn=[];
