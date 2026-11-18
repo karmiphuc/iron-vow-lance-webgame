@@ -58,7 +58,12 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
  });
  assert.deepEqual([gait.contract,gait.team,gait.name,gait.paint,gait.trim,gait.armored],
   ['corridor','enemy','REAVER 3',null,null,'RV-04 Autocannon']);
- assert.match(await page.locator('#target-toggle').textContent(),/MEDIUM\+/);
+ await tap('#target-toggle');
+ const details=page.getByRole('complementary',{name:'Target subsystem details'});
+ assert.equal(await details.isVisible(),true);
+ assert.equal(await details.getByRole('heading',{name:gait.name,exact:true}).isVisible(),true);
+ assert.match(await details.locator('.combat-status').innerText(),/MEDIUM\+/);
+ await tap('#close-target');
  assert.deepEqual(gait.locations,['LF','RF','LB','RB']);
  assert.ok(gait.arrived&&gait.samples.length>=2&&gait.samples.some(feet=>feet.some(foot=>foot.swing)),'The quad completes a legal step and articulates its ankles');
  let planted=0,worstTargetError=0;
