@@ -1,0 +1,88 @@
+{
+  "status": "passed",
+  "sourceBefore": {
+    "commit": "e63c8fb9ea0baef8494c96fb455c3367021e56ea",
+    "distTree": "3bab3bfcea7f1d348ea964bee62835e1cfbed614",
+    "dirty": false,
+    "status": "",
+    "untracked": [],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "scenarioSha256": "97cb7235d3fbb4cf699c5979ed4f09d632f2bfe68e580820b1bede6b1d0b395e"
+  },
+  "sourceAfter": {
+    "commit": "e63c8fb9ea0baef8494c96fb455c3367021e56ea",
+    "distTree": "3bab3bfcea7f1d348ea964bee62835e1cfbed614",
+    "dirty": false,
+    "status": "",
+    "untracked": [],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "scenarioSha256": "97cb7235d3fbb4cf699c5979ed4f09d632f2bfe68e580820b1bede6b1d0b395e"
+  },
+  "results": [
+    {
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "status": "passed"
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 1366
+      },
+      "status": "passed"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 1024
+      },
+      "status": "passed"
+    }
+  ],
+  "scope": "Three primary destinations with contextual secondary routes and returning Journal utility",
+  "simulationSuites": 70,
+  "releaseGateSourceSha256": "ecd6353ee47c72c64ca53b8a3ad22f41cf74d94cf957737c70fb36651e0d94e1",
+  "siteVersion": 111,
+  "siteSourceCommit": "f1b951cd39f0843210300bcbce23c3d9aad5774d",
+  "visualReview": "Accepted; three destinations fit, contextual controls clear at phone, tablet and desktop widths.",
+  "mobileBayClearance": {
+    "viewport": "320x735",
+    "statusTop": 123,
+    "controlsBottom": 114,
+    "gap": 9,
+    "reserveAndNoReserve": true,
+    "minimumControlHeight": 44
+  },
+  "environment": {
+    "browser": "Chromium",
+    "touch": "emulated",
+    "nativeIPad": "unverified"
+  },
+  "commands": [
+    "node qa/check-navigation.cjs --out <scratch>",
+    "node qa/site-package.cjs <site-workflow.mjs> (checkNavigation, desktop and touch)",
+    "node qa/release-check.cjs --live <public HTTPS URL> (7 affected scenarios, desktop and touch)"
+  ],
+  "production": {
+    "version": 111,
+    "sourceCommit": "f1b951cd39f0843210300bcbce23c3d9aad5774d",
+    "runtimeFilesCompared": 168,
+    "browser": {
+      "desktop": 7,
+      "touch": 7,
+      "result": "passed",
+      "scenarios": [
+        "checkNavigation",
+        "checkCampaign",
+        "checkShip",
+        "checkOverworld",
+        "checkHangar",
+        "checkWorkshopTurntable",
+        "checkCareerTabs"
+      ]
+    },
+    "verifiedAt": "2026-11-18T06:18:01.366Z"
+  }
+}

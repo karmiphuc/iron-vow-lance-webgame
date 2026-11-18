@@ -431,7 +431,14 @@
     } finally { renderer.setRenderTarget(target); renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest); }
   }
   function dropStage() { if (stage) { disposeTree(stage.scene); stage.light.shadow.map?.dispose(); stage = null; } routeSignature = worldSignature = null; }
+  // Journal restores only the five finite camera values, within interaction limits.
+  function restoreView(view) {
+    if (!view || !['zoom', 'tilt', 'yaw', 'panX', 'panZ'].every(key => Number.isFinite(view[key]))) return false;
+    zoom = clamp(view.zoom, .8, 1.65); tilt = clamp(view.tilt, .65, 1.1);
+    yaw = clamp(view.yaw, -.22, .22); panX = clamp(view.panX, -3, 3); panZ = clamp(view.panZ, -2, 2);
+    projectPorts(); return true;
+  }
   function close() { attach(null); dropStage(); data = callbacks = null; reset(); }
   owner.subscribe(({ type }) => { if (type === 'restored') dropStage(); });
-  root.IronVowChart = { show, render, close, reset, projectPorts, snapshot: () => ({ zoom, tilt, yaw, panX, panZ, ready: !!stage, shipReady: !!stage?.shipReady, portCount: Object.keys(stage?.ports || {}).length, markers: (stage?.markerPositions || []).map(marker => ({ ...marker })), sensorRange: stage?.sensorRadius || 0, labelLayout: stage?.labelLayout || {} }) };
+  root.IronVowChart = { show, render, close, reset, restoreView, projectPorts, snapshot: () => ({ zoom, tilt, yaw, panX, panZ, ready: !!stage, shipReady: !!stage?.shipReady, portCount: Object.keys(stage?.ports || {}).length, markers: (stage?.markerPositions || []).map(marker => ({ ...marker })), sensorRange: stage?.sensorRadius || 0, labelLayout: stage?.labelLayout || {} }) };
 })(window);

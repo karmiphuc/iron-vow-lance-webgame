@@ -21,6 +21,7 @@ See [Release checks](qa/README.md) for setup and covered behavior.
 
 ## Screen UX
 
+- Keep the global navigation to Bridge, Mech Bay and Company. Contracts belong to the selected port, Refit and Facilities to the selected mech bay, and hiring and records to Company. Journal is a returning utility. Add new screens within these contextual flows instead of restoring a row of departments.
 - Follow the decision hierarchy in `docs/overworld-design.md`. Give the map, mech or selected contract the main space, with the next action and its consequences visible together.
 - Put supporting detail behind deliberate disclosure. Use readouts for status and buttons for actions. Avoid repeated headings and permanent comprehensive breakdowns.
 - Preserve the primary view during confirmation. Check new controls at iPad portrait and landscape sizes, with touch targets of at least 44 CSS pixels. Native-device performance measurements remain nonblocking until supplied.

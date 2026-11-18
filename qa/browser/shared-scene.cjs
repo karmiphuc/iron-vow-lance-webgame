@@ -86,8 +86,7 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
   const model=IronVowScene.models.get(target).entry.m;
   model.init=false;
   IronVowScene.render(clock,1/60);
-  return {bearing,yaw:model.yaw,hip:model.rig.pelvis.position.y,arm:model.rig.arms.L.sh.rotation.x,
-   heading:defender.heading,brace:defender.brace,ap:defender.ap};
+  return {bearing,yaw:model.yaw,hip:model.rig.pelvis.position.y,heading:defender.heading,brace:defender.brace,ap:defender.ap};
  },{...attack,offset:mobile?Math.PI:Math.PI/2});
  await page.evaluate(a=>{void __ironVow.attack(a.id,a.target,a.part,a.mode);},attack);
  assert.equal(await page.evaluate(()=>Boolean(activeCinematic)),true,'Real attack opens the camera');
@@ -118,14 +117,16 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
    return {x:+ndc.x.toFixed(2),y:+ndc.y.toFixed(2),z:+ndc.z.toFixed(3),occluded:ray.intersectObjects(attackerMeshes,false).length>0};
   });
   const guardVisible=landmarkViews.every(v=>Math.abs(v.x)<1&&Math.abs(v.y)<1&&v.z<1&&!v.occluded);
-  return {yaw:model.yaw,hip:model.rig.pelvis.position.y,arm:model.rig.arms.L.sh.rotation.x,
+  const {so,sh}=model.rig.arms.L;
+  const leftHandHeight=so.getWorldPosition(new THREE.Vector3()).y-sh.getWorldPosition(new THREE.Vector3()).y;
+  return {yaw:model.yaw,hip:model.rig.pelvis.position.y,leftHandHeight,
    heading:defender.heading,brace:defender.brace,ap:defender.ap,guardVisible,landmarkViews};
  },attack);
  const separation=yaw=>Math.acos(Math.min(1,Math.max(-1,Math.cos(yaw-beforeGuard.bearing))));
  assert.ok(separation(duringGuard.yaw)<separation(beforeGuard.yaw)-.4,
   `The defending rig turns toward the actual attacker (${separation(beforeGuard.yaw)} to ${separation(duringGuard.yaw)} rad)`);
- assert.ok(duringGuard.hip<beforeGuard.hip-.12&&duringGuard.arm<beforeGuard.arm-.3,'The defending rig lowers its stance and raises its guard before impact');
- assert.ok(duringGuard.guardVisible,'The close shot leaves the defender’s stance and guard clear of the attacker: '+JSON.stringify(duringGuard.landmarkViews));
+ assert.ok(duringGuard.hip<beforeGuard.hip-.12&&duringGuard.leftHandHeight<-.3,'The defender lowers its hull and keeps the empty left hand down');
+ assert.ok(duringGuard.guardVisible,'The close shot leaves the defender in view: '+JSON.stringify(duringGuard.landmarkViews));
  assert.deepEqual([duringGuard.heading,duringGuard.brace,duringGuard.ap],[beforeGuard.heading,beforeGuard.brace,beforeGuard.ap],'The camera pose does not alter the defender’s rules or heading');
  await page.evaluate(()=>document.querySelector('#skip-shot').click());
  for(let i=0;i<20&&await page.evaluate(()=>__ironVow.pending);i++)await page.clock.fastForward(1000);

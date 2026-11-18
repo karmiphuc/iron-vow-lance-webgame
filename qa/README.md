@@ -22,7 +22,11 @@ Playwright uses its Chromium installation or a supported local Chrome. Set `IRON
 
 `node qa/check-combat-readability.cjs --out /tmp/iron-vow-combat-readability` runs actual shotgun-pool assertions, licensed GLB dependency checks, terrain/ridge rules, and three theater views each at desktop and iPad portrait. It verifies actual projected mech size, physical elevation, cover identity and claimed bounds, road links, shared rendering, mouse/touch movement and target details. The standard browser suite also includes a phone/desktop case. Evidence is kept under `design/combat-readability/`.
 
+`node qa/check-walk-weight.cjs --out design/heavier-walk` walks every hull through the real move timeline and fails on running cadence, catch-up steps, A-framed legs, toe-out, touching feet, massless footfalls or footstep sounds that miss the foot plants. Cicada and Gravemaw report leg-lean warnings until their model hip joints move.
+
 ## Menu and iPad UI gate
+
+`node qa/check-navigation.cjs --out /tmp/iron-vow-navigation` requires exactly three primary destinations at 320px and both iPad orientations. It checks contextual routes, active parents, 44px controls, training access, unchanged career data, selected-mech Refit and Journal return with chart camera and focus restoration. The prior eight-item bar fails the count assertion.
 
 `node qa/check-decision-ui.cjs --out /tmp/iron-vow-ui` checks real player flows at 1024×1366 and 1366×1024 with touch. It verifies one selected facility/refit/contract, preserved preparation and target state, 44-pixel controls, movement-hint clearance and one shared renderer. The maintained browser suite also runs the scenario on desktop and touch. Paint receives an additional 320-pixel overflow check. Evidence is kept compact under `design/decision-ui/`.
 
@@ -61,6 +65,12 @@ The Rig Bench War link opens a temporary encounter on the game board. Run War is
 The shared observer samples the live rig and combat events after rendering. War's 19 isolated fault probes pass perturbed copies of those observations through the same predicates. The existing scene checker also exercises 16 physical negative controls.
 
 `node qa/gate-phase6.cjs --out /tmp/iron-vow-phase6` runs the focused desktop and touch Bench/War gate and writes one summary and two real WebP captures. `node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
+
+## Mech pose regression
+
+The desktop and touch release suite runs `checkMechLoadoutPoses` against the production rigs and weapon meshes. It samples hand positions through the first step, sustained gait, Brace, aim, takeoff, limb loss and repair. It also checks that an unreachable rifle grip falls back to a lowered hand, and that mounted shields and melee attacks retain their poses.
+
+When adding a loadout stance, cover a compatible mount, an empty hand or unsupported weapon, and a transition out of the stance. Assert the result in world space: a lowered empty hand, a reachable gun contact or a shield raised with its actual mount. Finite joint matrices and a nonzero stance blend alone can pass with the wrong pose.
 
 ## Package and verify the Site
 

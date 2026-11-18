@@ -568,8 +568,7 @@ function resolveTransitEvent(id,choiceId){
  persist();return true;
 }
 function bindPortServices(){
- const opener=$('[data-port-services]');
- if(opener)opener.onclick=()=>{if(save.transit||overworldDeparture)return;portSheetOpen=true;portSheetTab='services';render();$('[data-port-close]')?.focus({preventScroll:true});};
+ for(const opener of document.querySelectorAll('[data-port-services]'))opener.onclick=()=>{if(save.transit||overworldDeparture)return;portSheetOpen=true;portSheetTab='services';render();$('[data-port-close]')?.focus({preventScroll:true});};
  const close=()=>{portSheetOpen=false;render();$('[data-port-services]')?.focus({preventScroll:true});};
  const closeButton=$('[data-port-close]');if(closeButton)closeButton.onclick=close;
  const sheet=document.querySelector('.port-services');if(sheet)sheet.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();e.preventDefault();close();}};
@@ -918,7 +917,7 @@ function loadStoredCareer(raw){
 }
 if(lionTrial||benchWar||benchRig)save=fresh();
 else loadStoredCareer(storedCareer);
-const entryPage={'?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=overworld':'overworld','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'ship';
+const entryPage={'?view=ship':'ship','?view=career':'career','?view=hangar':'hangar','?view=mechs':'hangar','?view=contracts':'contracts','?view=overworld':'overworld','?view=inn':'inn','?view=workshop':'workshop','?view=pilots':'pilots','?view=journal':'journal','?view=wiki':'journal'}[window.location?.search]??'overworld';
 let workshopView='assigned',hangarDeck=window.location?.search==='?view=mechs'?'mechs':'base';
 let armoryGroup='assault';
 let journalPage=window.location?.search==='?view=wiki'?'wiki':'orders';
@@ -1738,6 +1737,13 @@ function syncMachinery(){
  }else gain.gain.linearRampToValueAtTime(mix.idleGain,now+.35);
  machineryVoice={sortie,gain,idle,boot};
 }
+// scene/combat.js calls this on each real foot plant of a live rig: the planted foot lands, then the trailing foot's actuators lift it.
+window.IronVowFootPlant=(u,side,amount=1)=>{
+ if(amount<.9)return;   // settle and catch-up shuffles stay silent
+ gaitSound(u,'land',side);
+ const motion=u.motion;
+ if(motion)setTimeout(()=>{if(u.motion===motion&&!reducedMotion&&battle?.units.includes(u))gaitSound(u,'lift',-side);},90);
+};
 function gaitSound(u,kind,side){
  if(muted||document.hidden)return;
  const mix=MACHINERY_MIX,pan=side*.13,now=(audio?.currentTime??0)+.005;
@@ -1949,7 +1955,7 @@ function shipPage(){
  }).join('');
  return `<div class="page ship-page"><div class="ship-content">
   <div class="ship-banner"><div><div class="eyebrow">HEAVY-LIFT AIRSHIP / DAY ${save.day}</div><h1>IVS HALYARD.</h1><p>Docked at ${portName(companyPort())} · ${money(overworld.operatingRates(save).total)} per day · ${save.rep} reputation</p></div>
-   <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button data-page="contracts">CONTRACTS</button><button class="primary" data-page="overworld">${save.transit?'REVIEW TRANSIT':'CHART TABLE'} ${icon('arrow-right')}</button></div>
+   <div class="ship-actions"><button data-hangar-deck="mechs">MECH BAY</button><button class="navigation-quiet" data-primary="bridge">← Back to Bridge</button></div>
   </div>
   <section class="ship-readiness" aria-label="Lance readiness"><div class="facility-section-heading"><h2>Lance readiness</h2><span class="eyebrow">${LANCE_SLOTS.length} MECH SEATS</span></div><div class="ship-seats">${seats}</div></section>
   <section class="ship-queue" aria-label="Engineering queue"><div><span class="eyebrow">ENGINEERING QUEUE</span><h2>${queued?queued.name:'Ready for a project'}</h2></div>
@@ -2141,11 +2147,66 @@ window.addEventListener?.('rig-portrait-ready',e=>{
   if(image.dataset.rigPortrait===key)image.src=url;
  }
 });
-function nav(){const points=battle?0:totalTrainingPoints();closeHelp();syncMusic();document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page; $('#nav').innerHTML=['ship','hangar','contracts','inn','workshop','pilots','career','journal'].map(p=>`<button data-page="${p}" ${p==='journal'?'aria-label="Field Journal"':''} class="${p===page?'active':''}" ${battle?'disabled':''}>${p==='inn'?'INN':p.toUpperCase()}${p==='pilots'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');$('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');}
+// Navigation belongs to three persistent departments. Journal is a utility and
+// snapshots local view state rather than changing the career/save schema.
+let journalOrigin=null;
+function navigationParent(view=page){
+ if(view==='journal')return journalOrigin?.parent??'company';
+ return ['overworld','contracts','ship'].includes(view)?'bridge':['hangar','workshop'].includes(view)?'bay':'company';
+}
+function openJournal(){
+ if(battle||careerStale||page==='journal')return;
+ journalOrigin={page,parent:navigationParent(),chartView:page==='overworld'?window.IronVowChart?.snapshot():null,hangarDeck,workshopView,selected,
+  overworldSelection,overworldRouteKey,overworldConfirmation,overworldHoldPreview,
+  contractPortSelection,portSheetOpen,portSheetTab,portHullSelection,inspectOpen,
+  focus:document.activeElement,scroll:$('#ui').scrollTop,pageScroll:$('#ui .page')?.scrollTop??0,
+  details:[...$('#ui').querySelectorAll('details')].map(detail=>detail.open)};
+ page='journal';render();$('#journal-back')?.focus({preventScroll:true});
+}
+function returnFromJournal(){
+ if(battle||page!=='journal')return;
+ const origin=journalOrigin;
+ page=origin?.page??'pilots';
+ if(origin){
+  ({hangarDeck,workshopView,selected,overworldSelection,overworldRouteKey,
+   overworldConfirmation,overworldHoldPreview,contractPortSelection,portSheetOpen,
+   portSheetTab,portHullSelection,inspectOpen}=origin);
+ }
+ render();
+ if(origin){
+  $('#ui').querySelectorAll('details').forEach((detail,i)=>{detail.open=!!origin.details[i]});
+  if(origin.chartView)window.IronVowChart?.restoreView?.(origin.chartView);
+  $('#ui').scrollTop=origin.scroll;const content=$('#ui .page');if(content)content.scrollTop=origin.pageScroll;
+ }
+ (origin?.focus?.isConnected?origin.focus:$('#field-journal'))?.focus({preventScroll:true});
+ journalOrigin=null;
+}
+function navigatePrimary(destination){
+ if(battle||careerStale)return;
+ journalOrigin=null;
+ if(destination==='bridge'){showOverworld();}
+ else{page=destination==='bay'?'hangar':'pilots';if(destination==='bay')hangarDeck='mechs';render();}
+ $(`#nav [data-primary="${destination}"]`)?.focus({preventScroll:true});sound('click');
+}
+function navigationContext(){
+ const returns={contracts:['bridge','Bridge'],workshop:['bay','Mech Bay'],inn:['company','Company'],career:['company','Company']};
+ const back=returns[page]??(page==='hangar'&&hangarDeck==='base'?['bay','Mech Bay']:null);
+ if(back){
+  $('#ui').innerHTML=$('#ui').innerHTML.replace(/(<div class="page[^"]*">)/,`$1<button type="button" class="navigation-back navigation-quiet" data-primary="${back[0]}">← Back to ${back[1]}</button>`);
+ }
+}
+function nav(){
+ const points=battle?0:totalTrainingPoints(),parent=navigationParent();closeHelp();syncMusic();
+ document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page;document.body.dataset.navigationParent=parent;document.body.dataset.hangarView=hangarDeck;document.body.dataset.workshopMode=workshopView;
+ $('#nav').innerHTML=[['bridge','Bridge'],['bay','Mech Bay'],['company','Company']].map(([id,label])=>`<button type="button" data-primary="${id}" class="${id===parent?'active':''}" ${id===parent?'aria-current="page"':''} ${battle?'disabled':''}>${label}${id==='company'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');
+ const journal=$('#field-journal');if(journal){journal.disabled=!!battle;journal.setAttribute('aria-pressed',String(page==='journal'));journal.onclick=openJournal;}
+ $('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');
+}
+
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
  if(benchRig)return;
-  if(page!=='overworld'||battle){window.IronVowChart?.close();overworldDeparture=null;overworldConfirmation=null;portSheetOpen=false;}
+  if(page!=='overworld'||battle){window.IronVowChart?.close();if(page!=='journal'){overworldDeparture=null;overworldConfirmation=null;portSheetOpen=false;}}
   nav(); if(battle){window.IronVowWorkshop?.close();syncHangar();renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=unitWeapon({...u,frame}),training=trainingEffects(selected);
   const previewOpen=page==='workshop'&&workshopView==='assigned';
@@ -2158,10 +2219,10 @@ function render(){
     const lineup=PILOTS.map((_,i)=>({m:FRAMES[pilotFrame(i)],i}));
     const others=lineup.filter(v=>v.i!==selected);
     $('#ui').innerHTML=`<div class="hangar-status"><span class="status-dot"></span><span>MECH BAY / LANCE ONLINE</span><span>${portName(companyPort())}</span></div>
-    <div class="hangar-top-right"><button class="icon" data-hangar-hotspot="facilities" data-hangar-deck="base">FACILITIES</button><button class="icon" data-hangar-hotspot="ship" data-page="ship">SHIP</button><button class="icon" id="hangar-crew" data-hangar-hotspot="crew-cabin">CREW CABINS</button><button class="icon" id="hangar-overview">OVERVIEW</button>${Object.keys(save.reserve??{}).length?'<button class="icon" id="hangar-reserves">RESERVES</button>':''}<button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button></div>
+    <div class="hangar-top-right"><button class="icon" data-hangar-hotspot="facilities" data-hangar-deck="base">FACILITIES</button><button class="icon" id="hangar-overview">OVERVIEW</button>${Object.keys(save.reserve??{}).length?'<button class="icon" id="hangar-reserves">RESERVES</button>':''}<button class="icon" id="inspect">${icon('info')} UNIT DETAILS</button></div>
     ${inspectOpen?`<aside class="unit-inspect"><div class="inspect-head"><span class="eyebrow">CHASSIS 0${selected+1} / ${f.model}</span><button id="close-inspect" class="icon" aria-label="Close unit details">${icon('x')}</button></div><h2>${f.name}</h2><p class="note">${f.role} · PILOT LEVEL ${u.level}</p><div class="rule"></div>${stat('BODY INTEGRITY',chassisParts(f,u,training).body+' HP')}${stat('ARMOR',chassisArmor(f,u,training))}${stat('MOBILITY',(chassisMobility(f,false,training))+' TILES')}${stat('WEAPON',w.name)}${stat('CONDITION',u.condition+'%',u.condition)}<div class="pilot">${pilotMark(pilotClass(selected),'pilot-thumb')}<div>${p.name}<small>${p.call} / ${p.skill}</small></div></div><button class="full" data-page="workshop">${icon('wrench')} OPEN WORKSHOP</button><p class="note">${skillDescription(selected,training)}</p></aside>`:''}
     ${!inspectOpen?`<a class="hangar-rig-preview" href="?bench=rig"><img ${chassisPicture(0,stockHull(0))} alt="" width="66" height="66"><span><strong>WARDEN MARK II</strong><small>VIEW RIG IN MOTION</small></span></a>`:''}
-    <div class="command-deck"><div class="selected-chassis"><h1>${f.name}</h1><p>${p.name} / ${f.role} / ${u.condition>=90?'COMBAT READY':u.condition>=30?'OPERATIONAL':'REPAIR REQUIRED'}</p></div>${others.map(({m,i})=>`<button class="deck-unit" data-select="${i}" aria-label="Select ${m.name}"><h3>${m.name}</h3><small>${pilotProfile(i).call} / ${m.role}</small></button>`).join('')}<button class="primary deck-cta" data-page="contracts">SELECT CONTRACT ${icon('arrow-right')}</button></div>
+    <div class="command-deck"><div class="selected-chassis"><h1>${f.name}</h1><p>${p.name} / ${f.role} / ${u.condition>=90?'COMBAT READY':u.condition>=30?'OPERATIONAL':'REPAIR REQUIRED'}</p></div>${others.map(({m,i})=>`<button class="deck-unit" data-select="${i}" aria-label="Select ${m.name}"><h3>${m.name}</h3><small>${pilotProfile(i).call} / ${m.role}</small></button>`).join('')}<button class="primary deck-cta" data-page="workshop">REFIT ${icon('arrow-right')}</button></div>
     <div class="hangar-footer"><span>INDEPENDENT COMPANY / DAY ${String(save.day).padStart(3,'0')}</span><span>${save.wins} CONTRACTS / ${save.rep} REPUTATION</span><span>CAREER SAVED LOCALLY</span></div>`;
   }
   if(page==='inn')$('#ui').innerHTML=spaceInn();
@@ -2184,14 +2245,15 @@ function render(){
   </div>
   <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="compare" ${bindWorkshop.disclosures?.compare?'open':''}><summary>Compare chassis</summary>${chassisAssignments(selected,training)}</details>
   <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}<button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button></details>`:chassisAssignments(selected,training)}</div>`;
-  if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">PERSONNEL / ACTIVE DUTY</div><h1>HUMAN AT THE CORE.</h1></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
+  if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY / PILOTS</div><h1>HUMAN AT THE CORE.</h1><div class="company-context" role="group" aria-label="Company services"><button data-page="inn">Hiring Desk</button><button data-page="career">Career Record</button></div></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
    <div class="grid">${LANCE_SLOTS.map(i=>pilotCard(pilotClass(i),save.units[i],trainingEffects(i),FRAMES[pilotFrame(i)].name,`id="train-pilot-${i}" data-train-pilot="${i}"`,trainingPoints(i))).join('')}
    ${dutyRoster().map(id=>{
     const kind=pilotKind(id),u=save.reservePilots[id];
     return pilotCard(kind,u,effectsForTraining(kind,u.training),'RELIEF PILOT',`data-reserve-training="${id}"`,reliefTrainingPoints(id));
    }).join('')}</div></div>`;
   if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1><a class="rig-bench-link" href="?bench=rig">OPEN RIG BENCH</a></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button></div></section></div>`;
-  if(page==='journal')$('#ui').innerHTML=`<div class="page journal-page"><div class="pagehead"><div><div class="eyebrow">OPERATIONS / REFERENCE</div><h1>FIELD JOURNAL.</h1></div></div>${journalMarkup(journalPage)}</div>`;
+  if(page==='journal')$('#ui').innerHTML=`<div class="page journal-page"><button type="button" id="journal-back" class="navigation-quiet">← Back to ${journalOrigin?({bridge:'Bridge',bay:'Mech Bay',company:'Company'}[journalOrigin.parent]):'Company'}</button><div class="pagehead"><div><div class="eyebrow">OPERATIONS / REFERENCE</div><h1>FIELD JOURNAL.</h1></div></div>${journalMarkup(journalPage)}</div>`;
+  navigationContext();
   window.IronVowArmoryUI?.enhance(document);
   window.IronVowMenus?.enhance(document);
   bind();
@@ -2212,7 +2274,7 @@ function render(){
   };
   if(page==='hangar'&&hangarDeck==='mechs'){
    $('#hangar-overview').onclick=()=>window.IronVowHangarRuntime?.overview();
-   $('#hangar-crew').onclick=()=>navigateHangarRoute('crew-cabin');
+
    $('#inspect').onclick=()=>{inspectOpen=!inspectOpen;render()};if(inspectOpen)$('#close-inspect').onclick=()=>{inspectOpen=false;render()}}
   if(page==='journal')bindJournal($('#ui'));
   syncHangar();
@@ -2293,7 +2355,10 @@ window.IronVowHangarNavigation=Object.freeze({
  hotspots:hangarHotspots,
  project:projectHangarHotspots
 });
-function bind(){document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}if(destination==='contracts')contractPortSelection=companyPort();page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();overworldSelection=null;persist();closeModal();render()}}]);
+function bind(){
+ document.querySelectorAll('[data-primary]').forEach(button=>button.onclick=()=>navigatePrimary(button.dataset.primary));
+ if($('#journal-back'))$('#journal-back').onclick=returnFromJournal;
+ document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='journal'){openJournal();return;}journalOrigin=null;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}if(destination==='contracts')contractPortSelection=companyPort();page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();overworldSelection=null;persist();closeModal();render()}}]);
  $('#attack-camera').onclick=()=>{attackCameraEnabled=!attackCameraEnabled;try{localStorage.setItem('iron-vow-attack-camera',attackCameraEnabled?'on':'off')}catch{}render()};
  }}
 function validHull(u,frame,owned=[]){
@@ -2894,7 +2959,7 @@ async function moveUnit(u,x,z){
  if(!steps.length)return;
  spendMovement(u,steps.length);
  const twoStep=!u.kind&&!reducedMotion;
- const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:.22+1.3*MECH_MOTION[u.frame].step;
+ const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:walkTileDuration(u);
  const gaitBase=u.walkCount||0;
  const segments=[];
  if(twoStep){
@@ -2951,9 +3016,13 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
  // Under the attack camera the step-up and the raised-gun hold get a readable beat (CINEMATIC_PACE); field and reaction fire keep theirs.
  const paced=Boolean(sequence&&!sequence.skipped&&!reaction&&!reducedMotion);
- const primeDuration=(!lionStrike&&!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
-  (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0)*(paced?CINEMATIC_PACE.step:1);
- const windup=reducedMotion?.06:native?native.cue*native.duration:profile.raise+(!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction?(primeDuration?.12:.51)+(paced?CINEMATIC_PACE.aimHold:0):0),raise=primeDuration+windup;
+ const basePrime=!lionStrike&&!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
+  (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
+ const primeDuration=basePrime*(paced?CINEMATIC_PACE.step:1);
+ const cameraWindup=!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction;
+ const aimHold=paced&&!native&&cameraWindup?CINEMATIC_PACE.aimHold:0;
+ const windup=reducedMotion?.06:native?native.cue*native.duration:profile.raise+(cameraWindup?(basePrime?.12:.51):0)+aimHold;
+ const raise=primeDuration+windup;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,windup,native:native?{...native,clip}:null,
   ...(power?{stage:'pullback'}:{})};
  if(primeDuration&&!sequence?.skipped)gaitSound(a,'arm',0);
@@ -3103,7 +3172,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const settle=recover+(primeDuration?ATTACK_STEP.returnDuration:0);
  const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:DESTRUCTION.end*destructionPace(t));
  // The cinematic pacing lengthens the lead-in only; the result beat after the last round keeps its designed length.
- const pacedLead=paced?primeDuration*(1-1/CINEMATIC_PACE.step)+(native?0:CINEMATIC_PACE.aimHold):0;
+ const pacedLead=primeDuration-basePrime+aimHold;
  const cinematicHold=w.scout&&t.alive?1.2-raise-flight:t.alive&&reaction?.5:(t.alive?2.43:2.66)-(raise-pacedLead)-flight;
  const hold=sequence?Math.max(recovery,cinematicHold):recovery;
  await waitAttack(hold*1000,sequence);
@@ -3594,10 +3663,16 @@ function twoStepContacts(u,progress){
  const m=u.motion,mass=MECH_MOTION[u.frame].mass;
  while(m.stepBeats<2&&progress+1e-6>=(m.stepBeats+1)/2){
   const q=++m.stepBeats/2;
-  effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,t:1,mass,side:q===.5?1:-1});
+  effects.push({type:'step',actor:u.id,x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,t:1,mass,side:q===.5?1:-1});
  }
 }
 
+// Seconds per tile for a walking hull on the 7.4 m board (foundry/walk-tuning.js); the bare .22 + 1.3 x step was tuned for 3.4 m tiles.
+function walkTileDuration(u){
+ const base=.22+1.3*MECH_MOTION[u.frame].step,tuning=window.IronVowWalk;
+ if(!tuning||u.lionTrial)return base;
+ return tuning.tileDuration(u.frame,base,window.IronVowScene?.models?.get(u.id)?.entry?.m?.dims.stride);
+}
 function walkSoundMarkers(m,doubleStep){
  if(doubleStep)return [{at:0,side:1},{at:.5,side:1,land:true},{at:.5,side:-1},{at:1,side:-1,land:true}];
  const side=m.gaitBase%2?1:-1;
@@ -3606,10 +3681,13 @@ function walkSoundMarkers(m,doubleStep){
 function advanceGaitCues(u,phase){
  const m=u.motion;
  if(!m?.gaitCues?.length)return;
+ // Keep timed cues available for frames where the live rig is unavailable.
+ const scene=window.IronVowScene;
+ const live=!reducedMotion&&scene?.isLive(u)&&scene.models.get(u.id)?.entry;
  const progress=m.segment&&!reducedMotion?fieldStepProgress(phase,m.segment):phase;
  while(m.gaitCues[0]?.at<=progress+.000001){
   const marker=m.gaitCues.shift();
-  gaitSound(u,marker.land?'land':'lift',marker.side);
+  if(!live)gaitSound(u,marker.land?'land':'lift',marker.side);
  }
 }
 // reach in tiles (7.4 m): a dodge hops about 1.6 m back and aside; a plain miss sways about 0.5 m while the hull ducks (scene/combat.js evade)
@@ -3630,9 +3708,9 @@ function beginEvade(u,attacker,dodged,at){
 function evadeOffset(u,t){
  const e=evades.get(u);if(!e)return 0;
  const p=e.dodged?EVADE.dodge:EVADE.miss,age=t-e.at;
+ if(reducedMotion||!u.alive||u.hp.legs<=0||age>=p.back){evades.delete(u);return 0;}
  if(age<0)return 0;
  if(!e.kicked){e.kicked=true;window.IronVowScene?.combat?.evade?.(u,e);}
- if(age>=p.back){evades.delete(u);return 0;}
  if(e.authored)return 0;
  const reach=age<p.out?smoothRange(0,p.out,age):age<p.hold?1:1-smoothRange(p.hold,p.back,age);
  return p.reach*reach;
@@ -4061,8 +4139,8 @@ document.addEventListener('keydown',e=>{
  else return;
  renderBattle();persist();
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(activeCinematic){skipAttackCamera();return}if(!$('#modal').hidden){closeModal();return}if(targetPanelOpen){targetPanelOpen=false;renderBattle();$('#target-toggle').focus();return}moveTap=null}if(e.key==='Tab'&&!$('#modal').hidden){let btns=[...$('#modal').querySelectorAll('button')],first=btns[0],last=btns.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
-$('.brand').onclick=e=>{e.preventDefault();if(!battle)navigateHangarRoute('ship')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(activeCinematic){skipAttackCamera();return}if(!$('#modal').hidden){closeModal();return}if(!battle&&page==='journal'){e.preventDefault();returnFromJournal();return}if(targetPanelOpen){targetPanelOpen=false;renderBattle();$('#target-toggle').focus();return}moveTap=null}if(e.key==='Tab'&&!$('#modal').hidden){let btns=[...$('#modal').querySelectorAll('button')],first=btns[0],last=btns.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
+$('.brand').onclick=e=>{e.preventDefault();if(!battle)navigatePrimary('bridge')};
 $('#skip-shot').onclick=skipAttackCamera;
 let helpAnchor=null,helpPress=null,helpTimer;
 function cancelHelpPress(){clearTimeout(helpTimer);helpPress=null}

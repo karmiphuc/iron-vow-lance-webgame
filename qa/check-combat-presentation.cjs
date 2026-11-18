@@ -62,6 +62,10 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run("[foe.x,foe.z].every(Number.isInteger)"),true,'The rule position never moves');
  run("beginEvade(foe,current(),false,clock)");
  assert.ok(Math.abs(lateral(.3)-.07)<1e-6,'A plain miss is a short sway and duck, not a full hop');
+ run('reducedMotion=true');
+ assert.equal(lateral(.31),0,'Switching on reduced motion clears an active sway');
+ run('reducedMotion=false;beginEvade(foe,current(),true,clock);beginDestruction(foe)');
+ assert.equal(lateral(.3),0,'A destroyed hull stays on its tile during an interrupted dodge');
 
  // The attack camera rushed the brace, step-up and priming.
  assert.deepEqual(JSON.parse(run("JSON.stringify(CINEMATIC_PACE)")),{step:1.6,aimHold:.45});

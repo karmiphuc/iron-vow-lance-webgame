@@ -248,6 +248,8 @@ function draw(u,t,pose,scope,model,custom){
   const m=custom==='rig-v2'?rigV2.build(u,pose.stage||pose.previewScope||'battle'):
    buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim,pose.modules);
   if(!m)return null;
+  // foundry/walk-tuning.js: approved step length, foot track, toe-out and footfall mass for this hull (the Lion trial rig keeps its own)
+  window.IronVowWalk?.apply(m,u.lionTrial?null:u.frame,typeof MECH_MOTION!=='undefined'?MECH_MOTION[u.frame]?.mass:undefined);
   if(window.IronVowCairn?.applies(u.frame))window.IronVowCairn.fit(m,u,window.IronVowFieldPaint.finish(u));
   const coat=window.IronVowFieldPaint.create(u);
   if(coat)coat(m.body,m.build.ownedMaterials??=[]);
@@ -297,23 +299,6 @@ function draw(u,t,pose,scope,model,custom){
  v2?.beforeAnimate?.(m,pose.strikeKind||u.melee);
  if(!world){m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;m.s.arm.x=pose.impact*.75;}
  else if(pose.land>0)m.s.comp.x=Math.min(m.s.comp.x,-pose.land*.23);
- // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
- m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
- m.primaryWeapon=standardEquipment&&entry.primary&&u.hp.right>0&&!entry.primarySocket?entry.primary:null;
- const readyPose=!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
- animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
-  alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
-  bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
-  airborne:world?.airborne,artillery,mortarAge,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
-  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion},dt,t);
- // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
- if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
-  const lead=m.rig.legs[1];
-  const target=V3(lead.restX,m.dims.ankleH+primeLift,lead.restZ+prime*.82);
-  VC.solveLeg(m.rig,m.dims,lead,target,-primeLift*.32);
- }
- // UI previews keep the body centered while the shared animator solves the gait.
- if(!world&&step)m.cont.position.set(0,0,0);
  if(!standardEquipment){
   entry.armed=v2.pose(entry,u,pose,t,armory)!==false&&(!u.shield||Boolean(armory));
  }else if(armory&&!entry.armed){
@@ -342,6 +327,28 @@ function draw(u,t,pose,scope,model,custom){
  }
  const shoulderAttack=u.attack?.kind==='missile'&&entry.shoulderWeapon;
  const barrel=shoulderAttack||entry.primary;
+ // Both the brace and the carry solve use the equipment fitted for this frame.
+ const {primary:fittedGun,secondary:fittedMelee,shield:fittedShield}=entry,{L,R}=m.rig.arms;
+ const holdingShield=fittedShield?.mount.parent===L.so;
+ const holdingMelee=fittedMelee?.mount.parent===L.so;
+ m.offhand=u.hp.left<=0?'none':holdingShield?'shield':holdingMelee?'blade':u.shield||u.melee?'none':'free';
+ m.primaryWeapon=standardEquipment&&u.hp.right>0&&fittedGun?.mount.parent===R.so&&
+  (oneHandGuns.has(fittedGun.id)||longGuns.has(fittedGun.id))?fittedGun:null;
+ const readyPose=!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
+ const aimFromArm=barrel?.carrier!==m.rig.spine&&!(barrel&&barrel.mount.parent===entry.primarySocket);
+ animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
+  alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
+  bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
+  airborne:world?.airborne,artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
+  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion},dt,t);
+ // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
+ if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
+  const lead=m.rig.legs[1];
+  const target=V3(lead.restX,m.dims.ankleH+primeLift,lead.restZ+prime*.82);
+  VC.solveLeg(m.rig,m.dims,lead,target,-primeLift*.32);
+ }
+ // UI previews keep the body centered while the shared animator solves the gait.
+ if(!world&&step)m.cont.position.set(0,0,0);
  m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:barrel||{};
  if(!v2?.nativeShield)arsenal.poseShield(entry.shield,u,face+m.readyShieldTurn);
  if(standardEquipment&&entry.primary){

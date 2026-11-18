@@ -1,3 +1,4 @@
+const navigate=require('./navigate.cjs');
 const assert=require('node:assert/strict');
 const {join}=require('node:path');
 const saveWebp=require('./save-webp.cjs');
@@ -8,7 +9,7 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
  viewport??=mobile?{width:1024,height:1366}:{width:1366,height:1024};
  await page.setViewportSize(viewport);
  const tap=providedTap??(selector=>page.locator(selector).tap());
- const nav=name=>tap(`#nav [data-page="${name}"]`);
+ const nav=view=>navigate(page,view,tap,mobile);
  const capture=async name=>{if(!out)return;await page.waitForFunction(()=>!document.querySelector('#toast').classList.contains('show'));await saveWebp(page,join(out,name));};
  const state=()=>page.evaluate(async()=>{await pendingCareerWrite;return JSON.stringify({selected,career:save,ap:current()?.ap,target:lockedTarget})});
  const targets=async selector=>{
@@ -35,7 +36,9 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
  await targets('[data-hangar-room-detail] > summary');
  await tap('[data-build-room="cabins"]');
  assert.match(await page.locator('.base-queue').innerText(),/Crew Bunks/i);
- await tap('[data-hangar-deck="mechs"]');await tap('#hangar-crew');
+ await tap('[data-hangar-deck="mechs"]');await tap('[data-hangar-deck="base"]');
+ if(!await page.locator('[data-hangar-room-detail="cabins"]').evaluate(el=>el.open))await tap('[data-hangar-room-detail="cabins"] > summary');
+ if(!await page.locator('[data-crew-roster]').evaluate(el=>el.open))await tap('[data-crew-roster] > summary');
  assert.equal(await page.locator('[data-hangar-room-detail="cabins"]').evaluate(el=>el.open),true);
  assert.equal(await page.locator('[data-crew-roster]').evaluate(el=>el.open),true);
  await nav('workshop');
@@ -106,7 +109,7 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  assert.equal(await page.locator('#target-panel').isVisible(),false,'Target details start closed');
  assert.equal(await page.locator('#target-toggle').getAttribute('aria-expanded'),'false');
- assert.equal(await page.locator('#nav [data-page]:visible').count(),0,'Management navigation does not cover the battlefield');
+ assert.equal(await page.locator('#nav button:visible').count(),0,'Management navigation does not cover the battlefield');
  const before=await state();
  await targets('#target-toggle, .actionbuttons button, .unitbuttons button');
  const hint=await page.locator('.hint').boundingBox(),bottom=await page.locator('.battle-bottom').boundingBox();

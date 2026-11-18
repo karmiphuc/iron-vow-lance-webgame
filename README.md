@@ -2,7 +2,7 @@
 
 A self-contained, original browser tactical mech game inspired by part-based strategy games such as Front Mission 3. No original game assets are used.
 
-This repository contains the game source, assets, authoring tools, tests and fixtures. The original Site version 98 import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). The latest verified production release is **Site version 108**, recorded in [release verification](docs/release-verification.json). GitHub changes are published through the Sites release workflow.
+This repository contains the game source, assets, authoring tools, tests and fixtures. The original Site version 98 import provenance is recorded in [docs/sites-export.json](docs/sites-export.json). The latest verified production release is **Site version 111**, recorded in [release verification](docs/release-verification.json). GitHub changes are published through the Sites release workflow.
 
 ## Run locally
 
@@ -32,7 +32,7 @@ After deploying, select a unit, and click highlighted tiles to move. Choose Fire
 
 Keyboard: 1–3 selects a unit; M moves; F fires; Q activates a skill; E ends the turn. Mouse/touch supports every action. Sound is opt-in.
 
-Ship and Hangar show one selected upgrade at a time. Workshop keeps the selected mech beside one weapon refit, with comparison, statistics and paint available on demand. Contracts use a compact offer list with one preparation panel. Combat target details open explicitly on desktop, tablets and phones.
+The game opens on the Bridge chart. Global navigation has three destinations: Bridge, Mech Bay and Company. Open Contracts from a port, Refit from the selected mech, and Hiring Desk or Career Record from Company. Journal returns to the screen, selection and chart view you opened it from. Ship and Hangar show one selected upgrade at a time; Workshop keeps the selected mech beside one refit. Combat target details open explicitly on desktop, tablets and phones.
 
 Contract rewards fund weapons, chassis, upgrades, and repairs. Pilot experience unlocks training and improves combat performance. Career state saves to browser localStorage. Career screen supports backup export/import. Free field patches prevent an economy dead end.
 

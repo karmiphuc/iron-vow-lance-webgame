@@ -17,7 +17,8 @@ assert.equal(run('page'),'hangar');
 assert.equal(run('hangarDeck'),'base');
 assert.ok(node('#ui').innerHTML.includes('data-base-room="cabins" tabindex="-1"'));
 run("hangarDeck='mechs';render()");
-for(const route of navigation.routes)assert.ok(node('#ui').innerHTML.includes('data-hangar-hotspot="'+route+'"'));
+assert.ok(node('#ui').innerHTML.includes('data-hangar-hotspot="facilities"'));
+for(const route of ['ship','crew-cabin'])assert.ok(!node('#ui').innerHTML.includes('data-hangar-hotspot="'+route+'"')); // Ship and crew remain reachable through Bridge and Facilities.
 assert.equal(navigation.go('ship'),true);
 assert.equal(run('page'),'ship');
 assert.equal(sandbox.document.body.dataset.view,'ship');
