@@ -3622,7 +3622,9 @@ function beginEvade(u,attacker,dodged,at){
  if(!onBoard(Math.round(u.x-dz/length*side),Math.round(u.z+dx/length*side)))side=-side;
  // back along the line of fire as well as aside, so the hop reads from the side-on duel camera too
  const x=-dz/length*side*.8+dx/length*.6,z=dx/length*side*.8+dz/length*.6;
- evades.set(u,{at,dodged,side,x,z,kicked:false});
+ // Rigs with an authored dodge clip (Aero) play it in place: their clip keeps the ankles planted, and a hop would drag them.
+ const authored=Boolean(dodged&&window.IronVowScene?.models?.get(u.id)?.entry?.m?.nativeV2?.dodge);
+ evades.set(u,{at,dodged,side,x,z,kicked:false,authored});
 }
 // Sidestep offset in tiles for the displayed position: out fast, hold while the rounds pass, settle back.
 function evadeOffset(u,t){
@@ -3631,6 +3633,7 @@ function evadeOffset(u,t){
  if(age<0)return 0;
  if(!e.kicked){e.kicked=true;window.IronVowScene?.combat?.evade?.(u,e);}
  if(age>=p.back){evades.delete(u);return 0;}
+ if(e.authored)return 0;
  const reach=age<p.out?smoothRange(0,p.out,age):age<p.hold?1:1-smoothRange(p.hold,p.back,age);
  return p.reach*reach;
 }
