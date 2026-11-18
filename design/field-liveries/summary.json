@@ -1,7 +1,7 @@
 {
-  "origin": "checkout",
+  "origin": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
   "checkoutSourceHashes": {
-    "foundry/field-paint.js": "ef062ffa19b2f4846c131b7a9f562683b3b099d7476df0f572f8f19f8fa384c3",
+    "foundry/field-paint.js": "29d426f13caaba13d0f28dc7437278a729041d1cf207ead9b876be175d912a40",
     "foundry/rig-motion.js": "143f2a755c5d00b61f77ae7ebaf5254b3f09a1212cc61f3dea2c3516ed8a0243",
     "foundry/scene-rigs.js": "55c659e6b256fdf44e12a3cca57ae11424fa08d75cc51dcf9f2a7946db37c4b7",
     "game.js": "47aea5697b7b570273d50d223e3c23074af10a11fa7ece5caa112cc9b266e46e",
@@ -13,7 +13,7 @@
       "id": "warden",
       "paint": "splinter",
       "painted": 36,
-      "guard": 0.9038717172110712,
+      "guard": 0.90498303581468,
       "weapon": "shotgun",
       "shield": "citadel-shield",
       "pod": false
@@ -23,7 +23,7 @@
       "id": "oni",
       "paint": "splinter",
       "painted": 68,
-      "guard": 0.9053318391768636,
+      "guard": 0.9002942031672682,
       "weapon": "rifle",
       "melee": "blade",
       "shield": null,
@@ -34,7 +34,7 @@
       "id": "shrike",
       "paint": "splinter",
       "painted": 46,
-      "guard": 0.8999556741554553,
+      "guard": 0.8998871344633402,
       "weapon": "rail",
       "shield": null,
       "pod": false
@@ -44,7 +44,7 @@
       "id": "basilisk",
       "paint": "splinter",
       "painted": 54,
-      "guard": 0.8983099791858257,
+      "guard": 0.8982344880322404,
       "weapon": "missile",
       "shield": null,
       "pod": true
@@ -54,7 +54,7 @@
       "id": "valkyrie",
       "paint": "splinter",
       "painted": 59,
-      "guard": 0.9051105690975308,
+      "guard": 0.8998122842161355,
       "weapon": "sidewinder",
       "shield": "bulwark-shield",
       "pod": false
@@ -64,7 +64,7 @@
       "id": "valk-tower",
       "paint": "splinter",
       "painted": 59,
-      "guard": 0.9049691100462159,
+      "guard": 0.9053542783402537,
       "weapon": "trident",
       "shield": "citadel-shield",
       "pod": false
@@ -74,7 +74,7 @@
       "id": "valk-maul",
       "paint": "splinter",
       "painted": 58,
-      "guard": 0.8998873797203871,
+      "guard": 0.893855015520194,
       "weapon": "trident",
       "melee": "anchor-hammer",
       "shield": null,
@@ -85,7 +85,7 @@
       "id": "shrike-long",
       "paint": "splinter",
       "painted": 46,
-      "guard": 0.9049677483688252,
+      "guard": 0.9220017162458815,
       "weapon": "obelisk",
       "shield": null,
       "pod": false
@@ -105,7 +105,7 @@
       "id": "warden",
       "paint": "splinter",
       "painted": 36,
-      "guard": 0.8985862820812806,
+      "guard": 0.8983100795549852,
       "weapon": "shotgun",
       "shield": "citadel-shield",
       "pod": false
@@ -115,7 +115,7 @@
       "id": "oni",
       "paint": "splinter",
       "painted": 68,
-      "guard": 0.8935901035423983,
+      "guard": 0.9052953118561403,
       "weapon": "rifle",
       "melee": "blade",
       "shield": null,
@@ -165,13 +165,14 @@
     "workshop-320.webp",
     "battle-390.webp",
     "cairn-workshop.webp",
-    "cairn-sortie.webp"
+    "cairn-sortie.webp",
+    "mech-lineup.webp"
   ],
   "status": "passed",
   "damageRelease": true,
   "cairn": {
     "status": "passed",
-    "origin": "checkout",
+    "origin": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
     "units": [
       {
         "frame": 21,
@@ -211,5 +212,113 @@
         "kestrel__weapon_steel_warm_machined"
       ]
     }
+  },
+  "production": {
+    "version": 108,
+    "url": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+    "githubCommit": "dc8d08f114d385e4a3965183d0f11ec4e0e29689",
+    "sourceCommit": "75bbe92401d138a841b6d74c300867854940cea2",
+    "distTree": "9c54856e6ca79f15a7a8f7017fdb048bfdfc6af7",
+    "runtimeFiles": 166,
+    "simulationSuites": 70,
+    "localBrowser": {
+      "desktop": 13,
+      "touch": 13,
+      "result": "passed",
+      "scenarios": [
+        "checkCombatReadability",
+        "checkDecisionUI",
+        "sharedScene",
+        "livePaint",
+        "checkShields",
+        "checkInfantryCarry",
+        "checkStockV2",
+        "checkCampaign",
+        "checkHangarLive",
+        "checkWorkshopTurntable",
+        "checkWorkshopPaint",
+        "bastionSharedRig",
+        "checkRigWorkbench"
+      ],
+      "failedAttemptsBeforePass": 0
+    },
+    "liveBrowser": {
+      "desktop": 6,
+      "touch": 6,
+      "result": "passed",
+      "scenarios": [
+        "checkCombatReadability",
+        "livePaint",
+        "checkShields",
+        "checkCampaign",
+        "checkHangarLive",
+        "checkWorkshopPaint"
+      ],
+      "failedAttemptsBeforePass": 0
+    },
+    "liveLoadouts": 11,
+    "livePaintSelections": 8,
+    "liveDamageRelease": true,
+    "liveCairnCareer": "passed",
+    "rosterFinishes": {
+      "frames": 23,
+      "finishesPerFrame": 4
+    },
+    "touchTargets": {
+      "testedViewports": [
+        [
+          768,
+          1024
+        ],
+        [
+          1024,
+          768
+        ]
+      ],
+      "minimumCssPixels": 44,
+      "nativeHardware": "unverified"
+    }
+  },
+  "campaign": {
+    "result": "passed",
+    "seeds": [
+      4242,
+      4243,
+      4244,
+      4245,
+      4246,
+      4247,
+      4248,
+      4249,
+      4250,
+      4251,
+      4252,
+      4253,
+      4254,
+      4255,
+      4256,
+      4257,
+      4258,
+      4259,
+      4260,
+      4261,
+      4262,
+      4263,
+      4264,
+      4265,
+      4266,
+      4267,
+      4268,
+      4269,
+      4270,
+      4271
+    ],
+    "battles": 30,
+    "rigTicks": 164721,
+    "chassis": 22,
+    "weapons": 32,
+    "shields": 3,
+    "anomalies": [],
+    "errors": []
   }
 }
