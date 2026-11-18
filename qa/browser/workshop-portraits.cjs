@@ -1,3 +1,4 @@
+const navigate=require('./navigate.cjs');
 const assert=require('node:assert/strict');
 const waitForLivePortraits=require('./portrait-readiness.cjs');
 
@@ -25,15 +26,16 @@ module.exports=async function checkWorkshopPortraits({page,origin,tap,mobile}){
   return images;
  };
  await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await navigate(page,'ship',tap,mobile);
  await page.locator('.ship-seat img').first().waitFor();
  const ship=await check('.ship-seat img',3);
 
- await tap('#nav [data-page="hangar"]');
+ await navigate(page,'hangar',tap,mobile);
  await tap('[data-crew-roster] > summary');
  await check('.base-roster img.duty-mech',3).then(roster=>{
   assert.deepEqual(roster,ship,'Roster and Ship reuse matching cached images byte for byte');
  });
- await tap('#nav [data-page="workshop"]');
+ await navigate(page,'workshop',tap,mobile);
  const bay=await check('.bay-card img',3);
  assert.equal(new Set(bay.map(image=>image.key)).size,3);
 

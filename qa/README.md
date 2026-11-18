@@ -24,6 +24,8 @@ Playwright uses its Chromium installation or a supported local Chrome. Set `IRON
 
 ## Menu and iPad UI gate
 
+`node qa/check-navigation.cjs --out /tmp/iron-vow-navigation` requires exactly three primary destinations at 320px and both iPad orientations. It checks contextual routes, active parents, 44px controls, training access, unchanged career data, selected-mech Refit and Journal return with chart camera and focus restoration. The prior eight-item bar fails the count assertion.
+
 `node qa/check-decision-ui.cjs --out /tmp/iron-vow-ui` checks real player flows at 1024×1366 and 1366×1024 with touch. It verifies one selected facility/refit/contract, preserved preparation and target state, 44-pixel controls, movement-hint clearance and one shared renderer. The maintained browser suite also runs the scenario on desktop and touch. Paint receives an additional 320-pixel overflow check. Evidence is kept compact under `design/decision-ui/`.
 
 ## Overworld gate

@@ -1,3 +1,4 @@
+const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
@@ -17,7 +18,8 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
  await page.setViewportSize({width:320,height:735});
  await page.goto(new URL('?view=hangar',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('.base-page').waitFor();
- assert.ok(await page.locator('#nav').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'eight tabs fit at 320px');
+ assert.equal(await page.locator('#nav button:visible').count(),3,'three primary destinations');
+ assert.ok(await page.locator('#nav').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'primary navigation fits at 320px');
  await tap('[data-hangar-deck="mechs"]');
  assert.ok(await page.evaluate(()=>{
   const status=document.querySelector('.hangar-status').getBoundingClientRect();
@@ -65,7 +67,7 @@ module.exports=async function checkCareerTabs({context,page,mobile,origin,tap}){
 
   await reloadCareer(page);
   await ensureContractOffer(page,0);
-  await tap('#nav [data-page="contracts"]');
+  await navigate(page,'contracts',tap,mobile);
   await selectContract(page,{template:0});await tap('[data-deploy="0"]');
   await tap('#modal-1');
   await tap('#modal-0');

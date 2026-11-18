@@ -79,59 +79,56 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 108,
+    "siteVersion": 111,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "75bbe92401d138a841b6d74c300867854940cea2",
-    "githubCommit": "dc8d08f114d385e4a3965183d0f11ec4e0e29689",
-    "distTree": "9c54856e6ca79f15a7a8f7017fdb048bfdfc6af7",
-    "verifiedAt": "2026-11-18T05:41:10.967Z",
-    "localReleaseSourceSha256": "1930eac8f1fa5b6105128f003a1891fe1d16b366740b577b2c8fdcb25d8c6789",
+    "sourceCommit": "f1b951cd39f0843210300bcbce23c3d9aad5774d",
+    "githubCommit": "e63c8fb9ea0baef8494c96fb455c3367021e56ea",
+    "distTree": "3bab3bfcea7f1d348ea964bee62835e1cfbed614",
+    "verifiedAt": "2026-11-18T06:18:01.366Z",
+    "localReleaseSourceSha256": "ecd6353ee47c72c64ca53b8a3ad22f41cf74d94cf957737c70fb36651e0d94e1",
     "simulationSuites": 70,
     "localBrowser": {
-      "desktop": 13,
-      "touch": 13,
+      "desktop": 1,
+      "touch": 1,
       "result": "passed",
       "scenarios": [
-        "checkCombatReadability",
-        "checkDecisionUI",
-        "sharedScene",
-        "livePaint",
-        "checkShields",
-        "checkInfantryCarry",
-        "checkStockV2",
-        "checkCampaign",
-        "checkHangarLive",
-        "checkWorkshopTurntable",
-        "checkWorkshopPaint",
-        "bastionSharedRig",
-        "checkRigWorkbench"
-      ],
-      "failedAttemptsBeforePass": 0
+        "checkNavigation"
+      ]
     },
-    "liveFilesCompared": 166,
+    "layoutViewports": [
+      "320x700",
+      "1024x1366",
+      "1366x1024"
+    ],
+    "liveFilesCompared": 168,
     "liveBrowser": {
-      "desktop": 6,
-      "touch": 6,
+      "desktop": 7,
+      "touch": 7,
       "result": "passed",
       "scenarios": [
-        "checkCombatReadability",
-        "livePaint",
-        "checkShields",
+        "checkNavigation",
         "checkCampaign",
-        "checkHangarLive",
-        "checkWorkshopPaint"
-      ],
-      "failedAttemptsBeforePass": 0
+        "checkShip",
+        "checkOverworld",
+        "checkHangar",
+        "checkWorkshopTurntable",
+        "checkCareerTabs"
+      ]
     },
     "environment": {
       "browser": "Chromium",
-      "touch": "iPhone emulation; focused 320px, 390px, 768x1024 and 1024x768 checks",
+      "touch": "iPhone emulation",
       "graphics": "Software WebGL",
       "nativeIPad": "unverified"
     },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_5c791159b4348191b7dc60a621053f75",
-    "deploymentId": "appgdep_6afd39d966f481919424d4371bfc218f",
-    "evidence": "design/field-liveries/summary.json"
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_cd9265eba3508191a426159adc7e3d7e",
+    "deploymentId": "appgdep_6afd428c51a08191b6adc971259551cc",
+    "evidence": "design/navigation/summary.json",
+    "notes": [
+      "Eight department tabs replaced by three contextual destinations.",
+      "The initial Sites publication attempt failed; retrying the identical saved version succeeded.",
+      "Version 110 was saved only; the spacing-corrected version 111 is published."
+    ]
   },
   "publishedReleaseHistory": [
     {
@@ -378,6 +375,61 @@
       "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_f6da9b3569108191be712e88f9d80369",
       "deploymentId": "appgdep_6afd3109d40c8191af91c80b2f4eb0fd",
       "evidence": "design/combat-readability/summary.json"
+    },
+    {
+      "siteVersion": 108,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "75bbe92401d138a841b6d74c300867854940cea2",
+      "githubCommit": "dc8d08f114d385e4a3965183d0f11ec4e0e29689",
+      "distTree": "9c54856e6ca79f15a7a8f7017fdb048bfdfc6af7",
+      "verifiedAt": "2026-11-18T05:41:10.967Z",
+      "localReleaseSourceSha256": "1930eac8f1fa5b6105128f003a1891fe1d16b366740b577b2c8fdcb25d8c6789",
+      "simulationSuites": 70,
+      "localBrowser": {
+        "desktop": 13,
+        "touch": 13,
+        "result": "passed",
+        "scenarios": [
+          "checkCombatReadability",
+          "checkDecisionUI",
+          "sharedScene",
+          "livePaint",
+          "checkShields",
+          "checkInfantryCarry",
+          "checkStockV2",
+          "checkCampaign",
+          "checkHangarLive",
+          "checkWorkshopTurntable",
+          "checkWorkshopPaint",
+          "bastionSharedRig",
+          "checkRigWorkbench"
+        ],
+        "failedAttemptsBeforePass": 0
+      },
+      "liveFilesCompared": 166,
+      "liveBrowser": {
+        "desktop": 6,
+        "touch": 6,
+        "result": "passed",
+        "scenarios": [
+          "checkCombatReadability",
+          "livePaint",
+          "checkShields",
+          "checkCampaign",
+          "checkHangarLive",
+          "checkWorkshopPaint"
+        ],
+        "failedAttemptsBeforePass": 0
+      },
+      "environment": {
+        "browser": "Chromium",
+        "touch": "iPhone emulation; focused 320px, 390px, 768x1024 and 1024x768 checks",
+        "graphics": "Software WebGL",
+        "nativeIPad": "unverified"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_5c791159b4348191b7dc60a621053f75",
+      "deploymentId": "appgdep_6afd39d966f481919424d4371bfc218f",
+      "evidence": "design/field-liveries/summary.json"
     }
   ]
 }

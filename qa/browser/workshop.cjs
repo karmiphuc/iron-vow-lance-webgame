@@ -1,3 +1,4 @@
+const navigate=require('./navigate.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
@@ -123,7 +124,7 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
  assert.equal(await page.evaluate(()=>window.disposedWorkshop),1,'Restoration releases the previous authored scope');
  assert.deepEqual(await gear(),['morrow',undefined,'vesper',true,true]);
  const save=await page.evaluate(()=>JSON.stringify(window.__ironVow.career?.()??window.localStorage.getItem('iron-vow-v1')));
- await tap('#nav [data-page="contracts"]');
+ await navigate(page,'contracts',tap,mobile);
  assert.equal(await page.evaluate(()=>IronVowWorkshop.snapshot()),null);
  assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:3},'workshop')),undefined);
  assert.equal(await page.evaluate(()=>JSON.stringify(window.__ironVow.career?.()??window.localStorage.getItem('iron-vow-v1'))),save);
