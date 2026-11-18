@@ -1,0 +1,4453 @@
+{
+  "commit": "0fc9213998f331366e456bc780b9c2669e486930",
+  "sourceBefore": "27923743be0e56dd6393739e5f319ae482004f5adf345c75b07c220519223c0c",
+  "sourceAfter": "27923743be0e56dd6393739e5f319ae482004f5adf345c75b07c220519223c0c",
+  "status": "passed",
+  "checks": [
+    {
+      "mobile": false,
+      "contract": 1,
+      "status": "passed",
+      "state": {
+        "metrics": {
+          "tilePitch": 7.4,
+          "levelRise": 1.55,
+          "gridStyle": "corner-ticks",
+          "surface": "crowned-terraces-with-access-ramps"
+        },
+        "pitch": 7.400000000000001,
+        "rise": 1.55,
+        "ground": 0,
+        "base": [
+          3.7,
+          0,
+          -3.7
+        ],
+        "modelMin": 0.014747718937303256,
+        "modelPixels": 212.86512607191145,
+        "assets": [
+          {
+            "name": "industrial-building-b-north",
+            "model": "building-b",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -40.012146018505106,
+              0,
+              -86.95800021886825
+            ],
+            "max": [
+              -21.25985398149491,
+              13.230000257492069,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-i-north",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              20.01537995320559,
+              0,
+              -87.30000064373016
+            ],
+            "max": [
+              29.268620046794418,
+              6.601869106292724,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-i-east",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              68.2,
+              0,
+              -35.44958559975028
+            ],
+            "max": [
+              79.25000060796738,
+              6.235098600387572,
+              -26.710414400249718
+            ]
+          },
+          {
+            "name": "industrial-building-i-west",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -79.25000060796738,
+              0,
+              26.710414400249718
+            ],
+            "max": [
+              -68.2,
+              6.235098600387572,
+              35.44958559975028
+            ]
+          }
+        ],
+        "boardHalf": [
+          66.60000000000001,
+          74
+        ],
+        "project": {
+          "x": 512.6270839778209,
+          "y": 576.5892295382308,
+          "z": 0.9909706592396873
+        },
+        "picked": {
+          "x": 9,
+          "z": 10
+        },
+        "cover": [
+          {
+            "type": "ridge-rock",
+            "position": [
+              -55.5,
+              4.65,
+              -70.3
+            ],
+            "size": [
+              3.549854862689969,
+              4.0959342300891874,
+              6.118865012675542
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -55.5,
+              4.65,
+              -62.900000000000006
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.549854862689976
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -55.5,
+              3.1,
+              -25.900000000000002
+            ],
+            "size": [
+              3.549854862689969,
+              4.0959342300891874,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -25.900000000000002,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -18.5,
+              1.55,
+              -48.1
+            ],
+            "size": [
+              3.549854862689969,
+              4.095934230089188,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -33.300000000000004,
+              0,
+              -11.100000000000001
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.5498548626899726
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -3.7,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              3.5498548626899726,
+              4.095934230089188,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              25.900000000000002,
+              1.55,
+              48.1
+            ],
+            "size": [
+              6.118865012675521,
+              4.095934230089188,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              11.100000000000001,
+              0,
+              33.300000000000004
+            ],
+            "size": [
+              6.118865012675525,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              48.1,
+              3.1,
+              25.900000000000002
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              55.5,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              3.549854862689969,
+              4.095934230089188,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -3.7,
+              0,
+              48.1
+            ],
+            "size": [
+              6.118865012675523,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              40.7,
+              1.55,
+              70.3
+            ],
+            "size": [
+              3.549854862689969,
+              4.095934230089188,
+              6.118865012675542
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -11.100000000000001,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.900000095367432,
+              3.0000000059604646,
+              2.649999976158142
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              3.7,
+              1.55,
+              -25.900000000000002
+            ],
+            "size": [
+              2.6499999761581434,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              11.100000000000001,
+              3.1,
+              -48.1
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              40.7,
+              0,
+              3.7
+            ],
+            "size": [
+              5.900000095367432,
+              3.0000000059604646,
+              2.649999976158142
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              40.7,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              2.649999976158142,
+              3.0000000059604646,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              25.900000000000002,
+              1.55,
+              -48.1
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -3.7,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              5.900000095367432,
+              3.000000005960465,
+              2.649999976158142
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -48.1,
+              0,
+              11.100000000000001
+            ],
+            "size": [
+              2.649999976158142,
+              3.0000000059604646,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              25.900000000000002,
+              1.55,
+              40.7
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              62.900000000000006,
+              0,
+              18.5
+            ],
+            "size": [
+              2.649999976158142,
+              3.0000000059604646,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -25.900000000000002,
+              1.55,
+              33.300000000000004
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          }
+        ],
+        "expected": [
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock"
+        ],
+        "found": [
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock"
+        ],
+        "mapped": [
+          {
+            "x": 1,
+            "z": 0,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 1,
+            "z": 1,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 1,
+            "z": 6,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 5,
+            "z": 5,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 6,
+            "z": 3,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 4,
+            "z": 8,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 8,
+            "z": 13,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 12,
+            "z": 16,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 10,
+            "z": 14,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 15,
+            "z": 13,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 16,
+            "z": 13,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 8,
+            "z": 16,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 14,
+            "z": 19,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 7,
+            "z": 5,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 9,
+            "z": 6,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 10,
+            "z": 3,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 14,
+            "z": 10,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 14,
+            "z": 5,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 12,
+            "z": 3,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 8,
+            "z": 8,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 2,
+            "z": 11,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 12,
+            "z": 15,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 17,
+            "z": 12,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 5,
+            "z": 14,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          }
+        ],
+        "names": [
+          {
+            "name": "terrain-risers",
+            "count": 11136
+          },
+          {
+            "name": "terrace-coping",
+            "count": 11136
+          },
+          {
+            "name": "road-markings",
+            "count": 456
+          },
+          {
+            "name": "tactical-grid-corners",
+            "count": 5376
+          }
+        ],
+        "roadCount": 39,
+        "linkCount": 76,
+        "ids": [
+          "ally0",
+          "enemy0",
+          "enemy1"
+        ],
+        "seed": 20903,
+        "pathsReach": 1,
+        "renderer": {
+          "contexts": 1,
+          "geometries": 303,
+          "textures": 9,
+          "quality": "high",
+          "generation": 0
+        },
+        "overflow": [
+          1366,
+          1366
+        ],
+        "viewport": [
+          1366,
+          1024
+        ],
+        "fixture": {
+          "x": 9,
+          "z": 9,
+          "next": [
+            9,
+            10
+          ],
+          "covers": [
+            [
+              8,
+              8
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "mobile": false,
+      "contract": 2,
+      "status": "passed",
+      "state": {
+        "metrics": {
+          "tilePitch": 7.4,
+          "levelRise": 1.55,
+          "gridStyle": "corner-ticks",
+          "surface": "crowned-terraces-with-access-ramps"
+        },
+        "pitch": 7.400000000000001,
+        "rise": 1.55,
+        "ground": 0,
+        "base": [
+          3.7,
+          0,
+          3.7
+        ],
+        "modelMin": 0.014747718937303034,
+        "modelPixels": 214.1183271007236,
+        "assets": [
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 1,
+              "z": 1
+            },
+            "min": [
+              -57.899515290539156,
+              0,
+              -65.934
+            ],
+            "max": [
+              -53.100484709460844,
+              3.4239435498195303,
+              -59.866
+            ]
+          },
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 5,
+              "z": 5
+            },
+            "min": [
+              -28.29951529053916,
+              0,
+              -36.334
+            ],
+            "max": [
+              -23.500484709460846,
+              3.4239435498195303,
+              -30.266000000000005
+            ]
+          },
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 1,
+              "z": 7
+            },
+            "min": [
+              -57.899515290539156,
+              0,
+              -21.534
+            ],
+            "max": [
+              -53.100484709460844,
+              3.4239435498195303,
+              -15.466
+            ]
+          },
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 10,
+              "z": 7
+            },
+            "min": [
+              8.066000000000003,
+              1.55,
+              -20.899515290539156
+            ],
+            "max": [
+              14.134000000000002,
+              4.973943549819531,
+              -16.100484709460844
+            ]
+          },
+          {
+            "name": "industrial-building-m-north",
+            "model": "building-m",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -42.55323964834214,
+              0,
+              -90.90000042915344
+            ],
+            "max": [
+              -30.706760351657877,
+              13.671059489250183,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-m-north",
+            "model": "building-m",
+            "cover": false,
+            "tile": null,
+            "min": [
+              27.37676035165787,
+              0,
+              -90.90000042915344
+            ],
+            "max": [
+              39.22323964834214,
+              13.671059489250183,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-i-east",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              68.2,
+              0,
+              -47.54662004679441
+            ],
+            "max": [
+              79.90000064373017,
+              6.601869106292724,
+              -38.29337995320558
+            ]
+          },
+          {
+            "name": "industrial-building-i-east",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              68.2,
+              0,
+              -0.6695855997502811
+            ],
+            "max": [
+              79.25000060796738,
+              6.235098600387572,
+              8.069585599750281
+            ]
+          },
+          {
+            "name": "industrial-building-i-west",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -79.25000060796738,
+              0,
+              26.710414400249718
+            ],
+            "max": [
+              -68.2,
+              6.235098600387572,
+              35.44958559975028
+            ]
+          }
+        ],
+        "boardHalf": [
+          66.60000000000001,
+          74
+        ],
+        "project": {
+          "x": 853.3729160221792,
+          "y": 576.5892295382307,
+          "z": 0.9909706592396873
+        },
+        "picked": {
+          "x": 10,
+          "z": 10
+        },
+        "cover": [
+          {
+            "type": "cargo",
+            "position": [
+              -55.5,
+              0,
+              -62.900000000000006
+            ],
+            "size": [
+              5.890000000149016,
+              3.4239435498195303,
+              6.067999999999998
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -25.900000000000002,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.890000000149012,
+              3.4239435498195303,
+              6.067999999999998
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -55.5,
+              0,
+              -18.5
+            ],
+            "size": [
+              5.890000000149016,
+              3.4239435498195303,
+              6.068
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -40.7,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.62000000223518,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -25.900000000000002,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.620000002235173,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -11.100000000000001,
+              1.55,
+              40.7
+            ],
+            "size": [
+              5.89000000014901,
+              2.9549999761581422,
+              3.62000000223518
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              48.1,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.890000000149016,
+              2.954999976158142,
+              3.6200000022351766
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              11.100000000000001,
+              1.55,
+              -18.5
+            ],
+            "size": [
+              6.068,
+              3.4239435498195308,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              48.1,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.62000000223518,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              55.5,
+              1.55,
+              3.7
+            ],
+            "size": [
+              5.890000000149016,
+              2.9549999761581422,
+              3.620000002235175
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              11.100000000000001,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              3.620000002235175,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              48.1,
+              0,
+              70.3
+            ],
+            "size": [
+              5.890000000149016,
+              2.954999976158142,
+              3.620000002235173
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -18.5,
+              3.1,
+              48.1
+            ],
+            "size": [
+              5.890000000149012,
+              2.954999976158142,
+              3.62000000223518
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              33.300000000000004,
+              1.55,
+              18.5
+            ],
+            "size": [
+              3.6200000022351766,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -11.100000000000001,
+              0,
+              -40.7
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -33.300000000000004,
+              0,
+              -62.900000000000006
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              11.100000000000001,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              3.7,
+              0,
+              -25.900000000000002
+            ],
+            "size": [
+              3.5000000000000018,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -3.7,
+              0,
+              3.7
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -40.7,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              40.7,
+              3.1,
+              18.5
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              33.300000000000004,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.59999990463257
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              55.5,
+              0,
+              -70.3
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              33.300000000000004,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          }
+        ],
+        "expected": [
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer"
+        ],
+        "found": [
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer"
+        ],
+        "mapped": [
+          {
+            "x": 1,
+            "z": 1,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 5,
+            "z": 5,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 1,
+            "z": 7,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 3,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 5,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 7,
+            "z": 15,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 15,
+            "z": 5,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 10,
+            "z": 7,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 15,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 16,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 10,
+            "z": 13,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 15,
+            "z": 19,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 6,
+            "z": 16,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 13,
+            "z": 12,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 7,
+            "z": 4,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 4,
+            "z": 1,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 10,
+            "z": 5,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 9,
+            "z": 6,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 8,
+            "z": 10,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 3,
+            "z": 8,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 14,
+            "z": 12,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 13,
+            "z": 10,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 16,
+            "z": 0,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 13,
+            "z": 13,
+            "type": "transformer",
+            "expected": "transformer"
+          }
+        ],
+        "names": [
+          {
+            "name": "terrain-risers",
+            "count": 7488
+          },
+          {
+            "name": "terrace-coping",
+            "count": 7488
+          },
+          {
+            "name": "road-markings",
+            "count": 456
+          },
+          {
+            "name": "tactical-grid-corners",
+            "count": 5376
+          }
+        ],
+        "roadCount": 39,
+        "linkCount": 76,
+        "ids": [
+          "ally0",
+          "enemy0",
+          "enemy1"
+        ],
+        "seed": 20903,
+        "pathsReach": 1,
+        "renderer": {
+          "contexts": 1,
+          "geometries": 521,
+          "textures": 18,
+          "quality": "high",
+          "generation": 0
+        },
+        "overflow": [
+          1366,
+          1366
+        ],
+        "viewport": [
+          1366,
+          1024
+        ],
+        "fixture": {
+          "x": 9,
+          "z": 10,
+          "next": [
+            10,
+            10
+          ],
+          "covers": [
+            [
+              8,
+              10
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "mobile": false,
+      "contract": 3,
+      "status": "passed",
+      "state": {
+        "metrics": {
+          "tilePitch": 7.4,
+          "levelRise": 1.55,
+          "gridStyle": "corner-ticks",
+          "surface": "crowned-terraces-with-access-ramps"
+        },
+        "pitch": 7.400000000000001,
+        "rise": 1.55,
+        "ground": 1.5499999523162842,
+        "base": [
+          3.7,
+          1.55,
+          3.7
+        ],
+        "modelMin": 1.5647476712535875,
+        "modelPixels": 213.36481541146577,
+        "assets": [
+          {
+            "name": "industrial-building-i-north",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              10.282414400249722,
+              0,
+              -86.65000060796737
+            ],
+            "max": [
+              19.021585599750285,
+              6.235098600387572,
+              -75.6
+            ]
+          }
+        ],
+        "boardHalf": [
+          66.60000000000001,
+          74
+        ],
+        "project": {
+          "x": 848.0281427690916,
+          "y": 651.8000716525275,
+          "z": 0.991291586759836
+        },
+        "picked": {
+          "x": 10,
+          "z": 10
+        },
+        "cover": [
+          {
+            "type": "conifer",
+            "position": [
+              -62.900000000000006,
+              3.1,
+              -70.3
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874326
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -55.5,
+              4.65,
+              -62.900000000000006
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -18.5,
+              0,
+              -11.100000000000001
+            ],
+            "size": [
+              5.250829887390136,
+              4.2500000047683715,
+              4.0431432008743275
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -3.7,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              5.250829887390137,
+              4.250000004768371,
+              4.0431432008743275
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -62.900000000000006,
+              0,
+              -3.7
+            ],
+            "size": [
+              4.043143200874333,
+              4.2500000047683715,
+              5.250829887390137
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -48.1,
+              0,
+              25.900000000000002
+            ],
+            "size": [
+              4.043143200874333,
+              4.2500000047683715,
+              5.250829887390136
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -40.7,
+              0,
+              11.100000000000001
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.0431432008743275
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -18.5,
+              1.55,
+              40.7
+            ],
+            "size": [
+              4.043143200874329,
+              4.250000004768371,
+              5.25082988739014
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -3.7,
+              1.55,
+              -33.300000000000004
+            ],
+            "size": [
+              4.043143200874328,
+              4.250000004768371,
+              5.25082988739014
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              48.1,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              48.1,
+              0,
+              -11.100000000000001
+            ],
+            "size": [
+              4.043143200874333,
+              4.2500000047683715,
+              5.250829887390136
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              48.1,
+              0,
+              -18.5
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.043143200874329
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              18.5,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              4.043143200874329,
+              4.250000004768371,
+              5.250829887390136
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              55.5,
+              3.1,
+              33.300000000000004
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              40.7,
+              3.1,
+              62.900000000000006
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874326
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              62.900000000000006,
+              3.1,
+              40.7
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              11.100000000000001,
+              3.1,
+              -70.3
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              3.7,
+              3.1,
+              -33.300000000000004
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              3.7,
+              0,
+              25.900000000000002
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              -11.100000000000001,
+              0,
+              -3.7
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              3.7,
+              0,
+              18.5
+            ],
+            "size": [
+              3.700000166893007,
+              2.7499999701976776,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              18.5,
+              0,
+              55.5
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              55.5,
+              0,
+              -55.5
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              55.5,
+              0,
+              -3.7
+            ],
+            "size": [
+              3.7000001668930054,
+              2.7499999701976776,
+              5.900000095367433
+            ]
+          }
+        ],
+        "expected": [
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer"
+        ],
+        "found": [
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer"
+        ],
+        "mapped": [
+          {
+            "x": 0,
+            "z": 0,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 1,
+            "z": 1,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 6,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 8,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 0,
+            "z": 9,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 2,
+            "z": 13,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 3,
+            "z": 11,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 6,
+            "z": 15,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 8,
+            "z": 5,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 15,
+            "z": 5,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 15,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 15,
+            "z": 7,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 11,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 16,
+            "z": 14,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 14,
+            "z": 18,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 17,
+            "z": 15,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 10,
+            "z": 0,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 9,
+            "z": 5,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 9,
+            "z": 13,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 7,
+            "z": 9,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 9,
+            "z": 12,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 11,
+            "z": 17,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 16,
+            "z": 2,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 16,
+            "z": 9,
+            "type": "bunker",
+            "expected": "bunker"
+          }
+        ],
+        "names": [
+          {
+            "name": "terrain-risers",
+            "count": 11136
+          },
+          {
+            "name": "terrace-coping",
+            "count": 11136
+          },
+          {
+            "name": "road-markings",
+            "count": 276
+          },
+          {
+            "name": "tactical-grid-corners",
+            "count": 5376
+          }
+        ],
+        "roadCount": 24,
+        "linkCount": 46,
+        "ids": [
+          "ally0",
+          "enemy0",
+          "enemy1"
+        ],
+        "seed": 20903,
+        "pathsReach": 1,
+        "renderer": {
+          "contexts": 1,
+          "geometries": 586,
+          "textures": 150,
+          "quality": "high",
+          "generation": 0
+        },
+        "overflow": [
+          1366,
+          1366
+        ],
+        "viewport": [
+          1366,
+          1024
+        ],
+        "fixture": {
+          "x": 9,
+          "z": 10,
+          "next": [
+            10,
+            10
+          ],
+          "covers": [
+            [
+              9,
+              12
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "mobile": true,
+      "contract": 1,
+      "status": "passed",
+      "state": {
+        "metrics": {
+          "tilePitch": 7.4,
+          "levelRise": 1.55,
+          "gridStyle": "corner-ticks",
+          "surface": "crowned-terraces-with-access-ramps"
+        },
+        "pitch": 7.400000000000001,
+        "rise": 1.55,
+        "ground": 0,
+        "base": [
+          3.7,
+          0,
+          -3.7
+        ],
+        "modelMin": 0.014747718937302812,
+        "modelPixels": 183.878386841762,
+        "assets": [
+          {
+            "name": "industrial-building-b-north",
+            "model": "building-b",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -40.012146018505106,
+              0,
+              -86.95800021886825
+            ],
+            "max": [
+              -21.25985398149491,
+              13.230000257492069,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-i-north",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              20.01537995320559,
+              0,
+              -87.30000064373016
+            ],
+            "max": [
+              29.268620046794418,
+              6.601869106292724,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-i-east",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              68.2,
+              0,
+              -35.44958559975028
+            ],
+            "max": [
+              79.25000060796738,
+              6.235098600387572,
+              -26.710414400249718
+            ]
+          },
+          {
+            "name": "industrial-building-i-west",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -79.25000060796738,
+              0,
+              26.710414400249718
+            ],
+            "max": [
+              -68.2,
+              6.235098600387572,
+              35.44958559975028
+            ]
+          }
+        ],
+        "boardHalf": [
+          66.60000000000001,
+          74
+        ],
+        "project": {
+          "x": 367.96140119964,
+          "y": 737.6057574026056,
+          "z": 0.9947172755953408
+        },
+        "picked": {
+          "x": 9,
+          "z": 10
+        },
+        "cover": [
+          {
+            "type": "ridge-rock",
+            "position": [
+              -55.5,
+              4.65,
+              -70.3
+            ],
+            "size": [
+              3.549854862689969,
+              4.0959342300891874,
+              6.118865012675542
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -55.5,
+              4.65,
+              -62.900000000000006
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.549854862689976
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -55.5,
+              3.1,
+              -25.900000000000002
+            ],
+            "size": [
+              3.549854862689969,
+              4.0959342300891874,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -25.900000000000002,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -18.5,
+              1.55,
+              -48.1
+            ],
+            "size": [
+              3.549854862689969,
+              4.095934230089188,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -33.300000000000004,
+              0,
+              -11.100000000000001
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.5498548626899726
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -3.7,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              3.5498548626899726,
+              4.095934230089188,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              25.900000000000002,
+              1.55,
+              48.1
+            ],
+            "size": [
+              6.118865012675521,
+              4.095934230089188,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              11.100000000000001,
+              0,
+              33.300000000000004
+            ],
+            "size": [
+              6.118865012675525,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              48.1,
+              3.1,
+              25.900000000000002
+            ],
+            "size": [
+              6.118865012675521,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              55.5,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              3.549854862689969,
+              4.095934230089188,
+              6.118865012675521
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              -3.7,
+              0,
+              48.1
+            ],
+            "size": [
+              6.118865012675523,
+              4.0959342300891874,
+              3.549854862689969
+            ]
+          },
+          {
+            "type": "ridge-rock",
+            "position": [
+              40.7,
+              1.55,
+              70.3
+            ],
+            "size": [
+              3.549854862689969,
+              4.095934230089188,
+              6.118865012675542
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -11.100000000000001,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.900000095367432,
+              3.0000000059604646,
+              2.649999976158142
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              3.7,
+              1.55,
+              -25.900000000000002
+            ],
+            "size": [
+              2.6499999761581434,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              11.100000000000001,
+              3.1,
+              -48.1
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              40.7,
+              0,
+              3.7
+            ],
+            "size": [
+              5.900000095367432,
+              3.0000000059604646,
+              2.649999976158142
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              40.7,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              2.649999976158142,
+              3.0000000059604646,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              25.900000000000002,
+              1.55,
+              -48.1
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -3.7,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              5.900000095367432,
+              3.000000005960465,
+              2.649999976158142
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -48.1,
+              0,
+              11.100000000000001
+            ],
+            "size": [
+              2.649999976158142,
+              3.0000000059604646,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              25.900000000000002,
+              1.55,
+              40.7
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              62.900000000000006,
+              0,
+              18.5
+            ],
+            "size": [
+              2.649999976158142,
+              3.0000000059604646,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "relay-shield",
+            "position": [
+              -25.900000000000002,
+              1.55,
+              33.300000000000004
+            ],
+            "size": [
+              2.649999976158142,
+              3.000000005960465,
+              5.900000095367432
+            ]
+          }
+        ],
+        "expected": [
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock"
+        ],
+        "found": [
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "relay-shield",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock",
+          "ridge-rock"
+        ],
+        "mapped": [
+          {
+            "x": 1,
+            "z": 0,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 1,
+            "z": 1,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 1,
+            "z": 6,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 5,
+            "z": 5,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 6,
+            "z": 3,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 4,
+            "z": 8,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 8,
+            "z": 13,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 12,
+            "z": 16,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 10,
+            "z": 14,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 15,
+            "z": 13,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 16,
+            "z": 13,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 8,
+            "z": 16,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 14,
+            "z": 19,
+            "type": "ridge-rock",
+            "expected": "ridge-rock"
+          },
+          {
+            "x": 7,
+            "z": 5,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 9,
+            "z": 6,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 10,
+            "z": 3,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 14,
+            "z": 10,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 14,
+            "z": 5,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 12,
+            "z": 3,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 8,
+            "z": 8,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 2,
+            "z": 11,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 12,
+            "z": 15,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 17,
+            "z": 12,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          },
+          {
+            "x": 5,
+            "z": 14,
+            "type": "relay-shield",
+            "expected": "relay-shield"
+          }
+        ],
+        "names": [
+          {
+            "name": "terrain-risers",
+            "count": 11136
+          },
+          {
+            "name": "terrace-coping",
+            "count": 11136
+          },
+          {
+            "name": "road-markings",
+            "count": 456
+          },
+          {
+            "name": "tactical-grid-corners",
+            "count": 5376
+          }
+        ],
+        "roadCount": 39,
+        "linkCount": 76,
+        "ids": [
+          "ally0",
+          "enemy0",
+          "enemy1"
+        ],
+        "seed": 20903,
+        "pathsReach": 1,
+        "renderer": {
+          "contexts": 1,
+          "geometries": 317,
+          "textures": 11,
+          "quality": "high",
+          "generation": 0
+        },
+        "overflow": [
+          1024,
+          1024
+        ],
+        "viewport": [
+          1024,
+          1366
+        ],
+        "fixture": {
+          "x": 9,
+          "z": 9,
+          "next": [
+            9,
+            10
+          ],
+          "covers": [
+            [
+              8,
+              8
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "mobile": true,
+      "contract": 2,
+      "status": "passed",
+      "state": {
+        "metrics": {
+          "tilePitch": 7.4,
+          "levelRise": 1.55,
+          "gridStyle": "corner-ticks",
+          "surface": "crowned-terraces-with-access-ramps"
+        },
+        "pitch": 7.400000000000001,
+        "rise": 1.55,
+        "ground": 0,
+        "base": [
+          3.7,
+          0,
+          3.7
+        ],
+        "modelMin": 0.014747718937302756,
+        "modelPixels": 184.26565253155695,
+        "assets": [
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 1,
+              "z": 1
+            },
+            "min": [
+              -57.899515290539156,
+              0,
+              -65.934
+            ],
+            "max": [
+              -53.100484709460844,
+              3.4239435498195303,
+              -59.866
+            ]
+          },
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 5,
+              "z": 5
+            },
+            "min": [
+              -28.29951529053916,
+              0,
+              -36.334
+            ],
+            "max": [
+              -23.500484709460846,
+              3.4239435498195303,
+              -30.266000000000005
+            ]
+          },
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 1,
+              "z": 7
+            },
+            "min": [
+              -57.899515290539156,
+              0,
+              -21.534
+            ],
+            "max": [
+              -53.100484709460844,
+              3.4239435498195303,
+              -15.466
+            ]
+          },
+          {
+            "name": "industrial-warehouse-inboard",
+            "model": "warehouse-inboard",
+            "cover": true,
+            "tile": {
+              "x": 10,
+              "z": 7
+            },
+            "min": [
+              8.066000000000003,
+              1.55,
+              -20.899515290539156
+            ],
+            "max": [
+              14.134000000000002,
+              4.973943549819531,
+              -16.100484709460844
+            ]
+          },
+          {
+            "name": "industrial-building-m-north",
+            "model": "building-m",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -42.55323964834214,
+              0,
+              -90.90000042915344
+            ],
+            "max": [
+              -30.706760351657877,
+              13.671059489250183,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-m-north",
+            "model": "building-m",
+            "cover": false,
+            "tile": null,
+            "min": [
+              27.37676035165787,
+              0,
+              -90.90000042915344
+            ],
+            "max": [
+              39.22323964834214,
+              13.671059489250183,
+              -75.6
+            ]
+          },
+          {
+            "name": "industrial-building-i-east",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              68.2,
+              0,
+              -47.54662004679441
+            ],
+            "max": [
+              79.90000064373017,
+              6.601869106292724,
+              -38.29337995320558
+            ]
+          },
+          {
+            "name": "industrial-building-i-east",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              68.2,
+              0,
+              -0.6695855997502811
+            ],
+            "max": [
+              79.25000060796738,
+              6.235098600387572,
+              8.069585599750281
+            ]
+          },
+          {
+            "name": "industrial-building-i-west",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              -79.25000060796738,
+              0,
+              26.710414400249718
+            ],
+            "max": [
+              -68.2,
+              6.235098600387572,
+              35.44958559975028
+            ]
+          }
+        ],
+        "boardHalf": [
+          66.60000000000001,
+          74
+        ],
+        "project": {
+          "x": 656.0385988003604,
+          "y": 737.6057574026055,
+          "z": 0.9947172755953408
+        },
+        "picked": {
+          "x": 10,
+          "z": 10
+        },
+        "cover": [
+          {
+            "type": "cargo",
+            "position": [
+              -55.5,
+              0,
+              -62.900000000000006
+            ],
+            "size": [
+              5.890000000149016,
+              3.4239435498195303,
+              6.067999999999998
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -25.900000000000002,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.890000000149012,
+              3.4239435498195303,
+              6.067999999999998
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -55.5,
+              0,
+              -18.5
+            ],
+            "size": [
+              5.890000000149016,
+              3.4239435498195303,
+              6.068
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -40.7,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.62000000223518,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -25.900000000000002,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.620000002235173,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -11.100000000000001,
+              1.55,
+              40.7
+            ],
+            "size": [
+              5.89000000014901,
+              2.9549999761581422,
+              3.62000000223518
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              48.1,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.890000000149016,
+              2.954999976158142,
+              3.6200000022351766
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              11.100000000000001,
+              1.55,
+              -18.5
+            ],
+            "size": [
+              6.068,
+              3.4239435498195308,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              48.1,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.62000000223518,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              55.5,
+              1.55,
+              3.7
+            ],
+            "size": [
+              5.890000000149016,
+              2.9549999761581422,
+              3.620000002235175
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              11.100000000000001,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              3.620000002235175,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              48.1,
+              0,
+              70.3
+            ],
+            "size": [
+              5.890000000149016,
+              2.954999976158142,
+              3.620000002235173
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              -18.5,
+              3.1,
+              48.1
+            ],
+            "size": [
+              5.890000000149012,
+              2.954999976158142,
+              3.62000000223518
+            ]
+          },
+          {
+            "type": "cargo",
+            "position": [
+              33.300000000000004,
+              1.55,
+              18.5
+            ],
+            "size": [
+              3.6200000022351766,
+              2.9549999761581422,
+              5.890000000149012
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -11.100000000000001,
+              0,
+              -40.7
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -33.300000000000004,
+              0,
+              -62.900000000000006
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              11.100000000000001,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              3.7,
+              0,
+              -25.900000000000002
+            ],
+            "size": [
+              3.5000000000000018,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -3.7,
+              0,
+              3.7
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              -40.7,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.599999904632568
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              40.7,
+              3.1,
+              18.5
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              33.300000000000004,
+              1.55,
+              3.7
+            ],
+            "size": [
+              3.5,
+              4.659999996423721,
+              5.59999990463257
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              55.5,
+              0,
+              -70.3
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          },
+          {
+            "type": "transformer",
+            "position": [
+              33.300000000000004,
+              1.55,
+              25.900000000000002
+            ],
+            "size": [
+              5.599999904632568,
+              4.659999996423721,
+              3.5
+            ]
+          }
+        ],
+        "expected": [
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer"
+        ],
+        "found": [
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "cargo",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer",
+          "transformer"
+        ],
+        "mapped": [
+          {
+            "x": 1,
+            "z": 1,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 5,
+            "z": 5,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 1,
+            "z": 7,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 3,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 5,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 7,
+            "z": 15,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 15,
+            "z": 5,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 10,
+            "z": 7,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 15,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 16,
+            "z": 10,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 10,
+            "z": 13,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 15,
+            "z": 19,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 6,
+            "z": 16,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 13,
+            "z": 12,
+            "type": "cargo",
+            "expected": "cargo"
+          },
+          {
+            "x": 7,
+            "z": 4,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 4,
+            "z": 1,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 10,
+            "z": 5,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 9,
+            "z": 6,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 8,
+            "z": 10,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 3,
+            "z": 8,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 14,
+            "z": 12,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 13,
+            "z": 10,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 16,
+            "z": 0,
+            "type": "transformer",
+            "expected": "transformer"
+          },
+          {
+            "x": 13,
+            "z": 13,
+            "type": "transformer",
+            "expected": "transformer"
+          }
+        ],
+        "names": [
+          {
+            "name": "terrain-risers",
+            "count": 7488
+          },
+          {
+            "name": "terrace-coping",
+            "count": 7488
+          },
+          {
+            "name": "road-markings",
+            "count": 456
+          },
+          {
+            "name": "tactical-grid-corners",
+            "count": 5376
+          }
+        ],
+        "roadCount": 39,
+        "linkCount": 76,
+        "ids": [
+          "ally0",
+          "enemy0",
+          "enemy1"
+        ],
+        "seed": 20903,
+        "pathsReach": 1,
+        "renderer": {
+          "contexts": 1,
+          "geometries": 546,
+          "textures": 20,
+          "quality": "high",
+          "generation": 0
+        },
+        "overflow": [
+          1024,
+          1024
+        ],
+        "viewport": [
+          1024,
+          1366
+        ],
+        "fixture": {
+          "x": 9,
+          "z": 10,
+          "next": [
+            10,
+            10
+          ],
+          "covers": [
+            [
+              8,
+              10
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "mobile": true,
+      "contract": 3,
+      "status": "passed",
+      "state": {
+        "metrics": {
+          "tilePitch": 7.4,
+          "levelRise": 1.55,
+          "gridStyle": "corner-ticks",
+          "surface": "crowned-terraces-with-access-ramps"
+        },
+        "pitch": 7.400000000000001,
+        "rise": 1.55,
+        "ground": 1.5499999523162842,
+        "base": [
+          3.7,
+          1.55,
+          3.7
+        ],
+        "modelMin": 1.5647476712535868,
+        "modelPixels": 184.95145362882954,
+        "assets": [
+          {
+            "name": "industrial-building-i-north",
+            "model": "building-i",
+            "cover": false,
+            "tile": null,
+            "min": [
+              10.282414400249722,
+              0,
+              -86.65000060796737
+            ],
+            "max": [
+              19.021585599750285,
+              6.235098600387572,
+              -75.6
+            ]
+          }
+        ],
+        "boardHalf": [
+          66.60000000000001,
+          74
+        ],
+        "project": {
+          "x": 653.1415635080468,
+          "y": 802.5650654517956,
+          "z": 0.9948476765341501
+        },
+        "picked": {
+          "x": 10,
+          "z": 10
+        },
+        "cover": [
+          {
+            "type": "conifer",
+            "position": [
+              -62.900000000000006,
+              3.1,
+              -70.3
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874326
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -55.5,
+              4.65,
+              -62.900000000000006
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -18.5,
+              0,
+              -11.100000000000001
+            ],
+            "size": [
+              5.250829887390136,
+              4.2500000047683715,
+              4.0431432008743275
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -3.7,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              5.250829887390137,
+              4.250000004768371,
+              4.0431432008743275
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -62.900000000000006,
+              0,
+              -3.7
+            ],
+            "size": [
+              4.043143200874333,
+              4.2500000047683715,
+              5.250829887390137
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -48.1,
+              0,
+              25.900000000000002
+            ],
+            "size": [
+              4.043143200874333,
+              4.2500000047683715,
+              5.250829887390136
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -40.7,
+              0,
+              11.100000000000001
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.0431432008743275
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -18.5,
+              1.55,
+              40.7
+            ],
+            "size": [
+              4.043143200874329,
+              4.250000004768371,
+              5.25082988739014
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              -3.7,
+              1.55,
+              -33.300000000000004
+            ],
+            "size": [
+              4.043143200874328,
+              4.250000004768371,
+              5.25082988739014
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              48.1,
+              0,
+              -33.300000000000004
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              48.1,
+              0,
+              -11.100000000000001
+            ],
+            "size": [
+              4.043143200874333,
+              4.2500000047683715,
+              5.250829887390136
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              48.1,
+              0,
+              -18.5
+            ],
+            "size": [
+              5.25082988739014,
+              4.2500000047683715,
+              4.043143200874329
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              18.5,
+              1.55,
+              -11.100000000000001
+            ],
+            "size": [
+              4.043143200874329,
+              4.250000004768371,
+              5.250829887390136
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              55.5,
+              3.1,
+              33.300000000000004
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              40.7,
+              3.1,
+              62.900000000000006
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874326
+            ]
+          },
+          {
+            "type": "conifer",
+            "position": [
+              62.900000000000006,
+              3.1,
+              40.7
+            ],
+            "size": [
+              5.25082988739014,
+              4.250000004768371,
+              4.043143200874333
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              11.100000000000001,
+              3.1,
+              -70.3
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              3.7,
+              3.1,
+              -33.300000000000004
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              3.7,
+              0,
+              25.900000000000002
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              -11.100000000000001,
+              0,
+              -3.7
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              3.7,
+              0,
+              18.5
+            ],
+            "size": [
+              3.700000166893007,
+              2.7499999701976776,
+              5.900000095367432
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              18.5,
+              0,
+              55.5
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              55.5,
+              0,
+              -55.5
+            ],
+            "size": [
+              5.900000095367432,
+              2.7499999701976776,
+              3.7000001668930054
+            ]
+          },
+          {
+            "type": "bunker",
+            "position": [
+              55.5,
+              0,
+              -3.7
+            ],
+            "size": [
+              3.7000001668930054,
+              2.7499999701976776,
+              5.900000095367433
+            ]
+          }
+        ],
+        "expected": [
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer"
+        ],
+        "found": [
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "bunker",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer",
+          "conifer"
+        ],
+        "mapped": [
+          {
+            "x": 0,
+            "z": 0,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 1,
+            "z": 1,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 6,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 8,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 0,
+            "z": 9,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 2,
+            "z": 13,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 3,
+            "z": 11,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 6,
+            "z": 15,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 8,
+            "z": 5,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 15,
+            "z": 5,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 15,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 15,
+            "z": 7,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 11,
+            "z": 8,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 16,
+            "z": 14,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 14,
+            "z": 18,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 17,
+            "z": 15,
+            "type": "conifer",
+            "expected": "conifer"
+          },
+          {
+            "x": 10,
+            "z": 0,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 9,
+            "z": 5,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 9,
+            "z": 13,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 7,
+            "z": 9,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 9,
+            "z": 12,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 11,
+            "z": 17,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 16,
+            "z": 2,
+            "type": "bunker",
+            "expected": "bunker"
+          },
+          {
+            "x": 16,
+            "z": 9,
+            "type": "bunker",
+            "expected": "bunker"
+          }
+        ],
+        "names": [
+          {
+            "name": "terrain-risers",
+            "count": 11136
+          },
+          {
+            "name": "terrace-coping",
+            "count": 11136
+          },
+          {
+            "name": "road-markings",
+            "count": 276
+          },
+          {
+            "name": "tactical-grid-corners",
+            "count": 5376
+          }
+        ],
+        "roadCount": 24,
+        "linkCount": 46,
+        "ids": [
+          "ally0",
+          "enemy0",
+          "enemy1"
+        ],
+        "seed": 20903,
+        "pathsReach": 1,
+        "renderer": {
+          "contexts": 1,
+          "geometries": 597,
+          "textures": 150,
+          "quality": "high",
+          "generation": 0
+        },
+        "overflow": [
+          1024,
+          1024
+        ],
+        "viewport": [
+          1024,
+          1366
+        ],
+        "fixture": {
+          "x": 9,
+          "z": 10,
+          "next": [
+            10,
+            10
+          ],
+          "covers": [
+            [
+              9,
+              12
+            ]
+          ]
+        }
+      }
+    }
+  ],
+  "distTree": "1640313ba238ceeb8adb8d1ac9dbb23c5d60bd78",
+  "captures": [
+    "desktop-theater-1.webp",
+    "desktop-theater-2.webp",
+    "desktop-theater-3.webp",
+    "touch-theater-1.webp",
+    "touch-theater-2.webp",
+    "touch-theater-3.webp",
+    "shotgun-cone.webp"
+  ],
+  "shotgun": {
+    "pellets": 12,
+    "distinctEndpoints": 12,
+    "mounted": true,
+    "aimError": 0,
+    "sourceFiles": {
+      "dist/scene/combat.js": "53297af27bbb2607eb138ae4805a84ab8faea64ba491efb373f48e433a386a84",
+      "dist/scene/effects.js": "c3fdc0227dffc5c1fc535c9fc1f4a10335d5a31079765ed4d31f4f6778549a9d",
+      "dist/scene/battle.js": "ca333c2447497797e0036addc70637ea3a12cd97d80cd765e54df68b8ae801a0",
+      "dist/scene/environment.js": "8c698b5a8bb8ddf481c8000cdbb0806725791918ee0e270f0a25bd8cd9df83d4",
+      "dist/scene/environment-assets.js": "64359f98f7d58faf3a2ca7baf3c0f7d3c6031c0aa8a3f1979b12406634f98357",
+      "dist/index.html": "a9f8ee122a767e036b30ce8ca526a578a102010250421ce1686dae2cd5293d36"
+    }
+  },
+  "browser": {
+    "desktop": 13,
+    "touch": 13,
+    "result": "passed",
+    "checks": [
+      {
+        "name": "checkCombatReadability",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "03fa6376bcf13288098b145b6be9eedb899b68f67dd8dd3e2b6beb5a409b81cc",
+        "report": "browser-desktop-final"
+      },
+      {
+        "name": "checkDecisionUI",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "1b6e395c5bb555df959fe246742b2f51a1d2a3b4e8a725710bd3ae7600b028a0",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkLionTrial",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "c26d4573a274124b065a312d8b11b802d9303b5e5128f1154a2d8c832598eec1",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkMovePreview",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "23344bf081dbc86ff8fa10283c6807d3a10a1356ec1444f5faae380550b304a1",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkRidgeCombat",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "144af232ad86e01ba9eedaa46c95b253807762d128229f942bf2cc720db921d2",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkTerrain",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "4d51a41f028b3d48f63edf3ea0f980afb09b5d71f1375a0e58723f485ef536c1",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkVehicles",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "f5cd1c3c6775ea5530bfe115a995dcf898c77c51ce5a4e060005be665f91b2e4",
+        "report": "vehicles-final"
+      },
+      {
+        "name": "checkGatecrasherV2",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "8066e2af7df631ef3855dc9f2ff168d128abac7bafcf0ad7385077ecbd48e7ae",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkShields",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "6fec9501abcc3c5420deb0b93c2cf962b12b248565f6db0d0aa2c5c864f6d263",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkLineInfantry",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "c2b10f1e52b7836d8963b1786a13dd4c7c7689d23f11e22b5b174b9aecdcfe3d",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkAero",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "6015b197c522280f2ee2ad0a924ed8eeac7d442af00d9f79d5a6075a50a34cef",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkCampaign",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "947c519e6b3562e283b01c88aa61488cf6fb837a0beba879b08fbc6aef1b5563",
+        "report": "browser-retained"
+      },
+      {
+        "name": "bastionSharedRig",
+        "device": "desktop",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "ec449619631cb782063b97a46f40a3e3eebe40c8e0b372b5deaedbd80a1cc598",
+        "report": "browser-retained"
+      },
+      {
+        "name": "checkCombatReadability",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "03fa6376bcf13288098b145b6be9eedb899b68f67dd8dd3e2b6beb5a409b81cc",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkDecisionUI",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "1b6e395c5bb555df959fe246742b2f51a1d2a3b4e8a725710bd3ae7600b028a0",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkLionTrial",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "c26d4573a274124b065a312d8b11b802d9303b5e5128f1154a2d8c832598eec1",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkMovePreview",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "23344bf081dbc86ff8fa10283c6807d3a10a1356ec1444f5faae380550b304a1",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkRidgeCombat",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "144af232ad86e01ba9eedaa46c95b253807762d128229f942bf2cc720db921d2",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkTerrain",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "4d51a41f028b3d48f63edf3ea0f980afb09b5d71f1375a0e58723f485ef536c1",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkVehicles",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "f5cd1c3c6775ea5530bfe115a995dcf898c77c51ce5a4e060005be665f91b2e4",
+        "report": "vehicles-final"
+      },
+      {
+        "name": "checkGatecrasherV2",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "8066e2af7df631ef3855dc9f2ff168d128abac7bafcf0ad7385077ecbd48e7ae",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkShields",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "6fec9501abcc3c5420deb0b93c2cf962b12b248565f6db0d0aa2c5c864f6d263",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkLineInfantry",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "c2b10f1e52b7836d8963b1786a13dd4c7c7689d23f11e22b5b174b9aecdcfe3d",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkAero",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "6015b197c522280f2ee2ad0a924ed8eeac7d442af00d9f79d5a6075a50a34cef",
+        "report": "browser-touch"
+      },
+      {
+        "name": "checkCampaign",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "UI and rules correctness; first main scene frame submitted, later unobserved GPU draws/readbacks omitted.",
+        "scenarioSha256": "947c519e6b3562e283b01c88aa61488cf6fb837a0beba879b08fbc6aef1b5563",
+        "report": "browser-touch"
+      },
+      {
+        "name": "bastionSharedRig",
+        "device": "touch",
+        "attempt": 1,
+        "status": "passed",
+        "renderPolicy": "Full GPU rendering",
+        "scenarioSha256": "ec449619631cb782063b97a46f40a3e3eebe40c8e0b372b5deaedbd80a1cc598",
+        "report": "browser-touch"
+      }
+    ],
+    "resumeGuard": "Retained completed desktop cases; the sole later camera adjustment was scoped to phones. Final readability case reran after adding authored-asset and pixel-size assertions. Vehicle cases reran on both profiles after matching hover to the new vertical presentation scale. Final committed six-view gate covers the complete renderer."
+  },
+  "gameplay": {
+    "saveSchemaChanged": false,
+    "terrainSeedChanged": false,
+    "hitRulesChanged": false,
+    "ruleRngUsedByShotgunFx": false,
+    "productionMechAssetsChanged": false
+  },
+  "artReview": {
+    "agent": "Astra Medium",
+    "commit": "0fc9213998f331366e456bc780b9c2669e486930",
+    "result": "accepted",
+    "note": "Current desktop Corridor and portrait Relay/Frontier accepted. Selected unit and terrain are legible; normal portrait focus can put a remote hostile outside the frame, with target card and Overview available."
+  },
+  "nativeIPadPerformance": "unverified",
+  "evidenceHashes": {
+    "desktop-theater-1.webp": "3a69e7caf0209c235dff73384ae0159bfd6b3661b1a9bf10ec458a7ee8990c99",
+    "desktop-theater-2.webp": "9e0706cb661ae59a059b6210d64f1c78f8b40c5259ea86948c6e2ccc866a9802",
+    "desktop-theater-3.webp": "271f19a92ef3fbbd62c5341496d9e8b3463473fa3d12f8bb3e24689ea99ad4f1",
+    "touch-theater-1.webp": "6d9cd67d855011d25832702becf1344ee95f7122b5d644875f4e7ac579ca0e62",
+    "touch-theater-2.webp": "e4bef947a0e7d056cc0a4ff3e42e5637ad957880b7889247b0063bb159af241a",
+    "touch-theater-3.webp": "1d3a78c1846b56505e1144980007365ed47eaa4bb5224da0d859ab27e9fde67a",
+    "shotgun-cone.webp": "bb8b72fe8842303771cfef6149fda027b7a93663fc965f1e12ebd425daf5e899"
+  },
+  "assetProvenance": "dist/assets/environment/industrial/manifest.json",
+  "release": {
+    "siteVersion": 107,
+    "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+    "sourceCommit": "dd0d39483a6e580ecde137ffaf7e9212ba3be381",
+    "githubCommit": "fc69adce3243c5432118491444a0f696a2cbdb7a",
+    "distTree": "1640313ba238ceeb8adb8d1ac9dbb23c5d60bd78",
+    "verifiedAt": "2026-11-18T05:03:48.928052+00:00",
+    "localReleaseSourceSha256": "b8397fb49ff407115a40edb134897d4ccbe95204f050a640a20d06968ad867bb",
+    "simulationSuites": 68,
+    "localBrowser": {
+      "desktop": 13,
+      "touch": 13,
+      "result": "passed",
+      "resumeGuard": "Retained completed desktop cases; only phone framing changed afterward. Final readability assertions reran on both profiles after authoring-asset and size checks were added. Vehicle targeting, muzzle origins and wreck grounding reran after hover was matched to the vertical terrain scale. The committed six-view phase gate and mandatory source-stable release gate passed."
+    },
+    "liveFilesCompared": 164,
+    "liveBrowser": {
+      "result": "passed",
+      "desktop": 6,
+      "touch": 6,
+      "scenarios": [
+        "checkCombatReadability",
+        "checkDecisionUI",
+        "checkRidgeCombat",
+        "checkTerrain",
+        "checkVehicles",
+        "checkCampaign"
+      ],
+      "failedAttemptsBeforePass": 0
+    },
+    "environment": {
+      "browser": "Chromium",
+      "touch": "iPhone 13 emulation; six full-resolution desktop/iPad portrait phase captures",
+      "graphics": "Software WebGL with documented behavior-check policy",
+      "nativeIPad": "unverified"
+    },
+    "evidenceSha256": {
+      "packageLog": "67c60336ffddb2552b2a350795051d71c9d68cc56adc8383b920af41760b289d",
+      "packageBrowser": "e7e1d0d19747d0a2ccdb0eab67a8fd10be4869d0d2a61cb6670261be83ce57f1",
+      "liveLog": "d8e97a6dfb2bf673753bb1ad65dca3af7f1bc7bec31dbb70aa2c9739e3f04301",
+      "liveBrowser": "d50362d12c53a02e032f09e05a64fa1442205f6bda7b3d432728cff2e8e09aae"
+    },
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_f6da9b3569108191be712e88f9d80369",
+    "deploymentId": "appgdep_6afd3109d40c8191af91c80b2f4eb0fd",
+    "evidence": "design/combat-readability/summary.json"
+  },
+  "simulationSuites": 68
+}

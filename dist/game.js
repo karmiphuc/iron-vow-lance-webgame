@@ -3971,7 +3971,7 @@ canvas.addEventListener('pointerup',async e=>{
    if(W>760)toast('Target acquired. Fire when ready.');
    return;
   }
-  if(!walk){moveTap=null;return toast('Choose a highlighted tile within movement range')}
+  if(!walk){moveTap=null;return toast(battle.cover.has(tile.x+','+tile.z)?'BLOCKED · '+({'ridge-rock':'Rock outcrop','relay-shield':'Relay barrier',cargo:'Cargo structure',transformer:'Transformer',conifer:'Trees',bunker:'Bunker'}[battle.field.cover[tile.x+','+tile.z]]||'Obstacle')+' · blocks movement':'Choose a highlighted tile within movement range')}
   if(e.pointerType==='touch'){
    hover=null;
    if(moveTap?.x!==tile.x||moveTap?.z!==tile.z){moveTap=tile;return}

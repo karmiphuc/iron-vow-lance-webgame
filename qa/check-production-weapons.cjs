@@ -99,7 +99,9 @@ const buffer=name=>{const b=fs.readFileSync(path.join(root,'rig-bench',name));re
  assert.ok(longAssets.has('parallax')&&retractedCases>0,'Actual long-gun negative-travel cases covered');
  console.log('PASS '+clearanceCases+' actual biped/quad long-gun cases ('+[...longAssets].join(', ')+'), '+retractedCases+' retracted poses, max '+clearanceMaximum+' rad; '+unreachableCases+' arm-only unreachable synthetic targets classified separately against gameplay');
  // Recheck recorded legal boundaries and the final missing endpoint class: real shield faces.
- const pitch=Number(process.env.IRON_VOW_AIM_PITCH||fs.readFileSync(path.join(root,'scene/battle.js'),'utf8').match(/TILE=([\d.]+)/)[1]),recorded=require('./fixtures/phase2-aim-clearance.json'),poseCache=new Map();
+ const battleSource=fs.readFileSync(path.join(root,'scene/battle.js'),'utf8');
+ const pitch=Number(process.env.IRON_VOW_AIM_PITCH||battleSource.match(/TILE=([\d.]+)/)[1]);
+ const rise=Number(process.env.IRON_VOW_AIM_RISE||battleSource.match(/\bRISE=([\d.]+)/)?.[1]||.646),recorded=require('./fixtures/phase2-aim-clearance.json'),poseCache=new Map();
  const poseRig=(model,pose,shieldId)=>{
   const m=IronVowFoundryRig.buildRig(model,'ally');m.scale=.9;m.cont.scale.setScalar(.9);m.seed=5;m.primaryWeapon=A.mount(source,'parallax',m.rig.arms.R.so);m.offhand=shieldId?'shield':'free';m.aim.blend=1;m.aim.until=100;m.aim.point.set(0,4,12);
   for(let n=1;n<=35;n++)IronVowFoundryRig.animateMech(m,{pos:V3(),ground:0,groundAt:()=>0,face:0,heading:0,moving:false,speed:0,stepLen:1.7,brace:pose==='brace'?1:0,alive:true,deathAge:-1,ready:true,artillery:m.dims.quad&&pose!=='ready'?[1,1,1]:null},1/30,n/30);
@@ -114,19 +116,19 @@ const buffer=name=>{const b=fs.readFileSync(path.join(root,'rig-bench',name));re
   for(let i=0;i<feet.length;i++)footDrift=Math.max(footDrift,m.rig.legs[i].an.getWorldPosition(V3()).distanceTo(feet[i]));
   if(error>=1e-6)endpointFailures.push({label,pitch,error,target:target.toArray(),actorModel:m.frame,actorYaw:yaw});assert.ok(nodes.every((n,i)=>n.position.distanceTo(rest[i].p)<1e-12),'Joint connections remain intact');assert.equal(w.mount.parent,m.rig.arms.R.so);assert.ok(w.mount.position.distanceTo(grip)<1e-12,'Actual hand grip remains connected');
  };
- for(const f of recorded.fixtures){const t=V3(...f.target.point);t.x+=f.target.dx*(pitch-recorded.basePitch);t.z+=f.target.dz*(pitch-recorded.basePitch);checkEndpoint(getPose(f.actor.model,f.actor.pose),f.actor.yaw,t,'Recorded '+f.target.kind);}
+ for(const f of recorded.fixtures){const t=V3(...f.target.point);t.x+=f.target.dx*(pitch-recorded.basePitch);t.z+=f.target.dz*(pitch-recorded.basePitch);t.y+=(f.target.level??0)*(rise-.646);checkEndpoint(getPose(f.actor.model,f.actor.pose),f.actor.yaw,t,'Recorded '+f.target.kind);}
  for(const enemyModel of [0,4])for(const actorModel of [1,5])for(const pose of ['ready','brace'])for(const shieldId of ['bulwark-shield','citadel-shield'])for(const [dx,dz]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]])for(const level of [-1,0,1]){
-  const key=enemyModel+'/'+pose+'/'+shieldId;if(!enemyPoses.has(key))enemyPoses.set(key,poseRig(enemyModel,pose,shieldId));const enemy=enemyPoses.get(key),yaw=Math.atan2(-dx,-dz);enemy.m.cont.rotation.y=yaw;enemy.m.cont.position.set(dx*pitch,level*.646,dz*pitch);enemy.m.cont.updateMatrixWorld(true);A.poseShield(enemy.shield,{alive:true,hp:{left:100}},yaw);enemy.m.cont.updateMatrixWorld(true);
+  const key=enemyModel+'/'+pose+'/'+shieldId;if(!enemyPoses.has(key))enemyPoses.set(key,poseRig(enemyModel,pose,shieldId));const enemy=enemyPoses.get(key),yaw=Math.atan2(-dx,-dz);enemy.m.cont.rotation.y=yaw;enemy.m.cont.position.set(dx*pitch,level*rise,dz*pitch);enemy.m.cont.updateMatrixWorld(true);A.poseShield(enemy.shield,{alive:true,hp:{left:100}},yaw);enemy.m.cont.updateMatrixWorld(true);
   checkEndpoint(getPose(actorModel,pose),Math.atan2(dx,dz),enemy.shield.face.getWorldPosition(V3()),'Real '+shieldId+' face enemyModel='+enemyModel+' actorModel='+actorModel+' pose='+pose+' dx='+dx+' dz='+dz+' level='+level);shieldCases++;
  }
  assert.ok(footDrift<1e-8,'Torso/arm clearance preserves actual planted ankle positions');
  let progressionCases=0,maximumShoulderRate=0,maximumSpineRate=0;
- const progression=recorded.fixtures.slice(0,8).map(f=>{const t=V3(...f.target.point);t.x+=f.target.dx*(pitch-recorded.basePitch);t.z+=f.target.dz*(pitch-recorded.basePitch);return{a:getPose(f.actor.model,f.actor.pose),yaw:f.actor.yaw,t};}).concat(torsoProgression);
+ const progression=recorded.fixtures.slice(0,8).map(f=>{const t=V3(...f.target.point);t.x+=f.target.dx*(pitch-recorded.basePitch);t.z+=f.target.dz*(pitch-recorded.basePitch);t.y+=(f.target.level??0)*(rise-.646);return{a:getPose(f.actor.model,f.actor.pose),yaw:f.actor.yaw,t};}).concat(torsoProgression);
  for(const {a,yaw,t} of progression){let previous=null;
   for(const weight of [0,.2,.4,.6,.8,.95,.98,.99,1]){const{m,nodes,rest}=a;nodes.forEach((n,i)=>{n.position.copy(rest[i].p);n.quaternion.copy(rest[i].q);});m.cont.rotation.y=yaw;m.cont.updateMatrixWorld(true);aim(m,m.primaryWeapon,t,weight);const current={weight,spine:nodes[0].quaternion.clone(),shoulder:nodes[1].quaternion.clone()};if(previous&&previous.weight>=.95){const dw=weight-previous.weight;maximumShoulderRate=Math.max(maximumShoulderRate,current.shoulder.angleTo(previous.shoulder)/dw);maximumSpineRate=Math.max(maximumSpineRate,current.spine.angleTo(previous.spine)/dw);}previous=current;progressionCases++;}
  }
  assert.ok(maximumShoulderRate<8&&maximumSpineRate<2,'Ready-weight shoulder/torso progression has no late threshold snap');
- if(process.env.IRON_VOW_AIM_BOUNDED_REPORT)fs.writeFileSync(process.env.IRON_VOW_AIM_BOUNDED_REPORT,JSON.stringify({pitch,endpointCases,shieldCases,endpointMax,footDrift,progressionCases,torsoProgressionCases:torsoProgression.length,maximumShoulderRate,maximumSpineRate,endpointFailures},null,2)+'\n');
+ if(process.env.IRON_VOW_AIM_BOUNDED_REPORT)fs.writeFileSync(process.env.IRON_VOW_AIM_BOUNDED_REPORT,JSON.stringify({pitch,rise,endpointCases,shieldCases,endpointMax,footDrift,progressionCases,torsoProgressionCases:torsoProgression.length,maximumShoulderRate,maximumSpineRate,endpointFailures},null,2)+'\n');
  assert.equal(endpointFailures.length,0,'Actual bounded part/miss/shield endpoints align: '+JSON.stringify(endpointFailures.slice(0,2)));
  console.log('PASS '+endpointCases+' bounded actual legal endpoints at pitch '+pitch+' ('+shieldCases+' real shield faces), max '+endpointMax+' rad, planted drift '+footDrift+'; '+progressionCases+' weighted poses, shoulder/spine rates '+maximumShoulderRate+'/'+maximumSpineRate);
  console.log('PASS '+count+' physical weapon aliases and sockets, geometry-adjacent emitters, real piledriver stroke and Parallax charge');

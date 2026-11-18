@@ -1,0 +1,2 @@
+# Preserve the creator's original CRLF license verbatim with the source assets.
+dist/assets/environment/industrial/License.txt -text -whitespace
