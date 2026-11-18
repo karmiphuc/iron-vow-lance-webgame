@@ -319,6 +319,13 @@
     "weapons": 32,
     "shields": 3,
     "anomalies": [],
-    "errors": []
+    "errors": [],
+    "commit": "dc8d08f114d385e4a3965183d0f11ec4e0e29689",
+    "workshopWeapons": 24,
+    "workshopShields": 2,
+    "negativeControlsPerShard": [
+      16,
+      16
+    ]
   }
 }
