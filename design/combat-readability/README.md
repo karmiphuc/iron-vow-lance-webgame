@@ -7,3 +7,5 @@ Terrain uses continuous worn material, road-link paint, quiet grid corners, flat
 The previous shotgun source fails the real-pool regression with one unique endpoint instead of twelve. Final assertions require the twelve separated trajectories and matching impacts. Legacy pre-survey terrain briefly lacked cells; the renderer now safely starts flat and rebuilds when the cells arrive, exercised by normal menu-to-combat flows. The phone fixture verifies an exposed, reachable ramp destination with actual touch input.
 
 Sources and deterministic asset preparation are described in docs/combat-art.md. The seven WebPs are the final evidence set; intermediate captures and raw logs remain outside the repository.
+
+Published and verified as Sites v107. All 68 simulation suites passed; 164 live runtime files matched and six combat flows passed on each desktop/touch profile. Source, version, deployment and evidence hashes are recorded in summary.json and docs/release-verification.json.
