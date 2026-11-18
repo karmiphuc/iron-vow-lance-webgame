@@ -10,7 +10,7 @@ const groundAt=(x,z)=>2+x*.08+z*.03;
 const effects=IronVowEffects.create(scene,{groundAt,partPoint:()=>new THREE.Vector3(0,3,0)}),fx=effects.fx;
 const p=new THREE.Vector3(0,2.15,0);effects.impact(p,new THREE.Vector3(1,.05,0),'rifle');
 const sparks=scene.children.filter(o=>o.isMesh&&o.geometry.parameters?.width===.05&&o.geometry.parameters?.depth===.38&&o.visible);
-assert.equal(sparks.length,13,'Reference rifle spray emits thirteen actual pooled meshes');
+assert.equal(sparks.length,17,'Rifle spray emits the reference thirteen sparks at game scale (IMPACT_SCALE.sparks 1.3) as actual pooled meshes');
 fx.update(.15);
 for(const spark of sparks){assert.ok(spark.position.x>0,'Every spark flies back toward the shooter');assert.ok(spark.position.y>=groundAt(spark.position.x,spark.position.z)+.029,'Sparks bounce on local elevated terrain');}
 fx.arc(new THREE.Vector3(0,3,0),new THREE.Vector3(3,4,0),.2,1);fx.update(.01);

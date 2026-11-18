@@ -2949,9 +2949,11 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const plantedBastion=a.brace&&bastionRig(a);
  const plantedWarden=a.brace&&a.hp.legs>0&&a.frame===0&&a.team==='ally';
  const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
- const primeDuration=!lionStrike&&!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
-  (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
- const windup=reducedMotion?.06:native?native.cue*native.duration:profile.raise+(!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction?(primeDuration?.12:.51):0),raise=primeDuration+windup;
+ // Under the attack camera the step-up and the raised-gun hold get a readable beat (CINEMATIC_PACE); field and reaction fire keep theirs.
+ const paced=Boolean(sequence&&!sequence.skipped&&!reaction&&!reducedMotion);
+ const primeDuration=(!lionStrike&&!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
+  (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0)*(paced?CINEMATIC_PACE.step:1);
+ const windup=reducedMotion?.06:native?native.cue*native.duration:profile.raise+(!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction?(primeDuration?.12:.51)+(paced?CINEMATIC_PACE.aimHold:0):0),raise=primeDuration+windup;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,windup,native:native?{...native,clip}:null,
   ...(power?{stage:'pullback'}:{})};
  if(primeDuration&&!sequence?.skipped)gaitSound(a,'arm',0);
@@ -2989,6 +2991,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  recordVolley(a,t,w,reaction,guard);
  const hit=landed>0,actual=impacts.find(impact=>impact.part===part)?.part??impacts[0]?.part??part;
  if(sequence&&guard)sequence.part='shield';
+ // A volley that misses entirely is telegraphed on the defender (Front Mission 3): it sidesteps a dodge, or ducks and twists under a
+ // plain miss, timed so the rounds pass where it stood. Display only: the unit's tile and every rule stay unchanged.
+ if(!hit&&!sequence?.skipped)beginEvade(t,a,dodged,clock+Math.max(0,contacts[0].at-EVADE.lead));
  const impact=freezeAttachment(t,guard?'shield':actual);
  if(!hit){impact.ox+=.55*(a.face||1);impact.oy-=.38}
  const anchors=new Map();
@@ -3052,7 +3057,6 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(sequence)sequence.phase='result';
  let jammed=false,keepBoost=false;
  if(!hit){
-  if(dodged&&!sequence?.skipped)window.IronVowScene?.combat?.dodge?.(t,a);
   const result=dodged?'DODGE':'MISS';
   if(sequence)sequence.result=result;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:result});
@@ -3098,7 +3102,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  a.attack.returnAt=clock+recover;
  const settle=recover+(primeDuration?ATTACK_STEP.returnDuration:0);
  const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:DESTRUCTION.end*destructionPace(t));
- const cinematicHold=w.scout&&t.alive?1.2-raise-flight:t.alive&&reaction?.5:(t.alive?2.43:2.66)-raise-flight;
+ // The cinematic pacing lengthens the lead-in only; the result beat after the last round keeps its designed length.
+ const pacedLead=paced?primeDuration*(1-1/CINEMATIC_PACE.step)+(native?0:CINEMATIC_PACE.aimHold):0;
+ const cinematicHold=w.scout&&t.alive?1.2-raise-flight:t.alive&&reaction?.5:(t.alive?2.43:2.66)-(raise-pacedLead)-flight;
  const hold=sequence?Math.max(recovery,cinematicHold):recovery;
  await waitAttack(hold*1000,sequence);
  if(hit&&w.melee&&hasMechSkill(a,BULWARK_FRAME)&&(a.frame!==BULWARK_FRAME||w.id==='aegis-bash')&&t.alive&&distance(a,t)===1){
@@ -3119,7 +3125,7 @@ const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recor
  BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,roundAP,resetMovement,highGroundAim
 });
-function engage(attacker,defender,part,weapon){return resolveExchange(attacker,defender,part,weapon)}
+function engage(attacker,defender,part,weapon){if(!attacker?.alive||!defender?.alive)return Promise.resolve(null);return resolveExchange(attacker,defender,part,weapon)}
 function checkEnd(){if(!battle)return true;if(!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
 const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
@@ -3341,7 +3347,7 @@ const ATTACK_PROFILES={
  rifle:{raise:.23,beats:[0,.09,.18],travel:.10,recover:.34},
  shotgun:{raise:.28,beats:[0],travel:.12,recover:.43},
  rail:{raise:.39,beats:[0],travel:.075,recover:.47},
- missile:{raise:.35,beats:[0,.17],travel:.42,recover:.39},
+ missile:{raise:.35,beats:[0,.17],travel:1.0,recover:.39},   // lofted 45-degree flight (was .42 on a flat arc)
  hailstorm:{raise:.36,beats:[0,.06,.12,.18,.24,.30,.36],travel:.09,recover:.39},
  rampart:{raise:.31,beats:[0],travel:.13,recover:.48},
  rivet:{raise:.28,beats:[0],interval:.072,travel:.095,recover:.38,effect:'hailstorm',feed:true},
@@ -3351,7 +3357,7 @@ const ATTACK_PROFILES={
  blade:{raise:.38,beats:[0],travel:.08,recover:.55,melee:true,effect:'cleaver'},
  piledriver:{raise:.32,beats:[0],travel:.18,recover:.39,melee:true},
  morrow:{raise:.784,beats:[0,.298667],travel:.14,recover:.48,effect:'rampart',alternate:true},
- locust:{raise:.784,beats:[0,.298667],travel:.46,recover:.39,effect:'missile',alternate:true},
+ locust:{raise:.784,beats:[0,.298667],travel:1.05,recover:.39,effect:'missile',alternate:true},   // lofted (was .46)
  'breach-gauntlet':{raise:.357,beats:[0],travel:.21,recover:.41,melee:true,effect:'breaker'},
  'pulse-bash':{raise:.357,beats:[0],travel:.21,recover:.33,melee:true,effect:'cleaver'},
  'aegis-cleave':{raise:1.08,beats:[0],travel:.29,recover:.70,melee:true,
@@ -3380,6 +3386,9 @@ const NATIVE_ATTACK_TIMING={
  strike:{duration:1.05,cue:.34},
 };
 const ATTACK_STEP={duration:.60,returnDuration:.35};
+// Attack-camera pacing (owner, 2026-11-18: the brace, step-up and priming went by too fast to read). Step-up 0.6 s -> 0.96 s; the gun
+// then holds raised and steady 0.45 s longer before the first round. Native GLB fire clips keep their authored cue timing.
+const CINEMATIC_PACE={step:1.6,aimHold:.45};
 const DESTRUCTION={kneelEnd:.56,fallEnd:.92,blast:1.05,end:1.92};
 function destructionPace(u){
  if(u.frame===ASHIGARU_FRAME)return .82;
@@ -3391,7 +3400,7 @@ function destructionStyle(u){return u.deathStyle||(u.frame===1||FRAMES[u.frame]?
 
 function beginDestruction(u,reason='body'){
  u.downReason=reason;
- u.alive=false;u.deathTime=clock;u.deathStyle=u.kind?'vehicle':destructionStyle(u);u.deathEvents=0;u.attack=null;
+ u.alive=false;if(lockedTarget===u.id)lockedTarget=null;u.deathTime=clock;u.deathStyle=u.kind?'vehicle':destructionStyle(u);u.deathEvents=0;u.attack=null;
 }
 function updateDestruction(u,t){
  if(u.alive||u.downReason==='pilot'||!Number.isFinite(u.deathTime))return;
@@ -3603,6 +3612,28 @@ function advanceGaitCues(u,phase){
   gaitSound(u,marker.land?'land':'lift',marker.side);
  }
 }
+// reach in tiles (7.4 m): a dodge hops about 1.6 m back and aside; a plain miss sways about 0.5 m while the hull ducks (scene/combat.js evade)
+const EVADE={lead:.24,dodge:{reach:.22,out:.2,hold:.5,back:1.05},miss:{reach:.07,out:.14,hold:.42,back:.8}};
+const evades=new WeakMap();   // display-only; kept off the unit so saves never carry it
+function beginEvade(u,attacker,dodged,at){
+ if(reducedMotion||u.kind||!u.alive||u.hp.legs<=0)return;
+ const dx=u.x-attacker.x,dz=u.z-attacker.z,length=Math.hypot(dx,dz)||1;
+ let side=(u.x+u.z+battle.turn)%2?1:-1;   // alternates by tile and turn; flips to stay on the board
+ if(!onBoard(Math.round(u.x-dz/length*side),Math.round(u.z+dx/length*side)))side=-side;
+ // back along the line of fire as well as aside, so the hop reads from the side-on duel camera too
+ const x=-dz/length*side*.8+dx/length*.6,z=dx/length*side*.8+dz/length*.6;
+ evades.set(u,{at,dodged,side,x,z,kicked:false});
+}
+// Sidestep offset in tiles for the displayed position: out fast, hold while the rounds pass, settle back.
+function evadeOffset(u,t){
+ const e=evades.get(u);if(!e)return 0;
+ const p=e.dodged?EVADE.dodge:EVADE.miss,age=t-e.at;
+ if(age<0)return 0;
+ if(!e.kicked){e.kicked=true;window.IronVowScene?.combat?.evade?.(u,e);}
+ if(age>=p.back){evades.delete(u);return 0;}
+ const reach=age<p.out?smoothRange(0,p.out,age):age<p.hold?1:1-smoothRange(p.hold,p.back,age);
+ return p.reach*reach;
+}
 function advanceUnitAnimation(u,t,dt){
  const m=u.motion;
  if(m){
@@ -3611,7 +3642,7 @@ function advanceUnitAnimation(u,t,dt){
   if(m.stepBeats!=null)twoStepContacts(u,q);
   advanceGaitCues(u,p);
  }
- else{u.vx=u.x;u.vz=u.z}
+ else{const off=evadeOffset(u,t),e=evades.get(u);u.vx=u.x+(e?.x??0)*off;u.vz=u.z+(e?.z??0)*off}
  updateDestruction(u,t);
  if(u.brace&&u.frame===0&&u.team==='ally'){
   u.braceBlend=reducedMotion?1:clamp01((t-(u.braceTime??-100))/WARDEN_BRACE_DURATION);
@@ -3681,28 +3712,23 @@ function animationPose(u,t){
  return pose;
 }
 
+// Field readout over each mech (owner, 2026-11-18: the boxed per-part table took too much screen and broke immersion).
+// Unfocused hulls show one thin body bar; the selected, locked or hovered hull shows one slim row of part pips and its call
+// sign. Exact numbers stay in the target panel and unit inspect. Nothing is drawn while the attack camera plays.
 function drawUnitReadout(u,height=2.35){
+ if(activeCinematic&&!reducedMotion)return;
  const q=window.IronVowScene?.ready?window.IronVowScene.labelPoint(u):project(u.vx,height,u.vz),ally=u.team==='ally';
  const focused=(ally&&u.index===selected)||u.id===lockedTarget||(hover?.x===u.x&&hover?.z===u.z);
- const detail=focused&&scale>=32,rows=healthRows(u),gap=2,rowHeight=detail?11:3;
- const width=detail?Math.max(86,Math.min(100,scale*.75)):Math.max(40,Math.min(62,scale*.7));
- const heightHP=rows.length*(rowHeight+gap)-gap,x=q.x-width/2,y=q.y+6-heightHP;
- ctx.fillStyle='#0b141de6';ctx.fillRect(x-2,y-2,width+4,heightHP+4);
- for(const [rowIndex,row] of rows.entries()){
-  const cellWidth=(width-(row.length-1)*gap)/row.length,top=y+rowIndex*(rowHeight+gap);
-  for(const [column,part] of row.entries()){
-   const left=x+column*(cellWidth+gap),hp=u.hp[part],ratio=clamp01(hp/u.max[part]),tone=healthTone(ratio);
-   ctx.fillStyle=tone==='down'?'#573638':'#293e4a';ctx.fillRect(left,top,cellWidth,rowHeight);
-   ctx.fillStyle=HEALTH_COLORS[tone];ctx.fillRect(left,top+(detail?rowHeight-2:0),cellWidth*ratio,detail?2:rowHeight);
-   if(detail){
-    ctx.font='8px Inter,Arial,sans-serif';ctx.textAlign='left';ctx.fillStyle='#c5d3da';
-    const label=part==='left'?'L':part==='right'?'R':HEALTH_LABEL[part];
-    ctx.fillText(label,left+2,top+8,cellWidth-18);
-    ctx.font='bold 9px Inter,Arial,sans-serif';ctx.textAlign='right';ctx.fillStyle=tone==='down'?HEALTH_COLORS.down:'#f2f6f4';
-    ctx.fillText(hp,left+cellWidth-2,top+8);
-   }
-  }
+ const parts=focused?healthRows(u).flat():['body'],gap=2,barHeight=focused?3:2;
+ const width=focused?Math.max(44,Math.min(60,scale*.55)):Math.max(22,Math.min(34,scale*.32));
+ const x=q.x-width/2,y=q.y+4,cellWidth=(width-(parts.length-1)*gap)/parts.length;
+ ctx.fillStyle='#0b141d99';ctx.fillRect(x-1,y-1,width+2,barHeight+2);
+ for(const [column,part] of parts.entries()){
+  const left=x+column*(cellWidth+gap),ratio=clamp01(u.hp[part]/u.max[part]),tone=healthTone(ratio);
+  ctx.fillStyle=tone==='down'?'#57363899':'#293e4a99';ctx.fillRect(left,y,cellWidth,barHeight);
+  ctx.fillStyle=HEALTH_COLORS[tone];ctx.fillRect(left,y,cellWidth*ratio,barHeight);
  }
+ if(!focused)return;
  ctx.font=(W<760?'9':'10')+'px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillStyle=ally?'#d7e3df':'#e5ae98';
  ctx.shadowColor='#06101a';ctx.shadowBlur=4;ctx.fillText(ally?CREW[u.pilot].call:u.name,q.x,y-5);ctx.shadowBlur=0;
 }
@@ -3908,7 +3934,8 @@ canvas.addEventListener('wheel',e=>{if(!battle||battle.busy)return;e.preventDefa
 function screenTile(x,y){return window.IronVowScene.screenTile(x,y);}
 
 
-function pick(x,y){return window.IronVowScene.pick(x,y);}
+// Wrecks keep their hit proxies (they block shots and cover), but a destroyed unit is never a pick: tapping one must not lock or fire on it.
+function pick(x,y){const u=window.IronVowScene.pick(x,y);return u?.alive?u:null;}
 let pointerGesture=null,pinchGesture=null;
 const fieldPointers=new Map();
 let hangarTap;

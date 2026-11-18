@@ -220,6 +220,30 @@ function labelPoint(unit){
  const neck=(m.nativeV2?.anchors?.pilot||m.rig.neck).getWorldPosition(V3());
  return projectWorld(neck.add(V3(0,record.headHeight+.7,0)));
 }
+// The duel camera's preferred side: toward the open board, so it does not end up off the field.
+function cameraSide(actor,direction){
+ const centre=world((battle.size.width-1)/2,(battle.size.depth-1)/2).sub(actor);
+ return V3(direction.z,0,-direction.x).dot(centre)>=0?1:-1;
+}
+// Pick a duel camera that sees both combatants past cover and props: the preferred side, then the other, each first level and then
+// raised. If nothing is clear, the side blocked furthest out, pulled in short of the obstruction. Computed once per phase.
+const duelRay=new T.Raycaster();
+function blockedAt(from,to){
+ const toward=to.clone().sub(from),length=toward.length();
+ duelRay.set(from,toward.normalize());duelRay.far=Math.max(0,length-1.5);
+ return duelRay.intersectObjects(board.children,true).find(h=>h.object.visible&&!groundMeshes.includes(h.object))?.distance??null;
+}
+function duelPlan(pose,preferred){
+ let best=null;
+ for(const lift of [0,7])for(const sign of [preferred,-preferred]){
+  const {look,at,subjects}=pose(sign,1,lift),hits=[look,...subjects].map(p=>blockedAt(at,p));
+  if(hits.every(h=>h===null))return {sign,pull:1,lift};
+  if(lift)continue;
+  const near=blockedAt(look,at),pull=near===null?1:Math.max(.35,(near-1.5)/look.distanceTo(at));
+  if(!best||pull>best.pull)best={sign,pull,lift:0};
+ }
+ return best;
+}
 function updateCamera(t,dt){
  const mobile=innerWidth<760,size=battle.size,fov=mobile?40:30;
  camera.aspect=innerWidth/innerHeight;camera.fov=fov;
@@ -233,12 +257,32 @@ function updateCamera(t,dt){
  const position=target.clone().add(V3(Math.sin(az)*Math.cos(el),Math.sin(el),Math.cos(az)*Math.cos(el)).multiplyScalar(distance));
  const shot=activeCinematic;
  if(shot&&!reducedMotion){
+  // Duel framing (owner, 2026-11-18; replaces the over-the-shoulder view that showed only the attacker's back).
+  // Aim (brace, step-up, prime): ahead of the attacker and off to one side, a three-quarter front of the attacker.
+  // Fire and result: a two-shot from the side, slightly ahead of the line, with both mechs in frame; its distance follows the
+  // horizontal field of view, so portrait screens pull back instead of cropping. Each phase picks the side whose view is not
+  // blocked by cover or props, and pulls in short of an obstruction when both are.
   const actor=unitRoot(shot.actor),victim=partPoint(shot.target,shot.part),direction=victim.clone().sub(actor).setY(0);
-  // On a close shot, move outside the attacker's shoulder so the defender stays visible.
-  const close=1-smoothRange(TILE*2,TILE*4,direction.length());
-  direction.normalize();const side=V3(direction.z,0,-direction.x);
-  target.copy(shot.phase==='result'?victim:victim.clone().lerp(actor,.12));
-  position.copy(actor).addScaledVector(direction,-6.5).addScaledVector(side,3.4+3.2*close);position.y=actor.y+6+1.2*close;
+  const span=Math.max(TILE*.8,direction.length());direction.normalize();
+  const chest=actor.clone();chest.y+=4.2;
+  const halfAngle=Math.atan(Math.tan(fov*Math.PI/360)*camera.aspect),key=shot.phase==='aim'?'aim':'duel';
+  const pose=(sign,pull,lift=0)=>{
+   const side=V3(direction.z,0,-direction.x).multiplyScalar(sign),look=V3(),at=V3();
+   if(key==='aim'){
+    look.copy(chest).addScaledVector(direction,span*.18);
+    at.copy(actor).addScaledVector(direction,Math.min(15,span*.5+6)).addScaledVector(side,10);at.y=actor.y+5.2+lift;
+   }else{
+    look.copy(chest).lerp(victim,.52);
+    const reach=Math.min(60,(span*.55+3)/Math.tan(halfAngle*.85));
+    at.copy(actor).addScaledVector(direction,span*.45).addScaledVector(side,reach);at.y=look.y+2.5+reach*.08+lift;
+   }
+    return {look,at:look.clone().lerp(at,pull),subjects:[chest,victim]};
+  };
+  // keyed by who fires at whom: a return-fire exchange reuses the same sequence with the roles swapped
+  const plans=shot.cameraPlans??={},id=shot.actor.id+'>'+shot.target.id+':'+key;
+  plans[id]??=duelPlan(pose,cameraSide(actor,direction));
+  const chosen=pose(plans[id].sign,plans[id].pull,plans[id].lift);
+  target.copy(chosen.look);position.copy(chosen.at);
  }
  const blend=cameraReady?1-Math.exp(-dt*6):1;cameraTarget.lerp(target,blend);cameraPosition.lerp(position,blend);camera.position.copy(cameraPosition);
  if(!reducedMotion&&shake>.15)camera.position.add(V3(Math.sin(t*110),Math.cos(t*93)*.5,0).multiplyScalar(Math.min(1.4,shake*.03)));
@@ -323,8 +367,17 @@ function render(t,dt){
  if(root.IronVowRenderer.lost)return;
  if(battleRef!==battle||terrainRef!==battle.field.cells||!scene)build();
  for(const u of battle.units)prepareUnit(u,t);
+ // While the duel camera plays, only the two combatants are drawn; everything else returns when it closes.
+ const duel=!reducedMotion&&activeCinematic?[activeCinematic.actor,activeCinematic.target]:null;
+ for(const u of battle.units){
+  const object=models.get(u.id)?.object;if(!object)continue;
+  const hide=Boolean(duel&&!duel.includes(u));
+  if(hide&&object.visible){object.visible=false;object.userData.duelHidden=true;}
+  else if(!hide&&object.userData.duelHidden){object.visible=true;object.userData.duelHidden=false;}
+ }
  for(const u of battle.units){const cue=mortarCues.get(u.id);if(cue&&!cue.fired&&t-cue.at>=.95){cue.fired=true;const p=attachmentPoint(u,'mortarMuzzle');combat.fx.glow(p,0xffb050,3,.15);combat.fx.smoke(p,4,1.4,0xc4bdb0,.5,.8,1.4,.3);}}
  combat.update(t,dt);updateCamera(t,dt);updateOverlays();
+ if(duel){selection.visible=false;targetRing.visible=false;}
  const storm=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3===2;
  if(storm&&!reducedMotion){if(t>=lightningAt){lightning=1;lightningAt=t+kit.random(5,11);}lightning*=Math.exp(-dt*9);sun.intensity=kit.PAL[2].sun[1]+lightning*2.5*(kit.random(0,1)>.3?1:.4);}
  root.IronVowRenderer.show(true);root.IronVowRenderer.resize(innerWidth,innerHeight);
