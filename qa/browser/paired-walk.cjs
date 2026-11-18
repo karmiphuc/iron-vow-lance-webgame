@@ -18,7 +18,7 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
     heading:headingTo(1,0),face:1,weapon:FRAMES[frame].weapon,melee:FRAMES[frame].melee});
    battle.units.filter(other=>other!==u).forEach((other,i)=>Object.assign(other,{x:17,z:i+1,vx:17,vz:i+1}));
    effects=[];action='move';closeModal();focusBattleCamera(u,true);fieldCamera.x=9.5;IronVowScene.clear();renderBattle();IronVowScene.render(clock,1);
-   const steps=[],sounds=[],bones=[],track={u,steps,sounds,bones,seam:false};
+   const steps=[],sounds=[],bones=[],tiles=[],track={u,steps,sounds,bones,tiles,seam:false};
    if(!window.pairedWalkQA){
     const push=Array.prototype.push,advance=advanceUnitAnimation,cue=gaitSound;
     gaitSound=(unit,kind,side)=>{
@@ -32,6 +32,10 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
     };
     advanceUnitAnimation=(unit,time,dt)=>{
      const watch=window.pairedWalkQA,m=unit.motion;
+     if(unit===watch?.u&&m&&!watch.tiles[m.stepIndex]){
+      const rig=IronVowScene.models.get(unit.id).entry.m;
+      watch.tiles[m.stepIndex]={duration:m.duration,base:walkTileDuration(unit),mass:rig.stepMass,expectedMass:MECH_MOTION[unit.frame].mass};
+     }
      if(unit===watch?.u&&m?.stepIndex===1&&m.segment?.length===2){
       const p=fieldStepProgress(.02,m.segment);
       const cycleAtSeam=animationPose(unit,m.start).cycle;
@@ -71,8 +75,13 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
   for(let i=0;i<400&&await page.evaluate(()=>battle.busy||current().x!==10||current().z!==10);i++)await page.clock.runFor(34);
   const state=await page.evaluate(()=>({x:current().x,z:current().z,busy:battle.busy,ready:IronVowScene.ready,action,moveTap,modal:!document.querySelector('#modal').hidden}));
   assert.equal(!state.busy&&state.x===10&&state.z===10,true,name+' completes its real two-tile move: '+JSON.stringify(state));
-  const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,sounds:pairedWalkQA.sounds,bones:pairedWalkQA.bones,seam:pairedWalkQA.seam,
+  const result=await page.evaluate(()=>({steps:pairedWalkQA.steps,sounds:pairedWalkQA.sounds,bones:pairedWalkQA.bones,tiles:pairedWalkQA.tiles,seam:pairedWalkQA.seam,
    ap:current().ap,move:current().moveLeft,walks:current().walkCount,motion:current().motion}));
+  assert.equal(result.tiles.length,2);
+  for(const tile of result.tiles){
+   assert.ok(Math.abs(tile.duration*3-tile.base)<1e-9,name+' completes each tile in one-third the original walk time');
+   assert.equal(tile.mass,tile.expectedMass,name+' keeps its footfall mass');
+  }
   assert.deepEqual(result.steps,[[8.5,10],[9,10],[9.5,10],[10,10]],name+' lands two alternating beats per tile');
   // Live rigs sound their real foot plants (fix/heavier-walk): each landing alternates feet and the trailing foot lifts after it.
   const lands=result.sounds.filter(([kind])=>kind==='land').map(([,side])=>side);

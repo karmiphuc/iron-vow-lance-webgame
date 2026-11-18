@@ -22,7 +22,7 @@ Playwright uses its Chromium installation or a supported local Chrome. Set `IRON
 
 `node qa/check-combat-readability.cjs --out /tmp/iron-vow-combat-readability` runs actual shotgun-pool assertions, licensed GLB dependency checks, terrain/ridge rules, and three theater views each at desktop and iPad portrait. It verifies actual projected mech size, physical elevation, cover identity and claimed bounds, road links, shared rendering, mouse/touch movement and target details. The standard browser suite also includes a phone/desktop case. Evidence is kept under `design/combat-readability/`.
 
-`node qa/check-walk-weight.cjs --out design/heavier-walk` walks every hull through the real move timeline and fails on running cadence, catch-up steps, A-framed legs, toe-out, touching feet, massless footfalls or footstep sounds that miss the foot plants. Cicada and Gravemaw report leg-lean warnings until their model hip joints move.
+`node qa/check-walk-weight.cjs --out design/heavier-walk` walks every hull through the real move timeline and fails on running cadence, catch-up steps, A-framed legs, toe-out, touching feet, massless footfalls or footstep sounds that miss the foot plants. Cadence and catch-up limits are measured in gait time, with a separate assertion for 3× playback. Cicada and Gravemaw report leg-lean warnings until their model hip joints move.
 
 ## Menu and iPad UI gate
 

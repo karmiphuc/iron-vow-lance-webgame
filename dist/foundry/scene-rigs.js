@@ -336,11 +336,25 @@ function draw(u,t,pose,scope,model,custom){
   (oneHandGuns.has(fittedGun.id)||longGuns.has(fittedGun.id))?fittedGun:null;
  const readyPose=!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
  const aimFromArm=barrel?.carrier!==m.rig.spine&&!(barrel&&barrel.mount.parent===entry.primarySocket);
- animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
+ const playbackRate=world&&step?(u.motion.playbackRate??1):1;
+ const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
   airborne:world?.airborne,artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
-  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion},dt,t);
+  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
+ const previous=entry.groundRoot;
+ // Step the rig at its original integration interval along the faster path.
+ // A larger single delta skips foot plants and changes the spring response.
+ if(playbackRate>1&&previous&&dt>0){
+  const sample=V3();
+  for(let i=1;i<playbackRate;i++){
+   const fraction=i/playbackRate;
+   sample.copy(previous).lerp(pos,fraction);
+   animateMech(m,{...input,pos:sample,ground:previous.y+(world.y-previous.y)*fraction},dt,t-dt*(1-fraction));
+  }
+ }
+ animateMech(m,input,dt,t);
+ if(world)(entry.groundRoot??=V3()).set(pos.x,world.y,pos.z);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
   const lead=m.rig.legs[1];

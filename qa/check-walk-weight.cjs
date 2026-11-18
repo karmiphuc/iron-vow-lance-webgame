@@ -9,7 +9,7 @@ const root=resolve(__dirname,'..'),dist=join(root,'dist');
 const args=process.argv.slice(2);if(args.length!==2||args[0]!=='--out')throw Error('Usage: node qa/check-walk-weight.cjs --out <directory>');
 const out=resolve(args[1]);mkdirSync(out,{recursive:true});
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.glb':'model/gltf-binary','.ogg':'audio/ogg','.mp3':'audio/mpeg','.json':'application/json'};
-const LIMITS={footGapCm:4,stepsPerS:2.6,catchUpsPer10s:2.5,legTiltDeg:12,toeOutDeg:4};   // steps per second per leg pair
+const LIMITS={footGapCm:4,stepsPerS:2.6,catchUpsPer10s:2.5,legTiltDeg:12,toeOutDeg:4};   // cadence and catch-ups use seconds of gait time
 // Known model limits: these hips sit too close together for their feet, so the leg leans out until the model moves the hip joints (Blender).
 // Their tilt and catch-up readings are reported as warnings, not passes.
 const PENDING_MODEL={4:'CICADA',15:'GRAVEMAW'};
@@ -42,9 +42,9 @@ const PENDING_MODEL={4:'CICADA',15:'GRAVEMAW'};
      footGap=Math.hypot(Math.max(0,A.min.x-B.max.x,B.min.x-A.max.x),Math.max(0,A.min.y-B.max.y,B.min.y-A.max.y),Math.max(0,A.min.z-B.max.z,B.min.z-A.max.z));}
     const R=IronVowRenderer.get(),draw=R.render;R.render=()=>{};   // skip the GL draw only; the rig still animates every frame
     const lands=[],cue=gaitSound;gaitSound=(unit,kind,side)=>{if(unit===u&&kind==='land')lands.push(side);return cue(unit,kind,side);};
-    const a={t0:0,t1:0,steps:0,plants:0,catchUps:0,tilt:0,toe:0,n:0,swing:m.legs.map(L=>!!L.swing),settle:m.legs.map(L=>!!L.settle),from:m.cont.position.clone()};
+    const a={t0:0,t1:0,rate:1,steps:0,plants:0,catchUps:0,tilt:0,toe:0,n:0,swing:m.legs.map(L=>!!L.swing),settle:m.legs.map(L=>!!L.settle),from:m.cont.position.clone()};
     let on=true;
-    const tick=()=>{if(!on)return;requestAnimationFrame(tick);if(!u.motion)return;const now=performance.now();a.t0||=now;a.t1=now;
+    const tick=()=>{if(!on)return;requestAnimationFrame(tick);if(!u.motion)return;const now=performance.now();a.t0||=now;a.t1=now;a.rate=u.motion.playbackRate??1;
      m.legs.forEach((L,j)=>{const s=!!L.swing,c=!!L.settle;if(s&&!a.swing[j])a.steps++;if(!s&&a.swing[j])a.plants++;if(c&&!a.settle[j])a.catchUps++;a.swing[j]=s;a.settle[j]=c;});
      if(quad)return;
      const yaw=m.yaw,fw=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),rt=new THREE.Vector3(fw.z,0,-fw.x),c=m.cont.position;
@@ -55,14 +55,15 @@ const PENDING_MODEL={4:'CICADA',15:'GRAVEMAW'};
     };
     requestAnimationFrame(tick);
     await V.move(u.id,dest.x,dest.z);await new Promise(r=>setTimeout(r,500));on=false;R.render=draw;gaitSound=cue;
-    const walkS=Math.max(.01,(a.t1-a.t0)/1000),dist=Math.hypot(m.cont.position.x-a.from.x,m.cont.position.z-a.from.z),n=a.n||1;
+    const walkS=Math.max(.01,(a.t1-a.t0)/1000),dist=Math.hypot(m.cont.position.x-a.from.x,m.cont.position.z-a.from.z),n=a.n||1,gaitS=walkS*a.rate;
     return {frame,name:FRAMES[frame].name,rig:m.live||'kit',quad,tiles:dest.cost,metres:+dist.toFixed(1),walkS:+walkS.toFixed(2),speed:+(dist/walkS).toFixed(2),
-     stepsPerS:+(a.steps/walkS/(m.legs.length/2)).toFixed(2),catchUpsPer10s:+(a.catchUps/walkS*10).toFixed(1),plants:a.plants,landSounds:lands.length,catchUps:a.catchUps,legTiltDeg:quad?null:+(a.tilt/n).toFixed(1),footGapCm:footGap==null?null:Math.round(footGap*100),toeOutDeg:quad?null:+(a.toe/n).toFixed(1),
+     playbackRate:a.rate,stepsPerS:+(a.steps/gaitS/(m.legs.length/2)).toFixed(2),catchUpsPer10s:+(a.catchUps/gaitS*10).toFixed(1),plants:a.plants,landSounds:lands.length,catchUps:a.catchUps,legTiltDeg:quad?null:+(a.tilt/n).toFixed(1),footGapCm:footGap==null?null:Math.round(footGap*100),toeOutDeg:quad?null:+(a.toe/n).toFixed(1),
      stride:m.dims.stride??1,stepMass:m.stepMass??null};
    },frame);
    const fail=[],warn=[];
    if(r.error)fail.push(r.error);
    else{
+    if(r.playbackRate!==3)fail.push('walk playback rate is '+r.playbackRate+' instead of 3');
     if(r.stepsPerS>LIMITS.stepsPerS)fail.push(`steps ${r.stepsPerS}/s > ${LIMITS.stepsPerS}`);
     const model=PENDING_MODEL[frame]?warn:fail;
     if(r.catchUpsPer10s>LIMITS.catchUpsPer10s)model.push(`${r.catchUpsPer10s} catch-up steps per 10 s > ${LIMITS.catchUpsPer10s}`);

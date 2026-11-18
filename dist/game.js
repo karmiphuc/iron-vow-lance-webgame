@@ -1742,7 +1742,7 @@ window.IronVowFootPlant=(u,side,amount=1)=>{
  if(amount<.9)return;   // settle and catch-up shuffles stay silent
  gaitSound(u,'land',side);
  const motion=u.motion;
- if(motion)setTimeout(()=>{if(u.motion===motion&&!reducedMotion&&battle?.units.includes(u))gaitSound(u,'lift',-side);},90);
+ if(motion)setTimeout(()=>{if(u.motion===motion&&!reducedMotion&&battle?.units.includes(u))gaitSound(u,'lift',-side);},90/(motion.playbackRate??1));
 };
 function gaitSound(u,kind,side){
  if(muted||document.hidden)return;
@@ -2959,7 +2959,9 @@ async function moveUnit(u,x,z){
  if(!steps.length)return;
  spendMovement(u,steps.length);
  const twoStep=!u.kind&&!reducedMotion;
- const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:walkTileDuration(u);
+ // Playback is separate from the gait's authored time, stride and mass.
+ const playbackRate=twoStep&&!u.lionTrial?3:1;
+ const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:walkTileDuration(u)/playbackRate;
  const gaitBase=u.walkCount||0;
  const segments=[];
  if(twoStep){
@@ -2976,7 +2978,7 @@ async function moveUnit(u,x,z){
  for(let i=0;i<steps.length;i++){
   const p=steps[i],fromX=u.x,fromZ=u.z;
   const turning=turnToward(u,p.x-fromX,p.z-fromZ);if(turning)await turning;
-  u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length,segment:segments[i]};
+  u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,playbackRate,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length,segment:segments[i]};
   if(twoStep)u.motion.stepBeats=0;
   if(u.kind)sound(u.kind==='tank'?'track':'rotor');
   else{
