@@ -1,10 +1,11 @@
+const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
 const assert=require('node:assert/strict');
 const arrived=require('../fixtures/overworld-relay.json');
 const restedArrival=require('../fixtures/overworld-transit-rest.json');
 
 module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
- const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const nav=view=>navigate(page,view,tap,mobile);
  const snapshot=()=>page.evaluate(async()=>{
   await pendingCareerWrite;
   return JSON.parse(localStorage.getItem(CAREER_STORAGE));
@@ -57,7 +58,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
 
  if(mobile)await page.setViewportSize({width:320,height:735});
  await page.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
- await page.locator('[data-page="overworld"]').first().waitFor();
+ await page.locator('#nav [data-primary="bridge"]').waitFor();
  await page.evaluate(async()=>{save.world=worldRules.createWorld(0,save.day);persist();await pendingCareerWrite});
  const initial=await page.evaluate(()=>({credits:save.credits,day:save.day,overworld:save.overworld,world:save.world}));
  assert.equal(initial.credits,4500);
@@ -125,7 +126,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  state=await snapshot();
  assert.deepEqual(state,relayArrival,'the Relay arrival including its world reloads exactly');
  assert.match(await page.locator('#ui').innerText(),/relay/i);
- await tap('[data-page="overworld"]');
+ await nav('overworld');
  await page.locator('#chart-viewport').waitFor();
  await tap('[data-chart-contracts="relay"]');
  await page.locator('.contract-grid').waitFor();
@@ -256,7 +257,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('.ship-banner').waitFor();
  assert.deepEqual(await snapshot(),restedWorldArrival,'the serviced arrival and world reload exactly');
- await tap('[data-page="overworld"]');
+ await nav('overworld');
  await page.locator('#chart-viewport').waitFor();
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
 };

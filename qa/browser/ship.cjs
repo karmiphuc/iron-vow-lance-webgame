@@ -1,9 +1,10 @@
+const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkShip({context,page,mobile,origin,tap}){
- const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const nav=view=>navigate(page,view,tap,mobile);
  const openFacility=async id=>{const details=page.locator('[data-facility="'+id+'"] > details[data-ship-facility-detail]');if(!await details.evaluate(el=>el.open))await tap('[data-facility="'+id+'"] > details > summary');};
  const fit=async(selector)=>assert.ok(await page.locator(selector).evaluate(el=>el.scrollWidth<=el.clientWidth+1),selector+' fits');
  const launch=async()=>{
@@ -28,7 +29,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await tap('[data-hangar-deck="mechs"]');
  await tap('#inspect');
  await page.locator('.unit-inspect').waitFor();
- await tap('.hangar-top-right [data-page="ship"]');
+ await nav('ship');
  await page.evaluate(()=>{save.credits=FRAMES[6].cost+24000;save.rep=30;save.history=[{name:'Picket sweep',day:1,win:true,pay:1300}];hirePilot(3);acquireHull(6);persist();render()});
  const before=await page.evaluate(()=>save.credits);
  await tap('[data-build-facility="drop"]');

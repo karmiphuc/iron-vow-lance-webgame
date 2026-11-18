@@ -1,3 +1,4 @@
+const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
@@ -8,7 +9,7 @@ const paths=[
 ];
 
 module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
- const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const nav=view=>navigate(page,view,tap,mobile);
  const fit=async()=>assert.ok(await page.evaluate(()=>[...document.querySelectorAll('#ui .page,#modal:not([hidden]) .modalbox')].every(p=>p.scrollWidth<=p.clientWidth+1)));
  const unit=i=>tap('[data-unit="'+i+'"]');
  const support=()=>tap('[data-support-target="0"]');
@@ -200,7 +201,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>save.credits),0);
  assert.equal(await page.evaluate(()=>save.reserve[HELLBREAKER]?.condition),55);
  await page.reload({waitUntil:'domcontentloaded'});
- await page.locator('#nav [data-page="workshop"]').waitFor({state:'attached'});
+ await page.locator('#nav [data-primary="bay"]').waitFor({state:'attached'});
  assert.equal(await page.evaluate(()=>save.reserve[HELLBREAKER]?.condition),55);
  console.log('PASS campaign UI, touch tooltip, reserve reload, Workshop, Wiki, variable seats and new skills');
 };
