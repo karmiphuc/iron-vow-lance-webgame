@@ -42,7 +42,7 @@ async function exerciseRigAdapter(){
   assert.ok(mounted[hook],id+' has its production hardpoint '+hook);
  }
  world.window.IronVowRenderer={get:()=>shared??=new TestRenderer(),subscribe(){},fatal(){fatal=true},metrics(){return{contexts:1}}};
- for(const file of ['behemoth-core.js','chassis.js','rig-motion.js','scene-rigs.js']){
+ for(const file of ['behemoth-core.js','chassis.js','rig-motion.js','field-paint.js','scene-rigs.js']){
   vm.runInContext(fs.readFileSync(path.join(dist,'foundry',file),'utf8'),world);
  }
  const adapter=world.window.IronVowFoundry,scope={};
@@ -109,7 +109,8 @@ async function exerciseRigAdapter(){
 
 (async()=>{
  const sim=simulate({random:()=>0}),{run}=sim;
- assert.equal(run('FRAMES.length'),21);
+ assert.equal(run('FRAMES.length'),22);
+ assert.equal(run('CAIRN_FRAME'),21);
  assert.equal(run('ASHIGARU_FRAME'),18);
  assert.equal(run('BULWARK_FRAME'),17);
  assert.equal(run('AERO_FRAME'),19);

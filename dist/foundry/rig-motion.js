@@ -144,7 +144,7 @@ function carryWeights(m,I,C,dt,dead){
   return W;
 }
 const _g0=V3(),_g1=V3(),_gp=V3(),_gs=V3(),_gt=V3();
-function shoulderRifle(m,arm,weight,recoil,F){
+function shoulderRifle(m,arm,weight,recoil,F,aim=m.aim.point){
   const r=m.rig,D=m.dims,spine=r.spine;
   m.cont.updateMatrixWorld(true);
   const toSpine=spine.getWorldQuaternion(new T.Quaternion()).invert();
@@ -152,7 +152,7 @@ function shoulderRifle(m,arm,weight,recoil,F){
   const shoulder=arm.sh.getWorldPosition(V3()),L=(D.fo+(D.so||.26))*m.scale;
   // Recoil drives the grip down and back along the stock, never straight into the head.
   const grip=spine.localToWorld(V3(F.grip[0],D.shY+F.grip[1]-recoil*.18,(D.shZ||0)+F.grip[2]-recoil*.16));
-  const line=m.aim.point.clone().sub(grip).normalize();
+  const line=aim.clone().sub(grip).normalize();
   const upper=grip.clone().addScaledVector(line,-L).sub(shoulder).normalize();
   const u=upper.applyQuaternion(toSpine),f=line.clone().applyQuaternion(toSpine);
   const Y=u.clone().negate(),Z=f.clone().addScaledVector(u,-f.dot(u)).normalize(),X=Y.clone().cross(Z);
@@ -187,6 +187,29 @@ function supportGrip(m,arm,weight){
   arm.el.rotation.x=lerp(arm.el.rotation.x,-up.angleTo(down),weight);
   arm.wr.rotation.x=lerp(arm.wr.rotation.x,0,weight);
   m.supportTarget=best||point;
+}
+/* Settled poses from the Valkyrie striker and roster loadout studies. Foot and pelvis offsets scale with hip height.
+   The last two arm angles, when supplied, turn the shoulder and roll the wrist. */
+const readyPoses={
+  striker:{pelvis:[.045,-.085,.027],feet:[.075,.275,.17],spine:[.145,.23,-.045],neck:[-.05,.07,.025],
+    gun:{aim:[6.7,0,13],grip:()=>[-.12,-.74,1.22]},support:true},
+  buckler:{pelvis:[.03,-.052,.028],feet:[.075,.24,.24],spine:[.135,.32,-.035],neck:[-.045,.125,0],
+    gun:{aim:[1.8,.1,13],grip:D=>[-D.shX*.85,-D.up*.7,D.fo*1.1]},left:[-.91,-.15,-1.09,.26],shieldTurn:.23,padDrop:.10},
+  tower:{pelvis:[.03,-.087,.028],feet:[.10,.24,.24],spine:[.175,.32,-.035],neck:[-.045,.125,0],
+    gun:{aim:[1.8,-.4,13],grip:D=>[-D.shX*.85,-D.up*.7,D.fo*1.1]},left:[-.66,-.15,-.91,.07],shieldTurn:.13,padDrop:.10},
+  maul:{pelvis:[-.06,-.052,-.045],feet:[.075,.19,.19],spine:[.135,-.63,-.035],neck:[-.045,-.125,0],
+    left:[-1.35,.52,-1.75,1.60,.65,.43],right:[-.09,-.25,-.62,0],padDrop:.10,leftPadTilt:-.19},
+  sword:{pelvis:[.03,-.052,.028],feet:[.075,.24,.24],spine:[.135,-.30,.06],neck:[-.045,-.125,0],
+    left:[-1.28,.33,-.30,1.18],right:[-.09,-.25,-.62,0],padDrop:.06,leftPadTilt:-.19},
+  rail:{pelvis:[.03,-.087,.028],feet:[.10,.24,.24],spine:[.175,.18,-.035],neck:[-.045,.125,0],
+    gun:{aim:[3.8,-.4,13],grip:D=>[D.shX*.16,-D.up*.7,D.fo*.88]},support:true,padDrop:.10},
+  pod:{pelvis:[.03,-.142,.028],feet:[.14,.12,.12],spine:[.185,.36,-.035],neck:[-.045,.125,0],
+    left:[-.40,.24,-.89,0],right:[.20,-.23,-.90,0]}
+};
+function blendReadyArm(arm,[pitch,spread,elbow,wrist,yaw=0,roll=0],weight){
+  arm.sh.rotation.set(lerp(arm.sh.rotation.x,pitch,weight),yaw*weight,lerp(arm.sh.rotation.z,spread,weight));
+  arm.el.rotation.x=lerp(arm.el.rotation.x,elbow,weight);
+  arm.wr.rotation.set(lerp(arm.wr.rotation.x,wrist,weight),0,roll*weight);
 }
 /* [walk fix] a foothold on the floor no further than lim from the hip: keeps its height and slides toward the hip's ground point */
 function onFloorWithin(p,hip,lim){const dy=p.y-hip.y,hx=p.x-hip.x,hz=p.z-hip.z,hd=Math.hypot(hx,hz),mx=Math.sqrt(Math.max(0,lim*lim-dy*dy));
@@ -247,12 +270,27 @@ function animateMech(m,I,dt,t){
   // reaches the under-barrel. Driven by I.ready (attack priming or aiming) and blended so it also animates under noPlant.
   const F=D.carry?.fire,ready=Boolean(F&&!dead&&!I.moving&&(m.offhand??'free')==='free'&&m.primaryWeapon&&((I.ready??t<m.aim.until)||m.aim.blend>.35));
   m.fireStance=ready;m.fireStep=damp(m.fireStep||0,ready?1:0,7,dt);const fs=smooth(clamp(m.fireStep,0,1));
+  const guard=readyPoses[I.readyPose];
+  const canGuard=guard&&!dead&&!I.legsDead&&!I.armDead&&!I.leftDead&&!I.reducedMotion;
+  const settled=canGuard&&!I.moving&&!I.airborne;
+  m.readyBlend=canGuard?damp(m.readyBlend??0,settled?1:0,settled?8:14,dt):0;
+  const footGuard=settled?m.readyBlend:0;
+  const strikeRelease=m.melee?easeRange(m.melee.age,0,.12):0;
+  const release=Math.max(I.readyRelease??0,strikeRelease,clamp(2*(I.brace??0),0,1));
+  const upperGuard=m.readyBlend*(1-release);
+  const guardWeight=m.readyGuard=Math.min(upperGuard,damp(m.readyGuard??0,upperGuard,12,dt));
   // Pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's.
   const p=r.pelvis,brace=I.brace;
   const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
   p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
   p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   p.rotation.y=F?-F.hips*fs:0;
+  if(guard){
+    m.readyRestZ??=p.position.z;
+    p.position.x+=D.py*guard.pelvis[0]*guardWeight;
+    p.position.y+=D.py*guard.pelvis[1]*guardWeight;
+    p.position.z=m.readyRestZ+D.py*guard.pelvis[2]*guardWeight;
+  }else if(m.readyRestZ!=null)p.position.z=m.readyRestZ;
   cont.updateMatrixWorld(true);
   let settling=m.legs.some(L=>L.settle);
   if(m.wasAirborne&&!I.airborne){for(const L of m.legs)L.settle={from:L.foot.clone(),t:0,dur:.15};settling=true;}
@@ -260,7 +298,13 @@ function animateMech(m,I,dt,t){
   const artilleryPreparing=D.quad&&!I.moving&&Boolean(I.artillery||Number.isFinite(I.mortarAge));
   const pitches=[];
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
-    const home=cont.localToWorld(_a.set(l.restX-(lead?F.narrow*fs:0),D.ankleH,l.restZ+(F?(lead?F.step:-F.back)*fs:0))).clone();let pitch=0;
+    let homeX=l.restX-(lead?F.narrow*fs:0),homeZ=l.restZ+(F?(lead?F.step:-F.back)*fs:0);
+    if(footGuard>0){
+      const side=Math.sign(l.restX),[spread,front,back]=guard.feet;
+      homeX+=side*D.py*spread*footGuard;
+      homeZ+=D.py*(side>0?front:-back)*footGuard;
+    }
+    const home=cont.localToWorld(_a.set(homeX,D.ankleH,homeZ)).clone();let pitch=0;
     if(I.groundAt&&I.alive&&!I.airborne)home.y=I.groundAt(home.x,home.z)+D.ankleH*sc;
     const hip=l.hip.getWorldPosition(V3()),reach=legReach(l,D)*sc,ph=((g+(l.phase??i*.5)+(L.phaseOffset||0))%1+1)%1;
     const lifting=I.moving&&!dead&&ph>=duty;
@@ -316,6 +360,11 @@ function animateMech(m,I,dt,t){
   // Behemoth's crew cabin is inset into the imported chest, rather than a swivel head.
   if(m.build.mods.core===5)r.neck.rotation.set(0,0,0);
   else r.neck.rotation.set(-el*.35*b+(pd?.45*dE:0)+(C&&!dead?C.chin:0),Math.sin(t*.45+m.seed)*.18*(1-b)*(dead?0:1),0);
+  if(guardWeight>.001){
+    for(const [joint,angles] of [[r.spine,guard.spine],[r.neck,guard.neck]]){
+      joint.rotation.set(lerp(joint.rotation.x,angles[0],guardWeight),lerp(joint.rotation.y,angles[1],guardWeight),lerp(joint.rotation.z,angles[2],guardWeight));
+    }
+  }
   const aR=r.arms.R;
   let carrySh=-.28+w*.12*Math.sin(2*PI*g+PI),carryEl=-.62,carryZ=-.07;
   if(C){
@@ -334,6 +383,7 @@ function animateMech(m,I,dt,t){
   if(F&&fs>.001&&!I.armDead&&!dead)shoulderRifle(m,aR,fs,R0,F);
   const aL=r.arms.L,bl=dead?0:brace;
   aL.sh.rotation.set(lerp(-.2+w*.14*Math.sin(2*PI*g),-1.2,bl)+S.arm.x*.12+(dead?.3*dE:0),0,lerp(.14,-.28,bl));aL.el.rotation.x=lerp(-.75,-1.35,bl)*(dead?1-dE*.7:1);aL.wr.rotation.x=0;
+  if(guard?.left){aL.wr.rotation.y=0;aL.wr.rotation.z=0;}
   if(C&&!dead){
     // Blade arm braced forward, edge toward the enemy (blade pitch = forearm pitch + 90deg - wrist).
     const f=hold.bladeForward*(1-bl),[sx,sz,ex,wx]=C.bladeForward;
@@ -342,8 +392,23 @@ function animateMech(m,I,dt,t){
     // Free left hand takes the rifle's handguard or barrel, as far forward as the arm reaches.
     if(sup>.01&&m.primaryWeapon?.muzzle&&!I.armDead)supportGrip(m,aL,sup*(1-bl));
   }
+  if(guardWeight>.001){
+    if(guard.left){
+      blendReadyArm(aL,guard.left,guardWeight);
+      // Expansion blades mount along the forearm. Match the grip angle of the authored hand-held guard.
+      if(I.readyMeleeMountPitch)aL.wr.rotateX(-I.readyMeleeMountPitch*guardWeight);
+    }
+    if(guard.right)blendReadyArm(aR,guard.right,guardWeight);
+    if(guard.gun){
+      const {aim,grip}=guard.gun;
+      const point=m.body.localToWorld(V3(aim[0],D.py+aim[1],aim[2]));
+      aR.wr.rotation.set(aR.wr.rotation.x,0,0);
+      shoulderRifle(m,aR,guardWeight,R0,{grip:grip(D)},point);
+      if(guard.support)supportGrip(m,aL,guardWeight);
+    }
+  }
   if(m.melee&&!dead){const K=meleeKeys(m.melee.age,m.melee.thrust,D.melee);
-    if(K){const wv=K.w,right=m.melee.side==='R',active=right?aR:aL,other=right?aL:aR,sign=right?1:-1;
+    if(K){const wv=K.w*(1-guardWeight),right=m.melee.side==='R',active=right?aR:aL,other=right?aL:aR,sign=right?1:-1;
       active.sh.rotation.x=lerp(active.sh.rotation.x,K.sx,wv);active.sh.rotation.z=lerp(active.sh.rotation.z,sign*K.sz,wv);active.el.rotation.x=lerp(active.el.rotation.x,K.el,wv);active.wr.rotation.x=lerp(0,K.wr,wv);
       r.spine.rotation.y+=sign*K.yaw*wv;r.spine.rotation.x+=K.lean*wv;other.sh.rotation.x=lerp(other.sh.rotation.x,D.melee?.offArm??-.7,wv*.5);}
     else m.melee=null;}
@@ -351,6 +416,19 @@ function animateMech(m,I,dt,t){
   for(const a of [aL,aR]){a.paul.rotation.x=a.sh.rotation.x*.28;a.paul.rotation.z=a.sh.rotation.z*.4;}
   // A shouldered rifle lifts the gun-side pauldron clear of the stock (dims.carry.fire.padLift).
   if(F&&fs>0){aR.paul.rotation.x-=(F.padLift||0)*fs;aR.paul.rotation.z+=(F.padRoll||0)*fs;}
+  if(guard?.padDrop)m.readyPadRest??={L:aL.paul.position.clone(),R:aR.paul.position.clone()};
+  if(m.readyPadRest){
+    for(const [side,arm] of Object.entries(r.arms)){
+      const sign=side==='L'?1:-1;
+      arm.paul.position.copy(m.readyPadRest[side]);
+      if(!guard?.padDrop||guardWeight<=.001)continue;
+      arm.paul.position.x+=sign*D.up*.04*guardWeight;
+      arm.paul.position.y-=D.up*guard.padDrop*guardWeight;
+      arm.paul.rotation.x=lerp(arm.paul.rotation.x,arm.sh.rotation.x*.13+(side==='L'?(guard.leftPadTilt??0):0),guardWeight);
+      arm.paul.rotation.z=lerp(arm.paul.rotation.z,-sign*(side==='L'&&guard.shieldTurn?.03:.12),guardWeight);
+    }
+  }
+  m.readyShieldTurn=guard?.shieldTurn?(wrapA(m.yaw-I.face)+guard.shieldTurn)*guardWeight:0;
 
   if(!dead)for(const sp of r.spinners)sp.rotation.y+=dt*1.1;
   // cockpit lights: flicker after pilot hits or when the pilot is badly hurt, dark when down

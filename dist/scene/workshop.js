@@ -97,7 +97,7 @@ function close(){
 function show(element,next,foundryModel){
  if(!element){close();return;}
  if(element!==host){attach(element);demo=null;}
- const signature=JSON.stringify([next.frame,next.weapon,next.melee,next.shoulder,next.shield,next.paint,next.trim,next.upgrade,next.condition]);
+ const signature=JSON.stringify([next.frame,next.weapon,next.melee,next.shoulder,next.shield,next.paintFinish,next.paint,next.trim,next.upgrade,next.condition]);
  if(signature===key)return;
  if(unit?.frame!==next.frame)reset();
  clearModel();key=signature;model=foundryModel;

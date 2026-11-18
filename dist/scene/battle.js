@@ -14,7 +14,7 @@ const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){
  if(u.kind)return false;
  if(rigV2.applies(u))return Boolean(battleRef?.units.includes(u))||u.frame===0||u.frame===10;
- return !u.lionTrial&&LIVE.has(u.frame);
+ return !u.lionTrial&&(LIVE.has(u.frame)||root.IronVowCairn?.applies(u.frame)===true);
 }
 function world(x,z,y){
  const size=battle.size;

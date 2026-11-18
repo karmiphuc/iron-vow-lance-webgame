@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "day": 1,
+  "credits": 4500,
+  "rep": 0,
+  "wins": 0,
+  "kills": 0,
+  "owned": [
+    "rifle",
+    "missile"
+  ],
+  "units": [
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0,
+      "paintFinish": "splinter",
+      "paint": "#6a6d78",
+      "trim": {
+        "s": "#3c4640",
+        "a": "#8a5044"
+      }
+    },
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0,
+      "paint": "#708657"
+    },
+    {
+      "weapon": "missile",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0,
+      "paintFinish": "factory"
+    }
+  ],
+  "history": [],
+  "reserve": {
+    "6": {
+      "weapon": "rifle",
+      "melee": "blade",
+      "condition": 100,
+      "upgrade": 0,
+      "paintFinish": "survey"
+    }
+  }
+}

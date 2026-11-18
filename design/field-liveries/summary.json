@@ -1,0 +1,215 @@
+{
+  "origin": "checkout",
+  "checkoutSourceHashes": {
+    "foundry/field-paint.js": "ef062ffa19b2f4846c131b7a9f562683b3b099d7476df0f572f8f19f8fa384c3",
+    "foundry/rig-motion.js": "143f2a755c5d00b61f77ae7ebaf5254b3f09a1212cc61f3dea2c3516ed8a0243",
+    "foundry/scene-rigs.js": "55c659e6b256fdf44e12a3cca57ae11424fa08d75cc51dcf9f2a7946db37c4b7",
+    "game.js": "47aea5697b7b570273d50d223e3c23074af10a11fa7ece5caa112cc9b266e46e",
+    "workshop-ui.css": "2b5e684e51f7b4e4f3bea40652ff0e138ced5f8e1a4ce99e579d7aaf3b754ae4"
+  },
+  "cases": [
+    {
+      "width": 960,
+      "id": "warden",
+      "paint": "splinter",
+      "painted": 36,
+      "guard": 0.9038717172110712,
+      "weapon": "shotgun",
+      "shield": "citadel-shield",
+      "pod": false
+    },
+    {
+      "width": 960,
+      "id": "oni",
+      "paint": "splinter",
+      "painted": 68,
+      "guard": 0.9053318391768636,
+      "weapon": "rifle",
+      "melee": "blade",
+      "shield": null,
+      "pod": false
+    },
+    {
+      "width": 960,
+      "id": "shrike",
+      "paint": "splinter",
+      "painted": 46,
+      "guard": 0.8999556741554553,
+      "weapon": "rail",
+      "shield": null,
+      "pod": false
+    },
+    {
+      "width": 960,
+      "id": "basilisk",
+      "paint": "splinter",
+      "painted": 54,
+      "guard": 0.8983099791858257,
+      "weapon": "missile",
+      "shield": null,
+      "pod": true
+    },
+    {
+      "width": 960,
+      "id": "valkyrie",
+      "paint": "splinter",
+      "painted": 59,
+      "guard": 0.9051105690975308,
+      "weapon": "sidewinder",
+      "shield": "bulwark-shield",
+      "pod": false
+    },
+    {
+      "width": 960,
+      "id": "valk-tower",
+      "paint": "splinter",
+      "painted": 59,
+      "guard": 0.9049691100462159,
+      "weapon": "trident",
+      "shield": "citadel-shield",
+      "pod": false
+    },
+    {
+      "width": 960,
+      "id": "valk-maul",
+      "paint": "splinter",
+      "painted": 58,
+      "guard": 0.8998873797203871,
+      "weapon": "trident",
+      "melee": "anchor-hammer",
+      "shield": null,
+      "pod": false
+    },
+    {
+      "width": 960,
+      "id": "shrike-long",
+      "paint": "splinter",
+      "painted": 46,
+      "guard": 0.9049677483688252,
+      "weapon": "obelisk",
+      "shield": null,
+      "pod": false
+    },
+    {
+      "width": 960,
+      "id": "shrike-unsupported",
+      "paint": "splinter",
+      "painted": 46,
+      "guard": 0,
+      "weapon": "parallax",
+      "shield": null,
+      "pod": false
+    },
+    {
+      "width": 390,
+      "id": "warden",
+      "paint": "splinter",
+      "painted": 36,
+      "guard": 0.8985862820812806,
+      "weapon": "shotgun",
+      "shield": "citadel-shield",
+      "pod": false
+    },
+    {
+      "width": 390,
+      "id": "oni",
+      "paint": "splinter",
+      "painted": 68,
+      "guard": 0.8935901035423983,
+      "weapon": "rifle",
+      "melee": "blade",
+      "shield": null,
+      "pod": false
+    }
+  ],
+  "paint": [
+    {
+      "width": 960,
+      "finish": "block"
+    },
+    {
+      "width": 960,
+      "finish": "splinter"
+    },
+    {
+      "width": 960,
+      "finish": "survey"
+    },
+    {
+      "width": 960,
+      "finish": "factory"
+    },
+    {
+      "width": 390,
+      "finish": "block"
+    },
+    {
+      "width": 390,
+      "finish": "splinter"
+    },
+    {
+      "width": 390,
+      "finish": "survey"
+    },
+    {
+      "width": 390,
+      "finish": "factory"
+    }
+  ],
+  "captures": [
+    "workshop-960.webp",
+    "workshop-factory.webp",
+    "battle-960.webp",
+    "battle-overview.webp",
+    "workshop-390.webp",
+    "workshop-320.webp",
+    "battle-390.webp",
+    "cairn-workshop.webp",
+    "cairn-sortie.webp"
+  ],
+  "status": "passed",
+  "damageRelease": true,
+  "cairn": {
+    "status": "passed",
+    "origin": "checkout",
+    "units": [
+      {
+        "frame": 21,
+        "weapon": "sidewinder",
+        "paintFinish": "survey"
+      },
+      {
+        "frame": 5,
+        "weapon": "rifle"
+      }
+    ],
+    "cairnGeometry": {
+      "meshes": 219,
+      "vertices": 56552,
+      "names": [
+        "sidewinder.bolt__armory_steel",
+        "sidewinder__armory_graphite",
+        "sidewinder__armory_identification",
+        "sidewinder__armory_olive",
+        "sidewinder__armory_rubber",
+        "sidewinder__armory_steel",
+        "sidewinder__armory_warmsteel"
+      ]
+    },
+    "valkGeometry": {
+      "meshes": 171,
+      "vertices": 60570,
+      "names": [
+        "kestrel__weapon_armor_charcoal",
+        "kestrel__weapon_armor_warm_ceramic",
+        "kestrel__weapon_frame_graphite",
+        "kestrel__weapon_grip_rubber",
+        "kestrel__weapon_identification_bone",
+        "kestrel__weapon_optic_cyan",
+        "kestrel__weapon_service_ochre",
+        "kestrel__weapon_steel_brushed",
+        "kestrel__weapon_steel_warm_machined"
+      ]
+    }
+  }
+}

@@ -62,7 +62,13 @@ Free emergency field patches now restore 50% condition. Seeded recovery tests fo
 
 ## Live rig rendering
 
-The battlefield renders all 21 campaign chassis, tanks, gunships, and cover with three.js. Mechs use their rig-v2 GLBs or the procedural kit. The shared animator drives the planted gait, weapon priming and recoil, bracing, part damage, and destruction. Shots and strikes use the actual muzzle and contact anchors. Existing career saves and in-progress sorties retain their format.
+Choose a finish in the Workshop paint panel. Block camo uses broad stepped patches that remain visible from the tactical camera. Splinter uses diagonal shapes, and Survey grid adds fine registration marks to a quieter pattern. Factory restores the original livery. Finishes follow the hull through storage, reassignment and deployment.
+
+The Workshop market offers Cairn (CRN–01) for 180,000 CR. Its compact cab, cast shoulder armor and slate paint distinguish it from Valkyrie. Its Braced Aim signature adds four aim points to direct shots while braced.
+
+Valkyrie’s shoulder armor sits lower to frame the V-fin. A stationary mech can settle into a guard suited to its equipment. A free hand supports a long gun, a shield leads the weapon arm, and a blade or maul gets its own clearance. Basilisk turns its torso to bring the integral missile pods to bear.
+
+The battlefield renders all 22 campaign chassis, tanks, gunships, and cover with three.js. Mechs use their rig-v2 GLBs or the procedural kit. The shared animator drives the planted gait, weapon priming and recoil, bracing, part damage, and destruction. Shots and strikes use the actual muzzle and contact anchors. Existing career saves and in-progress sorties retain their format.
 
 The Mech Bay shows the active seats and reserves in the hangar. Select a deployed mech to inspect it or open a reserve in Workshop Storage. The Workshop turntable shows the equipped guns, melee weapon, shield, pod, and reinforcement. Drag to rotate, pinch to zoom, and double-tap to reset. Armor paint and trim change the model materials. Workshop, Ship, and combat UI mech images use cached 640×640 renders.
 

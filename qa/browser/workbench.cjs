@@ -9,7 +9,8 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  const catalog=await page.evaluate(()=>WEAPONS.map(({id,builtIn,shoulder,melee})=>({id,builtIn,shoulder,melee})));
  const mounted=new Set();
 
- assert.equal(entries.length,22);
+ assert.equal(entries.length,23);
+ assert.ok(entries.some(([id,name])=>id==='21'&&name==='CAIRN'),'Cairn retains its own bench entry');
  const models=[];
  for(const [id,name] of entries){
   await page.evaluate(id=>__bench.selectFrame(id),id);
@@ -18,7 +19,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
   assert.ok(state.metrics.height>1&&state.metrics.feet.every(foot=>Number.isFinite(foot.error)),name);
   models.push(state.model);
  }
- assert.equal(new Set(models).size,22);
+ assert.equal(new Set(models).size,23);
  await page.evaluate(()=>__bench.selectFrame(10));
  await page.waitForFunction(()=>__bench.state.clips.length===6);
  if(out&&!mobile)await require('./save-webp.cjs')(page,join(out,'rig-bench.webp'));
@@ -130,6 +131,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  assert.ok(wardenStep[0].some((p,i)=>Math.hypot(...p.map((v,j)=>v-wardenStep[1][i][j]))>.01));
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
+ await page.locator('[data-workshop-detail="trials"] > summary').click();
  await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();
  await page.waitForFunction(()=>window.__bench?.state?.loaded&&__bench.state.frame===0);
  await page.goto(origin,{waitUntil:'domcontentloaded'});
