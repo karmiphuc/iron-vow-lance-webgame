@@ -402,7 +402,7 @@ function prepareUnit(u,t){
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
   const face=guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
-  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(...args),face,heading,aim,groundAt,speed};
+  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
   const custom=rigV2.applies(u)?'rig-v2':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;

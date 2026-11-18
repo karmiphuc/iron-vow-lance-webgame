@@ -68,7 +68,7 @@ function faultFX(m,I,t){const fx=BT.fx;if(!fx||!fx.arc||fx.isNull||options.reduc
 // part anchors sit inside the armour: push them out radially from the spine axis to roughly the hull surface
 function surfacePoint(m,part){const p=partPoint(m,part),c=m.rig.spine.getWorldPosition(V3()),d=V3(p.x-c.x,0,p.z-c.z);
   if(d.lengthSq()<.04)d.set(Math.sin(m.yaw),0,Math.cos(m.yaw));return p.addScaledVector(d.normalize(),.85*(m.scale||1));}
-function groundSlam(m){const fx=BT.fx,p=m.rig.spine.getWorldPosition(V3());const g=V3(p.x,BT.groundAt?.(p.x,p.z)??m.cont.position.y,p.z),heavy=HEAVY[m.build?.mods?m.build.mods.legs:m.frame]??1;
+function groundSlam(m){const fx=BT.fx,p=m.rig.spine.getWorldPosition(V3());const g=V3(p.x,BT.groundAt?.(p.x,p.z)??m.cont.position.y,p.z),heavy=m.stepMass??HEAVY[m.build?.mods?m.build.mods.legs:m.frame]??1;
   fx.airwave(g,8*heavy,.38,.4);fx.dustwave(g,Math.round(20*(BT.lowFx?.6:1)),6*heavy,2.4*heavy,0xb8ad99,.62,1.8,.6);fx.smoke(V3(g.x,g.y+.3,g.z),4,2.6*heavy,0x8f877b,.4,.6,1.8,.8);
   fx.spray(V3(g.x,g.y+.15,g.z),V3(Math.sin(m.yaw),.25,Math.cos(m.yaw)),12,7,1.1,SPARK_HOT,.5);BT.cam.shake=Math.max(BT.cam.shake,.5*heavy);}
 
@@ -246,8 +246,8 @@ function explode(p,big,m){const fx=BT.fx;
   else BT.cam.shake=Math.max(BT.cam.shake,.35);
   if(m){m.s.pitch.v-=big?0:1.2;m.s.comp.v-=big?0:.9;}
 }
-function onStep(m,p,i,amt=1){const fx=BT.fx,heavy=(HEAVY[m.build?.mods?m.build.mods.legs:m.frame]??1)*amt; // [bench] step weight follows the LEGS module (the game never mixes modules)
-  fx.smoke(V3(p.x,(BT.groundAt?.(p.x,p.z)??BT.floor)+.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);{const g=V3(p.x,BT.groundAt?.(p.x,p.z)??BT.floor,p.z);fx.dustwave(g,Math.max(3,Math.round((6+3*heavy)*(BT.lowFx?.5:1))),2.6*heavy,1.05*heavy,0xc0b5a1,.42,1.2,.35);}m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
+function onStep(m,p,i,amt=1){const fx=BT.fx,heavy=(m.stepMass??HEAVY[m.build?.mods?m.build.mods.legs:m.frame]??1)*amt; // the hull's MECH_MOTION mass (foundry/walk-tuning.js); HEAVY only knows the six kit legs, so GLB hulls fell back to 1
+  fx.smoke(V3(p.x,(BT.groundAt?.(p.x,p.z)??BT.floor)+.2,p.z),3,2*heavy,0x9e968a,.32,.35,1.3,.5);{const g=V3(p.x,BT.groundAt?.(p.x,p.z)??BT.floor,p.z);fx.dustwave(g,Math.max(3,Math.round((6+3*heavy)*(BT.lowFx?.5:1))),2.6*heavy,1.05*heavy,0xc0b5a1,.42,1.2,.35);}m.s.comp.v-=1.4*heavy;m.s.pitch.v+=.4*heavy;if(amt>=.9)stepSound(Math.min(1,.55*heavy)*(m.team==='ally'?1:.75));m.s.arm.v+=1.1*heavy;BT.cam.shake=Math.max(BT.cam.shake,.09*heavy*(m.team==='ally'?1:.7));}
 
 
 const before=new Set(scene.children),fx=BT.fx=FX(scene,{...options.pools,cam:options.camera}),owned=scene.children.filter(node=>!before.has(node));

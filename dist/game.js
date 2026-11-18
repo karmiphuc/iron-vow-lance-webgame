@@ -1737,6 +1737,13 @@ function syncMachinery(){
  }else gain.gain.linearRampToValueAtTime(mix.idleGain,now+.35);
  machineryVoice={sortie,gain,idle,boot};
 }
+// scene/combat.js calls this on each real foot plant of a live rig: the planted foot lands, then the trailing foot's actuators lift it.
+window.IronVowFootPlant=(u,side,amount=1)=>{
+ if(amount<.9)return;   // settle and catch-up shuffles stay silent
+ gaitSound(u,'land',side);
+ const motion=u.motion;
+ if(motion)setTimeout(()=>{if(u.motion===motion&&!reducedMotion&&battle?.units.includes(u))gaitSound(u,'lift',-side);},90);
+};
 function gaitSound(u,kind,side){
  if(muted||document.hidden)return;
  const mix=MACHINERY_MIX,pan=side*.13,now=(audio?.currentTime??0)+.005;
@@ -2952,7 +2959,7 @@ async function moveUnit(u,x,z){
  if(!steps.length)return;
  spendMovement(u,steps.length);
  const twoStep=!u.kind&&!reducedMotion;
- const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:.22+1.3*MECH_MOTION[u.frame].step;
+ const duration=reducedMotion?.12:u.kind?VEHICLES[u.kind].step:walkTileDuration(u);
  const gaitBase=u.walkCount||0;
  const segments=[];
  if(twoStep){
@@ -3643,10 +3650,16 @@ function twoStepContacts(u,progress){
  const m=u.motion,mass=MECH_MOTION[u.frame].mass;
  while(m.stepBeats<2&&progress+1e-6>=(m.stepBeats+1)/2){
   const q=++m.stepBeats/2;
-  effects.push({type:'step',x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,t:1,mass,side:q===.5?1:-1});
+  effects.push({type:'step',actor:u.id,x:m.fromX+(m.toX-m.fromX)*q,z:m.fromZ+(m.toZ-m.fromZ)*q,t:1,mass,side:q===.5?1:-1});
  }
 }
 
+// Seconds per tile for a walking hull on the 7.4 m board (foundry/walk-tuning.js); the bare .22 + 1.3 x step was tuned for 3.4 m tiles.
+function walkTileDuration(u){
+ const base=.22+1.3*MECH_MOTION[u.frame].step,tuning=window.IronVowWalk;
+ if(!tuning||u.lionTrial)return base;
+ return tuning.tileDuration(u.frame,base,window.IronVowScene?.models?.get(u.id)?.entry?.m?.dims.stride);
+}
 function walkSoundMarkers(m,doubleStep){
  if(doubleStep)return [{at:0,side:1},{at:.5,side:1,land:true},{at:.5,side:-1},{at:1,side:-1,land:true}];
  const side=m.gaitBase%2?1:-1;
@@ -3655,10 +3668,13 @@ function walkSoundMarkers(m,doubleStep){
 function advanceGaitCues(u,phase){
  const m=u.motion;
  if(!m?.gaitCues?.length)return;
+ // Keep timed cues available for frames where the live rig is unavailable.
+ const scene=window.IronVowScene;
+ const live=!reducedMotion&&scene?.isLive(u)&&scene.models.get(u.id)?.entry;
  const progress=m.segment&&!reducedMotion?fieldStepProgress(phase,m.segment):phase;
  while(m.gaitCues[0]?.at<=progress+.000001){
   const marker=m.gaitCues.shift();
-  gaitSound(u,marker.land?'land':'lift',marker.side);
+  if(!live)gaitSound(u,marker.land?'land':'lift',marker.side);
  }
 }
 function advanceUnitAnimation(u,t,dt){
