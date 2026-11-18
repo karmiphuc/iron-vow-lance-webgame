@@ -62,6 +62,12 @@ The shared observer samples the live rig and combat events after rendering. War'
 
 `node qa/gate-phase6.cjs --out /tmp/iron-vow-phase6` runs the focused desktop and touch Bench/War gate and writes one summary and two real WebP captures. `node qa/check-war-driver.cjs` checks a completed seeded encounter, alternate seeds and the turn limit. `IRON_VOW_QA_SCENARIOS=checkWarMode node qa/check-browser.cjs` compares the live browser and VM reports on Picket Sweep and the corridor, including reactions, the tank and gunship, and the career isolation boundary.
 
+## Mech pose regression
+
+The desktop and touch release suite runs `checkMechLoadoutPoses` against the production rigs and weapon meshes. It samples hand positions through the first step, sustained gait, Brace, aim, takeoff, limb loss and repair. It also checks that an unreachable rifle grip falls back to a lowered hand, and that mounted shields and melee attacks retain their poses.
+
+When adding a loadout stance, cover a compatible mount, an empty hand or unsupported weapon, and a transition out of the stance. Assert the result in world space: a lowered empty hand, a reachable gun contact or a shield raised with its actual mount. Finite joint matrices and a nonzero stance blend alone can pass with the wrong pose.
+
 ## Package and verify the Site
 
 Open the current Site with the installed Sites helper and retain its opening result. Use the repository packaging entry point to run the release gate before committing the Site source or packaging the archive.
