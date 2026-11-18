@@ -65,7 +65,7 @@ root.IronVowCombat={create(scene,api){
   });
   const flights=(w.scatter?selected:[contact]).filter(Boolean).map(c=>Math.max(.025,c.travel||flight));
   const source=model||{wpn:{},yaw:0,recoil:0,s:{pitch:{v:0},kx:{v:0},kz:{v:0}}};source.wpn=source.wpn||{};
-  effect.fireFX(source,to,kind,part,{at:clock,origin:from,target:to,targets,flights,flight,arrival:at=>{effect.explode(at,false);log('arrival',{actor:actor.id,weapon:w.id,index,point:at.toArray(),expected:to.toArray()});}});
+  effect.fireFX(source,to,kind,part,{at:clock,index,origin:from,target:to,targets,flights,flight,arrival:at=>{effect.explode(at,false);log('arrival',{actor:actor.id,weapon:w.id,index,point:at.toArray(),expected:to.toArray()});}});
  }
  function landed(actor,target,w,contact,guard){
   api.sync(actor);api.sync(target);
@@ -80,6 +80,16 @@ root.IronVowCombat={create(scene,api){
   const m=api.models.get(target.id)?.entry?.m;
   if(m){const kick=profile.archetype==='blade'?3.6:profile.archetype==='rail'?2.4:.7;m.s.kx.v-=back.x*kick;m.s.kz.v-=back.z*kick;m.s.pitch.v-=profile.archetype==='blade'?2:.55;m.s.comp.v-=contact.part==='legs'?1.4:.7;m.s.arm.v+=contact.part==='right'?1.8:.8;m.flicker=contact.part==='pilot'?1:m.flicker;}
   if(profile.archetype==='blade'&&!reducedMotion){actor.hitstop=target.hitstop={at:clock,until:clock+.085};shake=Math.max(shake,6);}
+ }
+ // Fully missed volley (game.js beginEvade): the body is already sidestepping through its displayed tile position; this adds the
+ // lean away from the fire and a crouch, a deep duck for a plain miss. Native rigs with an authored dodge clip play it for a dodge.
+ function evade(unit,e){
+  if(reducedMotion)return;
+  const m=api.models.get(unit.id)?.entry?.m;if(!m)return;
+  if(e.dodged&&m.nativeV2?.dodge){m.nativeV2.dodge(clock,V3(-e.x,0,-e.z));/* "incoming" side: the authored dodge goes the way of the sidestep */log('dodge',{actor:unit.id,evade:true});}
+  const lean=e.dodged?3.4:1.8;
+  m.s.kx.v+=e.x*lean;m.s.kz.v+=e.z*lean;m.s.comp.v-=e.dodged?1.3:2.6;m.s.pitch.v-=e.dodged?.4:.9;
+  log('evade',{actor:unit.id,dodged:e.dodged});
  }
  function dodge(unit,actor){
   if(reducedMotion)return;
@@ -131,6 +141,6 @@ root.IronVowCombat={create(scene,api){
   }
   effect.update(t,Math.min(.05,dt));
  }
- return {launch,landed,dodge,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>{pelletPoints=new WeakMap();effect.clear();}};
+ return {launch,landed,dodge,evade,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>{pelletPoints=new WeakMap();effect.clear();}};
 }};
 })(window);

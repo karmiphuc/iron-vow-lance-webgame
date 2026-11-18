@@ -81,9 +81,14 @@ const IMPACT={
   missile:{n:28,spd:12,cone:1.15,flash:3.2,light:9, cols:SPARK_HOT,chips:3},
   rail:   {n:16,spd:15,cone:.38,flash:2.6,light:10,cols:SPARK_RAIL},
   blade:  {n:18,spd:7, cone:.7, flash:2.0,light:8, cols:SPARK_HOT}};
-function impact(p,back,kind){const fx=BT.fx;if(!fx||!fx.spray||fx.isNull)return;const P=IMPACT[kind]||IMPACT.rifle,k=BT.lowFx?.6:1;
-  const rail=P.cols===SPARK_RAIL,d=V3().copy(back).normalize();fx.glow(p,rail?0xdff8ff:0xfff0d0,P.flash,.14);fx.glow(p,rail?0x7fdcff:0xffa75d,P.flash*1.8,.22);fx.light(p,rail?0x9fe6ff:0xffa04a,P.light);
-  fx.spray(p,d,Math.round(P.n*k),P.spd,P.cone,P.cols,.55);
+/* Game scale (owner, 2026-11-18: hits were barely visible). The bench reference views a mech from a few metres; the board camera sits
+   15-30 m out, where the bench flash (0.14 s) and 1x sparks read as specks. Flash x1.7 and held longer, sparks x1.3 and a little thicker (x1.6 stacked into white planks), and
+   kinetic hits throw a short grey puff of paint and dust so each landed round leaves a mark. */
+const IMPACT_SCALE={flash:1.7,life:1.6,sparks:1.3,size:1.1};
+function impact(p,back,kind){const fx=BT.fx;if(!fx||!fx.spray||fx.isNull)return;const P=IMPACT[kind]||IMPACT.rifle,k=BT.lowFx?.6:1,S=IMPACT_SCALE;
+  const rail=P.cols===SPARK_RAIL,d=V3().copy(back).normalize();fx.glow(p,rail?0xdff8ff:0xfff0d0,P.flash*S.flash,.14*S.life);fx.glow(p,rail?0x7fdcff:0xffa75d,P.flash*1.8*S.flash,.22*S.life);fx.light(p,rail?0x9fe6ff:0xffa04a,P.light*1.5);
+  fx.spray(p,d,Math.round(P.n*k*S.sparks),P.spd,P.cone,P.cols,.6,S.size);
+  if(!rail&&kind!=='blade')fx.smoke(p.clone().addScaledVector(d,.25),kind==='rifle'?1:2,kind==='missile'?2.2:1.1,0x857d72,.45,.5,.9,.18);
   // molten blobs: a few glowing sprites thrown along the spray, outliving the flash
   for(let i=0;i<Math.round(5*k);i++){const v=V3(d.x+rnd(-1,1)*P.cone*.6,d.y+rnd(-.2,.6),d.z+rnd(-1,1)*P.cone*.6).normalize().multiplyScalar(P.spd*rnd(.25,.6));fx.glow(p.clone().addScaledVector(v,.02),i%2?P.cols[1]:P.cols[0],rnd(.35,.6),rnd(.22,.36),v);}
   if(P.chips){fx.debris(p,P.chips,4);fx.smoke(p,3,1.4,0x8a847a,.4,.6,1.1,.25);}
@@ -161,7 +166,8 @@ function FX(scene,o){
   f.smoke=(p,n,size,c,op,rise,life,spread)=>{for(let k=0;k<n;k++){const s=smoke.next();s.o.position.copy(p).add(_a.set(rnd(-1,1)*spread,rnd(0,.3),rnd(-1,1)*spread));s.v.set(rnd(-1,1)*spread*.6,rise*rnd(.6,1.4),rnd(-1,1)*spread*.6);s.life=s.max=life*rnd(.7,1.3);s.size=size*rnd(.7,1.3);s.op=op;s.o.material.color.setHex(c);s.o.material.rotation=rnd(0,6);s.o.visible=true;}};
   f.sparks=(p,n,spd,c,up=0,life=.5,sz=1)=>{for(let k=0;k<n;k++){const s=sparks.next();s.o.position.copy(p);s.v.set(rnd(-1,1),rnd(-1,1)+up,rnd(-1,1)).normalize().multiplyScalar(spd*rnd(.35,1.2));s.life=s.max=life*rnd(.5,1.3);s.o.material.color.setHex(c);s.o.scale.set(sz,sz,sz);s.o.visible=true;}}; // [bench] scale reset: spray reuses the pool
   f.debris=(p,n,spd)=>{for(let k=0;k<n;k++){const d=debris.next();d.o.position.copy(p);d.v.set(rnd(-1,1),rnd(.6,1.6),rnd(-1,1)).multiplyScalar(spd*rnd(.5,1));d.w.set(rnd(-9,9),rnd(-9,9),rnd(-9,9));d.life=rnd(1.6,2.6);d.o.scale.setScalar(rnd(.6,1.6));d.o.visible=true;}};
-  f.streak=(a,b,c,w,flight,len)=>{const s=streaks.next();s.a.copy(a);s.b.copy(b);s.life=s.max=flight;s.w=w;s.len=len;s.o.material.color.setHex(c);s.o.visible=true;};
+  // len < 1 is a share of the whole path (bench reference); metres sets an absolute tail length instead, like a real tracer
+  f.streak=(a,b,c,w,flight,len,op=1,metres=0)=>{const s=streaks.next();s.a.copy(a);s.b.copy(b);s.life=s.max=flight;s.w=w;s.len=len;s.op=op;s.metres=metres;s.o.material.color.setHex(c);s.o.visible=true;};
   f.beam=(a,b,c,w,life)=>{const s=beams.next();s.o.position.copy(a);s.o.lookAt(b);s.len=a.distanceTo(b);s.w=w;s.o.scale.set(w,w,s.len);s.life=s.max=life;s.o.material.color.setHex(c);s.o.visible=true;};
   f.airwave=(p,r,life=.4,op=.35,c=0xe8eef2)=>{const s=airs.next();s.o.position.set(p.x,p.y||0,p.z);s.r=r;s.op=op;s.life=s.max=life;s.o.material.uniforms.color.value.setHex(c);s.o.scale.set(.2,.12,.2);s.o.visible=true;};
   // n soft puffs launched outward along the ground from a small starting ring; drag slows them, so they pile up into a rolling dust wall
@@ -191,7 +197,7 @@ function FX(scene,o){
           const w=(sp.w0+(sp.w1-sp.w0)*(i/(ARC_P-1)))*wk,P=pts[i];pa.setXYZ(i*2,P.x+_s.x*w,P.y+_s.y*w,P.z+_s.z*w);pa.setXYZ(i*2+1,P.x-_s.x*w,P.y-_s.y*w,P.z-_s.z*w);}
         pa.needsUpdate=true;}}
     for(const d of debris){if(!d.o.visible)continue;d.life-=dt;if(d.life<=0){d.o.visible=false;continue;}d.v.y-=18*dt;d.o.position.addScaledVector(d.v,dt);d.o.rotation.x+=d.w.x*dt;d.o.rotation.z+=d.w.z*dt;const df=(BT.groundAt?.(d.o.position.x,d.o.position.z)??BT.floor)+.08;if(d.o.position.y<df){d.o.position.y=df;d.v.y*=-.3;d.v.x*=.55;d.v.z*=.55;d.w.multiplyScalar(.5);}}
-    for(const s of streaks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const q=1-s.life/s.max;const head=_a.copy(s.a).lerp(s.b,q),tail=_b.copy(s.a).lerp(s.b,Math.max(0,q-s.len));s.o.position.copy(head).lerp(tail,.5);s.o.lookAt(head);s.o.scale.set(s.w,s.w,Math.max(.05,head.distanceTo(tail)));s.o.material.opacity=1;}
+    for(const s of streaks){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const q=1-s.life/s.max;const head=_a.copy(s.a).lerp(s.b,q),path=s.a.distanceTo(s.b)||1,share=s.metres?s.metres/path:s.len,tail=_b.copy(s.a).lerp(s.b,Math.max(0,q-share));s.o.position.copy(head).lerp(tail,.5);s.o.lookAt(head);s.o.scale.set(s.w,s.w,Math.max(.05,head.distanceTo(tail)));s.o.material.opacity=s.op??1;}
     for(const s of beams){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=s.life/s.max;s.o.material.opacity=u;s.o.scale.set(s.w*(.4+.6*u),s.w*(.4+.6*u),s.len);}
     for(const s of airs){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max,e=.2+(1-Math.pow(1-u,3))*s.r;s.o.scale.set(e,e*.55,e);s.o.material.uniforms.opacity.value=s.op*Math.pow(1-u,1.6);}
     for(const s of rings){if(!s.o.visible)continue;s.life-=dt;if(s.life<=0){s.o.visible=false;continue;}const u=1-s.life/s.max;s.o.scale.setScalar(.3+(1-Math.pow(1-u,2))*s.r);s.o.material.opacity=(1-u)*.9;}
@@ -207,7 +213,11 @@ function fireFX(ma,mt,kind,part,shot){
   const fx=BT.fx,muzzle=shot?.origin?.clone()||ma.wpn.muzzle.getWorldPosition(V3()),tp=shot?.target?.clone()||(mt.isVector3?mt.clone():partPoint(mt,part)); // [bench] target may be a point
   const beat=(d,fn)=>shot&&d===0?fn():pending.push({at:(shot?.at??BT.clock)+d,fn}); // production contacts own each beat
   const flash=(p,c,s)=>{fx.glow(p,c,s,.09);fx.light(p,c,6);fx.smoke(p,2,1.2,0x8f8a80,.35,.6,.9,.15);};
-  if(kind==='rifle'){for(let i=0;i<(shot?1:3);i++)beat(i*.085,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3()),j=tp.clone().add(V3(rnd(-.3,.3),rnd(-.3,.3),rnd(-.3,.3)));fx.streak(m0,shot?tp:j,0xffd27a,.09,shot?.flight||.13,.35);flash(m0,0xffc070,2.4);ma.recoil=Math.min(1.6,ma.recoil+.55);ma.s.pitch.v-=.4;
+  /* Jacketed rounds, not beams (owner, 2026-11-18): the bench tail was 35% of the whole path, a 10 m bar of white light on a 30 m shot.
+     Every third round is a tracer, a short warm 2.2 m streak; the rest are faint 0.9 m flicks of heat haze. Hot colours stay
+     below additive white-out. */
+  if(kind==='rifle'){for(let i=0;i<(shot?1:3);i++)beat(i*.085,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3()),j=tp.clone().add(V3(rnd(-.3,.3),rnd(-.3,.3),rnd(-.3,.3)));
+      const tracer=((shot?.index??i)%3)===0;fx.streak(m0,shot?tp:j,tracer?0xff9a3c:0x9a8467,tracer?.045:.022,shot?.flight||.13,0,tracer?.85:.4,tracer?2.2:.9);flash(m0,0xffb060,2.4);ma.recoil=Math.min(1.6,ma.recoil+.55);ma.s.pitch.v-=.4;
       if(ma.wpn.eject){const e=ma.wpn.eject.getWorldPosition(V3());fx.sparks(e,2,3,0xd9b45a,.8,.6);}});}
   else if(kind==='shotgun'){
     flash(muzzle,0xffc070,4);fx.light(muzzle,0xffa040,10);
@@ -215,12 +225,15 @@ function fireFX(ma,mt,kind,part,shot){
     for(let i=0;i<count;i++){
       const j=shot?.targets?.[i]||tp.clone().add(V3(rnd(-1,1),rnd(-.7,.9),rnd(-1,1)));
       // Short separated pellet tails keep the fan readable; heavy single slugs retain their reference streak.
-      fx.streak(muzzle,j,0xffe0a0,count>1?.045:.06,shot?.flights?.[i]||shot?.flight||.12,count>1?.16:.4);
+      fx.streak(muzzle,j,count>1?0xc89a62:0xff9a3c,count>1?.022:.05,shot?.flights?.[i]||shot?.flight||.12,0,count>1?.5:.85,count>1?.7:2.4);
     }
     ma.recoil=1.5;ma.s.pitch.v-=1;ma.spin=30;fx.smoke(muzzle,5,1.6,0x9a948a,.4,.5,1.2,.3);
   }
   else if(kind==='missile'){for(let i=0;i<(shot?1:3);i++)beat(i*.07,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3()).add(V3(rnd(-.2,.2),rnd(-.1,.2),0));fx.glow(m0,0xffb050,2,.12);fx.smoke(m0,4,1.4,0xc4bdb0,.5,.8,1.4,.3);
-      fx.missile(m0,shot?tp:tp.clone().add(V3(rnd(-.5,.5),rnd(-.3,.3),rnd(-.5,.5))),rnd(4,6.5),shot?.flight||.36-i*.05,shot?.arrival||null);ma.recoil=Math.min(1.4,ma.recoil+.35);});}
+      // Lofted about 45 degrees (owner, 2026-11-18): a quadratic curve leaves at 45 degrees when its control point stands as high above the
+      // launcher as it is far from it horizontally, so the missile climbs, turns over and drops onto the target.
+      const aim=shot?tp:tp.clone().add(V3(rnd(-.5,.5),rnd(-.3,.3),rnd(-.5,.5))),reach=Math.hypot(aim.x-m0.x,aim.z-m0.z);
+      fx.missile(m0,aim,Math.max(4,reach*.5+m0.y-Math.max(m0.y,aim.y)),shot?.flight||.36-i*.05,shot?.arrival||null);ma.recoil=Math.min(1.4,ma.recoil+.35);});}
   else if(kind==='blade'){ma.melee={age:0,target:mt,part,hit:false,prev:null};if(ma.wpn.glow)ma.wpn.glow.emissiveIntensity=2.4;}
   else if(kind==='rail'){fx.glow(muzzle,0x9fefff,3,.25);beat(.06,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3());fx.beam(m0,tp,0x7fdcff,.5,.4);fx.beam(m0,tp,0xffffff,.14,.28);fx.glow(m0,0xb5f8ff,6,.18);fx.light(m0,0x7fe6ff,14);fx.ring(V3(m0.x,BT.groundAt?.(m0.x,m0.z)??BT.floor,m0.z),0x7fdcff,5,.5);
       ma.recoil=1.8;ma.s.pitch.v-=1.8;ma.s.kx.v-=Math.sin(ma.yaw)*3;ma.s.kz.v-=Math.cos(ma.yaw)*3;for(let i=1;i<8;i++){const p=m0.clone().lerp(tp,i/8);fx.sparks(p,2,2,0x9fefff,.3,.4);}});

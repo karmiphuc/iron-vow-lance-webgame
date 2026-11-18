@@ -1,0 +1,31 @@
+{
+ "base": "main a5b904e",
+ "gate": {
+  "command": "node qa/check-combat-presentation.cjs",
+  "status": "pass",
+  "failsOnMain": "Round 0 streak is a short tracer, not a beam: 10.50 m"
+ },
+ "simulation": {
+  "command": "each qa/check-*.cjs run by check-simulation",
+  "passed": 70,
+  "unrunnable": ["check-ui.cjs: linkedom not installable offline"]
+ },
+ "browserDesktopSoftwareGL": {
+  "passed": ["checkCombatReadability", "checkDecisionUI", "sharedScene", "checkLivePortraits", "checkLionTrial", "checkPairedWalk", "checkMechComputer", "checkMovePreview", "checkRidgeCombat", "checkTerrain", "checkVehicles", "checkCicadaV2", "checkShields", "checkLineInfantry", "checkLineElite", "checkInfantryCarry", "checkVanguard", "checkReaver", "checkAero", "checkAeroReview", "checkCampaign"],
+  "failSameOnMain": ["checkGatecrasherV2", "checkHellbreakerV2", "checkShogunV2", "checkStockV2", "checkAshigaruV2", "checkBulwark"],
+  "note": "The six that also fail on main are gait and foot-planting assertions; this branch does not touch movement.",
+  "updatedAssertions": {
+   "sharedScene": "over-the-attacker-shoulder camera replaced by the duel framing; defender guard visibility kept",
+   "tactical": "cinematic step 0.96 s and 0.45 s aim hold",
+   "combatFx": "17 sparks at game scale",
+   "shotgunSpread": "pellet streak width 0.022"
+  },
+  "fixMotivatedByGate": "checkAero planted>0: the evade hop dragged the planted ankles under the authored dodge; rigs with an authored dodge clip now dodge in place"
+ },
+ "pacingMeasured": {
+  "unit": "seconds from attack start to first round, page-clock capture",
+  "rifle": {"main": 0.6, "branch": 1.6},
+  "missile": {"main": 1.0, "branch": 1.8}
+ },
+ "unverified": ["touch runs of the browser checks", "native iPad performance"]
+}

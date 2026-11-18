@@ -48,7 +48,7 @@ vertical=true;s=launch();assert.ok(s.every(f=>f.args[1].toArray().every(Number.i
 s=launch({scatter:false,id:'rampart'});assert.equal(s.length,1,'Shotgun FX archetype heavy slug remains a single tracer');assert.ok(s[0].args[1].distanceTo(anchor())<1e-8,'Slug remains centered without fake pellets');
 // Inspect real pooled geometry as well as call-through arguments during flight.
 combat.clear();actualFX=[];const rounds=contacts();combat.launch(actor,target,{id:'shotgun',scatter:true,burst:12},0,rounds,false);combat.fx.update(.03);
-const geom=scene.children.filter(o=>o.isMesh&&o.visible&&o.geometry.parameters?.width===1&&o.geometry.parameters?.height===1&&o.geometry.parameters?.depth===1&&Math.abs(o.scale.x-.045)<1e-8);
+const geom=scene.children.filter(o=>o.isMesh&&o.visible&&o.geometry.parameters?.width===1&&o.geometry.parameters?.height===1&&o.geometry.parameters?.depth===1&&Math.abs(o.scale.x-.022)<1e-8);   // pellet streaks: thin 0.7 m flicks, not beams (effects.js fireFX)
 assert.equal(geom.length,12,'Twelve real additive streak meshes exist during flight');
 assert.ok(new Set(geom.map(o=>o.position.toArray().map(n=>n.toFixed(4)).join(','))).size===12,'Real in-flight pellet meshes are spatially separated');
 combat.dispose();
