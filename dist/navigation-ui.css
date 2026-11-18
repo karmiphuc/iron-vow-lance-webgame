@@ -49,3 +49,6 @@ body:not([data-view="combat"]) #ui button{min-height:44px}
 
 /* Keep the carrier link in its own row, clear of the mooring actions. */
 .chart-port-card > .chart-ship-upgrades{display:block;width:100%;min-width:0;min-height:44px;margin-top:4px;padding:6px 0;background:transparent;border-color:transparent;color:var(--muted);font-size:11px}
+
+/* Leave a full touch-control row above the compact Mech Bay status. */
+@media(max-width:520px){.hangar-status{top:62px}}
