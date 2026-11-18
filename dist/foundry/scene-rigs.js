@@ -256,7 +256,8 @@ function draw(u,t,pose,scope,model,custom){
   entry={m,coat,surface:pose.stage?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
- const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
+ const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1;
+ const elapsed=entry.time==null?1/60:t-entry.time,dt=Math.min(elapsed,.042);
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
@@ -343,17 +344,19 @@ function draw(u,t,pose,scope,model,custom){
   airborne:world?.airborne,artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
   readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
  const previous=entry.groundRoot;
- // Step the rig at its original integration interval along the faster path.
- // A larger single delta skips foot plants and changes the spring response.
- if(playbackRate>1&&previous&&dt>0){
-  const sample=V3();
-  for(let i=1;i<playbackRate;i++){
-   const fraction=i/playbackRate;
-   sample.copy(previous).lerp(pos,fraction);
-   animateMech(m,{...input,pos:sample,ground:previous.y+(world.y-previous.y)*fraction},dt,t-dt*(1-fraction));
+ // Subdivide elapsed playback so slow render frames do not skip foot plants
+ // or send a large integration step through the existing springs.
+ if(playbackRate>1&&previous&&elapsed>0){
+  const realTime=Math.min(elapsed,.1),gaitTime=realTime*playbackRate;
+  const count=Math.ceil(gaitTime*60),stepTime=gaitTime/count;
+  const sample={...input,pos:V3()};
+  for(let i=1;i<=count;i++){
+   const fraction=i/count;
+   sample.pos.copy(previous).lerp(pos,fraction);
+   sample.ground=previous.y+(world.y-previous.y)*fraction;
+   animateMech(m,sample,stepTime,t-realTime*(1-fraction));
   }
- }
- animateMech(m,input,dt,t);
+ }else animateMech(m,input,dt,t);
  if(world)(entry.groundRoot??=V3()).set(pos.x,world.y,pos.z);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
