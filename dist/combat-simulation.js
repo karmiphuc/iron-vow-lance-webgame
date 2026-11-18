@@ -71,7 +71,7 @@
   }
   return {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
  }
- function createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,FREE_HAND_COUNTER}){
+ function createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
 const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee);
 // Part whose accuracy a shot uses: charged shots keep the old limb accuracy, every other shot uses the body.
@@ -79,6 +79,7 @@ const shotPart=(a,w,reaction)=>chargedLimbShot(a,w,'body',reaction)?'right':'bod
 function mechAim(a,t,w,reaction){
  const state=a.mechState,spot=t.mechState?.spot,direct=!w.melee&&!launchesMissiles(w);
  return (!reaction&&direct&&hasMechSkill(a,0)&&!state?.fired&&!state?.moved ? .06 : 0)+
+  (direct&&a.brace&&hasMechSkill(a,CAIRN_FRAME) ? .04 : 0)+
   (!w.melee&&spot?.team===a.team&&spot.source!==a.id ? .05 : 0)-
   (direct&&state?.disrupted ? .10 : 0)-
   (reaction&&state?.basilisk ? .15 : 0)+

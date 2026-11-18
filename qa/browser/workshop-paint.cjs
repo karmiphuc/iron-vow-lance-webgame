@@ -3,8 +3,10 @@ const assert=require('node:assert/strict');
 module.exports=async function checkWorkshopPaint({page,origin,tap}){
  const host=page.locator('#paint-preview');
  const openPaint=async()=>{if(!await page.locator('[data-workshop-detail="paint"]').evaluate(el=>el.open))await tap('[data-workshop-detail="paint"] > summary');};
+ const openColors=async()=>{if(!await page.locator('[data-workshop-detail="paint-colors"]').evaluate(el=>el.open))await tap('[data-workshop-detail="paint-colors"] > summary');};
  const factoryButton='[data-livery="0"]';
  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('iron-vow-career')).units[0]);
+ const waitFinish=finish=>page.waitForFunction(finish=>JSON.parse(localStorage.getItem('iron-vow-career'))?.units[0]?.paintFinish===finish,finish);
  const waitSaved=colors=>page.waitForFunction(colors=>{
   const unit=JSON.parse(localStorage.getItem('iron-vow-career'))?.units[0];
   return unit&&JSON.stringify([unit.paint??null,unit.trim?.s??null,unit.trim?.a??null])===JSON.stringify(colors);
@@ -41,8 +43,13 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
  await openPaint();
+ assert.equal(await page.locator('[data-paint-finish="block"]').getAttribute('aria-pressed'),'true');
+ await tap(factoryButton);
+ await host.evaluate(element=>element.scrollIntoView({block:'center'}));
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
  const originalFactory=await factoryColors();
  assert.equal(originalFactory.length,3);
+ await openColors();
  assert.equal(await page.locator('[data-livery]').count(),17);
  for(const channel of ['p','s','a']){
   assert.equal(await page.locator('[data-paint-channel="'+channel+'"]').count(),16);
@@ -65,6 +72,12 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  assert.deepEqual(values(await saved()),color);
  await matchColors(color);
  assert.equal(await page.locator('[data-livery][aria-pressed="true"]').count(),0);
+ await tap('[data-paint-finish="splinter"]');
+ await waitFinish('splinter');
+ assert.equal(await page.locator('[data-paint-finish="splinter"]').getAttribute('aria-pressed'),'true');
+ assert.deepEqual(values(await saved()),color,'Pattern changes preserve custom colors');
+ await tap('[data-paint-finish="solid"]');
+ await matchColors(color);
  await tap('#nav [data-page="hangar"]');await tap('[data-hangar-deck="mechs"]');
  await matchColors(color,true);
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
@@ -75,6 +88,7 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await tap(factoryButton);
  await waitSaved([null,null,null]);
  assert.deepEqual(values(await saved()),[null,null,null]);
+ assert.equal((await saved()).paintFinish,'factory');
  assert.equal(await page.locator(factoryButton).getAttribute('aria-pressed'),'true');
  await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
@@ -82,7 +96,7 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  await page.reload({waitUntil:'domcontentloaded'});
  assert.equal(await page.locator(factoryButton).getAttribute('aria-pressed'),'true');
 
- // Use a real rebuildable factory hull to exercise the unchanged livery lock.
+ // A rebuilt factory hull may change finishes while retaining its color lock.
  await page.evaluate(()=>{
   const frame=FRAMES.findIndex((frame,index)=>frame.fixedLivery&&salvageableHull(index));
   if(frame<0)throw Error('Missing factory-livery QA hull');
@@ -92,5 +106,6 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  });
  assert.equal(await page.locator('[data-custom-channel]').count(),0);
  assert.equal(await page.locator('[data-livery]').count(),0);
+ assert.equal(await page.locator('[data-paint-finish]').count(),4);
  assert.match(await page.locator('.paint-panel').textContent(),/FACTORY LIVERY/);
 };

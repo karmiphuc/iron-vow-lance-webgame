@@ -31,6 +31,25 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
   const material=name=>paint.find(material=>material.name===name);
   const hex=color=>color?.clone().convertLinearToSRGB().getHexString();
   const paints=Object.fromEntries(['paint_primary','paint_secondary','paint_accent'].map(name=>[name,hex(material(name)?.color)]));
+  const visiblePaint=new Map();
+  source.traverseVisible(node=>{if(node.isMesh)visiblePaint.set(node.material.name,node.material);});
+  function fieldColorCoverage(name,color){
+   const material=visiblePaint.get(name);
+   if(material?.userData.fieldFinish!=='block')return 0;
+   const shader={uniforms:{},vertexShader:'#include <begin_vertex>',fragmentShader:'#include <color_fragment>'};
+   material.onBeforeCompile(shader);
+   const canvas=shader.uniforms.fieldInk?.value.image;
+   if(!canvas)return 0;
+   const {width,height}=canvas,pixels=canvas.getContext('2d').getImageData(0,0,width,height).data;
+   const packed=Number.parseInt(color.slice(1),16),r=packed>>16,g=(packed>>8)&255,b=packed&255;
+   let matches=0,total=0;
+   for(let y=0;y<height;y+=4)for(let x=0;x<width;x+=4){
+    const i=(y*width+x)*4;
+    if(Math.hypot(pixels[i]-r,pixels[i+1]-g,pixels[i+2]-b)<10)matches++;
+    total++;
+   }
+   return matches/total;
+  }
   const slots=new Set();
   const weaponMaterials=[];
   socket.traverse(node=>{if(node.isMesh)weaponMaterials.push(node.material.name)});
@@ -52,6 +71,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
   };
   return {name:unit.name,contract:battle.contract.id,weapon:unit.weapon,model:FRAMES[frame].model,
    unitPaint:unit.paint.slice(1),unitTrim:unit.trim.s.slice(1),paint:paints,
+   fieldColors:[fieldColorCoverage('paint_primary',unit.paint),fieldColorCoverage('paint_secondary',unit.trim.s)],
    paintedWithTextures:paint.every(material=>material.map&&material.normalMap),
    bareWeapon:weaponMaterials.length>0&&weaponMaterials.every(name=>!name.startsWith('paint_')),
    chassisMaterials:slots.size,authoredRifle:socket.visible&&primary.mount.parent===entry.m.rig.arms.R.so};
@@ -63,6 +83,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  assert.equal(fit.paint.paint_primary,fit.unitPaint);
  assert.equal(fit.paint.paint_secondary,fit.unitTrim);
  assert.match(fit.paint.paint_accent,/^[0-9a-f]{6}$/);
+ assert.ok(fit.fieldColors.every(coverage=>coverage>.2),'The visible Block camo uses both enemy livery colors: '+JSON.stringify(fit.fieldColors));
  assert.ok(fit.paintedWithTextures&&fit.bareWeapon&&fit.chassisMaterials>=6&&fit.authoredRifle,JSON.stringify(fit));
 
  for(let turn=1;turn<=turns;turn++){

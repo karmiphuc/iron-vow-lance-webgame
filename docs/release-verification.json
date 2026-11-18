@@ -79,50 +79,59 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 107,
+    "siteVersion": 108,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "dd0d39483a6e580ecde137ffaf7e9212ba3be381",
-    "githubCommit": "fc69adce3243c5432118491444a0f696a2cbdb7a",
-    "distTree": "1640313ba238ceeb8adb8d1ac9dbb23c5d60bd78",
-    "verifiedAt": "2026-11-18T05:03:48.928052+00:00",
-    "localReleaseSourceSha256": "b8397fb49ff407115a40edb134897d4ccbe95204f050a640a20d06968ad867bb",
-    "simulationSuites": 68,
+    "sourceCommit": "75bbe92401d138a841b6d74c300867854940cea2",
+    "githubCommit": "dc8d08f114d385e4a3965183d0f11ec4e0e29689",
+    "distTree": "9c54856e6ca79f15a7a8f7017fdb048bfdfc6af7",
+    "verifiedAt": "2026-11-18T05:41:10.967Z",
+    "localReleaseSourceSha256": "1930eac8f1fa5b6105128f003a1891fe1d16b366740b577b2c8fdcb25d8c6789",
+    "simulationSuites": 70,
     "localBrowser": {
       "desktop": 13,
       "touch": 13,
       "result": "passed",
-      "resumeGuard": "Retained completed desktop cases; only phone framing changed afterward. Final readability assertions reran on both profiles after authoring-asset and size checks were added. Vehicle targeting, muzzle origins and wreck grounding reran after hover was matched to the vertical terrain scale. The committed six-view phase gate and mandatory source-stable release gate passed."
-    },
-    "liveFilesCompared": 164,
-    "liveBrowser": {
-      "result": "passed",
-      "desktop": 6,
-      "touch": 6,
       "scenarios": [
         "checkCombatReadability",
         "checkDecisionUI",
-        "checkRidgeCombat",
-        "checkTerrain",
-        "checkVehicles",
-        "checkCampaign"
+        "sharedScene",
+        "livePaint",
+        "checkShields",
+        "checkInfantryCarry",
+        "checkStockV2",
+        "checkCampaign",
+        "checkHangarLive",
+        "checkWorkshopTurntable",
+        "checkWorkshopPaint",
+        "bastionSharedRig",
+        "checkRigWorkbench"
+      ],
+      "failedAttemptsBeforePass": 0
+    },
+    "liveFilesCompared": 166,
+    "liveBrowser": {
+      "desktop": 6,
+      "touch": 6,
+      "result": "passed",
+      "scenarios": [
+        "checkCombatReadability",
+        "livePaint",
+        "checkShields",
+        "checkCampaign",
+        "checkHangarLive",
+        "checkWorkshopPaint"
       ],
       "failedAttemptsBeforePass": 0
     },
     "environment": {
       "browser": "Chromium",
-      "touch": "iPhone 13 emulation; six full-resolution desktop/iPad portrait phase captures",
-      "graphics": "Software WebGL with documented behavior-check policy",
+      "touch": "iPhone emulation; focused 320px, 390px, 768x1024 and 1024x768 checks",
+      "graphics": "Software WebGL",
       "nativeIPad": "unverified"
     },
-    "evidenceSha256": {
-      "packageLog": "67c60336ffddb2552b2a350795051d71c9d68cc56adc8383b920af41760b289d",
-      "packageBrowser": "e7e1d0d19747d0a2ccdb0eab67a8fd10be4869d0d2a61cb6670261be83ce57f1",
-      "liveLog": "d8e97a6dfb2bf673753bb1ad65dca3af7f1bc7bec31dbb70aa2c9739e3f04301",
-      "liveBrowser": "d50362d12c53a02e032f09e05a64fa1442205f6bda7b3d432728cff2e8e09aae"
-    },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_f6da9b3569108191be712e88f9d80369",
-    "deploymentId": "appgdep_6afd3109d40c8191af91c80b2f4eb0fd",
-    "evidence": "design/combat-readability/summary.json"
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_5c791159b4348191b7dc60a621053f75",
+    "deploymentId": "appgdep_6afd39d966f481919424d4371bfc218f",
+    "evidence": "design/field-liveries/summary.json"
   },
   "publishedReleaseHistory": [
     {
@@ -323,6 +332,52 @@
         "sourceCommit": "5164bd096c52c27d52e3da046735c7e4b855a732",
         "reason": "Live narrow-phone verification exposed three-unit combat row overflow. Fixed and checked before final signoff."
       }
+    },
+    {
+      "siteVersion": 107,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "dd0d39483a6e580ecde137ffaf7e9212ba3be381",
+      "githubCommit": "fc69adce3243c5432118491444a0f696a2cbdb7a",
+      "distTree": "1640313ba238ceeb8adb8d1ac9dbb23c5d60bd78",
+      "verifiedAt": "2026-11-18T05:03:48.928052+00:00",
+      "localReleaseSourceSha256": "b8397fb49ff407115a40edb134897d4ccbe95204f050a640a20d06968ad867bb",
+      "simulationSuites": 68,
+      "localBrowser": {
+        "desktop": 13,
+        "touch": 13,
+        "result": "passed",
+        "resumeGuard": "Retained completed desktop cases; only phone framing changed afterward. Final readability assertions reran on both profiles after authoring-asset and size checks were added. Vehicle targeting, muzzle origins and wreck grounding reran after hover was matched to the vertical terrain scale. The committed six-view phase gate and mandatory source-stable release gate passed."
+      },
+      "liveFilesCompared": 164,
+      "liveBrowser": {
+        "result": "passed",
+        "desktop": 6,
+        "touch": 6,
+        "scenarios": [
+          "checkCombatReadability",
+          "checkDecisionUI",
+          "checkRidgeCombat",
+          "checkTerrain",
+          "checkVehicles",
+          "checkCampaign"
+        ],
+        "failedAttemptsBeforePass": 0
+      },
+      "environment": {
+        "browser": "Chromium",
+        "touch": "iPhone 13 emulation; six full-resolution desktop/iPad portrait phase captures",
+        "graphics": "Software WebGL with documented behavior-check policy",
+        "nativeIPad": "unverified"
+      },
+      "evidenceSha256": {
+        "packageLog": "67c60336ffddb2552b2a350795051d71c9d68cc56adc8383b920af41760b289d",
+        "packageBrowser": "e7e1d0d19747d0a2ccdb0eab67a8fd10be4869d0d2a61cb6670261be83ce57f1",
+        "liveLog": "d8e97a6dfb2bf673753bb1ad65dca3af7f1bc7bec31dbb70aa2c9739e3f04301",
+        "liveBrowser": "d50362d12c53a02e032f09e05a64fa1442205f6bda7b3d432728cff2e8e09aae"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_f6da9b3569108191be712e88f9d80369",
+      "deploymentId": "appgdep_6afd3109d40c8191af91c80b2f4eb0fd",
+      "evidence": "design/combat-readability/summary.json"
     }
   ]
 }

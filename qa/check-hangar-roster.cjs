@@ -38,6 +38,14 @@ function checked(career,options){const before=JSON.stringify(career);freeze(care
  assert.equal(result.active.length,3,'hired reserve pilots do not create combat assignments');
 }
 {
+ const career=fixture('field-paint-career'),result=checked(career);
+ assert.equal(result.active[0].paintFinish,'splinter');
+ assert.equal(result.active[0].trim.s,'#3c4640');
+ assert.equal(result.active[1].paintFinish,undefined,'Legacy solid colors keep their original save layout');
+ assert.equal(result.active[2].paintFinish,'factory');
+ assert.equal(result.reserve[0].paintFinish,'survey');
+}
+{
  const career={units:[
   {id:'bad-id',frame:5,condition:29,weapon:'autocannon',melee:'breaker',shoulder:'pod',shield:'tower',paint:'#112233',trim:{s:'#445566'},upgrade:2},
   {frame:9,condition:1,weapon:'rifle'},

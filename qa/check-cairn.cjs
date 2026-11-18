@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+
+const career=simulate({random:()=>0,reducedMotion:true});
+const {run}=career;
+assert.equal(run('CAIRN_FRAME'),21);
+assert.equal(run("FRAMES[CAIRN_FRAME].rig"),'cairn');
+assert.equal(run("FRAMES[5].name"),'VALKYRIE');
+assert.equal(run('acquireHull(CAIRN_FRAME)'),false);
+run('save.credits=360000');
+assert.ok(run('acquireHull(CAIRN_FRAME)&&assignChassis(0,CAIRN_FRAME)&&assignChassis(1,5,true)'));
+assert.equal(run('save.credits'),0);
+assert.equal(run("stockHull(CAIRN_FRAME).weapon"),'rifle');
+run("save.units[0].paintFinish='survey';persist()");
+const restored=simulate({storage:new Map(career.storage),random:()=>0,reducedMotion:true});
+assert.ok(restored.run("validSave(save)&&pilotFrame(0)===CAIRN_FRAME&&pilotFrame(1)===5&&save.units[0].paintFinish==='survey'"));
+restored.run("deploy(1);const shooter=battle.units.find(u=>u.frame===CAIRN_FRAME&&u.team==='ally'),target=battle.units.find(u=>u.team==='enemy')");
+assert.equal(restored.run("shooter.paintFinish"),'survey');
+assert.equal(restored.run("mechAim(shooter,target,weapon('rifle'),false)"),0);
+restored.run('shooter.brace=true');
+assert.equal(restored.run("mechAim(shooter,target,weapon('rifle'),false)"),.04);
+assert.equal(restored.run("mechAim(shooter,target,weapon('missile'),false)"),0);
+assert.equal(restored.run("mechAim(shooter,target,weapon('cleaver'),false)"),0);
+console.log('PASS Cairn identity, market, joint deployment with Valkyrie, saved finish and Braced Aim');

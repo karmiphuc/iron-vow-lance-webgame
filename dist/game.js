@@ -70,6 +70,7 @@ const PAINT_PRESETS=[
  ['Neutral plates','#b0a88d','#343b42','#e08e3b']
 ];
 const PAINT_CHANNELS=[['p','Primary','#c6bd9f'],['s','Secondary','#343b42'],['a','Accent','#e08e3b']];
+const fieldPaint=window.IronVowFieldPaint;
 const paintChannel=(u,channel)=>(channel==='p'?u.paint:u.trim?.[channel])?.toLowerCase()??null;
 const activeLivery=(u,preset)=>PAINT_CHANNELS.every(([channel],index)=>paintChannel(u,channel)===preset[index+1]);
 function setPaintChannel(u,channel,color){
@@ -295,6 +296,9 @@ const AERO_FRAME=FRAMES.push({name:'AERO',model:'IV-03',role:'ELITE RECON',color
 const SHOGUN_FRAME=FRAMES.push({name:'SHOGUN',model:'HV–12',role:'FLAGSHIP ASSAULT',color:'#3978a8',
  hp:238,arm:124,leg:138,move:3,armor:10,cost:500000,weapon:'morrow',native:'shogun',
  brief:'A flagship assault chassis with layered armor and a planted stride. The Morrow twin cannon is standard.'})-1;
+const CAIRN_FRAME=FRAMES.push({name:'CAIRN',model:'CRN–01',role:'LINE ASSAULT',color:'#899aa2',
+ hp:155,arm:94,leg:105,move:4,armor:5,cost:180000,weapon:'rifle',foundry:3,rig:'cairn',
+ brief:'A compact rifle chassis with cast shoulders and slate field camouflage.'})-1;
 const MECH_SIGNATURES={
  0:['Steady Aim','First direct shot before moving gains +6 aim.'],
  1:['High Spot','A hit from high ground gives the next allied shot +5 aim.'],
@@ -314,7 +318,8 @@ const MECH_SIGNATURES={
  [BULWARK_FRAME]:['Shield Bash','Bulwark’s bash pushes the target one tile. Other frames push with melee hits. Requires a clear destination.'],
  [ASHIGARU_FRAME]:['Range Discipline','Ashigaru switches to flechettes up close. Other frames gain +5 aim on adjacent strikes or ranged shots from two or more tiles.'],
  [AERO_FRAME]:['Jumpjet','Jump up to five tiles for 2 AP, once per sortie.'],
- [SHOGUN_FRAME]:['Siegebreaker','Direct fire cuts Brace reduction by 20 points.']
+ [SHOGUN_FRAME]:['Siegebreaker','Direct fire cuts Brace reduction by 20 points.'],
+ [CAIRN_FRAME]:['Braced Aim','Direct shots gain +4 aim while braced.']
 };
 const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
 function hasMechSkill(u,frame){return Boolean(u?.mechSkills&&(u.frame===frame||u.mechSkills.includes(frame)))}
@@ -1446,7 +1451,7 @@ function assignChassis(i,frame,allowSwap=false){
  const cost=purchase?FRAMES[frame].cost:0;
  if(save.credits<cost)return false;
  const reserve=save.reserve??={};
- const hull=({weapon,melee,shoulder,shield,paint,trim,condition,upgrade})=>({weapon,melee,shoulder,shield,paint,trim,condition,upgrade});
+ const hull=({weapon,melee,shoulder,shield,paintFinish,paint,trim,condition,upgrade})=>({weapon,melee,shoulder,shield,paintFinish,paint,trim,condition,upgrade});
  const next=other>=0?hull(save.units[other]):reserve[frame]||stockHull(frame);
  if(other>=0){
    save.units[other]={...save.units[other],...hull(u),frame:previous};
@@ -1473,11 +1478,16 @@ function builtInLoadout(u,training,frame){
  <div class="armory-grid armory-shields" aria-label="Shields">${SHIELDS.map(shield=>shieldCard(u,shield)).join('')}</div>`;
 }
 function workshopPaint(u){
- if(FRAMES[pilotFrame(selected)].fixedLivery)return '<div class="paint-panel"><div class="eyebrow">FACTORY LIVERY</div><small>Black, green and crimson</small></div>';
- const presets=PAINT_PRESETS.map((preset,index)=>{
+ const fixed=FRAMES[pilotFrame(selected)].fixedLivery;
+ const finish=fieldPaint.finish(u);
+ const finishes=Object.entries(fieldPaint.finishes).filter(([key])=>!fixed||key!=='solid').map(([key,label])=>
+  `<button type="button" class="paint-swatch livery-swatch" data-paint-finish="${key}" ${key==='factory'&&!fixed?'data-livery="0"':''} aria-pressed="${finish===key}">${label}</button>`).join('');
+ const finishControls=`<fieldset class="livery-presets"><legend>Finish</legend><div class="paint-swatches paint-finishes">${finishes}</div></fieldset>`;
+ if(fixed)return `<div class="paint-panel">${finishControls}<small>FACTORY LIVERY COLORS</small></div>`;
+ const presets=PAINT_PRESETS.slice(1).map((preset,index)=>{
   const [name,p,s,a]=preset;
-  const chips=[p||'#b0a88d',s||'#343b42',a||'#e08e3b'].map(color=>`<i style="--swatch:${color}"></i>`).join('');
-  return `<button type="button" class="paint-swatch livery-swatch" data-paint="${p||''}" data-livery="${index}" aria-pressed="${activeLivery(u,preset)}"><span class="livery-colors" aria-hidden="true">${chips}</span>${name}</button>`;
+  const chips=[p,s,a].map(color=>`<i style="--swatch:${color}"></i>`).join('');
+  return `<button type="button" class="paint-swatch livery-swatch" data-paint="${p}" data-livery="${index+1}" aria-pressed="${activeLivery(u,preset)}"><span class="livery-colors" aria-hidden="true">${chips}</span>${name}</button>`;
  }).join('');
  const channels=PAINT_CHANNELS.map(([channel,label,factory])=>{
   const chosen=paintChannel(u,channel);
@@ -1485,8 +1495,10 @@ function workshopPaint(u){
   return `<fieldset class="paint-channel"><legend>${label}</legend><div class="channel-swatches">${swatches}</div>
    <label class="paint-custom">Custom <input ${channel==='p'?'id="custom-paint"':`data-trim="${channel}"`} data-custom-channel="${channel}" type="color" aria-label="${label} paint" value="${chosen||factory}"></label></fieldset>`;
  }).join('');
- return `<div class="paint-panel"><fieldset class="livery-presets"><legend>Livery</legend><div class="paint-swatches">${presets}</div></fieldset>
-  ${channels}<div class="inline-help"><small>FREE · SAVED PER CHASSIS</small>${infoTip('plate paint','Factory restores the chassis finish. Choose a livery or tune each armor channel.')}</div></div>`;
+ return `<div class="paint-panel">${finishControls}
+  <details class="workshop-disclosure" data-workshop-detail="paint-colors" ${bindWorkshop.disclosures?.['paint-colors']?'open':''}>
+   <summary>Custom colors</summary><fieldset class="livery-presets"><legend>Color presets</legend><div class="paint-swatches">${presets}</div></fieldset>${channels}
+  </details><div class="inline-help"><small>FREE · SAVED PER CHASSIS</small>${infoTip('plate paint','Choose a pattern or restore the original finish with Factory. Custom colors carry over to patterned finishes.')}</div></div>`;
 }
 let noiseBuffer=null,attackCameraEnabled=true;
 try{attackCameraEnabled=localStorage.getItem('iron-vow-attack-camera')!=='off'}catch{}
@@ -2294,7 +2306,8 @@ function validHull(u,frame,owned=[]){
  const shieldValid=u.shield==null||canFitShield(frame)&&u.melee==null&&shieldItem(u.shield)&&owned.includes(u.shield);
  return shieldValid&&slotValid&&(f.native||f.fixedWeapons?u.weapon===f.weapon&&meleeValid:
   RANGED.some(w=>w.id===u.weapon)&&(u.melee==null||MELEE.some(w=>w.id===u.melee)))&&
-  (u.paint==null||validPaint(u.paint))&&(u.trim==null||!!u.trim&&typeof u.trim==='object'&&['s','a'].every(k=>u.trim[k]==null||validPaint(u.trim[k])))&&Number.isFinite(u.condition)&&u.condition>=0&&u.condition<=100&&
+  (u.paintFinish===undefined||fieldPaint.valid(u.paintFinish))&&(u.paint==null||validPaint(u.paint))&&
+  (u.trim==null||!!u.trim&&typeof u.trim==='object'&&['s','a'].every(k=>u.trim[k]==null||validPaint(u.trim[k])))&&Number.isFinite(u.condition)&&u.condition>=0&&u.condition<=100&&
   Number.isInteger(u.upgrade)&&u.upgrade>=0&&u.upgrade<=3;
 }
 function validSave(s){
@@ -2496,7 +2509,7 @@ function makeUnit(i,team,x,z){
  const [paint,secondary]=f.fixedLivery?[null]:ally?[u.paint??null]:frame===REAVER_FRAME||frame===BULWARK_FRAME?[null]:hostileLivery(frame,i);
  const melee=!ally&&frame===AERO_FRAME?battle.aeroMelee:u.melee??null;
  return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee,shoulder:u.shoulder,shield:u.shield,
-  paint,trim:ally&&!f.fixedLivery?u.trim:secondary?{s:secondary}:null,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
+  paintFinish:ally?u.paintFinish:'block',paint,trim:ally&&!f.fixedLivery?u.trim:secondary?{s:secondary}:null,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
 }
 const sortiePilot=u=>u.index===AUX_SLOT?save.reservePilots[battle.aux.pilotId]:save.units[u.index];
 const sortieHull=u=>u.index===AUX_SLOT?save.reserve[u.frame]:save.units[u.index];
@@ -2644,7 +2657,7 @@ function jumpjetDestination(u,target){
  }
  return best;
 }
-const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,FREE_HAND_COUNTER});
+const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER});
 let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>ruleRandom(),chargedLimbShot});
 function shotContacts(w,profile,rounds,impacts){
  const spread=w.scatter?(reducedMotion?.021:.046):0;
@@ -3319,6 +3332,7 @@ MECH_MOTION[REAVER_FRAME]={...MECH_MOTION[0],step:.54};
 MECH_MOTION[BULWARK_FRAME]={...MECH_MOTION[3],step:.55,mass:1.5};
 MECH_MOTION[ASHIGARU_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.29,mass:.72};
 MECH_MOTION[AERO_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.43,mass:.89};
+MECH_MOTION[CAIRN_FRAME]={...MECH_MOTION[0]};
 MECH_MOTION[SHOGUN_FRAME]={...MECH_MOTION[3],mass:1.66};
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
@@ -3510,10 +3524,12 @@ function bindWorkshop(){
    $(`.lance-tabs [data-select="${selected}"]`)?.focus({preventScroll:true});
   }else if(FRAMES[frame].cost>save.credits)toast('Insufficient credits');
  };
- const presets=[...document.querySelectorAll('[data-livery]')];
+ const finishes=[...document.querySelectorAll('[data-paint-finish]')];
+ const presets=[...document.querySelectorAll('[data-livery]')].filter(button=>button.dataset.livery!=='0');
  const swatches=[...document.querySelectorAll('[data-paint-channel]')];
  const pickers=[...document.querySelectorAll('[data-custom-channel]')];
  const showPaint=()=>{
+  for(const button of finishes)button.setAttribute('aria-pressed',String(fieldPaint.finish(u)===button.dataset.paintFinish));
   for(const button of presets)button.setAttribute('aria-pressed',String(activeLivery(u,PAINT_PRESETS[button.dataset.livery])));
   for(const button of swatches)button.setAttribute('aria-pressed',String(paintChannel(u,button.dataset.paintChannel)===button.dataset.paintColor));
   for(const picker of pickers){
@@ -3522,16 +3538,23 @@ function bindWorkshop(){
   }
   drawWorkshopPreview();
  };
+ for(const button of finishes)button.onclick=()=>{
+  u.paintFinish=button.dataset.paintFinish;
+  if(u.paintFinish==='factory'){delete u.paint;delete u.trim;}
+  showPaint();persist();
+ };
+ const customPaint=()=>{if(u.paintFinish==='factory')delete u.paintFinish;};
  for(const button of presets)button.onclick=()=>{
   const preset=PAINT_PRESETS[button.dataset.livery];
+  customPaint();
   PAINT_CHANNELS.forEach(([channel],index)=>setPaintChannel(u,channel,preset[index+1]));
   showPaint();persist();
  };
  for(const button of swatches)button.onclick=()=>{
-  setPaintChannel(u,button.dataset.paintChannel,button.dataset.paintColor);showPaint();persist();
+  customPaint();setPaintChannel(u,button.dataset.paintChannel,button.dataset.paintColor);showPaint();persist();
  };
  for(const picker of pickers){
-  const update=()=>{if(validPaint(picker.value)){setPaintChannel(u,picker.dataset.customChannel,picker.value);showPaint();}};
+  const update=()=>{if(validPaint(picker.value)){customPaint();setPaintChannel(u,picker.dataset.customChannel,picker.value);showPaint();}};
   picker.oninput=update;picker.onchange=()=>{update();persist();};
  }
  const rotate=$('#rotate-foundry');
@@ -4232,8 +4255,8 @@ if(benchWar){
 if(benchRig){
  const prototypeArchives={3:'gatecrasher',4:'cicada',[HELLBREAKER]:'hellbreaker',[BULWARK_FRAME]:'bulwark',[ASHIGARU_FRAME]:'scout',[SHOGUN_FRAME]:'shogun'};
  const frames=FRAMES.map((frame,id)=>({
-  id,frame:id,name:frame.name,model:frame.foundry,
-  mix:frame.foundry!=null&&!window.IronVowRigV2.applies({frame:id}),
+  id,frame:id,name:frame.name,model:frame.foundry,rig:frame.rig,
+  mix:frame.foundry!=null&&frame.rig!=='cairn'&&!window.IronVowRigV2.applies({frame:id}),
   authored:window.IronVowRigV2.applies({frame:id}),quad:id===REAVER_FRAME,
   stock:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
   primaries:id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:undefined,
