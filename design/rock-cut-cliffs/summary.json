@@ -1,0 +1,223 @@
+{
+  "status": "passed",
+  "site": "appgprj_6aeeef176ee08191afe74f9556b02484",
+  "sourceCommit": "316960e5e21997c82a3774c9849fb1d2e9b97bf0",
+  "githubCommit": "c4ecc4eb4128229f94af2c0a81b303154a5d23f3",
+  "siteVersion": 109,
+  "versionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_e53886767b988191a0eb8e714590e3c7",
+  "distGate": "319c6353275ee0fc73b54068a5adaf14bd2c068092c7ddabdb25cb30bcae866c",
+  "distTree": "39ba03b70f4b7d73c8d29a00f623cb8efe736792",
+  "productionURL": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+  "filesVerified": 168,
+  "cases": [
+    {
+      "contract": 1,
+      "profile": "desktop",
+      "surface": "rock-cut-bluffs-with-graded-access",
+      "cliffVertices": 111360,
+      "shadeCount": 136,
+      "modelPixels": 213.61311195855205,
+      "picked": {
+        "x": 7,
+        "z": 12
+      }
+    },
+    {
+      "contract": 2,
+      "profile": "desktop",
+      "surface": "rock-cut-bluffs-with-graded-access",
+      "cliffVertices": 74880,
+      "shadeCount": 154,
+      "modelPixels": 213.3364574821087,
+      "picked": {
+        "x": 12,
+        "z": 10
+      }
+    },
+    {
+      "contract": 3,
+      "profile": "desktop",
+      "surface": "rock-cut-bluffs-with-graded-access",
+      "cliffVertices": 111360,
+      "shadeCount": 136,
+      "modelPixels": 213.00646307603267,
+      "picked": {
+        "x": 11,
+        "z": 9
+      }
+    },
+    {
+      "contract": 1,
+      "profile": "tablet-touch",
+      "surface": "rock-cut-bluffs-with-graded-access",
+      "cliffVertices": 111360,
+      "shadeCount": 136,
+      "modelPixels": 184.41491663886893,
+      "picked": {
+        "x": 7,
+        "z": 12
+      }
+    },
+    {
+      "contract": 2,
+      "profile": "tablet-touch",
+      "surface": "rock-cut-bluffs-with-graded-access",
+      "cliffVertices": 74880,
+      "shadeCount": 154,
+      "modelPixels": 183.89681382324693,
+      "picked": {
+        "x": 12,
+        "z": 10
+      }
+    },
+    {
+      "contract": 3,
+      "profile": "tablet-touch",
+      "surface": "rock-cut-bluffs-with-graded-access",
+      "cliffVertices": 111360,
+      "shadeCount": 136,
+      "modelPixels": 184.0044916839854,
+      "picked": {
+        "x": 11,
+        "z": 9
+      }
+    }
+  ],
+  "simulationSuites": 70,
+  "localBrowser": {
+    "commit": "316960e5e21997c82a3774c9849fb1d2e9b97bf0",
+    "distTree": "39ba03b70f4b7d73c8d29a00f623cb8efe736792",
+    "result": "passed",
+    "desktop": 7,
+    "touch": 7,
+    "scenarios": [
+      "checkCombatReadability",
+      "sharedScene",
+      "checkPairedWalk",
+      "checkMovePreview",
+      "checkRidgeCombat",
+      "checkTerrain",
+      "checkVehicles"
+    ],
+    "failedAttemptsBeforePass": 0
+  },
+  "liveBrowser": {
+    "commit": "f1b951cd39f0843210300bcbce23c3d9aad5774d",
+    "distTree": "3bab3bfcea7f1d348ea964bee62835e1cfbed614",
+    "result": "passed",
+    "desktop": 4,
+    "touch": 4,
+    "scenarios": [
+      "checkCombatReadability",
+      "checkMovePreview",
+      "checkRidgeCombat",
+      "checkTerrain"
+    ],
+    "failedAttemptsBeforePass": 0
+  },
+  "geometry": {
+    "terrains": 96,
+    "matchedSourceDuringGate": "38814b378f645acc95d69ca47dacb8e2611313345529d04a6db4316127d1d931",
+    "checks": [
+      {
+        "contract": 1,
+        "mobile": false,
+        "vertices": 111360,
+        "distinctShades": 136
+      },
+      {
+        "contract": 2,
+        "mobile": false,
+        "vertices": 74880,
+        "distinctShades": 154
+      },
+      {
+        "contract": 3,
+        "mobile": false,
+        "vertices": 111360,
+        "distinctShades": 136
+      },
+      {
+        "contract": 1,
+        "mobile": true,
+        "vertices": 111360,
+        "distinctShades": 136
+      },
+      {
+        "contract": 2,
+        "mobile": true,
+        "vertices": 74880,
+        "distinctShades": 154
+      },
+      {
+        "contract": 3,
+        "mobile": true,
+        "vertices": 111360,
+        "distinctShades": 136
+      }
+    ]
+  },
+  "campaign": {
+    "seeds": [
+      4242,
+      4243,
+      4244,
+      4245,
+      4246,
+      4247,
+      4248,
+      4249,
+      4250,
+      4251,
+      4252,
+      4253,
+      4254,
+      4255,
+      4256,
+      4257,
+      4258,
+      4259,
+      4260,
+      4261,
+      4262,
+      4263,
+      4264,
+      4265,
+      4266,
+      4267,
+      4268,
+      4269,
+      4270,
+      4271
+    ],
+    "battles": 30,
+    "ticks": 164723,
+    "anomalies": [],
+    "errors": [],
+    "sourceHash": "d0a6062aaa31e9e1f2f72db2b2508da3e7f6cd7d421aa8caadc88a1b1c10156c"
+  },
+  "captures": {
+    "terrainSeed": 101,
+    "viewport": [
+      1366,
+      1024
+    ],
+    "baseline": "a5b904e40aca6e23322c468a8dd2f2cd56176415",
+    "files": [
+      "relay-comparison.webp",
+      "corridor-comparison.webp",
+      "frontier-comparison.webp"
+    ]
+  },
+  "liveVerification": {
+    "version": 111,
+    "source": "f1b951cd39f0843210300bcbce23c3d9aad5774d",
+    "deploymentId": "appgdep_6afd428c51a08191b6adc971259551cc",
+    "status": "succeeded",
+    "scope": "The subsequent navigation release includes the tested cliffs. The production file comparison and focused browser runs apply to this combined release.",
+    "terrainHashes": {
+      "dist/scene/battle.js": "bafcdafff855ad8e0b9e8936c202e54a06d8745ef4e1c6fafb6b88aa1870089a",
+      "dist/assets/rock-cut.webp": "b1f0097c18f1ff4a717a4c295fe7204414c77e8eb720061e55ac7f7c13700d86"
+    }
+  }
+}
