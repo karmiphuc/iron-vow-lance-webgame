@@ -99,6 +99,35 @@ async function exerciseRigAdapter(){
  assert.equal(recovered.m.artilleryBrace,false);
  assert.equal(recovered.m.mortar.elevation.rotation.x,-.18);
  assert.equal(recovered.m.mortar.slide.position.z,-0);
+ const coatUnit={...artillery,id:'field-finish-damage',frame:5,paintFinish:'survey',paint:'#235679'};
+ const combatRig=adapter.draw(coatUnit,5,pose,scope,3).m;
+ const panel=combatRig.build.parts.body.find(({m})=>m.material.name==='paint_primary').m;
+ const base=panel.material;
+ function finishUniforms(material){
+  const shader={uniforms:{},vertexShader:'#include <begin_vertex>',fragmentShader:'#include <color_fragment>\n#include <alphamap_fragment>'};
+  material.onBeforeCompile(shader);
+  return shader.uniforms;
+ }
+ const ink=finishUniforms(base).fieldInk.value;
+ const rig=world.window.IronVowFoundryRig;
+ rig.setPartState(combatRig,'body',1);
+ const damaged=panel.material,damage=finishUniforms(damaged);
+ assert.notEqual(damaged,base);
+ assert.equal(damage.fieldInk.value,ink,'Scorched armor retains its chosen finish');
+ assert.ok(damage.fieldScorch.value.isTexture);
+ assert.equal(damaged.map,base.map);
+ rig.setPartState(combatRig,'body',0);
+ assert.equal(panel.material,base,'Repair puts the original paint material back');
+ rig.wreckMech(combatRig);
+ assert.equal(finishUniforms(panel.material).fieldInk,undefined,'A wreck uses the charred material');
+ assert.equal(panel.material.map,damage.fieldScorch.value);
+ let patternDisposals=0,damageDisposals=0;
+ ink.addEventListener('dispose',()=>patternDisposals++);
+ damaged.addEventListener('dispose',()=>damageDisposals++);
+ adapter.clearCombat();
+ assert.equal(patternDisposals,1,'Releasing the scene disposes unshared field textures');
+ assert.equal(damageDisposals,1,'Releasing the scene disposes cached damage material');
+
  fail=true;
  const unit={id:'failure',index:0,team:'ally',weapon:'rail',alive:true,hp,max:hp};
  assert.equal(adapter.draw(unit,1,pose,scope,0),null);

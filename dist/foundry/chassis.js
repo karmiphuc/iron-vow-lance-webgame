@@ -79,8 +79,9 @@ const PAL={
 const matCache=new Map();
 function paint(hex,rough=.58,metal=.34,name=''){const k='p'+hex+rough+name;if(matCache.has(k))return matCache.get(k);const c0=C(hex),lum=c0.r*.3+c0.g*.59+c0.b*.11,ns=lum>.45?.35:lum>.25?.6:.9;const m=MS({name,color:c0,map:grime,normalMap:panelNormal,normalScale:new T.Vector2(ns,ns),roughness:rough,metalness:metal,envMapIntensity:1.0});m.userData.paint=true;matCache.set(k,m);return m;}
 function hazardMat(rep){const k='hz'+rep;if(matCache.has(k))return matCache.get(k);const t=hazardTex.clone();t.needsUpdate=true;t.repeat.set(rep,1);const m=MS({map:t,roughness:.62,metalness:.2});matCache.set(k,m);return m;}
-function damagedOf(m){const k='dmg'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;
- d.color=(m.userData.scorchColor?C(m.userData.scorchColor):m.color.clone()).multiplyScalar(.62);d.roughness=.85;matCache.set(k,d);return d;}
+function damagedOf(m){const k='dmg'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone(),fade=.62;
+ if(!window.IronVowFieldPaint?.scorch(m,d,scorchMap,fade))d.map=scorchMap;
+ d.color.multiplyScalar(fade);d.roughness=.85;matCache.set(k,d);return d;}
 function wreckOf(m){const k='wr'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;d.color=C(0x2a2622);d.roughness=.95;d.metalness=.2;if(d.emissive)d.emissive.setHex(0);matCache.set(k,d);return d;}
 function releaseOwnedMaterials(owned){
  const all=new Set(owned);

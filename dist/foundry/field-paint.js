@@ -40,6 +40,7 @@ const darkSplinters=[
 ];
 const repeats={block:'.58',splinter:'.49',survey:'.52'};
 const textures=new Map();
+const programs=new WeakMap();
 const valid=finish=>typeof finish==='string'&&Object.hasOwn(finishes,finish);
 const hasColor=unit=>Boolean(unit.paint||unit.trim?.s||unit.trim?.a);
 const finish=unit=>valid(unit.paintFinish)?unit.paintFinish:hasColor(unit)?'solid':'block';
@@ -150,30 +151,48 @@ function coat(original,palette,finish,role){
   pattern.release();
  };
  material.addEventListener('dispose',release);
- if(!atlas)material.userData.scorchColor=palette[role==='p'?0:4];
  material.color.set(0xffffff);
  const declarations='varying vec3 fieldP; varying vec3 fieldN;\n';
- material.onBeforeCompile=(shader,renderer)=>{
-  original.onBeforeCompile.call(material,shader,renderer);
-  shader.uniforms.fieldInk={value:pattern.texture};
-  shader.vertexShader=declarations+shader.vertexShader.replace('#include <begin_vertex>',
-   '#include <begin_vertex>\nfieldP=position; fieldN=normal;');
-  shader.fragmentShader='uniform sampler2D fieldInk; '+declarations+shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-  {
-  vec3 n=abs(normalize(fieldN)); vec3 p=fieldP;
-  vec2 uv=n.z>=max(n.x,n.y)?p.xy:n.x>=n.y?p.zy:p.xz;
-  vec2 pat=uv * ${repeats[finish]} + vec2(.143,.246);
-  vec3 ink=texture2D(fieldInk,pat).rgb;
-  ink=mix(ink/12.92,pow((ink+.055)/1.055,vec3(2.4)),step(vec3(.04045),ink));
-  vec3 underneath=diffuseColor.rgb;
-  vec3 coating=ink*mix(vec3(.85),vec3(1.06),clamp(underneath,0.,1.));
-  ${atlas?`vec3 swatch=pow(max(underneath,vec3(.00001)),vec3(1.0/2.2));
-  float coverage=${atlasMask[original.name]};
-  diffuseColor.rgb=mix(underneath,coating*(.83+.34*swatch.g),coverage);`:'diffuseColor.rgb=coating;'}
-  }`);
- };
- material.customProgramCacheKey=()=>original.customProgramCacheKey()+'|field-paint|'+finish+'|'+(atlas?original.name:role);
+ function bind(target,scorchMap,fade=1){
+  target.onBeforeCompile=(shader,renderer)=>{
+   original.onBeforeCompile.call(target,shader,renderer);
+   shader.uniforms.fieldInk={value:pattern.texture};
+   shader.vertexShader=declarations+shader.vertexShader.replace('#include <begin_vertex>',
+    '#include <begin_vertex>\nfieldP=position; fieldN=normal;');
+   shader.fragmentShader='uniform sampler2D fieldInk; '+declarations+shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   vec3 fieldAxis=abs(normalize(fieldN));
+   vec2 fieldUV=fieldAxis.z>=max(fieldAxis.x,fieldAxis.y)?fieldP.xy:fieldAxis.x>=fieldAxis.y?fieldP.zy:fieldP.xz;
+   {
+   vec2 pat=fieldUV * ${repeats[finish]} + vec2(.143,.246);
+   vec3 ink=texture2D(fieldInk,pat).rgb;
+   ink=mix(ink/12.92,pow((ink+.055)/1.055,vec3(2.4)),step(vec3(.04045),ink));
+   vec3 underneath=diffuseColor.rgb ${scorchMap?'/ '+fade:''};
+   vec3 coating=ink*mix(vec3(.85),vec3(1.06),clamp(underneath,0.,1.));
+   ${atlas?`vec3 swatch=pow(max(underneath,vec3(.00001)),vec3(1.0/2.2));
+   float coverage=${atlasMask[original.name]};
+   diffuseColor.rgb=mix(underneath,coating*(.83+.34*swatch.g),coverage);`:'diffuseColor.rgb=coating;'}
+   }`);
+   if(scorchMap){
+    shader.uniforms.fieldScorch={value:scorchMap};
+    // Burn marks sit over the painted finish and markings. The atlas and its
+    // color mask still sample the original art before the burn layer is added.
+    shader.fragmentShader='uniform sampler2D fieldScorch;\n'+shader.fragmentShader.replace('#include <alphamap_fragment>',`
+    float fieldBurn=texture2D(fieldScorch,fieldUV * .71 + vec2(.23,.48)).r;
+    diffuseColor.rgb *= ${fade} * mix(vec3(.31,.28,.25),vec3(.98,.95,.89),clamp(fieldBurn * 1.8,0.,1.));
+    #include <alphamap_fragment>`);
+   }
+  };
+  target.customProgramCacheKey=()=>original.customProgramCacheKey()+'|field-paint|'+finish+'|'+(atlas?original.name:role)+'|'+fade;
+ }
+ bind(material);
+ programs.set(material,bind);
  return material;
+}
+function scorch(base,damaged,scorchMap,fade){
+ const bind=programs.get(base);
+ if(!bind)return false;
+ bind(damaged,scorchMap,fade);
+ return true;
 }
 function create(unit){
  const selected=finish(unit);
@@ -197,5 +216,5 @@ function create(unit){
   });
  };
 }
-root.IronVowFieldPaint={finishes,valid,finish,create};
+root.IronVowFieldPaint={finishes,valid,finish,create,scorch};
 })(window);

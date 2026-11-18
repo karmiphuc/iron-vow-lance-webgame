@@ -13,7 +13,15 @@ assert.match(await p.evaluate(()=>FRAMES[21]?.name||''),/cairn/i);
 await p.evaluate(()=>{save.credits=1000000;save.rep=1000;persist();render()});
 const open=async id=>{const d=p.locator(`[data-workshop-detail="${id}"]`);if(!await d.evaluate(e=>e.open))await p.locator(`[data-workshop-detail="${id}"] > summary`).click()};
 async function buyAssign(frame,seat){await p.locator(`[data-select="${seat}"]`).first().click();await open('compare');await p.locator('[data-bay="market"]').click();await p.locator(`[data-buy-hull="${frame}"]`).click();await p.locator(`[data-chassis="${frame}"]`).click();await p.waitForFunction(frame=>pilotFrame(selected)===frame,frame);await p.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed,null,{timeout:120000});}
-await buyAssign(21,0);await p.locator('[data-refit-choice="sidewinder"]').click();await p.locator('[data-equip="sidewinder"]').click();assert.equal(await p.evaluate(()=>save.units[0].weapon),'sidewinder');
+await buyAssign(21,0);
+assert.equal(await p.evaluate(()=>{
+ const gun=IronVowWorkshop.snapshot()?.entry?.primary;
+ if(gun?.id!=='rifle')return false;
+ let shroud=false;
+ gun.recoil.traverseVisible(mesh=>{if(mesh.isMesh&&mesh.material.name==='weapon_armor_cairn')shroud=true;});
+ return shroud;
+}),true,'The stock Kestrel carries the Cairn cast shroud');
+await p.locator('[data-refit-choice="sidewinder"]').click();await p.locator('[data-equip="sidewinder"]').click();assert.equal(await p.evaluate(()=>save.units[0].weapon),'sidewinder');
 await open('paint');for(const finish of ['block','splinter','survey','factory']){await p.locator(`[data-paint-finish="${finish}"]`).click();await p.waitForFunction(f=>JSON.parse(localStorage.getItem('iron-vow-career'))?.units[0]?.paintFinish===f,finish);await p.waitForFunction(f=>{const e=IronVowWorkshop.snapshot()?.entry;let n=0;e?.m.cont.traverse(o=>{if(o.material?.userData?.fieldFinish===f)n++});return f==='factory'?n===0:n>0},finish,{timeout:60000});}await p.locator('[data-paint-finish="survey"]').click();await p.waitForFunction(()=>JSON.parse(localStorage.getItem('iron-vow-career'))?.units[0]?.paintFinish==='survey');
 async function capture(name){const img=await loadImage(await p.screenshot()),canvas=createCanvas(img.width,img.height);canvas.getContext('2d').drawImage(img,0,0);fs.writeFileSync(path.join(out,name+'.webp'),await canvas.encode('webp'));}
 await p.locator('#paint-preview').scrollIntoViewIfNeeded();await p.waitForTimeout(250);await capture('cairn-workshop');assert.equal(await p.evaluate(()=>IronVowWorkshop.snapshot().entry.m.cairn),true,'Workshop uses the distinct Cairn rig');

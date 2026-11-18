@@ -206,10 +206,12 @@ function fit(m,unit,finish){
  m.cairn=true;
 }
 function fitRifle(gun){
- if(gun?.id!=='rifle'||!gun.grip||!gun.muzzle)return;
+ if(gun?.id!=='rifle'||!gun.model||!gun.muzzle)return;
  const root=gun.recoil;
  root.updateWorldMatrix(true,true);
- const rear=root.worldToLocal(gun.grip.getWorldPosition(V())),front=root.worldToLocal(gun.muzzle.getWorldPosition(V()));
+ // The stock Kestrel GLB uses its weapon origin as the grip point.
+ const grip=gun.grip||gun.model;
+ const rear=root.worldToLocal(grip.getWorldPosition(V())),front=root.worldToLocal(gun.muzzle.getWorldPosition(V()));
  const axis=front.clone().sub(rear),len=axis.length(),g=rack(root,0,0,0);
  g.quaternion.setFromUnitVectors(V(0,0,1),axis.normalize());g.position.copy(rear).lerp(front,.13);g.scale.setScalar(len);
  const shroud=coat('#4f554e','weapon_armor_cairn'),iron=coat('#303635'),mark=coat('#b79159');

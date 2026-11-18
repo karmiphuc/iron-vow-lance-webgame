@@ -3,10 +3,32 @@ const fs=require('node:fs');
 const path=require('node:path');
 
 module.exports=async function checkHangarLive({page,mobile,origin,tap}){
+ const shaderErrors=[];
+ page.on('console',msg=>{if(msg.type()==='error'&&/Shader Error|VALIDATE_STATUS|FRAGMENT SHADER/.test(msg.text()))shaderErrors.push(msg.text());});
  const ready=()=>page.waitForFunction(()=>IronVowHangarRuntime.scene?.records.filter(r=>r.unit).some(r=>r.rig.object.children.length)&&
   IronVowHangarRuntime.scene.records.filter(r=>r.unit).every(r=>r.rig.object.children.length),null,{timeout:60000});
  const snapshot=()=>page.evaluate(()=>IronVowHangarRuntime.scene.cameraState());
  const goBay=async()=>{await tap('[data-hangar-deck="mechs"]');await ready();};
+ const finishMaterials=id=>page.evaluate(id=>{
+  const record=IronVowHangarRuntime.scene.records.find(r=>r.unit?.id===id),samples=new Map();
+  function uniforms(material){
+   const shader={uniforms:{},vertexShader:'#include <begin_vertex>',fragmentShader:'#include <color_fragment>\n#include <alphamap_fragment>'};
+   material.onBeforeCompile(shader);
+   return shader.uniforms;
+  }
+  record.rig.object.traverseVisible(mesh=>{
+   if(!mesh.isMesh||samples.has(mesh.material.uuid)||mesh.userData.part==='pilot'||mesh.geometry.userData.part==='pilot')return;
+   const base=mesh.userData.base??mesh.material,ink=uniforms(base).fieldInk;
+   if(!base.userData.paint||!ink)return;
+   const current=uniforms(mesh.material);
+   samples.set(mesh.material.uuid,{name:base.name,sameInk:current.fieldInk?.value===ink.value,
+    scorched:Boolean(current.fieldScorch),sameMap:mesh.material.map===base.map});
+  });
+  return [...samples.values()];
+ },id);
+ function checkFinish(samples,scorched,description){
+  assert.ok(samples.length&&samples.every(m=>m.sameInk&&m.sameMap&&m.scorched===scorched),description);
+ }
  const clickHull=async id=>{
   const point=await page.evaluate(id=>{
    const stage=IronVowHangarRuntime.scene,record=stage.records.find(r=>r.unit?.id===id),canvas=document.querySelector('#scene'),rect=canvas.getBoundingClientRect();
@@ -65,7 +87,9 @@ module.exports=async function checkHangarLive({page,mobile,origin,tap}){
  });
  assert.ok(intact.mesh.length>0,'live hull contains painted meshes');
  assert.equal(intact.gantry,false,'30% is above the maintenance threshold');
- await page.evaluate(()=>{save.units[0].condition=29;render();});await ready();
+ checkFinish(await finishMaterials('seat:0'),false,'Intact Warden displays the original field finish');
+ const reconCondition=await page.evaluate(()=>save.units[1].condition);
+ await page.evaluate(()=>{save.units[0].condition=29;save.units[1].condition=29;render();});await ready();
  const damaged=await page.evaluate(()=>{
   const stage=IronVowHangarRuntime.scene,record=stage.records.find(r=>r.unit?.id==='seat:0'),mesh=[];
   record.rig.object.traverse(node=>{if(node.isMesh&&node.userData.base?.userData?.paint)mesh.push([node.name,node.material.color.toArray(),node.userData.base.color.toArray()]);});
@@ -76,8 +100,14 @@ module.exports=async function checkHangarLive({page,mobile,origin,tap}){
   'same hull retains its underlying paint at both conditions');
  assert.ok(damaged.mesh.length>0&&damaged.mesh.every(([,color,base])=>color.every((v,i)=>Math.abs(v-base[i]*.62)<1e-6)),
   'below 30% changes the actual hull paint to the Foundry scorch material');
+ checkFinish(await finishMaterials('seat:0'),true,'Warden keeps its field pattern beneath the scorch texture');
+ const damagedRecon=await finishMaterials('seat:1');
+ checkFinish(damagedRecon,true,'Kestrel keeps its field pattern beneath the scorch texture');
+ assert.ok(damagedRecon.some(m=>m.name==='warden_atlas'),'Kestrel retains the original atlas map for its mask');
  assert.deepEqual(damaged.camera,intact.camera,'condition change keeps the same mech camera');
- await page.evaluate(condition=>{save.units[0].condition=condition;render();},originalCondition);await ready();
+ await page.evaluate(([warden,recon])=>{save.units[0].condition=warden;save.units[1].condition=recon;render();},[originalCondition,reconCondition]);await ready();
+ checkFinish(await finishMaterials('seat:0'),false,'Repair restores the unscorched field finish');
+ checkFinish(await finishMaterials('seat:1'),false,'Repair restores the unscorched atlas finish');
  const activity=await page.evaluate(()=>{
   const stage=IronVowHangarRuntime.scene,scene=stage.scene;
   const walking=scene.getObjectByName('walking technician'),consoleWorker=scene.getObjectByName('console technician'),welder=scene.getObjectByName('welding technician');
@@ -132,6 +162,7 @@ module.exports=async function checkHangarLive({page,mobile,origin,tap}){
   Boolean(r.group.getObjectByName('maintenance gantry'))]));
  assert.deepEqual(expanded,[['seat:0',false,1,false],['seat:1',false,1,false],['seat:2',false,1,false],[null,false,null,false],
   ['reserve:6',true,.29,true],['reserve:10',true,1,false]]);
+ checkFinish(await finishMaterials('reserve:6'),true,'Procedural Oni keeps its field pattern beneath the scorch texture');
  const state=await page.evaluate(()=>JSON.stringify({save,selected}));
  const gl=await page.evaluate(()=>{
   const context=IronVowRenderer.get().getContext();
@@ -145,6 +176,7 @@ module.exports=async function checkHangarLive({page,mobile,origin,tap}){
  await page.waitForFunction(()=>!IronVowRenderer.lost&&IronVowRenderer.generation===1,null,{timeout:30000});
  await ready();
  assert.equal(await page.evaluate(()=>JSON.stringify({save,selected})),state,'Context restoration preserves real career and pilot selection');
+ assert.deepEqual(shaderErrors,[],'Intact, scorched and restored field materials compile on the actual renderer');
 
  if(process.env.IRON_VOW_HANGAR_PROOF&&!mobile){
   const data=await page.screenshot({type:'png'});
