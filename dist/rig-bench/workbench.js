@@ -32,7 +32,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  const health=Object.fromEntries(parts.map(part=>[part,100]));
  let frame=lookup.get(String(initialFrame))??frames[0],lowerFrame=frame,unit,modules,entry,lowerEntry,entries=[],lastStats,view='orbit',group='all',az=-.52,el=.1,dist=19;
  let time=0,prior,walk=false,advance=0,aim=false,fire=-Infinity,strike=-Infinity,clip='',clipTime=0,clipList='',drag;
- let showMarkers=false,paint={},team='ally',frameRequest,metricsAt=-Infinity;
+ let showMarkers=false,paint={},paintFinish,team='ally',frameRequest,metricsAt=-Infinity;
  let clipSource='current',archive=null,archiveRequest=0,archiveError='',playing=false,lastArchiveSample='',firePod=false;
  document.body.dataset.view='rig-bench';
  document.body.classList.add('rig-bench-v3');
@@ -51,6 +51,8 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   </div></details>
   <details><summary>Paint</summary><div class="bench-fields">
    <label>Team<select id="bench-team"></select></label>
+   <label>Finish<select id="bench-finish">${Object.entries(root.IronVowFieldPaint.finishes).map(([id,name])=>
+    `<option value="${id}">${name}</option>`).join('')}</select></label>
    ${['Primary','Secondary','Accent'].map((label,i)=>`<label>${label}<input id="bench-paint-${i}" type="color" value="${COLOR_DEFAULTS[i]}"></label>`).join('')}
    <button id="bench-factory" type="button">Factory colors</button>
   </div></details>
@@ -126,7 +128,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   clipSource=source;$('bench-clip-source').value=source;
   clipList='';setClip('');releaseArchive();archive=null;archiveError='';
   const archived=source==='archive';
-  for(const id of ['walk','aim','fire','strike','team','group','kit','ik','factory','paint-0','paint-1','paint-2',...parts.map(p=>'part-'+p)]){
+  for(const id of ['walk','aim','fire','strike','team','group','kit','ik','finish','factory','paint-0','paint-1','paint-2',...parts.map(p=>'part-'+p)]){
    $('bench-'+id).disabled=archived;
   }
   $('bench-fire-pod').disabled=archived||!unit?.shoulder;
@@ -155,7 +157,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   select('bench-clip-source',[['current','Live rig'],...(frame.archive?[['archive','Authored archive']]:[])],'current');
   $('bench-walk').setAttribute('aria-pressed','false');$('bench-aim').setAttribute('aria-pressed','false');
   for(const id of parts)applyPart(id,100);
-  unit={id:'bench-main',index:0,frame:next.frame,lionTrial:next.lionTrial,team,...next.stock};
+  unit={id:'bench-main',index:0,frame:next.frame,rig:next.rig,lionTrial:next.lionTrial,team,...next.stock};
   modules=frame.mix?{core:frame.model,arms:frame.model,legs:frame.model}:undefined;
   group='all';$('bench-group').value='all';setClip('');clipList='';
   reset(true);refreshLoadout();
@@ -173,7 +175,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  }
  function modelUnit(source,x,z,withHealth){
   const hp=withHealth?{...health}:owned();
-  return {...source,team,inspectWeapon:source.weapon,paint:paint.p,trim:{s:paint.s,a:paint.a},alive:hp.body>0&&hp.pilot>0,
+  return {...source,team,inspectWeapon:source.weapon,paintFinish,paint:paint.p,trim:{s:paint.s,a:paint.a},alive:hp.body>0&&hp.pilot>0,
    downReason:hp.pilot<=0?'pilot':undefined,face:0,hp,max:owned(),x,z,
    motion:withHealth&&walk&&!clip&&hp.legs>0&&hp.body>0&&hp.pilot>0?{toX:x,toZ:z+1}:null};
  }
@@ -386,8 +388,21 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
   lowerFrame=lookup.get(e.target.value);reset(true);
  };
  $('bench-team').onchange=e=>{team=e.target.value;reset();};
- for(const [i,key] of ['p','s','a'].entries())$('bench-paint-'+i).onchange=e=>{paint[key]=e.target.value;reset();};
- $('bench-factory').onclick=()=>{paint={};for(const [i,color] of COLOR_DEFAULTS.entries())$('bench-paint-'+i).value=color;reset();};
+ function selectFinish(selected){
+  paintFinish=selected;$('bench-finish').value=selected;
+  if(paintFinish==='factory'){
+   paint={};for(const [i,color] of COLOR_DEFAULTS.entries())$('bench-paint-'+i).value=color;
+  }
+  reset();
+ }
+ $('bench-finish').onchange=e=>selectFinish(e.target.value);
+ for(const [i,key] of ['p','s','a'].entries())$('bench-paint-'+i).onchange=e=>{
+  if(!paintFinish||paintFinish==='factory'){
+   paintFinish='solid';$('bench-finish').value='solid';
+  }
+  paint[key]=e.target.value;reset();
+ };
+ $('bench-factory').onclick=()=>selectFinish('factory');
  $('bench-clip-source').onchange=e=>void setClipSource(e.target.value);
  $('bench-clip').onchange=e=>setClip(e.target.value);
  $('bench-play-clip').onclick=()=>{
@@ -444,7 +459,7 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
   return matched;
  }
  root.__bench={selectFrame,setView,setClip,setClipSource,sampleArchive,samplePaint,get state(){return {roster:frames.map(f=>f.id),frame:frame.id,loaded:clipSource==='archive'?Number(Boolean(archive)):entries.length,view,clip,clipSource,clipTime,group,
-  model:entry?.m.live??frame.model,authoredMix:lowerEntry?{
+  model:frame.rig??entry?.m.live??frame.model,authoredMix:lowerEntry?{
    upper:entry.m.live,lower:lowerEntry.m.live,
    pelvisGap:entry.m.rig.pelvis.getWorldPosition(vector()).distanceTo(lowerEntry.m.rig.pelvis.getWorldPosition(vector()))
   }:null,clips:availableClips().map(c=>({name:c.name,duration:c.duration})),

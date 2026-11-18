@@ -78,17 +78,17 @@ function setCamera(elevation,azimuth=0){
  camera.lookAt(0,targetY,0);
  camera.updateMatrixWorld(true);
 }
-function disposeEntry({m,primary,secondary}){
+function disposeEntry({m,primary,secondary,shield}){
  m.cont.parent?.remove(m.cont);
  m.nativeV2?.dispose();
  if(!m.nativeV2?.pose)for(const weapon of [primary,secondary])for(const material of weapon?.ownedMaterials||[])material.dispose();
+ for(const material of shield?.ownedMaterials||[])material.dispose();
  const unique=new Set([m.build.visorMat,m.build.stackMat,...(m.build.ownedMaterials||[])]);
  if(m.live)for(const entries of Object.values(m.build.parts))
   for(const entry of entries)unique.add(entry.m.material);
  // The kit caches shared geometries. Merged per-rig buffers are uniquely owned.
  m.body.traverse(o=>{if(o.userData.foundryMerged)o.geometry.dispose()});
- if(m.live)VC.releaseOwnedMaterials(unique);
- else unique.forEach(material=>material.dispose());
+ VC.releaseOwnedMaterials(unique);
 }
 function makeSurface(){
  const surface=document.createElement('canvas');surface.width=surface.height=640;return surface;
@@ -213,6 +213,29 @@ function aimMounted(m,weapon,target,weight,node){
   wrist.quaternion.copy(parentQ.invert().multiply(delta.multiply(worldQ)));
  }
 }
+// Carry fit depends on physical mounts and weapon length, independently of the shot effects archetype.
+const oneHandGuns=new Set(['rifle','shotgun','sidewinder','trident','forge','ember']);
+const longGuns=new Set(['rail','obelisk','watchman','rampart','falcon']);
+const cuttingWeapons=new Set(['blade','cleaver','hatchet']);
+const shieldPoses={'bulwark-shield':'buckler','citadel-shield':'tower'};
+function combatReadyPose(u,{m,primary,secondary,shield}){
+ if(!primary?.muzzle||u.lionTrial)return;
+ const {spine,arms}=m.rig;
+ if(u.frame===2)return primary.carrier===spine?'pod':undefined;
+ if(primary.mount.parent!==arms.R.so)return;
+ const compact=oneHandGuns.has(primary.id),striker=u.frame===5||m.cairn;
+ if(u.shield){
+  if(compact&&(u.frame===0||striker)&&shield?.mount.parent===arms.L.so)return shieldPoses[u.shield];
+ }else if(u.melee){
+  if(compact&&(u.frame===6||striker)&&secondary?.mount.parent===arms.L.so){
+   if(window.IronVowWeaponFX?.profiles[u.melee]?.style==='maul')return 'maul';
+   if(cuttingWeapons.has(secondary.id))return 'sword';
+  }
+ }else{
+  if((u.frame===9||striker)&&longGuns.has(primary.id))return 'rail';
+  if(striker&&compact)return 'striker';
+ }
+}
 function draw(u,t,pose,scope,model,custom){
  if(!init())return null;
  if(!pose.preview&&!pose.stage&&combatScope!==scope){clearCombat();combatScope=scope;}
@@ -225,7 +248,10 @@ function draw(u,t,pose,scope,model,custom){
   const m=custom==='rig-v2'?rigV2.build(u,pose.stage||pose.previewScope||'battle'):
    buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim,pose.modules);
   if(!m)return null;
-  entry={m,surface:pose.stage?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
+  if(window.IronVowCairn?.applies(u.frame))window.IronVowCairn.fit(m,u,window.IronVowFieldPaint.finish(u));
+  const coat=window.IronVowFieldPaint.create(u);
+  if(coat)coat(m.body,m.build.ownedMaterials??=[]);
+  entry={m,coat,surface:pose.stage?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
@@ -274,9 +300,12 @@ function draw(u,t,pose,scope,model,custom){
  // The rig's carry poses depend on what the left hand holds and on the rifle the free hand can grip.
  m.offhand=!entry.armed||u.hp.left<=0?'none':entry.shield?'shield':entry.secondary?'blade':'free';
  m.primaryWeapon=standardEquipment&&entry.primary&&u.hp.right>0&&!entry.primarySocket?entry.primary:null;
+ const readyPose=!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
  animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
-  bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,airborne:world?.airborne,artillery,mortarAge,ready:prime>0||aim>.01},dt,t);
+  bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
+  airborne:world?.airborne,artillery,mortarAge,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
+  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion},dt,t);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
   const lead=m.rig.legs[1];
@@ -294,20 +323,27 @@ function draw(u,t,pose,scope,model,custom){
   }
   entry.primary=arsenal.mount(armory,profile?.asset??u.weapon,entry.primarySocket||m.rig.arms.R.so);
   entry.secondary=arsenal.mount(armory,u.melee?(window.IronVowWeaponFX?.get(u.melee).asset??u.melee):null,m.rig.arms.L.so);
+  if(m.cairn)window.IronVowCairn.fitRifle(entry.primary);
   entry.armed=true;
   if(equipmentScale!==1)for(const weapon of [entry.primary,entry.secondary])weapon?.model.scale.setScalar(equipmentScale);
  }
  if(!v2?.nativeShield&&armory&&entry.shieldId!==u.shield){
   entry.shieldId=u.shield;
-  if(entry.shield)entry.shield.mount.parent?.remove(entry.shield.mount);
+  if(entry.shield){
+   entry.shield.mount.parent?.remove(entry.shield.mount);
+   for(const material of entry.shield.ownedMaterials||[])material.dispose();
+  }
   entry.shield=arsenal.mountShield(armory,u.shield,v2?.shieldSocket||m.rig.arms.L.so);
   entry.shield?.mount.scale.setScalar(v2?.shieldScale??equipmentScale);
   if(!entry.shield)delete entry.anchors.shield;
  }
+ if(entry.coat)for(const gear of [entry.primary,entry.secondary,entry.shoulderWeapon,entry.shield]){
+  if(gear)entry.coat(gear.mount,gear.ownedMaterials??=[]);
+ }
  const shoulderAttack=u.attack?.kind==='missile'&&entry.shoulderWeapon;
  const barrel=shoulderAttack||entry.primary;
  m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:barrel||{};
- if(!v2?.nativeShield)arsenal.poseShield(entry.shield,u,face);
+ if(!v2?.nativeShield)arsenal.poseShield(entry.shield,u,face+m.readyShieldTurn);
  if(standardEquipment&&entry.primary){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
   if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
@@ -376,7 +412,7 @@ function previewHealth(unit){
 }
 function previewKey(u,scope,angle){
  const {hp,max}=previewHealth(u);
- return JSON.stringify([scope,u.frame,u.team||'ally',Boolean(u.lionTrial),u.paint,u.trim,u.weapon,u.melee,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
+ return JSON.stringify([scope,u.frame,u.team||'ally',Boolean(u.lionTrial),u.paintFinish,u.paint,u.trim,u.weapon,u.melee,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
 }
 function preview(u,model,custom,angle=0,scope='preview'){
  if(rigV2?.applies(u))custom='rig-v2';

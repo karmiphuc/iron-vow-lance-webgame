@@ -79,7 +79,9 @@ const PAL={
 const matCache=new Map();
 function paint(hex,rough=.58,metal=.34,name=''){const k='p'+hex+rough+name;if(matCache.has(k))return matCache.get(k);const c0=C(hex),lum=c0.r*.3+c0.g*.59+c0.b*.11,ns=lum>.45?.35:lum>.25?.6:.9;const m=MS({name,color:c0,map:grime,normalMap:panelNormal,normalScale:new T.Vector2(ns,ns),roughness:rough,metalness:metal,envMapIntensity:1.0});m.userData.paint=true;matCache.set(k,m);return m;}
 function hazardMat(rep){const k='hz'+rep;if(matCache.has(k))return matCache.get(k);const t=hazardTex.clone();t.needsUpdate=true;t.repeat.set(rep,1);const m=MS({map:t,roughness:.62,metalness:.2});matCache.set(k,m);return m;}
-function damagedOf(m){const k='dmg'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;d.color=m.color.clone().multiplyScalar(.62);d.roughness=.85;matCache.set(k,d);return d;}
+function damagedOf(m){const k='dmg'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone(),fade=.62;
+ if(!window.IronVowFieldPaint?.scorch(m,d,scorchMap,fade))d.map=scorchMap;
+ d.color.multiplyScalar(fade);d.roughness=.85;matCache.set(k,d);return d;}
 function wreckOf(m){const k='wr'+m.uuid;if(matCache.has(k))return matCache.get(k);const d=m.clone();d.map=scorchMap;d.color=C(0x2a2622);d.roughness=.95;d.metalness=.2;if(d.emissive)d.emissive.setHex(0);matCache.set(k,d);return d;}
 function releaseOwnedMaterials(owned){
  const all=new Set(owned);
@@ -684,8 +686,10 @@ function valkyrie(K,M){
   }
   /* ---- arms ---- */
   for(const x of [1,-1]){const Ar=arms[x>0?'L':'R'];B.part=x>0?'left':'right';
-    // layered pauldron
-    pauldron(Ar,x,M,{w:.78,top:.86,bot:-.14,d:1.06,style:'hero',dec:x>0?M.numTex:null,decS:.42});
+    // Lower the layered shell and sweep its crest aft without moving the arm hinge.
+    pauldron(Ar,x,M,{w:.96,top:.53,bot:-.35,d:1.12,style:'hero',dec:x>0?M.numTex:null,decS:.42});
+    P(Ar.paul,frame,mir([[.04,.39],[.49,.46],[.91,.19],[.97,.03],[.58,.16],[.12,.21]],x),.075,'z',0,0,.58,0,0,0,{bev:.018});
+    P(Ar.paul,p,mir([[-.09,.47],[.44,.58],[.97,.25],[.99,.15],[.57,.29],[.04,.30]],x),.12,'z',0,0,.60,0,0,0,{bev:.026});
     nozzle(Ar.paul,M.stack,.07,.14,x*.5,-.1,-.3,.4,0,0);
     // upper arm
     CX(Ar.sh,joint,.24,.48,0,0,0,16);S(Ar.sh,frame,.32,.95,.36,0,-.52,0,0,0,0,{bev:.03});
