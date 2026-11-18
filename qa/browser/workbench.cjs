@@ -1,3 +1,4 @@
+const navigate=require('./navigate.cjs');
 const assert=require('node:assert/strict');
 const {join}=require('node:path');
 const {readGLB}=require('../check-rig-v2.cjs');
@@ -135,7 +136,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();
  await page.waitForFunction(()=>window.__bench?.state?.loaded&&__bench.state.frame===0);
  await page.goto(origin,{waitUntil:'domcontentloaded'});
- await page.locator('#nav [data-page="career"]').click();
+ await navigate(page,'career');
  await page.getByRole('link',{name:'OPEN RIG BENCH'}).click();
  await page.waitForFunction(()=>window.__bench?.state?.loaded);
  console.log(`PASS ${mobile?'touch':'desktop'} Bench roster, native clip, loadout, paint, damage, mixed legs and six-rig lineup`);

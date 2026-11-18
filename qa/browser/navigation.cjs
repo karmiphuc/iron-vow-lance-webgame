@@ -1,0 +1,48 @@
+const assert=require('node:assert/strict');
+const {join}=require('node:path');
+const saveWebp=require('./save-webp.cjs');
+const navigate=require('./navigate.cjs');
+
+module.exports=async function checkNavigation({page,origin,out,viewport,mobile,tap:providedTap}){
+ const tap=providedTap??(selector=>page.locator(selector).tap());
+ const nav=view=>navigate(page,view,tap,mobile);
+ const parent=async expected=>assert.equal(await page.locator('#nav [aria-current=page]').getAttribute('data-primary'),expected);
+ await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await page.locator('#nav button').first().waitFor();
+ assert.equal(await page.locator('#nav button:visible').count(),3,'Exactly three visible global navigation buttons');
+ assert.deepEqual(await page.locator('#nav button:visible').evaluateAll(nodes=>nodes.map(n=>n.dataset.primary)),['bridge','bay','company']);
+ assert.equal(await page.locator('#nav #field-journal').count(),0);
+ const targets=async selector=>{for(const el of await page.locator(selector).all()){if(!await el.isVisible())continue;const r=await el.boundingBox();assert.ok(r&&r.width>=44&&r.height>=44,`${selector} needs a 44px touch target: ${JSON.stringify(r)}`)}};
+ await targets('#nav button');await targets('#field-journal');
+ const capture=async name=>{if(out)await saveWebp(page,join(out,`${name}-${viewport.width}x${viewport.height}.webp`));};
+ await nav('bridge');assert.equal(await page.evaluate(()=>page),'overworld');await parent('bridge');
+ assert.ok(await page.locator('[data-page="ship"]').isVisible());
+ assert.ok(await page.locator('#nav').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Page fits the viewport without horizontal overflow');
+ await capture('bridge');
+ await nav('ship');assert.equal(await page.evaluate(()=>page),'ship');await parent('bridge');
+ await nav('contracts');assert.equal(await page.evaluate(()=>page),'contracts');await parent('bridge');
+ assert.equal(await page.evaluate(()=>contractPortSelection),await page.evaluate(()=>companyPort()));
+ // Opening Dispatch initializes its daily offers; compare subsequent navigation after that legitimate write.
+ const careerBefore=await page.evaluate(async()=>{await pendingCareerWrite;return JSON.stringify(save)});
+ await nav('mech-bay');assert.equal(await page.evaluate(()=>page),'hangar');await parent('bay');
+ assert.ok(await page.locator('[data-page="workshop"]').isVisible());
+ await tap('[data-select="1"]');const selected=await page.evaluate(()=>selected);
+ await tap('[data-page="workshop"]');assert.equal(await page.evaluate(()=>page),'workshop');await parent('bay');assert.equal(await page.evaluate(()=>selected),selected);
+ await capture('refit');
+ const workshopContext=await page.evaluate(()=>JSON.stringify({selected,hangarDeck,workshopView}));
+ await tap('#field-journal');assert.equal(await page.evaluate(()=>page),'journal');
+ await tap('#journal-back');assert.equal(await page.evaluate(()=>page),'workshop');assert.equal(await page.evaluate(()=>JSON.stringify({selected,hangarDeck,workshopView})),workshopContext);
+ assert.equal(await page.evaluate(()=>document.activeElement.id),'field-journal');
+ await nav('hangar');assert.ok(await page.locator('.base-room').count());await parent('bay');
+ await nav('company');assert.equal(await page.evaluate(()=>page),'pilots');await parent('company');
+ await tap('#train-pilot-0');assert.ok(await page.locator('#modal [data-training-stage]').count());await page.keyboard.press('Escape');assert.equal(await page.locator('#modal').isHidden(),true);
+ assert.ok(await page.locator('[data-page="inn"]').isVisible());assert.ok(await page.locator('[data-page="career"]').isVisible());
+ await capture('company');
+
+ await tap('[data-page="inn"]');assert.equal(await page.evaluate(()=>page),'inn');await parent('company');
+ await nav('career');assert.equal(await page.evaluate(()=>page),'career');await parent('company');
+ await nav('bridge');
+ const ports=page.locator('[data-overworld-port]');if(await ports.count()>1){await ports.nth(1).click();await page.locator('#chart-viewport').focus();await page.keyboard.press('ArrowRight');await page.keyboard.press('+');const before=await page.evaluate(()=>JSON.stringify({overworldSelection,overworldRouteKey,pose:(({zoom,tilt,yaw,panX,panZ})=>({zoom,tilt,yaw,panX,panZ}))(IronVowChart.snapshot())}));await tap('#field-journal');await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>page),'overworld');assert.equal(await page.evaluate(()=>JSON.stringify({overworldSelection,overworldRouteKey,pose:(({zoom,tilt,yaw,panX,panZ})=>({zoom,tilt,yaw,panX,panZ}))(IronVowChart.snapshot())})),before);assert.equal(await page.evaluate(()=>document.activeElement.id),'field-journal');}
+ assert.equal(await page.evaluate(async()=>{await pendingCareerWrite;return JSON.stringify(save)}),careerBefore,'Navigation and Journal do not alter the career');
+};

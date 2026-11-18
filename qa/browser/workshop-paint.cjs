@@ -1,6 +1,7 @@
+const navigate=require('./navigate.cjs');
 const assert=require('node:assert/strict');
 
-module.exports=async function checkWorkshopPaint({page,origin,tap}){
+module.exports=async function checkWorkshopPaint({page,origin,tap,mobile}){
  const host=page.locator('#paint-preview');
  const openPaint=async()=>{if(!await page.locator('[data-workshop-detail="paint"]').evaluate(el=>el.open))await tap('[data-workshop-detail="paint"] > summary');};
  const openColors=async()=>{if(!await page.locator('[data-workshop-detail="paint-colors"]').evaluate(el=>el.open))await tap('[data-workshop-detail="paint-colors"] > summary');};
@@ -78,10 +79,10 @@ module.exports=async function checkWorkshopPaint({page,origin,tap}){
  assert.deepEqual(values(await saved()),color,'Pattern changes preserve custom colors');
  await tap('[data-paint-finish="solid"]');
  await matchColors(color);
- await tap('#nav [data-page="hangar"]');await tap('[data-hangar-deck="mechs"]');
+ await navigate(page,'hangar',tap,mobile);await tap('[data-hangar-deck="mechs"]');
  await matchColors(color,true);
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
- await tap('#nav [data-page="workshop"]');
+ await navigate(page,'workshop',tap,mobile);
  await host.evaluate(element=>element.scrollIntoView({block:'center'}));
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed);
  await openPaint();

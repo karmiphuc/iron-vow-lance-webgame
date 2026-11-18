@@ -1,16 +1,17 @@
+const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  if(mobile)await page.setViewportSize({width:320,height:735});
  await page.goto(new URL('?view=ship',origin).href,{waitUntil:'domcontentloaded'});
- await page.locator('[data-page="overworld"]').first().waitFor();
+ await page.locator('#nav [data-primary="bridge"]').waitFor();
  await page.evaluate(async()=>{
   save.world=worldRules.createWorld(0,save.day);
   save.ship={levels:{office:2}};
   persist();await pendingCareerWrite;
  });
- await tap('[data-page="overworld"]');
+ await navigate(page,'overworld',tap,mobile);
  await page.locator('#chart-viewport').waitFor();
  await page.waitForFunction(()=>IronVowChart.snapshot().ready&&IronVowChart.snapshot().portCount===6);
 
@@ -81,7 +82,7 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
 
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('.ship-banner').waitFor();
- await tap('[data-page="overworld"]');
+ await navigate(page,'overworld',tap,mobile);
  await page.locator('#chart-viewport').waitFor();
  await page.waitForFunction(()=>IronVowChart.snapshot().ready);
  await tap('[data-chart-contracts="picket"]');

@@ -1,9 +1,10 @@
+const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkHangar({context,page,mobile,origin,tap}){
- const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const nav=view=>navigate(page,view,tap,mobile);
  const openRoom=async id=>{const details=page.locator('[data-base-room="'+id+'"] > details[data-hangar-room-detail]');if(!await details.evaluate(el=>el.open))await tap('[data-base-room="'+id+'"] > details > summary');};
  const openCrew=async()=>{if(!await page.locator('details[data-crew-roster]').evaluate(el=>el.open))await tap('details[data-crew-roster] > summary');};
  const baseUrl=new URL('?view=hangar',origin).href;

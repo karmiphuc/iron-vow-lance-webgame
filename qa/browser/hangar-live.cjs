@@ -1,3 +1,4 @@
+const navigate=require('./navigate.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
@@ -49,7 +50,7 @@ module.exports=async function checkHangarLive({page,mobile,origin,tap}){
   return FRAMES.flatMap((frame,id)=>playerHull(id)&&!catalog.supports(id,foundryModel(id))?[frame.name]:[]);
  }),[],'Every player-accessible hull has a production rig in the catalogue');
  assert.equal(await page.locator('#hangar-art').count(),0);
- assert.equal(await page.locator('.hangar-scene-hotspot:visible').count(),3);
+ assert.equal(await page.locator('.hangar-scene-hotspot:visible').count(),1);
  assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0})),undefined,'The hangar releases and loads its own assets independently of sorties');
  assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0},'hangar')),'ready');
  // Inspect the real neck driver over one selected nine-second look-around cycle.
@@ -140,13 +141,14 @@ module.exports=async function checkHangarLive({page,mobile,origin,tap}){
     Number.parseFloat(button.style.top)-rect.top-(1-screen.y)*rect.height/2);
   });
  });
+ assert.equal(projections.length,1,'Facilities is the projected Mech Bay hotspot');
  assert.ok(projections.every(error=>error<.1));
- await tap('[data-hangar-hotspot="crew-cabin"]');
- assert.equal(await page.evaluate(()=>document.activeElement.dataset.baseRoom),'cabins');
+ await tap('[data-hangar-hotspot="facilities"]');
+ if(!await page.locator('[data-base-room="cabins"] > details').evaluate(el=>el.open))await tap('[data-base-room="cabins"] > details > summary');
+ assert.equal(await page.locator('[data-base-room="cabins"] > details').evaluate(el=>el.open),true);
  assert.ok(await page.locator('.base-page').isVisible());
  assert.equal(await page.evaluate(()=>IronVowRigV2.status({frame:0},'hangar')),undefined,'Facility panels do not keep idle mech geometry resident');
- await goBay();
- await tap('[data-hangar-hotspot="ship"]');
+ await navigate(page,'ship',tap);
  assert.ok(await page.locator('.ship-page').isVisible());
  await goBay();
  await tap('[data-hangar-hotspot="facilities"]');

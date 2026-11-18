@@ -61,8 +61,9 @@ window.IronVowOverworldView = (() => {
       <div class="chart-heading"><span class="eyebrow">IVS HALYARD / BRIDGE</span><h1>CHART TABLE</h1><p>${data.departing ? 'In transit' : data.transitEvent ? 'Transit report' : 'Moored'} · ${escapeHtml(current.name)}</p></div>
       <button type="button" class="chart-reset" data-chart-reset aria-label="Recenter chart">Recenter</button>
       <aside class="chart-port-card" aria-label="Selected mooring">
-        <h2><button type="button" class="chart-port-services-open" data-port-services="${escapeHtml(selected.id)}" aria-haspopup="dialog" aria-expanded="${!!data.portServices && !data.transitEvent}"${data.transitEvent ? ' disabled' : ''}>${escapeHtml(selected.name)}</button></h2>${data.arrivingContracts < data.contractCount && quote ? `<small class="chart-expiry-warning">${data.contractCount - data.arrivingContracts} expire en route</small>` : ''}
-        <button type="button" data-chart-contracts="${selected.id}"${data.transitEvent || data.departing ? ' disabled' : ''}>Contracts ${data.contractCount ?? 1}</button>
+        <h2>${escapeHtml(selected.name)}</h2>${data.arrivingContracts < data.contractCount && quote ? `<small class="chart-expiry-warning">${data.contractCount - data.arrivingContracts} expire en route</small>` : ''}
+        <div class="chart-port-actions"><button type="button" data-chart-contracts="${selected.id}"${data.transitEvent || data.departing ? ' disabled' : ''}>Contracts ${data.contractCount ?? 1}</button><button type="button" class="chart-services-link" data-port-services="${escapeHtml(selected.id)}" aria-haspopup="dialog" aria-expanded="${!!data.portServices && !data.transitEvent}"${data.transitEvent || data.departing ? ' disabled' : ''}>Services</button></div>
+        <button type="button" class="navigation-quiet chart-ship-upgrades" data-page="ship">Ship Upgrades</button>
       </aside>
       <div class="chart-course">${forecast}</div>
       ${data.transitEvent ? transitReport(data.transitEvent) : data.portServices ? window.IronVowPortView.render(data.portServices) : ''}

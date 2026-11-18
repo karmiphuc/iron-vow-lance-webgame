@@ -1,9 +1,10 @@
+const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
 const ensureContractOffer=require('./contract-fixture.cjs');
 const assert=require('node:assert/strict');
 
 module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
- const nav=view=>tap('#nav [data-page="'+view+'"]');
+ const nav=view=>navigate(page,view,tap,mobile);
  const openCrew=async()=>{if(!await page.locator('details[data-crew-roster]').evaluate(el=>el.open))await tap('details[data-crew-roster] > summary');};
  const openCabins=async()=>{if(!await page.locator('[data-base-room="cabins"] > details').evaluate(el=>el.open))await tap('[data-base-room="cabins"] > details > summary');};
  const ids=['scout','marshal','sapper','signal','retriever'];
