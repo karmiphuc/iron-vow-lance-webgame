@@ -252,7 +252,7 @@ function animateMech(m,I,dt,t){
   const tip=dead&&!pd?smooth(clamp((I.deathAge-.42)/.52,0,1)):0;
   cont.rotation.set(-.95*tip,m.yaw,pd?.05*dE:.32*tip);
   cont.updateMatrixWorld(true);
-  spr(S.comp,80,11,dt);S.comp.x=clamp(S.comp.x,-.4,.12);spr(S.pitch,55,7,dt);spr(S.arm,60,7,dt);spr(S.kx,40,9,dt);spr(S.kz,40,9,dt);
+  spr(S.comp,80,11,dt);S.comp.x=clamp(S.comp.x,-.4,.12);spr(S.pitch,55,7,dt);spr(S.roll,55,9,dt);spr(S.arm,60,7,dt);spr(S.kx,40,9,dt);spr(S.kz,40,9,dt);
   m.gait.w=damp(m.gait.w,I.moving?1:0,I.moving?10:6,dt);const w=m.gait.w;
   // Heavier frames take shorter, quicker steps so a longer planted phase stays within leg reach.
   const stepLen=(I.stepLen??1.55)*(D.stride??1);
@@ -370,6 +370,7 @@ function animateMech(m,I,dt,t){
       joint.rotation.set(lerp(joint.rotation.x,angles[0],guardWeight),lerp(joint.rotation.y,angles[1],guardWeight),lerp(joint.rotation.z,angles[2],guardWeight));
     }
   }
+  if(!dead&&!I.reducedMotion)r.spine.rotation.z+=S.roll.x;
   const aR=r.arms.R;
   let carrySh=-.28+w*.12*Math.sin(2*PI*g+PI),carryEl=-.62,carryZ=-.07;
   if(C){

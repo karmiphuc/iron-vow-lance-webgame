@@ -3,11 +3,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const simulate=require('./sim-harness.cjs');
 (async()=>{
  // --- Effects in real Three.js pools ---
- const context={console,Math,Date};context.window=context;context.self=context;context.globalThis=context;
+ const context={console,Math,Date,clock:0,innerWidth:1440,reducedMotion:false};context.window=context;context.self=context;context.globalThis=context;
  const noop=()=>{},gradient={addColorStop:noop};
  context.document={createElement(){return{width:1,height:1,getContext:()=>new Proxy({createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get:(t,k)=>t[k]||noop})};}};
  vm.createContext(context);
- for(const file of ['rig-bench/vendor/three.min.js','scene/effects.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../dist',file),'utf8'),context,{filename:file});
+ for(const file of ['rig-bench/vendor/three.min.js','scene/effects.js','scene/weapon-fx.js','scene/combat.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../dist',file),'utf8'),context,{filename:file});
  const {THREE,IronVowEffects}=context,V=(x,y,z)=>new THREE.Vector3(x,y,z);
  const scene=new THREE.Scene(),effects=IronVowEffects.create(scene,{groundAt:()=>0,partPoint:()=>V(0,3,0)});
  const shooter={wpn:{muzzle:new THREE.Object3D()},yaw:0,recoil:0,s:{pitch:{v:0},kx:{v:0},kz:{v:0}}};
@@ -42,6 +42,24 @@ const simulate=require('./sim-harness.cjs');
  assert.ok(sparks.length>=17&&sparks.every(o=>o.scale.x>=1.1),'Rifle hits throw at least 17 sparks, a little thicker than the bench');
  assert.ok(scene.children.some(o=>o.isSprite&&o.visible&&o.scale.x>=2.7),'Rifle hits flash at least 2.7 m wide');
 
+ // Scatter contacts retain their own hit events but share one mechanical kick.
+ context.IronVowRenderer={quality:{tier:'high'}};
+ const actor={id:'attacker',alive:true},target={id:'defender',alive:true};
+ const springs=()=>Object.fromEntries(['kx','kz','pitch','roll','comp','arm'].map(k=>[k,{v:0}]));
+ const model={s:springs()},models=new Map([[target.id,{entry:{m:model}}]]);
+ const combat=context.IronVowCombat.create(new THREE.Scene(),{models,sync(){},attachmentPoint:unit=>unit===actor?V(0,3,0):V(0,3,10)});
+ const part={part:'right',index:0,before:100,after:95,amount:5,damage:5};
+ combat.landed(actor,target,{id:'shotgun'},part,false);
+ const single=Object.fromEntries(Object.entries(model.s).map(([k,spring])=>[k,spring.v]));
+ model.s=springs();
+ for(let i=0;i<12;i++)combat.landed(actor,target,{id:'shotgun',scatter:true,burst:12},{...part,index:i},false);
+ for(const [k,value] of Object.entries(single))assert.ok(Math.abs(model.s[k].v-value)<1e-10,'One shell bounds the '+k+' spring impulse');
+ assert.ok(model.s.roll.v<0,'A hit turns the struck shoulder');
+ assert.equal(combat.history.filter(e=>e.type==='impact').length,13,'Every pellet keeps its own impact');
+ model.s=springs();
+ combat.landed(actor,target,{id:'shotgun'},{...part,part:'left'},true);
+ assert.ok(model.s.roll.v>0,'A shield impact turns the shield shoulder');
+
  // --- Game rules and timeline ---
  const sim=simulate({random:()=>0}),{run}=sim;
  run("createBattle(0);battle.cover.clear();battle.busy=true");
@@ -69,5 +87,5 @@ const simulate=require('./sim-harness.cjs');
 
  // The attack camera rushed the brace, step-up and priming.
  assert.deepEqual(JSON.parse(run("JSON.stringify(CINEMATIC_PACE)")),{step:1.6,aimHold:.45});
- console.log('PASS combat presentation: short tracers, 45-degree missiles, game-scale hits, no fire on wrecks, miss evade, cinematic pacing');
+ console.log('PASS combat presentation: short tracers, 45-degree missiles, bounded shell recoil, directional hit reactions, no fire on wrecks, miss evade, cinematic pacing');
 })().catch(e=>{console.error(e);process.exit(1);});
