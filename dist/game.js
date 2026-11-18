@@ -1505,7 +1505,6 @@ let activeCinematic=null;
 function closeAttackCamera(sequence){
  if(activeCinematic!==sequence)return;
  activeCinematic=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
- $('#shot-inset').textContent='';
 }
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
@@ -1518,7 +1517,6 @@ function beginAttackCamera(actor,target,w,part){
  const sequence={actor,target,w,part,start:clock,phase:'aim',result:'',skipped:false,resume:null};
  activeCinematic=sequence;duckMusic();document.body.dataset.shot='active';$('#skip-shot').hidden=false;
  $('#shot-status').textContent=actor.name+' prepares to attack '+target.name;
- if(!actor.kind)$('#shot-inset').innerHTML=`<img ${chassisPicture(actor.frame,actor,unitFacing(actor))} alt="" width="84" height="84">`;
  return sequence;
 }
 function waitAttack(ms,sequence){
@@ -3002,7 +3000,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(ownsCamera)sequence=beginAttackCamera(a,t,w,part);
  try{
  if(sequence&&!sequence.skipped){
-  Object.assign(sequence,{actor:a,target:t,w,part,reaction,phase:'aim',result:'',fireAt:null,contacts:null,contact:null});
+  Object.assign(sequence,{actor:a,target:t,w,part,reaction,phase:'aim',result:'',resultAt:null,fireAt:null,contacts:null,contact:null});
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
  const profile=attackProfile(a,w.id),power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
@@ -3125,7 +3123,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  }
  a.attack.releaseAt=clock;
  if(power)a.attack.stage='impact';
- if(sequence)sequence.phase='result';
+ if(sequence){sequence.phase='result';sequence.resultAt=clock;}
  let jammed=false,keepBoost=false;
  if(!hit){
   const result=dodged?'DODGE':'MISS';
@@ -3979,12 +3977,15 @@ function battlefield(t){
 
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
 
-function drawAttackCamera(t){
+function drawAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
- ctx.save();ctx.fillStyle='#101820e8';ctx.fillRect(24,H-116,Math.min(W-48,720),44);
+ const width=Math.min(W-32,460),x=16,y=H-72;
+ const status=sequence.result||(sequence.phase==='aim'?'AIMING':sequence.part==='shield'?'SHIELD':'FIRING');
+ ctx.save();ctx.fillStyle='#101820dc';ctx.fillRect(x,y,width,44);
  ctx.fillStyle='#e9bf7d';ctx.textAlign='left';ctx.font='700 12px Inter,Arial,sans-serif';
- ctx.fillText(sequence.actor.name+' / '+sequence.w.name,38,H-98);
- ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';ctx.fillText(sequence.target.name+' · '+(sequence.result||(sequence.part==='shield'?'SHIELD':'FIRING')),38,H-81);ctx.restore();
+ ctx.fillText(sequence.actor.name+' / '+sequence.w.name,x+12,y+17,width-24);
+ ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';
+ ctx.fillText(sequence.target.name+' · '+status,x+12,y+33,width-24);ctx.restore();
 }
 let canvasMode=null,warDiagnostics;
 function draw(ts){
@@ -3999,7 +4000,7 @@ function draw(ts){
  }
  if(mode==='battle'){
   if(canvasMode!=='battle')syncHangar();
-  battlefield(clock);if(activeCinematic)drawAttackCamera(clock);
+  battlefield(clock);if(activeCinematic)drawAttackCamera();
  }else if(mode==='chart'){
   window.IronVowChart?.render(clock,dt,W,H,reducedMotion);
   if(window.IronVowChart?.snapshot().shipReady){const status=$('.chart-load-status');if(status)status.textContent='';}

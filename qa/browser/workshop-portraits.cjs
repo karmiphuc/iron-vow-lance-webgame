@@ -89,10 +89,9 @@ module.exports=async function checkWorkshopPortraits({page,origin,tap,mobile}){
  await tap('#fire');
  if(mobile)await page.touchscreen.tap(point.x,point.y);
  else await page.mouse.click(point.x,point.y);
- await page.locator('#shot-inset img').waitFor({state:'attached'});
- await check('#shot-inset img',1);
+ await page.locator('#skip-shot').waitFor({state:'visible'});
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1);
  await tap('#skip-shot');
- await page.waitForFunction(()=>!battle.busy&&!document.getElementById('shot-inset').childElementCount);
- assert.ok(await page.evaluate(before=>battle.units.find(u=>u.id===lockedTarget).hp.body<before,targetBefore),'Inset and skip preserve actual attack resolution');
+ await page.waitForFunction(()=>!battle.busy&&document.getElementById('skip-shot').hidden);
+ assert.ok(await page.evaluate(before=>battle.units.find(u=>u.id===lockedTarget).hp.body<before,targetBefore),'Skipping the live camera preserves actual attack resolution');
 };
