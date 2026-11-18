@@ -258,7 +258,8 @@ function updateCamera(t,dt){
  const shot=activeCinematic;
  if(shot&&!reducedMotion){
   // Duel framing (owner, 2026-11-18; replaces the over-the-shoulder view that showed only the attacker's back).
-  // Aim (brace, step-up, prime): ahead of the attacker and off to one side, a three-quarter front of the attacker.
+  // Aim (brace, step-up, prime): just over the defender's shoulder, facing the attacker's front, with the defender's shoulder and
+  // raised guard in the foreground.
   // Fire and result: a two-shot from the side, slightly ahead of the line, with both mechs in frame; its distance follows the
   // horizontal field of view, so portrait screens pull back instead of cropping. Each phase picks the side whose view is not
   // blocked by cover or props, and pulls in short of an obstruction when both are.
@@ -269,8 +270,10 @@ function updateCamera(t,dt){
   const pose=(sign,pull,lift=0)=>{
    const side=V3(direction.z,0,-direction.x).multiplyScalar(sign),look=V3(),at=V3();
    if(key==='aim'){
-    look.copy(chest).addScaledVector(direction,span*.18);
-    at.copy(actor).addScaledVector(direction,Math.min(15,span*.5+6)).addScaledVector(side,10);at.y=actor.y+5.2+lift;
+    const defender=unitRoot(shot.target);
+    // aimed between the two (in angle), so the attacker sits left of centre and the defender's shoulder does not cover it
+    look.copy(chest).addScaledVector(side,-(span*.2+1.2));
+    at.copy(defender).addScaledVector(direction,8).addScaledVector(side,3.6);at.y=defender.y+4.4+lift;
    }else{
     look.copy(chest).lerp(victim,.52);
     const reach=Math.min(60,(span*.55+3)/Math.tan(halfAngle*.85));
