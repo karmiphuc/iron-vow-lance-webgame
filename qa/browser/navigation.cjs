@@ -39,7 +39,7 @@ module.exports=async function checkNavigation({page,origin,out,viewport,mobile,t
  await tap('#train-pilot-0');assert.ok(await page.locator('#modal [data-training-stage]').count());await page.keyboard.press('Escape');assert.equal(await page.locator('#modal').isHidden(),true);
  assert.ok(await page.locator('[data-page="inn"]').isVisible());assert.ok(await page.locator('[data-page="career"]').isVisible());
  await capture('company');
- 
+
  await tap('[data-page="inn"]');assert.equal(await page.evaluate(()=>page),'inn');await parent('company');
  await nav('career');assert.equal(await page.evaluate(()=>page),'career');await parent('company');
  await nav('bridge');

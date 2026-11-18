@@ -26,6 +26,7 @@ module.exports=async function checkWorkshopPortraits({page,origin,tap,mobile}){
   return images;
  };
  await page.goto(origin,{waitUntil:'domcontentloaded'});
+ await navigate(page,'ship',tap,mobile);
  await page.locator('.ship-seat img').first().waitFor();
  const ship=await check('.ship-seat img',3);
 
