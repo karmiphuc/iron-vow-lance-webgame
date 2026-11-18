@@ -256,7 +256,8 @@ function draw(u,t,pose,scope,model,custom){
   entry={m,coat,surface:pose.stage?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
- const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1,dt=entry.time==null?1/60:clamp(t-entry.time,0,.042);
+ const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1;
+ const elapsed=entry.time==null?1/60:t-entry.time,dt=Math.min(elapsed,.042);
  const canBrace=u.alive&&u.hp.legs>0&&!u.motion;
  const artillery=canBrace&&!pose.strikeKind?behemothBrace(m,u.attack,t):null;
  const mortarAge=canBrace?pose.mortarAge:undefined;
@@ -336,11 +337,28 @@ function draw(u,t,pose,scope,model,custom){
   (oneHandGuns.has(fittedGun.id)||longGuns.has(fittedGun.id))?fittedGun:null;
  const readyPose=!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
  const aimFromArm=barrel?.carrier!==m.rig.spine&&!(barrel&&barrel.mount.parent===entry.primarySocket);
- animateMech(m,{pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:world?.speed??2.6,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
+ const playbackRate=world&&step?(u.motion.playbackRate??1):1;
+ const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
   airborne:world?.airborne,artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
-  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion},dt,t);
+  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
+ const previous=entry.groundRoot;
+ // Subdivide elapsed playback so slow render frames do not skip foot plants
+ // or send a large integration step through the existing springs.
+ if(playbackRate>1&&previous&&elapsed>0){
+  const realTime=Math.min(elapsed,.1),gaitTime=realTime*playbackRate;
+  const count=Math.ceil(gaitTime*60),stepTime=gaitTime/count;
+  const distance=Math.hypot(pos.x-previous.x,world.y-previous.y,pos.z-previous.z);
+  const sample={...input,pos:V3(),speed:distance/gaitTime};
+  for(let i=1;i<=count;i++){
+   const fraction=i/count;
+   sample.pos.copy(previous).lerp(pos,fraction);
+   sample.ground=previous.y+(world.y-previous.y)*fraction;
+   animateMech(m,sample,stepTime,t-realTime*(1-fraction));
+  }
+ }else animateMech(m,input,dt,t);
+ if(world)(entry.groundRoot??=V3()).set(pos.x,world.y,pos.z);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
   const lead=m.rig.legs[1];
