@@ -209,7 +209,16 @@ function fireFX(ma,mt,kind,part,shot){
   const flash=(p,c,s)=>{fx.glow(p,c,s,.09);fx.light(p,c,6);fx.smoke(p,2,1.2,0x8f8a80,.35,.6,.9,.15);};
   if(kind==='rifle'){for(let i=0;i<(shot?1:3);i++)beat(i*.085,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3()),j=tp.clone().add(V3(rnd(-.3,.3),rnd(-.3,.3),rnd(-.3,.3)));fx.streak(m0,shot?tp:j,0xffd27a,.09,shot?.flight||.13,.35);flash(m0,0xffc070,2.4);ma.recoil=Math.min(1.6,ma.recoil+.55);ma.s.pitch.v-=.4;
       if(ma.wpn.eject){const e=ma.wpn.eject.getWorldPosition(V3());fx.sparks(e,2,3,0xd9b45a,.8,.6);}});}
-  else if(kind==='shotgun'){flash(muzzle,0xffc070,4);fx.light(muzzle,0xffa040,10);for(let i=0;i<(shot?.targets?.length||9);i++){const j=tp.clone().add(V3(rnd(-1,1),rnd(-.7,.9),rnd(-1,1)));fx.streak(muzzle,shot?.targets?.[i]||j,0xffe0a0,.06,shot?.flight||.12,.4);}ma.recoil=1.5;ma.s.pitch.v-=1;ma.spin=30;fx.smoke(muzzle,5,1.6,0x9a948a,.4,.5,1.2,.3);}
+  else if(kind==='shotgun'){
+    flash(muzzle,0xffc070,4);fx.light(muzzle,0xffa040,10);
+    const count=shot?.targets?.length||9;
+    for(let i=0;i<count;i++){
+      const j=shot?.targets?.[i]||tp.clone().add(V3(rnd(-1,1),rnd(-.7,.9),rnd(-1,1)));
+      // Short separated pellet tails keep the fan readable; heavy single slugs retain their reference streak.
+      fx.streak(muzzle,j,0xffe0a0,count>1?.045:.06,shot?.flights?.[i]||shot?.flight||.12,count>1?.16:.4);
+    }
+    ma.recoil=1.5;ma.s.pitch.v-=1;ma.spin=30;fx.smoke(muzzle,5,1.6,0x9a948a,.4,.5,1.2,.3);
+  }
   else if(kind==='missile'){for(let i=0;i<(shot?1:3);i++)beat(i*.07,()=>{const m0=shot?muzzle.clone():ma.wpn.muzzle.getWorldPosition(V3()).add(V3(rnd(-.2,.2),rnd(-.1,.2),0));fx.glow(m0,0xffb050,2,.12);fx.smoke(m0,4,1.4,0xc4bdb0,.5,.8,1.4,.3);
       fx.missile(m0,shot?tp:tp.clone().add(V3(rnd(-.5,.5),rnd(-.3,.3),rnd(-.5,.5))),rnd(4,6.5),shot?.flight||.36-i*.05,shot?.arrival||null);ma.recoil=Math.min(1.4,ma.recoil+.35);});}
   else if(kind==='blade'){ma.melee={age:0,target:mt,part,hit:false,prev:null};if(ma.wpn.glow)ma.wpn.glow.emissiveIntensity=2.4;}

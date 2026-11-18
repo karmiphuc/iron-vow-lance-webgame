@@ -1,0 +1,95 @@
+{
+  "archive_sha256": "5b381164e5760f3830a2dbee43b972deee38b2a695d091b56e238ab2910c96d2",
+  "author": "Kenney",
+  "creator_upload": "https://opengameart.org/content/city-kit-industrial",
+  "download": "https://opengameart.org/sites/default/files/kenney_city-kit-industrial_2.0.zip",
+  "license": "CC0-1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "models": {
+    "building-b.glb": {
+      "bounds": {
+        "max": [
+          1.0425217151641846,
+          1.4700000286102295,
+          0.6230000853538513
+        ],
+        "min": [
+          -1.041066288948059,
+          -4.242983379770251e-16,
+          -0.6389999389648438
+        ]
+      },
+      "bytes": 212040,
+      "dimensions": [
+        2.0835880041122437,
+        1.47000002861023,
+        1.262000024318695
+      ],
+      "role": "industrial-office",
+      "sha256": "2ae65bd9166449f0bef438fbefb75d57451cb15c16659d7f22a7d895296a46af",
+      "textures": [
+        "Textures/colormap.png"
+      ],
+      "triangles": 2422
+    },
+    "building-i.glb": {
+      "bounds": {
+        "max": [
+          0.07993178069591522,
+          0.7335410118103027,
+          0.9240000247955322
+        ],
+        "min": [
+          -0.9482060074806213,
+          1.2993810989170068e-16,
+          -0.3760000467300415
+        ]
+      },
+      "bytes": 73848,
+      "dimensions": [
+        1.0281377881765366,
+        0.7335410118103026,
+        1.3000000715255737
+      ],
+      "role": "warehouse",
+      "sha256": "12d9be598becf2b6d3758d23aba6c573ca2701fca5e77870d2ee5645647765ca",
+      "textures": [
+        "Textures/colormap.png"
+      ],
+      "triangles": 798
+    },
+    "building-m.glb": {
+      "bounds": {
+        "max": [
+          0.6581377387046814,
+          1.519006609916687,
+          0.8500000238418579
+        ],
+        "min": [
+          -0.6581377387046814,
+          0.0,
+          -0.8500000238418579
+        ]
+      },
+      "bytes": 138920,
+      "dimensions": [
+        1.3162754774093628,
+        1.519006609916687,
+        1.7000000476837158
+      ],
+      "role": "factory",
+      "sha256": "526881cb1851120a60195f76bd4d8c1963653cdda66e4d1d53f085b3395fb8a9",
+      "textures": [
+        "Textures/colormap.png"
+      ],
+      "triangles": 1694
+    }
+  },
+  "pack": "Kenney City Kit Industrial 2.0",
+  "source_page": "https://kenney.nl/assets/city-kit-industrial",
+  "texture": {
+    "bytes": 11986,
+    "file": "Textures/colormap.png",
+    "sha256": "950f4f891ebd05a2affac810e6eeb0fea1511bc39039b65a3cbf2e17d17bc6a2"
+  }
+}

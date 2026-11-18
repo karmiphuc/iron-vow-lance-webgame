@@ -3,7 +3,7 @@
 'use strict';
 const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
 root.IronVowCombat={create(scene,api){
- const seen=new WeakSet(),history=[],states=new Map();let sequence=0;
+ const seen=new WeakSet(),history=[],states=new Map();let sequence=0,pelletPoints=new WeakMap();
  const low=()=>innerWidth<760||root.IronVowRenderer.quality.tier==='low';
  const effect=root.IronVowEffects.create(scene,{camera:api.camera,groundAt:api.groundAt,low,contactsExternal:true,
   reducedMotion:()=>reducedMotion,shake:value=>{shake=Math.max(shake,value*10);},
@@ -46,9 +46,26 @@ root.IronVowCombat={create(scene,api){
   barrel?.onLaunch?.(clock);
   const model=api.models.get(actor.id)?.entry?.m;
   if(model){model.recoil=Math.max(model.recoil,.8);model.s.comp.v-=.28;}
-  const targets=(w.scatter?selected:[contact]).filter(Boolean).map(c=>{const p=point(target,guard?'shield':c.part);return c.hit?p:p.add(V3(.5+(c.index%3)*.17,-.3,.2));});
+  // Adapted from Claude Rig Bench shotgun fan (docs/reference/claude/rig-bench.html:1875-1883).
+  // The shell's existing rule contacts own count, timing and damage. This deterministic
+  // muzzle-normal disk only separates their rendered paths; it consumes no rule RNG.
+  const forward=to.clone().sub(from).normalize(),right=V3().crossVectors(forward,V3(0,1,0));
+  if(right.lengthSq()<1e-6)right.set(1,0,0);else right.normalize();
+  const up=V3().crossVectors(right,forward).normalize();
+  const radius=Math.min(guard ? .65 : 1.25,Math.max(.24,from.distanceTo(to)*.065));
+  const targets=(w.scatter?selected:[contact]).filter(Boolean).map((c,i)=>{
+   const p=point(target,guard?'shield':c.part);
+   if(!c.hit)p.add(V3(.5+(c.index%3)*.17,-.3,.2));
+   if(w.scatter){
+    const angle=i*2.399963229728653,radial=radius*Math.sqrt((i+.5)/selected.length);
+    p.addScaledVector(right,Math.cos(angle)*radial).addScaledVector(up,Math.sin(angle)*radial);
+    pelletPoints.set(c,p.clone());
+   }
+   return p;
+  });
+  const flights=(w.scatter?selected:[contact]).filter(Boolean).map(c=>Math.max(.025,c.travel||flight));
   const source=model||{wpn:{},yaw:0,recoil:0,s:{pitch:{v:0},kx:{v:0},kz:{v:0}}};source.wpn=source.wpn||{};
-  effect.fireFX(source,to,kind,part,{at:clock,origin:from,target:to,targets,flight,arrival:at=>{effect.explode(at,false);log('arrival',{actor:actor.id,weapon:w.id,index,point:at.toArray(),expected:to.toArray()});}});
+  effect.fireFX(source,to,kind,part,{at:clock,origin:from,target:to,targets,flights,flight,arrival:at=>{effect.explode(at,false);log('arrival',{actor:actor.id,weapon:w.id,index,point:at.toArray(),expected:to.toArray()});}});
  }
  function landed(actor,target,w,contact,guard){
   api.sync(actor);api.sync(target);
@@ -56,7 +73,7 @@ root.IronVowCombat={create(scene,api){
   const tip=!guard&&native?.strikeContact?.(w.id);
   if(tip)native.sync();
   const profile=profileFor(actor,w),part=guard?'shield':contact.part;
-  const p=tip?tip.getWorldPosition(V3()):point(target,part),back=point(actor,'body').sub(p).normalize();
+  const p=tip?tip.getWorldPosition(V3()):pelletPoints.get(contact)?.clone()||point(target,part),back=point(actor,'body').sub(p).normalize();
   effect.impact(p,back,profile.archetype);
   if(contact.before>0&&contact.after===0){fx.debris(p,low()?3:6,4);fx.smoke(p,3,1.7,0x817b73,.4,.7,1.3,.25);}
   log('impact',{actor:actor.id,target:target.id,weapon:w.id,index:contact.index,part:contact.part,shield:guard,point:p.toArray(),back:back.toArray(),planned:contact.amount,damage:contact.damage,before:contact.before,after:contact.after,actorAlive:actor.alive});
@@ -109,6 +126,6 @@ root.IronVowCombat={create(scene,api){
   }
   effect.update(t,Math.min(.05,dt));
  }
- return {launch,landed,dodge,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>effect.clear()};
+ return {launch,landed,dodge,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>{pelletPoints=new WeakMap();effect.clear();}};
 }};
 })(window);

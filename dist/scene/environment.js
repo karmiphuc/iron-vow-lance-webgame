@@ -2,7 +2,8 @@
 (function(root){
 'use strict';
 root.IronVowSceneKit=function(renderer){
-const T=root.THREE,PI=Math.PI,TILE=7.4,C=h=>new T.Color(h).convertSRGBToLinear();
+const T=root.THREE,PI=Math.PI,C=h=>new T.Color(h).convertSRGBToLinear();
+let TILE=7.4;
 let seed=97,width=10,depth=10;
 const rnd=(a,b)=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return a+(b-a)*seed/4294967296;};
 const tileW=(x,z)=>new T.Vector3((x-(width-1)/2)*TILE,0,(z-(depth-1)/2)*TILE);
@@ -36,7 +37,12 @@ const MAT={
   wall:MS({color:C(0x2d2f30),map:wearTex('#bdbdbd',[3,3]),roughness:.8,metalness:.35}),
   beacon:MS({color:0x110500,emissive:C(0xff8a1c),emissiveIntensity:2.5}),
   beaconRed:MS({color:0x110000,emissive:C(0xff2a1a),emissiveIntensity:2.5}),
-  screen:MS({color:0x050a0c,emissive:C(0x4fd8e8),emissiveIntensity:1.6,roughness:.3})
+  screen:MS({color:0x050a0c,emissive:C(0x4fd8e8),emissiveIntensity:1.6,roughness:.3}),
+  rock:MS({color:C(0x626865),roughness:1,flatShading:true}),
+  rockLight:MS({color:C(0x85877c),roughness:1,flatShading:true}),
+  foliage:MS({color:C(0x344c3e),roughness:1,flatShading:true}),
+  foliageLight:MS({color:C(0x49614c),roughness:1,flatShading:true}),
+  bark:MS({color:C(0x594b3c),roughness:1})
 };
 function envFrom(cols,pm=pmrem){const s=new T.Scene();s.background=C(cols[0]);
   const add=(w,h,c,x,y,z,ry)=>{const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:C(c),side:T.DoubleSide}));m.position.set(x,y,z);m.rotation.y=ry||0;s.add(m);};
@@ -87,16 +93,66 @@ function buildProps(s,ci){
   }
   g.traverse(o=>{if(o.isMesh){o.castShadow=o.position.length()<H+12;}});
 }
-function buildCover(key){const [x,z]=key.split(',').map(Number),p=tileW(x,z),g=new T.Group();g.position.copy(p);const v=(x*31+z*17)%3;
-  if(v===0){const jg=new T.Group();jg.scale.set(1.25,1.7,1);g.add(jg);for(const dz of [-.6,.6]){const j=jersey(jg,MAT.concrete,TILE*.86);j.position.x=dz;}bx(jg,.05,.22,TILE*.8,MAT.hazard,-.6+.215,.75,0,0,0,-.2,false);bx(jg,.05,.22,TILE*.8,MAT.hazard,.6-.215,.75,0,0,0,.2,false);}
-  else if(v===1){bx(g,TILE*.82,2.2,TILE*.5,MAT.olive,0,1.1,0);bx(g,TILE*.84,.14,TILE*.52,MAT.amber,0,1.95,0);bx(g,TILE*.82,.6,TILE*.5,MAT.oliveDark,0,2.5,0,0,0,0);for(const s of [-1,1])bx(g,.12,2.1,.12,MAT.graphite,s*TILE*.38,1.1,TILE*.26);const st=new T.Mesh(new T.PlaneGeometry(1.6,.8),MS({map:stencilTex('VOW-07','#4b5334','#d8d2bd',256,128,56),roughness:.8}));st.position.set(0,1.2,TILE*.251);g.add(st);}
-  else{const sb=MS({color:C(0x7a6f55),roughness:.95});for(let r=0;r<3;r++)for(let i=0;i<4;i++){const m=mesh(g,new T.SphereGeometry(.5,9,7),sb,(i-1.5)*.78+(r%2)*.39,.3+r*.5,0);m.scale.set(.85,.5,1.35);}bx(g,TILE*.8,2.4,.18,MAT.steel,0,1.2,-.9);}
-  g.rotation.y=((x+z)%2)?PI/2:0;g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;}
+function buildCover(key,type){
+  const [x,z]=key.split(',').map(Number),g=new T.Group();g.position.copy(tileW(x,z));
+  // All shapes fit within 85% of a 7.4-unit cell, then scale with the chosen pitch.
+  const types=['ridge-rock','relay-shield','cargo','transformer','conifer','bunker'];
+  type=types.includes(type)?type:types[((x*31+z*17)%types.length+types.length)%types.length];
+  g.userData.coverType=type;g.userData.blocking=true;
+  const shape=new T.Group();shape.scale.setScalar(TILE/7.4);g.add(shape);
+  const box=(w,h,d,m,x,y,z)=>bx(shape,w,h,d,m,x,y,z);
+  if(type==='ridge-rock'){
+    // Low irregular boulders and three angular peaks form a broken crown.
+    const rocks=[[-1.65,1.2,.1,1.9,1.4,1.7],[0,1.45,0,2.1,1.75,1.9],[1.65,1.1,-.15,1.65,1.3,1.65],[-.75,2.65,-.05,.7,1.35,.65],[.75,2.6,.15,.6,1.2,.7]];
+    for(const [rx,ry,rz,sx,sy,sz] of rocks){const o=mesh(shape,new T.DodecahedronGeometry(1,0),ry>2?MAT.rockLight:MAT.rock,rx,ry,rz);o.scale.set(sx*.85,sy,sz);}
+  }else if(type==='relay-shield'){
+    box(5.7,2.75,.8,MAT.concrete,0,1.375,0);
+    box(5.9,.3,1,MAT.graphite,0,2.85,0);
+    for(const sx of [-2.25,2.25]){box(.65,2.1,2.6,MAT.concrete,sx,1.05,0);box(.7,.22,2.65,MAT.hazard,sx,.3,0);}
+    box(1.1,.55,.08,MAT.amber,0,1.7,.44);
+  }else if(type==='cargo'){
+    box(5.7,2.85,3.5,MAT.olive,0,1.425,0);
+    for(let xx=-2.45;xx<=2.46;xx+=.55)for(const zz of [-1.77,1.77])box(.12,2.45,.08,MAT.oliveDark,xx,1.43,zz);
+    for(const xx of [-2.78,2.78])for(const zz of [-1.7,1.7])box(.22,2.95,.22,MAT.graphite,xx,1.48,zz);
+    // Paired end doors, locking bars and corner castings give a human-scale reference.
+    for(const zz of [-.72,.72]){box(.08,2.25,1.28,MAT.oliveDark,2.89,1.35,zz);box(.1,2.05,.09,MAT.steel,2.95,1.35,zz);}
+    for(const yy of [.16,2.74])for(const zz of [-1.62,1.62])box(.32,.28,.3,MAT.yellow,2.83,yy,zz);
+  }else if(type==='transformer'){
+    box(5.6,.35,3.5,MAT.concrete,0,.175,0);
+    box(4.4,2.45,2.5,MAT.graphite,0,1.55,0);
+    box(4.65,.25,2.75,MAT.steel,0,2.9,0);
+    for(const xx of [-1.25,1.25]){
+      cy(shape,.28,.36,1.45,MAT.white,xx,3.75,0,0,0,0,10);
+      for(const yy of [3.25,3.62,3.99,4.34])cy(shape,.48,.48,.11,MAT.white,xx,yy,0,0,0,0,10);
+      cy(shape,.15,.15,.22,MAT.steel,xx,4.55,0,0,0,0,10);
+    }
+    box(.9,1.45,.09,MAT.oliveDark,-1.25,1.35,1.3);
+    for(let yy=.8;yy<2.15;yy+=.27)box(1.15,.08,.09,MAT.steel,1.05,yy,1.3);
+  }else if(type==='conifer'){
+    // Three distinct tiered trees remain one blocking cell, not separate obstacles.
+    for(const [tx,tz,h] of [[-1.5,-.55,4.6],[1.45,-.7,4.25],[0,1.1,4.9]]){
+      cy(shape,.18,.28,h*.53,MAT.bark,tx,h*.265,tz,0,0,0,7);
+      for(let tier=0;tier<3;tier++){
+        const radius=1.18-tier*.24,cone=new T.Mesh(new T.ConeGeometry(radius,1.8,7),tier===1?MAT.foliageLight:MAT.foliage);
+        cone.position.set(tx,1.65+tier*.85,tz);cone.castShadow=true;cone.receiveShadow=true;shape.add(cone);
+      }
+    }
+  }else{
+    box(5.7,2.3,3.5,MAT.concrete,0,1.15,0);
+    box(5.9,.45,3.7,MAT.oliveDark,0,2.525,0);
+    // Dark inset reads as an embrasure, with a small access door and vents.
+    box(2.5,.34,.08,MAT.rubber,0,1.65,1.79);
+    box(.72,1.38,.1,MAT.graphite,-2,1,1.8);
+    for(let yy=.85;yy<=1.5;yy+=.2)box(.65,.07,.1,MAT.steel,1.95,yy,1.8);
+  }
+  g.rotation.y=((x+z)%2)?PI/2:0;
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;
+}
 function groundMaterial(P){
  const rough=tex(256,256,(g,w,h)=>{g.fillStyle='#e0e0e0';g.fillRect(0,0,w,h);for(let i=0;i<26;i++){const x=rnd(0,w),y=rnd(0,h),r=rnd(10,46),gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,`rgba(0,0,0,${P.wet})`);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);}},[6,6]);
  return MS({color:C(P.ground),map:imgTex('assets/concrete.webp',[14,14]),roughnessMap:rough,roughness:1,metalness:.08,envMapIntensity:.7});
 }
-return {TILE,PAL,C,MAT,MS,mesh,bx,cy,bevelGeo,tileW,envFrom,groundMaterial,imgTex,buildProps,buildCover,random:rnd,setSize(w,d){width=w;depth=d;},dispose(){
+return {get TILE(){return TILE;},PAL,C,MAT,MS,mesh,bx,cy,bevelGeo,tileW,envFrom,groundMaterial,imgTex,buildProps,buildCover,random:rnd,setSize(w,d,tile=7.4){width=w;depth=d;TILE=tile;},dispose(){
  const seen=new Set();for(const m of Object.values(MAT)){for(const t of [m.map,m.normalMap,m.roughnessMap])if(t&&!seen.has(t)){seen.add(t);t.dispose();}m.dispose();}
  for(const geo of geoCache.values())geo.dispose();for(const target of envTargets)target.dispose();pmrem.dispose();
 }};

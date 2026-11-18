@@ -30,10 +30,10 @@ function create(kind){
  object.updateMatrixWorld(true);const bounds=new T.Box3().setFromObject(object).applyMatrix4(object.matrixWorld.clone().invert());
  return {object,materials,bounds,muzzle:anchor(object,'muzzle'),body:anchor(object,'body')};
 }
-function update(record,u,t,position,heading,reduced){
+function update(record,u,t,position,heading,reduced,heightScale=HEIGHT){
  const spec=VEHICLES[u.kind],age=Number.isFinite(u.deathTime)?Math.max(0,t-u.deathTime):Infinity;
- const progress=u.alive?0:reduced?1:Math.min(1,age/spec.wreckAt),lift=spec.altitude*HEIGHT*(1-progress*progress*(3-2*progress));
- const bob=u.alive&&!reduced&&lift?Math.sin(t*6+u.index)*.045*HEIGHT:0;
+ const progress=u.alive?0:reduced?1:Math.min(1,age/spec.wreckAt),lift=spec.altitude*heightScale*(1-progress*progress*(3-2*progress));
+ const bob=u.alive&&!reduced&&lift?Math.sin(t*6+u.index)*.045*heightScale:0;
  record.object.position.copy(position);record.object.position.y+=lift+bob;
  const roll=u.kind==='helicopter'&&!reduced?.25*Math.sin(Math.PI*progress)*(1-progress):0;
  record.object.rotation.set(0,heading,roll);

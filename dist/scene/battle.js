@@ -1,10 +1,12 @@
 /* Shared battle scene. Game state owns rules and movement; this module owns presentation. */
 (function(root){
 'use strict';
-const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=7.4,HEIGHT=3.4;
+// Keep the clearance verified against actual long-gun/shield endpoints. Close
+// framing and continuous surfaces provide scale without moving those endpoints.
+const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=7.4,HEIGHT=3.4,RISE=1.55;
 const LIVE=new Set([5,6,7,8,9,12]);
 const rigV2=root.IronVowRigV2;
-let renderer,kit,scene,camera,battleRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
+let renderer,kit,scene,camera,battleRef,terrainRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let cameraReady=false,lightningAt=4,lightning=0;
 const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[],coverMeshes=[];
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
@@ -16,7 +18,23 @@ function isLive(u){
 }
 function world(x,z,y){
  const size=battle.size;
- return V3((x-(size.width-1)/2)*TILE,y??terrainHeight(x,z)*HEIGHT,(z-(size.depth-1)/2)*TILE);
+ return V3((x-(size.width-1)/2)*TILE,y??surfaceHeight(x,z),(z-(size.depth-1)/2)*TILE);
+}
+function cellAt(x,z){
+ if(x<0||z<0||x>=battle.size.width||z>=battle.size.depth)return;
+ return battle.field.cells?terrainCell(x,z):{level:0,material:0,variant:0,links:0};
+}
+// Presentation only: levels and legal routes remain owned by the existing rules.
+// Flat crowns and central access ramps expose the retaining faces between cells.
+function surfaceHeight(x,z){
+ const ix=Math.round(x),iz=Math.round(z),level=cellAt(ix,iz)?.level??0;
+ let y=level*RISE;
+ for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){
+  const along=dx?(x-ix)*dx:(z-iz)*dz,across=dx?Math.abs(z-iz):Math.abs(x-ix);
+  const other=cellAt(ix+dx,iz+dz);
+  if(other&&along>.25&&across<.25)y+=(other.level-level)*RISE*Math.min(.5,(along-.25)*2);
+ }
+ return y;
 }
 function unitRoot(u){
  const point=world(u.vx??u.x,u.vz??u.z);
@@ -28,10 +46,11 @@ function unitRoot(u){
 function groundAt(x,z){
  const fx=x/TILE+(battle.size.width-1)/2,fz=z/TILE+(battle.size.depth-1)/2,tx=Math.round(fx),tz=Math.round(fz);
  if(tx<0||tz<0||tx>=battle.size.width||tz>=battle.size.depth)return-.18;
- const mesh=groundMeshes[tz*battle.size.width+tx];if(!mesh)return terrainHeight(fx,fz)*HEIGHT;
+ const mesh=groundMeshes[tz*battle.size.width+tx];if(!mesh)return surfaceHeight(fx,fz);
  // Interpolate the actual rendered plate triangle, rather than a different analytic surface under the feet.
- const u=Math.max(0,Math.min(4,((fx-tx)*TILE/(TILE-.1)+.5)*4)),v=Math.max(0,Math.min(4,((fz-tz)*TILE/(TILE-.1)+.5)*4));
- const ix=Math.min(3,Math.floor(u)),iz=Math.min(3,Math.floor(v)),a=iz*5+ix,b=a+5,c=b+1,d=a+1,h=mesh.geometry.attributes.position;
+ const n=mesh.geometry.parameters.widthSegments;
+ const u=Math.max(0,Math.min(n,((fx-tx)*TILE/(TILE-.018)+.5)*n)),v=Math.max(0,Math.min(n,((fz-tz)*TILE/(TILE-.018)+.5)*n));
+ const ix=Math.min(n-1,Math.floor(u)),iz=Math.min(n-1,Math.floor(v)),a=iz*(n+1)+ix,b=a+n+1,c=b+1,d=a+1,h=mesh.geometry.attributes.position;
  const sx=u-ix,sz=v-iz;
  return sx+sz<=1?h.getY(a)+sx*(h.getY(d)-h.getY(a))+sz*(h.getY(b)-h.getY(a)):
   h.getY(c)+(1-sx)*(h.getY(b)-h.getY(c))+(1-sz)*(h.getY(d)-h.getY(c));
@@ -50,6 +69,7 @@ function init(){
  root.IronVowRenderer.subscribe(({type})=>{if(type==='restored'){clear();cameraReady=false;}});
 }
 function clear(){
+ if(board)root.IronVowEnvironmentAssets?.cancel(board);
  combat?.dispose();combat=null;
  for(const record of models.values())if(record.vehicle)root.IronVowVehicles.release(record.vehicle);
  root.IronVowFoundry?.clearCombat();root.IronVowVehicles.clear();models.clear();aimTargets.clear();mortarCues.clear();
@@ -58,17 +78,67 @@ function clear(){
  kit?.dispose();kit=null;scene=null;battleRef=null;groundMeshes.length=coverMeshes.length=0;
 }
 function plate(x,z){
- const geometry=new T.PlaneGeometry(TILE-.1,TILE-.1,4,4);geometry.rotateX(-Math.PI/2);
+ const geometry=new T.PlaneGeometry(TILE-.018,TILE-.018,8,8);geometry.rotateX(-Math.PI/2);
  const positions=geometry.attributes.position;
  for(let i=0;i<positions.count;i++){
   const px=x+positions.getX(i)/TILE,pz=z+positions.getZ(i)/TILE;
-  positions.setY(i,terrainHeight(px,pz)*HEIGHT);
+  positions.setY(i,surfaceHeight(px,pz));
  }
+ const uv=geometry.attributes.uv;
+ // World-continuous worn material avoids one painted/stamped panel per cell.
+ for(let i=0;i<uv.count;i++)uv.setXY(i,(x+uv.getX(i))/3,(z+uv.getY(i))/3);
  geometry.computeVertexNormals();return geometry;
+}
+function terrainDetails(index){
+ const faces=[],lips=[],markings=[],ticks=[],steps=[[1,0],[0,1],[-1,0],[0,-1]];
+ const quad=(out,a,b,c,d)=>out.push(...a,...b,...d,...b,...c,...d);
+ const point=(x,z,y)=>world(x,z,y).toArray();
+ const stripe=(out,x,z,dx,dz,lo,hi,w,y)=>{
+  const tx=-dz*w,tz=dx*w;
+  const p=(t,s)=>point(x+dx*t+tx*s,z+dz*t+tz*s,y);
+  quad(out,p(lo,-1),p(lo,1),p(hi,1),p(hi,-1));
+ };
+ for(let z=0;z<battle.size.depth;z++)for(let x=0;x<battle.size.width;x++){
+  const cell=cellAt(x,z),y=cell.level*RISE;
+  for(const [direction,[dx,dz]] of steps.entries()){
+   const next=cellAt(x+dx,z+dz),low=(next?.level??0)*RISE;
+   if(y>low+.1){
+    const tx=-dz,tz=dx;
+    for(let segment=0;segment<8;segment++){
+     const a=-.5+segment/8,b=a+.125;
+     const high=t=>surfaceHeight(x+dx*.499+tx*t,z+dz*.499+tz*t);
+     const base=t=>next?surfaceHeight(x+dx*.501+tx*t,z+dz*.501+tz*t):low;
+     const at=(t,h)=>point(x+dx*.5+tx*t,z+dz*.5+tz*t,h);
+     quad(faces,at(a,base(a)-.02),at(b,base(b)-.02),at(b,high(b)),at(a,high(a)));
+     // A narrow lit coping gives the silhouette a readable top edge.
+     const p=(t,s)=>point(x+dx*(.5-s)+tx*t,z+dz*(.5-s)+tz*t,high(t)+.018);
+     quad(lips,p(a,0),p(b,0),p(b,.035),p(a,.035));
+    }
+   }
+   if(cell.links&(1<<direction)){
+    // Roads are continuous across authored links, independent of the tile grid.
+    stripe(markings,x,z,dx,dz,.11,.32,.012,y+.032);
+   }
+  }
+  if(!battle.cover.has(x+','+z))for(const [dx,dz] of [[-1,-1],[1,-1],[1,1],[-1,1]]){
+   const a=world(x+dx*.47,z+dz*.47,y+.025),b=world(x+dx*.36,z+dz*.47,y+.025),c=world(x+dx*.47,z+dz*.36,y+.025);
+   ticks.push(...a.toArray(),...b.toArray(),...a.toArray(),...c.toArray());
+  }
+ }
+ const add=(positions,name,color,opacity=1)=>{
+  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.computeVertexNormals();
+  const material=new T.MeshStandardMaterial({color:kit.C(color),roughness:.95,side:T.DoubleSide,transparent:opacity<1,opacity,depthWrite:opacity===1});
+  const mesh=new T.Mesh(geo,material);mesh.name=name;mesh.receiveShadow=true;board.add(mesh);return mesh;
+ };
+ add(faces,'terrain-risers',index===1?0x68665c:0x665d50).userData.levelRise=RISE;
+ add(lips,'terrace-coping',index===1?0x807d70:0x79705f);
+ add(markings,'road-markings',0xb7a878,.65);
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(ticks,3));
+ const grid=new T.LineSegments(geo,new T.LineBasicMaterial({color:0xc1c9ba,transparent:true,opacity:.12,depthWrite:false}));grid.name='tactical-grid-corners';board.add(grid);
 }
 function build(){
  root.IronVowFoundry.retainPreview();
- clear();init();battleRef=battle;kit=root.IronVowSceneKit(renderer);kit.setSize(battle.size.width,battle.size.depth);
+ clear();init();battleRef=battle;terrainRef=battle.field.cells;kit=root.IronVowSceneKit(renderer);kit.setSize(battle.size.width,battle.size.depth,TILE);
  root.IronVowVehicles.load(battle.units.map(u=>u.kind).filter(Boolean));
  rigV2.load(battle.units);
  const index=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3,P=kit.PAL[index];
@@ -81,22 +151,29 @@ function build(){
  const rim=new T.DirectionalLight(kit.C(0x9ab8d0),.6);rim.position.set(30,18,-30);scene.add(rim);
  board=new T.Group();scene.add(board);units=new T.Group();scene.add(units);
  const floor=new T.Mesh(new T.PlaneGeometry(300,300),kit.groundMaterial(P));floor.rotation.x=-Math.PI/2;floor.position.y=-.18;floor.receiveShadow=true;board.add(floor);
- const material=new T.MeshStandardMaterial({color:kit.C(index===1?0x6e6152:0x5a6266),map:kit.imgTex('assets/concrete.webp',[1,1]),roughness:.85,metalness:.1});
+ const terrainMap=kit.imgTex('assets/concrete.webp',[1,1]);
+ const materials=[
+  new T.MeshStandardMaterial({color:kit.C(index===1?0xa49c86:0x8c9b91),map:terrainMap,roughness:.96,metalness:.015}),
+  new T.MeshStandardMaterial({color:kit.C(index===1?0x8b806a:0x83907b),map:terrainMap,roughness:1,metalness:0}),
+  new T.MeshStandardMaterial({color:kit.C(index===2?0x7f8981:0x777b79),map:terrainMap,roughness:.9,metalness:.015})
+ ];
  const overlayPositions=[],overlayColors=[],tileIndices=[];
  for(let z=0;z<battle.size.depth;z++)for(let x=0;x<battle.size.width;x++){
-  const geometry=plate(x,z),p=world(x,z,0),mesh=new T.Mesh(geometry,material);mesh.position.copy(p);mesh.receiveShadow=true;mesh.userData.tile={x,z};board.add(mesh);groundMeshes.push(mesh);
+  const geometry=plate(x,z),p=world(x,z,0),cell=cellAt(x,z),mesh=new T.Mesh(geometry,materials[cell?.links?2:cell?.level>0?1:0]);mesh.position.copy(p);mesh.receiveShadow=true;mesh.userData.tile={x,z};board.add(mesh);groundMeshes.push(mesh);
   const positions=geometry.attributes.position,offset=overlayPositions.length/3;
   for(let i=0;i<positions.count;i++){overlayPositions.push(positions.getX(i)+p.x,positions.getY(i)+.025,positions.getZ(i)+p.z);overlayColors.push(1,1,1);}
   tileIndices.push(Array.from(geometry.index.array,v=>v+offset));
  }
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(overlayPositions,3));geometry.setAttribute('color',new T.Float32BufferAttribute(overlayColors,3));geometry.setIndex([]);
  overlays=new T.Mesh(geometry,new T.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.38,depthWrite:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}));overlays.userData.indices=tileIndices;overlays.renderOrder=2;scene.add(overlays);
+ terrainDetails(index);
  const edgeMaterial=kit.MAT.hazard;
  for(const [x,z,w,d] of [[0,-battle.size.depth*TILE/2,battle.size.width*TILE,.3],[0,battle.size.depth*TILE/2,battle.size.width*TILE,.3],[-battle.size.width*TILE/2,0,.3,battle.size.depth*TILE],[battle.size.width*TILE/2,0,.3,battle.size.depth*TILE]]){
   const mesh=new T.Mesh(new T.BoxGeometry(w,.16,d),edgeMaterial);mesh.position.set(x,-.08,z);mesh.receiveShadow=true;board.add(mesh);
  }
- for(const key of battle.cover){const [x,z]=key.split(',').map(Number),cover=kit.buildCover(key);cover.position.y=terrainHeight(x,z)*HEIGHT;board.add(cover);cover.userData.bounds=new T.Box3().setFromObject(cover);coverMeshes.push(cover);}
+ for(const key of battle.cover){const [x,z]=key.split(',').map(Number),cover=kit.buildCover(key,battle.field.cover[key]);cover.position.y=surfaceHeight(x,z);cover.userData.tile={x,z};board.add(cover);cover.userData.bounds=new T.Box3().setFromObject(cover);coverMeshes.push(cover);}
  kit.buildProps(board,index);
+ if(root.IronVowEnvironmentAssets)void root.IronVowEnvironmentAssets.populate(board,{width:battle.size.width,depth:battle.size.depth,tile:TILE,theater:['relay','corridor','frontier'][index],coverGroups:coverMeshes});
  const ring=color=>{const m=new T.Mesh(new T.RingGeometry(TILE*.4,TILE*.43,48),new T.MeshBasicMaterial({color,transparent:true,opacity:.9,depthWrite:false,side:T.DoubleSide}));m.rotation.x=-Math.PI/2;m.renderOrder=3;scene.add(m);return m;};
  selection=ring(0xe6b76a);targetRing=ring(0xe2846e);
  pathGroup=new T.Group();scene.add(pathGroup);
@@ -118,7 +195,7 @@ function partPoint(unit,part='body'){
   const p=node.getWorldPosition(V3());if(part==='body')p.y+=1.2*(m.scale||1);return p;
  }
  const node=m?.anchors?.[part];if(node)return node.getWorldPosition(V3());
- const height=unit.kind?(VEHICLES[unit.kind].altitude+.4)*HEIGHT:part==='legs'?1:part==='pilot'?5.7:3.8;
+ const height=unit.kind?VEHICLES[unit.kind].altitude*(RISE/TERRAIN_RISE)+.4*HEIGHT:part==='legs'?1:part==='pilot'?5.7:3.8;
  return unitRoot(unit).add(V3(0,height,0));
 }
 function attachmentPoint(unit,part='body'){
@@ -148,8 +225,11 @@ function updateCamera(t,dt){
  camera.aspect=innerWidth/innerHeight;camera.fov=fov;
  const usable=Math.max(200,innerWidth-(mobile?24:380)),hf=2*Math.atan(Math.tan(fov*Math.PI/360)*usable/innerHeight);
  const fit=Math.max(size.width*TILE*1.3/(2*Math.tan(hf/2)),size.depth*TILE*.9/(2*Math.tan(fov*Math.PI/360)));
- const target=fieldCamera.overview?world((size.width-1)/2,(size.depth-1)/2):world(fieldCamera.x,fieldCamera.z);
- const distance=fieldCamera.overview?fit:fit*overviewZoom/Math.max(overviewZoom,viewZoom),az=mobile?0:Math.PI/4,el=mobile?.8:.66;
+ const portrait=innerHeight>innerWidth;
+ const fx=portrait&&!mobile?Math.max(1.5,Math.min(fieldCamera.x,size.width-2.5)):fieldCamera.x;
+ const fz=portrait&&!mobile?Math.max(1.5,Math.min(fieldCamera.z,size.depth-2.5)):fieldCamera.z;
+ const target=fieldCamera.overview?world((size.width-1)/2,(size.depth-1)/2):world(fx,fz);
+ const distance=fieldCamera.overview?fit:fit*overviewZoom/Math.max(overviewZoom,viewZoom)*(portrait&&!mobile?.66:.88),az=mobile?0:Math.PI/4,el=mobile?.8:.66;
  const position=target.clone().add(V3(Math.sin(az)*Math.cos(el),Math.sin(el),Math.cos(az)*Math.cos(el)).multiplyScalar(distance));
  const shot=activeCinematic;
  if(shot&&!reducedMotion){
@@ -172,7 +252,7 @@ function prepareUnit(u,t){
   if(!record){
    record={vehicle:root.IronVowVehicles.create(u.kind)};models.set(u.id,record);
   }
-  root.IronVowVehicles.update(record.vehicle,u,t,world(u.vx,u.vz),displayedHeading(u),reducedMotion);
+  root.IronVowVehicles.update(record.vehicle,u,t,world(u.vx,u.vz),displayedHeading(u),reducedMotion,RISE/TERRAIN_RISE);
   object=record.vehicle.object;
  }else{
   const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),goal=aimTargets.get(u.id),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
@@ -241,7 +321,7 @@ function updateOverlays(){
 function render(t,dt){
  init();if(!battle){root.IronVowRenderer.show(false);if(battleRef)clear();return;}
  if(root.IronVowRenderer.lost)return;
- if(battleRef!==battle||!scene)build();
+ if(battleRef!==battle||terrainRef!==battle.field.cells||!scene)build();
  for(const u of battle.units)prepareUnit(u,t);
  for(const u of battle.units){const cue=mortarCues.get(u.id);if(cue&&!cue.fired&&t-cue.at>=.95){cue.fired=true;const p=attachmentPoint(u,'mortarMuzzle');combat.fx.glow(p,0xffb050,3,.15);combat.fx.smoke(p,4,1.4,0xc4bdb0,.5,.8,1.4,.3);}}
  combat.update(t,dt);updateCamera(t,dt);updateOverlays();
@@ -253,12 +333,14 @@ function render(t,dt){
  renderer.setRenderTarget(null);renderer.render(scene,camera);root.IronVowPerformance?.recordRender(renderer.info);
 }
 function project(x,y,z){
- if(!scene||battleRef!==battle)build();const p=world(x,z,y*HEIGHT).project(camera);
+ if(!scene||battleRef!==battle)build();const p=world(x,z,y*(RISE/TERRAIN_RISE)).project(camera);
  return {x:(p.x+1)*innerWidth/2,y:(1-p.y)*innerHeight/2,z:p.z};
 }
 function ray(x,y){pointer.set(x/innerWidth*2-1,1-y/innerHeight*2);raycaster.setFromCamera(pointer,camera);return raycaster;}
 function screenTile(x,y){
  if(!scene||battleRef!==battle)build();const hit=ray(x,y).intersectObjects(groundMeshes,false)[0];
+ const obstacle=ray(x,y).intersectObjects(coverMeshes,true)[0];
+ if(obstacle&&(!hit||obstacle.distance<hit.distance)){let o=obstacle.object;while(o&&!o.userData?.blocking)o=o.parent;if(o?.userData.tile)return {...o.userData.tile};}
  if(!hit)return {x:-1,z:-1};return {x:Math.round(hit.point.x/TILE+(battle.size.width-1)/2),z:Math.round(hit.point.z/TILE+(battle.size.depth-1)/2)};
 }
 function pick(x,y){
@@ -270,15 +352,16 @@ function pan(dx,dy){
 }
 const overviewZoom=.47*3.4/TILE;
 root.IronVowScene={isLive,render,project,projectWorld,screenTile,pick,pan,partPoint,attachmentPoint,labelPoint,groundAt,world,clear,overviewZoom,
+ get terrainMetrics(){return {tilePitch:TILE,levelRise:RISE,gridStyle:'corner-ticks',surface:'crowned-terraces-with-access-ramps'};},
  get covers(){return coverMeshes.map(m=>({min:m.userData.bounds.min.toArray(),max:m.userData.bounds.max.toArray()}));},
  overlayInfo(){return {triangles:overlays.geometry.index.count/3,path:pathGroup.children.filter(m=>m.visible).map(m=>({position:m.position.toArray(),color:m.material.color.getHex()})),selected:selection.visible,target:targetRing.visible};},
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
  mortarPresentation(unit,at=clock){if(models.get(unit.id)?.entry?.m?.mortar)mortarCues.set(unit.id,{at,fired:false});},
  get combat(){return combat;},get camera(){return camera;},get scene(){return scene;},get models(){return models;},
- get loadFailed(){return Boolean(scene&&battleRef===battle&&battle?.units.some(u=>(
+ get loadFailed(){return root.IronVowEnvironmentAssets?.status(board)==='error'||Boolean(scene&&battleRef===battle&&battle?.units.some(u=>(
   u.kind?root.IronVowVehicles.status(u.kind):rigV2.status(u)
  )==='error'));},
- get ready(){return Boolean(scene&&!root.IronVowRenderer.lost&&battleRef===battle&&battle?.units.every(u=>(
+ get ready(){return Boolean(scene&&!root.IronVowRenderer.lost&&root.IronVowEnvironmentAssets?.status(board)!=='loading'&&battleRef===battle&&battle?.units.every(u=>(
   u.kind?models.get(u.id)?.vehicle:models.get(u.id)?.entry.armed
  )));}
 };
