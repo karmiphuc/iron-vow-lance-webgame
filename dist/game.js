@@ -1558,6 +1558,12 @@ function startAudio(unlock=true){
   syncMusic();
  }catch{}
 }
+function combatAudioPan(unit,sequence,fieldPan){
+ if(!sequence||sequence.skipped)return fieldPan;
+ const axis=sequence.cameraAxis;
+ if(axis)return (axis.actor===unit.id?1:-1)*axis.sign*.36;
+ return (unit===sequence.actor?-1:1)*(sequence.reaction?-1:1)*.36;
+}
 function sound(type,cueVolume=1,shot=null){
  if(muted)return;
  try{
@@ -1570,13 +1576,18 @@ function sound(type,cueVolume=1,shot=null){
    const samples=noiseBuffer.getChannelData(0);
    for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
   }
+  const pan=shot?.pan??0;
+  let output=soundBus;
+  if(pan&&audio.createStereoPanner){
+   output=audio.createStereoPanner();output.pan.value=pan;output.connect(soundBus);
+  }
   const tone=(at,duration,from,to,volume,wave='sine')=>{
    const oscillator=audio.createOscillator(),gain=audio.createGain();
    oscillator.type=wave;oscillator.frequency.setValueAtTime(from,at);
    oscillator.frequency.exponentialRampToValueAtTime(to,at+duration);
    gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume*cueVolume,at+.008);
    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
-   oscillator.connect(gain);gain.connect(soundBus);oscillator.start(at);oscillator.stop(at+duration+.01);
+   oscillator.connect(gain);gain.connect(output);oscillator.start(at);oscillator.stop(at+duration+.01);
   };
   const noise=(at,duration,frequency,end,volume,filterType='lowpass')=>{
    const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
@@ -1584,9 +1595,59 @@ function sound(type,cueVolume=1,shot=null){
    filter.frequency.exponentialRampToValueAtTime(end,at+duration);
    gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(volume*cueVolume,at+.005);
    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
-   source.connect(filter);filter.connect(gain);gain.connect(soundBus);source.start(at);source.stop(at+duration+.01);
+   source.connect(filter);filter.connect(gain);gain.connect(output);source.start(at);source.stop(at+duration+.01);
   };
   const thump=(at,weight=1)=>{tone(at,.27,95,34,.18*weight);noise(at,.20,1000,180,.13*weight);tone(at+.025,.12,410,180,.045*weight,'triangle')};
+  const clank=(at,weight=1)=>{
+   tone(at,.16,153,60,.15*weight);
+   noise(at,.065,3100,840,.24*weight,'bandpass');
+   tone(at+.005,.12,492,395,.085*weight,'triangle');
+  };
+  const machinery=(cue,at,level,rate)=>playSample(machinerySamples.get(cue),at,level*cueVolume,rate,pan);
+  if(type==='braceLift'){
+   machinery('servo',now,.42,shot.rate);
+   noise(now,.22,950,2200,.16,'bandpass');return;
+  }
+  if(type==='bracePlant'){
+   machinery(cueVolume<.95?'foot-a':'foot-heavy',now,.62,shot.rate);
+   clank(now+.007,.82);
+   machinery('vent',now+.11,.22,shot.rate);return;
+  }
+  if(type==='weaponLock'){
+   machinery('arm',now,.29,shot.rate);
+   clank(now+.045,.43);return;
+  }
+  if(type==='partFailure'){
+   if(shot.part==='shield'){
+    for(const [pitch,level] of [[526,.12],[819,.083],[1438,.049]])tone(now,.31,pitch,pitch*.95,level,'triangle');
+    clank(now+.064,.34);
+   }else if(shot.part==='legs'){
+    clank(now,.85);noise(now+.025,.24,1900,220,.23,'bandpass');
+    tone(now+.03,.19,380,115,.10,'triangle');machinery('vent',now+.09,.35,.77);
+   }else{
+    tone(now,.28,755,117,.11,'triangle');noise(now+.024,.24,2180,705,.16,'bandpass');
+    clank(now+.18,.38);
+   }
+   return;
+  }
+  if(type==='vehicleShutdown'){
+   if(shot.material==='tank'){
+    for(const [i,offset] of [0,.032,.078,.138].entries())clank(now+offset,.68-i*.12);
+    noise(now,.22,730,165,.22,'bandpass');
+   }else{
+    for(const [i,offset] of [0,.049,.105,.175,.265,.382].entries()){
+     noise(now+offset,.095,440-i*35,140,.30-i*.025,'bandpass');
+     tone(now+offset,.09,100-i*7,40,.12);
+    }
+    noise(now+.35,.14,2700,540,.22,'bandpass');
+   }
+   return;
+  }
+  if(type==='vehicleGround'){
+   const tank=shot.material==='tank';
+   clank(now,tank?1.28:1.12);clank(now+.24,tank?.44:.56);
+   clank(now+.40,.30);return;
+  }
   if(type==='click'){tone(now,.06,820,610,.025,'triangle');return}
   if(type==='hydraulic'){
    tone(now,.24,150,325,.071,'triangle');
@@ -1625,7 +1686,7 @@ const MACHINERY_MIX={liftGain:.306,liftRate:.784,stepGain:.936,stepRate:.8176,ve
 const machinerySamples=new Map();
 let machineryVoice=null,startedMachinery=null;
 function loadMachinerySamples(){
- for(const cue of ['servo','arm','foot-heavy','vent','boot','idle']){
+ for(const cue of ['servo','arm','foot-heavy','foot-a','vent','boot','idle']){
   fetch(asset('assets/audio/mech-'+cue+'.wav'))
    .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Machinery audio unavailable')})
    .then(bytes=>audio.decodeAudioData(bytes))
@@ -2929,7 +2990,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  }
  const profile=attackProfile(a,w.id),power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
  const weaponVoice=a.kind==='tank'?'javelin':a.kind==='helicopter'?'kite':w.id;
- const shotPan=sequence?-.32:(a.face||1)*-.23,hitPan=sequence ? .32 : (a.face||1)*.24;
+ const shotPan=()=>combatAudioPan(a,sequence,(a.face||1)*-.23);
+ const hitPan=()=>combatAudioPan(t,sequence,(a.face||1)*.24);
+ const braceMass=Math.min(1.24,.64+(MECH_MOTION[a.frame]?.mass??1)*.35);
+ const braceRate=1.10/braceMass;
  if(!muted&&gunBankLoad)await gunBankLoad;
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
@@ -2952,22 +3016,22 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const raise=primeDuration+windup;
  a.attack={kind:w.id,start:clock,fireAt:null,releaseAt:null,primeDuration,windup,native:native?{...native,clip}:null,
   ...(power?{stage:'pullback'}:{})};
- if(primeDuration&&!sequence?.skipped)gaitSound(a,'arm',0);
+ if(primeDuration&&!sequence?.skipped)sound('braceLift',braceMass,{pan:shotPan(),rate:braceRate});
  if(primeDuration){
   await waitAttack(primeDuration*1000,sequence);
   if(!sequence?.skipped){
    effects.push({type:'step',actor:a.id,x:a.x,z:a.z,t:1,mass:MECH_MOTION[a.frame].mass,attackPlant:true});
-   sound('step',MECH_MOTION[a.frame].mass);
-   sound('prime',MECH_MOTION[a.frame].mass);
+   sound('bracePlant',braceMass,{pan:shotPan(),rate:braceRate});
+   sound('weaponLock',braceMass,{pan:shotPan(),rate:braceRate});
   }
  }
  const armTime=rockets?Math.min(windup,.28):0;
  if(armTime){
   if(windup>armTime)await waitAttack((windup-armTime)*1000,sequence);
-  if(!sequence?.skipped)sound('missileArm',windup<.28?.55:1,{pan:shotPan});
+  if(!sequence?.skipped)sound('missileArm',windup<.28?.55:1,{pan:shotPan()});
  }
  if(profile.charge&&!reducedMotion&&!sequence?.skipped){
-  sound('parallax-charge',1,{pan:shotPan});
+  sound('parallax-charge',1,{pan:shotPan()});
   if(sequence)$('#shot-status').textContent=a.name+' charges the Parallax.';
  }
  if(power&&!reducedMotion){
@@ -3019,7 +3083,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
    if(profile.melee)sound(power?.sound||weaponMotion(w.id));
    else sound('gunReport',event.index?.93:1,{weaponVoice,
     rate:rockets?(event.index?.90:1):rate,travel:profile.travel,lastReport:event.index===profile.beats.length-1,
-    pan:rockets?shotPan+(event.index%2?.12:-.12):shotPan});
+    pan:rockets?shotPan()+(event.index%2?.12:-.12):shotPan()});
    continue;
   }
   if(event.plant){
@@ -3030,7 +3094,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
    continue;
   }
   if(sequence)sequence.contact=event;
-  if(rockets&&!sequence?.skipped)sound(event.hit?'missileImpact':'groundBlast',event.index?.83:.71,{pan:hitPan});
+  if(rockets&&!sequence?.skipped)sound(event.hit?'missileImpact':'groundBlast',event.index?.83:.71,{pan:hitPan()});
   if(!event.hit)continue;
   const broken=applyImpact(t,event);
   if(!sequence?.skipped)window.IronVowScene?.combat?.landed(a,t,w,event,guard);
@@ -3043,9 +3107,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   effects.push({type:'boom',target:t.id,part:event.part,x:t.x,z:t.z,t:1,light,broken,big:Boolean(power&&!reducedMotion),
    ...(guard?{shieldImpact:impact}:{})});
   shake=Math.max(shake,power?.shake??(broken?6:light?2.8:4));
+  if(broken&&limbPart(event.part))sound('partFailure',.85,{part:guard?'shield':event.part,pan:hitPan()});
   if(!rockets){
    const heavy=profile.melee||!light&&['rail','rampart','shotgun'].includes(effectKind);
-   sound(guard?'shieldImpact':heavy?'heavyImpact':'armorImpact',light?(broken?.94:w.scatter?.57:.83):1,{weaponVoice,material:t.kind,rate,pan:hitPan});
+   sound(guard?'shieldImpact':heavy?'heavyImpact':'armorImpact',light?(broken?.94:w.scatter?.57:.83):1,{weaponVoice,material:t.kind,rate,pan:hitPan()});
   }
  }
  a.attack.releaseAt=clock;
@@ -3070,7 +3135,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(failsafe)addLog(t.name+' triggered Failsafe.');
   if(!reaction&&w.melee&&a.training?.strikeBrace)braceUnit(a);
   if(t.hp.body<=0||t.hp.pilot===0){
-   beginDestruction(t,t.hp.body>0?'pilot':'body');addLog(t.name+(t.downReason==='pilot'?': pilot down.': ' neutralized.'));
+   beginDestruction(t,t.hp.body>0?'pilot':'body',sequence);addLog(t.name+(t.downReason==='pilot'?': pilot down.': ' neutralized.'));
    if(a.team==='ally'){save.kills++;sortiePilot(a).xp+=t.kind?VEHICLES[t.kind].xp:35;recordMechKill(a,t)}
    if(!reaction){
      const refund=w.melee?(a.training?.strikeRefund??0):a.boost&&a.training?.deadeyeRefund?paid:0;
@@ -3394,7 +3459,10 @@ function destructionPace(u){
 function destructionAge(u,t){return Number.isFinite(u.deathTime)?(t-u.deathTime)/destructionPace(u):DESTRUCTION.end}
 function destructionStyle(u){return u.deathStyle||(u.frame===1||FRAMES[u.frame]?.native||destructionPace(u)>=1.5?'fall':'kneel')}
 
-function beginDestruction(u,reason='body'){
+function beginDestruction(u,reason='body',sequence=null){
+ if(u.kind&&reason==='body'&&!reducedMotion&&!sequence?.skipped){
+  sound('vehicleShutdown',1,{material:u.kind,pan:combatAudioPan(u,sequence,(u.face||1)*.20)});
+ }
  u.downReason=reason;
  u.alive=false;if(lockedTarget===u.id)lockedTarget=null;u.deathTime=clock;u.deathStyle=u.kind?'vehicle':destructionStyle(u);u.deathEvents=0;u.attack=null;
 }
@@ -3406,7 +3474,10 @@ function updateDestruction(u,t){
    u.deathEvents=1;
    if(!reducedMotion&&elapsed<.55){
     effects.push({type:'detonation',x:u.x,z:u.z,t:1-elapsed/.85,big:true,seed:u.index,anchor:freezeAttachment(u,'body',t)});
-    sound('boom',1,{pan:(u.face||1)*.20});shake=Math.max(shake,u.kind==='helicopter'?5:4);
+    const pan=combatAudioPan(u,activeCinematic,(u.face||1)*.20);
+    sound('vehicleGround',1,{material:u.kind,pan});
+    sound('boom',u.kind==='tank'?.77:.62,{pan});
+    shake=Math.max(shake,u.kind==='helicopter'?5:4);
    }
   }
   return;
