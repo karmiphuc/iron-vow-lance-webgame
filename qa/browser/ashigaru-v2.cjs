@@ -12,13 +12,43 @@ module.exports=async function checkAshigaruV2({page,origin}){
    const gait=await page.evaluate(async()=>{
     const u=battle.units.find(x=>x.frame===ASHIGARU_FRAME),m=IronVowScene.models.get(u.id).entry.m,src=m.nativeV2.source,node=n=>src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(n));
     battle.cover.clear();const tile=__ironVow.legalMoves(u.id).find(p=>p.cost===1&&p.x===u.x+1&&p.z===u.z);if(!tile)throw Error('No scout gait tile');
-    const samples=[];let moving=true;const record=new Promise(resolve=>{function sample(){if(!moving){resolve();return}if(u.motion)samples.push(m.rig.legs.map((leg,i)=>{const state=m.legs[i],joint=node('ankle.'+leg.side),p=joint.getWorldPosition(new THREE.Vector3()),sole=new THREE.Box3().setFromObject(joint).min.y;return {p:p.toArray(),sole,floor:IronVowScene.groundAt(p.x,p.z),ankleHeight:m.dims.ankleH*m.scale,binding:p.distanceTo(leg.an.getWorldPosition(new THREE.Vector3())),goal:p.distanceTo(state.foot),swing:state.swing,settle:Boolean(state.settle),plant:state.planted.toArray()}}));requestAnimationFrame(sample)}requestAnimationFrame(sample)});
+    const vertex=new THREE.Vector3();
+    function soleHeight(joint){
+     // The source foot meshes are rigid. A transformed local bounding box
+     // includes empty corners below the chamfered sole during ankle pitch.
+     joint.updateWorldMatrix(true,true);
+     let minimum=Infinity;
+     joint.traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      const positions=mesh.geometry.attributes.position;
+      for(let i=0;i<positions.count;i++){
+       vertex.fromBufferAttribute(positions,i).applyMatrix4(mesh.matrixWorld);
+       minimum=Math.min(minimum,vertex.y);
+      }
+     });
+     return minimum;
+    }
+    const samples=[];
+    let moving=true;
+    const record=new Promise(resolve=>{
+     function sample(){
+      if(!moving){resolve();return}
+      if(u.motion)samples.push(m.rig.legs.map((leg,i)=>{
+       const state=m.legs[i],joint=node('ankle.'+leg.side),p=joint.getWorldPosition(new THREE.Vector3());
+       return {p:p.toArray(),sole:soleHeight(joint),floor:IronVowScene.groundAt(p.x,p.z),ankleHeight:m.dims.ankleH*m.scale,
+        binding:p.distanceTo(leg.an.getWorldPosition(new THREE.Vector3())),goal:p.distanceTo(state.foot),swing:state.swing,
+        settle:Boolean(state.settle),plant:state.planted.toArray()};
+      }));
+      requestAnimationFrame(sample);
+     }
+     requestAnimationFrame(sample);
+    });
     try{await moveUnit(u,tile.x,tile.z)}finally{moving=false}await record;return {samples,py:m.dims.py,ankleH:m.dims.ankleH,frame:u.frame};
    });
    assert.ok(Math.abs(gait.py-3.032)<1e-3&&Math.abs(gait.ankleH-.49)<1e-3,JSON.stringify({py:gait.py,ankleH:gait.ankleH}));
    assert.ok(gait.samples.length>=2&&gait.samples.some(feet=>feet.some(f=>f.swing)),'Scout uses the live gait');let planted=0;
    for(const [i,feet] of gait.samples.entries())for(const [j,f] of feet.entries()){
-    assert.ok(f.binding<1e-5&&f.goal<.04&&f.sole>=f.floor-.05,JSON.stringify(f));const prev=gait.samples[i-1]?.[j];
+    assert.ok(f.binding<1e-5&&f.goal<.04&&Number.isFinite(f.sole)&&f.sole>=f.floor-.05,JSON.stringify(f));const prev=gait.samples[i-1]?.[j];
     if(!prev||f.swing||f.settle||prev.swing||prev.settle||distance(f.plant,prev.plant)>1e-5)continue;
     assert.ok(distance(f.p,prev.p)<.004&&Math.abs(f.p[1]-(f.floor+f.ankleHeight))<.04&&Math.abs(f.sole-f.floor)<.12,JSON.stringify(f));planted++;
    }assert.ok(planted>0,'Scout must plant at least one foot');console.log('Scout planted pairs',planted);
