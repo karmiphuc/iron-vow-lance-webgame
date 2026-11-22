@@ -14,6 +14,9 @@ for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v5
   if(file==='v55-corridor.json')assert.equal(sim.run('battle.units[1].frame'),1,'existing Corridor keeps the original hostile');
   if(file==='ashigaru-picket.json')assert.equal(sim.run('battle.units.find(u=>u.id==="enemy1").frame'),sim.run('ASHIGARU_FRAME'),'Picket restores its Ashigaru');
   const {sortie,...actual}=JSON.parse(sim.run('JSON.stringify(save)'));
+  assert.equal(actual.itemInventory,true,file+' migrated to physical copies');
+  assert.equal(sim.run('validSave(save)'),true,file+' has a consistent allocation');
+  delete actual.itemInventory;actual.owned=[...new Set(actual.owned)].filter(id=>career.owned.includes(id));
   assert.deepEqual(actual,career,file+' career, roster, hull and offer data');
   const {version,...checkpoint}=JSON.parse(sim.run('JSON.stringify(captureSortie())'));
   const {version:previousVersion,...previous}=expected;
@@ -34,6 +37,7 @@ for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v5
 {
  const raw=readFileSync(join(__dirname,'fixtures','world-pending-transit.json'),'utf8');
  const expected=JSON.parse(raw);
+ expected.itemInventory=true;expected.owned.push('rifle');
  const resumed=simulate({storage:new Map([[key,raw]]),random:()=>0,reducedMotion:true});
  const imported=simulate({random:()=>0,reducedMotion:true});
  imported.run('let backup='+raw.trim());

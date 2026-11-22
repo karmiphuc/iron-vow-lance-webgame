@@ -42,20 +42,20 @@ root.IronVowCombat={create(scene,api){
   const part=guard?'shield':contact?.part||'body',to=point(target,part);
   if(contact&&!contact.hit)to.add(V3(.6,0,.4));
   const native=mounted?.m.nativeV2,shoulder=socket.startsWith('shoulderMuzzle'),alternate=socket.endsWith('2');
-  const weapon=native&&shoulder?mounted.shoulderWeapon:mounted?.primary;
+  const weapon=shoulder?mounted?.shoulderWeapon??mounted?.primary:mounted?.primary;
   if(weapon){
    const indexed=weapon.muzzles?.[index%weapon.muzzles.length];
    if(indexed)weapon.muzzle=indexed;
    const selected=alternate?(weapon.muzzle2||weapon.muzzle):weapon.muzzle;
    const pivot=weapon.aimPivot?.(selected)||(mounted.primarySocket?weapon.mount:null);
-   root.IronVowFoundry.aimMounted(mounted.m,native?{muzzle:selected}:weapon,to,1,pivot);
+   root.IronVowFoundry.aimMounted(mounted.m,native||shoulder?{muzzle:selected}:weapon,to,1,pivot);
    native?.sync();
   }
   const from=point(actor,socket);
   const flight=Math.max(.025,contact?.travel||attackProfile(actor,w.id).travel);
   const entry=mounted,barrel=alternate&&weapon?.alternate||weapon;
   const expectedMarker=alternate?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
-  const aimMarker=native?expectedMarker:barrel?.muzzle;
+  const aimMarker=native||shoulder?expectedMarker:barrel?.muzzle;
   const axis=aimMarker?.getWorldDirection(V3()),muzzle=aimMarker?.getWorldPosition(V3());
   const aimError=axis&&muzzle?axis.angleTo(to.clone().sub(muzzle)):null;
   const carrier=barrel?.carrier||entry?.primarySocket||entry?.m.rig.arms.R.so;

@@ -23,7 +23,7 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  run('save.credits=100000;save.rep=100;workshopView="market"');
  assert.equal(run('hullOnMarket(VANGUARD_FRAME)||acquireHull(VANGUARD_FRAME)||assignChassis(0,VANGUARD_FRAME,true)'),false);
  assert.equal(run('chassisAssignments(0).includes("GRAVEMAW")'),false);
- assert.ok(run('validSave({...save,reserve:{[VANGUARD_FRAME]:stockHull(VANGUARD_FRAME)}})'));
+ assert.ok(run('validSave({...save,owned:[...save.owned,"hailstorm","piledriver"],reserve:{[VANGUARD_FRAME]:stockHull(VANGUARD_FRAME)}})'));
  assert.ok(run('validSave({...save,salvage:{[VANGUARD_FRAME]:1}})'));
 
  for(const upgraded of [false,true]){
@@ -63,9 +63,10 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  assert.equal(run('distance('+vanguard+',current())'),4);
  assert.deepEqual(shotKinds,['hailstorm','hailstorm']);
  run(arrange);
- run(vanguard+'.hp.left='+vanguard+'.max.left;'+vanguard+'.hp.right=0');
+ run(vanguard+'.hp.left='+vanguard+'.max.left;'+vanguard+'.hp.right=0;let surrenderChecks=0;captureRandom=()=>{surrenderChecks++;return .30}');
  shotKinds.length=0;
  await run('endTurn()');
+ assert.equal(run('surrenderChecks'),1,'the damaged weapon arm triggers one surrender roll before the fallback strike');
  assert.equal(shotKinds[0],'piledriver');
 
  run('for(const u of battle.units)if(u.team==="enemy")u.alive=false;finish(true)');

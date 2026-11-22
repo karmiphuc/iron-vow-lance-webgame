@@ -9,7 +9,7 @@ const load=record=>simulate({storage:new Map([[key,JSON.stringify(record)]]),ran
 const saved=sim=>JSON.parse(sim.storage.get(key));
 const snapshot=sim=>JSON.parse(sim.run('JSON.stringify(save)'));
 const roundTrip=sim=>load(saved(sim));
-const withoutWorld=record=>{const {world,...legacyFields}=record;return legacyFields};
+const withoutWorld=record=>{const {world,itemInventory,...legacyFields}=record;legacyFields.owned=[...new Set(legacyFields.owned)];return legacyFields};
 const quote=(sim,path)=>JSON.parse(sim.run(`JSON.stringify(window.IronVowOverworld.itineraryQuote(${JSON.stringify(path)},window.IronVowOverworld.operatingRates(save),save.credits,save.overworld?.arrears??0))`));
 const travel=(sim,destination,from,cost,path)=>sim.run(`travelTo(${JSON.stringify(destination)},${JSON.stringify(from)},${cost===undefined?'undefined':cost},${JSON.stringify(path)})`);
 
@@ -54,7 +54,7 @@ assert.deepEqual(saved(roundTrip(company)),relaySaved,'the full world survives a
 
 const imported=simulate();
 assert.equal(imported.run(`importCareer(${JSON.stringify(arrived)})`),false,'travel fixture has no active sortie');
-assert.deepEqual(saved(imported),arrived);
+assert.deepEqual(withoutWorld(saved(imported)),arrived);
 assert.equal(Object.hasOwn(saved(imported),'world'),false,'legacy import does not create a world before chart entry');
 imported.run('showOverworld("relay")');
 const importedOnChart=saved(imported);
@@ -66,7 +66,7 @@ assert.deepEqual(saved(roundTrip(imported)),importedOnChart,'the lazily added wo
 const rested=simulate({random:()=>0});
 rested.run(`save.units[0].condition=25;save.units[1].condition=95;save.units[2].condition=30;
  save.ship={levels:{repair:1,crew:1}};save.owned.push('blade');
- save.reserve={'6':{weapon:'rifle',melee:'blade',condition:40,upgrade:0}};
+ save.reserve={'6':{weapon:'rifle',melee:'blade',condition:40,upgrade:0}};save.owned.push('rifle');
  save.wounds={rook:2,ghost:1};persist()`);
 rested.run('ensureWorld()');
 const viaPath=['picket','relay','corridor'];

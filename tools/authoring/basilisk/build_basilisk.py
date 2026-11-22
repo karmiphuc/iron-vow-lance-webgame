@@ -362,7 +362,7 @@ for side,L in [(1,'L'),(-1,'R')]:
     box(an,(.64,.20,.40),(0,-.12,-.54),1,.03)
 
 # Twin rear-set six-cell launch packs identify Basilisk at game scale.
-# Both are static children of the spine, leaving all shared animation pivots exact.
+# Each pack has its own spine-relative node so the matching arm damage can remove it.
 def zring(parent,outer,inner,depth,pos,tile=3,n=12):
     verts=[]
     for zz,rr in [(-depth/2,outer),(depth/2,outer),(-depth/2,inner),(depth/2,inner)]:
@@ -408,13 +408,14 @@ def podshell(parent,cx,cy):
     handle(parent,(cx-.28,cy+.60,-.72),(cx+.28,cy+.60,-.72),.033)
 for side in [-1,1]:
     cx=side*1.70;cy=2.77
+    mount=empty('launcher.'+('L' if side>0 else 'R'),spine,(0,0,0),False)
     # Rear swept pedestal places the launcher above and behind shoulder swing volume.
-    cyl(spine,.28,.56,(cx,2.13,-.72),2,vertices=16)
-    cyl(spine,.33,.09,(cx,2.38,-.72),3,vertices=16)
-    box(spine,(.51,.18,1.04),(cx,2.35,-.70),1,.035)
-    podshell(spine,cx,cy)
+    cyl(mount,.28,.56,(cx,2.13,-.72),2,vertices=16)
+    cyl(mount,.33,.09,(cx,2.38,-.72),3,vertices=16)
+    box(mount,(.51,.18,1.04),(cx,2.35,-.70),1,.035)
+    podshell(mount,cx,cy)
     empty('pod.'+('L' if side>0 else 'R'),spine,(cx,cy,.25),False)
-    hose(spine,[(side*.82,1.73,-1.05),(side*1.20,1.96,-1.26),(cx,2.23,-1.15),(cx,2.35,-.94)],.075,6)
+    hose(mount,[(side*.82,1.73,-1.05),(side*1.20,1.96,-1.26),(cx,2.23,-1.15),(cx,2.35,-.94)],.075,6)
 # Central rangefinder/radio pack bridges the shoulder systems without obscuring the head.
 loft(spine,[(2.03,.29,-.61,-1.16),(2.32,.36,-.66,-1.20),(2.54,.23,-.72,-1.10)],1,.025)
 box(spine,(.37,.10,.025),(0,2.34,-.653),6,.012)
@@ -444,10 +445,11 @@ for s,L in [(1,'L'),(-1,'R')]:
 for side,L in [(1,'L'),(-1,'R')]:
     sh,el,wr=arms[L];hip,kn,an=legs[L]
     cx=side*1.70;cy=2.77
+    mount=bpy.data.objects['launcher.'+L]
     # Flush pale brows keep both launch packs readable against dark terrain.
-    box(spine,(.95,.065,.105),(cx,cy+.46,.255),7,.012)
-    for xx in [-.43,0,.43]:box(spine,(.09,.025,.018),(cx+xx,cy-.46,.27),4,.004)
-    box(spine,(.34,.055,.28),(cx,cy+.60,-.20),15,.012)
+    box(mount,(.95,.065,.105),(cx,cy+.46,.255),7,.012)
+    for xx in [-.43,0,.43]:box(mount,(.09,.025,.018),(cx+xx,cy-.46,.27),4,.004)
+    box(mount,(.34,.055,.28),(cx,cy+.60,-.20),15,.012)
     # Braced heel uses only the outside of each foot; stance and sole remain exact.
     box(an,(.16,.25,.44),(side*.57,-.105,-.25),1,.025)
     box(an,(.17,.065,.24),(side*.57,.025,-.27),7,.01)

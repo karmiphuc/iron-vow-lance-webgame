@@ -3,7 +3,7 @@ const simulate=require('./sim-harness.cjs');
 
 const sim=simulate();
 const {run}=sim;
-assert.ok(run(`FRAMES.every((frame,index)=>!playerHull(index)||index===SHOGUN_FRAME||
+assert.ok(run(`FRAMES.every((frame,index)=>!playerHull(index)||frame.captureOnly||index===SHOGUN_FRAME||
  Number.isInteger(frame.cost)&&frame.cost>=50000&&frame.cost<=400000)`));
 assert.equal(run('Math.min(...FRAMES.filter((_,i)=>hullOnMarket(i)).map(f=>f.cost))'),50000);
 assert.equal(run('Math.max(...FRAMES.filter((_,i)=>hullOnMarket(i)).map(f=>f.cost))'),500000);

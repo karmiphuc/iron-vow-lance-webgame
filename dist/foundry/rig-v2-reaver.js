@@ -36,7 +36,7 @@ root.IronVowRigV2.register(16,{
     right.pose(unit.alive&&unit.hp.right>0,time);left.pose(useLeft,time);
     right.muzzle2=useLeft?left.muzzle:undefined;
     right.alternate=useLeft?left:undefined;
-    entry.primary=right;
+    entry.primary=unit.hp.right>0?right:left;
    },
    afterSync(){
     for(const {from,to,rest,axis:restAxis} of actuators){

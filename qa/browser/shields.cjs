@@ -48,9 +48,7 @@ module.exports=async function checkShields({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>save.credits),1350);
  await tap('[data-armory-class="melee"]');
  await equip('cleaver');
- assert.deepEqual(await page.evaluate(()=>[save.units[0].shield,save.units[0].melee]),[undefined,'cleaver']);
- await tap(tab);
- await equip(tower);
+ assert.deepEqual(await page.evaluate(()=>[save.units[0].shield,save.units[0].melee]),['citadel-shield','cleaver']);
  await page.reload({waitUntil:'domcontentloaded'});
  assert.match(await page.locator('.armory-mounted').innerText(),/Citadel T-6/);
  console.log('Shield reload state',JSON.stringify(await page.evaluate(()=>({page,selected,frame:pilotFrame(selected),classTabs:[...document.querySelectorAll('[data-armory-class]')].map(n=>n.dataset.armoryClass),url:location.href,modal:!document.querySelector('#modal').hidden}))));

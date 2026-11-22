@@ -28,12 +28,12 @@ root.IronVowRigV2.register(15,{
   const primary={id:'hailstorm',carrier:right,mount:gun,muzzle:muzzles[0],muzzles,bounds:()=>bounds('SOCKET.weapon.R')};
   const secondary={id:'piledriver',carrier:left,mount:ram,tip,bounds:()=>bounds('SOCKET.weapon.L')};
   return {boundsNames:['SOCKET.weapon.R','SOCKET.weapon.L'],pose(entry,unit,pose,time){
-   const alive=unit.alive;gun.visible=bone('SOCKET.weapon.R').visible=alive&&unit.hp.right>0;
-   ram.visible=bone('SOCKET.weapon.L').visible=alive&&unit.hp.left>0;
+   const alive=unit.alive;gun.visible=bone('SOCKET.weapon.R').visible=alive&&unit.weapon==='hailstorm'&&unit.hp.right>0;
+   ram.visible=bone('SOCKET.weapon.L').visible=alive&&unit.melee==='piledriver'&&unit.hp.left>0;
    entry.primary=primary;entry.secondary=secondary;
    const dt=lastTime===undefined?0:Math.min(.05,Math.max(0,time-lastTime));
    lastTime=time;
-   const spinning=alive&&unit.hp.right>0&&unit.attack?.kind==='hailstorm'&&!pose.reducedMotion;
+   const spinning=alive&&unit.weapon==='hailstorm'&&unit.hp.right>0&&unit.attack?.kind==='hailstorm'&&!pose.reducedMotion;
    rotorSpeed+=((spinning?22:0)-rotorSpeed)*(1-Math.exp(-12*dt));
    if(!pose.reducedMotion)rotorAngle=(rotorAngle+rotorSpeed*dt)%(2*Math.PI);
    rotor.quaternion.copy(rotorRest).multiply(turn.setFromAxisAngle(V3(0,1,0),rotorAngle));

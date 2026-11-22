@@ -6,7 +6,7 @@ module.exports=async function checkStockV2({page,origin}){
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[1,2]}));
  await page.waitForFunction(()=>IronVowScene.ready&&battle.units.filter(u=>u.team==='ally').every(u=>IronVowScene.isLive(u)&&IronVowScene.models.get(u.id)?.entry?.armed),null,{timeout:120000});
- const details=await page.evaluate(async()=>{
+ const details=await page.evaluate(async software=>{
   const all=[1,2].map(frame=>battle.units.find(u=>u.team==='ally'&&u.frame===frame)),results=[];
   for(const u of all){
    const entry=IronVowScene.models.get(u.id).entry,m=entry.m,src=m.nativeV2.source,node=name=>src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name)),world=o=>o.getWorldPosition(new THREE.Vector3());
@@ -24,12 +24,17 @@ module.exports=async function checkStockV2({page,origin}){
    const pistonPairs=[];for(let i=1;i<=10;i++){const a=node(`piston.${i}.a`),b=node(`piston.${i}.b`);if(!a||!b)throw Error('Missing piston '+i);pistonPairs.push([a,b,a.worldToLocal(world(b)).normalize().clone(),b.worldToLocal(world(a)).normalize().clone()]);}
    const fixture=[...__ironVow.legalMoves(u.id)].find(p=>p.cost===2&&p.x===u.x+2&&p.z===u.z);if(!fixture)throw Error('Missing stock ground two-step '+u.frame);
    const samples=[];let moving=true;const sampled=new Promise(resolve=>{function sample(){if(!moving){resolve();return}if(u.motion)samples.push(m.rig.legs.map((leg,i)=>{const p=world(node('ankle.'+leg.side)),state=m.legs[i];return {p:p.toArray(),sole:new THREE.Box3().setFromObject(node('ankle.'+leg.side)).min.y,binding:p.distanceTo(world(leg.an)),goal:p.distanceTo(state.foot),floor:IronVowScene.groundAt(p.x,p.z)+m.dims.ankleH*m.scale,swing:state.swing,settle:Boolean(state.settle),plant:state.planted.toArray()}}));requestAnimationFrame(sample)}requestAnimationFrame(sample)});
-   try{await moveUnit(u,fixture.x,fixture.z)}finally{moving=false}await sampled;
+   // Software rasterization can miss the short planted intervals. Keep
+   // the real gait and transforms, and sample them without GPU draws here.
+   const renderer=IronVowRenderer.get(),draw=renderer.render;
+   if(software)renderer.render=(scene,camera)=>{scene.updateMatrixWorld();camera.updateMatrixWorld();};
+   try{await moveUnit(u,fixture.x,fixture.z)}finally{moving=false;renderer.render=draw}
+   await sampled;
    const pistonErrors=pistonPairs.flatMap(([a,b,axisA,axisB])=>[axisA.angleTo(a.worldToLocal(world(b)).normalize()),axisB.angleTo(b.worldToLocal(world(a)).normalize())]);
    results.push({originalAnkleH:m.dims.ankleH*m.scale,frame:u.frame,role:FRAMES[u.frame].role,original,saveUnchanged:before===after,guns,shield,dead,paint,sourceSocket,pistonErrors,samples});
   }
   return results;
- });
+ },Boolean(process.env.IRON_VOW_SOFTWARE_QA));
  assert.deepEqual(details.map(x=>[x.frame,x.role]),[[1,'RECON'],[2,'SUPPORT']]);
  for(const d of details){
   assert.ok(d.saveUnchanged,`Render preserved save and HP for ${d.frame}`);assert.deepEqual([d.guns.gun,d.guns.blade],['rail','pike']);assert.ok(d.guns.right<1e-5&&d.guns.left<1e-5&&d.shield.grip<1e-5&&d.shield.visible,JSON.stringify(d));
@@ -71,26 +76,36 @@ module.exports=async function checkStockV2({page,origin}){
   Object.assign(target,{x:7,z:13,vx:7,vz:13});for(const p of ['body','pilot','legs'])target.hp[p]=target.max[p]=10000;
   battle.cover.clear();ruleRandom=()=>0;IronVowScene.render(clock,.016);
   const before=target.hp.body,originalRight=basilisk.hp.right,defaultWeapon=entry.primary.id;
-  const visibleBody=node('spine.geometry').visible, podsRemainAfterLoss=()=>node('spine.geometry').visible;
-  basilisk.hp.right=0;IronVowScene.render(clock,.016);const lock={canFire:canUseWeapon(basilisk,weapon('missile')),podsVisible:podsRemainAfterLoss(),mountVisible:entry.primary.mount.visible};
-  basilisk.hp.right=originalRight;IronVowScene.render(clock,.016);
-  const combat=IronVowScene.combat,launch=combat.launch,observed=[];
+  const visibleBody=node('spine.geometry').visible,combat=IronVowScene.combat;
+  basilisk.hp.right=0;IronVowScene.render(clock,.016);
+  const lock={canFire:canUseWeapon(basilisk,weapon('missile')),left:node('launcher.L').visible,right:node('launcher.R').visible};
+  await shoot(basilisk,target,'body',weapon('missile'),false,null);
+  const survivingRocket=combat.history.filter(e=>e.actor===basilisk.id&&e.type==='launch'&&e.weapon==='missile');
+  const leftMuzzle=entry.shoulderWeapon.muzzle;
+  const survivingMuzzle=leftMuzzle.name;
+  basilisk.hp.right=originalRight;target.hp.body=before;IronVowScene.render(clock,.016);
+  const launch=combat.launch,observed=[];
   combat.launch=function(...args){const result=launch.apply(this,args),event=this.history.at(-1);if(event?.type==='launch'&&event.actor===basilisk.id&&event.weapon==='missile'){
    const name=event.index%2?'pod.L':'pod.R';observed.push({event,name,pod:node(name).getWorldPosition(new THREE.Vector3()).toArray()});
   }return result;};
   await shoot(basilisk,target,'body',weapon('missile'),false,null);combat.launch=launch;
   const damage=before-target.hp.body,impacts=combat.history.filter(e=>e.type==='impact'&&e.actor===basilisk.id&&e.weapon==='missile').map(e=>({damage:e.damage,point:e.point,planned:e.planned}));
   Object.assign(basilisk,{weapon:'rail',ap:20});kestrel.weapon='missile';IronVowScene.render(clock,.016);
-  const swap={basilisk:entry.primary.id,basiliskCarrier:entry.primary.mount.parent===entry.m.rig.arms.R.so,kestrel:IronVowScene.models.get(kestrel.id).entry.primary.id,kestrelCarrier:IronVowScene.models.get(kestrel.id).entry.primary.mount.parent===IronVowScene.models.get(kestrel.id).entry.m.rig.arms.R.so};
-  return {stock:stockHull(2).weapon,defaultWeapon,visibleBody,lock,observed,damage,impacts,swap};
+  const kestrelEntry=IronVowScene.models.get(kestrel.id).entry;
+  const swap={basilisk:entry.primary.id,basiliskCarrier:entry.primary.mount.parent===entry.m.rig.arms.R.so,
+   kestrel:kestrelEntry.primary.id,kestrelShoulder:kestrelEntry.primary===kestrelEntry.shoulderWeapon&&kestrelEntry.primary.carrier.parent===kestrelEntry.m.rig.spine};
+
+  return {stock:stockHull(2).weapon,defaultWeapon,visibleBody,lock,survivingRocket,survivingMuzzle,observed,damage,impacts,swap};
  });
  assert.equal(missile.stock,'missile');assert.equal(missile.defaultWeapon,'missile');assert.ok(missile.visibleBody&&missile.damage>0);
- assert.deepEqual(missile.lock,{canFire:false,podsVisible:true,mountVisible:false});
+ assert.deepEqual(missile.lock,{canFire:true,left:true,right:false});
+ assert.equal(missile.survivingRocket.length,1);assert.equal(missile.survivingMuzzle,'pod.L');
+ assert.ok(distance(missile.survivingRocket[0].origin,missile.survivingRocket[0].expectedOrigin)<1e-5);
  assert.ok(missile.observed.length>=2&&missile.impacts.length>0&&missile.impacts.some(hit=>hit.damage>0&&hit.point.every(Number.isFinite)),JSON.stringify(missile));
  for(const [i,{event,name,pod}] of missile.observed.entries()){
   assert.equal(name,i%2?'pod.L':'pod.R');assert.equal(event.weapon,'missile');assert.ok(event.mounted&&event.aimError<8*Math.PI/180&&distance(event.origin,pod)<1e-5&&distance(event.expectedOrigin,pod)<1e-5,JSON.stringify({event,name,pod}));
  }
- assert.deepEqual(missile.swap,{basilisk:'rail',basiliskCarrier:true,kestrel:'missile',kestrelCarrier:true});
+ assert.deepEqual(missile.swap,{basilisk:'rail',basiliskCarrier:true,kestrel:'missile',kestrelShoulder:true});
  const dispose=await page.evaluate(()=>{
   const entries=battle.units.filter(u=>u.team==='ally').map(u=>IronVowScene.models.get(u.id).entry),geometries=new Map();
   for(const entry of entries)entry.m.nativeV2.source.traverse(o=>{if(o.geometry&&!geometries.has(o.geometry)){geometries.set(o.geometry,0);o.geometry.addEventListener('dispose',()=>geometries.set(o.geometry,geometries.get(o.geometry)+1));}});

@@ -32,6 +32,25 @@ assert.equal(result.dodged,true);assert.equal(result.impacts.length,0);
 p=planner([.1],{shield:true});result=p.plan({},target,'body',{},false);
 assert.equal(p.calls(),1,'a shield takes the hit without location draws');
 assert.equal(result.guard,true);assert.equal(result.impacts[0].part,'left');
+// A 119% solution caps hit probability at 99%, with a 20% crit roll on landed rounds.
+const odds=context.window.IRON_VOW_SIM.hitOdds;
+assert.equal(odds(1.19).hit,.99);
+assert.ok(Math.abs(odds(1.19).crit-.20)<1e-10);
+assert.equal(odds(3).crit,1);
+assert.equal(odds(.99).crit,0);
+p=planner([.9],{chance:1.19,shield:true});
+result=p.plan({},target,'body',{},false);
+assert.equal(result.rounds[0].critical,true);
+assert.equal(result.impacts[0].amount,45);
+p=planner([.9,.1,.995],{chance:1.19,shield:true});
+result=p.plan({},target,'body',{burst:3},false);
+assert.deepEqual(Array.from(result.rounds,r=>[r.hit,!!r.critical]),[[true,true],[true,false],[false,false]]);
+assert.equal(result.impacts[0].amount,30,'only the critical round doubles damage');
+p=planner([.10,.81,.79,.79],{chance:1.19,shield:true});
+result=p.plan({},target,'body',{burst:3,scatter:true},false);
+assert.equal(result.impacts[0].amount,40,'pellets share shell accuracy and roll crits individually');
+p=planner([.95],{chance:1.19,dodge:.10});
+assert.equal(p.plan({},target,'body',{},false).dodged,true,'overflow cannot override a dodge');
 const host=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
 assert.ok(host.indexOf('src="combat-simulation.js"')>0&&host.indexOf('src="combat-simulation.js"')<host.indexOf('src="game.js'));
 const bench=fs.readFileSync(path.join(root,'dist/rig-bench/index.html'),'utf8');
@@ -46,10 +65,18 @@ sim.run(`createBattle(0);var a=current(),t=battle.units[3],v=battle.units.find(u
 const actual=JSON.parse(sim.run(`JSON.stringify([hitChance(a,t,'body'),damage(a,t),
  partDamage(a,t,'pilot',weapon('rifle')),attackBudget(a,t,'body',weapon('rifle'),true),
  hitChance(a,v,'body',weapon('rifle'),true),planVolley(a,t,'body',weapon('rifle'),false)])`));
-assert.deepEqual(actual,[.9016000000000001,20,10,25,.98,{
+assert.deepEqual(actual,[.9568000000000001,20,10,25,1.02,{
  rounds:[['body',true],['body',true],['body',true],['body',true],['legs',true],['body',true],['legs',true],['body',true]].map(([part,hit])=>({part,hit})),
  impacts:[{part:'body',amount:17},{part:'legs',amount:6}],landed:8,dodged:false,guard:false
 }]);
+sim.run("a.level=1;a.training={rangedHit:.30};a.x=5;v.x=7;battle.cover.clear()");
+assert.match(sim.run("attackPreview(a,v,weapon('rifle'))"),/99%\/ROUND · 23% CRIT\/ROUND/);
+for(const id of ['rifle','shotgun','rail','morrow','blade']){
+ const loss=sim.run(`hitChance(a,{...v,x:a.x+1},'body',weapon('${id}'))-hitChance(a,{...v,x:a.x+2},'body',weapon('${id}'))`);
+ assert.ok(Math.abs(loss-(['rifle','shotgun'].includes(id)?.02:0))<1e-9,id+' per-tile range adjustment');
+}
+const damageSplit=sim.run("shotContacts(weapon('morrow'),attackProfile(a,'morrow'),[{part:'body',hit:true,critical:true},{part:'body',hit:true}],[{part:'body',amount:60}]).map(round=>round.amount).join(',')");
+assert.equal(damageSplit,'40,20','the cinematic applies extra damage at the critical round’s own impact');
 // Exercise reaction selection through the reusable API, including blocked shots,
 // broken arms, shields, ranged counters and the two specialized frames.
 const rifle={id:'rifle'},blade={id:'blade',melee:true},hand={id:'hand',melee:true};

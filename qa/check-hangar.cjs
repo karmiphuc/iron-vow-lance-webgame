@@ -46,7 +46,7 @@ settle(run,false);
 assert.equal(run('treatPilot("rook")'),true);
 assert.equal(run('woundDays("rook")'),0);
 
-run('save.ship.levels.drop=2;save.reserve={6:stockHull(6)};const aux={pilotId:"scout",frame:6};createBattle(0,false,false,[0],true,aux);selected=3;persist()');
+run('save.ship.levels.drop=2;save.reserve={6:stockHull(6)};stockFittedGear(save);const aux={pilotId:"scout",frame:6};createBattle(0,false,false,[0],true,aux);selected=3;persist()');
 assert.equal(run('current().training.paintRange'),2,'trained reserve skills reach the auxiliary seat');
 const checkpoint=JSON.stringify(JSON.parse(sim.storage.get(key)).sortie);
 assert.equal(resume(sim).run('JSON.stringify(captureSortie())'),checkpoint);

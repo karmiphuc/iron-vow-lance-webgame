@@ -34,11 +34,18 @@ function mountShield(scene,id,socket){
  if(!id||!socket)return null;
  const original=scene.getObjectByName(id);
  if(!original)return null;
- const mount=original.clone(true);
+ const mount=new T.Group(),model=original.clone(true);
+ const marker=part=>model.getObjectByName(id+'.'+part)
+  ??model.getObjectByName(T.PropertyBinding.sanitizeNodeName(id+'.'+part));
+ // The shield roots are authored at the grip. Grow the face while retaining
+ // its depth and arm clearance; chassis-specific fit scales apply to the mount.
+ const size=id==='citadel-shield'?2.25:2;
+ const grip=marker('grip'),face=marker('face');
+ const hardware=model.children.filter(part=>/Arm.?saddle|Grip.?lug|Insulated.?handgrip/i.test(part.name));
+ mount.add(model,grip,...hardware);
+ model.scale.x*=size;model.scale.y*=size;
  socket.add(mount);
- const marker=part=>mount.getObjectByName(id+'.'+part)
-  ??mount.getObjectByName(T.PropertyBinding.sanitizeNodeName(id+'.'+part));
- return {mount,grip:marker('grip'),face:marker('face'),rotation:new T.Quaternion()};
+ return {mount,grip,face,rotation:new T.Quaternion()};
 }
 function poseShield(shield,u,heading){
  if(!shield)return;

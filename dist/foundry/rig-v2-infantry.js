@@ -61,7 +61,7 @@ function setup({bone,rig,workshopMounts}){
    }
    grip=held?(gun.id==='trident'?'crossbar':'pistol'):'rest';
    entry.primary=gun;
-   return Boolean(gun);
+   return !unit.weapon||Boolean(gun);
   },
   afterSync(){
    for(const finger of fingers)finger.joints.forEach((joint,index)=>joint.quaternion.copy(finger[grip??'rest'][index]));

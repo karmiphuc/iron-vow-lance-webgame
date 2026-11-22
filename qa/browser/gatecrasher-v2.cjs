@@ -150,8 +150,8 @@ async function destroySide(page,fixture,side,gear){
  if(gear)assert.equal(result.gearVisible,false,`${side} destruction cuts the mounted ${gear}`);
  if(side==='right'){
   assert.equal(result.modes.includes('fire'),false,'Right arm destruction removes Morrow from legal attacks');
-  assert.equal(result.modes.includes('missile'),true,'The body-mounted Vesper remains eligible after right arm loss');
-  assert.equal(result.vesperVisible,true,'Right arm loss leaves the body-powered Vesper mounted');
+  assert.equal(result.modes.includes('missile'),false,'Right arm destruction disables the Vesper');
+  assert.equal(result.vesperVisible,false,'Right arm destruction hides its shoulder pod');
  }
  if(side==='left'&&gear==='cleaver')assert.equal(result.modes.includes('strike'),false,'Left arm destruction removes the cleaver from legal attacks');
  return result;

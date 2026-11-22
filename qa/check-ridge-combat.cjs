@@ -28,7 +28,7 @@ const simulate=require('./sim-harness.cjs');
  assert.ok(run('a.ap===ROUND_AP-missile.ap&&t.hp.body<t.max.body&&!t.reacted'),'missile hits without opening a blocked counter lane');
 
  run('[a,t]=setupRidge();terrainCell(4,8).level=0;const flat=hitChance(a,t,"pilot",rifle);terrainCell(6,8).level=2');
- assert.ok(run('Math.abs(hitChance(a,t,"pilot",rifle)-flat-.10*(1-dodgeChance(t)))<1e-8'));
+ assert.ok(run('Math.abs(hitChance(a,t,"pilot",rifle)-flat-.20*(1-dodgeChance(t)))<1e-8'));
  assert.equal(run('highGroundAim(a,t,missile)'),0);
  assert.equal(run('highGroundAim(a,t,weapon("cleaver"))'),0);
  assert.equal(run('highGroundAim({...a,kind:"tank"},t,rifle)'),0);
