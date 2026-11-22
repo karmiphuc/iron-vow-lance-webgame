@@ -544,17 +544,13 @@ body[data-view="workshop"] #world-scene{z-index:3}
 .channel-swatches button:hover:not(:disabled){background:var(--swatch);border-color:#ddd}
 .channel-swatches button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px #f1dcae;border-color:#101519}
 
-/* Shared-renderer mech portraits on the Ship, duty roster and shot camera. */
+/* Shared-renderer mech portraits on the Ship and duty roster. */
 .ship-seats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 16px}
 .ship-seat{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--line);background:#121b20}
-.ship-seat img,.duty-mech,#shot-inset img{display:block;object-fit:contain}
+.ship-seat img,.duty-mech{display:block;object-fit:contain}
 .ship-seat small,.ship-seat b{display:block}
 .ship-seat small{color:var(--muted);font-size:9px}
-#shot-inset{display:none;position:fixed;right:max(16px,9.5vw);top:124px;pointer-events:none;z-index:8}
-body[data-shot=active] #shot-inset:has(img[src]){display:block;border:1px solid var(--line);background:#12212ceb}
 @media(max-width:760px){
  .ship-seat{flex-direction:column;align-items:flex-start;gap:1px}
  .ship-seat img{width:48px;height:48px}
- #shot-inset{right:12px;top:98px}
- #shot-inset img{width:58px;height:58px}
 }

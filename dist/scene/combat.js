@@ -2,6 +2,7 @@
 (function(root){
 'use strict';
 const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z);
+const impactMotion={rifle:[.7,.55],shotgun:[1.35,.85],missile:[1.65,1],rampart:[1.8,1.1],rail:[2.4,1.25],blade:[3.6,2]};
 root.IronVowCombat={create(scene,api){
  const seen=new WeakSet(),history=[],states=new Map();let sequence=0,pelletPoints=new WeakMap();
  const low=()=>innerWidth<760||root.IronVowRenderer.quality.tier==='low';
@@ -78,7 +79,20 @@ root.IronVowCombat={create(scene,api){
   if(contact.before>0&&contact.after===0){fx.debris(p,low()?3:6,4);fx.smoke(p,3,1.7,0x817b73,.4,.7,1.3,.25);}
   log('impact',{actor:actor.id,target:target.id,weapon:w.id,index:contact.index,part:contact.part,shield:guard,point:p.toArray(),back:back.toArray(),planned:contact.amount,damage:contact.damage,before:contact.before,after:contact.after,actorAlive:actor.alive});
   const m=api.models.get(target.id)?.entry?.m;
-  if(m){const kick=profile.archetype==='blade'?3.6:profile.archetype==='rail'?2.4:.7;m.s.kx.v-=back.x*kick;m.s.kz.v-=back.z*kick;m.s.pitch.v-=profile.archetype==='blade'?2:.55;m.s.comp.v-=contact.part==='legs'?1.4:.7;m.s.arm.v+=contact.part==='right'?1.8:.8;m.flicker=contact.part==='pilot'?1:m.flicker;}
+  if(m){
+   // A shell can mark several parts, but its total push is bounded by one impact.
+   const portion=w.scatter?1/Math.max(1,w.burst):1;
+   const [kick,pitch]=impactMotion[profile.archetype]??impactMotion.rifle;
+   const side=part==='right'?-1:part==='left'||part==='shield'?1:0;
+   const spring=m.s;
+   spring.kx.v-=back.x*kick*portion;
+   spring.kz.v-=back.z*kick*portion;
+   spring.pitch.v-=pitch*portion;
+   spring.roll.v+=side*(guard?1.8:1.4)*portion;
+   spring.comp.v-=(part==='legs'?1.4:.7)*portion;
+   spring.arm.v+=(part==='right'?1.8:.8)*portion;
+   if(part==='pilot')m.flicker=1;
+  }
   if(profile.archetype==='blade'&&!reducedMotion){actor.hitstop=target.hitstop={at:clock,until:clock+.085};shake=Math.max(shake,6);}
  }
  // Fully missed volley (game.js beginEvade): the body is already sidestepping through its displayed tile position; this adds the
