@@ -56,7 +56,7 @@ const createSimulation=require('./sim-harness.cjs');
   foe.x=attacker.x+4;
   const far=hitChance(attacker,foe,'left',weapon('sidewinder'));
   return damage(attacker,foe,weapon('forge'))===52&&damage(attacker,foe,weapon('pike'))===50&&damage(attacker,foe,weapon('piledriver'))===54
-   &&Math.abs(near-far-.10*(1-dodgeChance(foe)))<1e-9
+   &&Math.abs(near-far-.14*(1-dodgeChance(foe)))<1e-9
    &&weaponRange(weapon('trident'),{range:1})===6&&armoryClass(weapon('trident'))==='assault';
  })()`),'piercing and trained range apply independently of classification');
  const career=createSimulation();

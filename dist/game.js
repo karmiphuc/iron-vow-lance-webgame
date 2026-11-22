@@ -3,29 +3,29 @@ const $=s=>document.querySelector(s),canvas=$('#scene');
 let ctx=canvas.getContext('2d');
 // The default rule RNG is unchanged; the required scene-test API can seed it independently of visual noise.
 let ruleRandom=()=>Math.random();
-const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,damage:36,range:5,ap:3,weight:14,price:0,desc:'Reliable burst fire. Balanced range and accuracy.'},{id:'shotgun',name:'Breacher SG-4',type:'SCATTER CANNON',burst:12,scatter:true,damage:60,range:3,ap:3,weight:18,price:1500,desc:'A landed shell throws pellets that each roll their own hit location unless a shield blocks it.'},{id:'missile',name:'Vesper MRL',type:'MISSILE POD',damage:45,range:7,ap:4,weight:22,price:2400,desc:'Guided ordnance ignores cover penalties. The launcher cannot counter.'},{id:'rail',name:'Longbow R-12',type:'RAIL CANNON',damage:70,range:8,ap:5,weight:26,price:3600,desc:'Precision anti-armor fire. Powerful, but demanding.'},
+const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,damage:36,range:5,ap:3,weight:14,price:0,desc:'Reliable burst fire. Balanced range and accuracy.'},{id:'shotgun',name:'Breacher SG-4',type:'SCATTER CANNON',burst:12,scatter:true,damage:60,range:3,ap:3,weight:18,price:1500,desc:'A landed shell throws pellets that each roll their own hit location unless a shield blocks it.'},{id:'missile',rounds:2,name:'Vesper MRL',type:'MISSILE POD',damage:45,range:7,ap:4,weight:22,price:2400,desc:'Guided ordnance ignores cover penalties. The launcher cannot counter.'},{id:'rail',name:'Longbow R-12',type:'RAIL CANNON',damage:70,range:8,ap:5,weight:26,price:3600,desc:'Precision anti-armor fire. Powerful, but demanding.'},
  {id:'hailstorm',name:'Hailstorm M-8',type:'ROTARY GUN',burst:12,damage:49,range:5,ap:4,weight:21,price:2200,desc:'Spins up for sustained fire at medium range.'},
  {id:'rampart',name:'Rampart AC-40',type:'AUTOCANNON',damage:61,range:6,ap:5,weight:25,price:2900,desc:'A single heavy shell with a longer reach than the scatter cannon.'},
  {id:'breaker',name:'Breaker Maul',type:'IMPACT MAUL',damage:66,range:1,ap:4,weight:20,price:1600,melee:true,desc:'An overhead strike for heavy damage against adjacent targets.'},
  {id:'cleaver',name:'Arc Cleaver',type:'HEATED BLADE',damage:40,range:1,ap:2,weight:12,price:1200,melee:true,desc:'A quick sweep for repeated strikes against an adjacent target.'},
  {id:'piledriver',name:'Piledriver',type:'HYDRAULIC RAM',damage:59,range:1,ap:3,weight:18,price:2100,melee:true,pierce:.75,desc:'A powered point-blank thrust that ignores 75% of armor.'},
  {id:'blade',name:'Raijin HB-9',type:'HEAT BLADE',damage:64,range:1,ap:3,weight:16,price:2200,melee:true,desc:'A planted step and a committed lunge. Ignores cover against adjacent targets.'},
- {id:'sidewinder',name:'Sidewinder SM-2',type:'SUBMACHINE GUN',burst:12,damage:25,range:4,ap:2,weight:10,price:900,motion:'rifle',falloff:{start:2,step:.05},desc:'A low-AP burst for close work. Accuracy falls by 5 percentage points per tile beyond 2.'},
+ {id:'sidewinder',name:'Sidewinder SM-2',type:'SUBMACHINE GUN',burst:12,damage:25,range:4,ap:2,weight:10,price:900,motion:'rifle',falloff:{start:2,step:.05},desc:'A low-AP burst for close work. Beyond 2 tiles, each extra tile costs 5 more accuracy points.'},
  {id:'trident',name:'Trident BR-5',type:'BULLPUP CARBINE',burst:8,damage:43,range:5,ap:3,weight:16,price:2000,motion:'rifle',desc:'A premium service carbine. Hits harder than Kestrel at the same reach and AP.'},
  {id:'forge',name:'Forge SG-12',type:'SLUG SHOTGUN',burst:12,scatter:true,damage:61,range:2,ap:3,weight:21,price:2300,motion:'rampart',pierce:.55,desc:'A landed shell sends 12 slugs into randomly rolled parts, punching through 55% of the target’s armor.'},
  {id:'ember',name:'Ember PC-4',type:'PLASMA SHOTGUN',burst:12,scatter:true,damage:53,range:4,ap:3,weight:19,price:2800,motion:'rail',desc:'A single discharge fans out into 12 plasma bolts, each rolling its own hit location on a hit.'},
  {id:'watchman',name:'Watchman DMR-8',type:'MARKSMAN RIFLE',damage:47,range:8,ap:4,weight:17,price:2600,motion:'rampart',aim:.08,desc:'A stabilised optic adds 8 percentage points of accuracy. Lower impact per shot than Longbow.'},
  {id:'falcon',name:'Falcon AC-7',type:'FIELD AUTOCANNON',damage:57,range:7,ap:4,weight:23,price:3200,motion:'rampart',aim:-.08,desc:'Fires for 1 AP less than Rampart. Heavy vibration costs 8 percentage points of accuracy.'},
- {id:'cerberus',name:'Cerberus RP-6',type:'ROCKET POD',damage:76,range:6,ap:5,weight:29,price:3900,motion:'missile',desc:'An unguided two-rocket salvo. Cover reduces accuracy and the launcher cannot counter.'},
+ {id:'cerberus',rounds:2,name:'Cerberus RP-6',type:'ROCKET POD',damage:76,range:6,ap:5,weight:29,price:3900,motion:'missile',desc:'An unguided two-rocket salvo. Cover reduces accuracy and the launcher cannot counter.'},
  {id:'obelisk',name:'Obelisk R-9',type:'SIEGE RAIL',damage:90,range:9,ap:6,weight:32,price:4800,motion:'rail',desc:'A long accelerator delivers the largest single shot at a steep AP cost.'},
- {id:'rivet',name:'Rivet MG-12',type:'UNDER-CARRY MACHINE GUN',burst:12,damage:60,range:5,ap:4,weight:24,price:8600,rep:120,motion:'hailstorm',falloff:{start:3,step:.05},desc:'A belt-fed gun slung below the fist. Accuracy falls by 5 points per tile beyond 3.'},
+ {id:'rivet',name:'Rivet MG-12',type:'UNDER-CARRY MACHINE GUN',burst:12,damage:60,range:5,ap:4,weight:24,price:8600,rep:120,motion:'hailstorm',falloff:{start:3,step:.05},desc:'A belt-fed gun slung below the fist. Beyond 3 tiles, each extra tile costs 5 more accuracy points.'},
  {id:'parallax',name:'Parallax SR-10',type:'UNDER-CARRY SNIPER',damage:78,range:10,ap:6,weight:28,price:13500,rep:180,motion:'rail',aim:.06,pierce:.30,desc:'A 10-tile accelerator rifle with +6 aim and 30% armor pierce. Ridges block its shots.'},
  {id:'hatchet',name:'Cinder Hatchet',type:'BREACHING AXE',damage:47,range:1,ap:2,weight:13,price:1950,melee:true,motion:'cleaver',desc:'A premium breaching axe. Hits harder than Arc Cleaver at the same AP.'},
  {id:'pike',name:'Pilum Pike',type:'PILE BUNKER',damage:52,range:1,ap:3,weight:15,price:1750,melee:true,motion:'piledriver',pierce:.90,desc:'A lower-cost alternative to Piledriver. Its lighter strike ignores 90% of armor.'},
  {id:'tonfa',name:'Ward Tonfa',type:'IMPACT BATON',damage:32,range:1,ap:2,weight:9,price:900,melee:true,motion:'cleaver',aim:.13,desc:'A controlled strike with 13 extra percentage points of accuracy. Best for hitting a specific part.'},
  {id:'anchor-hammer',name:'Anchor Hammer',type:'SIEGE HAMMER',damage:86,range:1,ap:5,weight:27,price:2750,melee:true,motion:'breaker',desc:'A slow overhead blow with a heavy counterweight. Commit to a single decisive strike.'},
- {id:'morrow',name:'Morrow AC-2',type:'TWIN AUTOCANNON',damage:59,range:6,ap:4,builtIn:true,desc:'Two staggered shells from a sliding carriage. Designed to break a line at medium range.'},
- {id:'locust',name:'Locust MRL-24',type:'GUIDED MISSILE RACKS',damage:47,range:8,ap:4,builtIn:true,guided:true,desc:'Alternating launches from the two shoulder racks. Guided missiles ignore cover penalties.'},
+ {id:'morrow',rounds:2,name:'Morrow AC-2',type:'TWIN AUTOCANNON',damage:59,range:6,ap:4,builtIn:true,desc:'Two staggered shells from a sliding carriage. Designed to break a line at medium range.'},
+ {id:'locust',rounds:2,name:'Locust MRL-24',type:'GUIDED MISSILE RACKS',damage:47,range:8,ap:4,builtIn:true,guided:true,desc:'Alternating launches from the two shoulder racks. Guided missiles ignore cover penalties.'},
  {id:'breach-gauntlet',name:'Breach Gauntlet',type:'ACTUATED GRIPPER',damage:53,range:1,ap:3,builtIn:true,melee:true,desc:'A braced punch from the left gripper. Strongest when the enemy closes in.'},
  {id:'pulse-bash',name:'Pulse Bash',type:'EMITTER STRIKE',damage:33,range:1,ap:2,builtIn:true,melee:true,desc:'A quick close-range strike with the left emitter housing.'},
  {id:'aegis-cleave',name:'Charged Arc Cleaver',type:'REACTOR CLEAVE',damage:38,range:1,ap:5,builtIn:true,melee:true,hand:'right'},
@@ -33,7 +33,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
  {id:'flechette-scattergun',name:'Flechette scattergun',type:'SCOUT SCATTERGUN',burst:12,scatter:true,damage:31,range:2,ap:5,builtIn:true,effect:'shotgun',scout:'scatter'},
  {id:'signal-knife',name:'Signal knife',type:'SCOUT KNIFE',damage:26,range:1,ap:5,builtIn:true,effect:'cleaver',scout:'knife',melee:true,pierce:.4},
- {id:'vesper-shoulder',name:'Vesper Shoulder Pod',type:'GUIDED MISSILE POD',damage:45,range:7,ap:4,price:2400,shoulder:true,desc:'Launch guided missiles across cover from a compatible right-shoulder mount.'}
+ {id:'vesper-shoulder',rounds:2,name:'Vesper Shoulder Pod',type:'GUIDED MISSILE POD',damage:45,range:7,ap:4,price:2400,shoulder:true,desc:'Launch guided missiles across cover from a compatible right-shoulder mount.'}
 ];
 const FREE_HAND_COUNTER={id:'free-hand',damage:10,range:1,ap:0,melee:true};
 const BURST_BONUS=1.15;
@@ -2716,32 +2716,39 @@ function jumpjetDestination(u,target){
  }
  return best;
 }
-const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER});
+const {hitOdds,shotsPerAttack,roundWeight}=window.IRON_VOW_SIM;
+const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER});
 let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>ruleRandom(),chargedLimbShot});
 function shotContacts(w,profile,rounds,impacts){
  const spread=w.scatter?(reducedMotion?.021:.046):0;
- const contacts=(w.burst?rounds:profile.beats.map(()=>rounds[0])).map(({part,hit},index)=>({
-  part,hit,index,amount:0,travel:profile.travel+index*spread,
+ const contacts=(rounds.length>1?rounds:profile.beats.map(()=>rounds[0])).map(({part,hit,critical},index)=>({
+  part,hit,critical,index,amount:0,travel:profile.travel+index*spread,
   at:profile.travel+index*spread+(profile.beats[index]??0)
  }));
  // Spread each part's already-rounded damage over its own contacts.
  for(const {part,amount} of impacts){
   const hits=contacts.filter(contact=>contact.hit&&contact.part===part);
-  let assigned=0;
-  for(const [i,contact] of hits.entries()){
-   const next=Math.round(amount*(i+1)/hits.length);
+  const weight=contact=>roundWeight(contact,rounds.length);
+  const total=hits.reduce((sum,contact)=>sum+weight(contact),0);
+  let assigned=0, cumulative=0;
+  for(const contact of hits){
+   cumulative+=weight(contact);
+   const next=Math.round(amount*cumulative/total);
    contact.amount=next-assigned;assigned=next;
   }
  }
  return contacts;
 }
+function displayedAttackOdds(a,t,w){
+ const odds=hitOdds(hitChance(a,t,shotPart(a,w,false),w),dodgeChance(t));
+ return {hit:Math.round(odds.hit*100),crit:Math.round(odds.crit*100)};
+}
 function attackPreview(a,t,w){
  // Nobody aims: a normal shot is rolled against the body, and each landed round then rolls its own location.
- const aim=shotPart(a,w,false),hit=Math.round(hitChance(a,t,aim,w)*100)+'%';
- const damage=attackBudget(a,t,aim,w);
- if(w.scatter)return hit+' SHELL · '+damage+' SPREAD';
- if(w.burst)return hit+'/ROUND · ≤'+damage+' DMG';
- return hit+' HIT · '+damage+' DMG';
+ const {hit,crit}=displayedAttackOdds(a,t,w),multi=shotsPerAttack(w)>1;
+ const damage=attackBudget(a,t,shotPart(a,w,false),w);
+ const odds=hit+'%'+(w.scatter?' SHELL':multi?'/ROUND':' HIT');
+ return odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG');
 }
 function barrageTarget(u){
  const lock=u.mechState?.lock;
@@ -2785,8 +2792,9 @@ function renderBattle(){
   const ready=battle.phase==='player'&&!battle.busy&&battlefieldReady,canMove=Boolean(u&&movementLimit(u)),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
   const obstruction=u&&target?attackObstruction(u,target,chosen):'';
   const inRange=Boolean(u&&target&&distance(u,target)<=combatRange(u,target,chosen));
+  const elevationAim=inRange?highGroundAim(u,target,chosen):0;
   const shotStatus=obstruction||(!inRange?'OUT OF RANGE':
-   [highGroundAim(u,target,chosen)?'HIGH GROUND':'',launchesMissiles(chosen)&&ridgeBlocks(u,target)?'ARC OVER RIDGE':'',inCover(target)&&!chosen.melee&&!launchesMissiles(chosen)?'COVER':''].filter(Boolean).join(' · ')||'IN RANGE');
+   [elevationAim?'HIGH GROUND +'+Math.round(elevationAim*100)+' AIM':'',launchesMissiles(chosen)&&ridgeBlocks(u,target)?'ARC OVER RIDGE':'',inCover(target)&&!chosen.melee&&!launchesMissiles(chosen)?'COVER':''].filter(Boolean).join(' · ')||'IN RANGE');
   const barrage=u&&target?barrageStatus(u,target,chosen):'';
   const shotPreview=inRange&&!obstruction?(barrage||attackPreview(u,target,chosen)+(targetShield?' → LEFT ARM':'')):'';
   const contacts=battle.units.filter(t=>t.team==='enemy'&&t.alive).length;
@@ -3138,11 +3146,13 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   const failsafe=disabled.includes('body')&&t.training?.repairFailsafe&&!t.skill;
   if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t)}
   const broken=guard&&t.hp.left===0;
+  const crits=rounds.filter(round=>round.critical).length;
+  const critLabel=crits?(rounds.length>1?' · '+crits+' CRIT':' · CRIT'):'';
   const volleyText=landed+'/'+rounds.length+(w.scatter?' PELLETS':' HITS')+' / −'+lost+' HP';
-  if(sequence)sequence.result=broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' LEFT ARM':failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':w.burst?volleyText:'−'+d+' '+label;
-  effects.push({type:'text',x:t.x,z:t.z,t:1,text:broken?'SHIELD ARM LOST':guard?'BLOCK · −'+d:w.burst?volleyText:'−'+d+' '+label});
+  if(sequence)sequence.result=(broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' LEFT ARM':failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':rounds.length>1?volleyText:'−'+d+' '+label)+critLabel;
+  effects.push({type:'text',x:t.x,z:t.z,t:1,text:(broken?'SHIELD ARM LOST':guard?'BLOCK · −'+d:rounds.length>1?volleyText:'−'+d+' '+label)+critLabel});
   const report=w.burst&&!guard?impacts.map(({part,amount})=>(t.kind?'HULL':PART_LABEL[part])+' −'+amount).join(' · '):label+' −'+d;
-  addLog(a.name+(w.scout?' · '+w.name:'')+' → '+t.name+' / '+report);
+  addLog(a.name+(w.scout?' · '+w.name:'')+' → '+t.name+' / '+report+critLabel);
   if(failsafe)addLog(t.name+' triggered Failsafe.');
   if(!reaction&&w.melee&&a.training?.strikeBrace)braceUnit(a);
   if(t.hp.body<=0||t.hp.pilot===0){
@@ -3931,8 +3941,8 @@ function previewMoveShots(u,spot,cost){
   const w=inRange.find(gun=>!attackObstruction(from,target,gun));
   const barrage=w&&barrageStatus(from,target,w);
   const state=!w?'blocked':barrage?'mark':highGroundAim(from,target,w)?'high':launchesMissiles(w)&&ridgeBlocks(from,target)?'arc':'clear';
-  const hit=w&&!barrage?Math.round(hitChance(from,target,shotPart(from,w,false),w)*100):null;
-  shots.push({target,state,hit});
+  const odds=w&&!barrage?displayedAttackOdds(from,target,w):{hit:null,crit:0};
+  shots.push({target,state,...odds});
  }
  return {shots,canFire:guns.length>0};
 }
@@ -3944,9 +3954,9 @@ function showMovePreview(spot,preview){
   if(!panel.hidden){panel.hidden=true;hint.hidden=false}
   return;
  }
- const labels=preview.shots.map(({target,state,hit})=>{
+ const labels=preview.shots.map(({target,state,hit,crit})=>{
   const {color,glyph,label}=MOVE_SHOT_STYLE[state];
-  return `<span class="move-contact" data-shot="${state}" style="--shot-color:${color}"><b aria-hidden="true">${glyph}</b> ${target.name} <span class="move-hit">${hit===null?'—':hit+'%'}</span> <small>${label}</small></span>`;
+  return `<span class="move-contact" data-shot="${state}" style="--shot-color:${color}"><b aria-hidden="true">${glyph}</b> ${target.name} <span class="move-hit">${hit===null?'—':hit+'%'+(crit?' · '+crit+'% CRIT':'')}</span> <small>${label}</small></span>`;
  }).join('');
  const markup=`<div class="move-contacts">${labels||(preview.canFire?'NO TARGET IN RANGE':'NO SHOT')}</div>${moveTap?'<span class="move-confirm">TAP AGAIN TO MOVE</span>':''}`;
  if(!panel.hidden&&movePreviewMarkup===markup)return;

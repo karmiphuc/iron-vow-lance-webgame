@@ -7,6 +7,13 @@
  const HIT_LOCATION=Object.freeze({body:.55,left:.125,right:.125,legs:.20});
  // Chance per attack that strikes the body that one of its body rounds hits the cockpit instead. Training adds pilotHit*PILOT_HIT_TRAINING.
  const PILOT_HIT_BASE=.03,PILOT_HIT_TRAINING=.2,PILOT_HIT_MIN=.01,PILOT_HIT_MAX=.05;
+ const HIT_CAP=.99;
+ const shotsPerAttack=w=>w.burst||w.rounds||1;
+ const hitOdds=(accuracy,dodge=0)=>({
+  hit:Math.min(HIT_CAP,1-dodge,accuracy),
+  crit:Math.min(1,Math.max(0,accuracy-HIT_CAP))
+ });
+ const roundWeight=(round,count)=>round.critical?(count>1?2:1.5):1;
  const BREACH_LIMBS=Object.freeze(['right','left','legs']);
  const pilotHitChance=training=>Math.min(PILOT_HIT_MAX,Math.max(PILOT_HIT_MIN,PILOT_HIT_BASE+(training?.pilotHit??0)*PILOT_HIT_TRAINING));
  function createTerrainRules({getBattle,onBoard,movementLimit,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
@@ -67,11 +74,12 @@
    return !w.melee&&!launchesMissiles(w)&&ridgeBlocks(a,t)?'RIDGE BLOCK':'';
   }
   function highGroundAim(a,t,w){
-   return !a.kind&&t.kind!=='helicopter'&&!w.melee&&!launchesMissiles(w)&&terrainLevel(a)>terrainLevel(t)?HIGH_GROUND_AIM:0;
+   if(a.kind||t.kind==='helicopter'||w.melee||launchesMissiles(w))return 0;
+   return HIGH_GROUND_AIM*Math.min(3,Math.max(0,terrainLevel(a)-terrainLevel(t)));
   }
   return {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
  }
- function createCombatRules({weapon,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER}){
+ function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
 const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee);
 // Part whose accuracy a shot uses: charged shots keep the old limb accuracy, every other shot uses the body.
@@ -89,10 +97,12 @@ function hitChance(a,t,part,w=weapon(a.weapon),reaction=false){
  const training=a.training,aim=(w.melee?training?.meleeHit:training?.rangedHit)??0;
  const cockpit=part==='pilot'?(training?.pilotHit??0):0;
  const cover=inCover(t)&&w.id!=='missile'&&!w.guided&&!w.melee&&!(a.brace&&training?.braceAim)?.19:0;
- const falloff=w.falloff?Math.max(0,distance(a,t)-w.falloff.start)*w.falloff.step:0;
+ const range=distance(a,t);
+ const falloff=(shotsPerAttack(w)>1&&armoryClass(w)==='assault'?.02*range:0)+
+  (w.falloff?Math.max(0,range-w.falloff.start)*w.falloff.step:0);
  const support=(a.team==='ally'?(t.painted?.aim??0):0)+(reaction?0:a.order?.aim??0);
  const breachAim=(chargedLimbShot(a,w,part,reaction)?training?.breachAim??0:0)+mechAim(a,t,w,reaction);
- const accuracy=Math.min(.98,Math.max(part==='pilot'?.32:.5,.96-(part==='body'?0:part==='pilot'?.27:.13)-(a.max.pilot&&a.hp.pilot<a.max.pilot*.5?.10:0)-cover-falloff+.015*(a.level-1)+aim+(w.aim??0)+cockpit+support+breachAim+highGroundAim(a,t,w)-(a.blackout?.aim??0)));
+ const accuracy=Math.max(part==='pilot'?.32:.5,.96-(part==='body'?0:part==='pilot'?.27:.13)-(a.max.pilot&&a.hp.pilot<a.max.pilot*.5?.10:0)-cover-falloff+.015*(a.level-1)+aim+(w.aim??0)+cockpit+support+breachAim+highGroundAim(a,t,w)-(a.blackout?.aim??0));
  return accuracy*(1-dodgeChance(t));
 }
 function shieldProtection(target){
@@ -141,22 +151,25 @@ function pickWeighted(entries,roll){
 function planVolley(a,t,aimed,w,reaction){
  const charged=chargedLimbShot(a,w,aimed,reaction);
  // Nobody aims: normal shots roll to hit against the body. Charged shots keep limb accuracy.
- const chance=hitChance(a,t,charged?'right':'body',w,reaction),dodge=dodgeChance(t);
+ const dodge=dodgeChance(t),odds=hitOdds(hitChance(a,t,charged?'right':'body',w,reaction),dodge);
  const shield=activeShield(t),live=targetParts(t).filter(part=>t.hp[part]>0);
  const limbs=charged?BREACH_LIMBS.filter(part=>live.includes(part)):[];
  const frame=(charged?limbs:live.filter(part=>part!=='pilot')).map(part=>[part,HIT_LOCATION[part]??0]).filter(([,weight])=>weight>0);
  const table=!frame.length?[['body',1]]:frame;
  const pilotChance=!charged&&live.includes('pilot')?pilotHitChance(a.training):0;
- const count=w.burst||1;
+ const count=shotsPerAttack(w);
  const shell=w.scatter?ruleRandom():null;
  const rounds=[],hits=new Map();
  let evades=0,landed=0;
  for(let i=0;i<count;i++){
-  const roll=shell??ruleRandom(),dodged=dodge>0&&roll>=1-dodge,hit=!dodged&&roll<=chance;
+  const roll=shell??ruleRandom(),dodged=dodge>0&&roll>=1-dodge,hit=!dodged&&roll<odds.hit;
   let part=table[0][0];
   if(shield&&hit)part='left';
   else if(hit&&table.length>1)part=pickWeighted(table,ruleRandom());
-  rounds.push({part,hit});
+  // Ordinary rounds use the upper end of their hit interval for crits.
+  // Pellets share a shell hit roll, so their crit checks roll separately.
+  const critical=hit&&odds.crit>0&&(w.scatter?ruleRandom():roll/odds.hit)>=1-odds.crit;
+  rounds.push(critical?{part,hit,critical}:{part,hit});
   if(dodged)evades++;
   if(hit){landed++;hits.set(part,(hits.get(part)??0)+1)}
  }
@@ -168,8 +181,9 @@ function planVolley(a,t,aimed,w,reaction){
  // Each part is charged its own bonuses (limb training on limbs, halving on the cockpit)
  // for the rounds that landed on it. A part that was struck always takes at least 1.
  const impacts=[];
- for(const [part,n] of hits){
-  const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*n/count));
+ for(const part of hits.keys()){
+  const weight=rounds.reduce((sum,r)=>r.hit&&r.part===part?sum+roundWeight(r,count):sum,0);
+  const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*weight/count));
   if(amount>0)impacts.push({part,amount});
  }
  return {rounds,impacts,landed,dodged:evades===count,guard:Boolean(shield&&landed)};
@@ -423,5 +437,5 @@ async function runEnemyTurn(){
   }
   return {newBattle,step,run,runBattle,eventLog:()=>events.slice(),get state(){return report();},get running(){return working;}};
  }
- root.IRON_VOW_SIM=Object.freeze({HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
+ root.IRON_VOW_SIM=Object.freeze({hitOdds,shotsPerAttack,roundWeight,HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
 })(typeof window==='undefined'?globalThis:window);

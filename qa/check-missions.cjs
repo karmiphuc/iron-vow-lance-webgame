@@ -34,7 +34,14 @@ if(require.main===module)(async()=>{
   console.log('Picket seats '+slots.join(',')+': '+wins+'/12 victories');
  }
  // A real career loop, spending earned credits and training points between sorties.
- const career=createSimulation({seed:19});
+ for(const seed of [5,8])await checkCareer(seed);
+ const recovery=[];for(let seed=1;seed<=12;seed++){const sim=createSimulation({seed});sim.run('save.credits=0;save.units.forEach(u=>u.condition=FIELD_PATCH)');recovery.push(await play(sim,0))};const recovered=recovery.filter(r=>r.win).length;assert.ok(recovered>=9,'Emergency field patches must support a realistic comeback');console.log('Zero-reserve recovery:',recovered+'/12 victories');
+ assert.ok(wins>=9,'Starting contract should be approachable with coordinated normal play');
+ console.log('PASS: complete seeded missions resolve without forced kills; rewards, persistent damage, repairs, refits and redeployment exercised.');
+})().catch(e=>{console.error(e);process.exitCode=1});
+
+async function checkCareer(seed){
+ const career=createSimulation({seed});
  const ladder=[0,1,2,0,3];
  for(const [mission,contract] of ladder.entries()){
   if(mission)career.run(`
@@ -58,12 +65,9 @@ if(require.main===module)(async()=>{
    persist();
   `);
   const result=await play(career,contract);
-  console.log('Career sortie',mission+1,JSON.stringify(result));
+  console.log('Career seed',seed,'sortie',mission+1,JSON.stringify(result));
   assert.equal(result.win,true,'Earned refits and training should support the full contract ladder');
  }
- const recovery=[];for(let seed=1;seed<=12;seed++){const sim=createSimulation({seed});sim.run('save.credits=0;save.units.forEach(u=>u.condition=FIELD_PATCH)');recovery.push(await play(sim,0))};const recovered=recovery.filter(r=>r.win).length;assert.ok(recovered>=9,'Emergency field patches must support a realistic comeback');console.log('Zero-reserve recovery:',recovered+'/12 victories');
- assert.ok(wins>=9,'Starting contract should be approachable with coordinated normal play');
- console.log('PASS: complete seeded missions resolve without forced kills; rewards, persistent damage, repairs, refits and redeployment exercised.');
-})().catch(e=>{console.error(e);process.exitCode=1});
+}
 
 module.exports={play};

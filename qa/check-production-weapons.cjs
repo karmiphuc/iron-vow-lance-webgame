@@ -11,6 +11,20 @@ for(const name of ['foundry/production-arsenal.js','scene/weapon-fx.js'])vm.runI
 const buffer=name=>{const b=fs.readFileSync(path.join(root,'rig-bench',name));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);};
 (async()=>{
  const A=IronVowProductionArsenal,source=await A.load(buffer('weapons.glb'),buffer('expansion-weapons.glb'),buffer('shields.glb'));
+ for(const [id,scale] of [['bulwark-shield',2],['citadel-shield',2.25]]){
+  const original=source.getObjectByName(id),socket=new THREE.Group();
+  const shield=A.mountShield(source,id,socket);
+  const size=object=>new THREE.Box3().setFromObject(object).getSize(new THREE.Vector3());
+  const before=size(original),after=size(shield.mount);
+  assert.ok(Math.abs(after.x/before.x-scale)<.02&&Math.abs(after.y/before.y-scale)<.02,id+' armor face scales up');
+  assert.ok(Math.abs(after.z-before.z)<1e-7,id+' retains its fitted depth');
+  assert.equal(shield.grip.parent,shield.mount,id+' grip remains fixed at the hand');
+  socket.rotation.set(.3,.6,.1);socket.position.set(.5,2,.4);
+  A.poseShield(shield,{alive:true,hp:{left:100}},.8);
+  assert.ok(shield.grip.getWorldPosition(new THREE.Vector3()).distanceTo(socket.position)<1e-7,id+' stays attached through wrist rotation');
+  A.poseShield(shield,{alive:true,hp:{left:0}},.8);
+  assert.equal(shield.mount.visible,false);
+ }
  for(const id of expansionIds){
   assert.equal(A.isExpansion(id),true,id+' remains an expansion weapon without sprite metadata');
   assert.equal(A.assetNodeName(id),id);
