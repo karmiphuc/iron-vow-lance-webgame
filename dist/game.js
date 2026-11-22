@@ -1510,7 +1510,7 @@ try{attackCameraEnabled=localStorage.getItem('iron-vow-attack-camera')!=='off'}c
 let activeCinematic=null;
 function closeAttackCamera(sequence){
  if(activeCinematic!==sequence)return;
- activeCinematic=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
+ activeCinematic=null;duelNumbers.length=0;duelBanner=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
 }
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
@@ -3009,6 +3009,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const {paid,charged}=spendAttack(a,w,part,reaction);
+ if(a.boost&&sequence&&!sequence.skipped)duelSkill(a,'Deadeye');
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
  const shoulder=w===shoulderWeapon(a),clip=w.melee?'strike':'fire';
  const plantedCleaver=breachLoadout(a.frame)&&w.id==='cleaver';
@@ -3130,13 +3131,14 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  let jammed=false,keepBoost=false;
  if(!hit){
   const result=dodged?'DODGE':'MISS';
+  if(!sequence?.skipped)duelText(t,result);
   if(sequence)sequence.result=result;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:result});
   addLog(dodged?t.name+' dodged '+a.name+'’s attack.':a.name+' missed '+t.name+'.');
  }else{
   const label=guard?'SHIELD / LEFT ARM':t.kind?'HULL':PART_LABEL[actual];
   const failsafe=disabled.includes('body')&&t.training?.repairFailsafe&&!t.skill;
-  if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t)}
+  if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t);duelSkill(t,'Failsafe')}
   const broken=guard&&t.hp.left===0;
   const volleyText=landed+'/'+rounds.length+(w.scatter?' PELLETS':' HITS')+' / −'+lost+' HP';
   if(sequence)sequence.result=broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' LEFT ARM':failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':w.burst?volleyText:'−'+d+' '+label;
@@ -3173,7 +3175,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const recover=native&&!reducedMotion?Math.max(.12,native.duration-windup-flight):profile.recover;
  a.attack.returnAt=clock+recover;
  const settle=recover+(primeDuration?ATTACK_STEP.returnDuration:0);
- const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:DESTRUCTION.end*destructionPace(t));
+ const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:destructionTime(t,DESTRUCTION.end));
  // The cinematic pacing lengthens the lead-in only; the result beat after the last round keeps its designed length.
  const pacedLead=primeDuration-basePrime+aimHold;
  const cinematicHold=w.scout&&t.alive?1.2-raise-flight:t.alive&&reaction?.5:(t.alive?2.43:2.66)-(raise-pacedLead)-flight;
@@ -3467,7 +3469,19 @@ function destructionPace(u){
  if(u.frame===REAVER_FRAME)return 1.22;
  return MECH_MOTION[u.frame]?.mass>=1.4?1.55:1;
 }
-function destructionAge(u,t){return Number.isFinite(u.deathTime)?(t-u.deathTime)/destructionPace(u):DESTRUCTION.end}
+/* Death timing (owner, 2026-11-22: deaths should play slower, the first frames in slow motion). Real seconds since death are warped:
+   the first DEATH_TIME.window seconds run at DEATH_TIME.rate, then normal speed; the whole sequence is DEATH_TIME.stretch slower.
+   Every death beat (kneel, fall, the three blasts, the rig's collapse) reads destructionAge, so they all slow together.
+   Display only: the unit is dead from the killing contact; reduced motion skips straight to the wreck as before. */
+const DEATH_TIME={window:.55,rate:.3,stretch:1.35};
+function deathWarp(elapsed){const W=DEATH_TIME.window,r=DEATH_TIME.rate;return reducedMotion?elapsed:elapsed<W?elapsed*r:W*r+(elapsed-W);}
+function deathUnwarp(warped){const W=DEATH_TIME.window,r=DEATH_TIME.rate;return reducedMotion?warped:warped<W*r?warped/r:W+(warped-W*r);}
+function deathScale(u){return destructionPace(u)*(reducedMotion?1:DEATH_TIME.stretch);}
+function destructionAge(u,t){return Number.isFinite(u.deathTime)?deathWarp(Math.max(0,t-u.deathTime))/deathScale(u):DESTRUCTION.end}
+// real seconds after death at which the sequence reaches a destruction age
+function destructionTime(u,age){return deathUnwarp(age*deathScale(u))+1e-9;}   // lands on, never just before, that beat
+// true while a death's opening slow motion plays (scene effects slow with it)
+function deathSlowmo(t){return !reducedMotion&&battle?.units.some(u=>!u.alive&&!u.kind&&u.downReason!=='pilot'&&Number.isFinite(u.deathTime)&&t-u.deathTime>=0&&t-u.deathTime<DEATH_TIME.window);}
 function destructionStyle(u){return u.deathStyle||(u.frame===1||FRAMES[u.frame]?.native||destructionPace(u)>=1.5?'fall':'kneel')}
 
 function beginDestruction(u,reason='body',sequence=null){
@@ -3506,9 +3520,10 @@ function updateDestruction(u,t){
  const cues=[{at:.67,big:false},{at:DESTRUCTION.blast,big:true},{at:1.28,big:false}];
  for(let i=0;i<cues.length;i++){
   const cue=cues[i],flag=1<<i;if(age<cue.at||(u.deathEvents&flag))continue;u.deathEvents=(u.deathEvents||0)|flag;
-  if((age-cue.at)*pace>.6||reducedMotion)continue;
-  const at=u.deathTime+cue.at*pace,anchor=freezeAttachment(u,'body',at);
-  effects.push({type:'detonation',x:u.x,z:u.z,anchor,at,t:1-(age-cue.at)*pace/.85,big:cue.big,seed:u.index+u.frame*7});
+  const at=u.deathTime+destructionTime(u,cue.at),late=t-at;
+  if(late>.6||reducedMotion)continue;
+  const anchor=freezeAttachment(u,'body',at);
+  effects.push({type:'detonation',x:u.x,z:u.z,anchor,at,t:1-late/.85,big:cue.big,seed:u.index+u.frame*7});
   if(cue.big){sound('boom');shake=Math.max(shake,9*MECH_MOTION[u.frame].mass)}
  }
 }
@@ -3986,15 +4001,45 @@ function battlefield(t){
 
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
 
+// FM3 duel feedback (owner, 2026-11-22): damage numbers pop at each impact point, a destroyed part names itself in red, a missed
+// volley reads MISS / DODGE, and skills get a slanted banner (blue ally, orange enemy). No HP strip: the owner keeps the duel
+// clear of health bars (approved demo, minus the strip).
+const duelNumbers=[];
+let duelBanner=null;
+// Each popped number takes the lowest slot no live number holds: three across, rows climbing, so a long burst cascades
+// instead of overprinting. A word (part destroyed, MISS) is wider and takes a whole free row, centred.
+function duelPush(n){
+ const used=new Set(duelNumbers.filter(d=>clock-d.at<=.9).flatMap(d=>d.slots));let slots;
+ if(n.big){let row=0;while([0,1,2].some(c=>used.has(row*3+c)))row++;slots=[row*3,row*3+1,row*3+2];}
+ else{let k=0;while(used.has(k))k++;slots=[k];}
+ const k=slots[0];duelNumbers.push({...n,slots,dx:n.big?0:((k%3)-1)*30,stack:Math.floor(k/3)});
+}
+window.IronVowDuelHit=(u,point,contact,guard)=>{
+ if(!activeCinematic||!point)return;
+ duelPush({point:point.clone(),text:String(contact.damage),at:clock,color:guard?'#bfe4ee':'#ffffff'});
+ if(contact.before>0&&contact.after===0)duelPush({point:point.clone(),text:guard?'SHIELD':ATTACK_PART_LABEL[contact.part],at:clock+.05,color:'#ff8a72',big:true});
+};
+function duelText(u,text){const point=window.IronVowScene?.partPoint?.(u,'body');if(point&&activeCinematic)duelPush({point:point.clone(),text,at:clock,color:'#f5dbb1',big:true});}
+function duelSkill(u,name){if(activeCinematic)duelBanner={text:name,ally:u.team==='ally',at:clock};}
 function drawAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
- const width=Math.min(W-32,460),x=16,y=H-72;
- const status=sequence.result||(sequence.phase==='aim'?'AIMING':sequence.part==='shield'?'SHIELD':'FIRING');
- ctx.save();ctx.fillStyle='#101820dc';ctx.fillRect(x,y,width,44);
- ctx.fillStyle='#e9bf7d';ctx.textAlign='left';ctx.font='700 12px Inter,Arial,sans-serif';
- ctx.fillText(sequence.actor.name+' / '+sequence.w.name,x+12,y+17,width-24);
- ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';
- ctx.fillText(sequence.target.name+' · '+status,x+12,y+33,width-24);ctx.restore();
+ // damage numbers at the impact point, rising and fading
+ ctx.save();ctx.textAlign='center';
+ for(let i=duelNumbers.length-1;i>=0;i--){
+  const n=duelNumbers[i],age=clock-n.at;if(age>.9){duelNumbers.splice(i,1);continue;}if(age<0)continue;
+  const p=window.IronVowScene.projectWorld(n.point);
+  ctx.globalAlpha=Math.min(1,(.9-age)*4);ctx.font=(n.big?'800 ':'800 ')+(n.big?(W<760?14:18):(W<760?14:19))+'px Inter,Arial,sans-serif';
+  ctx.lineWidth=4;ctx.strokeStyle='#05090d';const y=p.y-20*n.stack-24*age/.9,x=p.x+(n.dx||0);
+  ctx.strokeText(n.text,x,y);ctx.fillStyle=n.color;ctx.fillText(n.text,x,y);
+ }
+ ctx.restore();
+ // skill banner, top left, 0.9 s
+ if(duelBanner&&clock-duelBanner.at<.9){
+  const age=clock-duelBanner.at,x=16-Math.max(0,(.12-age))*600,y=74;
+  ctx.save();ctx.globalAlpha=Math.min(1,(.9-age)*5);ctx.fillStyle=duelBanner.ally?'#27489a':'#9a4a1c';
+  ctx.beginPath();ctx.moveTo(x+14,y);ctx.lineTo(x+214,y);ctx.lineTo(x+200,y+30);ctx.lineTo(x,y+30);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f2f6f4';ctx.font='700 16px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(duelBanner.text,x+107,y+21);ctx.restore();
+ }
 }
 let canvasMode=null,warDiagnostics;
 function draw(ts){

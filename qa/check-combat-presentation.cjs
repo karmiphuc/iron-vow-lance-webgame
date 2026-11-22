@@ -1,4 +1,5 @@
-/* Combat presentation (fix/combat-presentation, owner 2026-11-18). Each assertion names the visible behaviour that failed before. */
+/* Combat presentation (fix/combat-presentation, owner 2026-11-18; FM3 cinematics, owner 2026-11-22).
+   Each assertion names the visible behaviour that failed before. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const simulate=require('./sim-harness.cjs');
 (async()=>{
@@ -35,12 +36,22 @@ const simulate=require('./sim-harness.cjs');
  let apex=0;for(let i=0;i<60;i++){effects.fx.update(1/60);if(missile.visible)apex=Math.max(apex,missile.position.y);}
  assert.ok(apex-from.y>=6.5,'Missiles climb well above the shooter before dropping: '+(apex-from.y).toFixed(1)+' m');
 
- // Hits were barely visible: the flash and sparks are sized for the board camera, and kinetic hits leave a puff.
+ // FM3 hit: a landed round is an orange-white fireball on the armour with debris and a few short sparks. The previous fan of long
+ // white streaks read as planks at duel distance.
  effects.clear();
  effects.impact(V(0,3,0),V(0,0,-1),'rifle');
  const sparks=scene.children.filter(o=>o.isMesh&&o.visible&&o.geometry.parameters?.width===.05&&o.geometry.parameters?.depth===.38);
- assert.ok(sparks.length>=17&&sparks.every(o=>o.scale.x>=1.1),'Rifle hits throw at least 17 sparks, a little thicker than the bench');
- assert.ok(scene.children.some(o=>o.isSprite&&o.visible&&o.scale.x>=2.7),'Rifle hits flash at least 2.7 m wide');
+ const fireball=scene.children.filter(o=>o.isSprite&&o.visible&&o.position.distanceTo(V(0,3,0))<1.5);
+ assert.ok(fireball.length>=3,'A rifle hit is a fireball: core glow plus fire sprites at the impact ('+fireball.length+')');
+ assert.ok(sparks.length>=1&&sparks.length<=4,'A rifle hit throws only a few short sparks, not a streak fan ('+sparks.length+')');
+ assert.equal(streaks().length,0,'A hit draws no streak spray');
+ effects.clear();
+ effects.impact(V(0,3,0),V(0,0,-1),'missile');
+ assert.ok(scene.children.some(o=>o.isSprite&&o.visible&&o.scale.x>=1.3),'A missile hit is a large fireball');
+ // A missed round's ground strike: dirt, dust and a scorch where it lands.
+ effects.clear();
+ effects.groundHit(V(4,0,9),'rifle');
+ assert.ok(scene.children.some(o=>o.isMesh&&o.visible&&o.position.distanceTo(V(4,0,9))<.5&&o.geometry.parameters?.width!==.05),'A ground strike kicks up debris at its point');
 
  // Scatter contacts retain their own hit events but share one mechanical kick.
  context.IronVowRenderer={quality:{tier:'high'}};
@@ -59,6 +70,31 @@ const simulate=require('./sim-harness.cjs');
  model.s=springs();
  combat.landed(actor,target,{id:'shotgun'},{...part,part:'left'},true);
  assert.ok(model.s.roll.v>0,'A shield impact turns the shield shoulder');
+
+ // FM3 realism: a missed round in a burst flew to a point beside the target and vanished in the air. It now strikes the
+ // ground: every third short of the target in front of the hit camera, the rest past it, wide of the hull, on both sides.
+ Object.assign(context,{effects:[],battle:{units:[]},shake:0,shotMuzzle:()=>'muzzle'});
+ const lane=context.IronVowCombat.create(new THREE.Scene(),{models:new Map(),sync(){},groundAt:()=>0,isLive:()=>false,world:()=>V(0,0,0),
+  attachmentPoint:unit=>unit===actor?V(0,4,0):V(0,3,22)});
+ const strikes=()=>lane.history.filter(e=>e.type==='ground');
+ for(const index of [0,1,2,3,4,5]){
+  context.clock=10+index;
+  lane.launch(actor,target,{id:'rifle'},index,[{part:'body',index,hit:false,travel:.1,before:100,after:100,amount:0,damage:0}],false);
+  lane.update(context.clock,1/60);
+  assert.equal(strikes().length,index,'A missed round is in the air when it leaves the muzzle');
+  for(let f=0;f<36;f++){context.clock+=1/60;lane.update(context.clock,1/60);}
+  const g=strikes().at(-1);
+  assert.equal(strikes().length,index+1,'The missed round strikes the ground once on arrival');
+  assert.equal(g.point[1],0,'It lands on the ground');
+  assert.ok(Math.hypot(g.point[0],g.point[2]-22)>=2,'It lands clear of the target, never in it: '+g.point.map(v=>v.toFixed(2)));
+  assert.ok(index%3===2?g.point[2]<22-1.5:g.point[2]>22+1.5&&Math.abs(g.point[0])>=2.8,(index%3===2?'Every third falls short':'The rest carry past, wide of the hull')+': '+g.point.map(v=>v.toFixed(2)));
+  // arrival scales with the distance flown: a short round lands before its contact time, a long one after
+  const arrive=g.time-(10+index),scale=Math.hypot(g.point[0],g.point[1]-4,g.point[2])/Math.hypot(0,-1,22);
+  assert.ok(Math.abs(arrive-.1*scale)<1/60+1e-9,'It lands when it gets there: '+arrive.toFixed(3)+' vs '+(.1*scale).toFixed(3));
+ }
+ assert.ok(strikes().some(g=>g.point[0]>0)&&strikes().some(g=>g.point[0]<0),'Missed rounds in a burst fall on both sides of the target');
+ lane.launch(actor,target,{id:'rifle'},6,[{part:'body',index:6,hit:false,travel:.1}],false);lane.clear();context.clock+=2;lane.update(context.clock,1/60);
+ assert.equal(strikes().length,6,'Skipping the attack drops rounds still in the air');
 
  // --- Game rules and timeline ---
  const sim=simulate({random:()=>0}),{run}=sim;
@@ -87,5 +123,37 @@ const simulate=require('./sim-harness.cjs');
 
  // The attack camera rushed the brace, step-up and priming.
  assert.deepEqual(JSON.parse(run("JSON.stringify(CINEMATIC_PACE)")),{step:1.6,aimHold:.45});
- console.log('PASS combat presentation: short tracers, 45-degree missiles, bounded shell recoil, directional hit reactions, no fire on wrecks, miss evade, cinematic pacing');
+
+ // FM3 duel feedback: no HP strip over the duel (owner did not approve it); a damage number pops at each landed round, a part
+ // that breaks names itself, and nothing lingers after the camera closes.
+ run("globalThis.duelist=battle.units.find(u=>u.team==='enemy'&&!u.kind);window.IronVowScene.projectWorld=()=>({x:320,y:200});window.IronVowScene.partPoint=()=>({clone(){return {x:1,y:2,z:3}}})");
+ run("globalThis.fills=[];globalThis.words=[];ctx.fillRect=(...a)=>fills.push(a);ctx.fillText=(text)=>words.push(String(text));");
+ run("activeCinematic={actor:current(),target:duelist,w:unitWeapon(current()),phase:'fire',part:'body'};duelNumbers.length=0;duelBanner=null;drawAttackCamera()");
+ assert.equal(run('fills.length'),0,'The duel draws no HP strip or banner box');
+ const hitPoint="{clone(){return {x:1,y:2,z:3}}}";
+ run(`window.IronVowDuelHit(duelist,${hitPoint},{damage:7,before:20,after:13,part:'left'},false);window.IronVowDuelHit(duelist,${hitPoint},{damage:13,before:13,after:0,part:'left'},false)`);
+ assert.deepEqual(JSON.parse(run('JSON.stringify(duelNumbers.map(n=>n.text))')),['7','13','L ARM'],'Each landed round pops its damage; a destroyed part names itself');
+ run('drawAttackCamera()');
+ assert.ok(run("words.includes('7')&&words.includes('13')"),'The numbers draw at the impact point');
+ // an 8-round burst at one impact point: every live number keeps its own place (they overprinted before)
+ run(`for(let i=0;i<8;i++,clock+=.06)window.IronVowDuelHit(duelist,${hitPoint},{damage:4+i%2,before:99,after:90,part:'body'},false)`);
+ const places=JSON.parse(run("JSON.stringify(duelNumbers.flatMap(n=>n.big?[-1,0,1].map(c=>c*30+','+n.stack):[n.dx+','+n.stack]))"));
+ assert.equal(new Set(places).size,places.length,'Simultaneous damage numbers never share a position: '+places.join(' '));
+ run("duelText(duelist,'MISS');duelSkill(current(),'Deadeye')");
+ assert.equal(run("duelNumbers.at(-1).text+'|'+duelBanner.text+'|'+duelBanner.ally"),'MISS|Deadeye|true','A miss reads MISS; a skill banner names it, coloured by side');
+ run('closeAttackCamera(activeCinematic)');
+ assert.equal(run('duelNumbers.length+(duelBanner?1:0)'),0,'Nothing lingers after the duel closes');
+
+ // Deaths played too fast to read: the collapse now runs 1.35x slower and opens in slow motion (0.3x for 0.55 s).
+ run("globalThis.wreck=battle.units.find(u=>u.team==='enemy'&&!u.kind);wreck.alive=true;delete wreck.downReason;beginDestruction(wreck)");
+ assert.deepEqual(JSON.parse(run('JSON.stringify(DEATH_TIME)')),{window:.55,rate:.3,stretch:1.35});
+ assert.equal(run('deathSlowmo(clock+.1)'),true,'The first frames of a death run in slow motion');
+ assert.equal(run('deathSlowmo(clock+.7)'),false,'Then the collapse resumes normal speed');
+ const linear=run('DESTRUCTION.end*destructionPace(wreck)'),span=run('destructionTime(wreck,DESTRUCTION.end)');
+ assert.ok(span>linear*1.35,'The whole death plays slower than before: '+span.toFixed(2)+' s vs '+linear.toFixed(2)+' s');
+ assert.ok(Math.abs(run('destructionAge(wreck,clock+destructionTime(wreck,1.05))')-1.05)<1e-6,'Beat times invert exactly (the reactor blast lands on its beat)');
+ run('reducedMotion=true');
+ assert.equal(run('deathSlowmo(clock+.1)'),false,'Reduced motion never slows the scene');
+ run('reducedMotion=false');
+ console.log('PASS combat presentation: short tracers, 45-degree missiles, fireball hits, misses strike the ground, bounded shell recoil, directional hit reactions, no fire on wrecks, miss evade, cinematic pacing, damage numbers without an HP strip, slow-motion deaths');
 })().catch(e=>{console.error(e);process.exit(1);});
