@@ -10,13 +10,13 @@ const roster=JSON.parse(run(`JSON.stringify(FRAMES.map((frame,i)=>{
   u.alive=true;u.deathStyle=null;effects=[];
   beginDestruction(u,reason);
   const samples=[0,.27,.56,.95,1.92].map(age=>{
-   const pose=animationPose(u,clock+age*pace);
+   const pose=animationPose(u,clock+destructionTime(u,age));   // ages -> real seconds through DEATH_TIME
    return {kneel:pose.kneel,blast:pose.explosion,death:pose.death};
   });
-  updateDestruction(u,clock+1.02*pace);
+  updateDestruction(u,clock+destructionTime(u,1.02));
   const early=effects.filter(e=>e.type==='detonation'&&e.big).length;
-  updateDestruction(u,clock+1.09*pace);
-  updateDestruction(u,clock+1.15*pace);
+  updateDestruction(u,clock+destructionTime(u,1.09));
+  updateDestruction(u,clock+destructionTime(u,1.15));
   const blasts=effects.filter(e=>e.type==='detonation'&&e.big).length;
   const contact=Boolean(u.deathEvents&16);
   delete u.deathTime;

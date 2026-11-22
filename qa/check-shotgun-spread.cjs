@@ -18,7 +18,7 @@ let actualFX=[];
 for(const key of ['streak','spray','glow','smoke']){const fn=combat.fx[key];combat.fx[key]=function(...args){actualFX.push({type:key,args:args.map(v=>v?.isVector3?v.clone():v)});return fn.apply(this,args);};}
 const contacts=(hit=true,n=12)=>Array.from({length:n},(_,index)=>Object.freeze({index,hit,part:'body',travel:.12+index*.046,before:100,after:99,amount:1,damage:1}));
 function launch({scatter=true,guard=false,hit=true,id='shotgun'}={}){
- combat.clear();actualFX=[];
+ combat.clear();actualFX=[];const logged=combat.history.length;
  const rounds=contacts(hit,scatter?12:1),before=JSON.stringify(rounds),weapon=Object.freeze({id,...scatter?{scatter:true,burst:12}:{}});
  const random=Math.random;Math.random=()=>{throw Error('Presentation consumed gameplay RNG');};
  try{combat.launch(actor,target,weapon,0,rounds,guard);if(hit)for(const c of rounds)combat.landed(actor,target,weapon,c,guard);}finally{Math.random=random;}
@@ -28,10 +28,20 @@ function launch({scatter=true,guard=false,hit=true,id='shotgun'}={}){
  if(scatter)assert.equal(new Set(streaks.map(f=>f.args[1].toArray().join(','))).size,12,'REGRESSION: twelve pellets must not collapse onto one subsystem point');
  for(const [i,f] of streaks.entries()){
   assert.ok(f.args[0].distanceTo(origin)<1e-8,'Each actual tracer starts at the source muzzle');
-  assert.equal(f.args[4],rounds[i].travel,'Each tracer arrives on its rule contact timeline');
-  if(hit)assert.ok(sprays[i].args[0].distanceTo(f.args[1])<1e-8,'Actual impact spray lands at its own tracer endpoint');
+  const impacts=combat.history.slice(logged).filter(e=>e.type==='impact');
+  if(hit||guard)assert.equal(f.args[4],rounds[i].travel,'Each tracer arrives on its rule contact timeline');
+  if(hit)assert.ok(V(...impacts[i].point).distanceTo(f.args[1])<1e-8,'Each landed impact sits at its own tracer endpoint');
+  // fm3-cinematics: a missed pellet strikes the ground clear of the target, every third short of it, the rest past it, and
+  // arrives when it gets there (flight scaled by distance flown against the contact's travel time)
+  if(!hit&&!guard){
+   const end=f.args[1],a=anchor(),near=end.distanceTo(origin)<a.distanceTo(origin);
+   assert.ok(Math.abs(end.y)<1e-9,'A missed pellet ends on the ground: '+end.toArray());
+   assert.ok(Math.hypot(end.x-a.x,end.z-a.z)>=2,'A missed pellet lands clear of the target: '+end.toArray());
+   assert.equal(near,i%3===2,'Every third missed pellet falls short, the rest carry past');
+   assert.ok(Math.abs(f.args[4]-rounds[i].travel*end.distanceTo(origin)/a.distanceTo(origin))<1e-9,'A missed pellet\'s flight scales with the distance it flies');
+  }
  }
- assert.equal(sprays.length,hit?rounds.length:0,'Misses add no false landed impacts');
+ assert.equal(combat.history.slice(logged).filter(e=>e.type==='impact').length,hit?rounds.length:0,'Misses add no false landed impacts');
  assert.ok(actualFX.some(f=>f.type==='glow'&&f.args[0].distanceTo(origin)<1e-8),'Shell produces a real muzzle flash');
  return streaks;
 }

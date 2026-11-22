@@ -10,9 +10,13 @@ const groundAt=(x,z)=>2+x*.08+z*.03;
 const effects=IronVowEffects.create(scene,{groundAt,partPoint:()=>new THREE.Vector3(0,3,0)}),fx=effects.fx;
 const p=new THREE.Vector3(0,2.15,0);effects.impact(p,new THREE.Vector3(1,.05,0),'rifle');
 const sparks=scene.children.filter(o=>o.isMesh&&o.geometry.parameters?.width===.05&&o.geometry.parameters?.depth===.38&&o.visible);
-assert.equal(sparks.length,17,'Rifle spray emits the reference thirteen sparks at game scale (IMPACT_SCALE.sparks 1.3) as actual pooled meshes');
+// fm3-cinematics: a landed rifle round is an orange-white fireball on the armour (pooled fire + glow sprites at the hit) with a few
+// short ricochet sparks, not a fan of long streaks
+const burst=scene.children.filter(o=>o.isSprite&&o.visible&&o.position.distanceTo(p)<1.5);
+assert.ok(burst.length>=3,'A rifle hit is a fireball: core glow plus fire sprites at the impact point ('+burst.length+')');
+assert.ok(sparks.length>=1&&sparks.length<=4,'A rifle hit throws only a few short sparks ('+sparks.length+')');
 fx.update(.15);
-for(const spark of sparks){assert.ok(spark.position.x>0,'Every spark flies back toward the shooter');assert.ok(spark.position.y>=groundAt(spark.position.x,spark.position.z)+.029,'Sparks bounce on local elevated terrain');}
+for(const spark of sparks)assert.ok(spark.position.y>=groundAt(spark.position.x,spark.position.z)+.029,'Sparks bounce on local elevated terrain');
 fx.arc(new THREE.Vector3(0,3,0),new THREE.Vector3(3,4,0),.2,1);fx.update(.01);
 const arc=scene.children.find(o=>o.isGroup&&o.visible&&o.children.length===2&&o.children.every(c=>c.geometry?.attributes?.position?.count===48));
 assert.ok(arc,'The approved wide and thin plasma ribbons are visible');

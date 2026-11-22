@@ -1,0 +1,72 @@
+{
+  "phase": "fm3-cinematics",
+  "base": "f50afe7 (origin/main, after PR #55)",
+  "commit": "head of feat/fm3-cinematics (this commit)",
+  "date": "2026-11-22",
+  "environment": "Linux, headless Chrome on SwiftShader (IRON_VOW_SOFTWARE_QA=1)",
+  "sim": {
+    "command": "each qa/check-*.cjs that check-simulation.cjs runs, one by one",
+    "passed": [
+      "check-combat-presentation",
+      "check-shotgun-spread",
+      "check-combat-fx",
+      "check-animation",
+      "check-roster-destruction"
+    ],
+    "regression": "check-combat-presentation, check-shotgun-spread and check-animation fail on origin/main at the new assertions",
+    "result": "71 of 72 pass; check-ui needs linkedom, unavailable offline (same on main)"
+  },
+  "browser": {
+    "command": "IRON_VOW_QA_DEVICES=<desktop|touch|both> IRON_VOW_QA_SCENARIOS=<list> node qa/check-browser.cjs",
+    "passed": {
+      "desktop": [
+        "checkCombatDuel",
+        "checkCombatReadability",
+        "sharedScene",
+        "checkDecisionUI",
+        "checkLivePortraits",
+        "checkLionTrial",
+        "checkPairedWalk",
+        "checkMechComputer",
+        "checkMovePreview",
+        "checkRidgeCombat",
+        "checkTerrain",
+        "checkVehicles",
+        "checkShields",
+        "checkLineInfantry",
+        "checkLineElite",
+        "checkInfantryCarry",
+        "checkVanguard",
+        "checkReaver",
+        "checkAero",
+        "checkAeroReview",
+        "checkCampaign"
+      ],
+      "touch": [
+        "checkCombatDuel",
+        "checkCombatReadability",
+        "checkDecisionUI",
+        "checkMovePreview",
+        "checkCampaign"
+      ]
+    },
+    "failed": [
+      {
+        "device": "touch",
+        "scenario": "sharedScene",
+        "error": "Raycast missed visible tile 14,6",
+        "preExisting": "fails the same way on main back to a5b904e"
+      }
+    ],
+    "rebasedRerun": "desktop+touch: checkCombatDuel, checkCombatReadability, checkLineInfantry, checkCampaign all pass on the rebased head"
+  },
+  "unverified": [
+    "native iPad performance",
+    "War Mode on a GPU (cannot finish on SwiftShader)"
+  ],
+  "captures": {
+    "tool": "30 fps clock-driven Playwright capture of a real attack, seed 3, 1100x680",
+    "burst": "Kestrel AR-8, 8 rounds, 5 hits / 3 misses (rule RNG fixed to the sequence .02/.4/.91 so the planner itself rolls the misses)",
+    "kill": "Kestrel AR-8 on a 1 HP body, 8/8 hits"
+  }
+}
