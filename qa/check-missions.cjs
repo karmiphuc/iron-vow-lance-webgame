@@ -4,11 +4,11 @@ const playerTurn=`(async()=>{
   selected=ally.index;
   if(!ally.skill&&ally.index===2&&ally.hp.body<=ally.max.body-30)skill();
   for(let step=0;step<12&&battle&&ally.alive;step++){
-   let targets=battle.units.filter(t=>t.team==='enemy'&&t.alive),w=weapon(ally.weapon);
+   let targets=battle.units.filter(t=>t.team==='enemy'&&t.alive),w=unitWeapon(ally);
    if(!targets.length)break;
    const armed=targets.filter(t=>isArmed(t)),priority=armed.length?armed:targets;
    const available=priority.filter(t=>distance(ally,t)<=w.range&&!attackObstruction(ally,t,w)).sort((a,b)=>a.hp.body-b.hp.body);
-   if(available.length&&ally.hp.right>0&&ally.ap>=w.ap){
+   if(available.length&&canUseWeapon(ally,w)){
     if(ally.index<2&&!ally.skill)skill();const target=available[0];await engage(ally,target,'body',w);if(checkEnd())return;continue;
    }
    if(!movementLimit(ally))break;
@@ -23,7 +23,7 @@ const playerTurn=`(async()=>{
  }
  if(battle)await endTurn();
 })()`;
-async function play(sim,index,slots=[0,1,2]){sim.run(`deploy(${index},false,${JSON.stringify(slots)});closeModal()`);let rounds=0;while(sim.run('!!battle')&&rounds++<30)await sim.run(playerTurn);assert.equal(sim.run('!!battle'),false,'Mission stalled');return{win:sim.run('save.history.at(-1).win'),rounds,condition:sim.run('save.units.map(u=>u.condition)')}}
+async function play(sim,index,slots=[0,1,2]){sim.run(`deploy(${index},false,${JSON.stringify(slots)});closeModal()`);let rounds=0;while(sim.run('!!battle')&&rounds++<30)await sim.run(playerTurn);assert.equal(sim.run('!!battle'),false,sim.run(`battle&&JSON.stringify({stall:battle.contract.name,log:battle.log,units:battle.units.filter(u=>u.alive).map(({name,weapon,hp,x,z})=>({name,weapon,hp,x,z}))})`)||'Mission stalled');return{win:sim.run('save.history.at(-1).win'),rounds,condition:sim.run('save.units.map(u=>u.condition)')}}
 if(require.main===module)(async()=>{
  const results=[];for(let seed=1;seed<=12;seed++){const sim=createSimulation({seed});results.push(await play(sim,0));assert.equal(sim.run('validSave(save)'),true);assert.equal(sim.run('save.day'),2);assert.ok(sim.storage.has('iron-vow-career'))}
  const wins=results.filter(r=>r.win).length;console.log('Recruit contract, fresh lance:',wins+'/12 victories; rounds',results.map(r=>r.rounds).join(','));

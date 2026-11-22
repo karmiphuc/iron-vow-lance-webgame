@@ -190,13 +190,13 @@ function planVolley(a,t,aimed,w,reaction){
 }
  return planVolley;
  }
- function createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER}){
+ function createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon=(u,w)=>w&&u.hp[w.melee?'left':'right']>0,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER}){
 function reactionStatus(u){
  if(!u?.alive||u.kind)return 'UNAVAILABLE';
  if(u.blackout)return 'JAMMED';
  if(u.reacted)return 'USED';
  if(u.frame===BULWARK_FRAME)return isArmed(u)?'READY':'UNAVAILABLE';
- return u.hp.left>0&&!equippedShield(u)||u.hp.right>0&&counterRange(unitWeapon(u),u.training,u.brace)>0?'READY':'UNAVAILABLE';
+ return u.meleeHand==='right'&&workingWeapon(u,meleeWeapon(u))||u.hp.left>0&&!equippedShield(u)||workingWeapon(u,unitWeapon(u))&&counterRange(unitWeapon(u),u.training,u.brace)>0?'READY':'UNAVAILABLE';
 }
 function reactionWeapon(defender,attacker){
  if(reactionStatus(defender)!=='READY'||!attacker?.alive)return null;
@@ -206,19 +206,20 @@ function reactionWeapon(defender,attacker){
   const bash=meleeWeapon(defender),cut=unitWeapon(defender);
   return range===1&&!attackObstruction(defender,attacker,cut)?(defender.hp.left>0?bash:defender.hp.right>0?cut:null):null;
  }
- if(close&&defender.melee)return meleeWeapon(defender);
+ const melee=meleeWeapon(defender);
+ if(range===1&&(defender.melee||defender.meleeHand==='right')&&workingWeapon(defender,melee)&&!attackObstruction(defender,attacker,melee))return melee;
  const ranged=unitWeapon(defender),reach=counterRange(ranged,defender.training,defender.brace);
- if(defender.hp.right>0&&reach&&range<=reach&&!attackObstruction(defender,attacker,ranged))return ranged;
+ if(workingWeapon(defender,ranged)&&reach&&range<=reach&&!attackObstruction(defender,attacker,ranged))return ranged;
  return close?FREE_HAND_COUNTER:null;
 }
  return {reactionStatus,reactionWeapon};
  }
- function createEnemyTurn({getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,targetParts,canUseWeapon,attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME}){
+ function createEnemyTurn({getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,targetParts,canUseWeapon,attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,trySurrender=()=>false,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME}){
 function enemyAttackWeapon(u,t,primary){
  const battle=getBattle();
  if(u.frame===ASHIGARU_FRAME)return scoutWeapon(u,t);
  const range=distance(u,t),strike=range===1?meleeWeapon(u):null;
- const candidates=u.frame===BULWARK_FRAME&&battle.turn%2?[primary,strike]:[strike,primary];
+ const candidates=u.frame===BULWARK_FRAME&&battle.turn%2?[primary,strike]:[strike,primary,shoulderWeapon(u)];
  return candidates.find(w=>w&&range<=combatRange(u,t,w)&&(u.kind?u.ap>=w.ap:canUseWeapon(u,w))&&!attackObstruction(u,t,w)&&!(launchesMissiles(w)&&hasMechSkill(u,CITADEL_FRAME)&&u.mechState?.lock?.turn===battle.turn));
 }
 async function runEnemyTurn(){
@@ -228,12 +229,13 @@ async function runEnemyTurn(){
  for(const enemy of enemies){
   const allies=battle.units.filter(u=>u.team==='ally'&&u.alive);
   if(!allies.length)break;
+  if(trySurrender(enemy,allies)){if(checkEnd())return true;continue;}
   const primary=unitWeapon(enemy);
   allies.sort((a,b)=>distance(enemy,a)-distance(enemy,b));
   let target=allies[0];
   const vanguard=enemy.frame===VANGUARD_FRAME,bulwark=enemy.frame===BULWARK_FRAME,scout=enemy.frame===ASHIGARU_FRAME;
   const strike=meleeWeapon(enemy);
-  const chase=(vanguard||enemy.frame===AERO_FRAME||scout&&enemy.hp.right<=0)&&canUseWeapon(enemy,strike)?strike:primary;
+  const chase=(!workingWeapon(enemy,primary)||vanguard||enemy.frame===AERO_FRAME||scout&&enemy.hp.right<=0)&&canUseWeapon(enemy,strike)?strike:workingWeapon(enemy,primary)?primary:shoulderWeapon(enemy)??primary;
   const chaseRange=chase.range;
   if(attackObstruction(enemy,target,chase)==='RIDGE BLOCK')target=allies.find(ally=>enemyAttackWeapon(enemy,ally,primary))??target;
   const blocked=attackObstruction(enemy,target,chase)==='RIDGE BLOCK'&&!enemyAttackWeapon(enemy,target,primary);

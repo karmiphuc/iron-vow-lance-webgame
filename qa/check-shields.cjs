@@ -7,7 +7,7 @@ const simulate=require('./sim-harness.cjs');
  const {run,storage}=simulate({random:()=>roll,reducedMotion:true});
  run(`equipWeapon('cleaver');equipWeapon('bulwark-shield');equipWeapon('citadel-shield')`);
  assert.equal(run('save.credits'),150);
- assert.equal(run('save.units[0].melee'),undefined);
+ assert.equal(run('save.units[0].meleeHand'), 'right');
  run(`equipWeapon('cleaver');equipWeapon('bulwark-shield');equipWeapon('citadel-shield')`);
  assert.equal(run('save.credits'),150,'re-equipping owned kits is free');
  run(`save.credits=FRAMES[BASTION_FRAME].cost+FRAMES[3].cost+FRAMES[4].cost+20000;assignChassis(0,BASTION_FRAME);equipWeapon('bulwark-shield');
@@ -17,20 +17,21 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('save.units[1].shoulder'),'vesper-shoulder');
  assert.equal(run('save.reserve[BASTION_FRAME].shield'),'bulwark-shield');
  run(`assignChassis(1,4);equipWeapon('bulwark-shield')`);
- assert.equal(run('save.units[1].melee'),'pulse-bash','integral melee fit remains');
- assert.equal(run('save.units[1].shield'),undefined);
+ assert.equal(run('save.units[1].melee'),undefined);
+ assert.equal(run('save.units[1].shield'),'bulwark-shield');
+ assert.equal(run('shoulderWeapon({...save.units[1],frame:4}).id'),'locust','the integral launcher remains');
  assert.ok(run('validSave(save)'));
  for(const bad of [
   `s.units[0].shield='rifle'`,
-  `s.units[0].melee='cleaver'`,
+  `delete s.units[0].meleeHand`,
   `s.owned=s.owned.filter(id=>id!=='citadel-shield')`,
-  `s.units[1].shield='bulwark-shield';delete s.units[1].melee`
+  `s.owned=s.owned.filter(id=>id!=='bulwark-shield')`
  ])assert.equal(run(`(()=>{const s=JSON.parse(JSON.stringify(save));${bad};return validSave(s)})()`),false,bad);
 
  run(`selected=0;createBattle(0,false,false,[0]);const target=current(),foe=battle.units[1];
   const shootAt=(part,id='rifle',reaction=false)=>{foe.ap=ROUND_AP;return shoot(foe,target,part,weapon(id),reaction)};
   const hp=()=>JSON.stringify(target.hp);target.ap=0;
-  const original={...target.hp}`);
+  delete target.melee;delete target.meleeHand;const original={...target.hp}`);
  const left=run('target.hp.left'),initial=run('hp()');
  roll=.999;
  await run(`shootAt('pilot')`);

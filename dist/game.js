@@ -264,12 +264,13 @@ FRAMES.push(
  {name:'BASTION',model:'BST–04',role:'HEAVY SUPPORT',color:'#708c92',hp:188,arm:100,leg:105,move:3,armor:7,foundry:2,cost:260000,weapon:'rifle',rig:'bastion'}
 );
 const BASTION_FRAME=FRAMES.length-1;
-const playerHull=frame=>Boolean(FRAMES[frame]&&(!FRAMES[frame].enemyOnly||FRAMES[frame].salvageOnly));
+const playerHull=frame=>Boolean(FRAMES[frame]&&(!FRAMES[frame].enemyOnly||FRAMES[frame].salvageOnly||FRAMES[frame].captureOnly));
 const breachLoadout=frame=>{
  const model=FRAMES[frame]?.native;
  return model==='gatecrasher'||model==='shogun';
 };
-const canFitShield=frame=>playerHull(frame)&&(breachLoadout(frame)||!FRAMES[frame].native&&!FRAMES[frame].fixedWeapons);
+const openHands=frame=>playerHull(frame)&&(!FRAMES[frame].native||FRAMES[frame].native==='cicada')&&!FRAMES[frame].fixedWeapons&&!FRAMES[frame].captureOnly;
+const canFitShield=frame=>breachLoadout(frame)||openHands(frame);
 const bastionRig=unit=>FRAMES[unit.frame]?.rig==='bastion';
 const PART_LABEL={body:'BODY',pilot:'PILOT',right:'WEAPON ARM',left:'LEFT ARM',legs:'LEGS'};
 const HELLBREAKER=FRAMES.length;
@@ -279,9 +280,9 @@ const PILOT_HP=[70,55,80];
 const CREW_HP=[...PILOT_HP,60,72,67,61,76];
 const CITADEL_FRAME=FRAMES.push({...FRAMES[BASTION_FRAME],name:'CITADEL',model:'CTD–04',weapon:'missile',rig:null,enemyOnly:true,salvageOnly:true,fixedWeapons:true})-1;
 const LINE_INFANTRY_FRAME=FRAMES.push({name:'LINE INFANTRY',model:'LI-01',role:'STANDARD',color:'#7b8259',
- hp:151,arm:87,leg:98,move:4,armor:4,weapon:'rifle',foundry:6,enemyOnly:true})-1;
+ hp:151,arm:87,leg:98,move:4,armor:4,weapon:'rifle',foundry:6,enemyOnly:true,captureOnly:true,fixedWeapons:true})-1;
 const LINE_ELITE_FRAME=FRAMES.push({name:'LINE INFANTRY ELITE',model:'LI-02',role:'ELITE',color:'#526e86',
- hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true})-1;
+ hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true,captureOnly:true,fixedWeapons:true})-1;
 const INFANTRY_PRIMARIES=['rifle','trident','shotgun'];
 const isLineInfantry=u=>u.team==='enemy'&&(u.frame===LINE_INFANTRY_FRAME||u.frame===LINE_ELITE_FRAME);
 const VANGUARD_FRAME=FRAMES.push({name:'GRAVEMAW',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
@@ -331,7 +332,7 @@ const JUMPJET_HELP='Leap over cover and units to a clear tile within '+JUMPJET_R
 const dailyAeroMelee=()=>AERO_MELEE[(save.day-1)%AERO_MELEE.length];
 const chassisEvade=frame=>frame.dodge??.08;
 const dodgeChance=u=>u&&!u.kind&&FRAMES[u.frame]?chassisEvade(FRAMES[u.frame]):0;
-const salvageableHull=frame=>playerHull(frame)&&!FRAMES[frame].noSalvage;
+const salvageableHull=frame=>playerHull(frame)&&!FRAMES[frame].noSalvage&&!FRAMES[frame].captureOnly;
 const ENEMY_NAMES=['JACKAL','RAVEN','MARAUDER','GATEBREAKER','LOCUST','SERAPH','RONIN','TITAN','SENTINEL','RAZOR','CITADEL'];
 const FOUNDRY_HOSTILES={corridor:[1,6,8,9],frontier:[7,6,5,CITADEL_FRAME,2]};
 const RELAY_LEADS=[0,1,2,9,8];
@@ -486,7 +487,46 @@ function validTransit(career){
 function canUsePort(port){
  return !battle&&!careerStale&&!save.transit&&port===companyPort()&&!!(careerDB||careerIsCurrent());
 }
-function portStock(port){return save.world?worldRules.portProfile(save.world.seed,port):null;}
+function equipmentRoll(key){
+ let hash=2166136261;
+ for(const c of key)hash=Math.imul(hash^c.charCodeAt(0),16777619);
+ return (hash^(hash>>>16))>>>0;
+}
+function portStock(port){
+ const seed=save.world?.seed??0,profile=worldRules.portProfile(seed,port);
+ if(!profile)return null;
+ const stock=new Set([...profile.weapons,'rifle',...(port==='picket'?['shotgun','missile']:[]),'bulwark-shield','citadel-shield']);
+ const rotation=WEAPONS.filter(w=>!w.builtIn&&!w.shoulder&&!stock.has(w.id));
+ const key=[seed,port,save.day].join('/');
+ rotation.sort((a,b)=>equipmentRoll(key+a.id)-equipmentRoll(key+b.id));
+ return {...profile,weapons:[...stock,...rotation.slice(0,2).map(w=>w.id)]};
+}
+const itemId=id=>id==='vesper-shoulder'?'missile':id;
+const equipmentItem=id=>shieldItem(itemId(id))||WEAPONS.find(w=>w.id===itemId(id)&&!w.builtIn);
+const equipmentPrice=item=>item.id==='rifle'?600:item.price;
+const portableItems=(hull,frame=hull.frame)=>[frame===REAVER_FRAME?null:hull.weapon,hull.melee,hull.shoulder,hull.shield].map(itemId).filter(id=>equipmentItem(id));
+const fittedItems=career=>[...career.units.flatMap((hull,i)=>portableItems(hull,pilotFrame(i,career))),...Object.entries(career.reserve??{}).flatMap(([frame,hull])=>portableItems(hull,Number(frame)))];
+function stockFittedGear(career){
+ for(const id of new Set(fittedItems(career))){
+  const shortage=-availableCopies(id,career);
+  if(shortage>0)career.owned.push(...Array(shortage).fill(id));
+ }
+}
+const copies=(items,id)=>items.filter(item=>itemId(item)===itemId(id)).length;
+const availableCopies=(id,career=save)=>copies(career.owned,id)-copies(fittedItems(career),id);
+function migrateEquipment(career){
+ if(career.itemInventory)return career;
+ career.owned=[...new Set(career.owned.map(itemId))];
+ stockFittedGear(career);
+ career.itemInventory=true;
+ return career;
+}
+const localEquipment=id=>portStock(companyPort())?.weapons.includes(itemId(id));
+function equipmentOffer(id){
+ const item=equipmentItem(id),stock=localEquipment(id),price=equipmentPrice(item);
+ const reason=!stock?'NOT IN PORT STOCK':save.rep<(item.rep??0)?'UNLOCKS AT '+item.rep+' REP':save.credits<price?money(price)+' REQUIRED':'';
+ return {price,reason,free:Math.max(0,availableCopies(id))};
+}
 function portStockPrice(base,port){return Math.round(base*(.9-(save.world?.standings[port]??0)/1000));}
 function portHull(key){
  const active=/^active:([0-2])$/.exec(key),stored=/^reserve:(\d+)$/.exec(key);
@@ -507,14 +547,14 @@ function repairPortHull(key,port=companyPort()){
  save.credits-=price;entry.hull.condition=100;persist();return true;
 }
 function purchaseWeapon(id,price){
- const item=shieldItem(id)||WEAPONS.find(w=>w.id===id);
- if(!item||item.builtIn||save.owned.includes(id)||save.rep<(item.rep??0)||!Number.isSafeInteger(price)||price<0||save.credits<price)return false;
- save.credits-=price;save.owned.push(id);return true;
+ const item=equipmentItem(id);
+ if(!item||save.rep<(item.rep??0)||!Number.isSafeInteger(price)||price<0||save.credits<price)return false;
+ save.credits-=price;save.owned.push(itemId(id));return true;
 }
 function buyPortWeapon(id,port=companyPort()){
  if(!canUsePort(port)||!portStock(port)?.weapons.includes(id))return false;
- const item=WEAPONS.find(w=>w.id===id);
- if(!item||!purchaseWeapon(id,portStockPrice(item.price,port)))return false;
+ const item=equipmentItem(id);
+ if(!item||!purchaseWeapon(id,portStockPrice(equipmentPrice(item),port)))return false;
  persist();return true;
 }
 function buyPortHull(frame,port=companyPort()){
@@ -527,8 +567,8 @@ function portServicesData(port=overworldSelection??companyPort()){
  if(!hulls.some(h=>h.key===portHullSelection))portHullSelection=hulls[0]?.key;
  const local=port===companyPort(),hull=portHull(portHullSelection),repairCost=portRepairCost(portHullSelection,port);
  const repairReason=!local?'Moor here':hull?.hull.condition>=100?'Full integrity':save.credits<repairCost?'Insufficient credits':'';
- const items=[...profile.weapons.map(id=>{const w=WEAPONS.find(w=>w.id===id),price=portStockPrice(w.price,port),reason=save.rep<(w.rep??0)?'Requires '+w.rep+' reputation':save.credits<price?'Insufficient credits':'';
-  return {kind:'weapon',id,name:w.name,price,owned:save.owned.includes(id),disabled:!!reason,reason};}),
+ const items=[...profile.weapons.map(id=>{const w=equipmentItem(id),price=portStockPrice(equipmentPrice(w),port),reason=save.rep<(w.rep??0)?'Requires '+w.rep+' reputation':save.credits<price?'Insufficient credits':'';
+  return {kind:'weapon',id,name:w.name,price,copies:copies(save.owned,id),disabled:!!reason,reason};}),
   ...profile.frames.map(id=>{const f=FRAMES[id],price=portStockPrice(f.cost,port),reason=!hullOwned(id)&&!hullOnMarket(id)?'Salvage only':save.credits<price?'Insufficient credits':'';
    return {kind:'frame',id,name:f.name,price,owned:hullOwned(id),disabled:!!reason,reason};})];
  return {name:portName(port),faction:profile.faction,standing:save.world.standings[port]??0,local,tab:portSheetTab,discountPercent:10+(save.world.standings[port]??0)/10,hulls,selectedHull:portHullSelection,repairCost,repairDisabled:!!repairReason,repairReason,items,credits:save.credits};
@@ -707,8 +747,9 @@ function canReachTarget(w,target){return !(w.melee&&target.kind==='helicopter')}
 const asset=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
 const targetParts=u=>u?.kind?['body']:['body','pilot','right','left','legs'];
 const REAVER_AUTOCANNON={...weapon('rifle'),burst:0,name:'RV-04 Autocannon',type:'AUTOCANNON'};
-const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:u.frame===REAVER_FRAME?REAVER_AUTOCANNON:weapon(u.weapon);
-const isArmed=u=>u.kind||u.hp.right>0||(u.frame===BULWARK_FRAME||u.frame===ASHIGARU_FRAME||u.frame===AERO_FRAME)&&u.hp.left>0;
+const EMPTY_HAND=Object.freeze({id:'unarmed',name:'Free hand',type:'EMPTY',range:0,ap:0,damage:0,weight:0});
+const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:u.frame===REAVER_FRAME?REAVER_AUTOCANNON:u.weapon==null||launcherId(u.weapon)?shoulderWeapon(u)??EMPTY_HAND:weapon(u.weapon);
+const isArmed=u=>u.kind||[unitWeapon(u),shoulderWeapon(u),meleeWeapon(u)].some(w=>workingWeapon(u,w));
 const chassisMobility=(frame,legacy=false,training)=>frame.move+(legacy?0:1)+(training?.move??0);
 const mobility=u=>u.kind?VEHICLES[u.kind].move:chassisMobility(FRAMES[u.frame],battle.legacy,u.training);
 const mobile=u=>u.kind||u.hp.legs>0;
@@ -726,7 +767,7 @@ const deploymentHP=(max,condition)=>Math.round(max*Math.max(.3,condition/100));
 const roundAP=training=>ROUND_AP+(training?.roundAP??0);
 const weaponAP=(w,training)=>w.ap-(w.melee?(training?.strikeAP??0):0);
 const weaponRange=(w,training)=>w.range+(w.melee?0:(training?.range??0));
-const launchesMissiles=w=>w.id==='missile'||ATTACK_PROFILES[w.id]?.effect==='missile';
+const launchesMissiles=w=>w?.id==='missile'||ATTACK_PROFILES[w?.id]?.effect==='missile';
 const mechState=u=>u.mechState??={};
 const combatRange=(u,t,w)=>weaponRange(w,u.training)+(hasMechSkill(u,4)&&launchesMissiles(w)&&t?.painted?1:0);
 const counterRange=(w,training,braced=false)=>launchesMissiles(w)?0:weaponRange(w,training)+(training?.counterRange??0)+(braced?(training?.braceCounterRange??0):0);
@@ -764,7 +805,7 @@ function stockHull(i){
  const frame=FRAMES[i];
  return{weapon:frame.weapon||(i===2?'missile':'rifle'),melee:frame.melee,condition:100,upgrade:0};
 }
-function fresh(){return{version:1,day:1,credits:4500,rep:0,wins:0,kills:0,owned:['rifle','missile'],units:PILOTS.map((_,i)=>({...stockHull(i),level:1,xp:0})),history:[]}}
+function fresh(){return{version:1,day:1,credits:4500,rep:0,wins:0,kills:0,itemInventory:true,owned:['rifle','rifle','missile'],units:PILOTS.map((_,i)=>({...stockHull(i),level:1,xp:0})),history:[]}}
 const mechKills=(pilot,frame,career=save)=>career.mechMastery?.[pilotId(pilot)]?.kills[frame]??0;
 const mechSlotCount=kills=>kills>=MECH_MASTERY_KILLS?2:1;
 function enableMechComputers(){
@@ -915,7 +956,6 @@ const queuedCareerWrites=[];
 if(!benchWar&&!benchRig)try{storedCareer=localStorage.getItem(CAREER_STORAGE)}catch{}
 function loadStoredCareer(raw){
  try{save=loadCareer(JSON.parse(raw))??fresh()}catch{save=fresh()}
- save.owned=[...new Set([...save.owned,...save.units.flatMap(u=>[u.weapon,u.melee]).filter(id=>id&&!weapon(id).builtIn)])];
 }
 if(lionTrial||benchWar||benchRig)save=fresh();
 else loadStoredCareer(storedCareer);
@@ -1034,7 +1074,7 @@ function persist(enemyPending=false){
  }catch{warn()}
 }
 function captureSortie(enemyPending=false){
- return{version:battle.aux||battle.launchAP?8:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action:action==='jumpjet'?'move':action==='missile'?'fire':action,part:'body',enemyPending,
+ return{version:battle.aux||battle.launchAP?8:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action:action==='jumpjet'?'move':action,part:'body',enemyPending,
   ...(battle.offer?{offer:{...battle.offer}}:{}),
   ...(battle.aux?{aux:battle.aux}:{}),...(battle.launchAP?{launchAP:battle.launchAP}:{}),
   ...(battle.frontierHellbreaker?{frontierHellbreaker:true}:{}),
@@ -1048,7 +1088,7 @@ function captureSortie(enemyPending=false){
   ...(battle.relayLead?{relayLead:battle.relayLead}:{}),
   ...(battle.terrainSeed!==null?{terrainSeed:battle.terrainSeed}:{}),
   ...(battle.mechComputers?{mechComputers:true}:{}),
-  units:battle.units.map(u=>({infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,jumpjetUsed:u.jumpjetUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
+  units:battle.units.map(u=>({surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,jumpjetUsed:u.jumpjetUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
 }
 function dispatchSizes(){
  if(save.dispatch?.day!==save.day){
@@ -1153,7 +1193,7 @@ function restoreSortie(){
  const aux=saved.version===8?saved.aux??null:null,launchAP=saved.version===8?saved.launchAP??0:0;
  const regular=aux&&Array.isArray(slots)?slots.slice(0,-1):slots;
  const shipValid=saved.version!==8||!legacy&&integer(launchAP,0,Number(shipLevel('drop')>0))&&(!aux||Array.isArray(slots)&&slots.at(-1)===AUX_SLOT&&validAux(aux));
- let valid=[1,2,3,4,5,6,7,8].includes(saved.version)&&validSlots(regular)&&shipValid&&(!legacy||slots.length===3)&&typeof legacy==='boolean'&&(saved.version<4||typeof saved.stockHostiles==='boolean')&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&slots.includes(saved.selected)&&['move','fire','strike'].includes(saved.action)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
+ let valid=[1,2,3,4,5,6,7,8].includes(saved.version)&&validSlots(regular)&&shipValid&&(!legacy||slots.length===3)&&typeof legacy==='boolean'&&(saved.version<4||typeof saved.stockHostiles==='boolean')&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&slots.includes(saved.selected)&&['move','fire','strike','missile'].includes(saved.action)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
  valid=valid&&(saved.frontierHellbreaker===undefined||saved.frontierHellbreaker===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='frontier');
  valid=valid&&(saved.picketLineInfantry===undefined||saved.picketLineInfantry===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='picket');
  valid=valid&&(saved.corridorElite===undefined||saved.corridorElite===true&&saved.version>=7&&!legacy&&!saved.stockHostiles&&contractId==='corridor');
@@ -1203,9 +1243,10 @@ function restoreSortie(){
     valid=saved.mechComputers&&validMechState(state.mechState);
     if(valid)u.mechState={...state.mechState};
    }
-   if(!valid)break;const key=state.x+','+state.z,alive=state.hp.body>0&&(u.kind||(state.hp.pilot??1)>0);if(alive&&occupiedTiles.has(key)){valid=false;break}if(alive)occupiedTiles.add(key);
+   if(valid&&state.surrendered!==undefined)valid=state.surrendered===true&&u.team==='enemy'&&!u.kind&&state.hp.body>0&&state.hp.pilot>0;
+   if(!valid)break;const key=state.x+','+state.z,alive=!state.surrendered&&state.hp.body>0&&(u.kind||(state.hp.pilot??1)>0);if(alive&&occupiedTiles.has(key)){valid=false;break}if(alive)occupiedTiles.add(key);
    u.jumpjetUsed=state.jumpjetUsed===true;
-   u.face=state.face??(u.team==='enemy'?1:-1);u.x=u.vx=state.x;u.z=u.vz=state.z;u.hp=Object.fromEntries(targetParts(u).map(part=>[part,state.hp[part]??u.max[part]]));u.ap=state.ap;u.brace=state.brace;u.skill=state.skill;u.boost=state.boost;u.alive=alive;u.downReason=alive?null:u.hp.body>0?'pilot':'body';
+   u.face=state.face??(u.team==='enemy'?1:-1);u.x=u.vx=state.x;u.z=u.vz=state.z;u.hp=Object.fromEntries(targetParts(u).map(part=>[part,state.hp[part]??u.max[part]]));u.ap=state.ap;u.brace=state.brace;u.skill=state.skill;u.boost=state.boost;u.alive=alive;u.surrendered=state.surrendered;u.downReason=alive?null:state.surrendered?'surrender':u.hp.body>0?'pilot':'body';
    if(saved.version>=5){u.heading=FIELD_HEADINGS[headingIndex(state.heading)];u.face=Math.sign(Math.sin(u.heading));u.moveLeft=state.moveLeft;u.actionPhase=state.actionPhase;u.extraStep=state.extraStep;u.reacted=state.reacted}
    else{u.heading=defaultHeading(u);if(u.ap<8||u.brace){startAction(u);u.extraStep=true}}
   }
@@ -1213,15 +1254,19 @@ function restoreSortie(){
  }
  if(!valid){battle=null;delete save.sortie;persist();return null}
  battle.turn=saved.turn;selected=saved.selected;if(!current()||spent(current()))selected=battle.units.find(u=>u.team==='ally'&&u.alive&&!spent(u))?.index??selected;
- action=saved.action==='strike'&&!current()?.melee?'move':saved.action;effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;focusBattleCamera(current(),true);battle.log=['Sortie restored from the last completed action.'];
+ action=(saved.action==='strike'&&!current()?.melee||saved.action==='missile'&&!shoulderWeapon(current()))?'move':saved.action;effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;focusBattleCamera(current(),true);battle.log=['Sortie restored from the last completed action.'];
  return{enemyPending:saved.enemyPending};
 }
 function toast(s){if(careerStale)return;$('#toast').textContent=s;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),3200)}
 function money(n){return n.toLocaleString()+' CR'}
 function weapon(id){return WEAPONS.find(w=>w.id===id)||WEAPONS[0]}
 const weaponMotion=id=>{const w=weapon(id);return w.motion??w.effect??id};
-function meleeWeapon(u){return u.melee&&(u.frame===BULWARK_FRAME||!equippedShield(u))?weapon(u.melee):null}
-function shoulderWeapon(u,frame=u?.frame){return breachLoadout(frame)&&u.shoulder==='vesper-shoulder'?weapon('missile'):null}
+function meleeWeapon(u){return u.melee&&(u.meleeHand==='right'||u.frame===BULWARK_FRAME||!equippedShield(u))?weapon(u.melee):null}
+function launcherId(id){return ['missile','cerberus','locust','vesper-shoulder'].includes(id);}
+function shoulderWeapon(u){
+ const id=u?.shoulder??(launcherId(u?.weapon)?u.weapon:null);
+ return launcherId(id)?weapon(itemId(id)):FRAMES[u?.frame]?.native==='cicada'?weapon('locust'):null;
+}
 function selectedWeapon(u,mode=action,target=null){
  if(!u)return;
  if(mode==='strike')return meleeWeapon(u);
@@ -1233,8 +1278,9 @@ function selectedWeapon(u,mode=action,target=null){
  return unitWeapon(u);
 }
 const paidAttackAP=(u,w)=>Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0));
-function weaponSubsystem(u,w){return w===shoulderWeapon(u)?'body':w.hand||(w.melee?'left':'right')}
-function canUseWeapon(u,w){return Boolean(u&&w&&(!u.lionTrial||w.melee&&LION_TRIAL_WEAPONS.includes(w.id))&&u.ap>=paidAttackAP(u,w)&&u.hp[weaponSubsystem(u,w)]>0)}
+function weaponSubsystem(u,w){return launcherId(w.id)?'body':w===REAVER_AUTOCANNON&&u.hp.right<=0?'left':w.hand||(w.melee?(w.id===u.melee&&u.meleeHand==='right'?'right':'left'):'right')}
+const workingWeapon=(u,w)=>Boolean(w&&w!==EMPTY_HAND&&u.hp[weaponSubsystem(u,w)]>0);
+function canUseWeapon(u,w){return Boolean(u&&workingWeapon(u,w)&&(!u.lionTrial||w.melee&&LION_TRIAL_WEAPONS.includes(w.id))&&u.ap>=paidAttackAP(u,w))}
 function scoutWeapon(u,target,reaction=false){
  const range=distance(u,target);
  return [meleeWeapon(u),weapon('flechette-scattergun'),unitWeapon(u)].find(w=>w&&range<=w.range&&
@@ -1323,15 +1369,21 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
   </div>
  </section>`;
 }
-const armorySlot=w=>w.shoulder?'shoulder':w.melee?'melee':'weapon';
+const armorySlot=w=>launcherId(w.id)?'shoulder':w.melee?'melee':'weapon';
+const slotItem=(u,w)=>armorySlot(w)==='shoulder'?u.shoulder??(launcherId(u.weapon)?u.weapon:null):u[armorySlot(w)];
+function fitButton(w,equipped,offer){
+ const text=equipped?'EQUIPPED':offer.free?'EQUIP · '+offer.free+' FREE':offer.reason||'BUY & EQUIP · '+money(offer.price);
+ return `<button type="button" data-equip="${w.id}" aria-pressed="${equipped}" ${equipped||!offer.free&&offer.reason?'disabled':''}>${text}</button>`;
+}
 const armoryReach=(w,training)=>w.melee?'Adjacent':weaponRange(w,training)+' tiles';
 function equipmentPicture(kind,id){
  const url=window.IronVowFoundry?.equipmentThumbnail(kind,id);
  return `<img class="weapon-card-art" data-equipment-kind="${kind}" data-equipment-id="${id}" alt=""${url?' src="'+url+'"':''} loading="lazy" decoding="async">`;
 }
 function armoryCard(u,w,training){
- const equipped=u[armorySlot(w)]===w.id,owned=save.owned.includes(w.id)||equipped;
- const locked=!owned&&save.rep<(w.rep??0),blocked=!owned&&save.credits<w.price;
+ const equipped=itemId(slotItem(u,w))===itemId(w.id),offer=equipmentOffer(w.id);
+ const rightOption=w.melee&&openHands(pilotFrame(selected))&&!u.shield&&u.meleeHand!=='right';
+ const disabled=Boolean(!equipped&&!offer.free&&offer.reason);
  const special=w.shoulder||launchesMissiles(w)?'CANNOT COUNTER':w.pierce?`${Math.round(w.pierce*100)}% ARMOR PIERCE`:w.aim?`${w.aim>0?'+':''}${Math.round(w.aim*100)} AIM`:'';
  const trait=[burstLabel(w),special].filter(Boolean).join(' · ');
  return `<article class="armory-card${equipped?' active':''}" data-weapon-card="${w.id}" tabindex="-1">
@@ -1340,86 +1392,121 @@ function armoryCard(u,w,training){
    ${equipmentPicture('weapon',w.id)}
    <dl><div><dt>${w.burst?'MAX DMG':'DMG'}</dt><dd>${volleyBudget(w,w.damage)}</dd></div><div><dt>REACH</dt><dd>${w.melee?'1 tile':armoryReach(w,training)}</dd></div><div><dt>AP</dt><dd>${weaponAP(w,training)}</dd></div></dl>
    <div class="armory-card-foot">${trait?`<span class="armory-trait">${trait}</span>`:''}
-    <button type="button" data-equip="${w.id}" aria-pressed="${equipped}" ${equipped||locked||blocked?'disabled':''}>${equipped?'EQUIPPED':owned?'EQUIP':locked?'UNLOCKS AT '+w.rep+' REP':blocked?money(w.price)+' REQUIRED':'BUY & EQUIP · '+money(w.price)}</button>
+    ${fitButton(w,equipped,offer)}
+    ${rightOption?`<button type="button" data-equip-right="${w.id}" ${disabled?'disabled':''}>${equipped?'MOVE TO RIGHT HAND':offer.free?'EQUIP RIGHT HAND':'BUY FOR RIGHT HAND'}</button>`:''}
    </div>
   </article>`;
 }
 function shieldCard(u,shield){
- const equipped=u.shield===shield.id,owned=save.owned.includes(shield.id),blocked=!owned&&save.credits<shield.price;
+ const equipped=u.shield===shield.id;
  return `<article class="armory-card${equipped?' active':''}" data-shield-card="${shield.id}" tabindex="-1">
   <div class="armory-card-head"><span class="eyebrow">${shield.type}</span>${infoTip(shield.name,shield.desc+' '+SHIELD_HELP)}</div>
   <h3>${shield.name}</h3>
   ${equipmentPicture('shield',shield.id)}
   <dl><div><dt>BLOCK</dt><dd>Always</dd></div><div><dt>ARM DMG</dt><dd>−${shieldPercent(shield)}</dd></div><div><dt>AP</dt><dd>0</dd></div></dl>
   <div class="armory-card-foot"><span class="armory-trait">LEFT HAND</span>
-   <button type="button" data-equip="${shield.id}" aria-pressed="${equipped}" ${equipped||blocked?'disabled':''}>${equipped?'EQUIPPED':owned?'EQUIP':blocked?money(shield.price)+' REQUIRED':'BUY & EQUIP · '+money(shield.price)}</button>
+   ${fitButton(shield,equipped,equipmentOffer(shield.id))}
    ${equipped?'<button class="remove-melee" id="remove-shield" type="button">UNEQUIP</button>':''}
   </div>
  </article>`;
 }
 function workshopArmory(u,training){
- const owned=RANGED.concat(MELEE).filter(w=>save.owned.includes(w.id)).length;
- const shield=equippedShield(u),mounted=[weapon(u.weapon),shield||meleeWeapon(u)];
+ const owned=save.owned.length;
+ const shield=equippedShield(u),rack=shoulderWeapon(u);
+ const mounted=[u.meleeHand==='right'?meleeWeapon(u):launcherId(u.weapon)||!u.weapon?null:weapon(u.weapon),shield||(!u.meleeHand?meleeWeapon(u):null)];
+ if(rack)mounted.push(rack);
  const limits={assault:'UNDER 6 TILES',strike:'6+ TILES',melee:'ADJACENT',shields:'AUTO-BLOCK'};
  const guarding=armoryGroup==='shields';
- const cards=armoryOptions[armoryGroup].map(w=>guarding?shieldCard(u,w):armoryCard(u,w,training)).join('');
+ const cards=armoryOptions[armoryGroup].filter(w=>FRAMES[pilotFrame(selected)].native!=='cicada'||!launcherId(w.id)).map(w=>guarding?shieldCard(u,w):armoryCard(u,w,training)).join('');
  return `<section class="workshop-armory" aria-label="Company armory">
-  <div class="armory-title"><div><span class="eyebrow">COMPANY ARMORY</span><h2>Weapons</h2></div><span class="tag">${owned} / ${RANGED.length+MELEE.length} OWNED</span></div>
-  <div class="armory-mounted" aria-label="Equipped loadout">${mounted.map((w,index)=>`<div><span class="eyebrow">${index?'LEFT HAND / '+(shield?'SHIELD':'MELEE'):'PRIMARY / FIRE'}</span>
+  <div class="armory-title"><div><span class="eyebrow">COMPANY ARMORY</span><h2>Weapons</h2></div><span class="tag">${owned} ITEMS</span></div>
+  <div class="armory-mounted" aria-label="Equipped loadout">${mounted.map((w,index)=>`<div><span class="eyebrow">${index===2?'SHOULDER / MISSILES':index?'LEFT HAND / '+(shield?'SHIELD':'MELEE'):u.meleeHand==='right'?'RIGHT HAND / MELEE':'RIGHT HAND / FIRE'}</span>
    <b>${w?w.name:'Free hand'}</b><small>${w&&w===shield?'Auto-block · −'+shieldPercent(w)+' arm damage':w?volleyBudget(w,w.damage)+(w.burst?' MAX DMG · ':' DMG · ')+armoryReach(w,training)+' · '+weaponAP(w,training)+' AP':'5–10 DMG · Adjacent counter'}</small>
-   ${index&&w&&!shield?'<button class="remove-melee" id="remove-melee" type="button">UNEQUIP</button>':''}</div>`).join('')}</div>
+   ${w&&w.id===u.melee&&!w.builtIn?'<button class="remove-melee" id="remove-melee" type="button">UNEQUIP</button>':index===2&&!w.builtIn?'<button class="remove-melee" id="remove-shoulder" type="button">UNEQUIP</button>':!index&&w&&!w.melee?'<button class="remove-melee" id="remove-primary" type="button">UNEQUIP</button>':''}</div>`).join('')}</div>
   <div class="armory-class-tabs" aria-label="Weapon classes">${Object.entries(ARMORY_CLASSES).map(([key,label])=>`<button type="button" data-armory-class="${key}" aria-pressed="${armoryGroup===key}">
    <b>${label} <span>${armoryOptions[key].length}</span></b><small>${limits[key]}</small>
   </button>`).join('')}</div>
-  <div class="inline-help armory-help"><small>${guarding?'ALL HITS → LEFT ARM':'BASE DAMAGE · TRAINED REACH & AP'}</small>${guarding?infoTip('shield interception',SHIELD_HELP):infoTip('armory classes','Strike weapons start at 6 tiles of base range. Assault weapons have shorter base range. Melee uses the left hand at adjacency. Equipment unlocks are shared by the company.')}<button type="button" id="armory-preview" class="armory-jump">MECH PREVIEW ↓</button></div>
+  <div class="inline-help armory-help"><small>${guarding?'ALL HITS → LEFT ARM':'BASE DAMAGE · TRAINED REACH & AP'}</small>${guarding?infoTip('shield interception',SHIELD_HELP):infoTip('armory classes','Strike weapons start at 6 tiles of base range. Assault weapons have shorter base range. Each fitted weapon uses one inventory copy. Right-hand melee replaces that hand’s gun and leaves the left hand free for a shield. Missile launchers use the shoulder.')}<button type="button" id="armory-preview" class="armory-jump">MECH PREVIEW ↓</button></div>
   <div class="armory-grid${guarding?' armory-shields':''}" aria-label="${guarding?'Shields':ARMORY_CLASSES[armoryGroup]+' weapons'}">${cards}</div>
  </section>`;
 }
-function equipWeapon(id){
+function keepShoulder(hull){
+ if(launcherId(hull.weapon)){hull.shoulder??=hull.weapon;hull.weapon=null;}
+}
+function equipWeapon(id,hand){
  const shield=shieldItem(id),w=shield||WEAPONS.find(entry=>entry.id===id),frame=pilotFrame(selected),u=save.units[selected];
- if(battle||!w||w.builtIn||FRAMES[frame].fixedWeapons||(shield?!canFitShield(frame):breachLoadout(frame)?id!=='cleaver'&&!w.shoulder:FRAMES[frame].native||w.shoulder))return;
- const slot=shield?'shield':armorySlot(w);
- if(!save.owned.includes(id)&&u[slot]!==id){
-  if(save.rep<(w.rep??0))return toast('Requires '+w.rep+' reputation');
-  if(!purchaseWeapon(id,w.price))return toast('Insufficient credits');
+ if(battle||!w||w.builtIn||!(openHands(frame)||breachLoadout(frame)||fixedPrimaryOptions(frame).includes(id)||fixedMeleeOption(frame)===id)||
+    (FRAMES[frame].native==='cicada'&&launcherId(id))||
+    (shield?!canFitShield(frame):breachLoadout(frame)&&!['cleaver','missile','vesper-shoulder'].includes(id)))return false;
+ const slot=shield?'shield':armorySlot(w),current=shield?u.shield:slotItem(u,w);
+ const same=itemId(current)===itemId(id);
+ if(same&&(!w.melee||hand!=='right'||u.meleeHand==='right'))return false;
+ if(shield&&u.melee&&breachLoadout(frame))return toast('Unequip the left-hand cleaver first');
+ if(w.melee&&u.shield&&breachLoadout(frame))return toast('Unequip the left-hand shield first');
+ const offer=equipmentOffer(id);
+ if(!same&&!offer.free){
+  if(offer.reason)return toast(offer.reason);
+  if(!purchaseWeapon(id,offer.price))return false;
  }
- if(shield)delete u.melee;
- if(w.melee)delete u.shield;
+ if(openHands(frame)){
+  keepShoulder(u);
+  if(shield&&u.melee==='pulse-bash')delete u.melee;
+  if((shield&&u.melee)||(w.melee&&(u.shield||hand==='right'))){u.meleeHand='right';u.weapon=null;}
+  if(slot==='weapon'&&u.meleeHand==='right'){delete u.melee;delete u.meleeHand;}
+ }
  u[slot]=id;persist();refreshArmory(`[data-${shield?'shield':'weapon'}-card="${id}"]`);toast(w.name+' equipped');
+ return true;
+}
+function fixedMeleeOption(frame){return FRAMES[frame].fixedWeapons&&equipmentItem(FRAMES[frame].melee)?FRAMES[frame].melee:null;}
+function fixedPrimaryOptions(frame){
+ if(FRAMES[frame].captureOnly)return INFANTRY_PRIMARIES;
+ return FRAMES[frame].fixedWeapons&&frame!==REAVER_FRAME&&equipmentItem(FRAMES[frame].weapon)?[FRAMES[frame].weapon]:[];
 }
 const hullSlot=frame=>LANCE_SLOTS.findIndex(i=>pilotFrame(i)===frame);
 const hullOwned=frame=>hullSlot(frame)>=0||Boolean(save.reserve?.[frame]);
-const hullOnMarket=frame=>playerHull(frame)&&!FRAMES[frame].salvageOnly&&FRAMES[frame].cost>0&&!hullOwned(frame);
+const hullOnMarket=frame=>playerHull(frame)&&!FRAMES[frame].salvageOnly&&!FRAMES[frame].captureOnly&&FRAMES[frame].cost>0&&!hullOwned(frame);
 const rebuildPrice=frame=>Math.max(400,Math.round((FRAMES[frame].cost??1500)*.35/50)*50);
 const scrapPrice=frame=>Math.round(rebuildPrice(frame)*.45/25)*25;
 function acquireHull(frame,salvaged=false,localPort=null){
- if(battle||!playerHull(frame)||hullOwned(frame)||(salvaged?(!salvageableHull(frame)||!save.salvage?.[frame]):!hullOnMarket(frame)))return false;
+ const intact=salvaged&&Boolean(save.captured?.[frame]);
+ if(battle||!playerHull(frame)||hullOwned(frame)||(salvaged?!intact&&(!salvageableHull(frame)||!save.salvage?.[frame]):!hullOnMarket(frame)))return false;
  if(localPort!==null&&(salvaged||!canUsePort(localPort)||!portStock(localPort)?.frames.includes(frame)))return false;
- const price=salvaged?rebuildPrice(frame):localPort===null?FRAMES[frame].cost:portStockPrice(FRAMES[frame].cost,localPort);
+ const price=intact?0:salvaged?rebuildPrice(frame):localPort===null?FRAMES[frame].cost:portStockPrice(FRAMES[frame].cost,localPort);
  if(save.credits<price)return false;
- const hull={...stockHull(frame),condition:salvaged?rebuildIntegrity():100};
+ const hull={...stockHull(frame),condition:salvaged&&!intact?rebuildIntegrity():100};
+ // Captured hulls keep their integrated systems. Portable gear was awarded separately.
+ if(intact){
+  if(openHands(frame))keepShoulder(hull);
+  for(const slot of ['weapon','melee','shoulder']){
+   if(slot==='weapon'&&frame===REAVER_FRAME)continue;
+   if(equipmentItem(hull[slot])&&availableCopies(hull[slot])<=0)hull[slot]=slot==='weapon'?null:undefined;
+  }
+ }
  (save.reserve??={})[frame]=hull;
  save.credits-=price;
- if(salvaged)takeSalvage(frame);
- for(const id of [hull.weapon,hull.melee])if(id&&!weapon(id).builtIn&&!save.owned.includes(id))save.owned.push(id);
+ if(salvaged)takeSalvage(frame,intact);
+ if(!intact)save.owned.push(...portableItems(hull,frame));
  persist();return true;
 }
-function takeSalvage(frame){
- if(--save.salvage[frame]===0)delete save.salvage[frame];
+function takeSalvage(frame,intact=false){
+ const stock=intact?save.captured:save.salvage;
+ if(--stock[frame]===0)delete stock[frame];
 }
 function recycleHullBody(frame){
- if(battle||!salvageableHull(frame)||!save.salvage?.[frame])return false;
- takeSalvage(frame);save.credits+=scrapPrice(frame);persist();return true;
+ const intact=Boolean(save.captured?.[frame]);
+ if(battle||!intact&&(!salvageableHull(frame)||!save.salvage?.[frame]))return false;
+ takeSalvage(frame,intact);save.credits+=scrapPrice(frame);persist();return true;
 }
 function workshopTabs(){
- const counts={assigned:3,storage:Object.keys(save.reserve??{}).length,market:FRAMES.filter((_,i)=>hullOnMarket(i)).length,salvage:Object.values(save.salvage??{}).reduce((sum,n)=>sum+n,0)};
+ const counts={assigned:3,storage:Object.keys(save.reserve??{}).length,market:FRAMES.filter((_,i)=>hullOnMarket(i)).length,salvage:[...Object.values(save.salvage??{}),...Object.values(save.captured??{})].reduce((sum,n)=>sum+n,0)};
  return `<div class="reference-tabs bay-tabs" aria-label="Workshop bays">${Object.entries(counts).map(([view,count])=>`<button type="button" data-bay="${view}" aria-pressed="${workshopView===view}">${view} <b>${count}</b></button>`).join('')}</div>`;
 }
 function chassisAssignments(i,training){
  const assigned=pilotFrame(i),view=workshopView;
  const choices=FRAMES.map((frame,index)=>{
   if(!playerHull(index))return '';
-  const slot=hullSlot(index),reserve=save.reserve?.[index],bodies=save.salvage?.[index]??0;
+  const slot=hullSlot(index),reserve=save.reserve?.[index],intact=save.captured?.[index]??0;
+  const bodies=(salvageableHull(index)?save.salvage?.[index]??0:0)+intact;
   if(view==='assigned'&&slot<0||view==='storage'&&!reserve||view==='market'&&!hullOnMarket(index)||view==='salvage'&&!bodies)return '';
   const salvaged=view==='salvage',hull=salvaged?stockHull(index):slot>=0?save.units[slot]:reserve??stockHull(index);
   const {body,right,legs}=chassisParts(frame,hull,training);
@@ -1427,14 +1514,14 @@ function chassisAssignments(i,training){
   return `<article class="bay-card"${view==='storage'?` data-stored-hull-card="${index}" tabindex="-1" aria-label="${frame.name}"`:''}>
    <img ${chassisPicture(index,hull,1)} alt="" loading="lazy">
    <span class="eyebrow">${frame.model} / ${frame.role}</span><h3>${frame.name}</h3>
-   <p>${salvaged?bodies+' recovered '+(bodies===1?'body':'bodies')+' · '+rebuildIntegrity()+'% rebuilt':hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
+   <p>${salvaged?intact?intact+' intact · '+bodies+' recovered':bodies+' recovered '+(bodies===1?'body':'bodies')+' · '+rebuildIntegrity()+'% rebuilt':hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
    <dl><div><dt>Free move</dt><dd>${chassisMobility(frame,false,training)}</dd></div><div><dt>Armor</dt><dd>${chassisArmor(frame,hull,training)}</dd></div><div><dt>Body</dt><dd>${body}</dd></div><div><dt>Each arm</dt><dd>${right}</dd></div><div><dt>Legs</dt><dd>${legs}</dd></div><div><dt>Fire AP</dt><dd>${weaponAP(primary,training)}</dd></div></dl>
    <small>${primary.name} · ${weaponRange(primary,training)} tiles</small>
    <small>${shield?shield.name+' · −'+shieldPercent(shield)+' arm damage':melee?melee.name+' · '+weaponAP(melee,training)+' AP':'No melee'}</small>
    <small>Counter · ${counterSummary(primary,melee,training,shield)} · 0 AP</small>
    ${frame.jumpjet?'<small>Jumpjet · '+JUMPJET_RANGE+' tiles / '+JUMPJET_AP+' AP · once per sortie</small>':''}
    ${frame.dodge?'<small>Dodge · '+Math.round(frame.dodge*100)+'% per incoming round or shell</small>':''}
-   <div class="bay-actions">${salvaged?`<button data-rebuild="${index}" ${hullOwned(index)||save.credits<rebuildPrice(index)?'disabled':''}>${hullOwned(index)?'HULL OWNED':'REBUILD · '+money(rebuildPrice(index))}</button><button data-recycle="${index}">RECYCLE · +${money(scrapPrice(index))}</button>`:view==='market'?`<button data-buy-hull="${index}" ${save.credits<frame.cost?'disabled':''}>BUY · ${money(frame.cost)}</button>`:`<button data-chassis="${index}" aria-pressed="${index===assigned}" ${index===assigned?'disabled':''}>${index===assigned?'SELECTED':slot>=0?'SWAP WITH '+pilotProfile(slot).call:'ASSIGN TO '+pilotProfile(i).call}</button>`}</div>
+   <div class="bay-actions">${salvaged?`<button data-rebuild="${index}" ${hullOwned(index)||!intact&&save.credits<rebuildPrice(index)?'disabled':''}>${hullOwned(index)?'HULL OWNED':intact?'RECOVER INTACT':'REBUILD · '+money(rebuildPrice(index))}</button><button data-recycle="${index}">RECYCLE · +${money(scrapPrice(index))}</button>`:view==='market'?`<button data-buy-hull="${index}" ${save.credits<frame.cost?'disabled':''}>BUY · ${money(frame.cost)}</button>`:`<button data-chassis="${index}" aria-pressed="${index===assigned}" ${index===assigned?'disabled':''}>${index===assigned?'SELECTED':slot>=0?'SWAP WITH '+pilotProfile(slot).call:'ASSIGN TO '+pilotProfile(i).call}</button>`}</div>
    ${view==='storage'&&hangarLevel('fabrication')&&hull.condition<patchLimit()?`<button data-patch-storage="${index}">FIELD PATCH · ${patchLimit()}%</button>`:''}
   </article>`;
  }).join('');
@@ -1456,15 +1543,13 @@ function assignChassis(i,frame,allowSwap=false){
  const cost=purchase?FRAMES[frame].cost:0;
  if(save.credits<cost)return false;
  const reserve=save.reserve??={};
- const hull=({weapon,melee,shoulder,shield,paintFinish,paint,trim,condition,upgrade})=>({weapon,melee,shoulder,shield,paintFinish,paint,trim,condition,upgrade});
+ const hull=({weapon,melee,meleeHand,shoulder,shield,paintFinish,paint,trim,condition,upgrade})=>({weapon,melee,meleeHand,shoulder,shield,paintFinish,paint,trim,condition,upgrade});
  const next=other>=0?hull(save.units[other]):reserve[frame]||stockHull(frame);
  if(other>=0){
    save.units[other]={...save.units[other],...hull(u),frame:previous};
  }else{
   reserve[previous]=hull(u);delete reserve[frame];save.credits-=cost;
-  if(cost)for(const id of [next.weapon,next.melee]){
-   if(id&&!weapon(id).builtIn&&!save.owned.includes(id))save.owned.push(id);
-  }
+  if(purchase)save.owned.push(...portableItems(next,frame));
  }
   save.units[i]={...u,...hull(next),frame};
  persist();
@@ -1472,8 +1557,13 @@ function assignChassis(i,frame,allowSwap=false){
 }
 function builtInLoadout(u,training,frame){
  const loadout={...u,frame};
- const fixed=[unitWeapon(loadout),!breachLoadout(frame)&&meleeWeapon(loadout)].filter(Boolean).map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w.melee&&w.hand!=='right'?'LEFT HAND':'PRIMARY'} / ${ARMORY_CLASSES[armoryClass(w)]}</span>${infoTip(w.name,w.desc||'Factory weapon.')}</div><h3>${w.name}</h3><small>${w.damage} BASE DMG / ${armoryReach(w,training)} / ${weaponAP(w,training)} AP</small></article>`).join('');
- if(!breachLoadout(frame))return fixed;
+ const fixed=[unitWeapon(loadout),!breachLoadout(frame)&&meleeWeapon(loadout)].filter(w=>w&&w!==EMPTY_HAND).map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w.melee&&w.hand!=='right'?'LEFT HAND':'PRIMARY'} / ${ARMORY_CLASSES[armoryClass(w)]}</span>${infoTip(w.name,w.desc||'Factory weapon.')}</div><h3>${w.name}</h3><small>${w.damage} BASE DMG / ${armoryReach(w,training)} / ${weaponAP(w,training)} AP</small></article>`).join('');
+ if(!breachLoadout(frame)){
+  const refits=[...fixedPrimaryOptions(frame),fixedMeleeOption(frame)].filter(Boolean);
+  return fixed+(refits.length?'<div class="armory-grid">'+refits.map(id=>armoryCard(u,weapon(id),training)).join('')+'</div>':'')+
+   (equipmentItem(u.weapon)&&fixedPrimaryOptions(frame).length?'<button class="remove-melee" id="remove-primary" type="button">UNEQUIP PRIMARY</button>':'')+
+   (u.melee&&fixedMeleeOption(frame)?'<button class="remove-melee" id="remove-melee" type="button">UNEQUIP MELEE</button>':'');
+ }
  return fixed+`<div class="armory-grid armory-kits">
   <div><h3 class="loadout-slot">LEFT HAND / MELEE</h3>${armoryCard(u,weapon('cleaver'),training)}
    ${u.melee?'<button class="remove-melee" id="remove-melee" type="button">UNEQUIP CLEAVER</button>':''}</div>
@@ -2230,10 +2320,10 @@ function render(){
   <details class="workshop-disclosure" data-workshop-detail="paint" ${bindWorkshop.disclosures?.paint?'open':''}><summary>Paint</summary>${workshopPaint(u)}</details>
   <details class="workshop-disclosure" data-workshop-detail="trials" ${bindWorkshop.disclosures?.trials?'open':''}><summary>Reinforcement & trials</summary><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button><p class="note">+25 BODY HP · +2 ARMOR PER MK</p>${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}<a class="rig-bench-link" href="?bench=rig&amp;frame=${frame}">OPEN RIG BENCH</a><a class="rig-bench-link" href="?lion=cleaver">LION WEAPONS TRIAL</a></details>
   </div></section>
-  ${f.native||f.fixedWeapons?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
+  ${!openHands(frame)?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
   </div>
   <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="compare" ${bindWorkshop.disclosures?.compare?'open':''}><summary>Compare chassis</summary>${chassisAssignments(selected,training)}</details>
-  <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}<button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button></details>`:chassisAssignments(selected,training)}</div>`;
+  <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}${MECH_SIGNATURES[frame]?`<button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button>`:''}</details>`:chassisAssignments(selected,training)}</div>`;
   if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY / PILOTS</div><h1>HUMAN AT THE CORE.</h1><div class="company-context" role="group" aria-label="Company services"><button data-page="inn">Hiring Desk</button><button data-page="career">Career Record</button></div></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
    <div class="grid">${LANCE_SLOTS.map(i=>pilotCard(pilotClass(i),save.units[i],trainingEffects(i),FRAMES[pilotFrame(i)].name,`id="train-pilot-${i}" data-train-pilot="${i}"`,trainingPoints(i))).join('')}
    ${dutyRoster().map(id=>{
@@ -2347,19 +2437,22 @@ window.IronVowHangarNavigation=Object.freeze({
 function bind(){
  document.querySelectorAll('[data-primary]').forEach(button=>button.onclick=()=>navigatePrimary(button.dataset.primary));
  if($('#journal-back'))$('#journal-back').onclick=returnFromJournal;
- document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='journal'){openJournal();return;}journalOrigin=null;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}if(destination==='contracts')contractPortSelection=companyPort();page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();overworldSelection=null;persist();closeModal();render()}}]);
+ document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='journal'){openJournal();return;}journalOrigin=null;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}if(destination==='contracts')contractPortSelection=companyPort();page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-equip-right]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equipRight,'right'));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();overworldSelection=null;persist();closeModal();render()}}]);
  $('#attack-camera').onclick=()=>{attackCameraEnabled=!attackCameraEnabled;try{localStorage.setItem('iron-vow-attack-camera',attackCameraEnabled?'on':'off')}catch{}render()};
  }}
 function validHull(u,frame,owned=[]){
  const f=FRAMES[frame];
  if(!u||!playerHull(frame))return false;
- const slotValid=breachLoadout(frame)?(u.shoulder==null||u.shoulder==='vesper-shoulder'&&owned.includes(u.shoulder)):
-  u.shoulder==null;
- const meleeValid=breachLoadout(frame)?(u.melee==null||frame===3&&u.melee==='breach-gauntlet'||u.melee==='cleaver'&&owned.includes(u.melee)):
-  u.melee===f.melee;
- const shieldValid=u.shield==null||canFitShield(frame)&&u.melee==null&&shieldItem(u.shield)&&owned.includes(u.shield);
- return shieldValid&&slotValid&&(f.native||f.fixedWeapons?u.weapon===f.weapon&&meleeValid:
-  RANGED.some(w=>w.id===u.weapon)&&(u.melee==null||MELEE.some(w=>w.id===u.melee)))&&
+ const modular=openHands(frame);
+ const slotValid=u.shoulder==null||modular&&(f.native==='cicada'?u.shoulder==='locust':['missile','cerberus','vesper-shoulder'].includes(u.shoulder))||breachLoadout(frame)&&['vesper-shoulder','missile'].includes(u.shoulder);
+ const meleeValid=modular?(u.melee==null||MELEE.some(w=>w.id===u.melee)||f.native==='cicada'&&u.melee==='pulse-bash'):
+  breachLoadout(frame)?(u.melee==null||frame===3&&u.melee==='breach-gauntlet'||u.melee==='cleaver'&&owned.some(id=>itemId(id)==='cleaver')):u.melee===f.melee||u.melee==null&&Boolean(fixedMeleeOption(frame));
+ const rightMelee=u.meleeHand==='right';
+ const handValid=u.meleeHand==null||rightMelee&&modular&&MELEE.some(w=>w.id===u.melee)&&(u.weapon===null||launcherId(u.weapon));
+ const shieldValid=u.shield==null||canFitShield(frame)&&(u.melee==null||rightMelee)&&shieldItem(u.shield)&&owned.includes(u.shield);
+ const rangedValid=modular?(u.weapon===null||RANGED.some(w=>w.id===u.weapon)||f.native==='cicada'&&u.weapon==='locust'):
+  f.native||f.fixedWeapons?u.weapon===f.weapon||fixedPrimaryOptions(frame).length>0&&(u.weapon===null||fixedPrimaryOptions(frame).includes(u.weapon)):RANGED.some(w=>w.id===u.weapon);
+ return shieldValid&&slotValid&&meleeValid&&handValid&&rangedValid&&
   (u.paintFinish===undefined||fieldPaint.valid(u.paintFinish))&&(u.paint==null||validPaint(u.paint))&&
   (u.trim==null||!!u.trim&&typeof u.trim==='object'&&['s','a'].every(k=>u.trim[k]==null||validPaint(u.trim[k])))&&Number.isFinite(u.condition)&&u.condition>=0&&u.condition<=100&&
   Number.isInteger(u.upgrade)&&u.upgrade>=0&&u.upgrade<=3;
@@ -2391,11 +2484,13 @@ function validSave(s){
  if(s.salvage!==undefined&&!validRecord(s.salvage,([id,count])=>String(Number(id))===id&&salvageableHull(Number(id))&&Number.isSafeInteger(count)&&count>0))return false;
  if(s.dispatch!==undefined&&(!s.dispatch||s.dispatch.day!==s.day||!Array.isArray(s.dispatch.sizes)||s.dispatch.sizes.length!==CONTRACTS.length||!s.dispatch.sizes.every(n=>Number.isInteger(n)&&n>=1&&n<=3)))return false;
  if(s.mechMastery!==undefined&&!validMechMastery(s,pilots))return false;
- if(s.reserve===undefined)return true;
- return !!s.reserve&&typeof s.reserve==='object'&&!Array.isArray(s.reserve)&&Object.entries(s.reserve).every(([key,u])=>{
+ if(s.itemInventory!==undefined&&s.itemInventory!==true)return false;
+ if(s.captured!==undefined&&!validRecord(s.captured,([id,count])=>String(Number(id))===id&&playerHull(Number(id))&&Number.isSafeInteger(count)&&count>0))return false;
+ const reserveValid=s.reserve===undefined||!!s.reserve&&typeof s.reserve==='object'&&!Array.isArray(s.reserve)&&Object.entries(s.reserve).every(([key,u])=>{
   const i=Number(key);
   return Number.isInteger(i)&&String(i)===key&&!frames.has(i)&&validHull(u,i,s.owned);
  });
+ return reserveValid&&(!s.itemInventory||fittedItems(s).every(id=>availableCopies(id,s)>=0));
 }
 function validRecord(record,check){return Boolean(record&&typeof record==='object'&&!Array.isArray(record)&&Object.entries(record).every(check))}
 function validMechMastery(career,pilots){
@@ -2441,6 +2536,7 @@ function validHangar(career){
 function loadCareer(record){
  if(record?.version!==2){
   if(!validSave(record))return null;
+  migrateEquipment(record);
   const gatecrasher=record.units.find((_,i)=>pilotFrame(i,record)===3)??record.reserve?.[3];
   if(gatecrasher?.melee==='breach-gauntlet')delete gatecrasher.melee;
   return restoreTraining(record);
@@ -2467,8 +2563,7 @@ function loadCareer(record){
  const {day,credits,rep,wins,kills,history,owned}=record;
  const migrated={version:1,day,credits,rep,wins,kills,history,owned,units,reserve};
  if(!validSave(migrated))return null;
- migrated.owned=[...new Set([...owned,...hulls.flatMap(h=>[h.weapon,h.melee]).filter(Boolean)])];
- return migrated;
+ return migrateEquipment(migrated);
 }
 function importCareer(record){
  if(battle)throw Error('A sortie is active');
@@ -2488,7 +2583,7 @@ function quickOrders(){
  const topics=[
   ['arrows-out-cardinal','Move','Free tiles, then +1 tile for '+EXTRA_MOVE_AP+' AP',MOVE_HELP+' Cross terraces on foot. Obstacles block movement and give cover to adjacent units. Drag to pan, or use the map and zoom controls.'],
   ['crosshair','Fire','Pick a hostile and fire','Every round that hits rolls its own location: about 55% body, 25% arms, 20% legs and a small chance of the cockpit. Destroyed parts are skipped. High ground gives direct fire +10 aim. Ridges block guns, while missiles arc over them. Body or cockpit loss disables a mech. Arms and legs affect weapons, armor and movement.'],
-  ['crosshair','Strike','Adjacent ground targets','Equip melee in the Workshop. Strike needs a working left arm. Gunships require ranged attacks and can cross cover. Missiles ignore cover.'],
+  ['crosshair','Strike','Adjacent ground targets','Equip melee in the Workshop. Strike needs a working arm on the equipped side. Gunships require ranged attacks and can cross cover. Missiles ignore cover.'],
   ['shield-chevron','Brace','1–2 AP · blocks 50% or more','Brace lasts until your next turn. Training can reduce the cost. Pilot skills can be used once per battle.'],
   ['shield-chevron','Shield','0 AP · all hits go to the left arm',SHIELD_HELP],
   ['arrow-u-up-left','Counter','0 AP · 1 per round',COUNTER_HELP],
@@ -2562,7 +2657,7 @@ function makeUnit(i,team,x,z){
  if(ally&&woundDays(pilotId(pilot)))hp.pilot=Math.ceil(max.pilot*.65);
  const [paint,secondary]=f.fixedLivery?[null]:ally?[u.paint??null]:frame===REAVER_FRAME||frame===BULWARK_FRAME?[null]:hostileLivery(frame,i);
  const melee=!ally&&frame===AERO_FRAME?battle.aeroMelee:u.melee??null;
- return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee,shoulder:u.shoulder,shield:u.shield,
+ return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee,meleeHand:u.meleeHand,shoulder:u.shoulder,shield:u.shield,
   paintFinish:ally?u.paintFinish:'block',paint,trim:ally&&!f.fixedLivery?u.trim:secondary?{s:secondary}:null,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
 }
 const sortiePilot=u=>u.index===AUX_SLOT?save.reservePilots[battle.aux.pilotId]:save.units[u.index];
@@ -2822,7 +2917,7 @@ function renderBattle(){
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
   <div class="hint"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':''):'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH'}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="Right shoulder Vesper MRL">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>FIRE <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
   refreshTargetPortrait();
   bindTacticalMap();
@@ -3018,7 +3113,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const {paid,charged}=spendAttack(a,w,part,reaction);
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
- const shoulder=w===shoulderWeapon(a),clip=w.melee?'strike':'fire';
+ const shoulder=launcherId(w.id)&&w.id!=='locust',clip=w.melee?'strike':'fire';
  const plantedCleaver=breachLoadout(a.frame)&&w.id==='cleaver';
  const native=!lionStrike&&!shoulder&&!a.kind&&FRAMES[a.frame].native?NATIVE_ATTACK_TIMING[clip]:null;
  const plantedBastion=a.brace&&bastionRig(a);
@@ -3026,7 +3121,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
  // Under the attack camera the step-up and the raised-gun hold get a readable beat (CINEMATIC_PACE); field and reaction fire keep theirs.
  const paced=Boolean(sequence&&!sequence.skipped&&!reaction&&!reducedMotion);
- const basePrime=!lionStrike&&!aeroStrike&&!w.scout&&!power&&!shoulder&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
+ const basePrime=!lionStrike&&!aeroStrike&&!w.scout&&!power&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
   (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
  const primeDuration=basePrime*(paced?CINEMATIC_PACE.step:1);
  const cameraWindup=!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction;
@@ -3199,7 +3294,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(ownsCamera&&sequence)closeAttackCamera(sequence);
  }
 }
-const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
+const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
 const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound}=window.IRON_VOW_SIM.createCombatTransactions({
  getBattle:()=>battle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
  attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
@@ -3208,10 +3303,27 @@ const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recor
  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,roundAP,resetMovement,highGroundAim
 });
 function engage(attacker,defender,part,weapon){if(!attacker?.alive||!defender?.alive)return Promise.resolve(null);return resolveExchange(attacker,defender,part,weapon)}
+function surrenderEligible(u,opponents){
+ if(u.kind||!u.alive)return false;
+ if(u.hp.body/u.max.body<=.25||u.hp.pilot/u.max.pilot<=.25)return true;
+ const range=[unitWeapon(u),shoulderWeapon(u)].some(w=>w&&!w.melee&&workingWeapon(u,w));
+ const strike=[meleeWeapon(u),unitWeapon(u)].find(w=>w?.melee&&workingWeapon(u,w));
+ if(range)return false;
+ return !strike||u.hp.legs<=0&&!opponents.some(target=>distance(u,target)===1&&!attackObstruction(u,target,strike));
+}
+// A saved enemy phase keeps the same roll after reload.
+let captureRandom=u=>equipmentRoll([save.world?.seed??0,battle.terrainSeed??0,battle.contract.id,save.day,battle.turn,u.index,'surrender'].join('/'))/0x100000000;
+function trySurrender(u,opponents){
+ if(!surrenderEligible(u,opponents)||captureRandom(u)>=.30)return false;
+ u.alive=false;u.surrendered=true;u.downReason='surrender';u.ap=0;
+ addLog(u.name+' surrendered.');
+ effects.push({type:'text',x:u.x,z:u.z,t:1,text:'SURRENDERED'});
+ return true;
+}
 function checkEnd(){if(!battle)return true;if(!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
 const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
- unitWeapon,targetParts,combatRange,launchesMissiles,movementLimit,isArmed,
+ unitWeapon,targetParts,combatRange,launchesMissiles,movementLimit,isArmed,shoulderWeapon,workingWeapon,trySurrender,
  resetMovement:(u)=>resetMovement(u),renderBattle:()=>renderBattle(),
  distance:(a,b)=>distance(a,b),meleeWeapon:(u)=>meleeWeapon(u),scoutWeapon:(u,t)=>scoutWeapon(u,t),
  canUseWeapon:(u,w)=>canUseWeapon(u,w),attackObstruction:(u,t,w)=>attackObstruction(u,t,w),
@@ -3282,8 +3394,20 @@ function finish(win){
  if(battle.lionTrial){battle.busy=false;startLionTrial(current()?.melee??lionTrial);return}
  const b=battle,c=b.contract,promotions=[];
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
+ const surrendered=win?b.units.filter(u=>u.surrendered&&u.team==='enemy'):[];
+ const gear=surrendered.flatMap(u=>portableItems(u));
+ for(const u of surrendered){
+  const captured=save.captured??={};
+  captured[u.frame]=(captured[u.frame]??0)+1;
+ }
+ if(win&&!b.legacy&&!benchWar){
+  const roll=equipmentRoll([save.world?.seed??0,b.terrainSeed??0,save.day,c.id].join('/'));
+  const stock=portStock(b.offer?.port??c.id)?.weapons??[];
+  if(stock.length&&roll%5<2)gear.push(stock[Math.floor(roll/5)%stock.length]);
+ }
+ save.owned.push(...gear);
  const newHull=frame=>!hullOwned(frame)&&!save.salvage?.[frame];
- const recovered=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive&&salvageableHull(u.frame)&&
+ const recovered=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive&&!u.surrendered&&salvageableHull(u.frame)&&
   (b.mechComputers||!FRAMES[u.frame].enemyOnly))
   .sort((a,z)=>Number(newHull(z.frame))-Number(newHull(a.frame))||
    Number(Boolean(FRAMES[z.frame].salvageOnly))-Number(Boolean(FRAMES[a.frame].salvageOnly))||
@@ -3314,13 +3438,13 @@ function finish(win){
  window.IronVowScene?.clear?.();persist();page='career';render();
  const buttons=[{text:'COMPANY RECORD',fn:closeModal},{text:'REPAIR & REFIT',fn:()=>{closeModal();page='workshop';workshopView='assigned';render()}}];
  if(benchWar)buttons.unshift({text:'WAR REPORT',fn:showWarReport});
- if(recovered.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
+ if(recovered.length||surrendered.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
  const points=totalTrainingPoints();
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
  if(online)buttons.push({text:'SHIP DECK',fn:()=>{closeModal();navigateHangarRoute('ship')}});
  if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();navigateHangarRoute('facilities')}});
  modal(win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'The field is yours. Your pilots return with experience and recovered enemy components.':'Your pilots have been recovered. Combat damage persists.'}</p>
-  ${stat('CONTRACT PAYMENT',money(reward))}${c.fixedPay?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
+  ${stat('CONTRACT PAYMENT',money(reward))}${c.fixedPay?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${surrendered.length?stat('INTACT CAPTURES',surrendered.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
   ${costs?stat('CREW WAGES',money(costs.wages))+stat('SHIP UPKEEP',money(costs.ship))+stat('HULL UPKEEP',money(costs.hulls))+
    (costs.arrearsPaid?stat('ARREARS PAID',money(costs.arrearsPaid)):'')+(save.overworld.arrears?stat('OPERATING ARREARS',money(save.overworld.arrears)):'')+
    stat('NET CREDITS',money(pay-costs.paid-costs.arrearsPaid)):''}
@@ -3660,9 +3784,11 @@ function bindWorkshop(){
  if(testRifle)testRifle.onclick=()=>testBastionGrip(false);
  if(testMelee)testMelee.onclick=()=>testBastionGrip(true);
  const remove=$('#remove-melee');
- if(remove)remove.onclick=()=>{delete u.melee;persist();refreshArmory(breachLoadout(pilotFrame(selected))?'[data-equip="cleaver"]':`[data-armory-class="${armoryGroup}"]`);toast('Melee weapon unequipped')};
+ if(remove)remove.onclick=()=>{delete u.melee;delete u.meleeHand;persist();refreshArmory(breachLoadout(pilotFrame(selected))?'[data-equip="cleaver"]':`[data-armory-class="${armoryGroup}"]`);toast('Melee weapon unequipped')};
+ const removePrimary=$('#remove-primary');
+ if(removePrimary)removePrimary.onclick=()=>{u.weapon=null;persist();refreshArmory('[data-armory-class="assault"]');};
  const removeShoulder=$('#remove-shoulder');
- if(removeShoulder)removeShoulder.onclick=()=>{delete u.shoulder;persist();refreshArmory('[data-equip="vesper-shoulder"]');toast('Shoulder pod unequipped')};
+ if(removeShoulder)removeShoulder.onclick=()=>{keepShoulder(u);delete u.shoulder;persist();refreshArmory('[data-equip="vesper-shoulder"]');toast('Shoulder pod unequipped')};
  const removeShield=$('#remove-shield');
  if(removeShield)removeShield.onclick=()=>{
   const id=u.shield;delete u.shield;persist();refreshArmory(`[data-equip="${id}"]`);toast('Shield unequipped');
@@ -3801,9 +3927,9 @@ function animationPose(u,t){
  const motion=weaponMotion(attack?.kind??u.weapon);
  if(!strikeKind&&!reducedMotion)for(const beat of profile.beats)recoil+=dampedImpulse(age-beat,motion==='missile'?32:42,motion==='rail'?12:18);
  const impactAge=t-(u.hitTime??-100),impact=!reducedMotion?dampedImpulse(impactAge,28,11):0;
- const deathAge=u.alive?-1:destructionAge(u,t),death=u.alive||u.downReason==='pilot'?0:reducedMotion?1:clamp01(deathAge/DESTRUCTION.end);
+ const deathAge=u.alive?-1:destructionAge(u,t),death=u.alive||u.downReason==='pilot'||u.surrendered?0:reducedMotion?1:clamp01(deathAge/DESTRUCTION.end);
  const kneel=u.alive?0:reducedMotion?1:smoothRange(.04,DESTRUCTION.kneelEnd,deathAge);
- const explosion=u.alive||u.downReason==='pilot'?0:reducedMotion?1:smoothRange(DESTRUCTION.blast-.02,DESTRUCTION.blast+.15,deathAge);
+ const explosion=u.alive||u.downReason==='pilot'||u.surrendered?0:reducedMotion?1:smoothRange(DESTRUCTION.blast-.02,DESTRUCTION.blast+.15,deathAge);
  const landAge=t-(u.landTime??-100),land=!reducedMotion&&landAge>=0&&landAge<.4?Math.sin(landAge*30)*Math.exp(-landAge*15):0;
  const pose={time:t,strikeKind,strikeProgress,primePhase,primeProgress,phase,cycle,walk,recoil,impact,death,deathAge,kneel,
   explosion,aim:reducedMotion?(u.attack?1:0):aim,land,brace:u.braceBlend??(u.brace?1:0)};
@@ -3841,8 +3967,8 @@ function mechAttachmentPoint(u,part='muzzle',t=clock){
 }
 function freezeAttachment(u,part,t=clock){const p=mechAttachmentPoint(u,part,t),base=project(u.vx,0,u.vz);return{x:u.vx,z:u.vz,ox:(p.x-base.x)/scale,oy:(p.y-base.y)/scale}}
 function shotMuzzle(actor,id,index){
- const alternate=(id==='missile'||id==='cerberus'||ATTACK_PROFILES[id].alternate)&&index%2;
- const shoulder=breachLoadout(actor.frame)&&id==='missile';
+ const alternate=(id==='missile'||id==='cerberus'||ATTACK_PROFILES[id]?.alternate)&&index%2;
+ const shoulder=actor.shoulder&&shoulderWeapon(actor)?.id===id;
  return shoulder?(alternate?'shoulderMuzzle2':'shoulderMuzzle'):(alternate?'muzzle2':'muzzle');
 }
 
@@ -4250,16 +4376,18 @@ window.__ironVow=(()=>{
   skipAttackCamera();closeModal();seed=options.seed??0;ruleRandom=rng(seed);save=fresh();battle=null;effects=[];clock=0;selected=0;page='contracts';
   for(const [i,frame] of (options.frames||[]).entries()){if(!FRAMES[frame]||!save.units[i])throw Error('Invalid scene fixture frame');save.units[i].frame=frame;}
   for(const [i,loadout] of (options.loadouts||[]).entries()){
-   const frame=pilotFrame(i),owned=[...new Set([...save.owned,...[loadout.weapon,loadout.melee,loadout.shield,loadout.shoulder].filter(id=>id&&(shieldItem(id)||!weapon(id).builtIn))])];
+   const frame=pilotFrame(i),owned=[...save.owned,...portableItems(loadout)];
    if(!save.units[i]||!validHull(loadout,frame,owned))throw Error('Invalid sanctioned War loadout');
-   save.owned=owned;Object.assign(save.units[i],loadout);
+   Object.assign(save.units[i],loadout);stockFittedGear(save);
   }
+  stockFittedGear(save);
   deploy(options.contract??1);closeModal();
   if(options.weapons)for(const [i,id] of options.weapons.entries()){
    const u=battle.units.find(u=>u.team==='ally'&&u.index===i),w=WEAPONS.find(w=>w.id===id&&!w.builtIn&&!w.shoulder);
    if(!u||!w)throw Error('Invalid campaign weapon fixture');if(!save.owned.includes(id))save.owned.push(id);
    const saved=save.units[i];if(w.melee){u.melee=saved.melee=id;u.weapon=saved.weapon='rifle';delete u.shield;delete saved.shield;}else u.weapon=saved.weapon=id;
   }
+  stockFittedGear(save);
   return snapshot();
  }
  function snapshot(){

@@ -4,13 +4,16 @@
 const T=root.THREE,V3=root.IronVowFoundryRig.V3,arsenal=root.IronVowProductionArsenal;
 function setup({bone,find,marker,bounds,rig,workshopMounts}){
  const sockets={L:rig.arms.L.so,R:rig.arms.R.so};
- const {fit,dispose}=workshopMounts(sockets);
+ const shoulder=new T.Group();
+ shoulder.position.set(rig.arms.R.sh.position.x,rig.arms.R.sh.position.y+.6,-.35);
+ rig.spine.add(shoulder);
+ const {fit,dispose}=workshopMounts({...sockets,shoulder});
  let pods;
  // The Basilisk generator welds the shells into the spine and leaves a
  // marker at each pod face (tools/authoring/basilisk/build_basilisk.py:410–417).
  if(find('pod.R')&&find('pod.L')){
   const carrier=rig.spine,mount=new T.Group();carrier.add(mount);
-  pods={id:'missile',carrier,mount,muzzle:marker('pod.R',mount,[0,0,1]),muzzle2:marker('pod.L',mount,[0,0,1]),
+  pods={id:'missile',subsystem:'body',carrier,mount,muzzle:marker('pod.R',mount,[0,0,1]),muzzle2:marker('pod.L',mount,[0,0,1]),
    aimPivot:()=>carrier,bounds:()=>bounds('spine')};
  }
  // The source build scripts author ten paired cylinder pivots; keep each
@@ -23,16 +26,25 @@ function setup({bone,find,marker,bounds,rig,workshopMounts}){
  const axis=V3(),delta=new T.Quaternion();
  return {shieldSocket:sockets.L,boundsNames:pods?['spine']:[],
   pose(entry,unit,pose,time,armory){
-   const melee=unit.shield?null:unit.melee,integrated=pods&&unit.weapon==='missile';
-   const hand=fit('R',integrated?null:unit.weapon,armory),gun=integrated?pods:hand,blade=fit('L',melee,armory);
-   if(gun)gun.mount.visible=unit.alive&&unit.hp.right>0;
+   const rackId=unit.shoulder??(['missile','cerberus'].includes(unit.weapon)?unit.weapon:null);
+   const handId=unit.weapon===rackId?null:unit.weapon;
+   const rightMelee=unit.meleeHand==='right',melee=!unit.shield||rightMelee?unit.melee:null;
+   const hand=fit('R',rightMelee?melee:handId,armory),left=fit('L',rightMelee?null:melee,armory);
+   const retail=rackId==='vesper-shoulder'?'missile':rackId;
+   const added=fit('shoulder',pods&&retail==='missile'?null:retail,armory);
+   const rack=pods&&retail==='missile'?pods:added;
+   if(added){added.mount.rotation.x=0;added.subsystem='body';added.aimPivot=()=>added.mount;}
+   if(rack)rack.mount.visible=unit.alive&&unit.hp.body>0;
    if(hand){
-    if(arsenal.isExpansion(hand.id))arsenal.animate(hand,pose);
+    hand.mount.visible=unit.alive&&unit.hp.right>0;
+    if(rightMelee||arsenal.isExpansion(hand.id))arsenal.animate(hand,pose);
     else hand.recoil.position.z=-Math.abs(pose.recoil||0)*.22;
    }
-   if(blade){blade.mount.visible=unit.alive&&unit.hp.left>0;arsenal.animate(blade,pose);}
-   entry.primary=gun;entry.secondary=blade;
-   return Boolean(gun&&(!melee||blade));
+   if(left){left.mount.visible=unit.alive&&unit.hp.left>0;arsenal.animate(left,pose);}
+   entry.shoulderWeapon=rack;
+   entry.primary=(rightMelee?null:hand)??rack;
+   entry.secondary=rightMelee?hand:left;
+   return (!handId||rightMelee||Boolean(hand))&&(!melee||Boolean(entry.secondary))&&(!rackId||Boolean(rack));
   },
   afterSync(){for(const {from,to,rest,axis:restAxis} of pistons){
    const direction=from.parent.worldToLocal(to.getWorldPosition(V3())).sub(from.position).normalize();

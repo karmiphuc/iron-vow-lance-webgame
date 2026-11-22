@@ -295,7 +295,7 @@ function draw(u,t,pose,scope,model,custom){
  m.recoil=world?Math.max(m.recoil,Math.abs(pose.recoil)*.58):Math.abs(pose.recoil)*.58;
  if(melee){
   if(!m.melee||m.melee.action!==u.attack)m.melee={action:u.attack,age:meleeAge,prev:null};
-  m.melee.age=meleeAge;m.melee.side=v2?.meleeSide?.(pose.strikeKind)||'L';m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
+  m.melee.age=meleeAge;m.melee.side=v2?.meleeSide?.(pose.strikeKind)||(u.meleeHand==='right'?'R':'L');m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
  }else m.melee=null;
  v2?.beforeAnimate?.(m,pose.strikeKind||u.melee);
  if(!world){m.s.comp.x=-Math.max(0,pose.land||0)*.23-prime*.14;m.s.arm.x=pose.impact*.75;}
@@ -303,12 +303,20 @@ function draw(u,t,pose,scope,model,custom){
  if(!standardEquipment){
   entry.armed=v2.pose(entry,u,pose,t,armory)!==false&&(!u.shield||Boolean(armory));
  }else if(armory&&!entry.armed){
-  const profile=window.IronVowWeaponFX?.get(u.weapon);
-  if(profile?.socket?.startsWith('shoulder')){
-   const socket=new T.Object3D();socket.name='mount.shoulderR';socket.position.set(m.dims.shX,m.dims.shY+.55,-.25);m.rig.spine.add(socket);entry.primarySocket=socket;
+  const shoulderId=u.shoulder??(['missile','cerberus'].includes(u.weapon)?u.weapon:null);
+  const handId=u.weapon===shoulderId?null:u.weapon;
+  const profile=handId?window.IronVowWeaponFX?.get(handId):null;
+  if(shoulderId){
+   const socket=new T.Object3D();socket.name='mount.shoulderR';socket.position.set(m.dims.shX,m.dims.shY+.55,-.25);m.rig.spine.add(socket);
+   const pod=arsenal.mount(armory,shoulderId==='vesper-shoulder'?'missile':shoulderId,socket);
+   if(pod){
+    pod.mount.rotation.x=0;
+    entry.shoulderWeapon={...pod,carrier:m.rig.spine,subsystem:'body',aimPivot:()=>pod.mount};
+   }
+   if(!handId)entry.primarySocket=socket;
   }
-  entry.primary=arsenal.mount(armory,profile?.asset??u.weapon,entry.primarySocket||m.rig.arms.R.so);
-  entry.secondary=arsenal.mount(armory,u.melee?(window.IronVowWeaponFX?.get(u.melee).asset??u.melee):null,m.rig.arms.L.so);
+  entry.primary=handId?arsenal.mount(armory,profile?.asset??handId,m.rig.arms.R.so):entry.shoulderWeapon;
+  entry.secondary=arsenal.mount(armory,u.melee?(window.IronVowWeaponFX?.get(u.melee).asset??u.melee):null,m.rig.arms[u.meleeHand==='right'?'R':'L'].so);
   if(m.cairn)window.IronVowCairn.fitRifle(entry.primary);
   entry.armed=true;
   if(equipmentScale!==1)for(const weapon of [entry.primary,entry.secondary])weapon?.model.scale.setScalar(equipmentScale);
@@ -326,7 +334,7 @@ function draw(u,t,pose,scope,model,custom){
  if(entry.coat)for(const gear of [entry.primary,entry.secondary,entry.shoulderWeapon,entry.shield]){
   if(gear)entry.coat(gear.mount,gear.ownedMaterials??=[]);
  }
- const shoulderAttack=u.attack?.kind==='missile'&&entry.shoulderWeapon;
+ const shoulderAttack=entry.shoulderWeapon&&(u.attack?.kind===entry.shoulderWeapon.id||u.attack?.kind==='missile'&&u.shoulder==='vesper-shoulder')?entry.shoulderWeapon:null;
  const barrel=shoulderAttack||entry.primary;
  // Both the brace and the carry solve use the equipment fitted for this frame.
  const {primary:fittedGun,secondary:fittedMelee,shield:fittedShield}=entry,{L,R}=m.rig.arms;
@@ -339,7 +347,7 @@ function draw(u,t,pose,scope,model,custom){
  const aimFromArm=barrel?.carrier!==m.rig.spine&&!(barrel&&barrel.mount.parent===entry.primarySocket);
  const playbackRate=world&&step?(u.motion.playbackRate??1):1;
  const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
-  alive:u.alive,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
+  alive:u.alive||u.surrendered,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
   airborne:world?.airborne,artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
   readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
@@ -369,13 +377,14 @@ function draw(u,t,pose,scope,model,custom){
  if(!world&&step)m.cont.position.set(0,0,0);
  m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:barrel||{};
  if(!v2?.nativeShield)arsenal.poseShield(entry.shield,u,face+m.readyShieldTurn);
- if(standardEquipment&&entry.primary){
+ if(standardEquipment&&entry.primary&&entry.primary!==entry.shoulderWeapon){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
   if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
   else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
  }
+ if(standardEquipment&&entry.shoulderWeapon)entry.shoulderWeapon.mount.visible=u.alive&&u.hp.body>0;
  if(standardEquipment&&entry.secondary){
-  entry.secondary.mount.visible=u.alive&&u.hp.left>0;
+  entry.secondary.mount.visible=u.alive&&u.hp[u.meleeHand==='right'?'right':'left']>0;
   arsenal.animate(entry.secondary,pose);
  }
  if(world&&u.alive&&u.hp[barrel?.subsystem||'right']>0&&!melee&&aim>.01){

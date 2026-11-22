@@ -7,6 +7,7 @@ const key='iron-vow-career';
 const raw=readFileSync(join(__dirname,'fixtures','field-paint-career.json'),'utf8');
 const career=JSON.parse(raw);
 const plain=value=>JSON.parse(JSON.stringify(value));
+career.itemInventory=true;career.owned.push('rifle','rifle','blade');
 const sim=simulate({storage:new Map([[key,raw]]),random:()=>0,reducedMotion:true});
 const {run}=sim;
 assert.deepEqual(plain(run('save')),career,'Career reload preserves patterns and custom colors');

@@ -67,7 +67,7 @@ purchase("equipWeapon('cleaver');equipWeapon('vesper-shoulder')");
 assert.equal(purchase("save.units[0].melee==='cleaver'&&save.units[0].shoulder==='vesper-shoulder'"),true);
 assert.equal(purchase("validSave(save)"),true);
 assert.equal(purchase(`(()=>{
- const invalid=JSON.parse(JSON.stringify(save));invalid.owned=invalid.owned.filter(id=>id!=='vesper-shoulder');
+ const invalid=JSON.parse(JSON.stringify(save));invalid.owned=invalid.owned.filter(id=>id!=='missile');
  return validSave(invalid);
 })()`),false);
 purchase("assignChassis(0,0);assignChassis(0,3)");

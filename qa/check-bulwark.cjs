@@ -32,7 +32,7 @@ const cut='aegis-cleave',bash='aegis-bash';
  assert.ok(run('validSave({...save,salvage:{[BULWARK_FRAME]:1}})'));
  const observed=[];
  sim.sandbox.observed=observed;
- run('const engageAegis=engage;engage=(a,t,p,w)=>{if(a.frame===BULWARK_FRAME)observed.push(w.id);return engageAegis(a,t,p,w)}');
+ run('captureRandom=()=>1;const engageAegis=engage;engage=(a,t,p,w)=>{if(a.frame===BULWARK_FRAME)observed.push(w.id);return engageAegis(a,t,p,w)}');
  const arrange=`createBattle(3);{
   const u=${aegis},a=current();
   battle.units=battle.units.filter(x=>x===u||x===a);

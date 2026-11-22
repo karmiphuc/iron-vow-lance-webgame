@@ -13,6 +13,8 @@ const simulate=require('./sim-harness.cjs');
  const renderWorkshop=()=>run("page='workshop';workshopView='assigned';render()");
  const html=()=>sim.node('#ui').innerHTML;
  const equipItem=id=>{
+  // These legacy armory checks exercise bindings independently of port stock.
+  run(`save.owned.push('${id}')`);
   const group=run(`armoryClass(weapon('${id}'))`);
   run(`armoryGroup='${group}';render()`);
   assert.ok(html().includes(`data-weapon-card="${id}"`),id+' is listed in its armory class');

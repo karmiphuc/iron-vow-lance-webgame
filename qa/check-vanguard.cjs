@@ -23,7 +23,7 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  run('save.credits=100000;save.rep=100;workshopView="market"');
  assert.equal(run('hullOnMarket(VANGUARD_FRAME)||acquireHull(VANGUARD_FRAME)||assignChassis(0,VANGUARD_FRAME,true)'),false);
  assert.equal(run('chassisAssignments(0).includes("GRAVEMAW")'),false);
- assert.ok(run('validSave({...save,reserve:{[VANGUARD_FRAME]:stockHull(VANGUARD_FRAME)}})'));
+ assert.ok(run('validSave({...save,owned:[...save.owned,'hailstorm','piledriver'],reserve:{[VANGUARD_FRAME]:stockHull(VANGUARD_FRAME)}})'));
  assert.ok(run('validSave({...save,salvage:{[VANGUARD_FRAME]:1}})'));
 
  for(const upgraded of [false,true]){
