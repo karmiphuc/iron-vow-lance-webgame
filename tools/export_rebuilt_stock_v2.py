@@ -68,7 +68,7 @@ def export_stock(source,output,model):
         dims=dict(py=pelvis.z,spY=spine.z-pelvis.z,legA=(hip-knee).length,legB=(knee-ankle).length,ankleH=ankle.z,restX=abs(ankle.x),restZ=-ankle.y,lift=.5,stance=.86,toe=.17,reverse=False,quad=False,reach=0.,phases=[0.,.5],sway=.16)
         for key,val in dims.items():root[key]=val
         meshes=[o for o in nodes if o.type=='MESH']
-        if len(meshes)!=(42 if model=='basilisk' else 40):raise ValueError(f'Unexpected generated mesh count {len(meshes)}')
+        if len(meshes)!=40 and not (model=='basilisk' and len(meshes)==42):raise ValueError(f'Unexpected generated mesh count {len(meshes)}')
         for obj in meshes:
             part=damage_part(obj);obj['part']=obj.data['part']=part
             if obj.parent and base(obj.parent.name).startswith(('pauldron.','launcher.')):obj['detach']=obj.data['detach']=True

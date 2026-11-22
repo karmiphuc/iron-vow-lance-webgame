@@ -63,9 +63,10 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  assert.equal(run('distance('+vanguard+',current())'),4);
  assert.deepEqual(shotKinds,['hailstorm','hailstorm']);
  run(arrange);
- run(vanguard+'.hp.left='+vanguard+'.max.left;'+vanguard+'.hp.right=0');
+ run(vanguard+'.hp.left='+vanguard+'.max.left;'+vanguard+'.hp.right=0;let surrenderChecks=0;captureRandom=()=>{surrenderChecks++;return .30}');
  shotKinds.length=0;
  await run('endTurn()');
+ assert.equal(run('surrenderChecks'),1,'the damaged weapon arm triggers one surrender roll before the fallback strike');
  assert.equal(shotKinds[0],'piledriver');
 
  run('for(const u of battle.units)if(u.team==="enemy")u.alive=false;finish(true)');
