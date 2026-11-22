@@ -371,6 +371,24 @@ function animateMech(m,I,dt,t){
       drop=Math.max(drop,(hip.y-goal.y-vertical)/sc);
     }
     p.position.y-=Math.max(0,drop);cont.updateMatrixWorld(true);
+    // A foot on the high side of a ledge can be too CLOSE after pelvis drop.
+    // Unequal thigh and shin lengths leave an inner unreachable sphere.
+    // Move the pelvis the least distance that puts all goals in reach.
+    const minReach=l=>Math.abs((l.legA??D.legA)-(l.legB??D.legB))*sc;
+    if(r.legs.some((l,i)=>l.hip.getWorldPosition(_b).distanceTo(m.legs[i].foot)<minReach(l))){
+      const limits=r.legs.map((l,i)=>{
+        const hip=l.hip.getWorldPosition(V3()),goal=m.legs[i].foot;
+        const horizontalSq=(hip.x-goal.x)**2+(hip.z-goal.z)**2;
+        const vertical=reach=>Math.sqrt(Math.max(0,reach*reach-horizontalSq));
+        return {center:goal.y-hip.y,inner:vertical(minReach(l)+.002*sc),outer:vertical((legReach(l,D)-.002)*sc)};
+      });
+      let shift=Infinity;
+      for(const {center,inner} of limits)for(const dy of [center+inner,center-inner]){
+        if(Math.abs(dy)>=Math.abs(shift))continue;
+        if(limits.every(l=>Math.abs(dy-l.center)>=l.inner-1e-6&&Math.abs(dy-l.center)<=l.outer+1e-6))shift=dy;
+      }
+      if(Number.isFinite(shift)){p.position.y+=shift/sc;cont.updateMatrixWorld(true);}
+    }
   }
   r.legs.forEach((l,i)=>{const loc=cont.worldToLocal(_b.copy(m.legs[i].foot));solveLeg(m,l,loc,pitches[i]);});
   // kusazuri hinge with the thighs so the skirt never cuts through a moving leg

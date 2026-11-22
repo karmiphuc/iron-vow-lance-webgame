@@ -20,6 +20,7 @@ module.exports=async function checkCombatReadability({page,origin,mobile,out,con
   IronVowScene.render(clock,1/60);
   const cliff=IronVowScene.scene.getObjectByName('rock-cut-cliffs');
   if(!cliff)throw Error('Missing rendered rock cut');
+  const rise=IronVowScene.terrainMetrics.levelRise;
   const plates=cliff.parent.children.filter(o=>o.isMesh&&o.userData.tile&&o.geometry.type==='PlaneGeometry');
   const seamRise=({x,z,next:[a,b]})=>{
    const delta=[.49,.51].map(t=>{
@@ -28,8 +29,8 @@ module.exports=async function checkCombatReadability({page,origin,mobile,out,con
    });
    return Math.abs(delta[1]-delta[0]);
   };
-  const ramp=candidates.find(c=>seamRise(c)<.08);
-  const bluff=candidates.find(c=>seamRise(c)>1.5);
+  const ramp=candidates.find(c=>seamRise(c)<rise*.052);
+  const bluff=candidates.find(c=>seamRise(c)>rise*.97);
   if(!ramp||!bluff)throw Error('The seeded map needs both an open ramp and a full bluff beside cover');
   Object.assign(u,{x:ramp.x,z:ramp.z,vx:ramp.x,vz:ramp.z});
   action='move';selected=u.index;focusBattleCamera(u,true);renderBattle();
@@ -84,14 +85,14 @@ module.exports=async function checkCombatReadability({page,origin,mobile,out,con
   assert.ok(point.cliff===null||point.cliff<=point.plate+1e-4,'rock keeps the ramp clear');
   if(i)assert.ok(point.ground<cliffs.ramp[i-1].ground,'ramp descends toward the low tile');
  }
- assert.ok(Math.abs(cliffs.ramp[2].ground-cliffs.ramp[3].ground)<.08,'the ramp stays continuous across the seam');
+ assert.ok(Math.abs(cliffs.ramp[2].ground-cliffs.ramp[3].ground)<cliffs.rise*.052,'the ramp stays continuous across the seam');
  assert.ok(Math.abs(cliffs.lip[0].plate-cliffs.lip[1].plate-cliffs.rise)<1e-4,'the plates retain the full level change beside the ramp');
  for(const [near,far] of cliffs.bluff){
   assert.ok(Math.abs(near.plate-far.plate-cliffs.rise)<1e-4,'the bluff retains its full level change across the face');
   assert.ok(far.cliff!==null&&far.cliff>far.plate+cliffs.rise*.5,'rock covers the full bluff including its center');
  }
  const [near,far]=cliffs.bluff[1];
- assert.ok(Math.abs(near.root-far.root)<.08,'the chassis height blends as it crosses a bluff');
+ assert.ok(Math.abs(near.root-far.root)<cliffs.rise*.052,'the chassis height blends as it crosses a bluff');
  await page.waitForFunction(()=>IronVowScene.ready&&!IronVowScene.loadFailed,null,{timeout:120000});
  if(out)await saveWebp(page,join(out,`${mobile?'touch':'desktop'}-theater-${contract}.webp`));
  const state=await page.evaluate(()=>{
@@ -118,8 +119,9 @@ module.exports=async function checkCombatReadability({page,origin,mobile,out,con
   const boardHalf=[battle.size.width*m.tilePitch/2,battle.size.depth*m.tilePitch/2];
   return {metrics:m,pitch:neighbor.x-base.x,rise:Math.abs(base.y-dest.y),ground,base:base.toArray(),modelMin:box?.min.y,modelPixels,assets,boardHalf,project:p,picked:IronVowScene.screenTile(p.x,p.y),cover,expected,found,mapped,names,roadCount,linkCount,ids,terrain,seed,pathsReach,renderer:IronVowRenderer.metrics(),overflow:[document.documentElement.scrollWidth,document.documentElement.clientWidth],viewport:[innerWidth,innerHeight],fixture:readabilityQA};
  });
- assert.equal(state.metrics.tilePitch,7.4);assert.equal(state.metrics.levelRise,1.55);
- assert.ok(Math.abs(state.pitch-7.4)<1e-6&&Math.abs(state.rise-1.55)<1e-4,'weapon-safe tile pitch and readable physical level rise');
+ assert.equal(state.metrics.tilePitch,7.4);
+ assert.ok(state.metrics.levelRise>=2.75&&Math.abs(state.rise-state.metrics.levelRise)<1e-4,'the cliff rises at least 2.75 m per level');
+ assert.ok(Math.abs(state.pitch-7.4)<1e-6,'tile pitch preserves weapon reach and clearance');
  assert.ok(Math.abs(state.ground-state.base[1])<.01,'feet sample actual terrain at the occupied cell');
  assert.ok(Number.isFinite(state.modelMin)&&Math.abs(state.modelMin-state.ground)<1.2,'actual mech bounding base near terrain');
  const minimumPixels=state.viewport[0]<600?40:60;

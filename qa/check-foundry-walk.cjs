@@ -49,3 +49,27 @@ for(let model=0;model<6;model++)for(const terrain of [false,true]){
 console.log(JSON.stringify(results,null,2));
 for(const r of results){assert.ok(r.maxGround<.15,'model '+r.model+' ankle ground '+r.maxGround);assert.ok(r.maxSlide<.3,'model '+r.model+' planted drift '+r.maxSlide);assert.ok(r.maxIK<.01,'model '+r.model+' ankle-target error '+r.maxIK);assert.ok(r.maxReach<.001,'model '+r.model+' target past reach '+r.maxReach);}
 console.log('PASS all six production leg types: variable speed, corners, stop/restart, lunge/shove, brace, flat and elevated terrain');
+
+// A fractured lip above the 2.8 m step can bottom out the higher knee.
+const climber=R.buildRig(1,'ally');
+climber.scale=.9;
+climber.cont.scale.setScalar(climber.scale);
+climber.seed=0;
+for(const leg of climber.rig.legs){
+ leg.legA=1.078;leg.legB=1.326;
+ leg.kn.position.y=-leg.legA;
+ leg.an.position.y=-leg.legB;
+ leg.restX=leg.hip.position.x;
+}
+const ledge=x=>x<0?3:0;
+let worstLedgeError=0;
+for(let frame=0;frame<120;frame++){
+ R.animateMech(climber,{pos:V3(0,0,frame*.02),ground:1.4,groundAt:ledge,heading:0,face:0,moving:true,speed:1.2,stepLen:1.1,alive:true,brace:0},dt,frame*dt);
+ climber.cont.updateMatrixWorld(true);
+ climber.rig.legs.forEach((leg,index)=>{
+  const ankle=leg.an.getWorldPosition(V3());
+  worstLedgeError=Math.max(worstLedgeError,ankle.distanceTo(climber.legs[index].foot));
+ });
+}
+assert.ok(worstLedgeError<.02,'Unequal legs reach their foot targets along the fractured ledge: '+worstLedgeError);
+console.log('PASS unequal-leg IK along a fractured ledge, maximum ankle error '+worstLedgeError);

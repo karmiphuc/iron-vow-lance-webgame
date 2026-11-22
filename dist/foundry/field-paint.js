@@ -2,7 +2,7 @@
  * Projection uses bind coordinates so paint follows the armor as the rig moves. */
 (function(root){
 'use strict';
-const finishes=Object.freeze({block:'Block camo',splinter:'Splinter',survey:'Survey grid',factory:'Factory',solid:'Solid colors'});
+const finishes=Object.freeze({block:'Block camo',splinter:'Splinter',survey:'Survey grid',worn:'Field worn',factory:'Factory',solid:'Solid colors'});
 const frames=['warden','kestrel','basilisk','gatecrasher','cicada','valk','oni','behemoth','aegis','shrike','bastion',
  'hellbreaker','citadel','infantry','elite','gravemaw','reaver','bulwark','ashigaru','aero','shogun','cairn'];
 const iron=['#a09283','#897c70','#665e59','#c9b9a6','#716465','#a15c50'];
@@ -38,7 +38,7 @@ const darkSplinters=[
  [[3,83],[51,45],[76,45],[47,67],[35,67],[16,83]],
  [[152,148],[183,116],[197,116],[178,140],[165,141],[158,148]]
 ];
-const repeats={block:'.58',splinter:'.49',survey:'.52'};
+const repeats={block:'.58',splinter:'.49',survey:'.52',worn:'.63'};
 const textures=new Map();
 const programs=new WeakMap();
 const valid=finish=>typeof finish==='string'&&Object.hasOwn(finishes,finish);
@@ -49,8 +49,11 @@ function mix(left,right,amount){
  const a=parseInt(left.slice(1),16),b=parseInt(right.slice(1),16);
  return '#'+[16,8,0].map(shift=>Math.round(((a>>shift)&255)*(1-amount)+((b>>shift)&255)*amount).toString(16).padStart(2,'0')).join('');
 }
-function palette(unit){
- const [base,patch,dark,light,secondary,accent]=palettes[unit.lionTrial?'lion':frames[unit.frame]]||palettes.warden;
+function palette(unit,finish){
+ const frame=unit.lionTrial?'lion':frames[unit.frame];
+ const [base,patch,dark,light,secondary,accent]=finish==='worn'&&frame==='warden'?
+  ['#7a755d','#686754','#575849','#9f967b','#424848','#908c77']:
+  palettes[frame]||palettes.warden;
  const primary=unit.paint;
  return [primary||base,primary?mix(primary,'#303b3b',.22):patch,primary?mix(primary,'#202726',.44):dark,
   primary?mix(primary,'#eee2c1',.29):light,unit.trim?.s||secondary,unit.trim?.a||accent];
@@ -74,10 +77,10 @@ function patternTexture(palette,finish,role){
   }
   g.closePath();g.fill();
  }
- const angled=finish==='splinter',survey=finish==='survey';
+ const angled=finish==='splinter',survey=finish==='survey',worn=finish==='worn';
  const shapes=angled?splinters:blocks,cutouts=angled?darkSplinters:darkBlocks;
  const patchColor=survey?mix(bg,patch,.62):patch,cutColor=survey?mix(bg,cut,.43):cut;
- for(const dx of [-256,0,256])for(const dy of [-256,0,256]){
+ if(!worn)for(const dx of [-256,0,256])for(const dy of [-256,0,256]){
   for(const points of shapes)polygon(points,patchColor,dx,dy);
   for(const points of cutouts)polygon(points,cutColor,dx,dy);
  }
@@ -99,18 +102,24 @@ function patternTexture(palette,finish,role){
  let seed=6351;
  const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
  for(let index=0;index<135;index++){
-  const x=random()*256,y=random()*256,radius=6+random()*16;
-  const fog=g.createRadialGradient(x,y,0,x,y,radius);
-  fog.addColorStop(0,index%2?'rgba(61,53,36,.075)':'rgba(244,226,193,.07)');
-  fog.addColorStop(1,'rgba(0,0,0,0)');
-  g.fillStyle=fog;g.fillRect(x-radius,y-radius,2*radius,2*radius);
+  const x=random()*256,y=random()*256,radius=6+random()*(worn?35:16);
+  const opacity=worn ? .19 : index%2 ? .075 : .07;
+  const ink=index%2?'61,53,36':'244,226,193';
+  const dx=worn&&x<radius?256:worn&&x>256-radius?-256:0;
+  const dy=worn&&y<radius?256:worn&&y>256-radius?-256:0;
+  for(const offsetX of dx?[0,dx]:[0])for(const offsetY of dy?[0,dy]:[0]){
+   const px=x+offsetX,py=y+offsetY,fog=g.createRadialGradient(px,py,0,px,py,radius);
+   fog.addColorStop(0,`rgba(${ink},${opacity})`);
+   fog.addColorStop(1,`rgba(${ink},0)`);
+   g.fillStyle=fog;g.fillRect(px-radius,py-radius,2*radius,2*radius);
+  }
  }
  for(let index=0;index<2700;index++){
   g.fillStyle=index%3?'rgba(25,32,30,.10)':'rgba(243,236,214,.20)';
   g.fillRect(random()*256,random()*256,.4+random()*1.2,.35+random()*.65);
  }
  for(let index=0;index<30;index++){
-  g.fillStyle=index%3?'rgba(55,59,55,.25)':'rgba(230,226,204,.50)';
+  g.fillStyle=index%3?'rgba(55,59,55,.25)':worn?'rgba(230,226,204,.24)':'rgba(230,226,204,.50)';
   g.fillRect(random()*256,random()*256,.6+random()*5,.54);
  }
  const texture=new T.CanvasTexture(canvas);
@@ -135,12 +144,12 @@ const atlasMask={
  warden_atlas:'smoothstep(.045,.12,swatch.r-swatch.b)*smoothstep(.06,.13,swatch.g-swatch.b)*(1.-smoothstep(.12,.21,swatch.r-swatch.g))'
 };
 function coat(original,palette,finish,role){
- const material=original.clone(),atlas=role==='atlas',accent=role==='a';
+ const material=original.clone(),atlas=role==='atlas',accent=role==='a',worn=finish==='worn';
  material.userData.fieldFinish=finish;
  if(atlas)material.userData.paint=true;
- material.metalness=atlas?original.metalness:(accent ? .28 : .19);
- material.roughness=atlas?original.roughness:.81;
- material.envMapIntensity=.54;
+ material.metalness=atlas ? original.metalness : accent ? .28 : worn ? .07 : .19;
+ material.roughness=atlas ? original.roughness : worn ? .64 : .81;
+ material.envMapIntensity=worn ? .83 : .54;
  if(accent){
   material.color.set(palette[5]).convertSRGBToLinear();
   return material;
@@ -197,7 +206,7 @@ function scorch(base,damaged,scorchMap,fade){
 function create(unit){
  const selected=finish(unit);
  if(!Object.hasOwn(repeats,selected))return null;
- const colors=palette(unit),covered=new WeakSet();
+ const colors=palette(unit,selected),covered=new WeakSet();
  return (object,owned)=>{
   if(!object||covered.has(object))return;
   covered.add(object);
