@@ -87,7 +87,7 @@ function recruit(kind,path=null,slot=0){
  p('t.x=2;t.z=18');
  assert.equal(p('useSupportSkill(a,t)'),true);
  assert.equal(p('a.ap'),6);
- assert.ok(p('t.brace&&canUseWeapon(t,unitWeapon(t))&&["right","left","legs"].every(k=>t.hp[k]===Math.max(60,Math.ceil(t.max[k]*.75)))'));
+ assert.ok(p('t.brace&&canUseWeapon(t,unitWeapon(t))&&t.hp.legs===0&&!mobile(t)&&["right","left"].every(k=>t.hp[k]===Math.max(60,Math.ceil(t.max[k]*.75)))'));
  assert.equal(p('useSupportSkill(a,t)'),false);
  const salvage=recruit(7,1),w=salvage.run;
  w('createBattle(1,false,false,[0,1],true,null,0,true,true,true,true,true,true,null);let a=current();a.hp.right=0;a.hp.legs=0;useSupportSkill(a,a)');
@@ -96,7 +96,7 @@ function recruit(kind,path=null,slot=0){
  assert.equal(w('a.hp.right'),50);
  const twice=resume(salvage),v=twice.run;
  assert.equal(v('useSupportSkill(current(),current())'),true);
- assert.ok(v('current().skill&&current().recoveryUsed===2&&current().hp.legs===50'));
+ assert.ok(v('current().skill&&current().recoveryUsed===2&&current().hp.legs===0&&!mobile(current())&&current().hp.right>50'));
  assert.equal(v('useSupportSkill(current(),current())'),false);
  const broken=JSON.parse(twice.storage.get(key));
  broken.sortie.units[0].recoveryUsed=3;

@@ -48,7 +48,7 @@ function faultFX(m,I,t){const fx=BT.fx;if(!fx||!fx.arc||fx.isNull||options.reduc
   const F=m.fault||(m.fault={next:-1,beat:0,slam:false,pulse:0,seed:(random()*997)|0});
   const dead=!I.alive,pd=dead&&I.down==='pilot';
   if(!dead){F.beat=0;F.slam=false;}
-  const critical=!dead&&((I.bodyRatio!==undefined&&I.bodyRatio<.24)||I.armDead||I.legsDead);
+  const critical=!dead&&((I.bodyRatio!==undefined&&I.bodyRatio<.24)||I.legsDead);
   let fire=false,strength=.67,bi=-1; // bi: index of the collapse beat that fires (-1 while merely critical)
   if(dead&&!pd){const age=I.deathAge||0;
     while(F.beat<FAULT_BEATS.length&&age>=FAULT_BEATS[F.beat]){F.beat++;if(age-FAULT_BEATS[F.beat-1]<.12){fire=true;strength=.95;bi=F.beat-1;}}

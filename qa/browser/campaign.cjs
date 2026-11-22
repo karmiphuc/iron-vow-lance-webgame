@@ -35,7 +35,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
   await tip.scrollIntoViewIfNeeded();
   await tip.hover();
  }
- assert.match(await page.locator('#game-help').innerText(),/Revives disabled limbs/);
+ assert.match(await page.locator('#game-help').innerText(),/Destroyed legs stay down for the sortie/);
  await page.evaluate(()=>{save.credits=10000;save.units[0].level=4;save.units[0].xp=47;learnTraining(0,'pathfinder');persist();render()});
  for(let i=0;i<3;i++){
   const kind=i+5;
@@ -153,7 +153,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>JSON.stringify(captureSortie())),state);
  assert.equal(await page.evaluate(()=>save.reserve[6].condition),100);
  await tap('#skill');await support();
- assert.equal(await page.evaluate(()=>current().hp.legs),50);
+ assert.equal(await page.evaluate(()=>current().hp.legs),0);
  assert.equal(await page.locator('#skill').isDisabled(),true);
  await page.evaluate(()=>{
   const actor=current(),foe=battle.units[3];

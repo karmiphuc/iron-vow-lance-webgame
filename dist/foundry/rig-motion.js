@@ -26,10 +26,27 @@ function createMech(b,frame,team,upgrade){
   setKits(m,upgrade||0);return m;
 }
 function setKits(m,level){if(m.kitLevel===level)return;m.build.kits.forEach((k,i)=>k.forEach(o=>o.visible=i<level));m.kitLevel=level;}
-/* 0 intact, 1 damaged (scorched paint), 2 destroyed (outer plates blown off). Returns true when the state got worse. */
-function setPartState(m,part,st){const prev=m.partState[part];if(prev===st)return false;m.partState[part]=st;
-  for(const e of m.build.parts[part]){const o=e.m;if(!e.np){o.userData.base=o.userData.base||o.material;o.material=st>=1?VC.damagedOf(o.userData.base):o.userData.base;}if(e.detach)o.visible=st<2;}
-  return st>prev;}
+/* Arm loss takes the shoulder assembly with it. Skinned GLBs render from their
+   own bone tree, so hide their authored part meshes as well as the driver joints. */
+function setPartState(m,part,st){
+  const prev=m.partState[part];
+  if(prev===st)return false;
+  m.partState[part]=st;
+  const arm=part==='right'?m.rig.arms.R:part==='left'?m.rig.arms.L:null;
+  if(arm){arm.sh.visible=st<2;arm.paul.visible=st<2;}
+  for(const e of m.build.parts[part]){
+    const mesh=e.m;
+    if(!e.np){
+      mesh.userData.base??=mesh.material;
+      mesh.material=st>=1?VC.damagedOf(mesh.userData.base):mesh.userData.base;
+    }
+    if(arm||e.detach){
+      if(st===2){e.beforeLoss=mesh.visible;mesh.visible=false;}
+      else if(prev===2){mesh.visible=e.beforeLoss;delete e.beforeLoss;}
+    }
+  }
+  return st>prev;
+}
 function wreckMech(m){m.body.traverse(o=>{if(!o.isMesh||!o.material)return;const base=o.userData.base||o.material;if(base.userData&&base.userData.paint)o.material=VC.wreckOf(base);});m.build.visorMat.emissiveIntensity=0;m.build.stackMat.emissiveIntensity=0;}
 
 /* ---------- mech animation ---------- */
@@ -271,7 +288,7 @@ function animateMech(m,I,dt,t){
   // reaches the under-barrel. Driven by I.ready (attack priming or aiming) and blended so it also animates under noPlant.
   const brace=I.brace;
   const canSupport=Boolean(!dead&&!I.airborne&&!I.armDead&&!I.leftDead&&(m.offhand??'free')==='free'&&m.primaryWeapon?.muzzle);
-  const F=D.carry?.fire,ready=Boolean(F&&canSupport&&!I.moving&&brace<.5&&((I.ready??t<m.aim.until)||m.aim.blend>.35));
+  const F=D.carry?.fire,ready=Boolean(!I.legsDead&&F&&canSupport&&!I.moving&&brace<.5&&((I.ready??t<m.aim.until)||m.aim.blend>.35));
   m.fireStance=ready;
   m.fireStep=canSupport?damp(m.fireStep||0,ready?1:0,7,dt):0;
   const fs=smooth(clamp(m.fireStep,0,1));
@@ -287,7 +304,7 @@ function animateMech(m,I,dt,t){
   // Pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's.
   const p=r.pelvis;
   const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
-  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(I.legsDead?.26:0)-(pd?D.py*.3*dE:dE*1.4);
+  p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(pd?D.py*.3*dE:dE*1.4);
   p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   p.rotation.y=F?-F.hips*fs:0;
   if(guard){
@@ -296,6 +313,9 @@ function animateMech(m,I,dt,t){
     p.position.y+=D.py*guard.pelvis[1]*guardWeight;
     p.position.z=m.readyRestZ+D.py*guard.pelvis[2]*guardWeight;
   }else if(m.readyRestZ!=null)p.position.z=m.readyRestZ;
+  // Rest the chassis on its failed running gear, even when aiming or reloading a sortie.
+  // Keep this height as the starting point if the damaged hull subsequently falls.
+  if(I.legsDead)p.position.y=Math.min(p.position.y,D.py*(D.quad?.54:.47));
   cont.updateMatrixWorld(true);
   let settling=m.legs.some(L=>L.settle);
   if(m.wasAirborne&&!I.airborne){for(const L of m.legs)L.settle={from:L.foot.clone(),t:0,dur:.15};settling=true;}
@@ -304,6 +324,11 @@ function animateMech(m,I,dt,t){
   const pitches=[];
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
     let homeX=l.restX-(lead?F.narrow*fs:0),homeZ=l.restZ+(F?(lead?F.step:-F.back)*fs:0);
+    if(I.legsDead&&!dead&&!D.quad){
+      // Fold one shin along the ground and plant the other foot forward for support.
+      const bend=D.reverse?-1:1;
+      homeZ=l.restZ+bend*(l.restX>0?-.92*(l.legB??D.legB):.36*(l.legA??D.legA));
+    }
     if(footGuard>0){
       const side=Math.sign(l.restX),[spread,front,back]=guard.feet;
       homeX+=side*D.py*spread*footGuard;
@@ -315,8 +340,8 @@ function animateMech(m,I,dt,t){
     const lifting=I.moving&&!dead&&ph>=duty;
     const strained=!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
     if(strained){L.settle={from:L.planted.clone(),t:0,dur:.26};settling=true;}
-    if(I.noPlant||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;
-      if(lead&&!dead){L.foot.y+=F.lift*Math.sin(PI*fs)*sc;pitch=.3*Math.sin(PI*fs);}}
+    if(I.noPlant||I.legsDead||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;
+      if(lead&&!dead&&!I.legsDead){L.foot.y+=F.lift*Math.sin(PI*fs)*sc;pitch=.3*Math.sin(PI*fs);}}
     else if(L.settle&&(!dead||pd)){
       const step=L.settle;step.t+=dt/(step.dur||.42);const q=Math.min(1,step.t),land=home.clone().addScaledVector(vel,(1-q)*(step.dur||.42));
       if(I.moving)land.addScaledVector(dir,stepLen*duty*.5);

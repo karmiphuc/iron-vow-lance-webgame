@@ -74,7 +74,9 @@ function train(sim,i,ids){
  assert.equal(lance.run('anchor.hp.right'),30);
  assert.equal(lance.run('anchor.hp.left'),5);
  lance.run('anchor.skill=false;anchor.hp.body=anchor.max.body;anchor.hp.legs=0;skill()');
- assert.equal(lance.run('anchor.hp.legs'),30,'Rebuild can repair a limb at full body HP');
+ assert.equal(lance.run('anchor.hp.legs'),0,'Rebuild cannot restore destroyed legs');
+ lance.run('anchor.skill=false;anchor.hp.legs=1;skill()');
+ assert.equal(lance.run('anchor.hp.legs'),31,'Rebuild can still repair damaged legs');
  assert.ok(lance.run("(()=>{anchor.brace=true;return damage(target,anchor)<damage(target,{...anchor,training:{}})})()"));
  console.log('PASS: trained range and reactions, ranged/limb power and accuracy, brace, and actual body and limb repair.');
 

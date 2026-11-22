@@ -92,7 +92,7 @@ const HIRES=[
  {name:'Dax Mercer',call:'MARSHAL',skill:'Command Relay',desc:'Spend 1 AP to order another pilot within 5 tiles. Their next paid attack this round costs up to 2 AP less. Once per battle.',color:'#d3b07b',glyph:'shield-chevron',fee:1500},
  {name:'Inez Calder',call:'SAPPER',skill:'Breach Charge',desc:'Spend 1 AP to prime a ranged charged shot that strikes arms and legs. It gains 60% weapon power and ignores half the armor. A hit stops that counter. Once per battle.',color:'#eaa675',glyph:'lightning',fee:1400},
  {id:'signal',name:'Lio Vega',call:'SIGNAL OFFICER',skill:'Blackout',desc:'Spend 1 AP to jam a hostile within 6 tiles. It cannot counter and loses 20 accuracy points this round. Once per battle.',color:'#9daee2',glyph:'binoculars',fee:1700},
- {name:'Tess Kade',call:'RETRIEVER',skill:'Recovery Rig',desc:'Spend 2 AP to restore 30 HP to the weakest damaged arm or legs on yourself or an ally within 3 tiles. Revives disabled limbs. Once per battle.',color:'#80c6c2',glyph:'wrench',fee:1500}
+ {name:'Tess Kade',call:'RETRIEVER',skill:'Recovery Rig',desc:'Spend 2 AP to restore 30 HP to the weakest damaged arm or legs on yourself or an ally within 3 tiles. Can rebuild arms. Destroyed legs stay down for the sortie. Once per battle.',color:'#80c6c2',glyph:'wrench',fee:1500}
 ];
 const CREW=[...PILOTS,...HIRES],LANCE_SLOTS=[0,1,2];
 const AUX_SLOT=3;
@@ -743,12 +743,12 @@ function skillDescription(i,training){
  if(i===4)return `Order an ally within ${5+(training?.relayRange??0)} tiles. Their next ${training?.relayShots??1} paid attack(s) this round cost up to ${training?.relayDiscount??2} AP less (min 1). Once per battle.`;
  if(i===SAPPER)return `${training?.breachShots??1} charged shot(s) that strike arms and legs. +${Math.round(100*(training?.breachPower??.60))}% power, ignores ${Math.round(100*(training?.breachPierce??.50))}% armor. Hits deny counters.${training?.breachRefund?' Limb destruction refunds attack AP.':''}`;
  if(i===SIGNAL)return `Jam a hostile within ${6+(training?.blackoutRange??0)} tiles for the round. No counters, −${Math.round(100*(training?.blackoutAim??.20))} accuracy points${training?.blackoutAP?', −'+training.blackoutAP+' AP':''}${training?.blackoutHold?', no movement':''}.`;
- if(i===RETRIEVER)return `Restore ${training?.recoveryHP??30} HP to ${training?.recoveryAll?'each damaged limb':'the weakest damaged limb'} within ${recoveryRange(training)} tiles${training?.recoveryFloor?' (75% HP minimum)':''}. ${recoveryUses(training)} use(s) per battle.`;
+ if(i===RETRIEVER)return `Restore ${training?.recoveryHP??30} HP to ${training?.recoveryAll?'each damaged limb':'the weakest damaged limb'} within ${recoveryRange(training)} tiles${training?.recoveryFloor?' (75% HP minimum)':''}. ${recoveryUses(training)} use(s) per battle. Destroyed legs stay down for the sortie.`;
  if(!training?.overdrive&&!training?.deadeye&&!training?.deadeyeRefund&&!training?.repair&&!training?.limbRepair)return PILOTS[i].desc;
  const descriptions=[
   '+'+overdriveAP(training)+' AP this turn.'+(training?.overdriveMove?' Keeps free movement.':'')+(training?.overdriveBrace?' Also Braces.':''),
   'Next attack gains '+Math.round((deadeyePower(training)-1)*100)+'% power.'+(training?.deadeyeCascade?' Stays primed on limb destruction.':training?.deadeyeRefund?' A ranged kill refunds the shot’s AP.':''),
-  'Restore up to '+repairAmount(training)+' body HP.'+(training?.limbRepair?' Also restore '+training.limbRepair+' HP to '+(training.repairAll?'each':'the weakest')+' damaged limb.':'')+(training?.repairBrace?' Also Braces.':'')+(training?.repairFailsafe?' Triggers on lethal body damage if unused.':'')
+  'Restore up to '+repairAmount(training)+' body HP.'+(training?.limbRepair?' Also restore '+training.limbRepair+' HP to '+(training.repairAll?'each':'the weakest')+' damaged limb. Destroyed legs stay down for the sortie.':'')+(training?.repairBrace?' Also Braces.':'')+(training?.repairFailsafe?' Triggers on lethal body damage if unused.':'')
  ];
  return descriptions[i]+' Once per battle.';
 }
@@ -2509,7 +2509,7 @@ function pilotWiki(){
   ['Order an ally carrying an expensive weapon while they still have AP.','Order the front-line ally to brace or let them fire before moving.'],
   ['Prime to damage a random intact arm or leg. A charged hit cancels the immediate counter.','Move, fire a charged shot and use the rest of your movement to break contact.'],
   ['Jam a heavy gun before committing the lance. Drain its AP before the enemy acts.','Stop a close-range enemy from advancing while your lance moves into cover.'],
-  ['Restore a disabled weapon arm or legs to get a sidelined mech back into the fight.','Take the field and survive to bring extra wrecks back to the Workshop.']
+  ['Rebuild a disabled weapon arm or repair damaged legs before they give out.','Take the field and survive to bring extra wrecks back to the Workshop.']
  ];
  return `<section class="pilot-wiki" aria-label="Pilot classes and skills">
   <div class="stat-heading"><h2>Pilot classes &amp; skills</h2>${infoTip('training ranks',FOUNDATION_HELP+' Training points are earned at levels 1 through 6, then at 8 and 10. Your level 5 doctrine unlocks ranks 6, 8 and 10 in its path.')}</div>
@@ -2843,9 +2843,12 @@ function braceUnit(u){
  u.brace=true;u.braceTime=clock;
  if(!u.kind)gaitSound(u,'arm',0);
 }
+function damagedFieldLimbs(u){
+ return ['right','left','legs'].filter(part=>u.hp[part]<u.max[part]&&(part!=='legs'||u.hp.legs>0));
+}
 function repairableLimbs(u){
  if(!u.training?.limbRepair)return [];
- const parts=['right','left','legs'].filter(part=>u.hp[part]<u.max[part]);
+ const parts=damagedFieldLimbs(u);
  if(u.training.repairAll)return parts;
  return parts.sort((a,b)=>u.hp[a]/u.max[a]-u.hp[b]/u.max[b]).slice(0,1);
 }
@@ -2862,7 +2865,7 @@ function skillCost(kind,training){
 const hostileSkill=kind=>kind===3||kind===SIGNAL;
 const targetedSkill=kind=>kind>=3&&kind!==SAPPER;
 function recoveryParts(target,training){
- const parts=['right','left','legs'].filter(part=>target.hp[part]<target.max[part]);
+ const parts=damagedFieldLimbs(target);
  return training?.recoveryAll?parts:parts.sort((a,b)=>target.hp[a]/target.max[a]-target.hp[b]/target.max[b]).slice(0,1);
 }
 function recoverLimbs(target,training){
