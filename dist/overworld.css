@@ -3,15 +3,15 @@ body[data-view="overworld"] #ui{overflow:hidden;background:transparent}
 .chart-page{position:absolute;inset:0;overflow:hidden;color:#e9e8dc;isolation:isolate}
 .chart-viewport{position:absolute;inset:0 0 148px;touch-action:none;outline-offset:-4px}
 .chart-heading{position:absolute;left:30px;top:27px;pointer-events:none;text-shadow:0 2px 14px #111a}
-.chart-heading .eyebrow{font-size:9px;letter-spacing:1.6px;color:#acb9b8}
-.chart-heading h1{font:600 30px Barlow,sans-serif;letter-spacing:1px;margin:6px 0}
+.chart-heading .eyebrow{font:500 10px "IBM Plex Mono",monospace;letter-spacing:1.15px;color:#aebfba}
+.chart-heading h1{font:600 32px Barlow,sans-serif;letter-spacing:.6px;margin:4px 0 6px}
 .chart-heading p{color:#bdc7bd;font-size:11px;margin:0}
 .chart-reset{position:absolute;right:28px;top:27px;min-height:44px;padding:10px 15px;background:#172124eb;border-color:#64797666;font-size:11px}
-.chart-port{position:absolute;left:-999px;top:0;display:flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:7px 10px;background:#172124e8;border:1px solid #9bb4ac66;border-radius:3px;transform:translate(-50%,-100%);font:500 13px Barlow,sans-serif;letter-spacing:.25px;white-space:nowrap;box-shadow:0 3px 16px #09101255}
+.chart-port{position:absolute;left:-999px;top:0;display:flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:7px 10px;background:#131b1de8;border:1px solid #90aaa24d;border-radius:2px;transform:translate(-50%,-100%);font:600 14px Barlow,sans-serif;letter-spacing:.24px;white-space:nowrap;box-shadow:0 3px 16px #09101255}
 .chart-port[aria-pressed="true"]{background:#292a20ee;border-color:#e5b66d;color:#ffe2a9}
-.chart-port-mark{width:6px;height:6px;border-radius:50%;background:#93bcb7;flex:none}
+.chart-port-mark{width:7px;height:7px;transform:rotate(45deg);border:1px solid #a3c8c0;flex:none}
 .chart-port.is-current .chart-port-mark{background:#e5b66d;box-shadow:0 0 9px #e5b66d88}
-.chart-port-card{position:absolute;top:89px;right:28px;width:225px;padding:14px 16px;background:#152023e8;border:1px solid #8198903d;border-left:2px solid #e5b66d;box-shadow:0 6px 24px #0a141755}
+.chart-port-card{position:absolute;top:89px;right:28px;width:225px;padding:14px 16px;background:linear-gradient(145deg,#263235f0,#141d20fa);border:1px solid #7b918959;border-left:2px solid #e5b66d;box-shadow:0 6px 24px #0a141755}
 .chart-port-card h2{font:500 22px Barlow,sans-serif;margin:0 0 6px}
 .chart-port-card p{font-size:11px;line-height:1.5;color:#bdc7bd;margin:0 0 10px}
 .chart-port-card button{min-height:44px;width:100%;padding:8px 12px;text-align:left;font-size:11px;background:#213238;border-color:#6c84815c}
@@ -22,7 +22,7 @@ body[data-view="overworld"] #ui{overflow:hidden;background:transparent}
 .chart-route-options button[aria-pressed="true"]{border-color:#e5b66d;background:#2c3026f5;color:#ffdaa0}
 .chart-route-options button b{font-weight:600;white-space:nowrap}
 .chart-route-options button small{display:block;font-size:10px;color:#c2c9bd;font-weight:400;margin-top:3px}
-.chart-forecast{display:grid;grid-template-columns:1.1fr 1fr 1fr .9fr auto;align-items:center;gap:16px;min-height:92px;padding:16px 20px;border:1px solid #91a69d66;border-top-color:#d5b98188;background:#152023f5;box-shadow:0 10px 40px #080f1155;pointer-events:auto}
+.chart-forecast{display:grid;grid-template-columns:1.1fr 1fr 1fr .9fr auto;align-items:center;gap:16px;min-height:92px;padding:16px 20px;border:1px solid #91a69d66;border-top-color:#d5b98188;background:linear-gradient(160deg,#253135,#141d20 77%);box-shadow:0 10px 40px #080f1180;pointer-events:auto}
 .chart-forecast small{display:block;font-size:10px;color:#b0bcb6;letter-spacing:.8px}
 .chart-forecast strong{display:block;font:500 22px Barlow,sans-serif;line-height:1.1;margin-top:5px;font-variant-numeric:tabular-nums}
 .chart-arrival strong span{font:400 11px 'IBM Plex Mono',monospace;color:#bac6bc;margin-left:8px}

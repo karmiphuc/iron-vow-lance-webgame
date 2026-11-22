@@ -8,23 +8,42 @@
   const T = root.THREE, owner = root.IronVowRenderer;
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const linear = hex => new T.Color(hex).convertSRGBToLinear();
-  const colors = { steel: 0x20272a, land: 0xb7b29b, upland: 0x777d68, industry: 0x5d6260,
-    frontier: 0xaa8560, water: 0x203d46, amber: 0xe5b66d, cyan: 0x9ec8c3 };
+  const colors = { steel: 0x20272a, industry: 0x5d6260, frontier: 0xaa8560, amber: 0xe5b66d, cyan: 0x9ec8c3 };
   let host, data, callbacks, stage, events, pinch, routeSignature, worldSignature;
   let zoom = 1, tilt = .80, yaw = -.04, panX = 0, panZ = 0;
   const pointers = new Map();
   const catalogKey = ports => JSON.stringify((ports || []).map(({ id, x, y }) => [id, x, y]));
   const portPosition = port => new T.Vector3((port.x - 50) * .22, 0, (port.y - 50) * .17);
+  // One elevation field feeds the relief, port anchors, route clearance and sensor ring.
+  const shelf = .13;
+  const coastAt = x => 4.15 + Math.sin(x * .40 + .4) * .66 + Math.sin(x * 1.08) * .30 + Math.sin(x * 2.45) * .12;
+  const riverAt = z => 1.7 + Math.sin(z * .73) * .74 + Math.sin(z * 1.61) * .23;
+  const ridgeAt = x => -1.0 + Math.sin(x * .46) * .78;
+  const smooth = n => { const t = clamp(n, 0, 1); return t * t * (3 - 2 * t); };
+  const ripple = (x, z) => Math.sin(x * 2.7 + z * 1.5) * Math.cos(z * 2.1 - x * .73);
+  function terrainNoise(x, z) {
+    function cell(i, j) {
+      let h = Math.imul(i, 374761393) ^ Math.imul(j, 668265263);
+      h = Math.imul(h ^ h >>> 13, 1274126177);
+      return ((h ^ h >>> 16) >>> 0) / 0xffffffff;
+    }
+    const i = Math.floor(x), j = Math.floor(z), u = smooth(x - i), v = smooth(z - j);
+    const a = cell(i, j) * (1 - u) + cell(i + 1, j) * u;
+    const b = cell(i, j + 1) * (1 - u) + cell(i + 1, j + 1) * u;
+    return (a * (1 - v) + b * v) * 2 - 1;
+  }
   function heightAt(x, z) {
-    const coast = 3.1 + Math.sin(x * .66) * .65 + Math.sin(x * 1.7) * .2;
-    if (z > coast || z < -4.8 + Math.sin(x * .7) * .45 || x < -10.2 + Math.cos(z) * .4 || x > 10.1) return .12;
-    const ridge = Math.max(0, 1 - Math.abs(z + 1.5 + Math.sin(x * .4)) / 2.2);
-    const broadShelf = Math.floor(ridge * 3) / 3;
-    let h = .36 + broadShelf * .8 + Math.sin(x * .32 + z * .4) * .035;
-    if (x > 5) h += .28;
-    // The river incises the relief and opens into Vanta's estuary.
-    if (Math.abs(x - (1.8 + Math.sin(z * .7) * .65)) < .19 + Math.max(0, z) * .09) h = .15;
-    return h;
+    const coast = coastAt(x) - z;
+    const estuary = Math.abs(x - riverAt(z)) - (.12 + Math.max(0, z) * .067);
+    const bank = smooth(Math.min(coast, estuary * 1.65) / .50);
+    if (!bank) return shelf;
+    const range = Math.exp(-Math.pow((z - ridgeAt(x)) / 1.36, 2));
+    const folds = .58 + .20 * Math.sin(x * 1.38 + z * 1.8) + .13 * ripple(x, z)
+      + .09 * Math.sin(x * 5.1 - z * 3.8);
+    const karst = Math.exp(-((x + 7.4) ** 2 / 5.8 + (z - 2.0) ** 2 / 1.8));
+    const uplands = .24 + range * (1.16 + folds * 1.47) + karst * (.32 + folds * .67)
+      + smooth((x - 4) / 5) * .53 + .07 * ripple(x, z);
+    return shelf + bank * uplands;
   }
   function disposeTree(object) {
     const geometries = new Set(), materials = new Set();
@@ -33,7 +52,7 @@
   }
   function buildStage() {
     const renderer = owner.get(), scene = new T.Scene();
-    scene.background = new T.Color(0x10191d);
+    scene.background = new T.Color(0x111c22);
     scene.fog = new T.Fog(0x10191d, 65, 140);
     const camera = new T.PerspectiveCamera(35, 1, .1, 180);
     const materials = {};
@@ -51,9 +70,9 @@
       o.position.copy(a).add(b).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), delta.normalize()); return o;
     }
     scene.add(new T.HemisphereLight(linear(0xdbe4dc), linear(0x182125), .65));
-    const light = new T.DirectionalLight(linear(0xffe6bd), 1.75); light.position.set(-9, 16, 6); light.castShadow = true;
+    const light = new T.DirectionalLight(linear(0xffead8), 1.75); light.position.set(-12, 10, -4); light.castShadow = true;
     light.shadow.mapSize.set(1024, 1024); Object.assign(light.shadow.camera, { left: -15, right: 15, top: 11, bottom: -11, near: 1, far: 40 });
-    light.shadow.normalBias = .04; scene.add(light);
+    light.shadow.normalBias = .036; light.shadow.radius = 3; scene.add(light);
     const rim = new T.DirectionalLight(linear(0x91bcc8), .55); rim.position.set(7, 8, -10); scene.add(rim);
     // Thick chamfered table rim, with an inset water surface rather than a floating diagram.
     const outline = new T.Shape();
@@ -61,37 +80,83 @@
     outline.lineTo(11.6, 6.7); outline.lineTo(-11.6, 6.7); outline.lineTo(-12, 6.3); outline.lineTo(-12, -6.3); outline.closePath();
     const slab = new T.ExtrudeGeometry(outline, { depth: .56, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: .12, bevelThickness: .12 });
     slab.rotateX(-Math.PI / 2); mesh(scene, slab, steel, 0, -.6, 0);
-    box(scene, 22.7, .16, 12.1, mat('water', colors.water, .1), 0, .02, 0);
-    for (const z of [-6.37, 6.37]) box(scene, 22.9, .045, .045, mat('rim', 0x687574, .6), 0, .03, z);
-    for (let x = -10; x <= 10; x += 1) box(scene, .018, .025, .12, pale, x, .07, 6.16);
-    // Triangulated matte relief: hard shelves, worn ridges, a carved river and coast.
-    const vertices = [], vertexColors = [], indices = [], nx = 132, nz = 76;
-    const c = new T.Color();
+    // Recessed relief insert, gasket, brushed metal rail and flush deck screws.
+    const gasket = mat('gasket', 0x111818), rail = mat('rail', 0x667571, .65);
+    box(scene, 22.76, .19, 12.14, gasket, 0, -.01, 0);
+    const screws = new T.InstancedMesh(new T.CylinderGeometry(.049, .049, .016, 8), rail, 24);
+    const screw = new T.Matrix4();
+    let fastener = 0;
+    for (const z of [-6.28, 6.28]) {
+      box(scene, 22.92, .052, .075, rail, 0, .03, z);
+      for (let x = -10.45; x <= 10.5; x += 1.9) screws.setMatrixAt(fastener++, screw.makeTranslation(x, .066, z));
+    }
+    scene.add(screws);
+    for (const x of [-11.49, 11.49]) box(scene, .075, .052, 12.55, rail, x, .03, 0);
+
+    // Lithographic terrain colors follow elevation, moisture and exposed rock.
+    const vertices = [], uvs = [], indices = [], nx = 164, nz = 88;
+    const deep = linear(0x173039), shoal = linear(0x41666a), silt = linear(0x9d997a);
+    const grass = linear(0x68755a), stone = linear(0xa39a81), cliff = linear(0x626962);
+    const dry = linear(0x886b50), c = new T.Color();
+    const width = 22.56, depth = 11.94;
     for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
-      const x = -11 + i / nx * 22, z = -5.8 + j / nz * 11.6, h = heightAt(x, z);
-      vertices.push(x, h, z);
-      c.setHex(h < .2 ? colors.water : x > 5 ? colors.frontier : h > .83 ? colors.upland : colors.land);
-      c.convertSRGBToLinear();
-      c.multiplyScalar(.98 + .02 * Math.sin(x * .6 + z * .4)); vertexColors.push(c.r, c.g, c.b);
+      const u = i / nx, v = j / nz, x = (u - .5) * width, z = (v - .5) * depth;
+      vertices.push(x, heightAt(x, z), z);
+      uvs.push(u, v);
       if (i < nx && j < nz) { const k = j * (nx + 1) + i; indices.push(k, k + nx + 1, k + 1, k + 1, k + nx + 1, k + nx + 2); }
     }
-    const terrain = new T.BufferGeometry(); terrain.setAttribute('position', new T.Float32BufferAttribute(vertices, 3)); terrain.setAttribute('color', new T.Float32BufferAttribute(vertexColors, 3)); terrain.setIndex(indices); terrain.computeVertexNormals();
-    const relief = mesh(scene, terrain, new T.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
-    relief.castShadow = false;
-    // Bridge windows frame the distant edge. No empty floor in front of the table.
-    for (const x of [-15, -8, 0, 8, 15]) box(scene, .22, 11, .3, steel, x, 4, -10);
-    box(scene, 35, .23, .4, steel, 0, 8.5, -10); box(scene, 35, .25, .4, steel, 0, .3, -10);
-    // A softly varying cloudy sky beyond the bridge glass, with no extra canvas.
-    const skyGeometry = new T.PlaneGeometry(70, 26, 40, 24);
+    // Bake the fine vegetation and rock variation once, independent of mesh resolution.
+    const texWidth = 1024, texHeight = 512, pixels = new Uint8Array(texWidth * texHeight * 4);
+    for (let j = 0; j < texHeight; j++) for (let i = 0; i < texWidth; i++) {
+      const x = ((i + .5) / texWidth - .5) * width, z = ((j + .5) / texHeight - .5) * depth;
+      const h = heightAt(x, z), grain = terrainNoise(x * 1.4, z * 1.4), shore = coastAt(x) - z;
+      const mottling = terrainNoise(x * 4.2, z * 4.2) * .55 + terrainNoise(x * 10.7, z * 10.7) * .30 + terrainNoise(x * 27.6, z * 27.6) * .15;
+      if (h < shelf + .02) {
+        c.lerpColors(deep, shoal, 1 - smooth(-shore / 1.75)).multiplyScalar(.93 + grain * .055 + mottling * .08);
+      } else {
+        const slope = Math.hypot(heightAt(x + .07, z) - heightAt(x - .07, z),
+          heightAt(x, z + .07) - heightAt(x, z - .07)) / .14;
+        c.lerpColors(grass, stone, smooth((h - .64) / 1.63 + grain * .20 + mottling * .20));
+        c.lerp(dry, smooth((x - 1) / 10) * (1 - smooth((h - 1.1) / 1.4)) * .86);
+        c.lerp(cliff, smooth((slope - .42) / 1.65) * .64);
+        c.lerp(silt, (1 - smooth((h - shelf) / .34)) * .70);
+        c.multiplyScalar(.92 + .11 * grain + .25 * mottling);
+      }
+      c.convertLinearToSRGB();
+      const k = (j * texWidth + i) * 4;
+      pixels[k] = clamp(c.r, 0, 1) * 255; pixels[k + 1] = clamp(c.g, 0, 1) * 255; pixels[k + 2] = clamp(c.b, 0, 1) * 255; pixels[k + 3] = 255;
+    }
+    const reliefMap = new T.DataTexture(pixels, texWidth, texHeight, T.RGBAFormat);
+    reliefMap.encoding = T.sRGBEncoding; reliefMap.magFilter = T.LinearFilter;
+    reliefMap.minFilter = T.LinearMipmapLinearFilter; reliefMap.generateMipmaps = true; reliefMap.needsUpdate = true;
+    const terrain = new T.BufferGeometry();
+    terrain.setAttribute('position', new T.Float32BufferAttribute(vertices, 3));
+    terrain.setAttribute('uv', new T.Float32BufferAttribute(uvs, 2));
+    terrain.setIndex(indices); terrain.computeVertexNormals();
+    mesh(scene, terrain, new T.MeshStandardMaterial({ map: reliefMap, roughness: .88 }));
+
+    // Bridge surrounds sit behind and beneath the chart, leaving the terrain unobstructed.
+    const bulkhead = mat('bulkhead', 0x28343a, .4), trim = mat('trim', 0x526063, .52);
+    const deck = mat('deck', 0x151d20, .15);
+    box(scene, 52, .24, 19, deck, 0, -1.28, .6);
+    box(scene, 35, 1.18, .6, bulkhead, 0, -.48, -8.9);
+    box(scene, 35, .14, .76, trim, 0, .16, -8.9);
+    for (const x of [-15, -8, 0, 8, 15]) {
+      beam(scene, new T.Vector3(x, .12, -8.9), new T.Vector3(x * .91, 8.8, -10.6), .25, bulkhead);
+    }
+    box(scene, 35, .29, .56, bulkhead, 0, 8.8, -10.6);
+    const skyGeometry = new T.PlaneGeometry(90, 55, 56, 30);
     const skyPositions = skyGeometry.attributes.position, skyColors = [];
+    const zenith = linear(0x223b4c), horizon = linear(0xb3bab1), cloud = linear(0x849795);
     for (let i = 0; i < skyPositions.count; i++) {
       const x = skyPositions.getX(i), y = skyPositions.getY(i);
-      const cloud = .5 + .18 * Math.sin(x * .15 + y * .4) + .1 * Math.sin(x * .4 - y * .3);
-      const shade = new T.Color().lerpColors(linear(0x263b43), linear(0x617578), cloud * .55 + .1);
-      skyColors.push(shade.r, shade.g, shade.b);
+      const mist = Math.exp(-Math.pow((y + 6) / 5.8, 2));
+      const layer = smooth((Math.sin(x * .16 + y * .74) + Math.sin(x * .34 - y * 1.12) * .58) * .55);
+      c.lerpColors(zenith, horizon, mist * .82).lerp(cloud, layer * (.12 + mist * .26));
+      skyColors.push(c.r, c.g, c.b);
     }
     skyGeometry.setAttribute('color', new T.Float32BufferAttribute(skyColors, 3));
-    const sky = mesh(scene, skyGeometry, new T.MeshBasicMaterial({ vertexColors: true }), 0, 9, -14);
+    const sky = mesh(scene, skyGeometry, new T.MeshBasicMaterial({ vertexColors: true, fog: false }), 0, -4, -19);
     sky.castShadow = sky.receiveShadow = false;
     const ports = {}, portHits = [];
     for (const port of data.ports) {
@@ -139,7 +204,7 @@
       const mastZ = .30;
       mesh(town, new T.CylinderGeometry(.065, .13, 1.12, 8), dark, 0, .64, mastZ);
       box(town, .56, .065, .09, pale, 0, 1.13, mastZ);
-      mesh(town, new T.SphereGeometry(.10, 10, 6), mat('beacon', colors.amber), 0, 1.25, mastZ);
+      mesh(town, new T.SphereGeometry(.10, 10, 6), materials.beacon ||= new T.MeshStandardMaterial({ color: linear(0xeab26c), emissive: linear(0xeab26c), emissiveIntensity: .6 }), 0, 1.25, mastZ);
       // Native chart taps hit the physical mast before any route underneath it.
       const mastHit = new T.Mesh(new T.CylinderGeometry(.30, .34, 1.5, 8), new T.MeshBasicMaterial({ visible: false }));
       mastHit.position.set(0, .7, mastZ); mastHit.userData.portId = port.id; town.add(mastHit); portHits.push(mastHit);
@@ -147,7 +212,7 @@
     }
     const routeGroup = new T.Group(), sensorGroup = new T.Group(), markerGroup = new T.Group(), ship = new T.Group();
     scene.add(routeGroup, sensorGroup, markerGroup, ship);
-    const state = { renderer, scene, camera, ports, portHits, routeGroup, sensorGroup, markerGroup, catalog: catalogKey(data.ports), markerPositions: [], sensorRadius: 0, ship, routeHits: [], shipReady: false, light };
+    const state = { renderer, scene, camera, ports, portHits, routeGroup, sensorGroup, markerGroup, catalog: catalogKey(data.ports), markerPositions: [], sensorRadius: 0, ship, routeHits: [], shipReady: false, light, reliefMap };
     stage = state;
     new T.GLTFLoader().load('assets/overworld/halyard.glb', gltf => {
       if (stage !== state) { disposeTree(gltf.scene); return; }
@@ -177,7 +242,7 @@
       const points = pathPoints(path, offset); if (points.length < 2) return;
       const curve = new T.CatmullRomCurve3(points);
       const geometry = new T.TubeGeometry(curve, 100, dashed ? .045 : radius, 6, false);
-      const line = new T.Mesh(geometry, new T.MeshBasicMaterial({ color: linear(color), transparent: true, opacity: key ? 1 : .4, depthTest: false, toneMapped: false }));
+      const line = new T.Mesh(geometry, new T.MeshBasicMaterial({ color: linear(color), transparent: true, opacity: key ? 1 : .4, depthTest: !key, depthWrite: false, toneMapped: false }));
       if (dashed) {
         // A mesh dash pattern keeps the alternate leg readable on small screens.
         geometry.clearGroups();
@@ -391,7 +456,7 @@
     const elevation = portrait ? Math.max(tilt, 1.12) : tilt;
     const azimuth = yaw + (portrait ? .74 : 0);
     // Fit the complete table in both orientations, keeping the lip in foreground.
-    const distance = Math.max(25, (portrait ? 47 : 43) / camera.aspect) / zoom;
+    const distance = Math.max(23.5, (portrait ? 42 : 39) / camera.aspect) / zoom;
     camera.position.set(panX + Math.sin(azimuth) * Math.cos(elevation) * distance, Math.sin(elevation) * distance, panZ + Math.cos(elevation) * Math.cos(azimuth) * distance);
     camera.lookAt(panX, 0, panZ); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
     const current = stage.ports[data.current]?.ground;
@@ -430,7 +495,7 @@
       root.IronVowPerformance?.recordRender(renderer.info);
     } finally { renderer.setRenderTarget(target); renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest); }
   }
-  function dropStage() { if (stage) { disposeTree(stage.scene); stage.light.shadow.map?.dispose(); stage = null; } routeSignature = worldSignature = null; }
+  function dropStage() { if (stage) { disposeTree(stage.scene); stage.light.shadow.map?.dispose(); stage.reliefMap.dispose(); stage = null; } routeSignature = worldSignature = null; }
   // Journal restores only the five finite camera values, within interaction limits.
   function restoreView(view) {
     if (!view || !['zoom', 'tilt', 'yaw', 'panX', 'panZ'].every(key => Number.isFinite(view[key]))) return false;
