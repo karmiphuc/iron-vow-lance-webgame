@@ -19,15 +19,38 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  assert.ok(await page.evaluate(()=>__readBattlePixels())>64,'Actual main framebuffer contains the rendered battlefield');
  await tap('#map-overview');await page.waitForFunction(()=>fieldCamera.overview);await page.evaluate(()=>IronVowScene.render(clock,1));
  const picks=await page.evaluate(()=>{
-  const s=__ironVow.snapshot(),camera=IronVowScene.camera;let tested=0;
+  const s=__ironVow.snapshot(),{camera,scene}=IronVowScene;
+  const cliff=scene.getObjectByName('rock-cut-cliffs'),board=cliff.parent;
+  const surfaces=[cliff,...board.children.filter(object=>object.userData.tile)];
+  const ray=new THREE.Raycaster(),pixel=new THREE.Vector2();
+  let tested=0,cliffOcclusions=0;
   for(let z=0;z<s.size.depth;z++)for(let x=0;x<s.size.width;x++){
-   const p=IronVowScene.projectWorld(IronVowScene.world(x,z));if(p.x<0||p.x>innerWidth||p.y<0||p.y>innerHeight||p.z<0||p.z>1)continue;
-   const hit=IronVowScene.screenTile(Math.round(p.x),Math.round(p.y));if(hit.x!==x||hit.z!==z)throw Error('Raycast missed visible tile '+x+','+z+' -> '+JSON.stringify(hit));tested++;
+   const center=IronVowScene.world(x,z),p=IronVowScene.projectWorld(center);
+   if(p.x<0||p.x>innerWidth||p.y<0||p.y>innerHeight||p.z<0||p.z>1)continue;
+   const px=Math.round(p.x),py=Math.round(p.y);
+   ray.setFromCamera(pixel.set(px/innerWidth*2-1,1-py/innerHeight*2),camera);
+   // A projected tile center can lie behind the visible face of a higher terrace.
+   const surface=ray.intersectObjects(surfaces,true)[0];
+   if(!surface)throw Error('No rendered battlefield surface at tile '+x+','+z);
+   let expected;
+   if(surface.object===cliff){
+    const index=cliff.userData.faceTiles[surface.faceIndex];
+    expected={x:index%s.size.width,z:Math.floor(index/s.size.width)};
+   }else{
+    let object=surface.object;
+    while(object&&!object.userData.tile)object=object.parent;
+    expected=object?.userData.tile;
+   }
+   const hit=IronVowScene.screenTile(px,py);
+   if(hit.x!==expected?.x||hit.z!==expected?.z)throw Error('Raycast should pick the foreground surface at '+x+','+z+' -> '+JSON.stringify({expected,hit}));
+   if(expected.x===x&&expected.z===z)tested++;
+   else if(surface.object===cliff&&surface.distance<ray.ray.origin.distanceTo(center)-.1)cliffOcclusions++;
   }
   const u=battle.units.find(u=>u.id==='ally0'),p=IronVowScene.projectWorld(IronVowScene.partPoint(u));
-  return{tested,unit:IronVowScene.pick(p.x,p.y)?.id};
+  return{tested,cliffOcclusions,unit:IronVowScene.pick(p.x,p.y)?.id};
  });
  assert.ok(picks.tested>=50,'Ground raycasts cover visible overview plates at actual pointer pixel coordinates');assert.equal(picks.unit,'ally0');
+ assert.ok(picks.cliffOcclusions>0,'A foreground cliff resolves to its terrace before the hidden tile');
  await tap('#map-center');await page.waitForFunction(()=>!fieldCamera.overview);await page.evaluate(()=>IronVowScene.render(clock,1));
  assert.deepEqual(await page.evaluate(()=>[fieldCamera.x,fieldCamera.z]),await page.evaluate(()=>[current().x,current().z]));
  console.log('raycasts, Overview and centre passed');
