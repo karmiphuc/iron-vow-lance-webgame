@@ -230,7 +230,7 @@ function rockCuts(terrainMap,soil,road){
  rockContacts=indexRockContacts(geometry.attributes.position.array);
  const material=new T.MeshStandardMaterial({map:terrainMap,vertexColors:true,roughness:1,side:T.DoubleSide});
  const mesh=new T.Mesh(geometry,material);
- mesh.name='rock-cut-cliffs';mesh.userData.levelRise=RISE;mesh.receiveShadow=true;
+ mesh.name='rock-cut-cliffs';mesh.userData.levelRise=RISE;mesh.castShadow=mesh.receiveShadow=true;
  board.add(mesh);
 }
 function terrainDetails(){
@@ -269,23 +269,27 @@ function build(){
  clear();init();battleRef=battle;terrainRef=battle.field.cells;kit=root.IronVowSceneKit(renderer);kit.setSize(battle.size.width,battle.size.depth,TILE);
  root.IronVowVehicles.load(battle.units.map(u=>u.kind).filter(Boolean));
  rigV2.load(battle.units);
- const index=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3,P=kit.PAL[index];
+ const index=battle.contract.field,P=kit.PAL[index];
  scene=new T.Scene();scene.background=kit.C(P.bg);scene.fog=new T.Fog(kit.C(P.fog[0]),P.fog[1],P.fog[2]);scene.environment=kit.envFrom(P.env);
  scene.add(new T.HemisphereLight(kit.C(P.hemi[0]),kit.C(P.hemi[1]),P.hemi[2]));
- sun=new T.DirectionalLight(kit.C(P.sun[0]),P.sun[1]);sun.position.set(...P.dir);sun.castShadow=true;
+ sun=new T.DirectionalLight(kit.C(P.sun[0]),P.sun[1]);sun.name='theater-sun';sun.castShadow=true;
  const half=Math.max(battle.size.width,battle.size.depth)*TILE*.65;
- Object.assign(sun.shadow.camera,{left:-half,right:half,top:half,bottom:-half,near:1,far:180});
- sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0005;sun.shadow.normalBias=.03;scene.add(sun);
+ // Keep the low sun outside the map so its shadow camera covers both ends.
+ const lightDistance=half*1.55;
+ sun.position.set(...P.dir).setLength(lightDistance);
+ Object.assign(sun.shadow.camera,{left:-half,right:half,top:half,bottom:-half,near:1,far:lightDistance+half*1.45});
+ sun.shadow.camera.updateProjectionMatrix();
+ sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.00017;sun.shadow.normalBias=.025;scene.add(sun);
  const rim=new T.DirectionalLight(kit.C(0x9ab8d0),.6);rim.position.set(30,18,-30);scene.add(rim);
  board=new T.Group();scene.add(board);units=new T.Group();scene.add(units);
- const floor=new T.Mesh(new T.PlaneGeometry(300,300),kit.groundMaterial(P));floor.rotation.x=-Math.PI/2;floor.position.y=-.18;floor.receiveShadow=true;board.add(floor);
  const terrainMap=kit.imgTex('assets/concrete.webp',[1,1]);
  const rockMap=kit.imgTex('assets/rock-cut.webp',[1,1]);
- const soil=kit.C(index===1?0x8b806a:0x83907b),road=kit.C(index===2?0x7f8981:0x777b79);
+ const floor=new T.Mesh(new T.PlaneGeometry(300,300),kit.fieldSurface(kit.groundMaterial(P),rockMap,1));floor.rotation.x=-Math.PI/2;floor.position.y=-.18;floor.receiveShadow=true;board.add(floor);
+ const soil=kit.C(P.soil),road=kit.C(P.road);
  const materials=[
-  new T.MeshStandardMaterial({color:kit.C(index===1?0xa49c86:0x8c9b91),map:terrainMap,roughness:.96,metalness:.015}),
-  new T.MeshStandardMaterial({vertexColors:true,map:rockMap,roughness:1}),
-  new T.MeshStandardMaterial({color:road,map:terrainMap,roughness:.9,metalness:.015})
+  kit.fieldSurface(new T.MeshStandardMaterial({color:soil,map:terrainMap,roughness:.96,metalness:.015}),rockMap,1),
+  kit.fieldSurface(new T.MeshStandardMaterial({vertexColors:true,map:rockMap,roughness:1}),rockMap,.72),
+  kit.fieldSurface(new T.MeshStandardMaterial({color:road,map:terrainMap,roughness:.9,metalness:.015}),rockMap,.28)
  ];
  const overlayPositions=[],overlayColors=[],tileIndices=[];
  for(let z=0;z<battle.size.depth;z++)for(let x=0;x<battle.size.width;x++){
@@ -549,7 +553,7 @@ function render(t,dt){
  for(const u of battle.units){const cue=mortarCues.get(u.id);if(cue&&!cue.fired&&t-cue.at>=.95){cue.fired=true;const p=attachmentPoint(u,'mortarMuzzle');combat.fx.glow(p,0xffb050,3,.15);combat.fx.smoke(p,4,1.4,0xc4bdb0,.5,.8,1.4,.3);}}
  combat.update(t,dt);updateCamera(t,dt);updateOverlays();
  if(duel){selection.visible=false;targetRing.visible=false;}
- const storm=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3===2;
+ const storm=battle.contract.field===2;
  if(storm&&!reducedMotion){if(t>=lightningAt){lightning=1;lightningAt=t+kit.random(5,11);}lightning*=Math.exp(-dt*9);sun.intensity=kit.PAL[2].sun[1]+lightning*2.5*(kit.random(0,1)>.3?1:.4);}
  root.IronVowRenderer.show(true);root.IronVowRenderer.resize(innerWidth,innerHeight);
  const shadow=root.IronVowRenderer.quality.shadow;

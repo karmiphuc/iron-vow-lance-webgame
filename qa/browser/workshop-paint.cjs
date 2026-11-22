@@ -107,6 +107,6 @@ module.exports=async function checkWorkshopPaint({page,origin,tap,mobile}){
  });
  assert.equal(await page.locator('[data-custom-channel]').count(),0);
  assert.equal(await page.locator('[data-livery]').count(),0);
- assert.equal(await page.locator('[data-paint-finish]').count(),4);
+ assert.deepEqual(await page.locator('[data-paint-finish]').allTextContents(),['Block camo','Splinter','Survey grid','Field worn','Factory']);
  assert.match(await page.locator('.paint-panel').textContent(),/FACTORY LIVERY/);
 };

@@ -34,4 +34,5 @@ run('persist()');
 const restored=simulate({storage:storage(),random:()=>0,reducedMotion:true});
 assert.deepEqual(plain(restored.run("battle.units.filter(u=>u.team==='ally').map(u=>[fieldPaint.finish(u),u.paint,u.trim??null])")),units());
 assert.ok(run("battle.units.filter(u=>u.team==='enemy'&&!u.kind).every(u=>fieldPaint.finish(u)==='block')"));
+assert.ok(run("validHull({...save.units[0],paintFinish:'worn'},0,save.owned)"));
 console.log('PASS field paint: optional finish validation, old colors, hull swaps, import, deployment and sortie restore');

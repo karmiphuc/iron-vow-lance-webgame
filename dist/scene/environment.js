@@ -53,9 +53,9 @@ function envFrom(cols,pm=pmrem){const s=new T.Scene();s.background=C(cols[0]);
 function jersey(p,m,len){const sh=new T.Shape();sh.moveTo(-.55,0);sh.lineTo(.55,0);sh.lineTo(.42,.35);sh.lineTo(.2,.55);sh.lineTo(.2,1.1);sh.lineTo(-.2,1.1);sh.lineTo(-.2,.55);sh.lineTo(-.42,.35);sh.closePath();
   const g=new T.ExtrudeGeometry(sh,{depth:len,bevelEnabled:true,bevelSize:.03,bevelThickness:.03,bevelSegments:1});g.translate(0,0,-len/2);return mesh(p,g,m);}
 const PAL=[ // relay, corridor, frontier
-  {bg:0x1a232b,fog:[0x1e2830,70,190],sun:[0xc9dbe8,2.0],hemi:[0x9fb3c4,0x1d2124,.55],ground:0x6c7378,wet:.42,env:[0x1d242a,0xbfd3e0,0x8aa3b3,0x5a7080,0x333a3f],dir:[-28,40,18]},
-  {bg:0x2a1f19,fog:[0x3a2a20,70,190],sun:[0xffb878,2.6],hemi:[0xe0b48a,0x221812,.5],ground:0x857565,wet:.75,env:[0x2a2019,0xffc08a,0xe0905a,0x6a5040,0x3a3028],dir:[-34,26,-8]},
-  {bg:0x16222a,fog:[0x1c2c33,70,190],sun:[0xb9e4ea,1.7],hemi:[0x8fb8c0,0x14191c,.55],ground:0x67706f,wet:.5,env:[0x18232a,0xa8d8e0,0x7aa8b0,0x46606a,0x2c3438],dir:[-22,38,24]}
+  {bg:0x89807c,fog:[0x89807c,88,212],sun:[0xffd097,2.9],hemi:[0xcad9fa,0x9a6e49,.74],ground:0x7d6b58,wet:.42,env:[0x554e47,0xffcf91,0xb8c9ea,0x889bb2,0x573e30],dir:[-26,12,5],soil:0xa18c74,road:0x817c6e},
+  {bg:0x756053,fog:[0x756053,84,209],sun:[0xffc18b,2.7],hemi:[0xd2d5e4,0x926e50,.67],ground:0x827362,wet:.75,env:[0x51443b,0xffc08a,0xb8c2d4,0x846a56,0x453629],dir:[-34,17,-8],soil:0x9b846c,road:0x777b74},
+  {bg:0x62747a,fog:[0x62747a,80,206],sun:[0xc4dce0,1.9],hemi:[0xb0c6cf,0x66736a,.66],ground:0x67706f,wet:.5,env:[0x34434a,0xb5d7df,0x9eb3be,0x526a74,0x424b46],dir:[-24,23,23],soil:0x849188,road:0x7d8987}
 ];
 function buildProps(s,ci){
   const g=new T.Group();g.name='theater-props';s.add(g);const H=Math.max(width,depth)*TILE/2;
@@ -152,7 +152,52 @@ function groundMaterial(P){
  const rough=tex(256,256,(g,w,h)=>{g.fillStyle='#e0e0e0';g.fillRect(0,0,w,h);for(let i=0;i<26;i++){const x=rnd(0,w),y=rnd(0,h),r=rnd(10,46),gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,`rgba(0,0,0,${P.wet})`);gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,w,h);}},[6,6]);
  return MS({color:C(P.ground),map:imgTex('assets/concrete.webp',[14,14]),roughnessMap:rough,roughness:1,metalness:.08,envMapIntensity:.7});
 }
-return {get TILE(){return TILE;},PAL,C,MAT,MS,mesh,bx,cy,bevelGeo,tileW,envFrom,groundMaterial,imgTex,buildProps,buildCover,random:rnd,setSize(w,d,tile=7.4){width=w;depth=d;TILE=tile;},dispose(){
+function fieldSurface(material,strata,detail){
+ // World-space grit and wind ripples from the Warden field trial. Keep all
+ // height/cover rules on the board geometry and fade the fine detail at range.
+ material.extensions={derivatives:true};
+ material.onBeforeCompile=shader=>{
+  shader.uniforms.fieldStrata={value:strata};
+  shader.uniforms.fieldDetail={value:detail};
+  shader.vertexShader=shader.vertexShader
+   .replace('#include <common>','#include <common>\nvarying vec2 fieldGround;')
+   .replace('#include <begin_vertex>','#include <begin_vertex>\nfieldGround=(modelMatrix*vec4(position,1.)).xz;');
+  shader.fragmentShader=shader.fragmentShader
+   .replace('#include <common>',`#include <common>
+    varying vec2 fieldGround;
+    uniform sampler2D fieldStrata;
+    uniform float fieldDetail;
+    float fieldHash(vec2 p){
+     p=fract(p*vec2(123.34,345.45));
+     return fract((p.x+p.y)*dot(p,p+34.345));
+    }
+    float fieldNoise(vec2 p){
+     vec2 c=floor(p),f=fract(p);
+     vec2 u=f*f*(3.-2.*f);
+     return mix(mix(fieldHash(c),fieldHash(c+vec2(1.,0.)),u.x),
+      mix(fieldHash(c+vec2(0.,1.)),fieldHash(c+vec2(1.)),u.x),u.y);
+    }`)
+   .replace('#include <color_fragment>',`#include <color_fragment>
+    float broad=fieldNoise(fieldGround*.116);
+    float drift=broad*.68+fieldNoise(fieldGround*.39)*.32;
+    float ripples=sin(dot(fieldGround,vec2(11.7,5.7))+drift*19.);
+    float nearDetail=1.-smoothstep(.12,.55,length(fwidth(fieldGround)));
+    float windPatch=smoothstep(.28,.66,drift);
+    float stonePatch=smoothstep(.48,.75,drift);
+    float stone=texture2D(fieldStrata,fieldGround*.24).r;
+    float grit=mix(ripples*.033*windPatch,(stone-.48)*.21,stonePatch)*nearDetail;
+    diffuseColor.rgb*=1.+fieldDetail*((drift-.48)*.34+grit);
+    float microHeight=fieldDetail*grit*.14;`)
+   .replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+    vec3 groundX=dFdx(-vViewPosition),groundY=dFdy(-vViewPosition);
+    vec3 acrossX=cross(groundY,normal),acrossY=cross(normal,groundX);
+    float area=dot(groundX,acrossX);
+    vec3 relief=dFdx(microHeight)*acrossX+dFdy(microHeight)*acrossY;
+    normal=normalize(max(abs(area),1e-8)*normal-sign(area)*relief);`);
+ };
+ return material;
+}
+return {get TILE(){return TILE;},PAL,C,MAT,MS,mesh,bx,cy,bevelGeo,tileW,envFrom,groundMaterial,fieldSurface,imgTex,buildProps,buildCover,random:rnd,setSize(w,d,tile=7.4){width=w;depth=d;TILE=tile;},dispose(){
  const seen=new Set();for(const m of Object.values(MAT)){for(const t of [m.map,m.normalMap,m.roughnessMap])if(t&&!seen.has(t)){seen.add(t);t.dispose();}m.dispose();}
  for(const geo of geoCache.values())geo.dispose();for(const target of envTargets)target.dispose();pmrem.dispose();
 }};
