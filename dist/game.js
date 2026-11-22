@@ -1529,32 +1529,6 @@ function waitAttack(ms,sequence){
  });
 }
 let soundBus=null;
-const combatSamples=new Map();
-const COMBAT_CUES={
- missileArm:'pod-arm',rocketLaunch:'rocket-launch',armorImpact:'plate-strike',
- shieldImpact:'shield-strike',heavyImpact:'heavy-hit',missileImpact:'missile-hit',boom:'missile-hit',
- rifleReport:'rifle-report',rotaryReport:'rotary-report',shotgunReport:'shotgun-report',
- cannonReport:'cannon-report',railReport:'rail-report'
-};
-const FIRE_REPORTS={
- rifle:['rifleReport',1,.77],sidewinder:['rifleReport',1.18,.63],trident:['rifleReport',.94,.83],
- 'needle-carbine':['rifleReport',1.12,.70],hailstorm:['rotaryReport',1,.78],rivet:['rotaryReport',.88,.88],
- shotgun:['shotgunReport',1,1],forge:['cannonReport',1.13,.98],rampart:['cannonReport',1,1.07],
- morrow:['cannonReport',.92,1.07],rail:['railReport',1,1.06],parallax:['railReport',.86,1.13],
- ember:['railReport',1.21,.92]
-};
-function loadCombatSamples(){
- for(const file of new Set(Object.values(COMBAT_CUES))){
-  fetch(asset('assets/audio/'+file+'.wav'))
-   .then(response=>{if(response.ok)return response.arrayBuffer();throw Error('Audio unavailable')})
-   .then(bytes=>audio.decodeAudioData(bytes))
-   .then(buffer=>combatSamples.set(file,buffer))
-   .catch(()=>{});
- }
-}
-function playCombatSample(cue,at,volume,rate=1,pan=0){
- return playSample(combatSamples.get(COMBAT_CUES[cue]),at,volume,rate,pan);
-}
 function playSample(buffer,at,volume,rate=1,pan=0){
  if(!buffer)return false;
  const source=audio.createBufferSource(),gain=audio.createGain();
@@ -1577,7 +1551,8 @@ function startAudio(unlock=true){
    const compressor=audio.createDynamicsCompressor();
    compressor.threshold.value=-9;compressor.knee.value=7;compressor.ratio.value=4;
    soundBus.connect(compressor);compressor.connect(audio.destination);
-   if(typeof fetch==='function'){loadCombatSamples();loadMachinerySamples()}
+   gunBankLoad=loadGunBank().finally(()=>{gunBankLoad=null});
+   if(typeof fetch==='function')loadMachinerySamples();
   }
   if(unlock&&(audio.state==='suspended'||audio.state==='interrupted'))audio.resume().then(syncMusic).catch(()=>{});
   syncMusic();
@@ -1589,12 +1564,7 @@ function sound(type,cueVolume=1,shot=null){
   startAudio();
   if(!audio)return;
   const now=audio.currentTime+.005;
-  const rate=(type==='boom'?.78:1)*(shot?.rate??1),pan=shot?.pan??0;
-  if(playCombatSample(type,now,cueVolume*rate,rate,pan))return;
-  if(shot?.weapon){
-   const [cue,pitch,level]=FIRE_REPORTS[shot.weapon]??FIRE_REPORTS[type]??[];
-   if(cue&&playCombatSample(cue,now,cueVolume*level,pitch*rate,pan))return;
-  }
+  if(playGunMix(type,now,cueVolume,shot??{}))return;
   if(!noiseBuffer){
    noiseBuffer=audio.createBuffer(1,Math.ceil(audio.sampleRate*1.2),audio.sampleRate);
    const samples=noiseBuffer.getChannelData(0);
@@ -1617,12 +1587,6 @@ function sound(type,cueVolume=1,shot=null){
    source.connect(filter);filter.connect(gain);gain.connect(soundBus);source.start(at);source.stop(at+duration+.01);
   };
   const thump=(at,weight=1)=>{tone(at,.27,95,34,.18*weight);noise(at,.20,1000,180,.13*weight);tone(at+.025,.12,410,180,.045*weight,'triangle')};
-  const gun=(at,weight=1)=>{noise(at,.16,3300,240,.18*weight);tone(at,.18,145,42,.16*weight);noise(at+.035,.19,1300,180,.045*weight)};
-  if(type==='parallax-charge'){
-   tone(now,.68,155,1040,.085,'triangle');
-   tone(now+.22,.46,340,1810,.034,'sawtooth');
-   return;
-  }
   if(type==='click'){tone(now,.06,820,610,.025,'triangle');return}
   if(type==='hydraulic'){
    tone(now,.24,150,325,.071,'triangle');
@@ -1649,46 +1613,6 @@ function sound(type,cueVolume=1,shot=null){
    return;
   }
   if(type==='rotor'){tone(now,.23,92,115,.031,'triangle');noise(now,.25,390,200,.048,'bandpass');return}
-  const explosion=(at,scale=1)=>{
-   // Initial crack, pressure wave, turbulent fireball and scattered fragments.
-   noise(at,.075,6000,850,.32*scale);
-   tone(at,.45,155,36,.30*scale);
-   noise(at+.015,.85,1900,105,.29*scale);
-   noise(at+.045,.70,850,170,.17*scale,'bandpass');
-   tone(at+.035,.80,69,25,.19*scale);
-   for(const [delay,pitch] of [[.09,2400],[.16,1750],[.25,2800],[.37,1450]]){
-    tone(at+delay,.12,pitch,pitch*.42,.025*scale,'triangle');
-    noise(at+delay,.10,4200,900,.035*scale,'bandpass');
-   }
-  };
-  if(type==='boom'){explosion(now,.78);return}
-  if(type==='missileArm'){
-   tone(now,.22,112,220,.055,'triangle');
-   noise(now+.025,.18,380,1150,.08,'bandpass');
-   tone(now+.175,.06,710,250,.10,'triangle');
-   return;
-  }
-  if(type==='armorImpact'||type==='shieldImpact'){thump(now,.8);noise(now,.065,5300,750,.16);return}
-  if(type==='missileImpact'){explosion(now,1.15);return}
-  if(type==='heavyImpact'){
-   noise(now,.09,5700,1100,.24);
-   tone(now,.36,170,38,.25);
-   noise(now+.015,.50,1750,150,.19);
-   tone(now+.025,.23,830,190,.075,'triangle');
-   return;
-  }
-  if(type==='rifle'||type==='hailstorm'){gun(now,type==='rifle'?.8:1);return}
-  if(type==='shotgun'){gun(now,1.35);noise(now+.035,.32,2000,200,.12);return}
-  if(type==='rampart'){gun(now,1.5);tone(now+.035,.42,85,30,.13);return}
-  if(type==='morrow'){gun(now,1.35);tone(now+.02,.31,94,32,.11);return}
-  if(type==='rail'){tone(now,.32,1450,240,.07,'sawtooth');noise(now,.3,5000,350,.12,'bandpass');tone(now+.015,.4,150,35,.16);return}
-  if(type==='rocketLaunch'){
-   noise(now,.065,6100,1250,.29);
-   tone(now+.008,.22,180,65,.25);
-   noise(now+.036,.44,1600,230,.27);
-   noise(now+.066,.46,630,210,.16,'bandpass');
-   return;
-  }
   if(type==='cleaver'||type==='blade'){noise(now,.22,550,3500,.11,'bandpass');tone(now+.08,.2,1250,460,.05,'triangle');return}
   if(type==='breaker'){noise(now,.18,420,2100,.10,'bandpass');thump(now+.13,1.15);return}
   if(type==='breach-gauntlet'||type==='pulse-bash'||type===FREE_HAND_COUNTER.id){noise(now,.19,490,2100,.085,'bandpass');thump(now+.18,type==='breach-gauntlet'?1.1:.65);return}
@@ -3004,6 +2928,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
  const profile=attackProfile(a,w.id),power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
+ const weaponVoice=a.kind==='tank'?'javelin':a.kind==='helicopter'?'kite':w.id;
+ const shotPan=sequence?-.32:(a.face||1)*-.23,hitPan=sequence ? .32 : (a.face||1)*.24;
+ if(!muted&&gunBankLoad)await gunBankLoad;
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const {paid,charged}=spendAttack(a,w,part,reaction);
@@ -3037,10 +2964,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const armTime=rockets?Math.min(windup,.28):0;
  if(armTime){
   if(windup>armTime)await waitAttack((windup-armTime)*1000,sequence);
-  if(!sequence?.skipped)sound('missileArm',windup<.28?.55:1);
+  if(!sequence?.skipped)sound('missileArm',windup<.28?.55:1,{pan:shotPan});
  }
  if(profile.charge&&!reducedMotion&&!sequence?.skipped){
-  sound('parallax-charge');
+  sound('parallax-charge',1,{pan:shotPan});
   if(sequence)$('#shot-status').textContent=a.name+' charges the Parallax.';
  }
  if(power&&!reducedMotion){
@@ -3088,11 +3015,11 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   const rate=[1,.956,1.027,.981][event.index%4];
   if(event.report){
    if(sequence?.skipped)continue;
-   const type=rockets?'rocketLaunch':power?.sound||(w.scatter&&w.id!=='ember'?'shotgun':weaponMotion(w.id));
    window.IronVowScene?.combat?.launch(a,t,w,event.index,contacts,guard);
-   sound(type,event.index?.93:1,{weapon:w.id,
-    rate:rockets?(w.id==='locust'?1.12:1)*(event.index?.90:1):rate,
-    pan:rockets?(event.index?.22:-.22):(a.face||1)*-.23});
+   if(profile.melee)sound(power?.sound||weaponMotion(w.id));
+   else sound('gunReport',event.index?.93:1,{weaponVoice,
+    rate:rockets?(event.index?.90:1):rate,travel:profile.travel,lastReport:event.index===profile.beats.length-1,
+    pan:rockets?shotPan+(event.index%2?.12:-.12):shotPan});
    continue;
   }
   if(event.plant){
@@ -3103,7 +3030,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
    continue;
   }
   if(sequence)sequence.contact=event;
-  if(rockets&&!sequence?.skipped)sound('missileImpact',event.index?.83:.62,{rate,pan:(a.face||1)*.23});
+  if(rockets&&!sequence?.skipped)sound(event.hit?'missileImpact':'groundBlast',event.index?.83:.71,{pan:hitPan});
   if(!event.hit)continue;
   const broken=applyImpact(t,event);
   if(!sequence?.skipped)window.IronVowScene?.combat?.landed(a,t,w,event,guard);
@@ -3118,7 +3045,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   shake=Math.max(shake,power?.shake??(broken?6:light?2.8:4));
   if(!rockets){
    const heavy=profile.melee||!light&&['rail','rampart','shotgun'].includes(effectKind);
-   sound(guard?'shieldImpact':heavy?'heavyImpact':'armorImpact',light?(broken?.94:w.scatter?.57:.83):1,{rate,pan:(a.face||1)*.24});
+   sound(guard?'shieldImpact':heavy?'heavyImpact':'armorImpact',light?(broken?.94:w.scatter?.57:.83):1,{weaponVoice,material:t.kind,rate,pan:hitPan});
   }
  }
  a.attack.releaseAt=clock;
@@ -3479,7 +3406,7 @@ function updateDestruction(u,t){
    u.deathEvents=1;
    if(!reducedMotion&&elapsed<.55){
     effects.push({type:'detonation',x:u.x,z:u.z,t:1-elapsed/.85,big:true,seed:u.index,anchor:freezeAttachment(u,'body',t)});
-    sound('boom');shake=Math.max(shake,u.kind==='helicopter'?5:4);
+    sound('boom',1,{pan:(u.face||1)*.20});shake=Math.max(shake,u.kind==='helicopter'?5:4);
    }
   }
   return;

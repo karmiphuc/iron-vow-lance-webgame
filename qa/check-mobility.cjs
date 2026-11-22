@@ -35,7 +35,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('Boolean(rook.reacted)'),false);
  assert.equal(run('freeMovement(rook)'),0);
  assert.ok(run('rook.hp.body')<rookHP);
- assert.ok(run("cues.indexOf('hydraulic')<cues.indexOf('step')&&cues.indexOf('step')<cues.indexOf('prime')&&cues.indexOf('prime')<cues.indexOf('rifle')"));
+ assert.ok(run("cues.indexOf('hydraulic')<cues.indexOf('step')&&cues.indexOf('step')<cues.indexOf('prime')&&cues.indexOf('prime')<cues.indexOf('gunReport')"));
  const afterCounter=run('rook.hp.body');
  await run("engage(rook,hostile,'body',weapon('rifle'))");
  assert.equal(run('rook.hp.body'),afterCounter);

@@ -1,16 +1,15 @@
 Iron Vow ballistic audio
 
-The rifle, rotary, and rail reports use "AR15 rifle shot" by michorvath.
-https://freesound.org/people/michorvath/sounds/427596/
+Gunshot Sounds by Vincent Sevedge (Tabasco), CC BY 3.0.
+https://opengameart.org/content/gunshot-sounds
+https://creativecommons.org/licenses/by/3.0/
 
-The shotgun and cannon reports use "20 gauge shotgun gunshot" by michorvath.
-https://freesound.org/people/michorvath/sounds/427595/
+Sci-Fi Sounds by Kenney, CC0 1.0.
+https://kenney.nl/assets/sci-fi-sounds
+https://creativecommons.org/publicdomain/zero/1.0/
 
-Plate and shield contacts use "Metal Radiator Hit Bang Impact 96kHz.flac" by qubodup.
-https://freesound.org/people/qubodup/sounds/50674/
-
-All three recordings are CC0. The Iron Vow cues use edited excerpts and
-original synthesized layers. The edit recipe is tools/render_ballistic_audio.py.
+Clips are trimmed, filtered, pitch-shifted, and layered. The game adds
+three filtered stereo reflections for each gun and impact profile.
 
 Iron Vow machinery audio
 
