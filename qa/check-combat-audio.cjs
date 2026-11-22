@@ -58,7 +58,7 @@ async function salvo(id,miss){
  sim.run("for(const [name,buffer] of gunSampleBuffers)buffer.url=name+'.mp3'");
  const missing=JSON.parse(sim.run("JSON.stringify(WEAPONS.filter(w=>!w.melee&&!GUN_VOICES[w.id]).map(w=>w.id))"));
  assert.deepEqual(missing,[],'every ranged weapon has an echo mix');
- assert.equal(sim.run('machinerySamples.size'),6);
+ assert.equal(sim.run('machinerySamples.size'),7);
  assert.equal(plays.filter(entry=>entry.cue==='mech-boot').length,1,'unmuting resumes idle without replaying startup');
  assert.ok(sim.run('machineryVoice.idle.loop'));
  if(id==='rifle'){
@@ -139,9 +139,37 @@ async function salvo(id,miss){
  else assert.ok(finalHP<initialHP);
 }
 
+async function mechanicalEvents(){
+ const sim=create({random:()=>0}),{run}=sim;
+ run(`createBattle(0);battle.cover.clear();
+  const attacker=current(), tank=battle.units.find(u=>u.kind==='tank'),
+   kite=battle.units.find(u=>u.kind==='helicopter'), defender=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+  const labels=[];
+  sound=(cue,level,detail)=>labels.push({cue,level,...detail});
+  const axis={actor:attacker.id,sign:-1}, sequence={actor:attacker,cameraAxis:axis};`);
+ assert.equal(run("combatAudioPan(attacker,sequence,0)"),-.36);
+ assert.equal(run("combatAudioPan(defender,sequence,0)"),.36);
+ run("sequence.actor=defender;sequence.reaction=true");
+ assert.equal(run("combatAudioPan(defender,sequence,0)"),.36);
+ assert.equal(run("combatAudioPan(attacker,sequence,0)"),-.36);
+ assert.equal(run("combatAudioPan(attacker,{...sequence,skipped:true},.2)"),.2);
+ run(`attacker.x=1;attacker.z=1;defender.x=2;defender.z=1;defender.shield=null;
+  defender.hp.right=1;defender.hp.body=500;const rolls=[0,.60];ruleRandom=()=>rolls.shift()??0;`);
+ await run("shoot(attacker,defender,'right',weapon('rail'),false)");
+ await run("shoot(attacker,defender,'body',weapon('rail'),true)");
+ assert.deepEqual(JSON.parse(run("JSON.stringify(labels.filter(e=>e.cue==='partFailure').map(e=>e.part))")),['right']);
+ run(`labels.length=0;beginDestruction(tank);beginDestruction(kite);
+  for(const u of [tank,kite]){updateDestruction(u,clock+VEHICLES[u.kind].wreckAt+.01);updateDestruction(u,clock+VEHICLES[u.kind].wreckAt+.02);}`);
+ assert.deepEqual(JSON.parse(run("JSON.stringify(labels.map(e=>[e.cue,e.material??e.level]))")),[
+  ['vehicleShutdown','tank'],['vehicleShutdown','helicopter'],
+  ['vehicleGround','tank'],['boom',.77],['vehicleGround','helicopter'],['boom',.62]
+ ]);
+}
+
 (async()=>{
+ await mechanicalEvents();
  await salvo('missile',false);
  await salvo('locust',true);
  await salvo('rifle',false);
- console.log('PASS half-second ignition and idle, identical Siege walking mix across chassis, timed vents, and missile and rifle audio.');
+ console.log('PASS half-second ignition and idle, identical Siege walking mix across chassis, timed vents, missile and rifle timing, stable counterfire panning, one-shot part loss, and distinct vehicle wreck sequences.');
 })().catch(error=>{console.error(error);process.exitCode=1});
