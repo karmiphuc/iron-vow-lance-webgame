@@ -25,6 +25,7 @@ const checkpoint=require('./fixtures/equipment-capture.json');
  assert.equal(run("validSave({...save,owned:save.owned.filter(id=>id!=='missile')})"),false);
  run('createBattle(0);selected=2;const ally=current(),foe=battle.units.find(u=>u.team==="enemy"&&!u.kind);battle.cover.clear();foe.x=ally.x+1;foe.z=ally.z');
  assert.equal(run("reactionWeapon(ally,foe).id"),'cleaver');
+ assert.equal(run('animationPose({...ally,shoulder:null},0).strikeKind'),null);
  assert.equal(run("canUseWeapon(ally,shoulderWeapon(ally))"),true);
  run('ally.hp.right=0');
  assert.equal(run("canUseWeapon(ally,meleeWeapon(ally))"),false);
@@ -74,5 +75,11 @@ const checkpoint=require('./fixtures/equipment-capture.json');
  lost.run('finish(false)');
  assert.equal(lost.run('save.captured'),undefined);
  assert.equal(lost.run("copies(save.owned,'trident')"),0);
+ const loot=new Set();
+ for(let seed=0;seed<10;seed++){
+  const sortie=simulate({reducedMotion:true});
+  loot.add(sortie.run(`createBattle(0);battle.terrainSeed=${seed};finish(true);save.owned.slice(3).join('/')`));
+ }
+ assert.ok(loot.has('')&&loot.size>2,'victories may award different equipment or no equipment');
  console.log('PASS physical copy counts, port rotation, right-hand melee and shield, shoulder arm independence, surrender threshold, checkpoint, capture payout and refit');
 })().catch(error=>{console.error(error);process.exitCode=1});

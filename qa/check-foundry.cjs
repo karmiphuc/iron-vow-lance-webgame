@@ -85,8 +85,8 @@ async function exerciseRigAdapter(){
   slit.geometry.computeBoundingBox();
   assert.ok(slit.geometry.boundingBox.getCenter(new three.Vector3()).length()<.02,'pilot target is centered on the viewing slit');
   assert.equal(entry.primary.model.name,'vesper');
-  assert.equal(entry.primary.mount.parent,entry.m.rig.arms.R.so);
-  assert.equal(entry.primary.recoil.position.z,-kick*.22);
+  assert.equal(entry.primary.mount.parent.name,'mount.shoulderR');
+  assert.equal(entry.primary.recoil.position.z,0);
   assert.equal(entry.m.mortar.slide.position.z,-0);
  }
  artillery.attack=null;

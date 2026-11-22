@@ -3900,7 +3900,7 @@ function animationPose(u,t){
  const stride=m?.stepBeats!=null?fieldStepProgress(phase,m.segment):phase;
  const cycle=m?m.gaitBase+stride:0,routePhase=m?(m.stepIndex+stride)/m.totalSteps:0;
  const walk=m&&!reducedMotion?smoothRange(0,.12,routePhase)*(1-smoothRange(.87,1,routePhase)):0;
- const attack=u.attack,profile=attackProfile(u,attack?.kind||u.weapon);
+ const attack=u.attack,profile=attackProfile(u,attack?.kind??unitWeapon(u).id)??ATTACK_PROFILES.rifle;
  const strikeKind=profile.melee?attack?.kind:null;
  const primeDuration=attack?.primeDuration||0,windupAge=attack?t-attack.start-primeDuration:0;
  const returnAt=attack?.returnAt??((attack?.releaseAt??0)+profile.recover);

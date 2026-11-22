@@ -7,7 +7,8 @@ module.exports=async function checkEquipmentHardpoints({page,origin}){
   [2,null,'cleaver',['missile','missile','cleaver','bulwark-shield']],
   [4,'rifle',null,['rifle','locust',null,'bulwark-shield']],
   [4,null,'cleaver',['locust','locust','cleaver','bulwark-shield']],
-  [10,null,'cleaver',['missile','missile','cleaver','bulwark-shield']]
+  [10,null,'cleaver',['missile','missile','cleaver','bulwark-shield']],
+  [19,null,'cleaver',['missile','missile','cleaver','bulwark-shield']]
  ]){
   const params={frame,weapon,melee,meleeHand:melee?'right':null,shoulder:frame===4?'locust':'missile',shield:'bulwark-shield'};
   const mounted=await page.waitForFunction(params=>{
@@ -17,11 +18,21 @@ module.exports=async function checkEquipmentHardpoints({page,origin}){
    const point=node=>node.getWorldPosition(new THREE.Vector3());
    return {
     ids:[primary?.id??null,shoulderWeapon?.id??null,secondary?.id??null,preview.shieldId],
-    shieldLeft:point(shield.grip).distanceTo(point(arms.L.so))<.01,
-    meleeRight:!params.melee||secondary?.mount.parent===arms.R.so,
+    shieldLeft:point(shield.grip).distanceTo(point(preview.m.nativeV2.shieldSocket??arms.L.so))<.01,
+    meleeRight:!params.melee||(secondary?.mount.parent===arms.R.so||secondary?.mount.parent.parent===arms.R.wr),
     shoulderClear:shoulderWeapon?.mount.parent!==arms.R.so&&shoulderWeapon?.mount.parent!==arms.L.so
    };
   },params,{timeout:120000});
   assert.deepEqual(await mounted.jsonValue(),{ids:expected,shieldLeft:true,meleeRight:true,shoulderClear:true});
+ }
+ await page.locator('[data-armory-class="melee"]').click();
+ const choice=page.locator('[data-refit-choice="cleaver"]');
+ if(await choice.count()&&await choice.getAttribute('aria-pressed')!=='true')await choice.click();
+ const fitRight=page.locator('[data-equip-right="cleaver"]');
+ for(const [width,height] of [[768,1024],[1024,768]]){
+  await page.setViewportSize({width,height});
+  await fitRight.scrollIntoViewIfNeeded();
+  const area=await fitRight.boundingBox();
+  assert.ok(area&&area.width>=44&&area.height>=44&&area.x>=0&&area.x+area.width<=width);
  }
 };

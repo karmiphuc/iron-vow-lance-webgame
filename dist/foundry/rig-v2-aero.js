@@ -19,7 +19,10 @@ root.IronVowRigV2.register(19,{
    const name='melee.'+id,model=bone(name),mount=driver(name,sockets.L);
    blades.set(id,{id,model,mount,tip:marker('strike.tip.'+id,mount),bounds:()=>bounds(name)});
   }
-  const {fit,dispose}=workshopMounts(sockets);
+  const shoulder=new T.Group();
+  shoulder.position.set(rig.arms.R.sh.position.x,rig.arms.R.sh.position.y+.6,-.35);
+  rig.spine.add(shoulder);
+  const {fit,dispose}=workshopMounts({...sockets,shoulder});
   const spine=rig.spine,spineRest=spine.position.clone(),worldRight=V3();
   const rotation=new T.Quaternion();
   let dodgeAt=-Infinity,dodgeSide=1;
@@ -32,25 +35,31 @@ root.IronVowRigV2.register(19,{
    },
    pose(entry,unit,pose,time,armory){
     const right=unit.alive&&unit.hp.right>0,left=unit.alive&&unit.hp.left>0;
-    const melee=unit.shield?null:unit.melee,nativeRifle=unit.weapon==='rifle';
-    const nativeBlade=blades.get(melee);
+    const rightMelee=unit.meleeHand==='right',melee=unit.shield&&!rightMelee?null:unit.melee;
+    const rackId=unit.shoulder??(['missile','cerberus'].includes(unit.weapon)?unit.weapon:null);
+    const nativeRifle=unit.weapon==='rifle',nativeBlade=!rightMelee&&blades.get(melee);
+    const handId=nativeRifle||unit.weapon===rackId?null:unit.weapon;
     rifleMount.visible=rifleModel.visible=right&&nativeRifle;
-    for(const [id,weapon] of blades)weapon.mount.visible=weapon.model.visible=left&&id===melee;
-    const otherRifle=fit('R',nativeRifle?null:unit.weapon,armory);
-    const otherBlade=fit('L',nativeBlade?null:melee,armory);
+    for(const weapon of blades.values())weapon.mount.visible=weapon.model.visible=left&&weapon===nativeBlade;
+    const gear=fit('R',rightMelee?melee:handId,armory);
+    const offhand=fit('L',rightMelee||nativeBlade?null:melee,armory);
+    const otherRifle=rightMelee?null:gear,otherBlade=rightMelee?gear:offhand;
+    const rack=fit('shoulder',rackId==='vesper-shoulder'?'missile':rackId,armory);
+    if(rack){rack.mount.rotation.x=0;rack.mount.visible=unit.alive&&unit.hp.body>0;rack.subsystem='body';rack.aimPivot=()=>rack.mount;}
     if(otherRifle){
      otherRifle.mount.visible=right;
      if(arsenal.isExpansion(otherRifle.id))arsenal.animate(otherRifle,pose);
      else otherRifle.recoil.position.z=-Math.abs(pose.recoil)*.22;
     }
-    if(otherBlade){otherBlade.mount.visible=left;arsenal.animate(otherBlade,pose);}
-    entry.primary=nativeRifle?rifle:otherRifle;
+    if(otherBlade){otherBlade.mount.visible=rightMelee?right:left;arsenal.animate(otherBlade,pose);}
+    entry.shoulderWeapon=rack;
+    entry.primary=(nativeRifle?rifle:otherRifle)??rack;
     entry.secondary=nativeBlade||otherBlade;
     const age=time-dodgeAt;
     const evade=unit.alive&&!pose.reducedMotion&&age>=0&&age<.48?dodgeSide*Math.sin(Math.PI*age/.48)**2:0;
     spine.position.copy(spineRest);spine.position.x+=.32*evade;
     spine.rotation.z-=.32*evade;
-    return Boolean(entry.primary&&(!melee||entry.secondary));
+    return (!handId||rightMelee||Boolean(otherRifle))&&(!melee||Boolean(entry.secondary))&&(!rackId||Boolean(rack));
    },
    dispose
   };
