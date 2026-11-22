@@ -273,16 +273,16 @@ function draw(u,t,pose,scope,model,custom){
  const world=pose.world,face=world?.face??pose.heading??facing*Math.PI/4,aim=pose.aim;
  if(!world)m.yaw=face;else{m.scale=.9;m.cont.scale.setScalar(.9);}
  const paired=!world&&u.motion?.stepBeats!=null;
- const step=!pose.reducedMotion&&Boolean(world?u.motion&&!world.airborne:paired||pose.phase>0&&u.motion);
+ const step=u.hp.legs>0&&!pose.reducedMotion&&Boolean(world?u.motion&&!world.airborne:paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
  const primeLift=pose.primePhase==='step'||pose.primePhase==='return'?Math.sin(PI*prime)*.5:0;
  const melee=Boolean(pose.strikeKind),authoredStrike=v2?.authoredStrike?.(pose.strikeKind),meleeAge=pose.strikeProgress<=.7
   ?pose.strikeProgress/.7*MEL.hit:MEL.hit+(pose.strikeProgress-.7)/.3*(MEL.end-MEL.hit);
- const lunge=melee&&!authoredStrike?lungeK(meleeAge)*1.25:0;
+ const lunge=u.hp.legs>0&&melee&&!authoredStrike?lungeK(meleeAge)*1.25:0;
  const travel=step?(pose.phase-.5)*1.8:0;
  const pos=world?V3(world.x,0,world.z):paired?V3((u.vx-u.vz)*1.8*Math.SQRT1_2,0,(u.vx+u.vz)*1.8*Math.SQRT1_2):
   V3(Math.sin(face)*(lunge+travel),0,Math.cos(face)*(lunge+travel));
- if(world&&melee&&!authoredStrike&&world.lungeLimit){const direction=world.targetRoot.clone().sub(pos).setY(0).normalize();pos.addScaledVector(direction,lungeK(meleeAge)*world.lungeLimit);}
+ if(world&&u.hp.legs>0&&melee&&!authoredStrike&&world.lungeLimit){const direction=world.targetRoot.clone().sub(pos).setY(0).normalize();pos.addScaledVector(direction,lungeK(meleeAge)*world.lungeLimit);}
  if(paired&&!m.wasMoving)m.init=false;
  if(!world&&!step&&m.wasMoving){
   for(const L of m.legs){L.swing=false;L.settle=null;L.planted.sub(m.travelRoot??m.cont.position);L.foot.copy(L.planted)}
@@ -360,7 +360,7 @@ function draw(u,t,pose,scope,model,custom){
  }else animateMech(m,input,dt,t);
  if(world)(entry.groundRoot??=V3()).set(pos.x,world.y,pos.z);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
- if(!world&&prime>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
+ if(!world&&prime>0&&u.hp.legs>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
   const lead=m.rig.legs[1];
   const target=V3(lead.restX,m.dims.ankleH+primeLift,lead.restZ+prime*.82);
   VC.solveLeg(m.rig,m.dims,lead,target,-primeLift*.32);

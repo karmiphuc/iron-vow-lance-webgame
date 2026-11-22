@@ -61,6 +61,26 @@ for (const [index, name] of NAMES.entries()) {
 
 function settle(m,input={},frames=40){let t=0;for(let i=0;i<frames;i++){t+=dt;R.animateMech(m,{pos:V3(),face:0,heading:0,alive:true,brace:0,...input},dt,t);}return t;}
 
+// Dismember one instance at a time, including shoulder armor and unpainted joint hardware.
+for(const model of [0,1,5]){
+ const mech=R.buildRig(model,'ally'),twin=R.buildRig(model,'ally');
+ for(const [part,side,other] of [['right','R','L'],['left','L','R']]){
+  const arm=mech.rig.arms[side];
+  R.setPartState(mech,part,1);
+  assert.ok(arm.sh.visible&&arm.paul.visible,'damaged arm stays attached');
+  R.setPartState(mech,part,2);
+  assert.ok(!arm.sh.visible&&!arm.paul.visible,'loss removes the shoulder and the entire arm');
+  assert.ok(mech.rig.arms[other].sh.visible&&twin.rig.arms[side].sh.visible,'only the hit side and unit change');
+  R.setPartState(mech,part,0);
+  assert.ok(arm.sh.visible&&arm.paul.visible,'field-rebuilt arm returns');
+ }
+ for(const brace of [0,1,0]){
+  settle(mech,{legsDead:true,brace,ready:true,groundAt:()=>0});
+  assert.ok(mech.rig.pelvis.position.y<mech.dims.py*.68,'disabled hull stays low across brace changes');
+  for(const leg of mech.rig.legs)assert.ok(Math.abs(leg.an.getWorldPosition(V3()).y-mech.dims.ankleH)<.05,'braced sole stays planted');
+ }
+}
+
 // Walking: every stance frame keeps the ankle on its IK goal and the foot fixed on the ground.
 function walk(model){
  const m=R.buildRig(model,'ally'),face=-.76,forward=V3(Math.sin(face),0,Math.cos(face));
