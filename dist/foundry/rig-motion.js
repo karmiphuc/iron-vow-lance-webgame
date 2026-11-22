@@ -210,6 +210,9 @@ function supportGrip(m,arm,weight){
 /* Settled poses from the Valkyrie striker and roster loadout studies. Foot and pelvis offsets scale with hip height.
    The last two arm angles, when supplied, turn the shoulder and roll the wrist. */
 const readyPoses={
+  // The Harrier leads on its gauntlet side. Its weapon hangs outboard of the rear leg.
+  harrier:{restPose:true,pelvis:[.092,-.092,.015],feet:[.25,.18,.12],spine:[.15,-.19,.105],neck:[-.095,.17,-.055],
+    left:[.085,.36,-.19,.04,-.04,-.09],right:[-.06,-.30,-.23,.10,.065,.04]},
   striker:{pelvis:[.045,-.085,.027],feet:[.075,.275,.17],spine:[.145,.23,-.045],neck:[-.05,.07,.025],
     gun:{aim:[6.7,0,13],grip:D=>[D.shX*.12,-D.up*.72,D.fo*.93]},support:true},
   buckler:{pelvis:[.03,-.052,.028],feet:[.075,.24,.24],spine:[.135,.32,-.035],neck:[-.045,.125,0],
@@ -293,14 +296,14 @@ function animateMech(m,I,dt,t){
   m.fireStep=canSupport?damp(m.fireStep||0,ready?1:0,7,dt):0;
   const fs=smooth(clamp(m.fireStep,0,1));
   const guard=readyPoses[I.readyPose];
-  const canGuard=guard&&!dead&&!I.airborne&&!I.legsDead&&!I.armDead&&!I.leftDead&&!I.reducedMotion;
+  const canGuard=guard&&!dead&&!I.airborne&&!I.legsDead&&!I.armDead&&!I.leftDead&&(!I.reducedMotion||guard.restPose);
   const settled=canGuard&&!I.moving;
-  m.readyBlend=canGuard?damp(m.readyBlend??0,settled?1:0,settled?8:14,dt):0;
+  m.readyBlend=canGuard?damp(m.readyBlend??(guard.restPose?1:0),settled?1:0,settled?8:14,dt):0;
   const footGuard=settled?m.readyBlend:0;
   const strikeRelease=m.melee?easeRange(m.melee.age,0,.12):0;
   const release=Math.max(I.readyRelease??0,strikeRelease,clamp(2*(I.brace??0),0,1));
   const upperGuard=m.readyBlend*(1-release);
-  const guardWeight=m.readyGuard=Math.min(upperGuard,damp(m.readyGuard??0,upperGuard,12,dt));
+  const guardWeight=m.readyGuard=Math.min(upperGuard,damp(m.readyGuard??(guard?.restPose?upperGuard:0),upperGuard,12,dt));
   // Pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's.
   const p=r.pelvis;
   const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);

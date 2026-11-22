@@ -302,6 +302,9 @@ const SHOGUN_FRAME=FRAMES.push({name:'SHOGUN',model:'HV–12',role:'FLAGSHIP ASS
 const CAIRN_FRAME=FRAMES.push({name:'CAIRN',model:'CRN–01',role:'LINE ASSAULT',color:'#899aa2',
  hp:155,arm:94,leg:105,move:4,armor:5,cost:180000,weapon:'rifle',foundry:3,rig:'cairn',
  brief:'A compact rifle chassis with cast shoulders and slate field camouflage.'})-1;
+const HARRIER_FRAME=FRAMES.push({name:'HARRIER',model:'HR–06',role:'LIGHT DUELIST',color:'#d8d1c4',
+ hp:128,arm:83,leg:98,move:5,armor:3,cost:115000,weapon:'sidewinder',paintFinish:'factory',
+ brief:'A light chassis with a reinforced left gauntlet and a compact Sidewinder in its right hand.'})-1;
 const MECH_SIGNATURES={
  0:['Steady Aim','First direct shot before moving gains +6 aim.'],
  1:['High Spot','A hit from high ground gives the next allied shot +5 aim.'],
@@ -322,6 +325,7 @@ const MECH_SIGNATURES={
  [ASHIGARU_FRAME]:['Range Discipline','Ashigaru switches to flechettes up close. Other frames gain +5 aim on adjacent strikes or ranged shots from two or more tiles.'],
  [AERO_FRAME]:['Jumpjet','Jump up to five tiles for 2 AP, once per sortie.'],
  [SHOGUN_FRAME]:['Siegebreaker','Direct fire cuts Brace reduction by 20 points.'],
+ [HARRIER_FRAME]:['Close Quarters','Direct shots gain +4 aim against an adjacent target.'],
  [CAIRN_FRAME]:['Braced Aim','Direct shots gain +4 aim while braced.']
 };
 const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
@@ -803,7 +807,7 @@ const FIELDS=[
 ];
 function stockHull(i){
  const frame=FRAMES[i];
- return{weapon:frame.weapon||(i===2?'missile':'rifle'),melee:frame.melee,condition:100,upgrade:0};
+ return{weapon:frame.weapon||(i===2?'missile':'rifle'),melee:frame.melee,...(frame.paintFinish?{paintFinish:frame.paintFinish}:{}),condition:100,upgrade:0};
 }
 function fresh(){return{version:1,day:1,credits:4500,rep:0,wins:0,kills:0,itemInventory:true,owned:['rifle','rifle','missile'],units:PILOTS.map((_,i)=>({...stockHull(i),level:1,xp:0})),history:[]}}
 const mechKills=(pilot,frame,career=save)=>career.mechMastery?.[pilotId(pilot)]?.kills[frame]??0;
@@ -2817,7 +2821,7 @@ function jumpjetDestination(u,target){
  return best;
 }
 const {hitOdds,shotsPerAttack,roundWeight}=window.IRON_VOW_SIM;
-const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER});
+const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,HARRIER_FRAME,FREE_HAND_COUNTER});
 let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>ruleRandom(),chargedLimbShot});
 function shotContacts(w,profile,rounds,impacts){
  const spread=w.scatter?(reducedMotion?.021:.046):0;
@@ -3560,6 +3564,7 @@ MECH_MOTION[REAVER_FRAME]={...MECH_MOTION[0],step:.54};
 MECH_MOTION[BULWARK_FRAME]={...MECH_MOTION[3],step:.55,mass:1.5};
 MECH_MOTION[ASHIGARU_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.29,mass:.72};
 MECH_MOTION[AERO_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.43,mass:.89};
+MECH_MOTION[HARRIER_FRAME]={step:.46,mass:.78};
 MECH_MOTION[CAIRN_FRAME]={...MECH_MOTION[0]};
 MECH_MOTION[SHOGUN_FRAME]={...MECH_MOTION[3],mass:1.66};
 const clamp01=v=>Math.max(0,Math.min(1,v));

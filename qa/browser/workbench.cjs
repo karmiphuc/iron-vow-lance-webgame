@@ -10,7 +10,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  const catalog=await page.evaluate(()=>WEAPONS.map(({id,builtIn,shoulder,melee})=>({id,builtIn,shoulder,melee})));
  const mounted=new Set();
 
- assert.equal(entries.length,23);
+ assert.equal(entries.length,24);
  assert.ok(entries.some(([id,name])=>id==='21'&&name==='CAIRN'),'Cairn retains its own bench entry');
  const models=[];
  for(const [id,name] of entries){
@@ -20,7 +20,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
   assert.ok(state.metrics.height>1&&state.metrics.feet.every(foot=>Number.isFinite(foot.error)),name);
   models.push(state.model);
  }
- assert.equal(new Set(models).size,23);
+ assert.equal(new Set(models).size,24);
  await page.evaluate(()=>__bench.selectFrame(10));
  await page.waitForFunction(()=>__bench.state.clips.length===6);
  if(out&&!mobile)await require('./save-webp.cjs')(page,join(out,'rig-bench.webp'));

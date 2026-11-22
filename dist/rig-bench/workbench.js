@@ -175,7 +175,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  }
  function modelUnit(source,x,z,withHealth){
   const hp=withHealth?{...health}:owned();
-  return {...source,team,inspectWeapon:source.weapon,paintFinish,paint:paint.p,trim:{s:paint.s,a:paint.a},alive:hp.body>0&&hp.pilot>0,
+  return {...source,team,inspectWeapon:source.weapon,paintFinish:paintFinish??source.paintFinish,paint:paint.p,trim:{s:paint.s,a:paint.a},alive:hp.body>0&&hp.pilot>0,
    downReason:hp.pilot<=0?'pilot':undefined,face:0,hp,max:owned(),x,z,
    motion:withHealth&&walk&&!clip&&hp.legs>0&&hp.body>0&&hp.pilot>0?{toX:x,toZ:z+1}:null};
  }

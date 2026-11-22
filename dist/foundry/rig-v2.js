@@ -342,6 +342,9 @@ function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
    }
   };
 }
+// HR-06 uses the standard Workshop equipment sockets and the shared planted gait.
+register(22,{id:'harrier',assetPath:'rig-bench/rig-v2/harrier.glb',factoryLivery:true,
+ authoredPaint:true,equipmentScale:.54,dimensions:{walkDrop:.21},setup(){return {};}});
 register(3,{id:'gatecrasher',assetPath:'rig-bench/rig-v2/gatecrasher-r2-reference.glb',setup:breachSetup});
 register(20,{id:'shogun',assetPath:'rig-bench/rig-v2/shogun.glb',factoryLivery:true,setup:breachSetup});
 

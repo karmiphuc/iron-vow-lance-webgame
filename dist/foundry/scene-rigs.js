@@ -343,7 +343,8 @@ function draw(u,t,pose,scope,model,custom){
  m.offhand=u.hp.left<=0?'none':holdingShield?'shield':holdingMelee?'blade':u.shield||u.melee?'none':'free';
  m.primaryWeapon=standardEquipment&&u.hp.right>0&&fittedGun?.mount.parent===R.so&&
   (oneHandGuns.has(fittedGun.id)||longGuns.has(fittedGun.id))?fittedGun:null;
- const readyPose=!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
+ const harrierCarry=m.live==='harrier'&&m.offhand==='free'&&oneHandGuns.has(fittedGun?.id);
+ const readyPose=harrierCarry?'harrier':!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
  const aimFromArm=barrel?.carrier!==m.rig.spine&&!(barrel&&barrel.mount.parent===entry.primarySocket);
  const playbackRate=world&&step?(u.motion.playbackRate??1):1;
  const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,

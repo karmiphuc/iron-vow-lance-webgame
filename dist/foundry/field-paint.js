@@ -4,7 +4,7 @@
 'use strict';
 const finishes=Object.freeze({block:'Block camo',splinter:'Splinter',survey:'Survey grid',worn:'Field worn',factory:'Factory',solid:'Solid colors'});
 const frames=['warden','kestrel','basilisk','gatecrasher','cicada','valk','oni','behemoth','aegis','shrike','bastion',
- 'hellbreaker','citadel','infantry','elite','gravemaw','reaver','bulwark','ashigaru','aero','shogun','cairn'];
+ 'hellbreaker','citadel','infantry','elite','gravemaw','reaver','bulwark','ashigaru','aero','shogun','cairn','harrier'];
 const iron=['#a09283','#897c70','#665e59','#c9b9a6','#716465','#a15c50'];
 const olive=['#949984','#80866f','#636d5d','#b9bb9e','#647468','#aaa281'];
 const sand=['#b2a38b','#998c78','#777567','#cabea6','#78796b','#986957'];
@@ -16,6 +16,7 @@ const palettes={
  shrike:['#a8a18a','#888975','#696d61','#c6c3a7','#747769','#ba965e'],
  basilisk:['#87969a','#6f8083','#526468','#a7b5ac','#596e72','#b9a273'],
  valk:['#c7c9be','#acb5ab','#84938e','#e0deca','#456587','#b55e52'],
+ harrier:['#d8d1c4','#abb1af','#747b7a','#efe4cf','#414a53','#ab4236'],
  cairn:['#899aa2','#707f86','#586962','#aab7b6','#41505a','#a39b76'],
  kestrel:sand,gatecrasher:iron,cicada:olive,behemoth:sand,aegis:olive,bastion:blue,hellbreaker:iron,citadel:blue,
  infantry:olive,elite:blue,gravemaw:olive,reaver:iron,bulwark:olive,ashigaru:olive,aero:olive,shogun:blue,lion:sand
