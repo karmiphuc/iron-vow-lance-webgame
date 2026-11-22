@@ -358,25 +358,26 @@ function cameraSide(actor,direction){
  const centre=world((battle.size.width-1)/2,(battle.size.depth-1)/2).sub(actor);
  return V3(direction.z,0,-direction.x).dot(centre)>=0?1:-1;
 }
-// Pick a duel camera that sees both combatants past cover and props: the preferred side, then the other, each first level and then
-// raised. If nothing is clear, the side blocked furthest out, pulled in short of the obstruction. Computed once per phase.
+// Duel camera sightlines. Everything on the board can hide a mech from the low duel lens: cover, props, the landscape, and
+// since the v121 terrain (2.8 m terraces) the ground plates and rock-cut cliffs too, so none of them is skipped. Lines and
+// see-through overlays never block. The last 1.2 m before the subject point is ignored (its own armour and footing).
 const duelRay=new T.Raycaster();
-function blockedAt(from,to){
+// A view must see the hull from waist to head: one sample can pass under a rock overhang while the body above it is hidden, and
+// a ray aimed exactly where a check looks can graze a lip, so the samples run from below mid-body up to the head.
+const SIGHT_HEIGHTS=[.35,.5,.65,.85];
+function visibleChain(object){for(let o=object;o;o=o.parent)if(!o.visible)return false;return true;}
+function sightBlocked(from,to){
  const toward=to.clone().sub(from),length=toward.length();
- duelRay.set(from,toward.normalize());duelRay.far=Math.max(0,length-1.5);
- return duelRay.intersectObjects(board.children,true).find(h=>h.object.visible&&!groundMeshes.includes(h.object))?.distance??null;
+ duelRay.set(from,toward.normalize());duelRay.far=Math.max(0,length-1.2);
+ return duelRay.intersectObjects(board.children,true).some(h=>!h.object.isLine&&!h.object.isPoints&&
+  !(h.object.material?.transparent&&(h.object.material.opacity??1)<.5)&&visibleChain(h.object));
 }
-function duelPlan(pose,preferred,lockSide=false){
- let best=null;
- const sides=lockSide?[preferred]:[preferred,-preferred];
- for(const lift of [0,5,10])for(const sign of sides){
-  const {look,at,subjects}=pose(sign,1,lift),hits=[look,...subjects].map(p=>blockedAt(at,p));
-  if(hits.every(h=>h===null))return {sign,pull:1,lift};
-  if(lift)continue;
-  const near=blockedAt(look,at),pull=near===null?1:Math.max(.35,(near-1.5)/look.distanceTo(at));
-  if(!best||pull>best.pull)best={sign,pull,lift:0};
- }
- return best;
+// Lowest safe lens height at a point: above the rendered ground (rock overhangs included) everywhere within the near-plane's
+// reach, so the lens never sits inside a terrace or skims a cliff lip.
+function lensFloor(at){
+ let top=groundAt(at.x,at.z);
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;top=Math.max(top,groundAt(at.x+Math.cos(a)*1.8,at.z+Math.sin(a)*1.8));}
+ return top+1.1;
 }
 function updateCamera(t,dt){
  const mobile=innerWidth<760,size=battle.size,fov=mobile?40:30;
@@ -411,20 +412,21 @@ function updateCamera(t,dt){
   const up=V3(0,1,0);
   // One mech fills a little over half the frame height (the strip below takes the rest), three-quarter front, lens at a third of its height looking up at it.
   const single=(unit,facing,angle,lift,push)=>{
-   const record=models.get(unit.id),h=record?.height??6,base=unitRoot(unit),center=base.clone().add(V3(0,h*.5,0));
+   const record=models.get(unit.id),h=record?.height??6,base=unitRoot(unit);
+   const center=base.clone().add(V3(0,h*.5,0));
    const dist=h/(1.0*Math.tan(halfV))*push,want=unit.team==='ally'?1:-1;
    for(const s of [1,-1]){
-    const at=center.clone().addScaledVector(rot(facing,s*angle),dist);at.y=base.y+h*.34+lift;
+    const at=center.clone().addScaledVector(rot(facing,s*angle),dist);at.y=Math.max(base.y+h*.34+lift,lensFloor(at)+lift*.5);
     // lead room: the subject sits a little behind centre, space ahead of where it faces
     const look=center.clone().addScaledVector(facing,dist*Math.tan(halfH)*.22);
     const right=look.clone().sub(at).normalize().cross(up);
-    if(Math.sign(right.dot(facing))===want)return {look,at,subjects:[center],side:s};
+    if(Math.sign(right.dot(facing))===want)return {look,at,subjects:SIGHT_HEIGHTS.map(f=>base.clone().add(V3(0,h*f,0))),side:s};
    }
   };
-  const pose=(beat,lift,wide)=>{
-   const angle=(beat==='hit'?.62:.7)+(wide?.35:0);
-   if(beat==='hit')return single(shot.target,direction.clone().negate(),angle,lift,1);
-   const brace=single(shot.actor,direction,angle,lift,beat==='release'?.94:1);
+  const pose=(beat,lift,wide,pull=1)=>{
+   const angle=(beat==='hit'?.62:.7)+wide*.35;
+   if(beat==='hit')return single(shot.target,direction.clone().negate(),angle,lift,pull);
+   const brace=single(shot.actor,direction,angle,lift,(beat==='release'?.94:1)*pull);
    if(beat!=='flight')return brace;
    // beside the lane, almost halfway along: the defender ahead at a readable size (a quarter of the frame or more, even on a
    // 7-tile shot) as the rounds arc in, the launcher toward the frame edge
@@ -432,21 +434,34 @@ function updateCamera(t,dt){
    // whatever the viewport's lens, never sit farther from the defender than keeps it at ~30% of the frame height
    const th=models.get(shot.target.id)?.height??6,reach=th/(2*.3*Math.tan(halfV));
    for(const s of [1,-1]){
-    const at=actor.clone().addScaledVector(direction,span*.45).addScaledVector(V3(direction.z,0,-direction.x),s*(span*.26+6));at.y=actor.y+h*.9+lift;
+    const at=actor.clone().addScaledVector(direction,span*.45*pull).addScaledVector(V3(direction.z,0,-direction.x),s*(span*.26+6)*(1+.4*wide));at.y=actor.y+h*.9+lift;
     const gap=V3(victim.x-at.x,0,victim.z-at.z),far=gap.length();
     if(far>reach)at.addScaledVector(gap,(far-reach)/far);
+    at.y=Math.max(at.y,lensFloor(at)+lift*.5);
     // lean the lens toward the launcher only as far as keeps the defender well inside a narrow (portrait) frame
     const toVictim=V3(victim.x-at.x,0,victim.z-at.z).normalize();let look;
     for(let k=.2;k>=0;k-=.02){look=victim.clone().lerp(actor,Math.max(0,k));const d=V3(look.x-at.x,0,look.z-at.z).normalize();if(Math.acos(Math.min(1,d.dot(toVictim)))<=halfH*.45)break;}
     look.y=actor.y+h*.5;
-    if(Math.sign(look.clone().sub(at).normalize().cross(up).dot(direction))===want)return {look,at,subjects:[victim]};
+    if(Math.sign(look.clone().sub(at).normalize().cross(up).dot(direction))===want)return {look,at,subjects:[victim,...SIGHT_HEIGHTS.map(f=>V3(victim.x,unitRoot(shot.target).y+th*f,victim.z))]};
    }
   };
   shot.cameraBeat=key;   // read by qa/browser/combat-duel.cjs
   const plans=shot.cameraPlans??={},pair=shot.actor.id+'>'+shot.target.id;setup=pair+':'+key;
-  // occlusion: same side (screen direction holds), raise the lens, then swing wider; computed once per beat
-  plans[setup]??=(()=>{for(const [lift,wide] of [[0,false],[4,false],[0,true],[6,true]]){const c=pose(key,lift,wide);if(c.subjects.every(p=>blockedAt(c.at,p)===null))return {lift,wide};}return {lift:4,wide:true};})();
-  const chosen=pose(key,plans[setup].lift,plans[setup].wide);
+  // occlusion, computed once per beat: keep the side (screen direction holds) and try, in order of how little the shot changes,
+  // a raised lens, a wider swing, a closer lens (in front of a ledge), then a high crane. The first view that sees the subject's
+  // body and head wins; failing that, the view that sees most of it, preferring the earlier (gentler) one.
+  plans[setup]??=(()=>{
+   const options=[[0,0,1],[3,0,1],[0,1,1],[6,0,1],[3,1,1],[0,2,1],[0,0,.72],[6,1,1],[3,0,.72],[10,0,1],[3,2,1],[10,1,1],[6,2,1],[10,2,1],[16,1,.85],[24,1,.8]];
+   let best=null;
+   for(const [lift,wide,pull] of options){
+    const c=pose(key,lift,wide,pull),seen=c.subjects.filter(p=>!sightBlocked(c.at,p)).length;
+    if(seen===c.subjects.length)return {lift,wide,pull,clear:true};
+    if(!best||seen>best.seen)best={lift,wide,pull,seen};
+   }
+   return {...best,clear:false};
+  })();
+  shot.cameraClear=plans[setup].clear;   // read by QA
+  const chosen=pose(key,plans[setup].lift,plans[setup].wide,plans[setup].pull);
   target.copy(chosen.look);position.copy(chosen.at);duelSubjects=chosen.subjects;
   // release: a 5 degree Dutch tilt toward the line of fire, as FM3's firing shots lean
   if(key==='release')roll=(shot.actor.team==='ally'?-1:1)*5*Math.PI/180;

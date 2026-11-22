@@ -1,0 +1,8 @@
+{
+  "fix": "duel camera occlusion against v121 terrain",
+  "base": "28eea42 (origin/main)",
+  "regression": {"scenario": "checkDuelTerrain", "priorBuild": "fails: contract 0 10,4->13,9 ally brace, lens clearance -1.27 m", "fixed": "passes desktop and touch"},
+  "sweep": {"tool": "real duel camera on unflattened maps, 20 cliff-biased pairs x 8 beats per contract, rays to body and head", "prior": {"contracts": [0, 2], "samples": 320, "hidden": 16}, "fixed": {"contracts": [0, 1, 2, 3], "samples": 640, "hidden": 0}},
+  "browser": {"desktop": ["checkDuelTerrain", "checkCombatDuel", "checkCombatReadability", "sharedScene", "checkRidgeCombat", "checkTerrain", "checkFieldArt", "checkLimbLoss"], "touch": ["checkDuelTerrain", "checkCombatDuel", "checkCombatReadability", "sharedScene", "checkRidgeCombat", "checkTerrain", "checkFieldArt", "checkLimbLoss"], "failed": []},
+  "unverified": ["native iPad performance"]
+}
