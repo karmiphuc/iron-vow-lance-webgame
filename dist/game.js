@@ -3333,6 +3333,8 @@ function terrainCell(x,z){
 }
 function terrainHeight(x,z){
  if(!battle?.field.cells)return 0;
+ const scene=window.IronVowScene;
+ if(scene?.world)return scene.world(x,z).y*TERRAIN_RISE/scene.terrainMetrics.levelRise;
  const ax=Math.floor(x),az=Math.floor(z);
  const fx=clamp01((x-ax-.32)/.36),fz=clamp01((z-az-.32)/.36);
  const height=(a,b)=>terrainCell(a,b)?.level??0;

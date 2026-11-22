@@ -52,6 +52,11 @@ module.exports=async function checkFieldArt({page,origin,tap,mobile}){
  await tap('#modal-0');
  await finishOnMech();
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:60000});
+ await page.waitForFunction(()=>{
+  const terrain=IronVowScene.scene.getObjectByName('rock-cut-cliffs');
+  return terrain?.parent.children.some(mesh=>mesh.userData.tile&&
+   mesh.material?.map?.image?.naturalWidth===1024&&mesh.material.customProgramCacheKey().includes('fieldStrata'));
+ },null,{timeout:20000});
  const scene=await page.evaluate(()=>{
   const scene=IronVowScene.scene,sun=scene.getObjectByName('theater-sun');
   const terrain=scene.getObjectByName('rock-cut-cliffs');
