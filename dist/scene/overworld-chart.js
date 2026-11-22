@@ -21,6 +21,17 @@
   const ridgeAt = x => -1.0 + Math.sin(x * .46) * .78;
   const smooth = n => { const t = clamp(n, 0, 1); return t * t * (3 - 2 * t); };
   const ripple = (x, z) => Math.sin(x * 2.7 + z * 1.5) * Math.cos(z * 2.1 - x * .73);
+  function terrainNoise(x, z) {
+    function cell(i, j) {
+      let h = Math.imul(i, 374761393) ^ Math.imul(j, 668265263);
+      h = Math.imul(h ^ h >>> 13, 1274126177);
+      return ((h ^ h >>> 16) >>> 0) / 0xffffffff;
+    }
+    const i = Math.floor(x), j = Math.floor(z), u = smooth(x - i), v = smooth(z - j);
+    const a = cell(i, j) * (1 - u) + cell(i + 1, j) * u;
+    const b = cell(i, j + 1) * (1 - u) + cell(i + 1, j + 1) * u;
+    return (a * (1 - v) + b * v) * 2 - 1;
+  }
   function heightAt(x, z) {
     const coast = coastAt(x) - z;
     const estuary = Math.abs(x - riverAt(z)) - (.12 + Math.max(0, z) * .067);
@@ -98,8 +109,8 @@
     const texWidth = 1024, texHeight = 512, pixels = new Uint8Array(texWidth * texHeight * 4);
     for (let j = 0; j < texHeight; j++) for (let i = 0; i < texWidth; i++) {
       const x = ((i + .5) / texWidth - .5) * width, z = ((j + .5) / texHeight - .5) * depth;
-      const h = heightAt(x, z), grain = ripple(x, z), shore = coastAt(x) - z;
-      const mottling = ripple(x * 3.9, z * 3.9) * .58 + ripple(x * 9.3, z * 9.3) * .26 + ripple(x * 18.2, z * 18.2) * .16;
+      const h = heightAt(x, z), grain = terrainNoise(x * 1.4, z * 1.4), shore = coastAt(x) - z;
+      const mottling = terrainNoise(x * 4.2, z * 4.2) * .55 + terrainNoise(x * 10.7, z * 10.7) * .30 + terrainNoise(x * 27.6, z * 27.6) * .15;
       if (h < shelf + .02) {
         c.lerpColors(deep, shoal, 1 - smooth(-shore / 1.75)).multiplyScalar(.93 + grain * .055 + mottling * .08);
       } else {
