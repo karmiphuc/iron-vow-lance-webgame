@@ -6,7 +6,7 @@ const create=require('./sim-harness.cjs');
 async function salvo(id,miss){
  const timers=[];
  const sim=create({random:()=>miss?.999:0,setTimeout:(callback,ms)=>{timers.push({callback,ms});return timers.length}});
- const plays=[];
+ const plays=[],echoDelays=[];
  const parameter=()=>({value:0,setValueAtTime(){},exponentialRampToValueAtTime(){},setTargetAtTime(){},
   linearRampToValueAtTime(value,at){this.ramp={value,at}}});
  const audioNode=()=>({gain:parameter(),frequency:parameter(),pan:parameter(),connect(){},start(){},stop(){}});
@@ -20,13 +20,17 @@ async function salvo(id,miss){
   get currentTime(){return sim.run('clock')}
   createGain(){return audioNode()}
   createStereoPanner(){return audioNode()}
+  createBiquadFilter(){return audioNode()}
+  createDelay(){
+   const delayTime=parameter();echoDelays.push(delayTime);return {...audioNode(),delayTime};
+  }
   createDynamicsCompressor(){return {...audioNode(),threshold:parameter(),knee:parameter(),ratio:parameter()}}
   createBuffer(){return {getChannelData:()=>new Float32Array(100)}}
   createOscillator(){return audioNode()}
   createBufferSource(){
    return {...audioNode(),playbackRate:parameter(),connect(output){this.output=output},start(at){
-    if(this.buffer?.url?.endsWith('.wav'))plays.push({
-     cue:path.basename(this.buffer.url,'.wav'),at,rate:this.playbackRate.value,gain:this.output.gain.value
+    if(this.buffer?.url?.match(/\.(wav|mp3)$/))plays.push({
+     cue:path.basename(this.buffer.url,path.extname(this.buffer.url)),at,rate:this.playbackRate.value,gain:this.output.gain.value
     });
    }};
   }
@@ -50,7 +54,10 @@ async function salvo(id,miss){
  assert.equal(create({storage:new Map(sim.storage)}).run('muted'),true);
  sim.run("$('#sound').onclick()");
  await sim.flush();
- assert.equal(sim.run('combatSamples.size'),11);
+ assert.equal(sim.run('gunSampleBuffers.size'),32);
+ sim.run("for(const [name,buffer] of gunSampleBuffers)buffer.url=name+'.mp3'");
+ const missing=JSON.parse(sim.run("JSON.stringify(WEAPONS.filter(w=>!w.melee&&!GUN_VOICES[w.id]).map(w=>w.id))"));
+ assert.deepEqual(missing,[],'every ranged weapon has an echo mix');
  assert.equal(sim.run('machinerySamples.size'),6);
  assert.equal(plays.filter(entry=>entry.cue==='mech-boot').length,1,'unmuting resumes idle without replaying startup');
  assert.ok(sim.run('machineryVoice.idle.loop'));
@@ -85,6 +92,7 @@ async function salvo(id,miss){
    const riflePlan=planVolley(shooter,target,'body',w,false);
    index=0;`);
  }
+ const audioStart=plays.length;
  const attack=sim.run(`shoot(current(),battle.units[3],'body',weapon('${id}'))`);
  const changes=[];
  let previous=JSON.stringify(sim.run('battle.units[3].hp'));
@@ -98,9 +106,11 @@ async function salvo(id,miss){
  }
  await attack;
  if(id==='rifle'){
-  const shots=plays.filter(entry=>entry.cue==='rifle-report');
-  const hits=plays.filter(entry=>entry.cue==='plate-strike');
+  const shots=plays.filter(entry=>/^rifle[0-4]$/.test(entry.cue));
+  const hits=plays.filter(entry=>/^metal[0-2]$/.test(entry.cue));
   assert.equal(shots.length,8);
+  assert.ok(shots.slice(1).every((shot,i)=>shot.cue!==shots[i].cue));
+  assert.ok(echoDelays.some(t=>t.value===.053),'rifle uses close reflections');
   assert.equal(hits.length,5);
   const landed=JSON.parse(sim.run('JSON.stringify(riflePlan.rounds)')).flatMap((round,index)=>round.hit?[{...round,index}]:[]);
   const travel=sim.run("attackProfile(current(),'rifle').travel");
@@ -111,9 +121,13 @@ async function salvo(id,miss){
   }
   return;
  }
- const ballistic=plays.filter(entry=>!entry.cue.startsWith('mech-'));
- assert.deepEqual(ballistic.map(entry=>entry.cue),['pod-arm','rocket-launch','rocket-launch','missile-hit','missile-hit']);
- const [arm,first,second,firstImpact,lastImpact]=ballistic;
+ const ballistic=plays.slice(audioStart).filter(entry=>/^blast[0-2]$/.test(entry.cue));
+ assert.equal(ballistic.length,4);
+ const arm=plays.slice(audioStart).find(entry=>/^action[01]$/.test(entry.cue));
+ const [first,second,firstImpact,lastImpact]=ballistic;
+ assert.ok(echoDelays.some(t=>t.value===.447),'explosions use long reflections');
+ assert.equal(plays.slice(audioStart).filter(entry=>/^thrust[0-2]$/.test(entry.cue)).length,2);
+ assert.equal(plays.slice(audioStart).filter(entry=>/^metal[0-2]$/.test(entry.cue)).length,miss?0:2);
  const near=(actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-6,`${id} ${actual} != ${expected}`);
  near(first.at-arm.at,.28);
  near(second.at-first.at,sim.run(`ATTACK_PROFILES['${id}'].beats[1]`));
