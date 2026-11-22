@@ -1,0 +1,33 @@
+{
+  "repositoryRuntimeCommit": "f412410a7093b6196ed666e850a8dc7324dc5bc7",
+  "sitesVersion": 119,
+  "sitesSourceCommit": "9367c3fde91fd2887c2fa6a72613a4aaca84f77d",
+  "deploymentId": "appgdep_6b0302dfa8b08191b8808d83ce1e8274",
+  "site": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+  "repositorySimulationSuitesPassed": 72,
+  "sitesBrowserChecksPassed": 106,
+  "liveRuntimeFilesMatched": 158,
+  "liveBrowserChecks": [
+    {
+      "device": "desktop",
+      "scenario": "checkLimbLoss",
+      "result": "passed"
+    },
+    {
+      "device": "touch",
+      "scenario": "checkLimbLoss",
+      "result": "passed"
+    },
+    {
+      "device": "desktop",
+      "scenario": "checkCampaign",
+      "result": "passed"
+    },
+    {
+      "device": "touch",
+      "scenario": "checkCampaign",
+      "result": "passed"
+    }
+  ],
+  "visualComparison": "warden.webp"
+}
