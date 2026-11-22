@@ -23,7 +23,7 @@ def damage_part(obj):
         name=base(node.name)
         if name=='neck':return 'pilot'
         if name.startswith(('hip.','knee.','ankle.')):return 'legs'
-        if name.startswith(('shoulder.','elbow.','wrist.','socket.','pauldron.')):
+        if name.startswith(('shoulder.','elbow.','wrist.','socket.','pauldron.','launcher.')):
             return 'left' if name.endswith('.L') else 'right'
         node=node.parent
     return 'body'
@@ -62,16 +62,16 @@ def export_stock(source,output,model):
         paints={}
         for name in ('paint_primary','paint_secondary','paint_accent'):
             material=atlas.copy();material.name=name;paints[name]=material
-        bpy.context.view_layer.update()
+        scene.view_layers[0].update()
         point=lambda name:named[name].matrix_world.translation.copy()
         hip,knee,ankle=(point(n) for n in ('hip.L','knee.L','ankle.L'));pelvis,spine=(point(n) for n in ('pelvis','spine'))
         dims=dict(py=pelvis.z,spY=spine.z-pelvis.z,legA=(hip-knee).length,legB=(knee-ankle).length,ankleH=ankle.z,restX=abs(ankle.x),restZ=-ankle.y,lift=.5,stance=.86,toe=.17,reverse=False,quad=False,reach=0.,phases=[0.,.5],sway=.16)
         for key,val in dims.items():root[key]=val
         meshes=[o for o in nodes if o.type=='MESH']
-        if len(meshes)!=40:raise ValueError(f'Unexpected generated mesh count {len(meshes)}')
+        if len(meshes)!=(42 if model=='basilisk' else 40):raise ValueError(f'Unexpected generated mesh count {len(meshes)}')
         for obj in meshes:
             part=damage_part(obj);obj['part']=obj.data['part']=part
-            if obj.parent and base(obj.parent.name).startswith('pauldron.'):obj['detach']=obj.data['detach']=True
+            if obj.parent and base(obj.parent.name).startswith(('pauldron.','launcher.')):obj['detach']=obj.data['detach']=True
             if len(obj.data.materials)==1 and obj.data.materials[0]==atlas:
                 uv=obj.data.uv_layers.active
                 if not uv:raise ValueError(f'Missing atlas UV on {obj.name}')
@@ -91,7 +91,8 @@ def export_stock(source,output,model):
         bpy.ops.object.select_all(action='DESELECT')
         for obj in nodes:obj.select_set(True)
         bpy.context.view_layer.objects.active=root
-        result=bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',use_selection=True,use_active_scene=True,export_meshopt_compression_enable=True,export_animations=False,export_extras=True,export_yup=True,export_cameras=False,export_lights=False)
+        meshopt={'export_meshopt_compression_enable':True} if 'export_meshopt_compression_enable' in bpy.ops.export_scene.gltf.get_rna_type().properties else {}
+        result=bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',use_selection=True,use_active_scene=True,**meshopt,export_animations=False,export_extras=True,export_yup=True,export_cameras=False,export_lights=False)
         if result!={'FINISHED'} or not output.is_file():raise RuntimeError(f'Export failed: {result}')
     finally:
         window.scene=previous

@@ -8,12 +8,13 @@ function setup({bone,find,marker,bounds,rig,workshopMounts}){
  shoulder.position.set(rig.arms.R.sh.position.x,rig.arms.R.sh.position.y+.6,-.35);
  rig.spine.add(shoulder);
  const {fit,dispose}=workshopMounts({...sockets,shoulder});
- let pods;
- // The Basilisk generator welds the shells into the spine and leaves a
- // marker at each pod face (tools/authoring/basilisk/build_basilisk.py:410–417).
+ let pods,launchers,emitters;
+ // Each Basilisk pod is separate from the spine and keeps its authored emitter.
  if(find('pod.R')&&find('pod.L')){
   const carrier=rig.spine,mount=new T.Group();carrier.add(mount);
-  pods={id:'missile',subsystem:'body',carrier,mount,muzzle:marker('pod.R',mount,[0,0,1]),muzzle2:marker('pod.L',mount,[0,0,1]),
+  launchers={left:bone('launcher.L'),right:bone('launcher.R')};
+  emitters={left:marker('pod.L',mount,[0,0,1]),right:marker('pod.R',mount,[0,0,1])};
+  pods={id:'missile',subsystem:'right',carrier,mount,muzzle:emitters.right,muzzle2:emitters.left,
    aimPivot:()=>carrier,bounds:()=>bounds('spine')};
  }
  // The source build scripts author ten paired cylinder pivots; keep each
@@ -33,8 +34,17 @@ function setup({bone,find,marker,bounds,rig,workshopMounts}){
    const retail=rackId==='vesper-shoulder'?'missile':rackId;
    const added=fit('shoulder',pods&&retail==='missile'?null:retail,armory);
    const rack=pods&&retail==='missile'?pods:added;
-   if(added){added.mount.rotation.x=0;added.subsystem='body';added.aimPivot=()=>added.mount;}
-   if(rack)rack.mount.visible=unit.alive&&unit.hp.body>0;
+   if(added){added.mount.rotation.x=0;added.subsystem='right';added.aimPivot=()=>added.mount;}
+   const online=unit.alive&&unit.hp.body>0,rightOnline=unit.hp.right>0,leftOnline=unit.hp.left>0;
+   if(pods){
+    launchers.right.visible=rack===pods&&online&&rightOnline;
+    launchers.left.visible=rack===pods&&online&&leftOnline;
+    pods.subsystem=rightOnline?'right':'left';
+    pods.muzzle=rightOnline?emitters.right:emitters.left;
+    pods.muzzle2=leftOnline?emitters.left:pods.muzzle;
+    pods.mount.visible=online&&(rightOnline||leftOnline);
+   }
+   if(added)added.mount.visible=online&&rightOnline;
    if(hand){
     hand.mount.visible=unit.alive&&unit.hp.right>0;
     if(rightMelee||arsenal.isExpansion(hand.id))arsenal.animate(hand,pose);

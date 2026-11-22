@@ -25,6 +25,25 @@ module.exports=async function checkEquipmentHardpoints({page,origin}){
   },params,{timeout:120000});
   assert.deepEqual(await mounted.jsonValue(),{ids:expected,shieldLeft:true,meleeRight:true,shoulderClear:true});
  }
+ for(const [frame,launcher,shell,emitters] of [
+  [2,'missile',['launcher.L','launcher.R'],['pod.L','pod.R']],
+  [4,'locust',['Pod.L / rigid assembly','Pod.R / rigid assembly'],['muzzle.locust.L','muzzle.locust.R']],
+  [10,'missile',['mount.shoulderR'],['muzzle.vesper.01']]
+ ]){
+  for(const side of ['left','right']){
+   const asset=await page.waitForFunction(({frame,launcher,shell,side})=>{
+    const hp={body:100,pilot:100,legs:100,left:100,right:100};
+    hp[side]=0;
+    const entry=IronVowFoundry.preview({frame,weapon:'rifle',shoulder:launcher,hp},0,'rig-v2');
+    if(!entry?.armed||!entry.shoulderWeapon)return false;
+    const find=name=>entry.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
+    return {visible:shell.map(name=>find(name).visible),muzzle:entry.shoulderWeapon.muzzle.name};
+   },{frame,launcher,shell,side},{timeout:120000});
+   const result=await asset.jsonValue();
+   assert.deepEqual(result.visible,frame===10?[side==='left']:[side==='right',side==='left']);
+   assert.equal(result.muzzle,emitters[frame!==10&&side==='left'?1:0]);
+  }
+ }
  await page.locator('[data-armory-class="melee"]').click();
  const choice=page.locator('[data-refit-choice="cleaver"]');
  if(await choice.count()&&await choice.getAttribute('aria-pressed')!=='true')await choice.click();

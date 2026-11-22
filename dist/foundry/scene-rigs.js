@@ -311,7 +311,7 @@ function draw(u,t,pose,scope,model,custom){
    const pod=arsenal.mount(armory,shoulderId==='vesper-shoulder'?'missile':shoulderId,socket);
    if(pod){
     pod.mount.rotation.x=0;
-    entry.shoulderWeapon={...pod,carrier:m.rig.spine,subsystem:'body',aimPivot:()=>pod.mount};
+    entry.shoulderWeapon={...pod,carrier:m.rig.spine,subsystem:'right',aimPivot:()=>pod.mount};
    }
    if(!handId)entry.primarySocket=socket;
   }
@@ -382,7 +382,7 @@ function draw(u,t,pose,scope,model,custom){
   if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
   else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
  }
- if(standardEquipment&&entry.shoulderWeapon)entry.shoulderWeapon.mount.visible=u.alive&&u.hp.body>0;
+ if(standardEquipment&&entry.shoulderWeapon)entry.shoulderWeapon.mount.visible=u.alive&&u.hp.body>0&&u.hp.right>0;
  if(standardEquipment&&entry.secondary){
   entry.secondary.mount.visible=u.alive&&u.hp[u.meleeHand==='right'?'right':'left']>0;
   arsenal.animate(entry.secondary,pose);

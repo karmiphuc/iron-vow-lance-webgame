@@ -45,7 +45,7 @@ root.IronVowRigV2.register(19,{
     const offhand=fit('L',rightMelee||nativeBlade?null:melee,armory);
     const otherRifle=rightMelee?null:gear,otherBlade=rightMelee?gear:offhand;
     const rack=fit('shoulder',rackId==='vesper-shoulder'?'missile':rackId,armory);
-    if(rack){rack.mount.rotation.x=0;rack.mount.visible=unit.alive&&unit.hp.body>0;rack.subsystem='body';rack.aimPivot=()=>rack.mount;}
+    if(rack){rack.mount.rotation.x=0;rack.mount.visible=right&&unit.hp.body>0;rack.subsystem='right';rack.aimPivot=()=>rack.mount;}
     if(otherRifle){
      otherRifle.mount.visible=right;
      if(arsenal.isExpansion(otherRifle.id))arsenal.animate(otherRifle,pose);

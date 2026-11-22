@@ -326,7 +326,7 @@ function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
   const slideForward=V3(0,0,1).applyQuaternion(arms.R.wr.getWorldQuaternion(Q()).invert());
   const primary={id:'morrow',carrier:arms.R.wr,mount:slide,muzzle:marker('muzzle.upper',slide),muzzle2:marker('muzzle.lower',slide),bounds:()=>bounds('Cannon Slide')};
   const shoulder=driver('mount.shoulderR',arms.R.paul);
-  const vesper={id:'missile',subsystem:'body',carrier:arms.R.paul,mount:shoulder,muzzle:marker('muzzle.vesper.1',shoulder),muzzle2:marker('muzzle.vesper.2',shoulder),aimPivot:()=>shoulder,bounds:()=>bounds('mount.shoulderR')};
+  const vesper={id:'missile',subsystem:'right',carrier:arms.R.paul,mount:shoulder,muzzle:marker('muzzle.vesper.1',shoulder),muzzle2:marker('muzzle.vesper.2',shoulder),aimPivot:()=>shoulder,bounds:()=>bounds('mount.shoulderR')};
   const cleaver={id:'cleaver',mount:arms.L.so,tip:marker('Cleaver Tip.L',arms.L.so),bounds:()=>bounds('socket.L')};
   const cleaverSocket=bone('socket.L'),shoulderSocket=bone('mount.shoulderR');
   return {
@@ -336,7 +336,7 @@ function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
     entry.secondary=unit.melee==='cleaver'&&!unit.shield?cleaver:null;
     entry.shoulderWeapon=['vesper-shoulder','missile'].includes(unit.shoulder)?vesper:null;
     cleaverSocket.visible=unit.alive&&unit.hp.left>0&&Boolean(entry.secondary);
-    shoulderSocket.visible=unit.alive&&unit.hp.body>0&&Boolean(entry.shoulderWeapon);
+    shoulderSocket.visible=unit.alive&&unit.hp.body>0&&unit.hp.right>0&&Boolean(entry.shoulderWeapon);
     slide.position.copy(slideRest).addScaledVector(slideForward,-Math.abs(pose.recoil)*.22);
     shoulder.quaternion.identity();
    }
@@ -347,11 +347,12 @@ register(20,{id:'shogun',assetPath:'rig-bench/rig-v2/shogun.glb',factoryLivery:t
 
 register(4,{
  id:'cicada',assetPath:'rig-bench/rig-v2/cicada-reference.glb',
- setup({driver,marker,bounds,workshopMounts,rig:{spine,arms}}){
+ setup({bone,driver,marker,bounds,workshopMounts,rig:{spine,arms}}){
   const {fit,dispose}=workshopMounts({L:arms.L.so,R:arms.R.so});
   const left=driver('Pod.L',spine),right=driver('Pod.R',spine);
+  const leftShell=bone('Pod.L / rigid assembly'),rightShell=bone('Pod.R / rigid assembly');
   const muzzle=marker('muzzle.locust.L',left),muzzle2=marker('muzzle.locust.R',right);
-  const locust={id:'locust',subsystem:'body',carrier:spine,mount:left,muzzle,muzzle2,
+  const locust={id:'locust',subsystem:'right',carrier:spine,mount:left,muzzle,muzzle2,
    aimPivot:peg=>peg.parent,bounds:()=>bounds('Pod.L')};
   const emitter={id:'pulse-bash',mount:arms.L.so,tip:arms.L.so};
   return {
@@ -363,6 +364,13 @@ register(4,{
     const offhand=fit('L',leftMelee==='pulse-bash'?null:leftMelee,armory);
     if(hand)hand.mount.visible=unit.alive&&unit.hp.right>0;
     if(offhand)offhand.mount.visible=unit.alive&&unit.hp.left>0;
+    const online=unit.alive&&unit.hp.body>0,leftOnline=unit.hp.left>0,rightOnline=unit.hp.right>0;
+    left.visible=leftShell.visible=online&&leftOnline;
+    right.visible=rightShell.visible=online&&rightOnline;
+    locust.subsystem=leftOnline?'left':'right';
+    locust.mount=leftOnline?left:right;
+    locust.muzzle=leftOnline?muzzle:muzzle2;
+    locust.muzzle2=rightOnline?muzzle2:locust.muzzle;
     entry.primary=(rightMelee?null:hand)??locust;
     entry.shoulderWeapon=locust;
     entry.secondary=rightMelee?hand:leftMelee==='pulse-bash'?emitter:offhand;

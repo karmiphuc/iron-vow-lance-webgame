@@ -27,7 +27,7 @@ root.IronVowRigV2.register(10,{
   const launcherName='mount.shoulderR',launcher=bone(launcherName),rack=driver(launcherName,rig.spine);
   const rackRest=rack.quaternion.clone();
   const ports=Array.from({length:6},(_,i)=>marker('muzzle.vesper.0'+(i+1),rack,[0,0,-1]));
-  const missile={id:'missile',subsystem:'body',model:launcher,mount:rack,carrier:rig.spine,muzzle:ports[0],muzzle2:ports[3],
+  const missile={id:'missile',subsystem:'right',model:launcher,mount:rack,carrier:rig.spine,muzzle:ports[0],muzzle2:ports[3],
    aimPivot:()=>rack,bounds:()=>bounds(launcherName)};
   const pistons=JSON.parse(bone('root').userData.pistons).flatMap(([nameA,nameB])=>{
    const a=bone(nameA),b=bone(nameB);
@@ -40,13 +40,13 @@ root.IronVowRigV2.register(10,{
    shieldSocket:sockets.L,
    boundsNames:[name,launcherName,...[...blades.keys()].map(id=>'weapon.'+id)],
    pose(entry,u,pose,t,armory){
-    const right=u.alive&&u.hp.right>0,left=u.alive&&u.hp.left>0,body=u.alive&&u.hp.body>0;
+    const right=u.alive&&u.hp.right>0,left=u.alive&&u.hp.left>0,shoulderOnline=right&&u.hp.body>0;
     const rightMelee=u.meleeHand==='right',melee=!u.shield||rightMelee?u.melee:null;
     const shoulderId=u.shoulder??(['missile','cerberus'].includes(u.weapon)?u.weapon:null);
     const nativeRifle=u.weapon==='rifle',nativeMissile=['missile','vesper-shoulder'].includes(shoulderId),nativeBlade=!rightMelee&&blades.get(melee);
     rifleModel.visible=rifleMount.visible=right&&nativeRifle;
     rifleMount.position.copy(rifleRest).addScaledVector(rifleAxis,-Math.abs(pose.recoil||0)*.22);
-    launcher.visible=rack.visible=body&&nativeMissile;
+    launcher.visible=rack.visible=shoulderOnline&&nativeMissile;
     rack.quaternion.copy(rackRest);
     for(const blade of blades.values())blade.model.visible=blade.mount.visible=rightMelee?right:left&&blade===nativeBlade;
     if(nativeBlade?.auger){
@@ -58,7 +58,7 @@ root.IronVowRigV2.register(10,{
     const leftGear=fit('L',rightMelee||nativeBlade?null:melee,armory);
     const blade=rightMelee?rightGear:leftGear;
     const added=fit('shoulder',nativeMissile?null:shoulderId,armory);
-    if(added){added.mount.position.copy(rack.position);added.mount.rotation.x=0;added.mount.visible=body;added.subsystem='body';added.aimPivot=()=>added.mount;}
+    if(added){added.mount.position.copy(rack.position);added.mount.rotation.x=0;added.mount.visible=shoulderOnline;added.subsystem='right';added.aimPivot=()=>added.mount;}
     if(gun){
      gun.model.scale.setScalar(.62);
      gun.mount.visible=right;
