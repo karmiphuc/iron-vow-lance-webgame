@@ -3,13 +3,13 @@
 'use strict';
 // Keep the clearance verified against actual long-gun/shield endpoints. Close
 // framing and continuous surfaces provide scale without moving those endpoints.
-const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=7.4,HEIGHT=3.4,RISE=1.55;
+const T=root.THREE,V3=(x=0,y=0,z=0)=>new T.Vector3(x,y,z),TILE=7.4,HEIGHT=3.4,RISE=2.8;
 const CARDINAL=[[1,0],[0,1],[-1,0],[0,-1]];
 const ROCK_REPEAT=1.15,CONTACT_BINS=4;
 const LIVE=new Set([5,6,7,8,9,12]);
 const rigV2=root.IronVowRigV2;
 let renderer,kit,scene,camera,battleRef,terrainRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
-let rockContacts;
+let rockContacts,cliffMesh;
 let cameraReady=false,duelSky=null,duelSequence,duelSetup,lightningAt=4,lightning=0;
 const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[],coverMeshes=[];
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
@@ -120,46 +120,37 @@ function clear(){
  root.IronVowFoundry?.clearCombat();root.IronVowVehicles.clear();models.clear();aimTargets.clear();mortarCues.clear();
  rigV2.clear();
  if(scene){sun?.shadow.map?.dispose();disposeTree(scene);}
- kit?.dispose();kit=null;scene=null;battleRef=null;rockContacts=null;groundMeshes.length=coverMeshes.length=0;
+ kit?.dispose();kit=null;scene=null;battleRef=null;rockContacts=null;cliffMesh=null;groundMeshes.length=coverMeshes.length=0;
 }
 function rockGrain(x,z){
  return Math.sin(x*5.1+z*3.7)*.67+Math.sin(x*13.2-z*11.8)*.33;
 }
-function crownColor(color,soil,road,links,x,z,localX,localZ){
- let roadWeight=0;
+function roadCoverage(links,x,z,localX,localZ){
+ let coverage=0;
  for(const [direction,[dx,dz]] of CARDINAL.entries()){
   if(!(links&(1<<direction)))continue;
   const along=dx*localX+dz*localZ,across=Math.abs(dx*localZ-dz*localX);
-  const width=.19+rockGrain(x,z)*.022;
-  const corridor=(1-T.MathUtils.smoothstep(across,width-.08,width+.07))*T.MathUtils.smoothstep(along,-.22,0);
-  roadWeight=Math.max(roadWeight,corridor);
+  const width=.20+rockGrain(x,z)*.025;
+  coverage=Math.max(coverage,(1-T.MathUtils.smoothstep(across,width-.07,width+.085))*T.MathUtils.smoothstep(along,-.20,0));
  }
- return color.copy(soil).multiplyScalar(.96+rockGrain(x,z)*.11).lerp(road,roadWeight);
+ return coverage;
 }
-function plate(x,z,cell,soil,road){
+function crownColor(color,soil,road,links,x,z,localX,localZ){
+ return color.copy(soil).multiplyScalar(.96+rockGrain(x,z)*.11).lerp(road,roadCoverage(links,x,z,localX,localZ));
+}
+function plate(x,z,cell){
  const geometry=new T.PlaneGeometry(TILE-.018,TILE-.018,8,8);geometry.rotateX(-Math.PI/2);
- const positions=geometry.attributes.position;
+ const positions=geometry.attributes.position,weights=[];
  for(let i=0;i<positions.count;i++){
-  const px=x+positions.getX(i)/TILE,pz=z+positions.getZ(i)/TILE;
+  const localX=positions.getX(i)/TILE,localZ=positions.getZ(i)/TILE,px=x+localX,pz=z+localZ;
   positions.setY(i,surfaceHeight(px,pz,true));
+  weights.push(roadCoverage(cell.links,px,pz,localX,localZ),cell.level*.5,0);
  }
- const uv=geometry.attributes.uv;
- // World-continuous worn material avoids one painted/stamped panel per cell.
- for(let i=0;i<uv.count;i++)uv.setXY(i,(x+uv.getX(i))/3,(z+uv.getY(i))/3);
- if(cell.level){
-  const colors=[],color=new T.Color();
-  for(let i=0;i<positions.count;i++){
-   const localX=positions.getX(i)/TILE,localZ=positions.getZ(i)/TILE;
-   crownColor(color,soil,road,cell.links,x+localX,z+localZ,localX,localZ);
-   colors.push(color.r,color.g,color.b);
-   uv.setXY(i,(x+localX)*ROCK_REPEAT,(z+localZ)*ROCK_REPEAT);
-  }
-  geometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));
- }
+ geometry.setAttribute('color',new T.Float32BufferAttribute(weights,3));
  geometry.computeVertexNormals();return geometry;
 }
 function rockCuts(terrainMap,soil,road){
- const positions=[],colors=[],uvs=[],edge=.5-.009/TILE;
+ const positions=[],colors=[],uvs=[],faceTiles=[],edge=.5-.009/TILE;
  const bands=[1,.75,.61,.29,0],tones=[1,.92,.73,.87,.69];
  const ledges=[0,.032,.005,.059,.101];
  const faces=[[0,1],[1,2],[2,3],[3,4]];
@@ -182,6 +173,7 @@ function rockCuts(terrainMap,soil,road){
   for(const [dx,dz] of CARDINAL){
    const next=cellAt(x+dx,z+dz),lower=next?.level??0;
    if(level<=lower)continue;
+   const firstFace=positions.length/9;
    const tx=-dz,tz=dx;
    const corners=[-.5,.5].map(t=>cornerNormal(x+dx*.5+tx*t,z+dz*.5+tz*t,level));
    const station=t=>{
@@ -198,12 +190,12 @@ function rockCuts(terrainMap,soil,road){
     const turn=T.MathUtils.smoothstep(Math.abs(t),.375,.5);
     const nx=T.MathUtils.lerp(dx,cx,turn),nz=T.MathUtils.lerp(dz,cz,turn);
     const grain=rockGrain(ex,ez);
-    const overhang=(.075+grain*.055)*shoulder;
+    const overhang=(.085+grain*.066+.045*Math.sin(ex*2.8-ez*4.2))*shoulder;
     const tint=crownColor(new T.Color(),soil,road,links,x+localX,z+localZ,localX,localZ);
     const root={point:seam.setY(high),uv:[(x+localX)*ROCK_REPEAT,(z+localZ)*ROCK_REPEAT],shade:1,tint};
     const crestY=high-Math.min(relief*.18,(.12-grain*.055)*shoulder);
     const rows=bands.map((fraction,i)=>{
-     const spread=overhang+(ledges[i]+grain*.009*i)*shoulder;
+     const spread=overhang+(ledges[i]+grain*.014*i)*shoulder;
      const y=i===bands.length-1?low-.024:low+(crestY-low)*(fraction+grain*.033*Math.sin(fraction*Math.PI));
      const point=world(ex+nx*spread,ez+nz*spread,y);
      // Continue the crown's UVs down the face in the outward direction.
@@ -220,6 +212,7 @@ function rockCuts(terrainMap,soil,road){
     quad(a.root,b.root,b.rows[0],a.rows[0]);
     for(const [above,below] of faces)quad(a.rows[above],b.rows[above],b.rows[below],a.rows[below]);
    }
+   for(let i=firstFace;i<positions.length/9;i++)faceTiles.push(z*battle.size.width+x);
   }
  }
  const geometry=new T.BufferGeometry();
@@ -230,8 +223,8 @@ function rockCuts(terrainMap,soil,road){
  rockContacts=indexRockContacts(geometry.attributes.position.array);
  const material=new T.MeshStandardMaterial({map:terrainMap,vertexColors:true,roughness:1,side:T.DoubleSide});
  const mesh=new T.Mesh(geometry,material);
- mesh.name='rock-cut-cliffs';mesh.userData.levelRise=RISE;mesh.receiveShadow=true;
- board.add(mesh);
+ mesh.name='rock-cut-cliffs';mesh.userData.levelRise=RISE;mesh.castShadow=mesh.receiveShadow=true;
+ mesh.userData.faceTiles=new Uint16Array(faceTiles);cliffMesh=mesh;board.add(mesh);
 }
 function terrainDetails(){
  const markings=[],ticks=[];
@@ -260,22 +253,26 @@ function terrainDetails(){
   const material=new T.MeshStandardMaterial({color:kit.C(color),roughness:.95,side:T.DoubleSide,transparent:opacity<1,opacity,depthWrite:opacity===1});
   const mesh=new T.Mesh(geo,material);mesh.name=name;mesh.receiveShadow=true;board.add(mesh);return mesh;
  };
- add(markings,'road-markings',0xb7a878,.65);
+ add(markings,'road-markings',0xb7a878,.31);
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(ticks,3));
- const grid=new T.LineSegments(geo,new T.LineBasicMaterial({color:0xc1c9ba,transparent:true,opacity:.12,depthWrite:false}));grid.name='tactical-grid-corners';board.add(grid);
+ const grid=new T.LineSegments(geo,new T.LineBasicMaterial({color:0xc1c9ba,transparent:true,opacity:.085,depthWrite:false}));grid.name='tactical-grid-corners';board.add(grid);
 }
 function build(){
  root.IronVowFoundry.retainPreview();
  clear();init();battleRef=battle;terrainRef=battle.field.cells;kit=root.IronVowSceneKit(renderer);kit.setSize(battle.size.width,battle.size.depth,TILE);
  root.IronVowVehicles.load(battle.units.map(u=>u.kind).filter(Boolean));
  rigV2.load(battle.units);
- const index=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3,P=kit.PAL[index];
+ const index=battle.contract.field,P=kit.PAL[index];
  scene=new T.Scene();scene.background=kit.C(P.bg);scene.fog=new T.Fog(kit.C(P.fog[0]),P.fog[1],P.fog[2]);scene.environment=kit.envFrom(P.env);
  scene.add(new T.HemisphereLight(kit.C(P.hemi[0]),kit.C(P.hemi[1]),P.hemi[2]));
- sun=new T.DirectionalLight(kit.C(P.sun[0]),P.sun[1]);sun.position.set(...P.dir);sun.castShadow=true;
+ sun=new T.DirectionalLight(kit.C(P.sun[0]),P.sun[1]);sun.name='theater-sun';sun.castShadow=true;
  const half=Math.max(battle.size.width,battle.size.depth)*TILE*.65;
- Object.assign(sun.shadow.camera,{left:-half,right:half,top:half,bottom:-half,near:1,far:180});
- sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0005;sun.shadow.normalBias=.03;scene.add(sun);
+ // Keep the low sun outside the map so its shadow camera covers both ends.
+ const lightDistance=half*1.55;
+ sun.position.set(...P.dir).setLength(lightDistance);
+ Object.assign(sun.shadow.camera,{left:-half,right:half,top:half,bottom:-half,near:1,far:lightDistance+half*1.45});
+ sun.shadow.camera.updateProjectionMatrix();
+ sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.00017;sun.shadow.normalBias=.025;scene.add(sun);
  const rim=new T.DirectionalLight(kit.C(0x9ab8d0),.6);rim.position.set(30,18,-30);scene.add(rim);
  // FM3 battle scenes sit against open sky. From the duel's low angles the board's dark void would fill the top half, so a
  // theater-tinted sky dome shows only while the duel camera plays (the tactical view is unchanged); fog meets its horizon.
@@ -286,31 +283,29 @@ function build(){
   duelSky=new T.Mesh(geo,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide,fog:false,depthWrite:false}));
   duelSky.userData={horizon:low.clone(),fog:scene.fog.color.clone()};duelSky.visible=false;duelSky.renderOrder=-10;scene.add(duelSky);}
  board=new T.Group();scene.add(board);units=new T.Group();scene.add(units);
- const floor=new T.Mesh(new T.PlaneGeometry(300,300),kit.groundMaterial(P));floor.rotation.x=-Math.PI/2;floor.position.y=-.18;floor.receiveShadow=true;board.add(floor);
- const terrainMap=kit.imgTex('assets/concrete.webp',[1,1]);
+ const terrainMap=kit.imgTex('assets/terrain/karst-soil.webp',[1,1],'assets/rock-cut.webp');
  const rockMap=kit.imgTex('assets/rock-cut.webp',[1,1]);
- const soil=kit.C(index===1?0x8b806a:0x83907b),road=kit.C(index===2?0x7f8981:0x777b79);
- const materials=[
-  new T.MeshStandardMaterial({color:kit.C(index===1?0xa49c86:0x8c9b91),map:terrainMap,roughness:.96,metalness:.015}),
-  new T.MeshStandardMaterial({vertexColors:true,map:rockMap,roughness:1}),
-  new T.MeshStandardMaterial({color:road,map:terrainMap,roughness:.9,metalness:.015})
- ];
+ const soil=kit.C(0xb4b09f),road=kit.C(P.road);
+ const material=kit.fieldSurface(new T.MeshStandardMaterial({map:terrainMap,vertexColors:true,roughness:1}),rockMap,index);
+ const floorGeo=new T.PlaneGeometry(420,420);
+ floorGeo.setAttribute('color',new T.Float32BufferAttribute(new Float32Array(12),3));
+ const floor=new T.Mesh(floorGeo,material);floor.rotation.x=-Math.PI/2;floor.position.y=-.18;floor.receiveShadow=true;board.add(floor);
  const overlayPositions=[],overlayColors=[],tileIndices=[];
  for(let z=0;z<battle.size.depth;z++)for(let x=0;x<battle.size.width;x++){
-  const cell=cellAt(x,z),geometry=plate(x,z,cell,soil,road),p=world(x,z,0),mesh=new T.Mesh(geometry,materials[cell.level?1:cell.links?2:0]);mesh.position.copy(p);mesh.receiveShadow=true;mesh.userData.tile={x,z};board.add(mesh);groundMeshes.push(mesh);
+  const cell=cellAt(x,z),geometry=plate(x,z,cell),p=world(x,z,0),mesh=new T.Mesh(geometry,material);mesh.position.copy(p);mesh.receiveShadow=true;mesh.userData.tile={x,z};board.add(mesh);groundMeshes.push(mesh);
   const positions=geometry.attributes.position,offset=overlayPositions.length/3;
   for(let i=0;i<positions.count;i++){overlayPositions.push(positions.getX(i)+p.x,positions.getY(i)+.025,positions.getZ(i)+p.z);overlayColors.push(1,1,1);}
   tileIndices.push(Array.from(geometry.index.array,v=>v+offset));
  }
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(overlayPositions,3));geometry.setAttribute('color',new T.Float32BufferAttribute(overlayColors,3));geometry.setIndex([]);
- overlays=new T.Mesh(geometry,new T.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.38,depthWrite:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}));overlays.userData.indices=tileIndices;overlays.renderOrder=2;scene.add(overlays);
+ overlays=new T.Mesh(geometry,new T.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.20,depthWrite:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}));overlays.userData.indices=tileIndices;overlays.renderOrder=2;scene.add(overlays);
  rockCuts(rockMap,soil,road);terrainDetails();
  const edgeMaterial=kit.MAT.hazard;
  for(const [x,z,w,d] of [[0,-battle.size.depth*TILE/2,battle.size.width*TILE,.3],[0,battle.size.depth*TILE/2,battle.size.width*TILE,.3],[-battle.size.width*TILE/2,0,.3,battle.size.depth*TILE],[battle.size.width*TILE/2,0,.3,battle.size.depth*TILE]]){
   const mesh=new T.Mesh(new T.BoxGeometry(w,.16,d),edgeMaterial);mesh.position.set(x,-.08,z);mesh.receiveShadow=true;board.add(mesh);
  }
- for(const key of battle.cover){const [x,z]=key.split(',').map(Number),cover=kit.buildCover(key,battle.field.cover[key]);cover.position.y=surfaceHeight(x,z);cover.userData.tile={x,z};board.add(cover);cover.userData.bounds=new T.Box3().setFromObject(cover);coverMeshes.push(cover);}
- kit.buildProps(board,index);
+ for(const key of battle.cover){const [x,z]=key.split(',').map(Number),cover=kit.buildCover(key,battle.field.cover[key],rockMap);cover.position.y=surfaceHeight(x,z);cover.userData.tile={x,z};board.add(cover);cover.userData.bounds=new T.Box3().setFromObject(cover);coverMeshes.push(cover);}
+ kit.buildProps(board,index);kit.buildLandscape(board,index,rockMap);
  if(root.IronVowEnvironmentAssets)void root.IronVowEnvironmentAssets.populate(board,{width:battle.size.width,depth:battle.size.depth,tile:TILE,theater:['relay','corridor','frontier'][index],coverGroups:coverMeshes});
  const ring=color=>{const m=new T.Mesh(new T.RingGeometry(TILE*.4,TILE*.43,48),new T.MeshBasicMaterial({color,transparent:true,opacity:.9,depthWrite:false,side:T.DoubleSide}));m.rotation.x=-Math.PI/2;m.renderOrder=3;scene.add(m);return m;};
  selection=ring(0xe6b76a);targetRing=ring(0xe2846e);
@@ -529,7 +524,7 @@ function updateOverlays(){
   if(jump&&jumpjetLanding(selectedUnit,x,z))color=0x619fcb;
   if(w&&!battle.cover.has(key)&&distance(selectedUnit,{x,z})>0&&distance(selectedUnit,{x,z})<=weaponRange(w,selectedUnit.training)&&!attackObstruction(selectedUnit,{x,z},w))color=0xc48469;
   if(ready&&hover?.x===x&&hover?.z===z)color=0xe7be6e;
-  if(color!==undefined){const c=new T.Color(color);for(const i of new Set(overlays.userData.indices[index]))colors.setXYZ(i,c.r,c.g,c.b);indices.push(...overlays.userData.indices[index]);}
+  if(color!==undefined){const c=kit.C(color);for(const i of new Set(overlays.userData.indices[index]))colors.setXYZ(i,c.r,c.g,c.b);indices.push(...overlays.userData.indices[index]);}
  }
  colors.needsUpdate=true;overlays.geometry.setIndex(indices);
  for(const [ring,u] of [[selection,selectedUnit],[targetRing,battle.units.find(u=>u.alive&&u.id===lockedTarget)]]){ring.visible=Boolean(u);if(u)ring.position.copy(unitRoot(u)).add(V3(0,.04,0));}
@@ -557,7 +552,7 @@ function render(t,dt){
  combat.update(t,dt);updateCamera(t,dt);updateOverlays();
  if(duel){selection.visible=false;targetRing.visible=false;}
  if(duelSky){duelSky.visible=Boolean(duel);duelSky.position.copy(camera.position);scene.fog.color.copy(duel?duelSky.userData.horizon:duelSky.userData.fog);}
- const storm=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3===2;
+ const storm=battle.contract.field===2;
  if(storm&&!reducedMotion){if(t>=lightningAt){lightning=1;lightningAt=t+kit.random(5,11);}lightning*=Math.exp(-dt*9);sun.intensity=kit.PAL[2].sun[1]+lightning*2.5*(kit.random(0,1)>.3?1:.4);}
  root.IronVowRenderer.show(true);root.IronVowRenderer.resize(innerWidth,innerHeight);
  const shadow=root.IronVowRenderer.quality.shadow;
@@ -570,10 +565,16 @@ function project(x,y,z){
 }
 function ray(x,y){pointer.set(x/innerWidth*2-1,1-y/innerHeight*2);raycaster.setFromCamera(pointer,camera);return raycaster;}
 function screenTile(x,y){
- if(!scene||battleRef!==battle)build();const hit=ray(x,y).intersectObjects(groundMeshes,false)[0];
- const obstacle=ray(x,y).intersectObjects(coverMeshes,true)[0];
- if(obstacle&&(!hit||obstacle.distance<hit.distance)){let o=obstacle.object;while(o&&!o.userData?.blocking)o=o.parent;if(o?.userData.tile)return {...o.userData.tile};}
- if(!hit)return {x:-1,z:-1};return {x:Math.round(hit.point.x/TILE+(battle.size.width-1)/2),z:Math.round(hit.point.z/TILE+(battle.size.depth-1)/2)};
+ if(!scene||battleRef!==battle)build();
+ const pickRay=ray(x,y),hit=pickRay.intersectObjects(groundMeshes,false)[0],wall=pickRay.intersectObject(cliffMesh,false)[0];
+ const obstacle=pickRay.intersectObjects(coverMeshes,true)[0];
+ if(obstacle&&obstacle.distance<Math.min(hit?.distance??Infinity,wall?.distance??Infinity)){
+  let o=obstacle.object;while(o&&!o.userData?.blocking)o=o.parent;if(o?.userData.tile)return {...o.userData.tile};
+ }
+ if(wall&&wall.distance<(hit?.distance??Infinity)){
+  const tile=cliffMesh.userData.faceTiles[wall.faceIndex];return {x:tile%battle.size.width,z:Math.floor(tile/battle.size.width)};
+ }
+ return hit?{...hit.object.userData.tile}:{x:-1,z:-1};
 }
 function pick(x,y){
  if(!scene||battleRef!==battle)build();

@@ -36,6 +36,7 @@ const checkReaver=require('./browser/reaver.cjs');
 const checkAero=require('./browser/aero.cjs');
 const checkAeroReview=require('./browser/aero-review.cjs');
 const checkLimbLoss=require('./browser/limb-loss.cjs');
+const checkFieldArt=require('./browser/field-art.cjs');
 const checkStockV2=require('./browser/stock-v2.cjs');
 const checkMechLoadoutPoses=require('./browser/mech-loadout-poses.cjs');
 const checkAshigaruV2=require('./browser/ashigaru-v2.cjs');
@@ -93,10 +94,10 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkLimbLoss,checkNavigation,checkCombatReadability,checkCombatDuel,checkDecisionUI,sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkEquipmentHardpoints,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkStockV2,checkMechLoadoutPoses,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkOverworld,checkOverworldLiving,checkOverworldPortEvents,checkHangar,checkHangarLive,checkWorkshopTurntable,checkWorkshopPaint,checkWorkshopPortraits,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkWarMode,checkRigWorkbench]){
+async function checkBrowser(origin,scenarios=[checkLimbLoss,checkFieldArt,checkNavigation,checkCombatReadability,checkCombatDuel,checkDecisionUI,sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkEquipmentHardpoints,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkStockV2,checkMechLoadoutPoses,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkOverworld,checkOverworldLiving,checkOverworldPortEvents,checkHangar,checkHangarLive,checkWorkshopTurntable,checkWorkshopPaint,checkWorkshopPortraits,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkWarMode,checkRigWorkbench]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
  const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
- const cpuFlows=new Set(['checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);
+ const cpuFlows=new Set(['checkCombatDuel','checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);
  const timeout=Number(process.env.IRON_VOW_QA_TIMEOUT_MS??15000);
  if(!Number.isFinite(timeout)||timeout<1000||timeout>120000)throw Error('IRON_VOW_QA_TIMEOUT_MS must be between 1000 and 120000.');
  const server=origin?null:await serve();

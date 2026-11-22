@@ -8,7 +8,7 @@ Owner approval (2026-11-22): the demo was approved, with three changes. The HUD 
   - brace, then release with a 5° Dutch tilt;
   - a lane-side flight shot when rounds are in the air ≥ 0.4 s;
   - the hit shot on the defender.
-  
+
   The ally stays screen-left facing right through return fire. The flight shot caps its distance to the defender from the live vertical FOV and keeps it inside the horizontal FOV, so the framing holds on portrait touch screens too.
 - **Feedback.**
   - No HP strip.

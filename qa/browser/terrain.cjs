@@ -10,21 +10,43 @@ async function assertTheaterPropsOutsideBoard(page,contractIndex){
  },contractIndex);
  await page.waitForFunction(()=>Boolean(IronVowScene.scene?.getObjectByName('theater-props')),null,{timeout:15000});
  const overlap=await page.evaluate(()=>{
-  const props=IronVowScene.scene.getObjectByName('theater-props');
+  const scene=IronVowScene.scene,props=scene.getObjectByName('theater-props');
   if(!props)return {count:-1,examples:['missing theater props group']};
   const {width,depth}=battle.size,a=IronVowScene.world(0,0,0),b=IronVowScene.world(width-1,depth-1,0);
   const stepX=IronVowScene.world(1,0,0).x-a.x,stepZ=IronVowScene.world(0,1,0).z-a.z;
   const bounds={minX:a.x-stepX/2,maxX:b.x+stepX/2,minZ:a.z-stepZ/2,maxZ:b.z+stepZ/2},examples=[];
-  props.updateMatrixWorld(true);
+  scene.updateMatrixWorld(true);
+  const intersects=box=>box.max.x>bounds.minX&&box.min.x<bounds.maxX&&box.max.z>bounds.minZ&&box.min.z<bounds.maxZ;
   props.traverse(object=>{
    if(!object.isMesh)return;
    const box=new THREE.Box3().setFromObject(object);
-   if(box.max.x>bounds.minX&&box.min.x<bounds.maxX&&box.max.z>bounds.minZ&&box.min.z<bounds.maxZ)
+   if(intersects(box))
     examples.push({name:object.name,bounds:[box.min.x,box.min.z,box.max.x,box.max.z]});
   });
-  return {count:examples.length,examples:examples.slice(0,4)};
+  const forest=scene.getObjectByName('perimeter-conifer-belts');
+  const mountain=scene.getObjectByName('mountain-escarpments');
+  let mountainHeight=0,forestCount=0;
+  if(forest?.isInstancedMesh){
+   const matrix=new THREE.Matrix4(),box=new THREE.Box3();
+   forest.geometry.computeBoundingBox();
+   forestCount=forest.count;
+   for(let i=0;i<forestCount;i++){
+    forest.getMatrixAt(i,matrix);matrix.premultiply(forest.matrixWorld);
+    if(intersects(box.copy(forest.geometry.boundingBox).applyMatrix4(matrix)))examples.push({name:forest.name,index:i});
+   }
+  }
+  if(mountain?.isMesh){
+   const vertices=mountain.geometry.attributes.position,v=new THREE.Vector3();
+   for(let i=0;i<vertices.count;i++){
+    v.fromBufferAttribute(vertices,i).applyMatrix4(mountain.matrixWorld);
+    mountainHeight=Math.max(mountainHeight,v.y);
+    if(v.x>bounds.minX&&v.x<bounds.maxX&&v.z>bounds.minZ&&v.z<bounds.maxZ)examples.push({name:mountain.name,index:i});
+   }
+  }
+  return {count:examples.length,examples:examples.slice(0,4),forestCount,mountainHeight};
  });
  assert.equal(overlap.count,0,`contract ${contractIndex} scene dressing overlaps the playable board: ${JSON.stringify(overlap.examples)}`);
+ assert.ok(overlap.forestCount>=100&&overlap.mountainHeight>16,'the theater has forest belts and a mountain skyline');
  await page.evaluate(()=>{battle=null});
 }
 
@@ -60,6 +82,14 @@ module.exports=async function checkTerrain({page,mobile,origin,tap}){
  await click(move.p);
  if(mobile){await page.locator('#move-preview').waitFor();await click(move.p)}
  await page.waitForFunction(({x,z})=>current().x===x&&current().z===z&&!battle.busy,move);
+ const summit=await page.evaluate(({x,z})=>{
+  const {terrainMetrics,world,groundAt}=IronVowScene;
+  const point=world(x,z);
+  return {level:terrainCell(x,z).level,rise:terrainMetrics.levelRise,y:point.y,ground:groundAt(point.x,point.z)};
+ },move);
+ assert.equal(summit.level,2);
+ assert.ok(summit.y>=5.5,'level two stands at least 5.5 m above the valley floor');
+ assert.ok(Math.abs(summit.ground-summit.y)<.015&&Math.abs(summit.y-2*summit.rise)<.015,'movement and the rendered summit share a height');
  await page.waitForFunction(({x,z})=>JSON.parse(storedCareer)?.sortie?.units.some(u=>u.x===x&&u.z===z),move);
  const saved=await page.evaluate(()=>[battle.terrainSeed,current().x,current().z,JSON.stringify(battle.field.cells)]);
  await page.reload({waitUntil:'domcontentloaded'});
