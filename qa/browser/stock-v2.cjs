@@ -6,7 +6,7 @@ module.exports=async function checkStockV2({page,origin}){
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.evaluate(()=>__ironVow.start({seed:4242,frames:[1,2]}));
  await page.waitForFunction(()=>IronVowScene.ready&&battle.units.filter(u=>u.team==='ally').every(u=>IronVowScene.isLive(u)&&IronVowScene.models.get(u.id)?.entry?.armed),null,{timeout:120000});
- const details=await page.evaluate(async()=>{
+ const details=await page.evaluate(async software=>{
   const all=[1,2].map(frame=>battle.units.find(u=>u.team==='ally'&&u.frame===frame)),results=[];
   for(const u of all){
    const entry=IronVowScene.models.get(u.id).entry,m=entry.m,src=m.nativeV2.source,node=name=>src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name)),world=o=>o.getWorldPosition(new THREE.Vector3());
@@ -24,12 +24,17 @@ module.exports=async function checkStockV2({page,origin}){
    const pistonPairs=[];for(let i=1;i<=10;i++){const a=node(`piston.${i}.a`),b=node(`piston.${i}.b`);if(!a||!b)throw Error('Missing piston '+i);pistonPairs.push([a,b,a.worldToLocal(world(b)).normalize().clone(),b.worldToLocal(world(a)).normalize().clone()]);}
    const fixture=[...__ironVow.legalMoves(u.id)].find(p=>p.cost===2&&p.x===u.x+2&&p.z===u.z);if(!fixture)throw Error('Missing stock ground two-step '+u.frame);
    const samples=[];let moving=true;const sampled=new Promise(resolve=>{function sample(){if(!moving){resolve();return}if(u.motion)samples.push(m.rig.legs.map((leg,i)=>{const p=world(node('ankle.'+leg.side)),state=m.legs[i];return {p:p.toArray(),sole:new THREE.Box3().setFromObject(node('ankle.'+leg.side)).min.y,binding:p.distanceTo(world(leg.an)),goal:p.distanceTo(state.foot),floor:IronVowScene.groundAt(p.x,p.z)+m.dims.ankleH*m.scale,swing:state.swing,settle:Boolean(state.settle),plant:state.planted.toArray()}}));requestAnimationFrame(sample)}requestAnimationFrame(sample)});
-   try{await moveUnit(u,fixture.x,fixture.z)}finally{moving=false}await sampled;
+   // Software rasterization can miss the short planted intervals. Keep
+   // the real gait and transforms, and sample them without GPU draws here.
+   const renderer=IronVowRenderer.get(),draw=renderer.render;
+   if(software)renderer.render=(scene,camera)=>{scene.updateMatrixWorld();camera.updateMatrixWorld();};
+   try{await moveUnit(u,fixture.x,fixture.z)}finally{moving=false;renderer.render=draw}
+   await sampled;
    const pistonErrors=pistonPairs.flatMap(([a,b,axisA,axisB])=>[axisA.angleTo(a.worldToLocal(world(b)).normalize()),axisB.angleTo(b.worldToLocal(world(a)).normalize())]);
    results.push({originalAnkleH:m.dims.ankleH*m.scale,frame:u.frame,role:FRAMES[u.frame].role,original,saveUnchanged:before===after,guns,shield,dead,paint,sourceSocket,pistonErrors,samples});
   }
   return results;
- });
+ },Boolean(process.env.IRON_VOW_SOFTWARE_QA));
  assert.deepEqual(details.map(x=>[x.frame,x.role]),[[1,'RECON'],[2,'SUPPORT']]);
  for(const d of details){
   assert.ok(d.saveUnchanged,`Render preserved save and HP for ${d.frame}`);assert.deepEqual([d.guns.gun,d.guns.blade],['rail','pike']);assert.ok(d.guns.right<1e-5&&d.guns.left<1e-5&&d.shield.grip<1e-5&&d.shield.visible,JSON.stringify(d));
