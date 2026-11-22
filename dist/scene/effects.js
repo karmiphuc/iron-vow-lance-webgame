@@ -48,7 +48,7 @@ function faultFX(m,I,t){const fx=BT.fx;if(!fx||!fx.arc||fx.isNull||options.reduc
   const F=m.fault||(m.fault={next:-1,beat:0,slam:false,pulse:0,seed:(random()*997)|0});
   const dead=!I.alive,pd=dead&&I.down==='pilot';
   if(!dead){F.beat=0;F.slam=false;}
-  const critical=!dead&&((I.bodyRatio!==undefined&&I.bodyRatio<.24)||I.armDead||I.legsDead);
+  const critical=!dead&&((I.bodyRatio!==undefined&&I.bodyRatio<.24)||I.legsDead);
   let fire=false,strength=.67,bi=-1; // bi: index of the collapse beat that fires (-1 while merely critical)
   if(dead&&!pd){const age=I.deathAge||0;
     while(F.beat<FAULT_BEATS.length&&age>=FAULT_BEATS[F.beat]){F.beat++;if(age-FAULT_BEATS[F.beat-1]<.12){fire=true;strength=.95;bi=F.beat-1;}}
@@ -85,14 +85,27 @@ const IMPACT={
    15-30 m out, where the bench flash (0.14 s) and 1x sparks read as specks. Flash x1.7 and held longer, sparks x1.3 and a little thicker (x1.6 stacked into white planks), and
    kinetic hits throw a short grey puff of paint and dust so each landed round leaves a mark. */
 const IMPACT_SCALE={flash:1.7,life:1.6,sparks:1.3,size:1.1};
-function impact(p,back,kind){const fx=BT.fx;if(!fx||!fx.spray||fx.isNull)return;const P=IMPACT[kind]||IMPACT.rifle,k=BT.lowFx?.6:1,S=IMPACT_SCALE;
-  const rail=P.cols===SPARK_RAIL,d=V3().copy(back).normalize();fx.glow(p,rail?0xdff8ff:0xfff0d0,P.flash*S.flash,.14*S.life);fx.glow(p,rail?0x7fdcff:0xffa75d,P.flash*1.8*S.flash,.22*S.life);fx.light(p,rail?0x9fe6ff:0xffa04a,P.light*1.5);
-  fx.spray(p,d,Math.round(P.n*k*S.sparks),P.spd,P.cone,P.cols,.6,S.size);
-  if(!rail&&kind!=='blade')fx.smoke(p.clone().addScaledVector(d,.25),kind==='rifle'?1:2,kind==='missile'?2.2:1.1,0x857d72,.45,.5,.9,.18);
-  // molten blobs: a few glowing sprites thrown along the spray, outliving the flash
-  for(let i=0;i<Math.round(5*k);i++){const v=V3(d.x+rnd(-1,1)*P.cone*.6,d.y+rnd(-.2,.6),d.z+rnd(-1,1)*P.cone*.6).normalize().multiplyScalar(P.spd*rnd(.25,.6));fx.glow(p.clone().addScaledVector(v,.02),i%2?P.cols[1]:P.cols[0],rnd(.35,.6),rnd(.22,.36),v);}
-  if(P.chips){fx.debris(p,P.chips,4);fx.smoke(p,3,1.4,0x8a847a,.4,.6,1.1,.25);}
-  else if(rail)fx.smoke(p,2,1.1,0x9fb3c0,.3,.5,.9,.15);}
+/* FM3 hit (owner, 2026-11-22): a landed round is an orange-white fireball burst on the armour with dark debris specks and a few
+   short sparks, not a fan of long white streaks (those read as planks). Rail keeps its cold beam splash. */
+/* A missed round that keeps flying strikes the ground (owner, 2026-11-22): a kick of dirt and dust, a brief ricochet spark and a
+   scorch where it lands. Missiles that miss explode on the ground through explode(). */
+// A missed round striking the ground: a flash, a dark earth plume thrown up (it has to read against pale ground at duel
+// distance), a low dust ring, thrown clods and a scorch.
+function groundHit(p,kind){const fx=BT.fx;if(!fx||!fx.debris||fx.isNull)return;const k=BT.lowFx?.6:1,heavy=kind==='shotgun'?.7:kind==='rail'?1.4:1;
+  fx.glow(p.clone().add(V3(0,.2,0)),0xffd9a0,1.3*heavy,.07);fx.sparks(p.clone().add(V3(0,.1,0)),Math.round(4*k),6,0xffc070,1.2,.26,.5);
+  fx.debris(p,Math.round(5*k*heavy),4.2);
+  fx.smoke(p.clone().add(V3(0,.3,0)),Math.max(1,Math.round(3*k)),2.1*heavy,0x6e6252,.75,.9,1.4,.35);
+  fx.dustwave?.(p,Math.round(6*k),2.4*heavy,1,0xa89c86,.45,.9,.35);fx.scorch?.(p,1.1*heavy);}
+const FIREBALL={rifle:{size:2.6,n:2,debris:2,sparks:4},shotgun:{size:2.1,n:1,debris:1,sparks:3},missile:{size:5.6,n:4,debris:5,sparks:6},blade:{size:3,n:2,debris:3,sparks:8}};
+function impact(p,back,kind){const fx=BT.fx;if(!fx||!fx.spray||fx.isNull)return;const P=IMPACT[kind]||IMPACT.rifle,k=BT.lowFx?.6:1;
+  const rail=P.cols===SPARK_RAIL,d=V3().copy(back).normalize();
+  if(rail){fx.glow(p,0xdff8ff,P.flash*1.7,.22);fx.glow(p,0x7fdcff,P.flash*3,.35);fx.light(p,0x9fe6ff,P.light*1.5);fx.spray(p,d,Math.round(P.n*k),P.spd,P.cone,P.cols,.6,1);fx.smoke(p,2,1.1,0x9fb3c0,.3,.5,.9,.15);return;}
+  const F=FIREBALL[kind]||FIREBALL.rifle,o=p.clone().addScaledVector(d,.15);
+  fx.glow(o,0xfff3d6,F.size*.55,.08);fx.light(o,0xffa04a,P.light*1.6);
+  for(let i=0;i<Math.max(1,Math.round(F.n*k));i++){const v=V3(d.x+rnd(-.5,.5),d.y+rnd(.1,.7),d.z+rnd(-.5,.5)).normalize().multiplyScalar(rnd(.6,1.6));fx.fire(o.clone().addScaledVector(v,.12),F.size*rnd(.8,1.15),rnd(.18,.26),v,.8);}
+  fx.sparks(o,Math.round(F.sparks*k),5,0xffc070,.4,.32,.55);
+  if(F.debris)fx.debris(o,Math.round(F.debris*k),3.5);
+  fx.smoke(o,kind==='missile'?3:1,kind==='missile'?2.4:1.2,0x6f6a62,.5,.6,1,.2);}
 
 function FX(scene,o){
   const f={};
@@ -212,7 +225,9 @@ function FX(scene,o){
 function fireFX(ma,mt,kind,part,shot){
   const fx=BT.fx,muzzle=shot?.origin?.clone()||ma.wpn.muzzle.getWorldPosition(V3()),tp=shot?.target?.clone()||(mt.isVector3?mt.clone():partPoint(mt,part)); // [bench] target may be a point
   const beat=(d,fn)=>shot&&d===0?fn():pending.push({at:(shot?.at??BT.clock)+d,fn}); // production contacts own each beat
-  const flash=(p,c,s)=>{fx.glow(p,c,s,.09);fx.light(p,c,6);fx.smoke(p,2,1.2,0x8f8a80,.35,.6,.9,.15);};
+  // FM3 muzzle: a hot core plus a short orange fire bloom thrown along the barrel, then a puff of smoke
+  const along=V3().copy(tp).sub(muzzle).normalize();
+  const flash=(p,c,s)=>{fx.glow(p,0xfff4dc,s*.6,.06);fx.glow(p,c,s*1.25,.1);fx.fire(p.clone().addScaledVector(along,.35),s*.9,.09,along.clone().multiplyScalar(4),0);fx.light(p,c,9);fx.smoke(p,2,1.2,0x8f8a80,.35,.6,.9,.15);};
   /* Jacketed rounds, not beams (owner, 2026-11-18): the bench tail was 35% of the whole path, a 10 m bar of white light on a 30 m shot.
      Every third round is a tracer, a short warm 2.2 m streak; the rest are faint 0.9 m flicks of heat haze. Hot colours stay
      below additive white-out. */
@@ -264,7 +279,7 @@ function onStep(m,p,i,amt=1){const fx=BT.fx,heavy=(m.stepMass??HEAVY[m.build?.mo
 
 
 const before=new Set(scene.children),fx=BT.fx=FX(scene,{...options.pools,cam:options.camera}),owned=scene.children.filter(node=>!before.has(node));
-return {fx,impact,faultFX,surfacePoint,groundSlam,fireFX,meleeUpdate,explode,onStep,MEL,IMPACT,
+return {fx,impact,groundHit,faultFX,surfacePoint,groundSlam,fireFX,meleeUpdate,explode,onStep,MEL,IMPACT,
  later(delay,fn){pending.push({at:BT.clock+delay,fn});},
  update(t,dt){BT.clock=t;BT.lowFx=Boolean(options.low?.());for(let i=pending.length-1;i>=0;i--)if(t>=pending[i].at){const task=pending.splice(i,1)[0];task.fn();}fx.update(dt);if(!options.reducedMotion?.()){options.shake?.(BT.cam.shake);if(BT.hitstop)options.hitstop?.(BT.hitstop);}BT.hitstop=0;BT.cam.shake*=Math.exp(-dt*8);},
  clear(){pending.length=0;for(const node of owned){if(node.isLight)node.intensity=0;else node.visible=false;}fx.clearDecals();},

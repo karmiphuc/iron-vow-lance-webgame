@@ -69,7 +69,7 @@ root.IronVowRigV2.register('lion',{
    pose(entry,unit,pose,now){
     entry.secondary=weapons.get(unit.melee);
     for(const [id,weapon] of weapons)weapon.mount.visible=unit.alive&&unit.hp.left>0&&id===unit.melee;
-    const clip=unit.alive&&!unit.motion&&clips.get(unit.melee);
+    const clip=unit.alive&&unit.hp.legs>0&&!unit.motion&&clips.get(unit.melee);
     if(current&&!clip)for(const [value,rest] of originals)value.copy(rest);
     current=clip;
     if(!clip)return;

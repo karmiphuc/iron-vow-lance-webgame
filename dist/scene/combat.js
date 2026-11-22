@@ -14,6 +14,22 @@ root.IronVowCombat={create(scene,api){
   }}),fx=effect.fx;
  const log=(type,data)=>{history.push({sequence:++sequence,type,time:clock,...data});if(history.length>600)history.splice(0,100);};
  const point=(unit,part)=>api.attachmentPoint(unit,part);
+ // A missed round keeps flying past the target and strikes the ground behind it, beside its line, so a burst that misses kicks
+ // up dirt around the target instead of vanishing in the air (owner, 2026-11-22). Deterministic per contact index: rounds
+ // alternate sides 2.2-3.1 m off the target's centre line at the target and land 2.6-4 m beyond it. Rules are untouched.
+ let groundQueue=[];
+ // fm3-cinematics: where a missed round strikes the ground. Every third falls short, kicking dirt up in front of the target
+ // where the hit camera sees it; the rest carry past wide enough to clear the hull's silhouette. Sides alternate, distances
+ // vary with the round index, so a burst spreads like real fire and repeats exactly for the same volley.
+ function missGround(from,target,index){
+  const centre=point(target,'body'),flat=centre.clone().sub(from).setY(0),reach=Math.max(1,flat.length());flat.normalize();
+  const side=V3(flat.z,0,-flat.x),k=index%4,sign=index%2?1:-1,short=index%3===2;
+  const along=short?-Math.min(reach*.5,1.6+.35*k):1.8+1.6*((index*7)%5)/4;
+  const lateral=sign*(short?1.7+.25*k:2.8+.35*k)*(reach+along)/reach;
+  const p=V3(from.x,0,from.z).addScaledVector(flat,reach+along).addScaledVector(side,lateral);
+  p.y=api.groundAt?.(p.x,p.z)??centre.y-2;
+  return {point:p,stretch:from.distanceTo(p)/Math.max(.1,from.distanceTo(centre))};
+ }
  const profileFor=(actor,w)=>root.IronVowWeaponFX.get(w.id);
  function launch(actor,target,w,index,contacts,guard){
   api.sync(actor);api.sync(target);
@@ -65,8 +81,13 @@ root.IronVowCombat={create(scene,api){
    return p;
   });
   const flights=(w.scatter?selected:[contact]).filter(Boolean).map(c=>Math.max(.025,c.travel||flight));
+  let shotTarget=to,shotFlight=flight;
+  if(!guard&&!reducedMotion){
+   if(w.scatter)(selected).forEach((c,i)=>{if(c.hit||!targets[i])return;const g=missGround(from,target,c.index);targets[i]=g.point;flights[i]*=g.stretch;groundQueue.push({at:clock+flights[i],point:g.point,kind,actor:actor.id,index:c.index});});
+   else if(contact&&!contact.hit){const g=missGround(from,target,contact.index);shotTarget=g.point;shotFlight=flight*g.stretch;if(kind!=='missile')groundQueue.push({at:clock+shotFlight,point:g.point,kind,actor:actor.id,index:contact.index});}
+  }
   const source=model||{wpn:{},yaw:0,recoil:0,s:{pitch:{v:0},kx:{v:0},kz:{v:0}}};source.wpn=source.wpn||{};
-  effect.fireFX(source,to,kind,part,{at:clock,index,origin:from,target:to,targets,flights,flight,arrival:at=>{effect.explode(at,false);log('arrival',{actor:actor.id,weapon:w.id,index,point:at.toArray(),expected:to.toArray()});}});
+  effect.fireFX(source,shotTarget,kind,part,{at:clock,index,origin:from,target:shotTarget,targets,flights,flight:shotFlight,arrival:at=>{effect.explode(at,false);log('arrival',{actor:actor.id,weapon:w.id,index,point:at.toArray(),expected:shotTarget.toArray()});}});
  }
  function landed(actor,target,w,contact,guard){
   api.sync(actor);api.sync(target);
@@ -75,7 +96,7 @@ root.IronVowCombat={create(scene,api){
   if(tip)native.sync();
   const profile=profileFor(actor,w),part=guard?'shield':contact.part;
   const p=tip?tip.getWorldPosition(V3()):pelletPoints.get(contact)?.clone()||point(target,part),back=point(actor,'body').sub(p).normalize();
-  effect.impact(p,back,profile.archetype);
+  effect.impact(p,back,profile.archetype);root.IronVowDuelHit?.(target,p,contact,guard);
   if(contact.before>0&&contact.after===0){fx.debris(p,low()?3:6,4);fx.smoke(p,3,1.7,0x817b73,.4,.7,1.3,.25);}
   log('impact',{actor:actor.id,target:target.id,weapon:w.id,index:contact.index,part:contact.part,shield:guard,point:p.toArray(),back:back.toArray(),planned:contact.amount,damage:contact.damage,before:contact.before,after:contact.after,actorAlive:actor.alive});
   const m=api.models.get(target.id)?.entry?.m;
@@ -153,8 +174,12 @@ root.IronVowCombat={create(scene,api){
     }
    }
   }
-  effect.update(t,Math.min(.05,dt));
+  for(const g of groundQueue)if(clock>=g.at){effect.groundHit(g.point,g.kind);log('ground',{actor:g.actor,index:g.index,point:g.point.toArray()});}
+  groundQueue=groundQueue.filter(g=>clock<g.at);
+  // a death's opening slow motion (game.js DEATH_TIME) slows sparks, fire and debris with it
+  const slow=typeof deathSlowmo==='function'&&deathSlowmo(clock)?DEATH_TIME.rate:1;
+  effect.update(t,Math.min(.05,dt)*slow);
  }
- return {launch,landed,dodge,evade,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>{pelletPoints=new WeakMap();effect.clear();}};
+ return {launch,landed,dodge,evade,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>{pelletPoints=new WeakMap();groundQueue=[];effect.clear();}};
 }};
 })(window);

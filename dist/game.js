@@ -92,7 +92,7 @@ const HIRES=[
  {name:'Dax Mercer',call:'MARSHAL',skill:'Command Relay',desc:'Spend 1 AP to order another pilot within 5 tiles. Their next paid attack this round costs up to 2 AP less. Once per battle.',color:'#d3b07b',glyph:'shield-chevron',fee:1500},
  {name:'Inez Calder',call:'SAPPER',skill:'Breach Charge',desc:'Spend 1 AP to prime a ranged charged shot that strikes arms and legs. It gains 60% weapon power and ignores half the armor. A hit stops that counter. Once per battle.',color:'#eaa675',glyph:'lightning',fee:1400},
  {id:'signal',name:'Lio Vega',call:'SIGNAL OFFICER',skill:'Blackout',desc:'Spend 1 AP to jam a hostile within 6 tiles. It cannot counter and loses 20 accuracy points this round. Once per battle.',color:'#9daee2',glyph:'binoculars',fee:1700},
- {name:'Tess Kade',call:'RETRIEVER',skill:'Recovery Rig',desc:'Spend 2 AP to restore 30 HP to the weakest damaged arm or legs on yourself or an ally within 3 tiles. Revives disabled limbs. Once per battle.',color:'#80c6c2',glyph:'wrench',fee:1500}
+ {name:'Tess Kade',call:'RETRIEVER',skill:'Recovery Rig',desc:'Spend 2 AP to restore 30 HP to the weakest damaged arm or legs on yourself or an ally within 3 tiles. Can rebuild arms. Destroyed legs stay down for the sortie. Once per battle.',color:'#80c6c2',glyph:'wrench',fee:1500}
 ];
 const CREW=[...PILOTS,...HIRES],LANCE_SLOTS=[0,1,2];
 const AUX_SLOT=3;
@@ -784,12 +784,12 @@ function skillDescription(i,training){
  if(i===4)return `Order an ally within ${5+(training?.relayRange??0)} tiles. Their next ${training?.relayShots??1} paid attack(s) this round cost up to ${training?.relayDiscount??2} AP less (min 1). Once per battle.`;
  if(i===SAPPER)return `${training?.breachShots??1} charged shot(s) that strike arms and legs. +${Math.round(100*(training?.breachPower??.60))}% power, ignores ${Math.round(100*(training?.breachPierce??.50))}% armor. Hits deny counters.${training?.breachRefund?' Limb destruction refunds attack AP.':''}`;
  if(i===SIGNAL)return `Jam a hostile within ${6+(training?.blackoutRange??0)} tiles for the round. No counters, −${Math.round(100*(training?.blackoutAim??.20))} accuracy points${training?.blackoutAP?', −'+training.blackoutAP+' AP':''}${training?.blackoutHold?', no movement':''}.`;
- if(i===RETRIEVER)return `Restore ${training?.recoveryHP??30} HP to ${training?.recoveryAll?'each damaged limb':'the weakest damaged limb'} within ${recoveryRange(training)} tiles${training?.recoveryFloor?' (75% HP minimum)':''}. ${recoveryUses(training)} use(s) per battle.`;
+ if(i===RETRIEVER)return `Restore ${training?.recoveryHP??30} HP to ${training?.recoveryAll?'each damaged limb':'the weakest damaged limb'} within ${recoveryRange(training)} tiles${training?.recoveryFloor?' (75% HP minimum)':''}. ${recoveryUses(training)} use(s) per battle. Destroyed legs stay down for the sortie.`;
  if(!training?.overdrive&&!training?.deadeye&&!training?.deadeyeRefund&&!training?.repair&&!training?.limbRepair)return PILOTS[i].desc;
  const descriptions=[
   '+'+overdriveAP(training)+' AP this turn.'+(training?.overdriveMove?' Keeps free movement.':'')+(training?.overdriveBrace?' Also Braces.':''),
   'Next attack gains '+Math.round((deadeyePower(training)-1)*100)+'% power.'+(training?.deadeyeCascade?' Stays primed on limb destruction.':training?.deadeyeRefund?' A ranged kill refunds the shot’s AP.':''),
-  'Restore up to '+repairAmount(training)+' body HP.'+(training?.limbRepair?' Also restore '+training.limbRepair+' HP to '+(training.repairAll?'each':'the weakest')+' damaged limb.':'')+(training?.repairBrace?' Also Braces.':'')+(training?.repairFailsafe?' Triggers on lethal body damage if unused.':'')
+  'Restore up to '+repairAmount(training)+' body HP.'+(training?.limbRepair?' Also restore '+training.limbRepair+' HP to '+(training.repairAll?'each':'the weakest')+' damaged limb. Destroyed legs stay down for the sortie.':'')+(training?.repairBrace?' Also Braces.':'')+(training?.repairFailsafe?' Triggers on lethal body damage if unused.':'')
  ];
  return descriptions[i]+' Once per battle.';
 }
@@ -1605,7 +1605,7 @@ try{attackCameraEnabled=localStorage.getItem('iron-vow-attack-camera')!=='off'}c
 let activeCinematic=null;
 function closeAttackCamera(sequence){
  if(activeCinematic!==sequence)return;
- activeCinematic=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
+ activeCinematic=null;duelNumbers.length=0;duelBanner=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
 }
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
@@ -2609,7 +2609,7 @@ function pilotWiki(){
   ['Order an ally carrying an expensive weapon while they still have AP.','Order the front-line ally to brace or let them fire before moving.'],
   ['Prime to damage a random intact arm or leg. A charged hit cancels the immediate counter.','Move, fire a charged shot and use the rest of your movement to break contact.'],
   ['Jam a heavy gun before committing the lance. Drain its AP before the enemy acts.','Stop a close-range enemy from advancing while your lance moves into cover.'],
-  ['Restore a disabled weapon arm or legs to get a sidelined mech back into the fight.','Take the field and survive to bring extra wrecks back to the Workshop.']
+  ['Rebuild a disabled weapon arm or repair damaged legs before they give out.','Take the field and survive to bring extra wrecks back to the Workshop.']
  ];
  return `<section class="pilot-wiki" aria-label="Pilot classes and skills">
   <div class="stat-heading"><h2>Pilot classes &amp; skills</h2>${infoTip('training ranks',FOUNDATION_HELP+' Training points are earned at levels 1 through 6, then at 8 and 10. Your level 5 doctrine unlocks ranks 6, 8 and 10 in its path.')}</div>
@@ -2952,9 +2952,12 @@ function braceUnit(u){
  u.brace=true;u.braceTime=clock;
  if(!u.kind)gaitSound(u,'arm',0);
 }
+function damagedFieldLimbs(u){
+ return ['right','left','legs'].filter(part=>u.hp[part]<u.max[part]&&(part!=='legs'||u.hp.legs>0));
+}
 function repairableLimbs(u){
  if(!u.training?.limbRepair)return [];
- const parts=['right','left','legs'].filter(part=>u.hp[part]<u.max[part]);
+ const parts=damagedFieldLimbs(u);
  if(u.training.repairAll)return parts;
  return parts.sort((a,b)=>u.hp[a]/u.max[a]-u.hp[b]/u.max[b]).slice(0,1);
 }
@@ -2971,7 +2974,7 @@ function skillCost(kind,training){
 const hostileSkill=kind=>kind===3||kind===SIGNAL;
 const targetedSkill=kind=>kind>=3&&kind!==SAPPER;
 function recoveryParts(target,training){
- const parts=['right','left','legs'].filter(part=>target.hp[part]<target.max[part]);
+ const parts=damagedFieldLimbs(target);
  return training?.recoveryAll?parts:parts.sort((a,b)=>target.hp[a]/target.max[a]-target.hp[b]/target.max[b]).slice(0,1);
 }
 function recoverLimbs(target,training){
@@ -3121,6 +3124,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const {paid,charged}=spendAttack(a,w,part,reaction);
+ if(a.boost&&sequence&&!sequence.skipped)duelSkill(a,'Deadeye');
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
  const shoulder=launcherId(w.id)&&w.id!=='locust',clip=w.melee?'strike':'fire';
  const plantedCleaver=breachLoadout(a.frame)&&w.id==='cleaver';
@@ -3242,13 +3246,14 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  let jammed=false,keepBoost=false;
  if(!hit){
   const result=dodged?'DODGE':'MISS';
+  if(!sequence?.skipped)duelText(t,result);
   if(sequence)sequence.result=result;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:result});
   addLog(dodged?t.name+' dodged '+a.name+'’s attack.':a.name+' missed '+t.name+'.');
  }else{
   const label=guard?'SHIELD / LEFT ARM':t.kind?'HULL':PART_LABEL[actual];
   const failsafe=disabled.includes('body')&&t.training?.repairFailsafe&&!t.skill;
-  if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t)}
+  if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t);duelSkill(t,'Failsafe')}
   const broken=guard&&t.hp.left===0;
   const crits=rounds.filter(round=>round.critical).length;
   const critLabel=crits?(rounds.length>1?' · '+crits+' CRIT':' · CRIT'):'';
@@ -3287,7 +3292,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const recover=native&&!reducedMotion?Math.max(.12,native.duration-windup-flight):profile.recover;
  a.attack.returnAt=clock+recover;
  const settle=recover+(primeDuration?ATTACK_STEP.returnDuration:0);
- const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:DESTRUCTION.end*destructionPace(t));
+ const recovery=t.alive?settle:reducedMotion?.35:Math.max(settle,t.kind?.84:destructionTime(t,DESTRUCTION.end));
  // The cinematic pacing lengthens the lead-in only; the result beat after the last round keeps its designed length.
  const pacedLead=primeDuration-basePrime+aimHold;
  const cinematicHold=w.scout&&t.alive?1.2-raise-flight:t.alive&&reaction?.5:(t.alive?2.43:2.66)-(raise-pacedLead)-flight;
@@ -3610,7 +3615,19 @@ function destructionPace(u){
  if(u.frame===REAVER_FRAME)return 1.22;
  return MECH_MOTION[u.frame]?.mass>=1.4?1.55:1;
 }
-function destructionAge(u,t){return Number.isFinite(u.deathTime)?(t-u.deathTime)/destructionPace(u):DESTRUCTION.end}
+/* Death timing (owner, 2026-11-22: deaths should play slower, the first frames in slow motion). Real seconds since death are warped:
+   the first DEATH_TIME.window seconds run at DEATH_TIME.rate, then normal speed; the whole sequence is DEATH_TIME.stretch slower.
+   Every death beat (kneel, fall, the three blasts, the rig's collapse) reads destructionAge, so they all slow together.
+   Display only: the unit is dead from the killing contact; reduced motion skips straight to the wreck as before. */
+const DEATH_TIME={window:.55,rate:.3,stretch:1.35};
+function deathWarp(elapsed){const W=DEATH_TIME.window,r=DEATH_TIME.rate;return reducedMotion?elapsed:elapsed<W?elapsed*r:W*r+(elapsed-W);}
+function deathUnwarp(warped){const W=DEATH_TIME.window,r=DEATH_TIME.rate;return reducedMotion?warped:warped<W*r?warped/r:W+(warped-W*r);}
+function deathScale(u){return destructionPace(u)*(reducedMotion?1:DEATH_TIME.stretch);}
+function destructionAge(u,t){return Number.isFinite(u.deathTime)?deathWarp(Math.max(0,t-u.deathTime))/deathScale(u):DESTRUCTION.end}
+// real seconds after death at which the sequence reaches a destruction age
+function destructionTime(u,age){return deathUnwarp(age*deathScale(u))+1e-9;}   // lands on, never just before, that beat
+// true while a death's opening slow motion plays (scene effects slow with it)
+function deathSlowmo(t){return !reducedMotion&&battle?.units.some(u=>!u.alive&&!u.kind&&u.downReason!=='pilot'&&Number.isFinite(u.deathTime)&&t-u.deathTime>=0&&t-u.deathTime<DEATH_TIME.window);}
 function destructionStyle(u){return u.deathStyle||(u.frame===1||FRAMES[u.frame]?.native||destructionPace(u)>=1.5?'fall':'kneel')}
 
 function beginDestruction(u,reason='body',sequence=null){
@@ -3649,9 +3666,10 @@ function updateDestruction(u,t){
  const cues=[{at:.67,big:false},{at:DESTRUCTION.blast,big:true},{at:1.28,big:false}];
  for(let i=0;i<cues.length;i++){
   const cue=cues[i],flag=1<<i;if(age<cue.at||(u.deathEvents&flag))continue;u.deathEvents=(u.deathEvents||0)|flag;
-  if((age-cue.at)*pace>.6||reducedMotion)continue;
-  const at=u.deathTime+cue.at*pace,anchor=freezeAttachment(u,'body',at);
-  effects.push({type:'detonation',x:u.x,z:u.z,anchor,at,t:1-(age-cue.at)*pace/.85,big:cue.big,seed:u.index+u.frame*7});
+  const at=u.deathTime+destructionTime(u,cue.at),late=t-at;
+  if(late>.6||reducedMotion)continue;
+  const anchor=freezeAttachment(u,'body',at);
+  effects.push({type:'detonation',x:u.x,z:u.z,anchor,at,t:1-late/.85,big:cue.big,seed:u.index+u.frame*7});
   if(cue.big){sound('boom');shake=Math.max(shake,9*MECH_MOTION[u.frame].mass)}
  }
 }
@@ -4131,15 +4149,45 @@ function battlefield(t){
 
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
 
+// FM3 duel feedback (owner, 2026-11-22): damage numbers pop at each impact point, a destroyed part names itself in red, a missed
+// volley reads MISS / DODGE, and skills get a slanted banner (blue ally, orange enemy). No HP strip: the owner keeps the duel
+// clear of health bars (approved demo, minus the strip).
+const duelNumbers=[];
+let duelBanner=null;
+// Each popped number takes the lowest slot no live number holds: three across, rows climbing, so a long burst cascades
+// instead of overprinting. A word (part destroyed, MISS) is wider and takes a whole free row, centred.
+function duelPush(n){
+ const used=new Set(duelNumbers.filter(d=>clock-d.at<=.9).flatMap(d=>d.slots));let slots;
+ if(n.big){let row=0;while([0,1,2].some(c=>used.has(row*3+c)))row++;slots=[row*3,row*3+1,row*3+2];}
+ else{let k=0;while(used.has(k))k++;slots=[k];}
+ const k=slots[0];duelNumbers.push({...n,slots,dx:n.big?0:((k%3)-1)*30,stack:Math.floor(k/3)});
+}
+window.IronVowDuelHit=(u,point,contact,guard)=>{
+ if(!activeCinematic||!point)return;
+ duelPush({point:point.clone(),text:String(contact.damage),at:clock,color:guard?'#bfe4ee':'#ffffff'});
+ if(contact.before>0&&contact.after===0)duelPush({point:point.clone(),text:guard?'SHIELD':ATTACK_PART_LABEL[contact.part],at:clock+.05,color:'#ff8a72',big:true});
+};
+function duelText(u,text){const point=window.IronVowScene?.partPoint?.(u,'body');if(point&&activeCinematic)duelPush({point:point.clone(),text,at:clock,color:'#f5dbb1',big:true});}
+function duelSkill(u,name){if(activeCinematic)duelBanner={text:name,ally:u.team==='ally',at:clock};}
 function drawAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
- const width=Math.min(W-32,460),x=16,y=H-72;
- const status=sequence.result||(sequence.phase==='aim'?'AIMING':sequence.part==='shield'?'SHIELD':'FIRING');
- ctx.save();ctx.fillStyle='#101820dc';ctx.fillRect(x,y,width,44);
- ctx.fillStyle='#e9bf7d';ctx.textAlign='left';ctx.font='700 12px Inter,Arial,sans-serif';
- ctx.fillText(sequence.actor.name+' / '+sequence.w.name,x+12,y+17,width-24);
- ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';
- ctx.fillText(sequence.target.name+' · '+status,x+12,y+33,width-24);ctx.restore();
+ // damage numbers at the impact point, rising and fading
+ ctx.save();ctx.textAlign='center';
+ for(let i=duelNumbers.length-1;i>=0;i--){
+  const n=duelNumbers[i],age=clock-n.at;if(age>.9){duelNumbers.splice(i,1);continue;}if(age<0)continue;
+  const p=window.IronVowScene.projectWorld(n.point);
+  ctx.globalAlpha=Math.min(1,(.9-age)*4);ctx.font=(n.big?'800 ':'800 ')+(n.big?(W<760?14:18):(W<760?14:19))+'px Inter,Arial,sans-serif';
+  ctx.lineWidth=4;ctx.strokeStyle='#05090d';const y=p.y-20*n.stack-24*age/.9,x=p.x+(n.dx||0);
+  ctx.strokeText(n.text,x,y);ctx.fillStyle=n.color;ctx.fillText(n.text,x,y);
+ }
+ ctx.restore();
+ // skill banner, top left, 0.9 s
+ if(duelBanner&&clock-duelBanner.at<.9){
+  const age=clock-duelBanner.at,x=16-Math.max(0,(.12-age))*600,y=74;
+  ctx.save();ctx.globalAlpha=Math.min(1,(.9-age)*5);ctx.fillStyle=duelBanner.ally?'#27489a':'#9a4a1c';
+  ctx.beginPath();ctx.moveTo(x+14,y);ctx.lineTo(x+214,y);ctx.lineTo(x+200,y+30);ctx.lineTo(x,y+30);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f2f6f4';ctx.font='700 16px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(duelBanner.text,x+107,y+21);ctx.restore();
+ }
 }
 let canvasMode=null,warDiagnostics;
 function draw(ts){

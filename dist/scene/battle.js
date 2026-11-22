@@ -10,7 +10,7 @@ const LIVE=new Set([5,6,7,8,9,12]);
 const rigV2=root.IronVowRigV2;
 let renderer,kit,scene,camera,battleRef,terrainRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let rockContacts;
-let cameraReady=false,duelSequence,duelSetup,lightningAt=4,lightning=0;
+let cameraReady=false,duelSky=null,duelSequence,duelSetup,lightningAt=4,lightning=0;
 const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[],coverMeshes=[];
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
 const cameraTarget=V3(),cameraPosition=V3();
@@ -277,6 +277,14 @@ function build(){
  Object.assign(sun.shadow.camera,{left:-half,right:half,top:half,bottom:-half,near:1,far:180});
  sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0005;sun.shadow.normalBias=.03;scene.add(sun);
  const rim=new T.DirectionalLight(kit.C(0x9ab8d0),.6);rim.position.set(30,18,-30);scene.add(rim);
+ // FM3 battle scenes sit against open sky. From the duel's low angles the board's dark void would fill the top half, so a
+ // theater-tinted sky dome shows only while the duel camera plays (the tactical view is unchanged); fog meets its horizon.
+ {const SKY=[[0x9fb4c2,0x3e5a70],[0xc9a27a,0x5b4436],[0x8fb2b3,0x2f4f5c]][index],geo=new T.SphereGeometry(420,32,16),pos=geo.attributes.position,col=[];
+  const low=new T.Color(SKY[0]),high=new T.Color(SKY[1]),c=new T.Color();
+  for(let i=0;i<pos.count;i++){const y=pos.getY(i)/420;c.copy(low).lerp(high,Math.min(1,Math.max(0,y)*1.6));col.push(c.r,c.g,c.b);}
+  geo.setAttribute('color',new T.Float32BufferAttribute(col,3));
+  duelSky=new T.Mesh(geo,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide,fog:false,depthWrite:false}));
+  duelSky.userData={horizon:low.clone(),fog:scene.fog.color.clone()};duelSky.visible=false;duelSky.renderOrder=-10;scene.add(duelSky);}
  board=new T.Group();scene.add(board);units=new T.Group();scene.add(units);
  const floor=new T.Mesh(new T.PlaneGeometry(300,300),kit.groundMaterial(P));floor.rotation.x=-Math.PI/2;floor.position.y=-.18;floor.receiveShadow=true;board.add(floor);
  const terrainMap=kit.imgTex('assets/concrete.webp',[1,1]);
@@ -387,67 +395,66 @@ function updateCamera(t,dt){
  const distance=fieldCamera.overview?fit:fit*overviewZoom/Math.max(overviewZoom,viewZoom)*(portrait&&!mobile?.66:.88),az=mobile?0:Math.PI/4,el=mobile?.8:.66;
  const position=target.clone().add(V3(Math.sin(az)*Math.cos(el),Math.sin(el),Math.cos(az)*Math.cos(el)).multiplyScalar(distance));
  const shot=activeCinematic;
- let duelSubjects,setup;
+ let duelSubjects,setup,roll=0;
  if(shot&&!reducedMotion){
+  /* FM3 duel grammar (owner, 2026-11-22): every beat frames ONE mech, big and from below; no over-the-shoulder foreground,
+     no wide two-shot. Brace (aim) and release frame the attacker; a flight shot runs down the lane only when the round is in
+     the air long enough to read; the hit shot frames the defender. Screen direction follows FM3's HUD: the ally sits on the
+     left facing right, the enemy on the right facing left, through return fire too. */
   const actor=unitRoot(shot.actor),victim=partPoint(shot.target,'body'),direction=victim.clone().sub(actor).setY(0);
   const span=Math.max(TILE*.8,direction.length());direction.normalize();
-  const chest=partPoint(shot.actor,'body');
-  const halfAngle=Math.atan(Math.tan(fov*Math.PI/360)*camera.aspect);
-  const long=span>=TILE*3.5,showFlight=long&&shot.contacts?.[0]?.at>=.32;
-  let key='fire';
-  if(shot.phase==='aim')key=long?'launch':'aim';
-  else if(long&&!showFlight)key=shot.contact?'result':'launch';
-  else if(shot.phase==='result'&&t-shot.resultAt>=.10)key='result';
-  else if(showFlight&&t-shot.fireAt<.16)key='launch';
-  const closeShot=(look,unit,dir,side,lift,padding=1)=>{
-   const record=models.get(unit.id),height=record?.height??6,halfWidth=record?.proxy?.geometry.parameters.width/2||2;
-   const reach=padding*Math.max(10,height*.72/Math.tan(fov*Math.PI/360),(halfWidth+1)/Math.tan(halfAngle*.85));
-   const at=look.clone().addScaledVector(side,reach*.84).addScaledVector(dir,reach*.54);
-   at.y+=reach*.13+lift;
-   return at;
-  };
-  const pose=(beat,sign,pull,lift=0)=>{
-   const side=V3(direction.z,0,-direction.x).multiplyScalar(sign),look=V3(),at=V3();
-   let subjects=[chest,victim];
-   if(beat==='aim'){
-    const defender=unitRoot(shot.target);
-    look.copy(chest).addScaledVector(side,-(span*.2+1.2));
-    // Keep the foreground defender's shoulder in the portrait frustum.
-    const behind=Math.max(8,2.6/Math.tan(halfAngle));
-    at.copy(defender).addScaledVector(direction,behind).addScaledVector(side,3.6);at.y=defender.y+4.4+lift;
-   }else if(beat==='launch'){
-    // Hold the shooter through release. Leave room ahead of the muzzle before cutting to flight.
-    const height=models.get(shot.actor.id)?.height??5;
-    const lead=Math.min(height*.24,1.6);
-    const center=shot.actor.kind?chest:actor.clone().add(V3(0,height*.53,0));
-    look.copy(center).addScaledVector(direction,lead);
-    at.copy(closeShot(center,shot.actor,direction,side,lift,1.32));
-    subjects=[chest];
-   }else if(beat==='result'){
-    // The hull stays centered even if the hit removed a limb or dropped a shield.
-    look.copy(victim).y-=.40;
-    at.copy(closeShot(look,shot.target,direction.clone().negate(),side,lift));
-    subjects=[victim];
-   }else{
-    look.copy(chest).lerp(victim,.52);
-    const reach=(span*.55+3)/Math.tan(halfAngle*.85);
-    at.copy(actor).addScaledVector(direction,span*.45).addScaledVector(side,reach);at.y=look.y+2.5+reach*.08+lift;
+  const halfV=fov*Math.PI/360,halfH=Math.atan(Math.tan(halfV)*camera.aspect);
+  const contacts=shot.contacts||[],firstHit=contacts[0]?.at??0,lastHit=contacts.at(-1)?.at??firstHit,since=shot.fireAt==null?0:t-shot.fireAt;
+  const flight=firstHit>=.4&&!shot.w?.melee;
+  let key='brace';
+  if(shot.phase==='fire'){
+   if(flight)key=since<.3?'release':since<firstHit-.1?'flight':'hit';
+   // a burst: hold the shooter for the first part of it, then cut to the target for the rest of the impacts
+   else key=since<Math.min(Math.max(.35,lastHit*.45),Math.max(.12,lastHit-.25))?'release':'hit';
+  }else if(shot.phase==='result')key='hit';
+  const rot=(v,a)=>V3(v.x*Math.cos(a)+v.z*Math.sin(a),0,-v.x*Math.sin(a)+v.z*Math.cos(a));
+  const up=V3(0,1,0);
+  // One mech fills a little over half the frame height (the strip below takes the rest), three-quarter front, lens at a third of its height looking up at it.
+  const single=(unit,facing,angle,lift,push)=>{
+   const record=models.get(unit.id),h=record?.height??6,base=unitRoot(unit),center=base.clone().add(V3(0,h*.5,0));
+   const dist=h/(1.0*Math.tan(halfV))*push,want=unit.team==='ally'?1:-1;
+   for(const s of [1,-1]){
+    const at=center.clone().addScaledVector(rot(facing,s*angle),dist);at.y=base.y+h*.34+lift;
+    // lead room: the subject sits a little behind centre, space ahead of where it faces
+    const look=center.clone().addScaledVector(facing,dist*Math.tan(halfH)*.22);
+    const right=look.clone().sub(at).normalize().cross(up);
+    if(Math.sign(right.dot(facing))===want)return {look,at,subjects:[center],side:s};
    }
-   return {look,at:look.clone().lerp(at,pull),subjects};
   };
-  const plans=shot.cameraPlans??={},pair=shot.actor.id+'>'+shot.target.id;
-  // Choose the firing side once. Reversing the direction for a counter also
-  // reverses the sign, keeping both silhouettes on their original screen sides.
-  if(!shot.cameraAxis){
-   const fire=duelPlan((...args)=>pose('fire',...args),cameraSide(actor,direction));
-   shot.cameraAxis={actor:shot.actor.id,sign:fire.sign};
-   plans[pair+':fire']=fire;
-  }
-  setup=pair+':'+key;
-  const sign=shot.actor.id===shot.cameraAxis.actor?shot.cameraAxis.sign:-shot.cameraAxis.sign;
-  const plan=plans[setup]??=duelPlan((...args)=>pose(key,...args),sign,true);
-  const chosen=pose(key,plan.sign,plan.pull,plan.lift);
+  const pose=(beat,lift,wide)=>{
+   const angle=(beat==='hit'?.62:.7)+(wide?.35:0);
+   if(beat==='hit')return single(shot.target,direction.clone().negate(),angle,lift,1);
+   const brace=single(shot.actor,direction,angle,lift,beat==='release'?.94:1);
+   if(beat!=='flight')return brace;
+   // beside the lane, almost halfway along: the defender ahead at a readable size (a quarter of the frame or more, even on a
+   // 7-tile shot) as the rounds arc in, the launcher toward the frame edge
+   const record=models.get(shot.actor.id),h=record?.height??6,want=shot.actor.team==='ally'?1:-1;
+   // whatever the viewport's lens, never sit farther from the defender than keeps it at ~30% of the frame height
+   const th=models.get(shot.target.id)?.height??6,reach=th/(2*.3*Math.tan(halfV));
+   for(const s of [1,-1]){
+    const at=actor.clone().addScaledVector(direction,span*.45).addScaledVector(V3(direction.z,0,-direction.x),s*(span*.26+6));at.y=actor.y+h*.9+lift;
+    const gap=V3(victim.x-at.x,0,victim.z-at.z),far=gap.length();
+    if(far>reach)at.addScaledVector(gap,(far-reach)/far);
+    // lean the lens toward the launcher only as far as keeps the defender well inside a narrow (portrait) frame
+    const toVictim=V3(victim.x-at.x,0,victim.z-at.z).normalize();let look;
+    for(let k=.2;k>=0;k-=.02){look=victim.clone().lerp(actor,Math.max(0,k));const d=V3(look.x-at.x,0,look.z-at.z).normalize();if(Math.acos(Math.min(1,d.dot(toVictim)))<=halfH*.45)break;}
+    look.y=actor.y+h*.5;
+    if(Math.sign(look.clone().sub(at).normalize().cross(up).dot(direction))===want)return {look,at,subjects:[victim]};
+   }
+  };
+  shot.cameraBeat=key;   // read by qa/browser/combat-duel.cjs
+  const plans=shot.cameraPlans??={},pair=shot.actor.id+'>'+shot.target.id;setup=pair+':'+key;
+  // occlusion: same side (screen direction holds), raise the lens, then swing wider; computed once per beat
+  plans[setup]??=(()=>{for(const [lift,wide] of [[0,false],[4,false],[0,true],[6,true]]){const c=pose(key,lift,wide);if(c.subjects.every(p=>blockedAt(c.at,p)===null))return {lift,wide};}return {lift:4,wide:true};})();
+  const chosen=pose(key,plans[setup].lift,plans[setup].wide);
   target.copy(chosen.look);position.copy(chosen.at);duelSubjects=chosen.subjects;
+  // release: a 5 degree Dutch tilt toward the line of fire, as FM3's firing shots lean
+  if(key==='release')roll=(shot.actor.team==='ally'?-1:1)*5*Math.PI/180;
  }
  // Cut on the action cue. Damping only applies within a shot or on the tactical board.
  const sequence=setup?shot:null,cut=duelSequence!==sequence||duelSetup!==setup;
@@ -455,7 +462,7 @@ function updateCamera(t,dt){
  const blend=cameraReady&&!cut?1-Math.exp(-dt*6):1;
  cameraTarget.lerp(target,blend);cameraPosition.lerp(position,blend);camera.position.copy(cameraPosition);
  if(!reducedMotion&&shake>.15)camera.position.add(V3(Math.sin(t*110),Math.cos(t*93)*.5,0).multiplyScalar(Math.min(1.4,shake*.03)));
- camera.lookAt(cameraTarget);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);cameraReady=true;
+ camera.lookAt(cameraTarget);if(roll)camera.rotateZ(roll);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);cameraReady=true;
  const duelDistance=duelSubjects?Math.max(...duelSubjects.map(point=>camera.position.distanceTo(point)))+8:0;
  scene.fog.near=Math.max(distance*.9,duelDistance);
  scene.fog.far=duelSubjects?Math.max(distance*2.6,duelDistance+20):distance*2.6;
@@ -549,6 +556,7 @@ function render(t,dt){
  for(const u of battle.units){const cue=mortarCues.get(u.id);if(cue&&!cue.fired&&t-cue.at>=.95){cue.fired=true;const p=attachmentPoint(u,'mortarMuzzle');combat.fx.glow(p,0xffb050,3,.15);combat.fx.smoke(p,4,1.4,0xc4bdb0,.5,.8,1.4,.3);}}
  combat.update(t,dt);updateCamera(t,dt);updateOverlays();
  if(duel){selection.visible=false;targetRing.visible=false;}
+ if(duelSky){duelSky.visible=Boolean(duel);duelSky.position.copy(camera.position);scene.fog.color.copy(duel?duelSky.userData.horizon:duelSky.userData.fog);}
  const storm=Math.max(0,CONTRACTS.indexOf(battle.contract)-1)%3===2;
  if(storm&&!reducedMotion){if(t>=lightningAt){lightning=1;lightningAt=t+kit.random(5,11);}lightning*=Math.exp(-dt*9);sun.intensity=kit.PAL[2].sun[1]+lightning*2.5*(kit.random(0,1)>.3?1:.4);}
  root.IronVowRenderer.show(true);root.IronVowRenderer.resize(innerWidth,innerHeight);

@@ -16,7 +16,12 @@ const assert=require('node:assert/strict'),create=require('./sim-harness.cjs');
  for(const fps of[30,60,144]){sim.run('current().motion={fromX:1,fromZ:7,toX:2,toZ:7,start:0,duration:.31,gaitBase:0,stepIndex:0,totalSteps:1}');for(let f=0;f<=Math.ceil(fps*.31);f++)sim.run(`advanceUnitAnimation(current(),${Math.min(.31,f/fps)},${1/fps})`);assert.equal(sim.run('current().vx'),2);assert.equal(sim.run('current().vz'),7)}
  sim.run("current().motion=null;current().fireTime=0;current().weapon='rail';current().brace=false;current().braceBlend=0");
  assert.ok(sim.run('Math.abs(animationPose(current(),.04).recoil)')>.1);assert.equal(sim.run('animationPose(current(),1).recoil'),0);
- sim.run("const fallen=current();fallen.alive=false;fallen.deathTime=0");assert.equal(sim.run('animationPose(fallen,.56).kneel'),1);assert.equal(sim.run('animationPose(fallen,.9).explosion'),0);assert.equal(sim.run('animationPose(fallen,1.3).explosion'),1);assert.equal(sim.run('animationPose(fallen,2).death'),1);
+ sim.run("const fallen=current();fallen.alive=false;fallen.deathTime=0");
+ // Death beats sit at destruction ages; DEATH_TIME maps them to real seconds (slow-motion opening, 1.35x slower overall).
+ const at=age=>sim.run(`destructionTime(fallen,${age})`);
+ assert.equal(sim.run(`animationPose(fallen,${at(.56)}).kneel`),1);assert.equal(sim.run(`animationPose(fallen,${at(.9)}).explosion`),0);assert.equal(sim.run(`animationPose(fallen,${at(1.3)}).explosion`),1);assert.equal(sim.run(`animationPose(fallen,${at(1.92)}).death`),1);
+ assert.ok(at(1.92)>1.92*1.35,'The whole collapse plays slower than the old 1.92 s: '+at(1.92));
+ assert.ok(sim.run('destructionAge(fallen,.5)')<sim.run('destructionAge(fallen,1.5)')-sim.run('destructionAge(fallen,1)'),'The first half second runs in slow motion: less of the collapse plays in it than in a later half second');
  const reduced=create({reducedMotion:true});reduced.run("deploy(1,true);closeModal();current().fireTime=0;current().hitTime=0;current().motion={fromX:1,fromZ:8,toX:1,toZ:7,start:0,duration:.3,gaitBase:0,stepIndex:0,totalSteps:1}");assert.equal(reduced.run('animationPose(current(),.1).walk'),0);assert.equal(reduced.run('animationPose(current(),.1).recoil'),0);assert.equal(reduced.run('animationPose(current(),.1).impact'),0);
  const duration=sim.run('MECH_MOTION.map(m=>m.step)');assert.ok(duration[1]<duration[0]&&duration[0]<duration[2]);
  console.log('PASS: alternating foot lift, frame-independent movement at 30/60/144Hz, landing/AP timing, planted-foot rail recoil, collapse progression, weight-specific speeds and reduced-motion behavior.');

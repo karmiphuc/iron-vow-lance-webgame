@@ -75,7 +75,7 @@ async function main(){
   for(const part of ['left','right']){
    assert.ok(candidate.build.parts[part].some(entry=>entry.detach)&&candidate.build.parts[part].some(entry=>!entry.detach),part+' has separate apron and hard parts');
    R.setPartState(candidate,part,2);
-   assert.ok(candidate.build.parts[part].every(entry=>entry.m.visible!==entry.detach),part+' apron detaches while the mechanism remains');
+   assert.ok(candidate.build.parts[part].every(entry=>!entry.m.visible),part+' loses the apron, shoulder, and underlying mechanism');
   }
  }
  // 1b. The authored elbows bend ~25 degrees sideways; the live rig folds that into the forward hinge so each hand

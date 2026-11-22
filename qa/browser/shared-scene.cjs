@@ -92,7 +92,7 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>Boolean(activeCinematic)),true,'Real attack opens the camera');
  await page.clock.fastForward(34);
  assert.equal(await page.evaluate(()=>IronVowScene.camera.isPerspectiveCamera),true);
- // Duel framing (owner, 2026-11-18): during the aim stage the camera looks over the defender's shoulder at the attacker's front.
+ // Duel framing (FM3 grammar, owner 2026-11-22): during the brace the camera stands ahead of the attacker, three-quarter front, framing it.
  const framing=await page.evaluate(({id,target})=>{
   IronVowScene.render(clock,1);
   const camera=IronVowScene.camera,actor=battle.units.find(u=>u.id===id),victim=battle.units.find(u=>u.id===target);
@@ -126,7 +126,23 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  assert.ok(separation(duringGuard.yaw)<separation(beforeGuard.yaw)-.4,
   `The defending rig turns toward the actual attacker (${separation(beforeGuard.yaw)} to ${separation(duringGuard.yaw)} rad)`);
  assert.ok(duringGuard.hip<beforeGuard.hip-.12&&duringGuard.leftHandHeight<-.3,'The defender lowers its hull and keeps the empty left hand down');
- assert.ok(duringGuard.guardVisible,'The close shot leaves the defender in view: '+JSON.stringify(duringGuard.landmarkViews));
+ // FM3 grammar (owner, 2026-11-22): the brace frames the attacker alone; the defender's lowered stance and guard read on the hit
+ // shot, which frames the defender clear of the attacker.
+ for(let i=0;i<240&&await page.evaluate(()=>activeCinematic&&activeCinematic.cameraBeat!=='hit');i++)await page.clock.fastForward(34);
+ const onHit=await page.evaluate(({id,target})=>{
+  IronVowScene.render(clock,1/30);
+  const model=IronVowScene.models.get(target).entry.m,camera=IronVowScene.camera,attackerMeshes=[];
+  IronVowScene.models.get(id).object.traverseVisible(mesh=>{if(mesh.isMesh)attackerMeshes.push(mesh);});
+  const views=[model.rig.pelvis,model.rig.arms.L.el].map(node=>{
+   const point=node.getWorldPosition(new THREE.Vector3()),ndc=point.clone().project(camera);
+   const direction=point.sub(camera.position),distance=direction.length();
+   const ray=new THREE.Raycaster(camera.position,direction.normalize(),0,distance);
+   return {x:+ndc.x.toFixed(2),y:+ndc.y.toFixed(2),z:+ndc.z.toFixed(3),occluded:ray.intersectObjects(attackerMeshes,false).length>0};
+  });
+  return {beat:activeCinematic?.cameraBeat,views};
+ },attack);
+ assert.equal(onHit.beat,'hit','The exchange reaches its hit shot');
+ assert.ok(onHit.views.every(v=>Math.abs(v.x)<1&&Math.abs(v.y)<1&&v.z<1&&!v.occluded),'The hit shot leaves the defender\'s stance and guard in view, clear of the attacker: '+JSON.stringify(onHit.views));
  assert.deepEqual([duringGuard.heading,duringGuard.brace,duringGuard.ap],[beforeGuard.heading,beforeGuard.brace,beforeGuard.ap],'The camera pose does not alter the defender’s rules or heading');
  await page.evaluate(()=>document.querySelector('#skip-shot').click());
  for(let i=0;i<20&&await page.evaluate(()=>__ironVow.pending);i++)await page.clock.fastForward(1000);

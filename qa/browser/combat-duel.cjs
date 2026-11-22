@@ -49,31 +49,34 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
  const epoch=new Date('2026-11-11T00:00:00Z');
  await page.clock.install({time:epoch});
  await page.clock.pauseAt(new Date(epoch.getTime()+10000));
+ // FM3 duel grammar (owner, 2026-11-22): sample the first rendered frame of every camera beat. Each beat frames ONE hull: the
+ // attacker through brace and release, the defender on the hit; a lane-side flight shot only for rounds long in the air. The ally
+ // keeps the left of the screen through return fire.
  await page.evaluate(()=>{
   const render=IronVowScene.render;
   IronVowScene.render=function(t,dt){
    const result=render.call(this,t,dt),shot=activeCinematic,watch=window.duelWatch;
-   if(!shot||!watch||shot.phase==='aim')return result;
-   if(shot.phase==='result'&&!(t-shot.resultAt>=.10))return result;
-   const beat=watch.range===7&&shot.phase==='fire'&&t-shot.fireAt>=.16?'flight':shot.phase;
-   const key=shot.actor.id===watch.actor?beat:'counter-'+beat;
+   if(!shot||!watch||!shot.cameraBeat)return result;
+   const key=(shot.actor.id===watch.actor?'':'counter-')+shot.cameraBeat;
    if(watch.frames[key])return result;
    const {camera,scene,models}=IronVowScene;
+   const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);
    const direction=models.get(watch.target).proxy.position.clone().sub(models.get(watch.actor).proxy.position);
-   const screenDirection=Math.sign(direction.dot(new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0)));
-   const bounds=[watch.actor,watch.target].map(id=>{
-    const box=new THREE.Box3().setFromObject(models.get(id).proxy),{min,max}=box;
-    let edge=0,depth=0,top=-Infinity,bottom=Infinity;
+   const box=id=>{
+    const b=new THREE.Box3().setFromObject(models.get(id).proxy),{min,max}=b;
+    let edge=0,depth=0,top=-Infinity,bottom=Infinity,left=Infinity,rightmost=-Infinity,front=true;
     for(const x of [min.x,max.x])for(const y of [min.y,max.y])for(const z of [min.z,max.z]){
-     const point=new THREE.Vector3(x,y,z),ndc=point.clone().project(camera);
-     edge=Math.max(edge,Math.abs(ndc.x),Math.abs(ndc.y));
-     depth=Math.max(depth,-point.applyMatrix4(camera.matrixWorldInverse).z);
-     top=Math.max(top,ndc.y);bottom=Math.min(bottom,ndc.y);
+     const point=new THREE.Vector3(x,y,z),ndc=point.clone().project(camera),view=-point.clone().applyMatrix4(camera.matrixWorldInverse).z;
+     front&&=view>0;edge=Math.max(edge,Math.abs(ndc.x));left=Math.min(left,ndc.x);rightmost=Math.max(rightmost,ndc.x);depth=Math.max(depth,view);top=Math.max(top,ndc.y);bottom=Math.min(bottom,ndc.y);
     }
-    return {edge,depth,height:(top-bottom)/2,bottom,center:box.getCenter(new THREE.Vector3()).project(camera).toArray()};
-   });
-   watch.frames[key]={bounds,screenDirection,dt,fogNear:scene.fog.near,bystanderVisible:models.get(watch.bystander).object.visible,
-    overlays:IronVowScene.overlayInfo()};
+    const center=b.getCenter(new THREE.Vector3()).project(camera).toArray();
+    // on screen = in front of the camera and overlapping the frame horizontally and vertically
+    const onScreen=front&&rightmost>-1&&left<1&&top>-1&&bottom<1;
+    return {edge,depth,front,onScreen,height:(Math.min(1,top)-Math.max(-1,bottom))/2,center};
+   };
+   watch.frames[key]={actor:shot.actor.id,target:shot.target.id,boxes:{[watch.actor]:box(watch.actor),[watch.target]:box(watch.target)},
+    screenDirection:Math.sign(direction.dot(right)),roll:Math.asin(Math.max(-1,Math.min(1,right.y)))*180/Math.PI,dt,fogNear:scene.fog.near,
+    bystanderVisible:models.get(watch.bystander).object.visible,overlays:IronVowScene.overlayInfo()};
    return result;
   };
   last=performance.now();requestAnimationFrame(draw);
@@ -82,20 +85,20 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
   const {actor,choice}=window.duelWatch;
   void __ironVow.attack(actor,choice.target,choice.part,choice.mode);
  });
- const assertCinematic=frame=>{
-  assert.ok(frame.dt>0&&frame.dt<=.05,'The camera was sampled at normal frame deltas');
-  assert.equal(frame.bystanderVisible,false);
-  assert.equal(frame.overlays.selected||frame.overlays.target,false);
+ const assertCinematic=(frame,label)=>{
+  assert.ok(frame.dt>0&&frame.dt<=.05,label+': sampled at a normal frame delta');
+  assert.equal(frame.bystanderVisible,false,label+': bystanders are hidden');
+  assert.equal(frame.overlays.selected||frame.overlays.target,false,label+': no board rings');
+  assert.equal(frame.screenDirection,1,label+': the ally stays on the left of the enemy');
  };
- const assertTwoShot=frame=>{
-  assertCinematic(frame);
-  for(const box of frame.bounds){
-   assert.ok(box.edge<1,'Both hulls fit in the firing lane: '+JSON.stringify(frame.bounds));
-   assert.ok(box.depth<frame.fogNear,'Both hulls are clear of the fog');
-  }
-  assert.ok(Math.abs(frame.bounds[0].center[0]-frame.bounds[1].center[0])>.35,'The two hull silhouettes stay apart');
+ // one hull carries the shot: big, in frame, clear of fog; the other is small or out of the picture
+ const assertSingle=(frame,subject,label,min=.45)=>{
+  assertCinematic(frame,label);
+  const own=frame.boxes[subject],other=frame.boxes[Object.keys(frame.boxes).find(id=>id!==subject)];
+  assert.ok(own.front&&own.height>=min&&own.height<=1,label+': one hull fills the frame '+JSON.stringify(own));
+  assert.ok(own.depth<frame.fogNear,label+': the subject is clear of the fog');
+  assert.ok(!other.onScreen||other.height<own.height*.7,label+': no second hull competes for the frame '+JSON.stringify(other));
  };
- const order=frame=>Math.sign(frame.bounds[0].center[0]-frame.bounds[1].center[0]);
  const skip=async()=>{
   await page.evaluate(()=>document.querySelector('#skip-shot').click());
   await advanceUntil(()=>!__ironVow.pending&&!activeCinematic,'Skip did not return to the tactical board');
@@ -103,24 +106,19 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
   assert.equal(await page.evaluate(()=>IronVowScene.models.get(window.duelWatch.bystander).object.visible),true);
  };
 
+ // Long range: missiles brace, release (Dutch tilt), fly with the defender ahead, then hit.
  await fire();
- await advanceUntil(()=>window.duelWatch.frames.fire,'The missile never reached its first firing frame');
- const launch=await page.evaluate(()=>window.duelWatch.frames.fire),shooter=launch.bounds[0];
- assertCinematic(launch);
- assert.ok(shooter.edge<1&&shooter.height>.33,'The launch fills the frame with the shooter: '+JSON.stringify(shooter));
- if(out)await page.screenshot({path:join(out,mobile?'missile-release-touch.png':'missile-release-desktop.png')});
- await advanceUntil(()=>window.duelWatch.frames.flight,'The missile never reached the flight camera');
- const wide=await page.evaluate(()=>window.duelWatch.frames.flight);
- assertTwoShot(wide);
- assert.equal(launch.screenDirection,wide.screenDirection,'The missile continues across the screen in its established direction');
- if(out)await page.screenshot({path:join(out,mobile?'missile-flight-touch.png':'missile-flight-desktop.png')});
- await advanceUntil(()=>window.duelWatch.frames.result,'The missile never reached the result camera');
- const close=await page.evaluate(()=>window.duelWatch.frames.result.bounds[1]);
- assert.ok(Math.abs(close.center[0])<.35&&close.height>.33&&close.height>wide.bounds[1].height*1.5,'The result frames the defending hull: '+JSON.stringify(close));
- if(out){
-  await page.clock.runFor(120);
-  await page.screenshot({path:join(out,mobile?'missile-result-touch.png':'missile-result-desktop.png')});
- }
+ await advanceUntil(()=>window.duelWatch.frames.hit,'The missile never reached the hit camera');
+ const missile=await page.evaluate(()=>window.duelWatch.frames),attacker=missile.brace.actor,defender=missile.brace.target;
+ assertSingle(missile.brace,attacker,'Missile brace');
+ assertSingle(missile.release,attacker,'Missile release');
+ assert.ok(Math.abs(Math.abs(missile.release.roll)-5)<.6,'The release shot leans about 5 degrees: '+missile.release.roll);
+ assert.ok(Math.abs(missile.brace.roll)<.1,'The brace shot is level');
+ assertCinematic(missile.flight,'Missile flight');
+ assert.ok(missile.flight.boxes[defender].front&&missile.flight.boxes[defender].edge<1&&missile.flight.boxes[defender].height>=.25,'The flight shot holds the defender ahead: '+JSON.stringify(missile.flight.boxes[defender]));
+ assertSingle(missile.hit,defender,'Missile hit');
+ assert.ok(Math.abs(missile.hit.boxes[defender].center[0])<.5,'The hit frames the defender near centre');
+ if(out){await page.clock.runFor(120);await page.screenshot({path:join(out,mobile?'missile-hit-touch.png':'missile-hit-desktop.png')});}
  await skip();
 
  await fixture(2);
@@ -128,12 +126,17 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
   await new Promise(resolve=>setTimeout(resolve,20));await page.clock.runFor(34);
  }
  assert.equal(await page.evaluate(()=>IronVowScene.ready),true,'The short exchange rigs are ready');
+ // Short range: no flight shot; brace, release, hit, then the counter mirrors it with the ally still on the left.
  await fire();
- await advanceUntil(()=>window.duelWatch.frames['counter-fire'],'The defender did not return fire');
- const frames=await page.evaluate(()=>window.duelWatch.frames);
- assertTwoShot(frames.fire);assertTwoShot(frames['counter-fire']);
- assert.equal(order(frames['counter-fire']),order(frames.fire),'Return fire keeps both hulls on their established screen sides');
+ await advanceUntil(()=>window.duelWatch.frames['counter-hit'],'The defender did not return fire');
+ const exchange=await page.evaluate(()=>window.duelWatch.frames),ally=exchange.brace.actor,enemy=exchange.brace.target;
+ assert.equal(exchange.flight,undefined,'A short exchange has no flight shot');
+ assertSingle(exchange.release,ally,'Rail release');
+ assertSingle(exchange.hit,enemy,'Rail hit');
+ assertSingle(exchange['counter-release'],enemy,'Counter release');
+ assertSingle(exchange['counter-hit'],ally,'Counter hit');
+ assert.ok(Math.sign(exchange.release.roll)===-Math.sign(exchange['counter-release'].roll),'Each side leans toward its own line of fire');
  if(out)await page.screenshot({path:join(out,mobile?'counter-touch.png':'counter-desktop.png')});
  await skip();
- console.log('PASS first-frame release, long-range result, reverse-fire screen order, and tactical return');
+ console.log('PASS FM3 duel beats: single-hull brace, tilted release, lane-side flight, defender hit, mirrored counter, fixed screen sides, tactical return');
 };
