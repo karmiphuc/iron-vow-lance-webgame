@@ -282,6 +282,8 @@ const LINE_INFANTRY_FRAME=FRAMES.push({name:'LINE INFANTRY',model:'LI-01',role:'
  hp:151,arm:87,leg:98,move:4,armor:4,weapon:'rifle',foundry:6,enemyOnly:true})-1;
 const LINE_ELITE_FRAME=FRAMES.push({name:'LINE INFANTRY ELITE',model:'LI-02',role:'ELITE',color:'#526e86',
  hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true})-1;
+const INFANTRY_PRIMARIES=['rifle','trident','shotgun'];
+const isLineInfantry=u=>u.team==='enemy'&&(u.frame===LINE_INFANTRY_FRAME||u.frame===LINE_ELITE_FRAME);
 const VANGUARD_FRAME=FRAMES.push({name:'GRAVEMAW',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
  hp:165,arm:88,leg:103,move:3,armor:6,cost:230000,weapon:'hailstorm',melee:'piledriver',foundry:8,enemyOnly:true,salvageOnly:true,fixedWeapons:true,fixedLivery:true})-1;
 const REAVER_FRAME=FRAMES.push({name:'REAVER',model:'RV-04',role:'MEDIUM+',color:'#a1242c',
@@ -1046,7 +1048,7 @@ function captureSortie(enemyPending=false){
   ...(battle.relayLead?{relayLead:battle.relayLead}:{}),
   ...(battle.terrainSeed!==null?{terrainSeed:battle.terrainSeed}:{}),
   ...(battle.mechComputers?{mechComputers:true}:{}),
-  units:battle.units.map(u=>({x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,jumpjetUsed:u.jumpjetUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
+  units:battle.units.map(u=>({infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,jumpjetUsed:u.jumpjetUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
 }
 function dispatchSizes(){
  if(save.dispatch?.day!==save.day){
@@ -1191,6 +1193,10 @@ function restoreSortie(){
      (blackout===undefined||u.team==='enemy'&&blackout&&[.20,.30,.40].includes(blackout.aim)&&[0,2,4].includes(blackout.ap)&&typeof blackout.hold==='boolean')&&
      (u.pilot===RETRIEVER?(recoveryUsed===undefined&&!state.skill||integer(recoveryUsed,1,uses)&&state.skill===(recoveryUsed===uses)):recoveryUsed===undefined);
     if(valid){u.breach=breach;u.blackout=blackout;u.recoveryUsed=recoveryUsed}
+   }
+   if(valid&&state.infantryWeapon!==undefined){
+    valid=isLineInfantry(u)&&INFANTRY_PRIMARIES.includes(state.infantryWeapon);
+    if(valid)u.weapon=state.infantryWeapon;
    }
    if(valid&&state.jumpjetUsed!==undefined)valid=saved.version>=7&&(FRAMES[u.frame]?.jumpjet===true||hasMechSkill(u,AERO_FRAME))&&state.jumpjetUsed===true;
    if(valid&&state.mechState!==undefined){
@@ -2659,7 +2665,12 @@ function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null,offer=null){
  if(crew)slots.forEach((slot,index)=>seatPilot(slot,crew[index]));
  createBattle(i,legacy,legacy,slots,true,aux);
  if(offer){save.world=nextWorld;battle.offer=offer;}
- if(!legacy){surveyTerrain(Math.floor(ruleRandom()*4294967296));enableMechComputers()}
+ if(!legacy){
+  const seed=Math.floor(ruleRandom()*4294967296);
+  surveyTerrain(seed);
+  for(const u of battle.units)if(isLineInfantry(u))u.weapon=INFANTRY_PRIMARIES[(seed+u.index)%INFANTRY_PRIMARIES.length];
+  enableMechComputers();
+ }
  selected=slots[0];action='move';effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;
  persist();render();sound('click');if(save.history.length===0)guide();
 }
@@ -4368,7 +4379,8 @@ if(benchRig){
   mix:frame.foundry!=null&&frame.rig!=='cairn'&&!window.IronVowRigV2.applies({frame:id}),
   authored:window.IronVowRigV2.applies({frame:id}),quad:id===REAVER_FRAME,
   stock:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
-  primaries:id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:undefined,
+  primaries:id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME?INFANTRY_PRIMARIES:
+   id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:undefined,
   melees:breachLoadout(id)?['cleaver']:undefined,
   shield:canFitShield(id),pod:breachLoadout(id),
   archive:id===0?'rig-bench/warden-painted.glb':prototypeArchives[id]?'rig-bench/prototypes/'+prototypeArchives[id]+'.glb':null

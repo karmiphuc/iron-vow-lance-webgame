@@ -30,20 +30,18 @@ async function moveAndSample(page,delta){
  for(let tick=0;tick<400;tick++){
   await page.clock.runFor(17);
   state=await page.evaluate(()=>{
-   const {unit,entry,primary,source,stockGrip}=window.__infantryCarryFixture,move=window.__infantryCarryMove;
+   const {unit,entry,primary,source,restGrip}=window.__infantryCarryFixture,move=window.__infantryCarryMove;
    if(move.error)return {error:move.error};
    if(!unit.motion)return {done:move.done};
    IronVowScene.render(clock,.016);
    const authored=name=>source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
    const world=node=>node.getWorldPosition(new THREE.Vector3());
    const current=IronVowScene.models.get(unit.id).entry;
-   const weapon=world(authored('WEAPON_SOCKET_R'));
-   const muzzle=world(authored('muzzle.main'));
+   const grip=primary.mount.worldToLocal(world(authored('Middle.03.R')));
    return {done:move.done,sample:{
     sameRig:current===entry&&current.primary===primary,
-    gripError:Math.abs(weapon.distanceTo(world(authored('socket.R')))-stockGrip),
-    muzzleError:muzzle.distanceTo(world(primary.muzzle)),
-    visible:authored('WEAPON_SOCKET_R').visible,
+    gripError:grip.distanceTo(restGrip),
+    visible:primary.mount.visible&&!authored('WEAPON_SOCKET_R').visible,
     feet:entry.m.rig.legs.map((leg,index)=>{
      const legState=entry.m.legs[index],actual=world(authored('ankle.'+leg.side));
      return {swing:legState.swing,moving:Boolean(legState.swing||legState.settle),
@@ -88,9 +86,9 @@ module.exports=async function checkInfantryCarry({page,origin}){
    const {m,primary}=entry,{source}=m.nativeV2;
    const authored=name=>source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
    const world=node=>node.getWorldPosition(new THREE.Vector3());
-   const stockGrip=world(authored('WEAPON_SOCKET_R')).distanceTo(world(authored('socket.R')));
+   const restGrip=primary.mount.worldToLocal(world(authored('Middle.03.R')));
    battle.cover.clear();
-   window.__infantryCarryFixture={unit,entry,primary,source,stockGrip};
+   window.__infantryCarryFixture={unit,entry,primary,source,restGrip};
   },frame);
   // Step game timers at 60 Hz and explicitly render the real rig before each geometry sample.
   const arms=[];
@@ -101,8 +99,8 @@ module.exports=async function checkInfantryCarry({page,origin}){
    assert.equal(arrived,true,`${model} reaches the neighboring tile`);
    assert.ok(samples.length>=2,`${model} produces animated travel samples`);
    assert.ok(samples.some(({feet})=>feet.some(foot=>foot.swing)),`${model} swings an articulated ankle`);
-   for(const [i,{sameRig,gripError,muzzleError,visible,feet}] of samples.entries()){
-    assert.ok(sameRig&&visible&&gripError<1e-5&&muzzleError<1e-5,`${model} keeps the authored carbine in grip throughout travel`);
+   for(const [i,{sameRig,gripError,visible,feet}] of samples.entries()){
+    assert.ok(sameRig&&visible&&gripError<1e-5,`${model} keeps the production weapon in grip throughout travel`);
     for(const [side,foot] of feet.entries()){
      assert.ok(foot.binding<1e-5,`${model} posed ankle tracks the exported joint`);
      const previous=samples[i-1]?.feet[side];

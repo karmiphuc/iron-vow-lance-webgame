@@ -53,20 +53,19 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
   }
   const slots=new Set();
   const weaponMaterials=[];
-  socket.traverse(node=>{if(node.isMesh)weaponMaterials.push(node.material.name)});
+  primary.mount.traverse(node=>{if(node.isMesh)weaponMaterials.push(node.material.name)});
   source.traverse(node=>{if(node.isMesh)slots.add(node.material.name);});
   window.infantryLaunches=[];
   const combat=IronVowScene.combat,launch=combat.launch;
   combat.launch=function(...args){
    const result=launch.apply(this,args),event=this.history.at(-1);
    if(event?.type==='launch'&&event.actor===unit.id){
-    const authored=source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('muzzle.main'));
-    const point=authored.getWorldPosition(new THREE.Vector3());
-    const direction=new THREE.Vector3(0,0,-1).applyQuaternion(authored.getWorldQuaternion(new THREE.Quaternion()));
+    const point=primary.muzzle.getWorldPosition(new THREE.Vector3());
+    const direction=primary.muzzle.getWorldDirection(new THREE.Vector3());
     window.infantryLaunches.push({event,authored:point.toArray(),direction:direction.toArray(),
      marker:primary.muzzle.getWorldPosition(new THREE.Vector3()).toArray(),
      resolved:IronVowScene.attachmentPoint(unit,event.socket).toArray(),
-     bounds:primary.bounds().distanceToPoint(point)});
+     bounds:new THREE.Box3().setFromObject(primary.model).distanceToPoint(point)});
    }
    return result;
   };
@@ -75,7 +74,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
    fieldColors:[fieldColorCoverage('paint_primary',unit.paint),fieldColorCoverage('paint_secondary',unit.trim.s)],
    paintedWithTextures:paint.every(material=>material.map&&material.normalMap),
    bareWeapon:weaponMaterials.length>0&&weaponMaterials.every(name=>!name.startsWith('paint_')),
-   chassisMaterials:slots.size,authoredRifle:socket.visible&&primary.mount.parent===entry.m.rig.arms.R.so};
+   chassisMaterials:slots.size,productionRifle:!socket.visible&&primary.id===unit.weapon&&primary.mount.parent===entry.m.rig.arms.R.so};
  },frame);
  assert.equal(fit.name,`${name} 1`);
  assert.equal(fit.contract,contract===0?'picket':'corridor');
@@ -85,7 +84,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  assert.equal(fit.paint.paint_secondary,fit.unitTrim);
  assert.match(fit.paint.paint_accent,/^[0-9a-f]{6}$/);
  assert.ok(fit.fieldColors.every(coverage=>coverage>.2),'The visible Block camo uses both enemy livery colors: '+JSON.stringify(fit.fieldColors));
- assert.ok(fit.paintedWithTextures&&fit.bareWeapon&&fit.chassisMaterials>=6&&fit.authoredRifle,JSON.stringify(fit));
+ assert.ok(fit.paintedWithTextures&&fit.bareWeapon&&fit.chassisMaterials>=6&&fit.productionRifle,JSON.stringify(fit));
 
  for(let turn=1;turn<=turns;turn++){
   await tap('#end');
@@ -102,13 +101,12 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
   unit.hp.right=0;
   IronVowScene.render(clock,.016);
   const plates=entry.m.build.parts.right.filter(part=>part.detach);
-  const socket=entry.m.nativeV2.source.getObjectByName('WEAPON_SOCKET_R');
   return {launches:window.infantryLaunches,log,damaged,rightState:entry.m.partState.right,
-   plates:plates.length,platesVisible:plates.some(part=>part.m.visible),carbineVisible:socket.visible,
+   plates:plates.length,platesVisible:plates.some(part=>part.m.visible),gunVisible:entry.primary.mount.visible,
    armed:isArmed(unit)};
  },frame);
  assert.ok(attack.log&&attack.damaged,`${fit.model} deals damage on its normal enemy turn`);
- assert.ok(attack.launches.length>0,`${fit.model} fires with an authored carbine`);
+ assert.ok(attack.launches.length>0,`${fit.model} fires with a production weapon`);
  for(const {event,authored,marker,resolved,direction,bounds} of attack.launches){
   const close=(a,b)=>a.every((value,index)=>Math.abs(value-b[index])<1e-5);
   const toward=event.targetPoint.map((value,index)=>value-authored[index]);
@@ -117,12 +115,12 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
   assert.ok(event.mounted&&event.aimError<8*Math.PI/180&&angle<8*Math.PI/180,
    `${fit.model} mounts and aims the actual barrel ${JSON.stringify(event)}`);
   assert.ok(close(event.origin,authored)&&close(event.origin,marker)&&close(event.origin,resolved),
-   `${fit.model} launches from its exported muzzle`);
-  assert.ok(bounds<.1,`${fit.model} muzzle is on the posed carbine (${bounds})`);
+   `${fit.model} launches from the fitted production muzzle`);
+  assert.ok(bounds<.1,`${fit.model} muzzle is on the posed weapon (${bounds})`);
  }
  assert.equal(attack.rightState,2);
- assert.ok(attack.plates>0&&!attack.platesVisible&&!attack.carbineVisible&&!attack.armed,
-  `${fit.model} loses its plates and carbine when its firing arm is destroyed`);
+ assert.ok(attack.plates>0&&!attack.platesVisible&&!attack.gunVisible&&!attack.armed,
+  `${fit.model} loses its plates and weapon when its firing arm is destroyed`);
  return {launches:attack.launches.length,worstAimDegrees:Math.max(...attack.launches.map(({event})=>event.aimError))*180/Math.PI,detachedPlates:attack.plates};
 }
 
