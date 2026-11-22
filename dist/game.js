@@ -1504,7 +1504,7 @@ try{attackCameraEnabled=localStorage.getItem('iron-vow-attack-camera')!=='off'}c
 let activeCinematic=null;
 function closeAttackCamera(sequence){
  if(activeCinematic!==sequence)return;
- activeCinematic=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
+ activeCinematic=null;duelNumbers.length=0;duelBanner=null;duckMusic();delete document.body.dataset.shot;$('#skip-shot').hidden=true;$('#shot-status').textContent='';
 }
 function skipAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
@@ -1515,7 +1515,7 @@ function skipAttackCamera(){
 function beginAttackCamera(actor,target,w,part){
  if(!battle.busy||reducedMotion||!attackCameraEnabled||document.hidden)return null;
  const sequence={actor,target,w,part,start:clock,phase:'aim',result:'',skipped:false,resume:null};
- activeCinematic=sequence;duckMusic();document.body.dataset.shot='active';$('#skip-shot').hidden=false;
+ activeCinematic=sequence;duelPortrait(actor);duelPortrait(target);duckMusic();document.body.dataset.shot='active';$('#skip-shot').hidden=false;
  $('#shot-status').textContent=actor.name+' prepares to attack '+target.name;
  return sequence;
 }
@@ -3007,6 +3007,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
  const {paid,charged}=spendAttack(a,w,part,reaction);
+ if(a.boost&&sequence&&!sequence.skipped)duelSkill(a,'Deadeye');
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
  const shoulder=w===shoulderWeapon(a),clip=w.melee?'strike':'fire';
  const plantedCleaver=breachLoadout(a.frame)&&w.id==='cleaver';
@@ -3127,13 +3128,14 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  let jammed=false,keepBoost=false;
  if(!hit){
   const result=dodged?'DODGE':'MISS';
+  if(!sequence?.skipped)duelText(t,result);
   if(sequence)sequence.result=result;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:result});
   addLog(dodged?t.name+' dodged '+a.name+'’s attack.':a.name+' missed '+t.name+'.');
  }else{
   const label=guard?'SHIELD / LEFT ARM':t.kind?'HULL':PART_LABEL[actual];
   const failsafe=disabled.includes('body')&&t.training?.repairFailsafe&&!t.skill;
-  if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t)}
+  if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t);duelSkill(t,'Failsafe')}
   const broken=guard&&t.hp.left===0;
   const volleyText=landed+'/'+rounds.length+(w.scatter?' PELLETS':' HITS')+' / −'+lost+' HP';
   if(sequence)sequence.result=broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' LEFT ARM':failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':w.burst?volleyText:'−'+d+' '+label;
@@ -3977,15 +3979,83 @@ function battlefield(t){
 
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
 
+// FM3 duel HUD (owner, 2026-11-22). A bottom strip for the whole exchange: the ally panel on the left, the enemy on the right,
+// portrait at the outer edge, AP badge, and thin bars with numbers per part that drain as each round lands. Damage numbers pop
+// at the impact point; a destroyed part names itself in red; skills get a slanted banner (blue ally, orange enemy).
+const duelNumbers=[],duelShown=new WeakMap(),duelImages=new Map(),duelFaces=new WeakMap();
+let duelBanner=null;
+function duelImage(url){if(!url)return null;let image=duelImages.get(url);if(!image){image=new Image();image.src=url;duelImages.set(url,image);}return image.complete&&image.naturalWidth?image:null;}
+function duelPortrait(u){
+ if(u.team==='ally'&&!u.kind)return duelImage(u.pilot<PILOTS.length?pilotArt(u.pilot):asset('assets/pilot-'+pilotId(u.pilot)+'.png'));
+ // enemy pilots have no portraits: their hull's rig portrait, kept once it has loaded so it does not flicker
+ if(u.kind)return null;
+ const image=duelFaces.get(u)||duelImage(mechPortrait(u.frame,u,-1)?.url);
+ if(image)duelFaces.set(u,image);
+ return image;
+}
+window.IronVowDuelHit=(u,point,contact,guard)=>{
+ if(!activeCinematic||!point)return;
+ const near=duelNumbers.filter(n=>clock-n.at<.1).length;
+ duelNumbers.push({point:point.clone(),text:String(contact.damage),at:clock,stack:near,dx:((duelNumbers.length*37)%5-2)*9,color:guard?'#bfe4ee':'#ffffff'});
+ if(contact.before>0&&contact.after===0)duelNumbers.push({point:point.clone(),text:guard?'SHIELD':ATTACK_PART_LABEL[contact.part],at:clock+.05,stack:near+1,color:'#ff8a72',big:true});
+};
+function duelText(u,text){const point=window.IronVowScene?.partPoint?.(u,'body');if(point&&activeCinematic)duelNumbers.push({point:point.clone(),text,at:clock,stack:0,color:'#f5dbb1',big:true});}
+function duelSkill(u,name){if(activeCinematic)duelBanner={text:name,ally:u.team==='ally',at:clock};}
+function drawDuelPanel(u,x,y,w,h,mirror){
+ const ally=u.team==='ally',rows=u.kind?[['body']]:[['body'],['left','right'],['legs'],['pilot']];
+ const shown=duelShown.get(u)||{};duelShown.set(u,shown);
+ ctx.save();
+ ctx.fillStyle='#08111acc';ctx.fillRect(x,y,w,h);ctx.strokeStyle=ally?'#3f86b8':'#b9683f';ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+ const ps=h-12,px=mirror?x+w-6-ps:x+6,image=duelPortrait(u);
+ ctx.fillStyle='#16222c';ctx.fillRect(px,y+6,ps,ps);
+ if(image){const r=Math.max(ps/image.naturalWidth,ps/image.naturalHeight),iw=image.naturalWidth*r,ih=image.naturalHeight*r;ctx.save();ctx.beginPath();ctx.rect(px,y+6,ps,ps);ctx.clip();ctx.drawImage(image,px+(ps-iw)/2,y+6+(ps-ih)/2,iw,ih);ctx.restore();}
+ else{ctx.fillStyle='#c9d4d8';ctx.font='700 '+Math.round(ps*.28)+'px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText((u.name||'?').slice(0,2),px+ps/2,y+6+ps*.6);}
+ // AP badge: a slanted plate above the panel's inner corner
+ const bw=64,bx=mirror?x+w-bw-ps-14:x+ps+14,by=y-20;
+ ctx.fillStyle=ally?'#1d5d93':'#8a3f22';ctx.beginPath();ctx.moveTo(bx+8,by);ctx.lineTo(bx+bw,by);ctx.lineTo(bx+bw-8,by+18);ctx.lineTo(bx,by+18);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#f2f6f4';ctx.font='700 12px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText('AP '+Math.max(0,u.ap??0),bx+bw/2,by+13);
+ const left=mirror?x+8:x+ps+14,width=w-ps-22,rh=(h-14)/rows.length;
+ ctx.font='600 10.5px Inter,Arial,sans-serif';
+ for(const [r,row] of rows.entries()){
+  const ry=y+7+r*rh,cell=(width-(row.length-1)*8)/row.length;
+  for(const [c,part] of row.entries()){
+   const max=u.max[part]||1,actual=Math.max(0,u.hp[part]);
+   shown[part]=shown[part]==null?actual:shown[part]+(actual-shown[part])*Math.min(1,frameDt*9);
+   const cx=left+c*(cell+8),ratio=clamp01(shown[part]/max),label={body:'Body',left:'L',right:'R',legs:'Leg',pilot:'Pilot'}[part];
+   const barY=ry+rh-7,barX=mirror?cx:cx,fill=ctx.createLinearGradient(cx,0,cx+cell,0);
+   if(ally){fill.addColorStop(0,'#2a6fb1');fill.addColorStop(1,'#7fd6ff');}else{fill.addColorStop(0,'#d84a2f');fill.addColorStop(1,'#e8c64e');}
+   ctx.fillStyle='#1b2a35';ctx.fillRect(barX,barY,cell,4);
+   ctx.fillStyle=actual===0?'#4b2b2b':fill;
+   if(mirror)ctx.fillRect(barX+cell*(1-ratio),barY,cell*ratio,4);else ctx.fillRect(barX,barY,cell*ratio,4);
+   ctx.fillStyle='#b9c7cd';ctx.textAlign=mirror?'right':'left';ctx.fillText(label,mirror?cx+cell:cx,barY-3);
+   ctx.fillStyle=actual===0?'#f7a69a':'#f2f6f4';ctx.textAlign=mirror?'left':'right';ctx.fillText(String(Math.round(shown[part])),mirror?cx:cx+cell,barY-3);
+  }
+ }
+ ctx.restore();
+}
 function drawAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
- const width=Math.min(W-32,460),x=16,y=H-72;
- const status=sequence.result||(sequence.phase==='aim'?'AIMING':sequence.part==='shield'?'SHIELD':'FIRING');
- ctx.save();ctx.fillStyle='#101820dc';ctx.fillRect(x,y,width,44);
- ctx.fillStyle='#e9bf7d';ctx.textAlign='left';ctx.font='700 12px Inter,Arial,sans-serif';
- ctx.fillText(sequence.actor.name+' / '+sequence.w.name,x+12,y+17,width-24);
- ctx.fillStyle='#e2e9e6';ctx.font='600 11px Inter,Arial,sans-serif';
- ctx.fillText(sequence.target.name+' · '+status,x+12,y+33,width-24);ctx.restore();
+ const a=sequence.actor,t=sequence.target,ally=a.team==='ally'?a:t,enemy=ally===a?t:a;
+ const portrait=H>W,stripH=Math.round(Math.min(H*(portrait?.12:.18),120)),w=portrait?W-32:Math.min(W/2-24,400);
+ if(portrait){drawDuelPanel(ally,16,H-2*stripH-36,w,stripH,false);drawDuelPanel(enemy,16,H-stripH-12,w,stripH,true);}
+ else{drawDuelPanel(ally,16,H-stripH-12,w,stripH,false);drawDuelPanel(enemy,W-16-w,H-stripH-12,w,stripH,true);}
+ // damage numbers at the impact point, rising and fading
+ ctx.save();ctx.textAlign='center';
+ for(let i=duelNumbers.length-1;i>=0;i--){
+  const n=duelNumbers[i],age=clock-n.at;if(age>.9){duelNumbers.splice(i,1);continue;}if(age<0)continue;
+  const p=window.IronVowScene.projectWorld(n.point);
+  ctx.globalAlpha=Math.min(1,(.9-age)*4);ctx.font=(n.big?'800 ':'800 ')+(n.big?(W<760?14:18):(W<760?14:19))+'px Inter,Arial,sans-serif';
+  ctx.lineWidth=4;ctx.strokeStyle='#05090d';const y=p.y-17*n.stack-18*age/.9,x=p.x+(n.dx||0);
+  ctx.strokeText(n.text,x,y);ctx.fillStyle=n.color;ctx.fillText(n.text,x,y);
+ }
+ ctx.restore();
+ // skill banner, top left, 0.9 s
+ if(duelBanner&&clock-duelBanner.at<.9){
+  const age=clock-duelBanner.at,x=16-Math.max(0,(.12-age))*600,y=74;
+  ctx.save();ctx.globalAlpha=Math.min(1,(.9-age)*5);ctx.fillStyle=duelBanner.ally?'#27489a':'#9a4a1c';
+  ctx.beginPath();ctx.moveTo(x+14,y);ctx.lineTo(x+214,y);ctx.lineTo(x+200,y+30);ctx.lineTo(x,y+30);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#f2f6f4';ctx.font='700 16px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(duelBanner.text,x+107,y+21);ctx.restore();
+ }
 }
 let canvasMode=null,warDiagnostics;
 function draw(ts){

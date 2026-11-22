@@ -85,14 +85,18 @@ const IMPACT={
    15-30 m out, where the bench flash (0.14 s) and 1x sparks read as specks. Flash x1.7 and held longer, sparks x1.3 and a little thicker (x1.6 stacked into white planks), and
    kinetic hits throw a short grey puff of paint and dust so each landed round leaves a mark. */
 const IMPACT_SCALE={flash:1.7,life:1.6,sparks:1.3,size:1.1};
-function impact(p,back,kind){const fx=BT.fx;if(!fx||!fx.spray||fx.isNull)return;const P=IMPACT[kind]||IMPACT.rifle,k=BT.lowFx?.6:1,S=IMPACT_SCALE;
-  const rail=P.cols===SPARK_RAIL,d=V3().copy(back).normalize();fx.glow(p,rail?0xdff8ff:0xfff0d0,P.flash*S.flash,.14*S.life);fx.glow(p,rail?0x7fdcff:0xffa75d,P.flash*1.8*S.flash,.22*S.life);fx.light(p,rail?0x9fe6ff:0xffa04a,P.light*1.5);
-  fx.spray(p,d,Math.round(P.n*k*S.sparks),P.spd,P.cone,P.cols,.6,S.size);
-  if(!rail&&kind!=='blade')fx.smoke(p.clone().addScaledVector(d,.25),kind==='rifle'?1:2,kind==='missile'?2.2:1.1,0x857d72,.45,.5,.9,.18);
-  // molten blobs: a few glowing sprites thrown along the spray, outliving the flash
-  for(let i=0;i<Math.round(5*k);i++){const v=V3(d.x+rnd(-1,1)*P.cone*.6,d.y+rnd(-.2,.6),d.z+rnd(-1,1)*P.cone*.6).normalize().multiplyScalar(P.spd*rnd(.25,.6));fx.glow(p.clone().addScaledVector(v,.02),i%2?P.cols[1]:P.cols[0],rnd(.35,.6),rnd(.22,.36),v);}
-  if(P.chips){fx.debris(p,P.chips,4);fx.smoke(p,3,1.4,0x8a847a,.4,.6,1.1,.25);}
-  else if(rail)fx.smoke(p,2,1.1,0x9fb3c0,.3,.5,.9,.15);}
+/* FM3 hit (owner, 2026-11-22): a landed round is an orange-white fireball burst on the armour with dark debris specks and a few
+   short sparks, not a fan of long white streaks (those read as planks). Rail keeps its cold beam splash. */
+const FIREBALL={rifle:{size:2.6,n:2,debris:2,sparks:4},shotgun:{size:2.1,n:1,debris:1,sparks:3},missile:{size:5.6,n:4,debris:5,sparks:6},blade:{size:3,n:2,debris:3,sparks:8}};
+function impact(p,back,kind){const fx=BT.fx;if(!fx||!fx.spray||fx.isNull)return;const P=IMPACT[kind]||IMPACT.rifle,k=BT.lowFx?.6:1;
+  const rail=P.cols===SPARK_RAIL,d=V3().copy(back).normalize();
+  if(rail){fx.glow(p,0xdff8ff,P.flash*1.7,.22);fx.glow(p,0x7fdcff,P.flash*3,.35);fx.light(p,0x9fe6ff,P.light*1.5);fx.spray(p,d,Math.round(P.n*k),P.spd,P.cone,P.cols,.6,1);fx.smoke(p,2,1.1,0x9fb3c0,.3,.5,.9,.15);return;}
+  const F=FIREBALL[kind]||FIREBALL.rifle,o=p.clone().addScaledVector(d,.15);
+  fx.glow(o,0xfff3d6,F.size*.55,.08);fx.light(o,0xffa04a,P.light*1.6);
+  for(let i=0;i<Math.max(1,Math.round(F.n*k));i++){const v=V3(d.x+rnd(-.5,.5),d.y+rnd(.1,.7),d.z+rnd(-.5,.5)).normalize().multiplyScalar(rnd(.6,1.6));fx.fire(o.clone().addScaledVector(v,.12),F.size*rnd(.8,1.15),rnd(.18,.26),v,.8);}
+  fx.sparks(o,Math.round(F.sparks*k),5,0xffc070,.4,.32,.55);
+  if(F.debris)fx.debris(o,Math.round(F.debris*k),3.5);
+  fx.smoke(o,kind==='missile'?3:1,kind==='missile'?2.4:1.2,0x6f6a62,.5,.6,1,.2);}
 
 function FX(scene,o){
   const f={};
@@ -212,7 +216,9 @@ function FX(scene,o){
 function fireFX(ma,mt,kind,part,shot){
   const fx=BT.fx,muzzle=shot?.origin?.clone()||ma.wpn.muzzle.getWorldPosition(V3()),tp=shot?.target?.clone()||(mt.isVector3?mt.clone():partPoint(mt,part)); // [bench] target may be a point
   const beat=(d,fn)=>shot&&d===0?fn():pending.push({at:(shot?.at??BT.clock)+d,fn}); // production contacts own each beat
-  const flash=(p,c,s)=>{fx.glow(p,c,s,.09);fx.light(p,c,6);fx.smoke(p,2,1.2,0x8f8a80,.35,.6,.9,.15);};
+  // FM3 muzzle: a hot core plus a short orange fire bloom thrown along the barrel, then a puff of smoke
+  const along=V3().copy(tp).sub(muzzle).normalize();
+  const flash=(p,c,s)=>{fx.glow(p,0xfff4dc,s*.6,.06);fx.glow(p,c,s*1.25,.1);fx.fire(p.clone().addScaledVector(along,.35),s*.9,.09,along.clone().multiplyScalar(4),0);fx.light(p,c,9);fx.smoke(p,2,1.2,0x8f8a80,.35,.6,.9,.15);};
   /* Jacketed rounds, not beams (owner, 2026-11-18): the bench tail was 35% of the whole path, a 10 m bar of white light on a 30 m shot.
      Every third round is a tracer, a short warm 2.2 m streak; the rest are faint 0.9 m flicks of heat haze. Hot colours stay
      below additive white-out. */
