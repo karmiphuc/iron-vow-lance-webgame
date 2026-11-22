@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HR-06 Harrier · Rig studio</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#8a8e94;color:#202328;font:15px system-ui,sans-serif}canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}header,aside{position:fixed;z-index:1}header{top:20px;left:24px;pointer-events:none}h1{font:600 22px/1.2 system-ui;margin:0}header a{display:inline-block;pointer-events:auto;color:#24282c;margin-top:5px;padding:8px 0}aside{bottom:18px;left:50%;transform:translateX(-50%);background:#ecebe6ef;border:1px solid #777b7b;border-radius:8px;padding:4px;box-shadow:0 4px 20px #25293324;max-width:96vw}nav{display:flex;align-items:center;gap:3px}button,summary,select{cursor:pointer;font:inherit}button,summary{min-height:44px;padding:10px 15px;border:0;background:transparent;border-radius:5px}button[aria-pressed=true]{background:#33383a;color:white}summary{list-style:none}details[open] .panel{display:grid}.panel{display:none;position:absolute;bottom:calc(100% + 8px);right:0;background:#f1f0ea;padding:16px;border:1px solid #777b7b;border-radius:7px;gap:8px;width:280px}label{display:flex;justify-content:space-between;align-items:center;gap:8px}input,select{min-height:38px;min-width:0}input{width:140px}#error{position:absolute;top:35%;text-align:center;width:100%}@media(max-width:500px){header{left:14px;top:12px}button,summary{padding:10px}h1{font-size:18px}}
+</style></head><body><canvas id="studio" aria-label="Orbit the articulated Harrier"></canvas>
+<header><h1>HR-06 Harrier</h1><a href="../?bench=rig&amp;frame=22">Game rig bench ↗</a></header>
+<aside><nav aria-label="Rig controls"><button id="pose" aria-pressed="true">Pose</button><button id="walk" aria-pressed="false">Walk</button><button id="reset" title="Restore camera and rig">Reset</button>
+<details><summary>Inspect</summary><div class="panel"><label>Joint <select id="joint"></select></label>
+<label>Pitch <input type="range" id="rx" min="-1.5" max="1.5" step=".01" value="0"></label>
+<label>Yaw <input type="range" id="ry" min="-1.5" max="1.5" step=".01" value="0"></label>
+<label>Roll <input type="range" id="rz" min="-1.5" max="1.5" step=".01" value="0"></label>
+<label>Material <select id="material"></select></label><label>Roughness <input type="range" id="roughness" min=".05" max="1" step=".01"></label>
+<label>Forward <input type="range" id="speed" min="-1" max="1" step=".05" value=".85"></label><label>Strafe <input type="range" id="strafe" min="-1" max="1" step=".05" value="0"></label></div></details></nav></aside>
+<script src="vendor/three.min.js"></script><script src="vendor/studio-examples.js"></script><script src="../foundry/harrier/loftBuilder.js"></script><script src="../foundry/harrier/mechTrueRig.js"></script><script src="../foundry/harrier/mechAnimator.js"></script><script src="../foundry/harrier/studio-lighting.js"></script><script src="harrier-studio.js"></script></body></html>

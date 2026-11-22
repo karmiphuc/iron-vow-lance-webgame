@@ -506,14 +506,20 @@ function clearInspection(frameChanged){
  for(const id of stageModels.bench.keys())releaseStageRig('bench',id);
  if(frameChanged)rigV2.clear('bench');
 }
-function renderInspection(objects,view){
+function renderInspection(objects,view,stage){
  if(!init()||window.IronVowRenderer.lost)return;
  window.IronVowRenderer.resize(innerWidth,innerHeight);
  window.IronVowRenderer.show(true);
- for(const object of objects)scene.add(object);
- scene.background=new T.Color(0x152128);
- try{renderer.render(scene,view);return {...renderer.info.render};}
- finally{scene.background=null;for(const object of objects)scene.remove(object);}
+ const target=stage||scene,shadows=renderer.shadowMap.enabled,exposure=renderer.toneMappingExposure;
+ if(stage){stage.environment=scene.environment;renderer.shadowMap.enabled=true;renderer.toneMappingExposure=1.05;}
+ else scene.background=new T.Color(0x152128);
+ for(const object of objects)target.add(object);
+ try{renderer.render(target,view);return {...renderer.info.render};}
+ finally{
+  if(!stage)scene.background=null;
+  renderer.shadowMap.enabled=shadows;renderer.toneMappingExposure=exposure;
+  for(const object of objects)target.remove(object);
+ }
 }
 window.IronVowFoundry={releaseStageRig,metrics,draw:withFallback(draw),preview:withFallback(preview),portrait,previewAnimated:withFallback(previewAnimated),
  equipmentThumbnail:withFallback(equipmentThumbnail),vehicleThumbnail:withFallback(vehicleThumbnail),aimMounted,entry:id=>combat.get(id+'|field'),clearCombat,retainPreview,inspect:withFallback(inspect),clearInspection,renderInspection:withFallback(renderInspection)};

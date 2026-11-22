@@ -20,6 +20,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  const cameras=new Map(VIEWS.map(view=>[view[0],view]));
  const camera=new T.PerspectiveCamera(40,1,.1,150),target=vector();
  const ground=new T.GridHelper(80,80,0x3c545e,0x263840);ground.position.y=-.025;
+ let harrierStage;
  const flashGeometry=new T.IcosahedronGeometry(.12,0),flashMaterial=new T.MeshBasicMaterial({color:0xffc179});
  const markers=new T.Group(),markerGeometry=new T.SphereGeometry(.077,8,6),markerMaterial=new T.MeshBasicMaterial({color:0x5fd4c4});
  for(let i=0;i<4;i++)markers.add(new T.Mesh(markerGeometry,markerMaterial));
@@ -38,7 +39,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  document.body.classList.add('rig-bench-v3');
  $('ui').innerHTML=`
  <section class="bench-controls" aria-label="Rig Bench controls">
-  <div class="bench-heading"><h1>Rig Bench</h1><a href="?bench=war">War</a><a href="?view=workshop">Workshop</a></div>
+  <div class="bench-heading"><h1>Rig Bench</h1><a id="harrier-studio" href="rig-bench/harrier.html" hidden>Studio</a><a href="?bench=war">War</a><a href="?view=workshop">Workshop</a></div>
   <label>Chassis<select id="bench-frame"></select></label>
   <details open><summary>Loadout</summary><div class="bench-fields">
    <label>Primary<select id="bench-primary"></select></label><label>Melee<select id="bench-melee"></select></label>
@@ -153,7 +154,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  function selectFrame(id){
   const next=lookup.get(String(id));if(!next)throw Error('Unknown Bench frame '+id);
   void setClipSource('current');
-  frame=lowerFrame=next;$('bench-frame').value=id;walk=false;aim=false;
+  frame=lowerFrame=next;$('harrier-studio').hidden=next.frame!==22;$('bench-frame').value=id;walk=false;aim=false;
   select('bench-clip-source',[['current','Live rig'],...(frame.archive?[['archive','Authored archive']]:[])],'current');
   $('bench-walk').setAttribute('aria-pressed','false');$('bench-aim').setAttribute('aria-pressed','false');
   for(const id of parts)applyPart(id,100);
@@ -324,7 +325,14 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
    updateClipList();
   }
   ground.position.z=Math.round(advance/10)*10;
-  const objects=[ground,...entries.map(e=>e.m.cont)],hidden=[];
+  const useStudio=!lineup&&!archived&&frame.frame===22;
+  if(useStudio&&!harrierStage){
+   const scene=new T.Scene();harrierStage={scene,...root.HarrierRig.lightStudio(scene,2.5)};
+   scene.background.setHex(0x8a8e94); // The shared renderer clears directly to the display buffer.
+  }
+  if(useStudio)harrierStage.lights.position.z=advance;
+  const objects=entries.map(e=>e.m.cont),hidden=[];
+  if(!useStudio)objects.unshift(ground);
   if(archived&&archive)objects.push(archive.source);
   const hide=(object,visible)=>object.traverseVisible(node=>{
    if(node.isMesh&&!visible(node)){node.visible=false;hidden.push(node);}
@@ -345,7 +353,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   cameraAt();
   if(!lineup&&!archived&&!clip){stageEffects(dt);if(effects)objects.push(effectRoot);}
   if(showRig&&!lineup){updateRigLines(archived);objects.push(rigLines);}
-  lastStats=foundry.renderInspection(objects,camera);
+  lastStats=foundry.renderInspection(objects,camera,useStudio?harrierStage.scene:null);
   for(const node of hidden)node.visible=true;
   const status=rigV2.status(source,'bench');
   if(time-metricsAt>.15){
@@ -471,7 +479,7 @@ ${clip?'':m.feet.map(f=>`${f.side}: ${(f.error*100).toFixed(1)} cm IK`).join(' Â
  root.addEventListener('pagehide',event=>{if(event.persisted)return;
   cancelAnimationFrame(frameRequest);foundry.clearInspection(true);archiveRequest++;releaseArchive();
   ground.geometry.dispose();ground.material.dispose();markerGeometry.dispose();markerMaterial.dispose();flashGeometry.dispose();flashMaterial.dispose();
-  effects?.dispose();rigGeometry.dispose();rigLines.material.dispose();});
+  effects?.dispose();rigGeometry.dispose();rigLines.material.dispose();harrierStage?.dispose();});
  frameRequest=requestAnimationFrame(draw);
 }
 root.IronVowBench={mount};

@@ -272,6 +272,7 @@ function build(unit,scope='battle'){
  const mech=R.createMech({root:body,rig,dims,parts,kits:[],mods:profile.canonical?{core:profile.id,arms:profile.id,legs:profile.id}:{core:profile.id},
   visorMat:emissive('visor'),stackMat:emissive('stack'),ownedMaterials},profile.id,unit.team,unit.upgrade);
  mech.live=profile.id;
+ profile.prepareMotion?.(mech);
  mech.scale=profile.scale??1;mech.cont.scale.setScalar(mech.scale);
  mech.previewSpan=profile.previewSpan;mech.equipmentScale=profile.equipmentScale;
  // Bind a fixed offset from each normalized driver to the authored bone,
@@ -344,7 +345,13 @@ function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
 }
 // HR-06 uses the standard Workshop equipment sockets and the shared planted gait.
 register(22,{id:'harrier',assetPath:'rig-bench/rig-v2/harrier.glb',factoryLivery:true,
- authoredPaint:true,equipmentScale:.54,dimensions:{walkDrop:.21},setup(){return {};}});
+ authoredPaint:true,equipmentScale:.54,dimensions:{walkDrop:.065,idleBob:.001},prepareMotion(mech){
+   const {spine,neck,arms}=mech.rig;
+   const targets={torso:spine,head:neck,rShoulder:arms.R.sh,lShoulder:arms.L.sh,rElbow:arms.R.el,lElbow:arms.L.el};
+   const sample=Object.fromEntries(Object.keys(targets).map(key=>[key,new T.Object3D()]));
+   mech.loftMotion=new root.HarrierRig.MechAnimator(sample);
+   mech.loftMotion.channels=Object.entries(targets).map(([key,joint])=>[joint,sample[key]]);
+ },setup(){return {};}});
 register(3,{id:'gatecrasher',assetPath:'rig-bench/rig-v2/gatecrasher-r2-reference.glb',setup:breachSetup});
 register(20,{id:'shogun',assetPath:'rig-bench/rig-v2/shogun.glb',factoryLivery:true,setup:breachSetup});
 

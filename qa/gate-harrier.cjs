@@ -19,7 +19,30 @@ async function main() {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     const capture = name => saveWebp(page, path.join(out, name + '.webp'));
+    await page.goto(new URL('rig-bench/harrier.html', origin).href);
+    await page.waitForFunction(() => window.harrierStudio?.animator.phase > 0);
+    const studio = await page.evaluate(() => {
+      const {joints:j,bloom,renderer} = harrierStudio;
+      return [j.rHip.position.x,j.lHip.position.x,j.rKnee.rotation.x,j.lKnee.rotation.x,bloom.threshold,renderer.toneMappingExposure];
+    });
+    assert.deepEqual(studio,[-.2,.2,.18,.24,1.1,1.05]);
+    await capture('studio');
+    await page.mouse.move(800,420); await page.mouse.down(); await page.mouse.move(1190,425,{steps:8}); await page.mouse.up();
+    await page.waitForFunction(()=>harrierStudio.camera.position.z < -4.0);
+    await capture('studio-reverse');
+    await page.locator('#walk').click();
+    await page.waitForFunction(() => harrierStudio.joints.lKnee.rotation.x > .32);
+    await page.locator('#reset').click();
+    await page.locator('summary').click();
+    await page.locator('#joint').selectOption('lFinger0');
+    await page.locator('#rx').fill('0.55');
+    await page.waitForFunction(() => Math.abs(harrierStudio.joints.lFinger0.rotation.x-.55)<.001);
+    await page.locator('#roughness').fill('0.8');
+    await page.waitForFunction(() => harrierStudio.materials.armor.roughness===.8);
+    await page.locator('#reset').click();
+    await page.waitForFunction(() => harrierStudio.materials.armor.roughness===.56 && harrierStudio.joints.lFinger0.rotation.x===0);
     await page.goto(new URL('?bench=rig&frame=22', origin).href);
+    await page.locator('#harrier-studio').waitFor({state:'visible'});
     await page.waitForFunction(() => window.__bench?.state?.model === 'harrier' && __bench.state.metrics?.triangles);
     await page.waitForFunction(() => document.querySelector('#bench-metrics')?.textContent.includes('triangles'));
     await page.mouse.move(746,450);
@@ -29,8 +52,8 @@ async function main() {
     await page.mouse.wheel(0,-480);
     await page.waitForFunction(() => {
       const feet=__bench.state.metrics.feet;
-      return Math.abs(feet[0].ankle[2]-feet[1].ankle[2])>.95 &&
-        __bench.state.metrics.stance>2.48 && feet.every(f=>f.error<.035);
+      return Math.abs(feet[0].ankle[2]-feet[1].ankle[2])>.62 &&
+        __bench.state.metrics.stance>1.67 && __bench.state.metrics.stance<1.88 && feet.every(f=>f.error<.035);
     });
     await capture('rig-bench');
     await page.goto(new URL('?view=workshop', origin).href);
@@ -48,13 +71,16 @@ async function main() {
     await page.waitForFunction(() => pilotFrame(0) === HARRIER_FRAME && IronVowWorkshop.snapshot()?.entry?.m.live === 'harrier');
     await page.locator('#paint-preview').scrollIntoViewIfNeeded();
     await page.waitForFunction(() => IronVowWorkshop.snapshot().entry.primary?.id === 'sidewinder');
+    await page.waitForFunction(() => IronVowWorkshop.snapshot().entry.m.readyGuard>.995);
     const stance = await page.evaluate(() => {
       const m = IronVowWorkshop.snapshot().entry.m;
       const pos = joint => m.cont.worldToLocal(joint.getWorldPosition(new THREE.Vector3()));
       const [left,right] = m.rig.legs.map(leg=>pos(leg.an));
-      return {track:left.x-right.x, stagger:left.z-right.z, soleDifference:Math.abs(left.y-right.y), spread:pos(m.rig.arms.L.wr).x-pos(m.rig.arms.L.sh).x};
+      return {knees:m.rig.legs.map(leg=>leg.kn.rotation.x), hipWidth:2*m.dims.hipX,track:left.x-right.x, stagger:left.z-right.z, soleDifference:Math.abs(left.y-right.y), spread:pos(m.rig.arms.L.wr).x-pos(m.rig.arms.L.sh).x};
     });
-    assert.ok(stance.track>2.6 && stance.stagger>1 && stance.spread>.35 && stance.soleDifference<.035, JSON.stringify(stance));
+    assert.ok(Math.abs(stance.hipWidth-1)<.001 && stance.track>1.96 && stance.track<2.04 &&
+      stance.stagger>.84 && stance.stagger<.92 && stance.knees.every(bend=>bend>=.18 && bend<=.24) &&
+      stance.spread>.25 && stance.soleDifference<.01, JSON.stringify(stance));
     await capture('workshop');
     await page.evaluate(() => { deploy(0, false, [0]); closeModal(); });
     await page.waitForFunction(() => IronVowScene.models.get(current().id)?.entry?.m.live === 'harrier');
@@ -100,7 +126,7 @@ async function main() {
     });
     assert.ok(shot.spent > 0 && shot.hit, JSON.stringify(shot));
     assert.deepEqual(errors, []);
-    console.log('PASS Harrier purchase, assignment, reload, Sidewinder mount, three-tile walk, animated knee, left-arm loss and Sidewinder damage.', result.triangles, 'triangles.', gait);
+    console.log('PASS Harrier purchase, assignment, reload, Sidewinder mount, three-tile walk, animated knee, left-arm loss and Sidewinder damage.', result.triangles, 'triangles.', gait, stance);
   } finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -211,8 +211,8 @@ function supportGrip(m,arm,weight){
    The last two arm angles, when supplied, turn the shoulder and roll the wrist. */
 const readyPoses={
   // The Harrier leads on its gauntlet side. Its weapon hangs outboard of the rear leg.
-  harrier:{restPose:true,pelvis:[.092,-.092,.015],feet:[.25,.18,.12],spine:[.15,-.19,.105],neck:[-.095,.17,-.055],
-    left:[.085,.36,-.19,.04,-.04,-.09],right:[-.06,-.30,-.23,.10,.065,.04]},
+  harrier:{restPose:true,pelvis:[-.0321,.0011,0],pelvisTurn:-.14,pelvisRoll:-.025,footShift:-.028,feet:[.112,.123,.118],
+    spine:[.16,.12,.164],neck:[-.05,.04,0]},
   striker:{pelvis:[.045,-.085,.027],feet:[.075,.275,.17],spine:[.145,.23,-.045],neck:[-.05,.07,.025],
     gun:{aim:[6.7,0,13],grip:D=>[D.shX*.12,-D.up*.72,D.fo*.93]},support:true},
   buckler:{pelvis:[.03,-.052,.028],feet:[.075,.24,.24],spine:[.135,.32,-.035],neck:[-.045,.125,0],
@@ -306,11 +306,13 @@ function animateMech(m,I,dt,t){
   const guardWeight=m.readyGuard=Math.min(upperGuard,damp(m.readyGuard??(guard?.restPose?upperGuard:0),upperGuard,12,dt));
   // Pose the pelvis before solving the legs, so the IK uses this frame's hips rather than the previous frame's.
   const p=r.pelvis;
-  const breathe=Math.sin(t*1.3+m.seed)*.03*(1-w)*(dead?0:1);
+  const breathe=Math.sin(t*1.3+m.seed)*(D.idleBob??.03)*(1-w)*(dead?0:1);
   p.position.y=D.py+w*(.05*Math.cos(4*PI*(g-.25))-.1-(D.walkDrop??0))+breathe+S.comp.x-brace*.34-(pd?D.py*.3*dE:dE*1.4);
   p.position.x=w*(D.sway??.16)*Math.sin(2*PI*g*(D.quad?2:1));p.rotation.z=w*(D.quad?.015:.05)*Math.sin(2*PI*g)+(I.legsDead?.08:0);
   p.rotation.y=F?-F.hips*fs:0;
   if(guard){
+    p.rotation.y+=(guard.pelvisTurn??0)*guardWeight;
+    p.rotation.z+=(guard.pelvisRoll??0)*guardWeight;
     m.readyRestZ??=p.position.z;
     p.position.x+=D.py*guard.pelvis[0]*guardWeight;
     p.position.y+=D.py*guard.pelvis[1]*guardWeight;
@@ -334,7 +336,7 @@ function animateMech(m,I,dt,t){
     }
     if(footGuard>0){
       const side=Math.sign(l.restX),[spread,front,back]=guard.feet;
-      homeX+=side*D.py*spread*footGuard;
+      homeX+=D.py*(side*spread+(guard.footShift??0))*footGuard;
       homeZ+=D.py*(side>0?front:-back)*footGuard;
     }
     const home=cont.localToWorld(_a.set(homeX,D.ankleH,homeZ)).clone();let pitch=0;
@@ -456,6 +458,17 @@ function animateMech(m,I,dt,t){
       const point=m.body.localToWorld(V3(aim[0],D.py+aim[1],aim[2]));
       shoulderRifle(m,aR,guardWeight,R0,{grip:grip(D)},point);
     }
+  }
+  if(m.loftMotion)r.arms.L.el.rotation.z=0;
+  if(m.loftMotion && guard?.restPose && canGuard){
+    const weight=1-Math.max(release,b,clamp(R0*2,0,1));
+    const lateral=vs>.3?(vel.x*Math.cos(m.yaw)-vel.z*Math.sin(m.yaw))/vs:0;
+    const forward=vs>.3?(vel.x*Math.sin(m.yaw)+vel.z*Math.cos(m.yaw))/vs:1;
+    const speed=w*clamp(I.speed/2.6,0,1);
+    m.loftMotion.update(dt,speed*forward,speed*lateral,{
+      groundIK:true,phase:w>.01?2*PI*g:undefined
+    });
+    for(const [target,sampled] of m.loftMotion.channels)target.quaternion.slerp(sampled.quaternion,clamp(weight,0,1));
   }
   // Solve contact once, after the right arm has blended both carry poses.
   const gripWeight=guard?.support?lerp(sup,1,guardWeight):sup;
