@@ -1,9 +1,11 @@
 const assert=require('node:assert/strict');
 const navigate=require('./navigate.cjs');
 const selectContract=require('./select-contract.cjs');
+const firstRifles=require('./salt-rifle-roll.cjs');
 
 // Use the real acquisition and deployment controls with a funded Vanta career.
 module.exports=async function checkSaltWorks({page,origin,mobile,tap}){
+ await firstRifles.install(page);
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
  await page.locator('.workshop-refit').waitFor();
  await page.evaluate(async()=>{
@@ -61,6 +63,7 @@ module.exports=async function checkSaltWorks({page,origin,mobile,tap}){
    return e?.primary?.id==='rifle'&&hand.children.length===1&&hand.children[0]===e.primary.mount;
   }),null,{timeout:90000});
  await waitForPair();
+ await firstRifles.assertFirst(page,'rifle');
  if(await page.locator('#modal-0:visible').count())await tap('#modal-0');
  const initial=await page.evaluate(async()=>{
   await pendingCareerWrite;
@@ -74,6 +77,7 @@ module.exports=async function checkSaltWorks({page,origin,mobile,tap}){
  ]);
  await page.reload({waitUntil:'domcontentloaded'});
  await waitForPair();
+ await firstRifles.assertFirst(page,'rifle');
  assert.equal(await page.evaluate(()=>battle.offer.id),offer.id);
 
  const saved=await page.evaluate(()=>localStorage.getItem('iron-vow-career'));
