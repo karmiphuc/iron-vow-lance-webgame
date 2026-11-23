@@ -83,16 +83,20 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
 
  const integrated=[[3,'weapon','morrow'],[4,'weapon','locust'],[4,'melee','pulse-bash'],[11,'melee','breach-gauntlet'],
   [17,'weapon','aegis-cleave'],[17,'melee','aegis-bash'],[18,'weapon','needle-carbine'],[18,'melee','signal-knife'],
-  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder'],[22,'weapon','salt-rifle'],[23,'weapon','salt-rifle']];
- for(const [frame,slot,id] of integrated){
+  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder','missile'],[22,'weapon','salt-rifle'],[23,'weapon','salt-rifle']];
+ for(const [frame,slot,id,mountId=id] of integrated){
   await page.evaluate(frame=>__bench.selectFrame(frame),frame);
   if(id==='flechette-scattergun')await page.locator('#bench-primary').selectOption(id);
-  if(slot==='pod')await page.locator('#bench-shoulder').selectOption(id);
+  if(slot==='pod'){
+   const shoulder=page.locator('#bench-shoulder');
+   await shoulder.selectOption(id);
+   assert.equal(await shoulder.inputValue(),id);
+  }
   try{
-   await page.waitForFunction(({slot,id})=>__bench.state[slot]===(id==='vesper-shoulder'?'vesper':id),{slot,id});
+   await page.waitForFunction(({slot,mountId})=>__bench.state[slot]===mountId,{slot,mountId});
   }catch(error){
    const actual=await page.evaluate(slot=>__bench.state[slot],slot);
-   throw Error(`Frame ${frame} ${slot} did not mount ${id} (actual: ${actual})`,{cause:error});
+   throw Error(`Frame ${frame} ${slot} expected mount ${mountId} for ${id}, got ${actual}`,{cause:error});
   }
   mounted.add(id);
  }
