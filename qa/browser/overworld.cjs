@@ -3,6 +3,7 @@ const selectContract=require('./select-contract.cjs');
 const assert=require('node:assert/strict');
 const arrived=require('../fixtures/overworld-relay.json');
 const restedArrival=require('../fixtures/overworld-transit-rest.json');
+const startingGear=['rifle','rifle','missile'];
 
 module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  const nav=view=>navigate(page,view,tap,mobile);
@@ -109,8 +110,8 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  state=await snapshot();
  assert.equal(state.day,2);
  assert.equal(state.credits,3990);
- const {world:relayWorld,...relayLegacyFields}=state;
- assert.deepEqual(relayLegacyFields,arrived,'one-hop Relay travel keeps its existing career fields');
+ const {world:relayWorld,...relayFields}=state;
+ assert.deepEqual(relayFields,{...arrived,itemInventory:true,owned:startingGear},'one-hop Relay travel preserves the starting equipment copies');
  assert.deepEqual(relayWorld,await page.evaluate(()=>worldRules.createWorld(0,2)),'travel advances the seeded world by one day');
  assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),relayWorld),true);
  const relayArrival=JSON.parse(JSON.stringify(state));
@@ -213,7 +214,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  await page.evaluate(async()=>{
   save.ship={levels:{repair:1,crew:1}};
   save.units[0].condition=25;save.units[1].condition=95;save.units[2].condition=30;
-  save.owned.push('blade');
+  save.owned.push('blade','rifle');
   save.reserve={'6':{weapon:'rifle',melee:'blade',condition:40,upgrade:0}};
   save.wounds={rook:2,ghost:1};persist();await pendingCareerWrite;render();
  });
@@ -246,8 +247,9 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  state=await snapshot();
  assert.equal(state.credits,beforePassing.credits,'passing the call adds no charge');
  assert.equal(state.day,beforePassing.day,'passing the call adds no delay');
- const {world:restedWorld,...restedLegacyFields}=state;
- assert.deepEqual(restedLegacyFields,restedArrival,'two-day transit preserves the existing rest and expense values');
+ const {world:restedWorld,...restedFields}=state;
+ assert.deepEqual(restedFields,{...restedArrival,itemInventory:true,owned:[...startingGear,'blade','rifle']},
+  'two-day transit preserves equipment copies and applies the expected rest and expenses');
  assert.deepEqual(restedWorld,await page.evaluate(()=>worldRules.createWorld(0,3)),'successful two-day travel advances the world exactly once');
  assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),restedWorld),true);
  const restedWorldArrival=JSON.parse(JSON.stringify(state));

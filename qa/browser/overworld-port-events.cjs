@@ -23,10 +23,15 @@ module.exports=async function checkOverworldPortEvents({page,mobile,origin,tap})
  await tap('[data-port-tab="market"]');
  const weaponPrice=await page.evaluate(()=>portServicesData('picket').items.find(item=>item.id==='sidewinder').price);
  const beforeBuy=await page.evaluate(()=>save.credits);
- await tap('[data-port-buy-weapon="sidewinder"]');
- await page.waitForFunction(()=>save.owned.includes('sidewinder'));
- assert.equal(await page.evaluate(()=>save.credits),beforeBuy-weaponPrice,'local market purchase charges the displayed price');
- assert.equal(await page.locator('[data-port-buy-weapon="sidewinder"]').isDisabled(),true,'a purchased weapon cannot be bought twice');
+ const buySidewinder='[data-port-buy-weapon="sidewinder"]';
+ assert.equal(await page.evaluate(()=>save.owned.filter(id=>id==='sidewinder').length),0);
+ for(const count of [1,2]){
+  assert.equal(await page.locator(buySidewinder).isEnabled(),true,'the market offers another physical copy');
+  await tap(buySidewinder);
+  await page.waitForFunction(count=>save.owned.filter(id=>id==='sidewinder').length===count,count);
+  assert.equal(await page.evaluate(()=>save.credits),beforeBuy-count*weaponPrice,'each purchase charges the displayed price once');
+  assert.match(await page.locator('li').filter({has:page.locator(buySidewinder)}).innerText(),new RegExp('\\b'+count+' owned\\b'));
+ }
  await tap('[data-port-close]');
 
  // Departure remains an inline confirmation while the chart stays visible.
