@@ -17,9 +17,7 @@ module.exports = async function checkGizaReview({page, origin, tap}) {
  await tap('footer button:text-is("Shoulder salvo")');
  const salvo = page.getByRole('button', {name:'Shoulder salvo', exact:true});
  assert.equal(await salvo.getAttribute('aria-pressed'), 'true');
- await page.waitForFunction(() => Array.from(document.querySelectorAll('footer button')).some(button =>
-  button.textContent === 'Ready' && button.getAttribute('aria-pressed') === 'true'
- ), null, {timeout:10000});
+ await page.getByRole('button', {name:'Ready', exact:true, pressed:true}).waitFor();
  await tap('footer button:text-is("Fall")');
  assert.equal(await page.getByRole('button', {name:'Fall', exact:true}).getAttribute('aria-pressed'), 'true');
  const fallen = await canvas.screenshot();
