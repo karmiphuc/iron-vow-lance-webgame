@@ -77,10 +77,10 @@
  const mixer = new T.AnimationMixer(model);
  const clips = new Map(asset.animations.map(clip => [clip.name, clip]));
  const views = {
-  quarter:[-.49, .15, 7.2],
-  front:[.005, .075, 7.25],
-  side:[-Math.PI / 2, .07, 7.2],
-  rear:[2.7, .14, 7.2],
+  quarter:[-.49, .15, 8.55],
+  front:[.005, .075, 8.55],
+  side:[-Math.PI / 2, .07, 8.55],
+  rear:[2.7, .14, 8.55],
   board:[.73, .62, 11.2]
  };
  let azimuth, elevation, span, mode, action, drag;
@@ -156,13 +156,13 @@
   });
   camera.updateProjectionMatrix();
   model.updateMatrixWorld(true);
-  const target = vector(0, 2.85, chassis.position.z);
+  const target = vector(0, 3.48, chassis.position.z);
   if (mode === 'Fall') {
    // Follow the pelvis through the drop while leaving both feet in frame.
    const settle = Math.min(1, Math.max(0, (time - .55) / .8));
    const follow = settle * settle * (3 - 2 * settle);
    pelvis.getWorldPosition(hip);
-   target.set(hip.x * .55, 2.85 - 1.45 * follow, hip.z);
+   target.set(hip.x * .55, 3.48 - 2.08 * follow, hip.z);
   }
   const offset = vector(
    Math.sin(azimuth) * Math.cos(elevation),
@@ -176,8 +176,14 @@
 
  function frame(now) {
   if (!paused) time += Math.min(.1, (now - previousTime) / 1000);
-  const duration = clips.get(mode).duration;
-  if (mode !== 'Fall' && time > duration + .28) time = 0;
+  let duration = clips.get(mode).duration;
+  if (mode === 'Shoulder salvo' && time >= duration) {
+   // A triggered salvo finishes with the launchers stowed in Ready.
+   play('Ready');
+   duration = clips.get(mode).duration;
+  } else if (mode !== 'Fall' && time > duration + .28) {
+   time = 0;
+  }
   action.paused = true;
   action.time = Math.min(duration, time);
   mixer.update(0);
