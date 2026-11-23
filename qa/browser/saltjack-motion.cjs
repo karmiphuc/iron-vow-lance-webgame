@@ -259,18 +259,23 @@ async function checkCombatReady(page,mobile,tap){
   action='move';lockedTarget=null;
   Object.assign(fieldCamera,{x:enemy.x,z:enemy.z,overview:false});
   IronVowScene.clear();
-  await wait(900);
+  return {guard,rest,lateWalk};
+ });
+ await page.waitForFunction(()=>IronVowScene.ready&&IronVowScene.models.get(battle.units[1].id)?.proxy,
+  null,{timeout:90000});
+ const point=await page.evaluate(()=>{
+  const enemy=battle.units[1];
   const projected=IronVowScene.projectWorld(IronVowScene.models.get(enemy.id).proxy.position);
   const points=[0,8,-8,16,-16].flatMap(dx=>[0,8,-8,16,-16].map(dy=>({x:projected.x+dx,y:projected.y+dy})));
-  const point=points.find(({x,y})=>document.elementFromPoint(x,y)===document.querySelector('#scene')&&IronVowScene.pick(x,y)===enemy);
-  return {guard,rest,point,lateWalk};
+  return points.find(({x,y})=>document.elementFromPoint(x,y)===document.querySelector('#scene')&&IronVowScene.pick(x,y)===enemy);
+
  });
  assert.ok(setup.guard.flat().every(up=>up>.95),`Both randomly selected guards carry upright: ${setup.guard}`);
  assert.ok(setup.rest.flat().every(up=>up>.15&&up<.60),`Both other idle samples carry the rifle forward: ${setup.rest}`);
  assert.ok(setup.lateWalk&&setup.lateWalk.carryUp<.60,
   `The first late march frame already has the weapon lowered: ${JSON.stringify(setup.lateWalk)}`);
- assert.ok(setup.point,'The Garrison is selectable through the visible battle canvas');
- const {x,y}=setup.point;
+ assert.ok(point,'The Garrison is selectable through the visible battle canvas');
+ const {x,y}=point;
  if(mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);
  await page.waitForFunction(()=>action==='fire'&&lockedTarget===battle.units[1].id);
  const alignment=async()=>page.evaluate(()=>{
