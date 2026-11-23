@@ -35,8 +35,16 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   await tap('#armory-back');
   assert.equal(await page.locator('[data-armory-class="assault"]').evaluate(node=>node===document.activeElement),true);
  }
+ // These days in seed zero stock the real items this scenario buys and equips.
+ const shopDay=day=>page.evaluate(day=>{
+  save.day=day;
+  save.world=worldRules.createWorld(0,day);
+  delete save.dispatch;
+  render();
+ },day);
+ await shopDay(1);
  const seen=[];
- for(const [group,count] of Object.entries({assault:8,strike:8,melee:8})){
+ for(const [group,count] of Object.entries({assault:8,strike:9,melee:8})){
   await tab(group);
   assert.equal(await page.locator('[data-armory-class="'+group+'"]').getAttribute('aria-pressed'),'true');
   const cards=page.locator('[data-weapon-card]');
@@ -60,7 +68,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   }
   assert.ok(await page.locator('#ui .page').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
  }
- assert.equal(new Set(seen).size,24);
+ assert.equal(new Set(seen).size,25);
  await tab('shields');
  for(const item of await page.locator('[data-shield-card]').all()){await choose(await item.getAttribute('data-shield-card'));await checkPortrait(item.locator('.weapon-card-art'));}
  if(mobile)await page.setViewportSize({width:390,height:844});
@@ -87,7 +95,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  assert.deepEqual(await card('trident').locator('dd').allTextContents(),['49','6 tiles','3']);
  await tap('[data-select="0"]');
  await equip('sidewinder');
- await tab('melee');await equip('pike');
+ await shopDay(6);await tab('melee');await equip('pike');
  assert.deepEqual(await page.locator('.armory-mounted b').allTextContents(),['Sidewinder SM-2','Pilum Pike']);
  assert.equal(await page.evaluate(()=>save.credits),1850);
  if(process.env.IRON_VOW_ARMORY_PROOF){
@@ -101,14 +109,17 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  await page.waitForFunction(()=>IronVowFoundry.preview({frame:10,weapon:'sidewinder',melee:'pike'},2)?.secondary?.tip,null,{timeout:120000});
  const fittings=await page.evaluate(()=>WEAPONS.map(w=>w.id).filter(IronVowProductionArsenal.isExpansion).map(id=>{
   const melee=weapon(id).melee,entry=IronVowFoundry.preview({frame:10,weapon:melee?'sidewinder':id,melee:melee?id:'pike'},2),mount=melee?entry.secondary:entry.primary;
-  const point=node=>node.getWorldPosition(new THREE.Vector3()),socket=entry.m.rig.arms[melee?'L':'R'].so;
+  const point=node=>node.getWorldPosition(new THREE.Vector3());
+  const socket=id==='cerberus'?entry.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('mount.shoulderR')):entry.m.rig.arms[melee?'L':'R'].so;
   return{id,seated:point(mount.grip).distanceTo(point(socket)),tip:point(melee?mount.tip:mount.muzzle).distanceTo(point(mount.grip)),pixels:entry.surface.width};
  }));
- assert.equal(fittings.length,14);
+ assert.equal(fittings.length,15);
  for(const fit of fittings){assert.ok(fit.seated<1e-6&&fit.tip>.1,JSON.stringify(fit));assert.equal(fit.pixels,640);}
+ await shopDay(23);
  await checkCerberusSalvo(page,mobile,tap);
  await page.evaluate(()=>{battle=null;page='workshop';save.credits=30000;save.rep=119;render()});
- for(const [id,group,rep,price] of [['rivet','assault',120,'8,600'],['parallax','strike',180,'13,500']]){
+ for(const [id,group,rep,price,day] of [['rivet','assault',120,'8,600',50],['parallax','strike',180,'13,500',61]]){
+  await shopDay(day);
   await tab(group);await choose(id);
   const button=card(id).locator('[data-equip]');
   assert.equal(await button.isDisabled(),true);
@@ -122,7 +133,9 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
 
 async function checkCerberusSalvo(page,mobile,tap){
  const before=await page.evaluate(()=>{
-  save.credits=6000;equipWeapon('cerberus');attackCameraEnabled=false;
+  save.credits=6000;
+  if(!equipWeapon('cerberus'))throw Error('The fixture must fit Cerberus before the sortie');
+  attackCameraEnabled=false;
   createBattle(0,false,false,[0]);selected=0;action='move';Math.random=()=>0;
   const actor=current(),foe=battle.units.find(u=>u.team==='enemy'&&!u.kind);
   const valid=(x,z)=>onBoard(x,z)&&!battle.cover.has(x+','+z)&&!battle.units.some(u=>u!==actor&&u!==foe&&u.x===x&&u.z===z);
@@ -136,7 +149,7 @@ async function checkCerberusSalvo(page,mobile,tap){
   window.armoryQA={actor,foe};
   return {hp:foe.hp.body,ap:actor.ap,damage:partDamage(actor,foe,'body',weapon('cerberus'))};
  });
- await tap('#fire');
+ await tap('#missile');
  await page.waitForFunction(()=>IronVowScene.ready,null,{timeout:120000});
  // On a phone the tactical map can cover a nearby target at close zoom.
  // Use the actual overview control before tapping the real projected target.
@@ -152,7 +165,7 @@ async function checkCerberusSalvo(page,mobile,tap){
   launches:IronVowScene.combat.history.filter(e=>e.type==='launch'&&e.actor===armoryQA.actor.id&&e.weapon==='cerberus')}));
  assert.equal(result.hp,before.hp-before.damage);
  assert.equal(result.ap,before.ap-5);
- assert.deepEqual(result.launches.map(e=>e.socket),['muzzle','muzzle2']);
+ assert.deepEqual(result.launches.map(e=>e.socket),['shoulderMuzzle','shoulderMuzzle2']);
  for(const e of result.launches){
   assert.ok(e.mounted&&e.aimError<8*Math.PI/180,JSON.stringify(e));
   assert.ok(Math.hypot(...e.origin.map((n,i)=>n-e.expectedOrigin[i]))<1e-5,JSON.stringify(e));

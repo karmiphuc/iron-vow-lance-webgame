@@ -101,9 +101,10 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
   const {foe,entry,source}=window.reaverFixture;
   foe.hp.right=right?foe.max.right:0;foe.hp.left=left?foe.max.left:0;
   IronVowScene.render(clock,.016);
+  const ready={...foe,ap:roundAP(foe.training)};
   return {visible:['R','L'].map(side=>source.getObjectByName('RECOIL_CARRIAGE_'+side).visible),
    plates:['right','left'].map(part=>entry.m.build.parts[part].filter(item=>item.detach&&item.m.visible).length),
-   armed:isArmed(foe),shoots:canUseWeapon(foe,unitWeapon(foe))};
+   armed:isArmed(foe),shoots:canUseWeapon(ready,unitWeapon(ready))};
  },{right,left});
  async function fire(turn,sides){
   await tap('#end');
@@ -146,23 +147,30 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
  const leftOnly=await loadout(false,true);
  assert.deepEqual(leftOnly.visible,[false,true]);
  assert.deepEqual(leftOnly.plates,[0,intact.plates[1]]);
- assert.ok(!leftOnly.armed&&!leftOnly.shoots);
+ assert.ok(leftOnly.armed&&leftOnly.shoots,'An intact left autocannon can fire after right-arm loss');
+ const leftBurst=await fire(3,['L','L','L']);
+ assert.equal(leftBurst.damage-single.damage,leftBurst.reports);
+ const disarmed=await loadout(false,false);
+ assert.deepEqual(disarmed.visible,[false,false]);
+ assert.deepEqual(disarmed.plates,[0,0]);
+ assert.ok(!disarmed.armed&&!disarmed.shoots,'Losing both arms disables the autocannons');
+ // Keep the disarmed unit on the board for a complete enemy turn.
+ await page.evaluate(()=>{captureRandom=()=>1;});
  await tap('#end');
- await page.waitForFunction(()=>battle?.turn===4&&!battle.busy,null,{timeout:60000});
+ await page.waitForFunction(()=>battle?.turn===5&&!battle.busy,null,{timeout:60000});
  const dispose=await page.evaluate(()=>{
-  const {foe,entry,source,observed}=window.reaverFixture;
+  const {entry,source,observed}=window.reaverFixture;
   const geometries=new Map();
   source.traverse(node=>{
    if(!node.geometry||geometries.has(node.geometry))return;
    geometries.set(node.geometry,0);
    node.geometry.addEventListener('dispose',()=>geometries.set(node.geometry,geometries.get(node.geometry)+1));
   });
-  foe.hp.left=0;IronVowScene.render(clock,.016);
   const disarmed=['R','L'].every(side=>!source.getObjectByName('RECOIL_CARRIAGE_'+side).visible);
   IronVowScene.clear();
   return {disarmed,locked:observed.length===0,removed:!entry.m.cont.parent,
    geometries:geometries.size,disposedOnce:[...geometries.values()].every(count=>count===1),contexts:IronVowRenderer.metrics().contexts};
  });
  assert.ok(dispose.disarmed&&dispose.locked&&dispose.removed&&dispose.geometries>0&&dispose.disposedOnce&&dispose.contexts===1,JSON.stringify(dispose));
- return {planted,dualReports:dual.reports,rightOnlyReports:single.reports,geometries:dispose.geometries};
+ return {planted,dualReports:dual.reports,rightOnlyReports:single.reports,leftOnlyReports:leftBurst.reports,geometries:dispose.geometries};
 };

@@ -79,14 +79,22 @@
   }
   return {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
  }
- function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER}){
+ function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
 const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee);
 // Part whose accuracy a shot uses: charged shots keep the old limb accuracy, every other shot uses the body.
 const shotPart=(a,w,reaction)=>chargedLimbShot(a,w,'body',reaction)?'right':'body';
+function specialtyAim(a,t,w,direct){
+ if(!direct)return 0;
+ let aim=0;
+ if(hasMechSkill(a,LINE_INFANTRY_FRAME)&&battleUnits()?.some(ally=>ally.id!==a.id&&ally.alive&&!ally.kind&&ally.team===a.team&&distance(a,ally)===1))aim+=.05;
+ if(w.burst&&distance(a,t)>=4&&hasMechSkill(a,SALTJACK_FRAME))aim+=.06;
+ if(inCover(a)&&hasMechSkill(a,SALT_WORKS_GARRISON_FRAME))aim+=.08;
+ return aim;
+}
 function mechAim(a,t,w,reaction){
  const state=a.mechState,spot=t.mechState?.spot,direct=!w.melee&&!launchesMissiles(w);
- return (!reaction&&direct&&hasMechSkill(a,0)&&!state?.fired&&!state?.moved ? .06 : 0)+
+ return specialtyAim(a,t,w,direct)+(!reaction&&direct&&hasMechSkill(a,0)&&!state?.fired&&!state?.moved ? .06 : 0)+
   (direct&&a.brace&&hasMechSkill(a,CAIRN_FRAME) ? .04 : 0)+
   (!w.melee&&spot?.team===a.team&&spot.source!==a.id ? .05 : 0)-
   (direct&&state?.disrupted ? .10 : 0)-
@@ -115,15 +123,16 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const limb=limbPart(part),limbPower=limb?(training?.limbPower??0):0;
  const reactionPower=(reaction?(training?.reactionPower??0):0)+
   (reaction&&w.melee&&hasMechSkill(a,6)?.20:0)+
+  (reaction&&!w.melee&&a.brace&&hasMechSkill(a,LINE_ELITE_FRAME)?.10:0)+
   (a.brace&&launchesMissiles(w)&&hasMechSkill(a,7)&&!a.mechState?.behemothUsed?.15:0)+
   (w.scatter&&distance(a,t)===1&&hasMechSkill(a,9)?.15:0)+
-  (w.melee&&hasMechSkill(a,VANGUARD_FRAME)&&a.mechState?.moved>=2?.20:0);
+  (!reaction&&w.melee&&hasMechSkill(a,VANGUARD_FRAME)&&a.mechState?.moved>=2&&!a.mechState.chargeUsed?.20:0);
  const support=(a.team==='ally'?(t.painted?.power??0):0)+(reaction?0:a.order?.power??0);
  const charged=chargedLimbShot(a,w,part,reaction),breachPower=charged?training?.breachPower??.60:0;
  const power=w.damage*(1+.05*(a.level-1))*(a.boost?deadeyePower(training):1)*(1+weaponPower+limbPower+reactionPower+support+breachPower);
  const armor=t.hp.left===0?damagedArmor(t.armor):t.armor;
  const pierce=Math.max(w.pierce??0,w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0,charged?training?.breachPierce??.50:0);
- const bracePiercing=!w.melee&&!launchesMissiles(w)?(hasMechSkill(a,SHOGUN_FRAME)?.20:hasMechSkill(a,3)?.15:0):0;
+ const bracePiercing=!w.melee&&!launchesMissiles(w)?(Math.max(hasMechSkill(a,SHOGUN_FRAME)?.20:0,hasMechSkill(a,3)?(distance(a,t)<=4?.25:.15):0)):0;
  const brace=t.brace?Math.max(0,braceReduction(t.training)-bracePiercing):0;
  const amount=Math.max(5,Math.round((power-armor*(1-pierce))*(1-brace)*(1-shieldProtection(t))));
  return w===FREE_HAND_COUNTER?Math.min(amount,10):amount;
@@ -214,63 +223,183 @@ function reactionWeapon(defender,attacker){
 }
  return {reactionStatus,reactionWeapon};
  }
- function createEnemyTurn({getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,targetParts,canUseWeapon,attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,trySurrender=()=>false,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME}){
-function enemyAttackWeapon(u,t,primary){
- const battle=getBattle();
- if(u.frame===ASHIGARU_FRAME)return scoutWeapon(u,t);
- const range=distance(u,t),strike=range===1?meleeWeapon(u):null;
- const candidates=u.frame===BULWARK_FRAME&&battle.turn%2?[primary,strike]:[strike,primary,shoulderWeapon(u)];
- return candidates.find(w=>w&&range<=combatRange(u,t,w)&&(u.kind?u.ap>=w.ap:canUseWeapon(u,w))&&!attackObstruction(u,t,w)&&!(launchesMissiles(w)&&hasMechSkill(u,CITADEL_FRAME)&&u.mechState?.lock?.turn===battle.turn));
-}
-async function runEnemyTurn(){
- const battle=getBattle();
- const enemies=battle.units.filter(u=>u.team==='enemy'&&u.alive);
- enemies.forEach(u=>{u.ap=ROUND_AP-(u.blackout?.ap??0);u.brace=false;resetMovement(u)});renderBattle();
- for(const enemy of enemies){
-  const allies=battle.units.filter(u=>u.team==='ally'&&u.alive);
-  if(!allies.length)break;
-  if(trySurrender(enemy,allies)){if(checkEnd())return true;continue;}
-  const primary=unitWeapon(enemy);
-  allies.sort((a,b)=>distance(enemy,a)-distance(enemy,b));
-  let target=allies[0];
-  const vanguard=enemy.frame===VANGUARD_FRAME,bulwark=enemy.frame===BULWARK_FRAME,scout=enemy.frame===ASHIGARU_FRAME;
-  const strike=meleeWeapon(enemy);
-  const chase=(!workingWeapon(enemy,primary)||vanguard||enemy.frame===AERO_FRAME||scout&&enemy.hp.right<=0)&&canUseWeapon(enemy,strike)?strike:workingWeapon(enemy,primary)?primary:shoulderWeapon(enemy)??primary;
-  const chaseRange=chase.range;
-  if(attackObstruction(enemy,target,chase)==='RIDGE BLOCK')target=allies.find(ally=>enemyAttackWeapon(enemy,ally,primary))??target;
-  const blocked=attackObstruction(enemy,target,chase)==='RIDGE BLOCK'&&!enemyAttackWeapon(enemy,target,primary);
-  const alert=vanguard||bulwark||scout||battle.legacy||distance(enemy,target)<=(enemy.kind==='helicopter'?11:12)||targetParts(enemy).some(p=>enemy.hp[p]<enemy.max[p]);
-  if(!alert)continue;
-  if(!enemy.blackout?.hold&&(distance(enemy,target)>chaseRange||blocked)&&(movementLimit(enemy)>0||canJumpjet(enemy))){
-   const options=[...paths(enemy)].map(([key,cost])=>{
+ function createEnemyTurn({
+  getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
+  attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,
+  useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,
+  trySurrender=()=>false,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
+  doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,freeMovement=movementLimit,extraMoveAP=1,jumpjetAP=2,
+  braceCost=()=>2,braceUnit=u=>{u.brace=true},startAction=()=>{},barrageTarget=()=>null,
+  inCover=()=>false,highGroundAim=()=>0,reactionWeapon=()=>null,
+  forecast=(_,t,w)=>({part:'body',damage:w.damage??10})
+ }){
+  const weapons=(u,primary=unitWeapon(u))=>[...new Set([primary,meleeWeapon(u),shoulderWeapon(u)])].filter(w=>w&&(u.kind||workingWeapon(u,w)));
+  const paid=(u,w)=>u.kind?w.ap:paidAttackAP(u,w);
+  const inReach=(u,t,w)=>distance(u,t)<=combatRange(u,t,w)&&!attackObstruction(u,t,w);
+  function candidates(u,t,primary){
+   const turn=getBattle().turn;
+   if(u.frame===ASHIGARU_FRAME){
+    const w=scoutWeapon(u,t);
+    return w?[w]:[];
+   }
+   return weapons(u,primary).filter(w=>{
+    if(!inReach(u,t,w)||(u.kind?u.ap<w.ap:!canUseWeapon(u,w)))return false;
+    if(!launchesMissiles(w)||!hasMechSkill(u,CITADEL_FRAME))return true;
+    if(u.mechState?.lock?.turn===turn)return false;
+    const marked=barrageTarget(u);
+    return !marked||marked===t||!inReach(u,marked,w);
+   });
+  }
+  function shotValue(u,t,w){
+   const {part,damage}=forecast(u,t,w);
+   const hp=t.hp?.[part]??100,threat=weapons(t).length>0;
+   // Fire can land on any live part. Prefer exposed, damaged targets without treating a finish as guaranteed.
+   const exposed=t.kind||part==='left'?damage:damage*.55;
+   const finish=hp>0?Math.min(1,exposed/hp):0;
+   const counter=reactionWeapon(t,u);
+   const response=counter?forecast(t,u,counter,true).damage:0;
+   const bodyRisk=u.hp?.body>0&&response>=u.hp.body*.65?.55:.27;
+   const count=u.kind?1:Math.max(1,Math.floor(u.ap/Math.max(1,paid(u,w))));
+   const marking=launchesMissiles(w)&&hasMechSkill(u,CITADEL_FRAME)&&barrageTarget(u)!==t;
+   const closeStrike=w.melee&&doctrine(u)?.[1]==='push'?10:0;
+   const preference=u.frame===BULWARK_FRAME&&w.melee&&((getBattle().turn%2===1)===(w===unitWeapon(u)))?5:0;
+   return (damage*(marking?.64:1)+4+(threat?5:0)+13*finish+preference+closeStrike)*(1+.55*(count-1))-response*bodyRisk;
+  }
+  function bestAttack(u,opponents,primary){
+   let best=null;
+   for(const t of opponents)for(const w of candidates(u,t,primary)){
+    const value=shotValue(u,t,w);
+    if(!best||value>best.value)best={target:t,weapon:w,value};
+   }
+   return best;
+  }
+  function enemyAttackWeapon(u,t,primary){return bestAttack(u,[t],primary)?.weapon;}
+  function positionValue(u,opponents,friends,role){
+   const [preferred,style]=role;
+   const armed=weapons(u),near=Math.min(...opponents.map(t=>distance(u,t)));
+   const weaponReach=Math.max(1,...armed.map(w=>w.range));
+   const hasStrike=armed.some(w=>w.melee),hasRanged=armed.some(w=>!w.melee);
+   const reach=!hasRanged?1:preferred===1&&!hasStrike?Math.min(4,weaponReach):Math.min(preferred,weaponReach);
+   const shot=bestAttack(u,opponents);
+   if(style==='patrol')return {shot,value:(shot?40:0)-near*8};
+   const approach=Math.min(...opponents.flatMap(t=>armed.map(w=>{
+    const obstruction=attackObstruction(u,t,w);
+    if(obstruction==='AIRBORNE')return Infinity;
+    return Math.max(0,distance(u,t)-Math.min(reach,combatRange(u,t,w)))+(obstruction==='RIDGE BLOCK'?2:0);
+   })));
+   const spacing=style==='push'?9:style==='mobile'?3:2;
+   const cover=inCover(u)?(style==='screen'||style==='anchor'?7:3):0;
+   const support=style==='escort'&&friends.some(friend=>!friend.kind&&distance(friend,u)===1)?7:0;
+   const height=style==='high'?Math.max(0,...opponents.map(t=>armed[0]?highGroundAim(u,t,armed[0])*70:0)):0;
+   const safe=style==='screen'||style==='mobile'?Math.max(0,reach-near)*2:0;
+   const value=shot?32+shot.value:-8*approach;
+   return {shot,value:value-spacing*Math.abs(reach-near)+cover+support+height-safe};
+  }
+  function bestPosition(u,opponents,friends,role){
+   const armed=weapons(u);
+   opponents=opponents.filter(t=>armed.some(w=>attackObstruction(u,t,w)!=='AIRBORNE'));
+   if(!opponents.length)return {cost:0};
+   let best={...positionValue(u,opponents,friends,role),x:u.x,z:u.z,cost:0};
+   const [,style]=role;
+   const currentShot=best.shot,front=Math.min(...opponents.map(t=>distance(u,t)));
+   function consider(x,z,cost,ap,jet=false){
+    if(u.ap<ap)return;
+    const moved=distance(u,{x,z});
+    const next={...u,x,z,ap:u.ap-ap,mechState:{...u.mechState,moved:(u.mechState?.moved??0)+moved}};
+    const result=positionValue(next,opponents,friends,role);
+    if(currentShot){
+     const pressured=opponents.some(t=>distance(u,t)<=2);
+     const gainsHeight=style==='high'&&result.shot&&
+      highGroundAim(next,result.shot.target,result.shot.weapon)>highGroundAim(u,currentShot.target,currentShot.weapon);
+     const reposition=style==='push'&&!currentShot.weapon.melee||style==='mobile'||(style==='screen'&&pressured)||gainsHeight;
+     if(!reposition)return;
+    }
+    const target=result.shot?.target,scout=u.frame===ASHIGARU_FRAME&&u.hp.right>0;
+    // Ground assault units commit to the front line instead of running past it for a softer target.
+    const bypass=style==='push'&&target?Math.max(0,distance(u,target)-front)*12:0;
+    const originRange=target?distance(u,target):0,range=target?distance(next,target):0;
+    const overextend=scout&&originRange>3?Math.max(0,3-range)*25:0;
+    const leaveKnife=scout&&originRange===1&&range>1&&armed.some(w=>w.melee)?14:0;
+    const value=result.value-cost*.75-ap*2-overextend-leaveKnife-bypass;
+    if(value>best.value)best={...result,value,x,z,cost,jet};
+   }
+   if(movementLimit(u)>0)for(const [key,cost] of paths(u)){
+    if(cost===0)continue;
     const [x,z]=key.split(',').map(Number);
-    const d=distance(target,{x,z});
-    return{x,z,cost,d,clear:blocked&&d<=chaseRange&&!attackObstruction({...enemy,x,z},target,chase)};
-   }).sort((a,b)=>Number(b.clear)-Number(a.clear)||(scout&&enemy.hp.right>0?Math.abs(a.d-3)-Math.abs(b.d-3)||a.cost-b.cost:a.d-b.d||a.cost-b.cost));
-   const next=options[0];
-   const jet=next?.d>chaseRange?jumpjetDestination(enemy,target):null;
-   if(jet&&jet.d<next.d)await useJumpjet(enemy,jet.x,jet.z);
-   else if(next&&(next.clear||next.d<distance(enemy,target)))await moveUnit(enemy,next.x,next.z,next.cost);
+    consider(x,z,cost,cost>freeMovement(u)?extraMoveAP:0);
+   }
+   if((!best.shot||role[1]==='push'&&!best.shot.weapon.melee)&&canJumpjet(u))for(const t of opponents){
+    const landing=jumpjetDestination(u,t);
+    if(landing)consider(landing.x,landing.z,1,jumpjetAP,true);
+   }
+   return best;
   }
-  while(enemy.alive&&target.alive){
-   const w=enemyAttackWeapon(enemy,target,primary);
-   if(!w)break;
-   await engage(enemy,target,'body',w);renderBattle();
-   if(checkEnd())return true;
-   if(enemy.kind)break;
+  function braceIfUseful(u,opponents,attack){
+   if(u.kind||u.brace||u.ap<braceCost(u))return;
+   const cost=braceCost(u);
+   if(attack){
+    const w=attack.weapon,ap=paid(u,w);
+    const anchor=hasMechSkill(u,7)&&launchesMissiles(w)||hasMechSkill(u,8);
+    if(!anchor||Math.floor((u.ap-cost)/ap)!==Math.floor(u.ap/ap))return;
+   }else if(doctrine(u)?.[1]!=='anchor'||!opponents.some(t=>weapons(t).some(w=>inReach(t,u,w))))return;
+   u.ap-=cost;startAction(u);braceUnit(u);addLog(u.name+' braces.');
   }
-  if(!isArmed(enemy))addLog(enemy.name+(bulwark||scout||enemy.frame===AERO_FRAME?' cannot attack: both weapon arms destroyed.':' cannot fire: weapon arm destroyed.'));
- }
- return false;
-}
- return {enemyAttackWeapon,runEnemyTurn};
+  async function runEnemyTurn(){
+   const battle=getBattle();
+   const enemies=battle.units.filter(u=>u.team==='enemy'&&u.alive);
+   // The solo introductory contract needs room for a first pilot to learn movement and cover.
+   const soloPatrol=battle.contract?.id==='picket'&&battle.slots?.length===1;
+   const opponents=()=>battle.units.filter(u=>u.team==='ally'&&u.alive);
+   for(const u of enemies){u.ap=ROUND_AP-(u.blackout?.ap??0);u.brace=false;resetMovement(u);}
+   renderBattle();
+   for(const enemy of enemies){
+    if(!enemy.alive)continue;
+    let allies=opponents();
+    if(!allies.length)break;
+    if(trySurrender(enemy,allies)){if(checkEnd())return true;continue;}
+    const arms=weapons(enemy);
+    const patrol=enemy.frame===VANGUARD_FRAME||enemy.frame===BULWARK_FRAME||enemy.frame===ASHIGARU_FRAME;
+    const detection=soloPatrol?12:Math.max(patrol?8:5,...arms.map(w=>w.range+Number(!enemy.kind)));
+    const active=battle.legacy||
+     allies.some(t=>distance(enemy,t)<=detection)||
+     Object.keys(enemy.hp).some(part=>enemy.hp[part]<enemy.max?.[part]);
+    if(!active)continue;
+    if(!isArmed(enemy)){addLog(enemy.name+' cannot attack: weapons disabled.');continue;}
+    const role=soloPatrol?[unitWeapon(enemy)?.range??3,'patrol']:doctrine(enemy)??[unitWeapon(enemy)?.range??3,'hold'];
+    const friends=enemies.filter(u=>u!==enemy&&u.alive);
+    if(!enemy.blackout?.hold&&!(soloPatrol&&bestAttack(enemy,allies))){
+     const position=bestPosition(enemy,allies,friends,role);
+     if(position.jet)await useJumpjet(enemy,position.x,position.z);
+     else if(position.cost)await moveUnit(enemy,position.x,position.z,position.cost);
+    }
+    let choice=bestAttack(enemy,allies);
+    if(!soloPatrol)braceIfUseful(enemy,allies,choice);
+    while(enemy.alive&&choice){
+     const before=enemy.ap;
+     await engage(enemy,choice.target,'body',choice.weapon);renderBattle();
+     if(checkEnd())return true;
+     if(enemy.kind||enemy.ap>=before)break;
+     allies=opponents();
+     choice=bestAttack(enemy,allies);
+    }
+    if(!enemy.alive)continue;
+    if(enemy.mechState?.valkyrieStep&&!enemy.blackout?.hold){
+     const position=bestPosition(enemy,allies,friends,role);
+     if(position.cost&&!position.jet)await moveUnit(enemy,position.x,position.z,position.cost);
+    }
+    if(!soloPatrol)braceIfUseful(enemy,allies,null);
+   }
+   renderBattle();
+   return false;
+  }
+  return {enemyAttackWeapon,runEnemyTurn};
  }
  // Commands own gameplay mutations. The host supplies presentation, persistence and the current board.
  function createCombatTransactions({
   getBattle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
   attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
   beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
-  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,roundAP,resetMovement,highGroundAim
+  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
  }){
   function barrageRestriction(attacker,defender,w){
    if(!launchesMissiles(w)||!hasMechSkill(attacker,CITADEL_FRAME))return null;
@@ -333,6 +462,7 @@ async function runEnemyTurn(){
    return {paid,charged};
   }
   function recordVolley(a,t,w,reaction,guard){
+   if(!reaction&&w.melee&&hasMechSkill(a,VANGUARD_FRAME)&&a.mechState?.moved>=2)a.mechState.chargeUsed=true;
    if(!reaction&&!w.melee&&a.mechSkills){
     const state=mechState(a);
     if(!launchesMissiles(w))state.fired=true;

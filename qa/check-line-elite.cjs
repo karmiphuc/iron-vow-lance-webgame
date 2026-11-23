@@ -18,6 +18,13 @@ const simulate=require('./sim-harness.cjs');
  const foe=run('battle.units[1].frame');
  assert.equal(foe,frame);
  await run('endTurn()');
+ assert.equal(run('battle.log.some(line=>line.startsWith("LINE INFANTRY ELITE 1 → WARDEN"))'),false,
+  'an unprovoked sentry stays at its post beyond its detection range');
+ run(`{
+  const enemy=battle.units[1],target=current();
+  Object.assign(target,{x:enemy.x,z:enemy.z+3,vx:enemy.x,vz:enemy.z+3});
+  battle.cover.clear();
+ }`);
  await run('endTurn()');
  assert.ok(run('battle.log.some(line=>line.startsWith("LINE INFANTRY ELITE 1 → WARDEN"))'));
  const resumed=simulate({...options,storage:new Map(sim.storage)});

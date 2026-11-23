@@ -486,6 +486,12 @@ const profiles={
   },
   "style": "knife"
  },
+ "salt-mg": {
+  "archetype": "rifle",
+  "beats": Array.from({length:12},(_,i)=>i*.082),
+  "asset": "salt-mg",
+  "source": "Workshop"
+ },
  "vesper-shoulder": {
   "archetype": "missile",
   "beats": [

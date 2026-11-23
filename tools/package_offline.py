@@ -21,6 +21,7 @@ assets = {
 
 for asset in (
     "rig-bench/weapons.glb",
+    "rig-bench/salt-mg.glb",
     "rig-bench/expansion-weapons.glb",
     "rig-bench/shields.glb",
     *(f"rig-bench/prototypes/{name}.glb" for name in ("gatecrasher", "cicada", "hellbreaker", "bulwark", "scout", "shogun")),
@@ -57,6 +58,9 @@ def script(path):
     content = (dist / path).read_text().replace("</script", "<\\/script")
     if path == "game.js":
         for link in ("rig-bench/index.html", "foundry/studio.html"):
+            content = content.replace(f'href="{link}"', f'href="{site}{link}"')
+    if path == "rig-bench/workbench.js":
+        for link in ("rig-bench/giza.html", "rig-bench/husky.html"):
             content = content.replace(f'href="{link}"', f'href="{site}{link}"')
     return f"<script>{content}</script>"
 

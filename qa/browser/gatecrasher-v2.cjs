@@ -264,7 +264,9 @@ module.exports=async function checkGatecrasherV2({page,origin,mobile,out,frame=3
  }
  await destroySide(page,cleaver,'left','cleaver');
  await destroySide(page,cleaver,'right',null);
- if(frame!==3)await observeLaunches(page,cleaver,'missile','missile');
+ if(frame!==3)await assert.rejects(page.evaluate(({actor,target})=>
+  __ironVow.attack(actor,target,'body','missile'),cleaver),/Illegal test attack/,
+ 'Right arm destruction rejects a Vesper attack in the live sortie');
 
  const lifecycle=await page.evaluate(actor=>{
   const entry=IronVowScene.models.get(actor)?.entry,cont=entry?.m?.cont;

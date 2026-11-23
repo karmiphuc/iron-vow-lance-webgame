@@ -15,7 +15,7 @@ function countTriangles(root) {
 
 async function checkKitBudgets() {
   const dist = join(__dirname, '../dist');
-  const sandbox = { atob, console, document: { createElement: () => createCanvas(32, 32) } };
+  const sandbox = { atob, console, navigator: { userAgent: "Node" }, Blob, URL, fetch, Request, Headers, TextDecoder, createImageBitmap: async () => ({width:1,height:1}), document: { createElement: () => createCanvas(32, 32) } };
   sandbox.window = sandbox.self = sandbox;
   vm.createContext(sandbox);
   for (const file of [
@@ -25,7 +25,7 @@ async function checkKitBudgets() {
     vm.runInContext(readFileSync(join(dist, file), 'utf8'), sandbox, { filename: file });
   }
   const { VowChassis, IronVowProductionArsenal: arsenal } = sandbox;
-  const buffers = ['weapons', 'expansion-weapons', 'shields'].map(name => {
+  const buffers = ['weapons', 'expansion-weapons', 'shields', 'salt-mg'].map(name => {
     const data = readFileSync(join(dist, 'rig-bench', name + '.glb'));
     return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
   });

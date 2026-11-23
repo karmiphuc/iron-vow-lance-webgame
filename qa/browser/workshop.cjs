@@ -77,13 +77,24 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
  });
  await ready(3);
  const gear=()=>page.evaluate(()=>{
-  const e=IronVowWorkshop.snapshot().entry;
-  return [e.primary?.id,e.secondary?.id,e.shoulderWeapon?.id,e.shoulderWeapon?.mount.visible,e.shield?.mount.visible??false];
+  const {primary,secondary,shoulderWeapon,shield}=IronVowWorkshop.snapshot().entry;
+  return {
+   primary:primary?.id,
+   melee:secondary?.id,
+   shoulderChoice:save.units[selected].shoulder,
+   shoulderAdapter:shoulderWeapon?.id,
+   shoulderFitted:Boolean(shoulderWeapon?.mount.visible&&shoulderWeapon.mount.parent===shoulderWeapon.carrier),
+   shield:Boolean(shield?.mount.visible)
+  };
  });
- assert.deepEqual(await gear(),['morrow','cleaver','vesper',true,false]);
- await page.evaluate(()=>{equipWeapon('citadel-shield');render();});
+ const vesperLoadout={primary:'morrow',shoulderChoice:'vesper-shoulder',shoulderAdapter:'missile',shoulderFitted:true};
+ assert.deepEqual(await gear(),{...vesperLoadout,melee:'cleaver',shield:false});
+ await tap('#remove-melee');
+ await tap('[data-refit-choice="citadel-shield"]');
+ await tap('[data-equip="citadel-shield"]');
  await ready(3);
- assert.deepEqual(await gear(),['morrow',undefined,'vesper',true,true]);
+ const shieldLoadout={...vesperLoadout,melee:undefined,shield:true};
+ assert.deepEqual(await gear(),shieldLoadout);
  for(let tier=1;tier<=3;tier++){
   await tap('[data-upgrade="0"]');await ready(3);
   const fitted=await kits();
@@ -122,7 +133,7 @@ module.exports=async function checkWorkshopTurntable({context,page,mobile,origin
  await page.waitForFunction(generation=>!IronVowRenderer.lost&&IronVowRenderer.generation===generation+1,source);
  await ready(3);
  assert.equal(await page.evaluate(()=>window.disposedWorkshop),1,'Restoration releases the previous authored scope');
- assert.deepEqual(await gear(),['morrow',undefined,'vesper',true,true]);
+ assert.deepEqual(await gear(),shieldLoadout);
  const save=await page.evaluate(()=>JSON.stringify(window.__ironVow.career?.()??window.localStorage.getItem('iron-vow-v1')));
  await navigate(page,'contracts',tap,mobile);
  assert.equal(await page.evaluate(()=>IronVowWorkshop.snapshot()),null);

@@ -8,6 +8,7 @@ const V3=R.V3,Q=()=>new T.Quaternion();
 const profiles=new Map(),assets={battle:new Map(),preview:new Map(),portrait:new Map(),hangar:new Map(),workshop:new Map(),bench:new Map()};
 const profileKey=u=>u.lionTrial?'lion':u.frame;
 const applies=u=>!u.kind&&profiles.has(profileKey(u));
+const assetKey=u=>profiles.get(profileKey(u))?.assetPath;
 
 function releaseStock(source){
  const geometry=new Set(),materials=new Set(),textures=new Set();
@@ -21,13 +22,14 @@ function releaseStock(source){
 }
 function load(units,scope='battle'){
  const cache=assets[scope],loader=new T.GLTFLoader().setMeshoptDecoder(root.MeshoptDecoder);
- return Promise.all([...new Set(units.filter(applies).map(profileKey))].map(frame=>{
-  const cached=cache.get(frame);
+ const wanted=new Map(units.filter(applies).map(unit=>[assetKey(unit),profiles.get(profileKey(unit))]));
+ return Promise.all([...wanted.values()].map(({id,assetPath})=>{
+  const cached=cache.get(assetPath);
   if(cached)return cached.request;
-  const {id,assetPath}=profiles.get(frame),asset={status:'loading'};
-  cache.set(frame,asset);
+  const asset={status:'loading'};
+  cache.set(assetPath,asset);
   asset.request=loader.loadAsync(root.IRON_VOW_INLINE_ASSETS?.[assetPath]||assetPath).then(({scene,parser,animations})=>{
-   if(cache.get(frame)!==asset){releaseStock(scene);return false;}
+   if(cache.get(assetPath)!==asset){releaseStock(scene);return false;}
    // The vendored renderer samples all color maps through the primary attribute.
    scene.traverse(mesh=>{
     if(!mesh.isMesh)return;
@@ -40,7 +42,7 @@ function load(units,scope='battle'){
    asset.scene=scene;asset.animations=animations;asset.status='ready';
    return true;
   }).catch(error=>{
-   if(cache.get(frame)!==asset)return false;
+   if(cache.get(assetPath)!==asset)return false;
    asset.status='error';console.warn(id+' rig-v2 load failed',error);
    return false;
   });
@@ -53,7 +55,7 @@ function clear(scope='battle'){
  cache.clear();
 }
 function retain(units,scope){
- const cache=assets[scope],wanted=new Set(units.filter(applies).map(profileKey));
+ const cache=assets[scope],wanted=new Set(units.filter(applies).map(assetKey));
  for(const [key,asset] of cache)if(!wanted.has(key)){
   cache.delete(key);if(asset.scene)releaseStock(asset.scene);
  }
@@ -135,9 +137,10 @@ async function loadClipArchive(file){
 }
 
 function build(unit,scope='battle'){
- const key=profileKey(unit),asset=assets[scope].get(key);
+ const key=profileKey(unit),asset=assets[scope].get(assetKey(unit));
  if(!asset?.scene)return null;
  const profile=profiles.get(key);
+ if(profile.build)return profile.build(unit,asset.scene.clone(true),asset.animations,workshopMounts);
  const {source,skeletons}=cloneSkin(asset.scene);
  const scrubber=scope==='bench'&&asset.animations.length?createScrubber(source,asset.animations):null;
  const body=new T.Group();
@@ -319,7 +322,7 @@ function build(unit,scope='battle'){
 }
 
 function register(frame,profile){profiles.set(frame,profile);}
-root.IronVowRigV2={applies,register,load,retain,build,clear,loadClipArchive,status:(unit,scope='battle')=>assets[scope].get(profileKey(unit))?.status};
+root.IronVowRigV2={applies,register,load,retain,build,clear,loadClipArchive,status:(unit,scope='battle')=>assets[scope].get(assetKey(unit))?.status};
 
 function breachSetup({bone,driver,marker,bounds,rig:{arms}}){
   const slide=driver('Cannon Slide',arms.R.wr),slideRest=slide.position.clone();

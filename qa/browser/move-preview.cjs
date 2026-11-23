@@ -29,8 +29,8 @@ module.exports=async function checkMovePreview({page,mobile,origin,tap}){
  }
  assert.equal(await preview.locator('.move-contact').count(),3,'only contacts within range appear');
  const projectedHit=await preview.locator('[data-shot="high"] .move-hit').innerText();
- assert.equal(projectedHit,'90%','the projected rifle chance is rolled against the body from the higher tile');
- assert.equal(await preview.locator('[data-shot="clear"] .move-hit').innerText(),'82%','Aero dodge is included in the projected chance');
+ assert.equal(projectedHit,'92%','the high-ground body shot is capped by the target’s 8% dodge');
+ assert.equal(await preview.locator('[data-shot="clear"] .move-hit').innerText(),'76%','the clear three-tile rifle shot includes range falloff and Aero’s 15% dodge');
  assert.equal(await preview.locator('[data-shot="blocked"] .move-hit').innerText(),'—');
  assert.equal(await page.locator(mobile?'#target-toggle small':'.shot-readout').isVisible(),false,'the current-position shot readout yields to the preview');
  assert.deepEqual(await page.evaluate(()=>[current().x,current().z,current().ap]),[8,10,fixture.ap]);

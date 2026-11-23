@@ -24,10 +24,10 @@ window.IronVowWorld=(()=>{
   return n>>>0;
  }
  const period=day=>Math.floor((day-1)/4)*4+1;
- function offer(seed,port,postedDay,slot){
+ function offer(seed,port,postedDay,slot,featuredTemplate){
   const h=hash(seed,port,postedDay,slot);
   const base=port==='picket'&&postedDay===1?0:hash(seed,port,postedDay,'template')%4;
-  return {id:`offer:${port}:${postedDay}:${slot}`,templateIndex:(base+slot)%4,port,postedDay,expiryDay:Math.min(Number.MAX_SAFE_INTEGER,postedDay+3),
+  return {id:`offer:${port}:${postedDay}:${slot}`,templateIndex:featuredTemplate??(base+slot)%4,port,postedDay,expiryDay:Math.min(Number.MAX_SAFE_INTEGER,postedDay+3),
    payPercent:90+(h>>>4)%21,intel:{minMechs:1+(h>>>9)%2,maxMechs:3+(h>>>11)%2}};
  }
  function pool(seed,day){
@@ -35,6 +35,8 @@ window.IronVowWorld=(()=>{
   const counts=ids.map(port=>port==='picket'&&postedDay===1?1+hash(seed,port,postedDay,'count')%3:hash(seed,port,postedDay,'count')%4);
   if(counts.every(count=>count===0))counts[0]=1;
   ids.forEach((port,i)=>{for(let slot=0;slot<counts[i];slot++)result.push(offer(seed,port,postedDay,slot));});
+  // Salt Works reserves Vanta's fourth slot. Existing offer IDs stay stable across upgrades.
+  result.push(offer(seed,'corridor',postedDay,3,4));
   return result;
  }
  function validWorld(w){
@@ -90,7 +92,7 @@ window.IronVowWorld=(()=>{
  const MARKET={
   picket:{faction:'Karst Wardens',frames:[0,1,2],weapons:['rifle','sidewinder','trident','cleaver']},
   relay:{faction:'Relay Union',frames:[1,5,9],weapons:['watchman','rail','parallax','tonfa']},
-  corridor:{faction:'Vanta Combine',frames:[6,7,8],weapons:['rampart','forge','piledriver','pike']},
+  corridor:{faction:'Vanta Combine',frames:[6,7,8,22],weapons:['rampart','forge','piledriver','pike','salt-mg']},
   frontier:{faction:'Halcyon Guard',frames:[5,7,10],weapons:['cerberus','obelisk','anchor-hammer','rivet']},
   ridge:{faction:'Ridge Freeholders',frames:[0,3,8],weapons:['shotgun','breaker','falcon','blade']},
   haven:{faction:'Haven Salvors',frames:[2,4,9],weapons:['missile','hailstorm','ember','hatchet']}

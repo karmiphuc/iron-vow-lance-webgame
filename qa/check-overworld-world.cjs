@@ -16,13 +16,17 @@ for(let seed=0;seed<100;seed++)assert.equal(W.offersAt(W.createWorld(seed,1),'pi
 for(let seed=0;seed<40;seed++)for(let day=1;day<=81;day+=4){
  const state=W.createWorld(seed,day),all=W.PORTS.flatMap(port=>{
   const local=W.offersAt(state,port.id);
-  assert(local.length<=3);
+  const featured=local.filter(offer=>offer.templateIndex===4);
+  assert.equal(featured.length,Number(port.id==='corridor'));
+  assert(local.length-featured.length<=3);
   assert.equal(new Set(local.map(o=>o.templateIndex)).size,local.length);
   return local;
  });
  assert(all.length>=1);
 }
-for(const port of W.PORTS)assert(W.offersAt(world,port.id).length<=3);
+const saltWorks=W.offersAt(world,'corridor').find(offer=>offer.templateIndex===4);
+assert.equal(saltWorks.id,'offer:corridor:1:3');
+assert(!W.offersAt(W.consumeOffer(world,saltWorks.id),'corridor').some(offer=>offer.id===saltWorks.id));
 assert(offers.every(o=>o.templateIndex>=0&&o.templateIndex<4&&o.postedDay===1&&o.expiryDay===4));
 assert(W.offersAt(world,'picket',4).every(o=>o.availableOnArrival));
 assert(W.offersAt(world,'picket',5).every(o=>!o.availableOnArrival));
@@ -68,7 +72,7 @@ for(const day of [1,10,11,Number.MAX_SAFE_INTEGER]){
 }
 assert.notEqual(W.markersAt(world,10)[0].fraction,W.markersAt(world,11)[0].fraction);
 assert.deepEqual(W.portProfile(12345,'ridge'),W.portProfile(12345,'ridge'));
-assert.deepEqual(W.portProfile(12345,'corridor').frames,[6,7,8]);
+assert.deepEqual(W.portProfile(12345,'corridor').frames,[6,7,8,22]);
 assert(W.portProfile(12345,'relay').weapons.includes('watchman'));
 assert.notDeepEqual(W.portProfile(12345,'picket').weapons,W.portProfile(12345,'frontier').weapons);
 const catalog=JSON.parse(require('./sim-harness.cjs')().run('JSON.stringify(WEAPONS.filter(w=>!w.builtIn&&!w.shoulder).map(w=>w.id))'));

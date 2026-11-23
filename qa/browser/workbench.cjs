@@ -10,8 +10,10 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  const catalog=await page.evaluate(()=>WEAPONS.map(({id,builtIn,shoulder,melee})=>({id,builtIn,shoulder,melee})));
  const mounted=new Set();
 
- assert.equal(entries.length,23);
+ assert.equal(entries.length,25);
  assert.ok(entries.some(([id,name])=>id==='21'&&name==='CAIRN'),'Cairn retains its own bench entry');
+ assert.ok(entries.some(([id,name])=>id==='22'&&name==='SALTJACK'));
+ assert.ok(entries.some(([id,name])=>id==='23'&&name==='SALT WORKS GARRISON'));
  const models=[];
  for(const [id,name] of entries){
   await page.evaluate(id=>__bench.selectFrame(id),id);
@@ -20,7 +22,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
   assert.ok(state.metrics.height>1&&state.metrics.feet.every(foot=>Number.isFinite(foot.error)),name);
   models.push(state.model);
  }
- assert.equal(new Set(models).size,23);
+ assert.equal(new Set(models).size,25);
  await page.evaluate(()=>__bench.selectFrame(10));
  await page.waitForFunction(()=>__bench.state.clips.length===6);
  if(out&&!mobile)await require('./save-webp.cjs')(page,join(out,'rig-bench.webp'));
@@ -81,12 +83,21 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
 
  const integrated=[[3,'weapon','morrow'],[4,'weapon','locust'],[4,'melee','pulse-bash'],[11,'melee','breach-gauntlet'],
   [17,'weapon','aegis-cleave'],[17,'melee','aegis-bash'],[18,'weapon','needle-carbine'],[18,'melee','signal-knife'],
-  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder']];
- for(const [frame,slot,id] of integrated){
+  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder','missile'],[22,'weapon','rifle'],[23,'weapon','rifle'],[23,'weapon','salt-mg']];
+ for(const [frame,slot,id,mountId=id] of integrated){
   await page.evaluate(frame=>__bench.selectFrame(frame),frame);
-  if(id==='flechette-scattergun')await page.locator('#bench-primary').selectOption(id);
-  if(slot==='pod')await page.locator('#bench-shoulder').selectOption(id);
-  await page.waitForFunction(({slot,id})=>__bench.state[slot]===(id==='vesper-shoulder'?'vesper':id),{slot,id});
+  if(id==='flechette-scattergun'||id==='salt-mg')await page.locator('#bench-primary').selectOption(id);
+  if(slot==='pod'){
+   const shoulder=page.locator('#bench-shoulder');
+   await shoulder.selectOption(id);
+   assert.equal(await shoulder.inputValue(),id);
+  }
+  try{
+   await page.waitForFunction(({slot,mountId})=>__bench.state[slot]===mountId,{slot,mountId});
+  }catch(error){
+   const actual=await page.evaluate(slot=>__bench.state[slot],slot);
+   throw Error(`Frame ${frame} ${slot} expected mount ${mountId} for ${id}, got ${actual}`,{cause:error});
+  }
   mounted.add(id);
  }
  assert.deepEqual([...mounted].sort(),catalog.map(w=>w.id).sort(),'Every actual catalog weapon mounts');

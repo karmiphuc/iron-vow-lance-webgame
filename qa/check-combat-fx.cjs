@@ -31,7 +31,7 @@ const resources=new Set();for(const node of scene.children.filter(o=>o!==retaine
 const disposed=new Map();for(const resource of resources)resource.addEventListener('dispose',()=>disposed.set(resource,(disposed.get(resource)||0)+1));
 effects.dispose();assert.deepEqual(scene.children,[retained]);for(const resource of resources)assert.equal(disposed.get(resource),1,'Every owned pooled resource is disposed exactly once');
 const catalog=fs.readFileSync(path.join(root,'game.js'),'utf8').split('const WEAPONS=[')[1].split('\n];')[0];
-const ids=[...catalog.matchAll(/\bid:'([^']+)'/g)].map(m=>m[1]);assert.equal(ids.length,34);IronVowWeaponFX.assertCatalog(ids.map(id=>({id})));
+const ids=[...catalog.matchAll(/\bid:'([^']+)'/g)].map(m=>m[1]);assert.equal(ids.length,35);IronVowWeaponFX.assertCatalog(ids.map(id=>({id})));
 for(const id of ids)assert.ok(['rifle','shotgun','missile','rail','blade'].includes(IronVowWeaponFX.get(id).archetype));
 assert.throws(()=>IronVowWeaponFX.get('unmapped-test-weapon'),/Missing 3D weapon profile/);
-console.log('PASS real reference FX pools, directional spray, elevated spark floor, plasma ribbons with final depth bias, single missile arrival, reusable lights, exact owned-resource disposal and all 34 weapon mappings (GPU/action integration pending)');
+console.log('PASS real reference FX pools, directional spray, elevated spark floor, plasma ribbons with final depth bias, single missile arrival, reusable lights, exact owned-resource disposal and all 35 weapon mappings (GPU/action integration pending)');

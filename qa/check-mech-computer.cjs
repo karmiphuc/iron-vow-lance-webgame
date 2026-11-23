@@ -45,6 +45,31 @@ const fixture=require('./fixtures/mech-mastery.json');
  assert.ok(run('validSave(save)'));
  assert.equal(run(`(()=>{const invalid=JSON.parse(JSON.stringify(save));invalid.mechMastery[rook].slots[0]=[1,1];return validSave(invalid)})()`),false);
 
+ assert.ok(run('FRAMES.every((_,id)=>MECH_SIGNATURES[id]?.length===4)'), 'every frame has a signature and a positioning doctrine');
+ run(`createBattle(1,false,false,[0]);enableMechComputers();battle.cover.clear();battle.field={};
+  const trained=current(),victim=battle.units.find(u=>u.team==='enemy');
+  trained.x=4;trained.z=5;victim.x=8;victim.z=5;victim.brace=true;
+  trained.mechSkills=[];const checkRifle=weapon('rifle');
+  const raw=()=>hitChance(trained,victim,'body',checkRifle)/(1-dodgeChance(victim));
+ `);
+ assert.ok(run(`(()=>{const base=raw();trained.mechSkills=[SALTJACK_FRAME];return Math.abs(raw()-base-.06)<1e-9})()`));
+ assert.ok(run(`(()=>{trained.mechSkills=[];const base=raw();battle.cover.add('4,4');
+  trained.mechSkills=[SALT_WORKS_GARRISON_FRAME];return Math.abs(raw()-base-.08)<1e-9})()`));
+ assert.ok(run(`(()=>{trained.mechSkills=[3];const breach=damage(trained,victim,checkRifle);
+  trained.mechSkills=[SHOGUN_FRAME];const siege=damage(trained,victim,checkRifle);
+  victim.x++;const rangedSiege=damage(trained,victim,checkRifle);trained.mechSkills=[3];
+  return breach>siege&&rangedSiege>damage(trained,victim,checkRifle)})()`));
+
+ assert.ok(run(`(()=>{trained.mechSkills=[VANGUARD_FRAME];trained.mechState={moved:2};
+  const ram=weapon('piledriver'),charged=damage(trained,victim,ram);
+  const counter=damage(trained,victim,ram,'body',true);
+  recordVolley(trained,victim,ram,false,false);
+  const following=damage(trained,victim,ram);
+  const saved=validMechState(trained.mechState);
+  resetMovement(trained);
+  return charged>following&&counter===following&&saved&&!trained.mechState.chargeUsed;
+ })()`));
+
  const resumed=simulate({reducedMotion:true,storage:new Map([['iron-vow-career',JSON.stringify(fixture)]])});
  assert.equal(resumed.run('JSON.stringify(captureSortie())'),JSON.stringify(fixture.sortie));
  assert.ok(resumed.run('current().jumpjetUsed&&hasMechSkill(current(),AERO_FRAME)&&hasMechSkill(current(),1)&&hasMechSkill(current(),0)'));

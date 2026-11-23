@@ -2,16 +2,40 @@ const assert=require('node:assert/strict');
 const create=require('./sim-harness.cjs');
 
 (async()=>{
- // Golden result for the production enemy turn (re-recorded 2026-11-17 for per-round hit location). This
- // exercises mech and vehicle attacks, reactions, seeded rolls and round reset.
- const sim=create({seed:42});
- sim.run(`createBattle(0);selected=0;
-  battle.units.forEach((u,i)=>{u.x=3+i;u.z=5;u.vx=u.x;u.vz=u.z;u.heading=defaultHeading(u)});
-  battle.cover=new Set();`);
- await sim.run('endTurn()');
- const actual=JSON.parse(sim.run(`JSON.stringify({turn:battle.turn,phase:battle.phase,
-  units:battle.units.map(u=>({id:u.id,x:u.x,z:u.z,hp:u.hp,ap:u.ap,reacted:u.reacted})),log:battle.log})`));
- assert.deepEqual(actual,{"turn":2,"phase":"player","units":[{"id":"ally0","x":3,"z":5,"hp":{"body":160,"pilot":70,"right":92,"left":92,"legs":110},"ap":8,"reacted":false},{"id":"ally1","x":4,"z":5,"hp":{"body":126,"pilot":55,"right":78,"left":78,"legs":100},"ap":8,"reacted":false},{"id":"ally2","x":5,"z":5,"hp":{"body":114,"pilot":80,"right":78,"left":91,"legs":81},"ap":8,"reacted":false},{"id":"enemy0","x":6,"z":5,"hp":{"body":145,"pilot":70,"right":87,"left":87,"legs":98},"ap":2,"reacted":false},{"id":"enemy1","x":7,"z":5,"hp":{"body":82,"pilot":55,"right":45,"left":45,"legs":72},"ap":3,"reacted":false},{"id":"enemy2","x":8,"z":5,"hp":{"body":64},"ap":4,"reacted":false},{"id":"enemy3","x":9,"z":5,"hp":{"body":43},"ap":4,"reacted":false}],"log":["ASHIGARU 2 · Flechette scattergun → BASILISK / LEGS −5 · LEFT ARM −9 · BODY −12 · WEAPON ARM −2","JAVELIN TANK 3 → BASILISK / WEAPON ARM −20","KITE GUNSHIP 4 → BASILISK / BODY −12","Round 2. Your lance has the initiative."]});
+ // Real opening roster with an identical seed must make identical decisions and rolls.
+ async function opening(){
+  const sim=create({seed:42});
+  sim.run(`createBattle(0);selected=0;globalThis.attacks=[];
+   battle.units.forEach((u,i)=>{u.x=3+i;u.z=5;u.vx=u.x;u.vz=u.z;u.heading=defaultHeading(u)});
+   battle.cover.clear();
+   const original=engage;
+   engage=(u,t,p,w)=>{attacks.push([u.id,t.id,w.id]);return original(u,t,p,w)};
+  `);
+  await sim.run('endTurn()');
+  return JSON.parse(sim.run(`JSON.stringify({turn:battle.turn,phase:battle.phase,attacks,
+   units:battle.units.map(({id,x,z,hp,ap})=>({id,x,z,hp,ap})),log:battle.log})`));
+ }
+ const actual=await opening();
+ assert.deepEqual(actual,await opening());
+ assert.equal(actual.turn,2);
+ assert.equal(actual.phase,'player');
+ for(const vehicle of ['enemy2','enemy3'])assert.equal(actual.attacks.filter(([id])=>id===vehicle).length,1);
+ assert.ok(actual.attacks.some(([id])=>id==='enemy0'||id==='enemy1'));
+ assert.ok(actual.units.filter(u=>u.id.startsWith('ally')).every(u=>u.ap===8));
+
+ // A wounded, exposed target can beat the nearest shielded target. Replan after the first target falls.
+ const tactics=create({random:()=>0});
+ tactics.run(`createBattle(0);captureRandom=()=>1;globalThis.targets=[];battle.cover.clear();battle.field={};
+  const [near,weak]=battle.units.filter(u=>u.team==='ally'),gun=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+  battle.units=[near,weak,gun];Object.assign(gun,{x:6,z:6});
+  Object.assign(near,{x:7,z:6,shield:'citadel-shield',reacted:true});
+  Object.assign(weak,{x:9,z:6,reacted:true});weak.hp.body=6;
+  gun.blackout={hold:true};gun.weapon='rifle';
+  engage=async(u,t,p,w)=>{targets.push(t.id);u.ap-=w.ap;t.alive=false};
+ `);
+ assert.equal(await tactics.run('runEnemyTurn()'),true);
+ assert.equal(tactics.run('targets.join(",")'),'ally1,ally0');
+
  // An ending during an enemy attack must stop the loop before the next actor.
  const sim2=create({random:()=>0});
  sim2.run(`createBattle(0);selected=0;globalThis.calls=0;
@@ -24,8 +48,8 @@ const create=require('./sim-harness.cjs');
  const context={window:{}};vm.createContext(context);
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../dist/combat-simulation.js'),'utf8'),context);
  const scout={frame:5,team:'enemy',alive:true,x:0,z:0,hp:{right:1},ap:0};
- const ally={team:'ally',alive:true,x:1,z:0};
- const blade={id:'scout'};
+ const ally={team:'ally',alive:true,x:1,z:0,hp:{body:5}};
+ const blade={id:'scout',ap:3,range:1};
  const isolated=context.window.IRON_VOW_SIM.createEnemyTurn({getBattle:()=>({units:[scout,ally],turn:1}),
   ROUND_AP:8,resetMovement:()=>{},renderBattle:()=>{},unitWeapon:()=>({range:1}),
   distance:(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.z-b.z),meleeWeapon:()=>blade,
@@ -38,5 +62,5 @@ const create=require('./sim-harness.cjs');
  assert.equal(await isolated.runEnemyTurn(),true);
  scout.frame=0;scout.max={right:1};ally.x=20;
  assert.equal(await isolated.runEnemyTurn(),false);
- console.log('PASS shared enemy turn: seeded production baseline, vehicles, reactions and early battle end');
+ console.log('PASS shared enemy turn: deterministic real opening, vehicle limits, target priority and replan, early battle end');
 })().catch(error=>{console.error(error);process.exitCode=1});

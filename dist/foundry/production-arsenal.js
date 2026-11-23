@@ -7,12 +7,12 @@ const names={rifle:'kestrel',shotgun:'breacher',missile:'vesper',rail:'longbow',
  hailstorm:'hailstorm',rampart:'rampart',breaker:'breaker',cleaver:'cleaver',piledriver:'piledriver',blade:'cleaver'};
 // GLB node names are independent of the temporary 2D weapon-art metadata.
 const expansion=new Set(['sidewinder','trident','forge','ember','watchman','falcon',
- 'cerberus','obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax']);
+ 'cerberus','obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax','salt-mg']);
 const rigs=window.IRON_VOW_EXPANSION_RIG??{};
 const isExpansion=id=>expansion.has(id);
 const assetNodeName=id=>isExpansion(id)?id:Object.hasOwn(names,id)?names[id]:undefined;
 let arsenal;
-function load(source,expansionSource,shieldSource){
+function load(source,expansionSource,shieldSource,saltGunSource){
  if(!arsenal){
   const loader=new T.GLTFLoader();
   const read=source=>typeof source==='string'?loader.loadAsync(source):
@@ -21,7 +21,10 @@ function load(source,expansionSource,shieldSource){
    console.warn('Expanded arsenal GLB failed to load',error);
   }):null,shieldSource?read(shieldSource).catch(error=>{
    console.warn('Shield arsenal GLB failed to load',error);
-  }):null]).then(([{scene},extra,shields])=>{
+  }):null,saltGunSource?read(saltGunSource).catch(error=>{
+   console.warn('Salt Works MG model failed to load',error);
+  }):null]).then(([{scene},extra,shields,saltGun])=>{
+   if(saltGun)scene.add(saltGun.scene);
    if(extra)scene.add(extra.scene);
    if(shields)scene.add(shields.scene);
    scene.traverse(o=>{if(typeof o.userData.name==='string')o.name=o.userData.name});

@@ -25,7 +25,7 @@ const simulate=require('./sim-harness.cjs');
 
  renderWorkshop();
  const listed=new Set();
- for(const [group,count] of Object.entries({assault:8,strike:8,melee:8})){
+ for(const [group,count] of Object.entries({assault:8,strike:9,melee:8})){
   run(`armoryGroup='${group}';render()`);
   const cards=[...html().matchAll(/data-weapon-card="([^"]+)"/g)].map(([,id])=>id);
   assert.equal(cards.length,count);
@@ -34,7 +34,7 @@ const simulate=require('./sim-harness.cjs');
    listed.add(id);
   }
  }
- assert.equal(listed.size,24);
+ assert.equal(listed.size,25);
 
  run("armoryGroup='assault';render()");
  assert.equal(typeof paintPreset.onclick,'function','Preset paint has a bound action');
@@ -89,5 +89,5 @@ const simulate=require('./sim-harness.cjs');
    return !paths(current()).has(key)&&inCover({x:x-1,z});
   })`));
  }
- console.log('PASS: live attack phase timing, 24 classified weapon options, independent saved paint and loadouts, purchases and melee unequip, strike save, attack AP/damage, and three theater rules with cover and pathing.');
+ console.log('PASS: live attack phase timing, 25 classified weapon options, independent saved paint and loadouts, purchases and melee unequip, strike save, attack AP/damage, and three theater rules with cover and pathing.');
 })().catch(error=>{console.error(error);process.exitCode=1});
