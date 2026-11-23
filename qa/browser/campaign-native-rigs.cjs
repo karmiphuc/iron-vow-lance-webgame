@@ -134,9 +134,21 @@ module.exports=async function checkCampaignNativeRigs({page,origin,tap}){
     }
     requestAnimationFrame(frame);
    });
+   let knuckle;
    try{
     if(id===25)await executeTactical(actor,tacticalPlan(actor,{target:foe.id}));
-    else if(id===26)await executeTactical(actor,tacticalPlan(actor,{x:foe.x,z:foe.z}));
+    else if(id===26){
+     await executeTactical(actor,tacticalPlan(actor,{x:foe.x,z:foe.z}));
+     const combat=IronVowScene.combat,landed=combat.landed;
+     combat.landed=function(...args){
+      landed.apply(this,args);
+      if(args[0]!==actor||args[2].id!=='vyzov-knuckle')return;
+      const rig=entry(actor).m.nativeV2,contact=history.at(-1);
+      knuckle={damage:contact.damage,point:contact.point,
+       fist:rig.strikeContact(args[2].id).getWorldPosition(vertex()).toArray()};
+     };
+     try{await shoot(actor,foe,'body');}finally{combat.landed=landed;}
+    }
     else await shoot(actor,foe,'body');
     if(id===25)await new Promise(resolve=>setTimeout(resolve,1150));
    }finally{working=false;}
@@ -151,7 +163,7 @@ module.exports=async function checkCampaignNativeRigs({page,origin,tap}){
     return {height:m.rig.neck.getWorldPosition(vertex()).y,
      chassis:m.campaignRig.chassis.matrixWorld.toArray(),knee:m.rig.legs[0].kn.matrixWorld.toArray()};
    };
-   return {response,attacks,mortarHits:battle.log.filter(text=>text.includes('mortar damage')).length,
+   return {response,attacks,knuckle,mortarHits:battle.log.filter(text=>text.includes('mortar damage')).length,
     returnStow,standing,fall:[age(.44),age(1.1),age(1.92),age(3.7)]};
   },profile.id);
 
@@ -172,6 +184,8 @@ module.exports=async function checkCampaignNativeRigs({page,origin,tap}){
    assert.equal(launch?.tiles.length,5);
    assert.equal(after.attacks.filter(event=>event.type==='mortar-arrival').length,5);
    assert.ok(after.mortarHits>=1&&after.response.some(sample=>sample.mortarKick>.04));
+   assert.ok(after.knuckle?.damage>0,'The built-in Pile Knuckle lands real damage');
+   assert.deepEqual(after.knuckle.point,after.knuckle.fist,'The Pile Knuckle impact comes from the authored fist');
   }
   for(const launch of launches){
    assert.ok(launch.mounted&&launch.aimError<.015,'The rendered bore tracks the rule contact');
