@@ -138,8 +138,14 @@ function livePose(m,I,dt,t,state){
   spring(S[name],horizontal?56:72,horizontal?11:10,dt);
  }
  m.recoil*=Math.exp(-dt*9);
+ const ready=Math.max(I.targeting?1:0,I.readyRelease??0,I.brace??0);
+ const idle=!I.moving&&!I.airborne&&!I.attacking&&ready<.01&&!I.armDead;
+ if(idle&&!state.idle)state.uprightGuard=Math.random()<.5;
+ state.idle=idle;
+ const guard=idle&&state.uprightGuard?1:0;
+ state.guard=I.reducedMotion?guard:damp(state.guard,guard,10,dt);
  state.brace=I.reducedMotion?0:damp(state.brace,Math.max(I.brace??0,(I.readyRelease??0)*.87),12,dt);
- state.shouldered=I.reducedMotion?0:damp(state.shouldered,Math.max((I.brace??0)*.65,I.readyRelease??0),13,dt);
+ state.shouldered=I.reducedMotion?ready:damp(state.shouldered,ready,13,dt);
  state.walk=I.reducedMotion?0:damp(state.walk,I.moving?1:0,I.moving?9:8,dt);
  const brake=state.brace,walk=state.walk;
  const support=state.swing?1-state.swing.index:1-state.next;
@@ -167,8 +173,8 @@ function livePose(m,I,dt,t,state){
  const action=clamp(walk+brake+Math.abs(impact)*3),gun=state.shouldered;
  const sway=lean*.12;
  const aimYaw=clamp(angle(m.yaw,I.face),-.68,.68)*brake;
- const idle=I.reducedMotion?0:Math.sin(t*2.25)*.011;
- rig.spine.rotation.set(.035+walk*.09+.08*brake-.12*kick+impact*1.8+idle,aimYaw+sway+sideHit*.6,-lean*.09+sideHit*1.18,'YXZ');
+ const breath=I.reducedMotion?0:Math.sin(t*2.25)*.011;
+ rig.spine.rotation.set(.035+walk*.09+.08*brake-.12*kick+impact*1.8+breath,aimYaw+sway+sideHit*.6,-lean*.09+sideHit*1.18,'YXZ');
  rig.neck.rotation.set(-.065+brake*.05-impact*.7,(1-brake)*Math.sin(t*.9)*.10,sideHit*.3);
  blendRotation(joints.Shoulder_R,rest.Shoulder_R,gun,-.10-.38*gun+.09*kick,0,-.045);
  blendRotation(joints.Arm_R,rest.Arm_R,gun,-.09-.14*gun,0,-.07);
@@ -179,7 +185,7 @@ function livePose(m,I,dt,t,state){
  blendRotation(joints.Elbow_L,rest.Elbow_L,action,-.30-.13*brake-sway+clamp(S.arm.x,-.22,.23),-.13,0);
  // Swing the bore forward as the shoulder draws the rifle in. Interpolating
  // the carriage's local roll would sweep the barrel sideways across the hull.
- const barrelPitch=gun*1.53;
+ const barrelPitch=mix(1.17,0,state.guard)*(1-gun)+1.56*gun;
  orientRifle(joints.Carriage,m.cont,rest.Carriage,V(.065*(1-gun),Math.cos(barrelPitch),Math.sin(barrelPitch)+sway*.12));
  joints.Carriage.position.y=state.carriageY+.25*kick;
  state.visorMat.emissiveIntensity=m.wrecked?0:1;
@@ -394,9 +400,10 @@ function build(unit,source,clips,workshopMounts){
  const aimPivot=()=>mount;
  mech.live=id;
  mech.scale=scale;mech.cont.scale.setScalar(scale);
- mech.saltMotion={joints,rest,readyHeight:dims.py,carriageY:mount.position.y,next:0,balance:0,brace:0,shouldered:0,walk:0,visorMat,stackMat};
+ mech.saltMotion={joints,rest,readyHeight:dims.py,carriageY:mount.position.y,next:0,balance:0,brace:0,shouldered:0,guard:0,walk:0,visorMat,stackMat};
  mech.nativeV2={
   source,clips,animate,worldScale:scale,nativeShield:true,
+  targetingBlend:()=>mech.saltMotion.shouldered,
   pose(entry,u,pose,t,armory){
    entry.primary=equipment.fit('R',u.weapon,armory);
    if(entry.primary){

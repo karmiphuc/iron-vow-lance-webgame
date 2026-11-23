@@ -472,12 +472,19 @@ function prepareUnit(u,t){
   root.IronVowVehicles.update(record.vehicle,u,t,world(u.vx,u.vz),displayedHeading(u),reducedMotion,RISE/TERRAIN_RISE);
   object=record.vehicle.object;
  }else{
-  const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),goal=aimTargets.get(u.id),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
+  const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
   if(airborne)p.y+=jumpjetHeight(u,t);
   const mortar=mortarCues.get(u.id);if(mortar){pose.mortarAge=t-mortar.at;if(pose.mortarAge>=2.1)mortarCues.delete(u.id);}
   const motion=u.motion,heading=motion?Math.atan2(motion.toX-motion.fromX,motion.toZ-motion.fromZ):(displayedHeading(u)+Math.PI/4);
   const defending=u.alive&&!u.attack&&!motion&&!reducedMotion&&activeCinematic?.target===u;
   const guardPoint=defending?unitRoot(activeCinematic.actor):null;
+  const saltWorks=u.frame===SALTJACK_FRAME||u.frame===SALT_WORKS_GARRISON_FRAME;
+  const selectedContact=saltWorks&&u.alive&&!u.attack&&!motion&&action==='fire'&&u===current()&&
+   battle.units.find(target=>target.alive&&target.team!==u.team&&target.id===lockedTarget);
+  const readyContact=selectedContact||(saltWorks&&defending&&activeCinematic.actor.alive?activeCinematic.actor:null);
+  const attackGoal=!saltWorks||u.attack?aimTargets.get(u.id):null;
+  const goal=readyContact?{target:readyContact,part:'body'}:attackGoal;
+  const acquiredShot=saltWorks&&u.attack&&!pose.strikeKind&&u===current()&&attackGoal?.target.alive&&attackGoal.target.id===lockedTarget;
   const elapsed=record?Math.max(0,Math.min(.05,t-record.previousTime)):1/60;
   const lastGuard=record?.guard??0;
   // The cinematic guard uses the rig's brace pose without changing the unit's Brace action.
@@ -489,7 +496,7 @@ function prepareUnit(u,t){
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
   const face=guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
-  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
+  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,targeting:Boolean(readyContact||acquiredShot),lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
   const custom=rigV2.applies(u)?'rig-v2':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;

@@ -1,9 +1,12 @@
 const assert=require('node:assert/strict');
 
-module.exports=async function checkSaltjackMotion({page,origin}){
+module.exports=async function checkSaltjackMotion({page,origin,mobile,tap}){
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.addInitScript(()=>localStorage.setItem('iron-vow-attack-camera','off'));
- await page.goto(new URL('?bench=war&trial=salt-works',origin).href,{waitUntil:'domcontentloaded'});
+ const trial=new URL('?bench=war&trial=salt-works',origin).href;
+ await page.goto(trial,{waitUntil:'domcontentloaded'});
+ await checkCombatReady(page,mobile,tap);
+ await page.goto(trial,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>IronVowScene.ready&&battle?.units.length===2&&battle.units.every(unit=>
   IronVowScene.models.get(unit.id)?.entry?.primary?.id==='rifle'),null,{timeout:90000});
 
@@ -166,7 +169,8 @@ module.exports=async function checkSaltjackMotion({page,origin}){
   assert.ok(move.plants.length>=3&&move.plants.every((side,i)=>i===0||side!==move.plants[i-1]),`Frame ${move.frame} alternates its footfalls: ${move.plants}`);
   const shifts=move.samples.map(sample=>sample.shift);
   assert.ok(Math.min(...shifts)<-.11&&Math.max(...shifts)>.11,'The chassis transfers weight to both sides');
-  assert.ok(move.samples.every(sample=>sample.freeArmDrop>.70&&sample.carryUp>.98),'Marching keeps the free hand low and the carried rifle upright');
+  assert.ok(move.samples.every(sample=>sample.freeArmDrop>.70),'Marching keeps the free hand low');
+  assert.ok(move.samples.slice(3).every(sample=>sample.carryUp<.82),'Marching leaves the idle guard and lowers the rifle');
   let planted=0;
   for(const [i,sample] of move.samples.entries())for(const [side,foot] of sample.feet.entries()){
    if(foot.lift)continue;
@@ -206,3 +210,74 @@ module.exports=async function checkSaltjackMotion({page,origin}){
   impactCount:impact.length,carriageKick,hitPitch,death:checks.death.map(({frame,samples,contact})=>({frame,contact,
    samples:samples.map(({age,height,roll,knees,forwardSplit})=>({age,height,roll,knees,forwardSplit}))}))}));
 };
+
+async function checkCombatReady(page,mobile,tap){
+ await page.waitForFunction(()=>IronVowScene.ready&&battle?.units.length===2,null,{timeout:90000});
+ const setup=await page.evaluate(async()=>{
+  const [hero,enemy]=battle.units;
+  const actors=[hero,enemy];
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  const bore=unit=>IronVowScene.models.get(unit.id).entry.primary.muzzle.getWorldDirection(new THREE.Vector3());
+  const sample=()=>actors.map(unit=>bore(unit).y);
+  const idle=async pick=>{
+   const random=Math.random;
+   Math.random=()=>pick;
+   try{
+    for(const unit of actors)Object.assign(unit,{brace:true,braceBlend:1});
+    await wait(230);
+    for(const unit of actors)Object.assign(unit,{brace:false,braceBlend:0});
+    await wait(650);
+    const first=sample();
+    await wait(250);
+    return [first,sample()];
+   }finally{Math.random=random;}
+  };
+  const [guard,rest]=[await idle(.01),await idle(.99)];
+  battle.cover.clear();battle.field.cover={};
+  for(const cell of battle.field.cells)cell.level=0;
+  const x=Math.floor(battle.size.width/2),z=Math.floor(battle.size.depth/2);
+  Object.assign(hero,{x:x-1,z,vx:x-1,vz:z,ap:15});
+  Object.assign(enemy,{x:x+1,z,vx:x+1,vz:z,ap:15});
+  hero.hp.body=hero.max.body=10000;
+  enemy.hp.body=enemy.max.body=10000;
+  action='move';lockedTarget=null;
+  Object.assign(fieldCamera,{x:enemy.x,z:enemy.z,overview:false});
+  IronVowScene.clear();
+  await wait(900);
+  const projected=IronVowScene.projectWorld(IronVowScene.models.get(enemy.id).proxy.position);
+  const points=[0,8,-8,16,-16].flatMap(dx=>[0,8,-8,16,-16].map(dy=>({x:projected.x+dx,y:projected.y+dy})));
+  const point=points.find(({x,y})=>document.elementFromPoint(x,y)===document.querySelector('#scene')&&IronVowScene.pick(x,y)===enemy);
+  return {guard,rest,point};
+ });
+ assert.ok(setup.guard.flat().every(up=>up>.95),`Both randomly selected guards carry upright: ${setup.guard}`);
+ assert.ok(setup.rest.flat().every(up=>up>.15&&up<.60),`Both other idle samples carry the rifle forward: ${setup.rest}`);
+ assert.ok(setup.point,'The Garrison is selectable through the visible battle canvas');
+ const {x,y}=setup.point;
+ if(mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);
+ await page.waitForFunction(()=>action==='fire'&&lockedTarget===battle.units[1].id);
+ const alignment=async()=>page.evaluate(()=>{
+  const [hero,enemy]=battle.units,entry=IronVowScene.models.get(hero.id).entry,muzzle=entry.primary.muzzle;
+  const direction=IronVowScene.partPoint(enemy,'body').sub(muzzle.getWorldPosition(new THREE.Vector3())).normalize();
+  return muzzle.getWorldDirection(new THREE.Vector3()).dot(direction);
+ });
+ await page.waitForFunction(()=>IronVowScene.models.get(current().id).entry.m.saltMotion.shouldered>.995);
+ assert.ok(await alignment()>.995,'Selecting the Garrison shoulders the actual rifle and tracks its body');
+ await tap('#brace');
+ assert.ok(await alignment()>.995,'Bracing keeps the rifle on the acquired target');
+ const enemyAttack=await page.evaluate(async()=>{
+  const [hero,enemy]=battle.units;
+  const random=ruleRandom,visualRandom=Math.random;
+  ruleRandom=()=>.005;Math.random=()=>.99;
+  const start=IronVowScene.combat.history.length;
+  try{await shoot(enemy,hero,'body');await new Promise(resolve=>setTimeout(resolve,650));}
+  finally{ruleRandom=random;Math.random=visualRandom;}
+  const shots=IronVowScene.combat.history.slice(start).filter(event=>event.type==='launch'&&event.actor===enemy.id);
+  const entry=IronVowScene.models.get(enemy.id).entry;
+  return {error:Math.max(...shots.map(event=>event.aimError)),shots:shots.length,
+   recovery:entry.primary.muzzle.getWorldDirection(new THREE.Vector3()).y};
+ });
+ assert.equal(enemyAttack.shots,8,'The Garrison fires a real stock volley');
+ assert.ok(enemyAttack.error<.012,`Garrison mounted weapon follows the real attack line: ${enemyAttack.error}`);
+ assert.ok(enemyAttack.recovery>.15&&enemyAttack.recovery<.60,`Garrison recovers to its sampled idle: ${enemyAttack.recovery}`);
+ console.log(JSON.stringify({readyPose:{idle:setup.guard,carry:setup.rest,garrison:enemyAttack,selectedAim:await alignment()}}));
+}
