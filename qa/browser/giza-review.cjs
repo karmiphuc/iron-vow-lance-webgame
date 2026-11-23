@@ -3,7 +3,10 @@ const assert = require('node:assert/strict');
 module.exports = async function checkGizaReview({page, origin, tap}) {
  await page.goto(new URL('?bench=rig', origin).href, {waitUntil:'domcontentloaded'});
  await tap('.bench-model-review');
- await page.waitForURL('**/rig-bench/giza.html');
+ await page.waitForURL(url => url.origin === new URL(origin).origin &&
+  /^\/rig-bench\/giza(?:\.html)?$/.test(url.pathname)
+ );
+ assert.equal(await page.title(), 'Giza · model review');
  await page.locator('#status').waitFor({state:'hidden'});
  const buttons = page.locator('footer button');
  assert.deepEqual((await buttons.allTextContents()).sort(), ['Ready', 'Advance', 'Brace', 'Armor hit', 'Fall', 'Shoulder salvo'].sort());
