@@ -140,7 +140,7 @@ function build(unit,scope='battle'){
  const key=profileKey(unit),asset=assets[scope].get(assetKey(unit));
  if(!asset?.scene)return null;
  const profile=profiles.get(key);
- if(profile.build)return profile.build(unit,asset.scene.clone(true),asset.animations);
+ if(profile.build)return profile.build(unit,asset.scene.clone(true),asset.animations,workshopMounts);
  const {source,skeletons}=cloneSkin(asset.scene);
  const scrubber=scope==='bench'&&asset.animations.length?createScrubber(source,asset.animations):null;
  const body=new T.Group();

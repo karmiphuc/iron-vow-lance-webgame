@@ -36,7 +36,7 @@ function checkWorkshopBudgets(assets) {
     sim.run(fs.readFileSync(path.join(dir, script), 'utf8'));
   }
   const { IronVowProductionArsenal: arsenal, IronVowWeaponFX: effects } = sim.sandbox.window;
-  const armory = ['weapons.glb', 'expansion-weapons.glb', 'shields.glb'].map(file => readGLB(path.join(dir, 'rig-bench', file)));
+  const armory = ['weapons.glb', 'expansion-weapons.glb', 'shields.glb', 'salt-mg.glb'].map(file => readGLB(path.join(dir, 'rig-bench', file)));
   const main = [], offhand = [{ id: 'empty', triangles: 0 }];
   for (const { id, melee } of sim.run('WEAPONS.filter(weapon => !weapon.builtIn && !weapon.shoulder)')) {
     const name = arsenal.assetNodeName(effects.get(id).asset ?? id);

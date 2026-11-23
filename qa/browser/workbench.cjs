@@ -83,10 +83,10 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
 
  const integrated=[[3,'weapon','morrow'],[4,'weapon','locust'],[4,'melee','pulse-bash'],[11,'melee','breach-gauntlet'],
   [17,'weapon','aegis-cleave'],[17,'melee','aegis-bash'],[18,'weapon','needle-carbine'],[18,'melee','signal-knife'],
-  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder','missile'],[22,'weapon','salt-rifle'],[23,'weapon','salt-rifle']];
+  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder','missile'],[22,'weapon','rifle'],[23,'weapon','rifle'],[23,'weapon','salt-mg']];
  for(const [frame,slot,id,mountId=id] of integrated){
   await page.evaluate(frame=>__bench.selectFrame(frame),frame);
-  if(id==='flechette-scattergun')await page.locator('#bench-primary').selectOption(id);
+  if(id==='flechette-scattergun'||id==='salt-mg')await page.locator('#bench-primary').selectOption(id);
   if(slot==='pod'){
    const shoulder=page.locator('#bench-shoulder');
    await shoulder.selectOption(id);

@@ -5,10 +5,21 @@ const createSimulation=require('./sim-harness.cjs');
  const sim=createSimulation({random:()=>0}),{run}=sim;
  const groups={
   assault:['sidewinder','trident','forge','ember','rivet'],
-  strike:['watchman','falcon','cerberus','obelisk','parallax'],
+  strike:['watchman','falcon','cerberus','obelisk','parallax','salt-mg'],
   melee:['hatchet','pike','tonfa','anchor-hammer']
  };
- assert.equal(run('WEAPONS.filter(w=>w.motion&&!w.builtIn).length'),14);
+ assert.equal(run('WEAPONS.filter(w=>w.motion&&!w.builtIn).length'),15);
+ const migration=createSimulation().run;
+ for(const reserve of [false,true]){
+  const result=migration(`(()=>{
+   const old=fresh(),hull={...stockHull(22),weapon:'salt-rifle'};
+   if(${reserve})old.reserve={22:hull};else Object.assign(old.units[0],hull,{frame:22});
+   const career=loadCareer(old),again=loadCareer(JSON.parse(JSON.stringify(career)));
+   return [career&&validSave(career),(${reserve}?again.reserve[22]:again.units[0]).weapon,
+    copies(career.owned,'rifle'),copies(again.owned,'rifle'),again.owned.includes('salt-mg')].join('/');
+  })()`);
+  assert.equal(result,'true/rifle/3/3/false','Previously integrated guns convert once to stock inventory');
+ }
  const legacy=[
   ['rifle',36,5,3,0],['shotgun',60,3,3,1500],['missile',45,7,4,2400],
   ['rail',70,8,5,3600],['hailstorm',49,5,4,2200],['rampart',61,6,5,2900],
@@ -80,5 +91,5 @@ const createSimulation=require('./sim-harness.cjs');
  assert.equal(late('save.credits'),27900);
  assert.equal(late("battle.units.slice(0,2).map(u=>u.weapon).join(' ')"),'rivet parallax');
  assert.equal(late('JSON.stringify(captureSortie())'),arm('JSON.stringify(captureSortie())'));
- console.log('PASS 14 expansion weapons, firing, reputation gates, per-copy purchase, and exact save resume.');
+ console.log('PASS 15 expansion weapons, firing, reputation gates, per-copy purchase, and exact save resume.');
 })().catch(error=>{console.error(error);process.exitCode=1});

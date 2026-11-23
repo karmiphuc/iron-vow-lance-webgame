@@ -18,10 +18,33 @@ module.exports=async function checkSaltWorks({page,origin,mobile,tap}){
  await tap('[data-bay="market"]');
  await tap('[data-buy-hull="22"]');
  await tap('[data-chassis="22"]');
- await page.waitForFunction(()=>pilotFrame(0)===22&&IronVowWorkshop.snapshot()?.entry?.primary?.id==='salt-rifle',null,{timeout:90000});
+ await page.waitForFunction(()=>pilotFrame(0)===22&&IronVowWorkshop.snapshot()?.entry?.primary?.id==='rifle',null,{timeout:90000});
  assert.match(await page.locator('.workshop-selected').innerText(),/SALTJACK/);
- assert.equal(await page.getByRole('heading',{name:'Salt Works rifle'}).count(),1);
- assert.equal(await page.locator('#remove-primary').count(),0);
+ const fitted=page.locator('.fixed-loadout h3');
+ assert.equal(await fitted.first().textContent(),'Kestrel AR-8');
+ const mg=page.locator('[data-equip="salt-mg"]');
+ await page.evaluate(()=>{save.rep=179;render();});
+ await tap('[data-refit-choice="salt-mg"]');
+ assert.ok(await mg.isDisabled());
+ assert.ok(!(await page.evaluate(()=>save.owned.includes('salt-mg'))));
+ await page.evaluate(()=>{save.rep=180;render();});
+ const credits=await page.evaluate(()=>save.credits);
+ await tap('[data-equip="salt-mg"]');
+ await page.locator('#paint-preview').scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>{
+  const e=IronVowWorkshop.snapshot()?.entry,p=e?.primary;
+  return p?.id==='salt-mg'&&p.model.name==='salt-mg'&&p.mount.parent===e.m.saltMotion.joints.Carriage&&Boolean(p.muzzle);
+ });
+ assert.equal(await page.evaluate(()=>save.credits),credits-14500);
+ assert.equal(await fitted.first().textContent(),'Salt Works MG-12');
+ await page.evaluate(()=>pendingCareerWrite);
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>save.units[0].weapon==='salt-mg');
+ await tap('#remove-primary');
+ await page.locator('#paint-preview').scrollIntoViewIfNeeded();
+ await page.waitForFunction(()=>{const e=IronVowWorkshop.snapshot()?.entry;return e&&!e.primary&&e.m.saltMotion.joints.Carriage.children.length===0;});
+ await tap('[data-refit-choice="rifle"]');
+ await tap('[data-equip="rifle"]');
 
  await navigate(page,'contracts',tap,mobile);
  const offer=await page.evaluate(()=>availableOffers('corridor').find(item=>item.templateIndex===SALT_WORKS_CONTRACT));
@@ -33,7 +56,10 @@ module.exports=async function checkSaltWorks({page,origin,mobile,tap}){
  await tap('#modal-1');
 
  const waitForPair=()=>page.waitForFunction(()=>battle?.contract.id==='salt-works'&&IronVowScene.ready&&
-  battle.units.length===2&&battle.units.every(actor=>IronVowScene.models.get(actor.id)?.entry?.primary?.id==='salt-rifle'),null,{timeout:90000});
+  battle.units.length===2&&battle.units.every(actor=>{
+   const e=IronVowScene.models.get(actor.id)?.entry,hand=e?.m.saltMotion?.joints.Carriage;
+   return e?.primary?.id==='rifle'&&hand.children.length===1&&hand.children[0]===e.primary.mount;
+  }),null,{timeout:90000});
  await waitForPair();
  if(await page.locator('#modal-0:visible').count())await tap('#modal-0');
  const initial=await page.evaluate(async()=>{
@@ -43,8 +69,8 @@ module.exports=async function checkSaltWorks({page,origin,mobile,tap}){
  assert.equal(initial.offer,offer.id);
  assert.ok(initial.consumed.includes(offer.id));
  assert.deepEqual(initial.units,[
-  {frame:22,team:'ally',weapon:'salt-rifle'},
-  {frame:23,team:'enemy',weapon:'salt-rifle'}
+  {frame:22,team:'ally',weapon:'rifle'},
+  {frame:23,team:'enemy',weapon:'rifle'}
  ]);
  await page.reload({waitUntil:'domcontentloaded'});
  await waitForPair();

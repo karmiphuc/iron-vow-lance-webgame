@@ -92,7 +92,7 @@ window.IronVowWorld=(()=>{
  const MARKET={
   picket:{faction:'Karst Wardens',frames:[0,1,2],weapons:['rifle','sidewinder','trident','cleaver']},
   relay:{faction:'Relay Union',frames:[1,5,9],weapons:['watchman','rail','parallax','tonfa']},
-  corridor:{faction:'Vanta Combine',frames:[6,7,8,22],weapons:['rampart','forge','piledriver','pike']},
+  corridor:{faction:'Vanta Combine',frames:[6,7,8,22],weapons:['rampart','forge','piledriver','pike','salt-mg']},
   frontier:{faction:'Halcyon Guard',frames:[5,7,10],weapons:['cerberus','obelisk','anchor-hammer','rivet']},
   ridge:{faction:'Ridge Freeholders',frames:[0,3,8],weapons:['shotgun','breaker','falcon','blade']},
   haven:{faction:'Haven Salvors',frames:[2,4,9],weapons:['missile','hailstorm','ember','hatchet']}

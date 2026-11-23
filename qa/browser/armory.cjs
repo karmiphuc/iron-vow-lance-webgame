@@ -44,7 +44,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
  },day);
  await shopDay(1);
  const seen=[];
- for(const [group,count] of Object.entries({assault:8,strike:8,melee:8})){
+ for(const [group,count] of Object.entries({assault:8,strike:9,melee:8})){
   await tab(group);
   assert.equal(await page.locator('[data-armory-class="'+group+'"]').getAttribute('aria-pressed'),'true');
   const cards=page.locator('[data-weapon-card]');
@@ -68,7 +68,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   }
   assert.ok(await page.locator('#ui .page').evaluate(node=>node.scrollWidth<=node.clientWidth+1));
  }
- assert.equal(new Set(seen).size,24);
+ assert.equal(new Set(seen).size,25);
  await tab('shields');
  for(const item of await page.locator('[data-shield-card]').all()){await choose(await item.getAttribute('data-shield-card'));await checkPortrait(item.locator('.weapon-card-art'));}
  if(mobile)await page.setViewportSize({width:390,height:844});
@@ -113,7 +113,7 @@ module.exports=async function checkArmory({context,page,mobile,origin,tap}){
   const socket=id==='cerberus'?entry.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('mount.shoulderR')):entry.m.rig.arms[melee?'L':'R'].so;
   return{id,seated:point(mount.grip).distanceTo(point(socket)),tip:point(melee?mount.tip:mount.muzzle).distanceTo(point(mount.grip)),pixels:entry.surface.width};
  }));
- assert.equal(fittings.length,14);
+ assert.equal(fittings.length,15);
  for(const fit of fittings){assert.ok(fit.seated<1e-6&&fit.tip>.1,JSON.stringify(fit));assert.equal(fit.pixels,640);}
  await shopDay(23);
  await checkCerberusSalvo(page,mobile,tap);

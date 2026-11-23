@@ -321,7 +321,7 @@ function animate(m,I,dt,t){
 
 const names=['Pelvis','Thorax','Optics','Hip_L','Hip_R','Knee_L','Knee_R','Ankle_L','Ankle_R',
  'Shoulder_L','Shoulder_R','Arm_L','Arm_R','Elbow_L','Elbow_R','Carriage'];
-function build(unit,source,clips){
+function build(unit,source,clips,workshopMounts){
  const garrison=unit.frame===23;
  for(const side of ['L','R']){
   const cassette=source.getObjectByName('Cassette_'+side);
@@ -332,6 +332,8 @@ function build(unit,source,clips){
   if(!node)throw Error('Salt Works rig is missing '+name);
   return [name,node];
  }));
+ // Retain the animated grip pivot. All visible weapons now come from inventory.
+ joints.Carriage.clear();
  const rest=Object.fromEntries(names.map(name=>[name,joints[name].quaternion.clone()]));
  // The film export inverts this joint about Z. The upper-arm spar and
  // elbow pivots descend along -Y in the workshop reference.
@@ -375,22 +377,27 @@ function build(unit,source,clips){
  const dims={py:joints.Pelvis.position.y,ankleH:.308,restX:Math.abs(legs[0].restX),stride:stepLength/1.7};
  const mech=R.createMech({root:source,rig,dims,parts,kits:[],mods:{core:id,legs:id,arms:id},
   visorMat,stackMat,ownedMaterials},id,unit.team,unit.upgrade);
- const mount=joints.Carriage,muzzle=source.getObjectByName('Muzzle');
- if(!muzzle||muzzle.parent!==mount)throw Error('Salt Works rifle muzzle is missing');
- muzzle.quaternion.setFromUnitVectors(V(0,0,1),V(0,-1,0));
- const rifle={id:'salt-rifle',subsystem:'right',carrier:mount.parent,mount,model:mount,muzzle,aimPivot:()=>mount};
+ const mount=joints.Carriage,equipment=workshopMounts({R:mount});
+ const aimPivot=()=>mount;
  mech.live=id;
  mech.scale=scale;mech.cont.scale.setScalar(scale);
  mech.saltMotion={joints,rest,readyHeight:dims.py,carriageY:mount.position.y,next:0,balance:0,brace:0,shouldered:0,walk:0,visorMat,stackMat};
  mech.nativeV2={
   source,clips,animate,worldScale:scale,nativeShield:true,
-  pose(entry,u){entry.primary=rifle;return u.weapon===rifle.id;},
+  pose(entry,u,pose,t,armory){
+   entry.primary=equipment.fit('R',u.weapon,armory);
+   if(entry.primary){
+    entry.primary.mount.visible=u.hp.right>0;
+    entry.primary.aimPivot=aimPivot;
+   }
+   return !u.weapon||Boolean(entry.primary);
+  },
   sync(){mech.cont.updateMatrixWorld(true);},
   bounds(name){
    const node=name==='neck'?rig.neck:legs.find(leg=>name==='ankle.'+leg.side)?.an;
    return node?new T.Box3().setFromObject(node):new T.Box3();
   },
-  dispose(){}
+  dispose:equipment.dispose
  };
  return mech;
 }

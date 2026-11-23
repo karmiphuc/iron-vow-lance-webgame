@@ -21,6 +21,7 @@ assets = {
 
 for asset in (
     "rig-bench/weapons.glb",
+    "rig-bench/salt-mg.glb",
     "rig-bench/expansion-weapons.glb",
     "rig-bench/shields.glb",
     *(f"rig-bench/prototypes/{name}.glb" for name in ("gatecrasher", "cicada", "hellbreaker", "bulwark", "scout", "shogun")),

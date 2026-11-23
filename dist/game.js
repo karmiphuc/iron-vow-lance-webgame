@@ -33,8 +33,8 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
  {id:'flechette-scattergun',name:'Flechette scattergun',type:'SCOUT SCATTERGUN',burst:12,scatter:true,damage:31,range:2,ap:5,builtIn:true,effect:'shotgun',scout:'scatter'},
  {id:'signal-knife',name:'Signal knife',type:'SCOUT KNIFE',damage:26,range:1,ap:5,builtIn:true,effect:'cleaver',scout:'knife',melee:true,pierce:.4},
- {id:'salt-rifle',name:'Salt Works rifle',type:'CARRIAGE RIFLE',burst:4,damage:41,range:6,ap:3,builtIn:true,motion:'rifle',
-  desc:'An integrated four-round service rifle on a reinforced forearm carriage.'},
+ {id:'salt-mg',name:'Salt Works MG-12',type:'CASELESS MACHINE GUN',burst:12,damage:66,range:6,ap:5,weight:27,price:14500,rep:180,motion:'hailstorm',
+  desc:'A twelve-round caseless burst from the long Salt Works carriage. Vanta supplies veteran companies at 180 reputation.'},
  {id:'vesper-shoulder',rounds:2,name:'Vesper Shoulder Pod',type:'GUIDED MISSILE POD',damage:45,range:7,ap:4,price:2400,shoulder:true,desc:'Launch guided missiles across cover from a compatible right-shoulder mount.'}
 ];
 const FREE_HAND_COUNTER={id:'free-hand',damage:10,range:1,ap:0,melee:true};
@@ -304,11 +304,12 @@ const SHOGUN_FRAME=FRAMES.push({name:'SHOGUN',model:'HV–12',role:'FLAGSHIP ASS
 const CAIRN_FRAME=FRAMES.push({name:'CAIRN',model:'CRN–01',role:'LINE ASSAULT',color:'#899aa2',
  hp:155,arm:94,leg:105,move:4,armor:5,cost:180000,weapon:'rifle',foundry:3,rig:'cairn',
  brief:'A compact rifle chassis with cast shoulders and slate field camouflage.'})-1;
+const SALT_WORKS_PRIMARIES=['rifle','salt-mg'];
 const SALTJACK_FRAME=FRAMES.push({name:'SALTJACK',model:'SJ–04',role:'LINE ASSAULT',color:'#c4c9c9',
- hp:164,arm:94,leg:112,move:4,armor:5,cost:185000,weapon:'salt-rifle',native:'saltjack',fixedLivery:true,
- brief:'A rifle chassis built for industrial fields. Its four-round carriage rifle is fitted at the factory.'})-1;
+ hp:164,arm:94,leg:112,move:4,armor:5,cost:185000,weapon:'rifle',primaryOptions:SALT_WORKS_PRIMARIES,native:'saltjack',fixedLivery:true,
+ brief:'A rifle chassis built for industrial fields. Ships with the standard Kestrel AR-8. Its primary mount also accepts the Salt Works MG-12.'})-1;
 const SALT_WORKS_GARRISON_FRAME=FRAMES.push({name:'SALT WORKS GARRISON',model:'SJ–04G',role:'YARD DEFENSE',color:'#596949',
- hp:172,arm:98,leg:109,move:3,armor:6,weapon:'salt-rifle',native:'saltworks-garrison',enemyOnly:true,fixedLivery:true})-1;
+ hp:172,arm:98,leg:109,move:3,armor:6,weapon:'rifle',primaryOptions:SALT_WORKS_PRIMARIES,native:'saltworks-garrison',enemyOnly:true,fixedLivery:true})-1;
 const MECH_SIGNATURES={
  0:['Steady Aim','First direct shot before moving gains +6 aim.'],
  1:['High Spot','A hit from high ground gives the next allied shot +5 aim.'],
@@ -515,7 +516,7 @@ function portStock(port){
  const seed=save.world?.seed??0,profile=worldRules.portProfile(seed,port);
  if(!profile)return null;
  const stock=new Set([...profile.weapons,'rifle',...(port==='picket'?['shotgun','missile']:[]),'bulwark-shield','citadel-shield']);
- const rotation=WEAPONS.filter(w=>!w.builtIn&&!w.shoulder&&!stock.has(w.id));
+ const rotation=WEAPONS.filter(w=>!w.builtIn&&!w.shoulder&&w.id!=='salt-mg'&&!stock.has(w.id));
  const key=[seed,port,save.day].join('/');
  rotation.sort((a,b)=>equipmentRoll(key+a.id)-equipmentRoll(key+b.id));
  return {...profile,weapons:[...stock,...rotation.slice(0,2).map(w=>w.id)]};
@@ -1486,6 +1487,7 @@ function equipWeapon(id,hand){
 }
 function fixedMeleeOption(frame){return FRAMES[frame].fixedWeapons&&equipmentItem(FRAMES[frame].melee)?FRAMES[frame].melee:null;}
 function fixedPrimaryOptions(frame){
+ if(FRAMES[frame].primaryOptions)return FRAMES[frame].primaryOptions;
  if(FRAMES[frame].captureOnly)return INFANTRY_PRIMARIES;
  return FRAMES[frame].fixedWeapons&&frame!==REAVER_FRAME&&equipmentItem(FRAMES[frame].weapon)?[FRAMES[frame].weapon]:[];
 }
@@ -2347,7 +2349,7 @@ function render(){
   <details class="workshop-disclosure" data-workshop-detail="paint" ${bindWorkshop.disclosures?.paint?'open':''}><summary>Paint</summary>${workshopPaint(u)}</details>
   <details class="workshop-disclosure" data-workshop-detail="trials" ${bindWorkshop.disclosures?.trials?'open':''}><summary>Reinforcement & trials</summary><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button><p class="note">+25 BODY HP · +2 ARMOR PER MK</p>${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}<a class="rig-bench-link" href="?bench=rig&amp;frame=${frame}">OPEN RIG BENCH</a><a class="rig-bench-link" href="?lion=cleaver">LION WEAPONS TRIAL</a></details>
   </div></section>
-  ${!openHands(frame)?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">FACTORY ARMAMENT.</h2><div class="inline-help"><small>INTEGRATED WEAPONS</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
+  ${!openHands(frame)?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">${f.primaryOptions?'PRIMARY MOUNT.':'FACTORY ARMAMENT.'}</h2><div class="inline-help"><small>${f.primaryOptions?'COMPATIBLE WEAPONS':'INTEGRATED WEAPONS'}</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
   </div>
   <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="compare" ${bindWorkshop.disclosures?.compare?'open':''}><summary>Compare chassis</summary>${chassisAssignments(selected,training)}</details>
   <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}${MECH_SIGNATURES[frame]?`<button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button>`:''}</details>`:chassisAssignments(selected,training)}</div>`;
@@ -2560,8 +2562,20 @@ function validHangar(career){
  const next=HANGAR_ROOMS[job.room].tiers[hangarLevel(job.room,career)];
  return !!next&&Number.isInteger(job.wins)&&job.wins>=1&&job.wins<=next.wins;
 }
+// The original Salt Works gun was inseparable from its hull and had no inventory copy.
+function migrateSaltWorksRifles(record){
+ if(!Array.isArray(record?.units)||!Array.isArray(record.owned))return;
+ const replace=hull=>{
+  if(hull?.weapon!=='salt-rifle')return;
+  hull.weapon='rifle';
+  record.owned.push('rifle');
+ };
+ record.units.forEach((hull,i)=>{if(hull&&pilotFrame(i,record)===SALTJACK_FRAME)replace(hull);});
+ replace(record.reserve?.[SALTJACK_FRAME]);
+}
 function loadCareer(record){
  if(record?.version!==2){
+  if(record?.version===1)migrateSaltWorksRifles(record);
   if(!validSave(record))return null;
   migrateEquipment(record);
   const gatecrasher=record.units.find((_,i)=>pilotFrame(i,record)===3)??record.reserve?.[3];
@@ -3439,7 +3453,7 @@ function finish(win){
  }
  if(win&&!b.legacy&&!benchWar){
   const roll=equipmentRoll([save.world?.seed??0,b.terrainSeed??0,save.day,c.id].join('/'));
-  const stock=portStock(b.offer?.port??contractPort(c))?.weapons??[];
+  const stock=(portStock(b.offer?.port??contractPort(c))?.weapons??[]).filter(id=>id!=='salt-mg'||save.rep>=weapon(id).rep);
   if(stock.length&&roll%5<2)gear.push(stock[Math.floor(roll/5)%stock.length]);
  }
  save.owned.push(...gear);
@@ -4605,7 +4619,7 @@ if(benchRig){
   authored:window.IronVowRigV2.applies({frame:id}),quad:id===REAVER_FRAME,
   stock:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
   primaries:id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME?INFANTRY_PRIMARIES:
-   id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:undefined,
+   id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:frame.primaryOptions,
   melees:breachLoadout(id)?['cleaver']:undefined,
   shield:canFitShield(id),pod:breachLoadout(id),
   archive:id===0?'rig-bench/warden-painted.glb':prototypeArchives[id]?'rig-bench/prototypes/'+prototypeArchives[id]+'.glb':null

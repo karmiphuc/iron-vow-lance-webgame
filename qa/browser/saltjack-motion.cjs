@@ -5,7 +5,7 @@ module.exports=async function checkSaltjackMotion({page,origin}){
  await page.addInitScript(()=>localStorage.setItem('iron-vow-attack-camera','off'));
  await page.goto(new URL('?bench=war&trial=salt-works',origin).href,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>IronVowScene.ready&&battle?.units.length===2&&battle.units.every(unit=>
-  IronVowScene.models.get(unit.id)?.entry?.primary?.id==='salt-rifle'),null,{timeout:90000});
+  IronVowScene.models.get(unit.id)?.entry?.primary?.id==='rifle'),null,{timeout:90000});
 
  const checks=await page.evaluate(async()=>{
   const [hero,enemy]=battle.units;
@@ -75,7 +75,7 @@ module.exports=async function checkSaltjackMotion({page,origin}){
   }
 
   // Set up a clear lane after movement so the aim and collapse checks use a
-  // deterministic four-round exchange at the trial's normal firing pace.
+  // deterministic stock-rifle exchange at the trial's normal firing pace.
   let lane;
   for(let z=1;z<battle.size.depth-1&&!lane;z++)
    for(let x=1;x<battle.size.width-3&&!lane;x++){
@@ -151,8 +151,8 @@ module.exports=async function checkSaltjackMotion({page,origin}){
  }
  const {launch,impact,carriageKick,hitPitch,compression,freeArmDrop}=checks.weapon;
  assert.ok(compression>.14,`Brace compresses the suspension: ${compression}`);
- assert.equal(launch.length,4);
- assert.equal(impact.length,4);
+ assert.equal(launch.length,8);
+ assert.equal(impact.length,8);
  assert.ok(freeArmDrop>.70,'The free forearm stays low through the burst and hit reaction');
  for(const round of launch){
   assert.ok(round.mounted&&round.aimError<.012,'The actual mounted muzzle points along the shot');

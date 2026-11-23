@@ -486,11 +486,11 @@ const profiles={
   },
   "style": "knife"
  },
- "salt-rifle": {
+ "salt-mg": {
   "archetype": "rifle",
-  "beats": [0, 0.105, 0.21, 0.315],
-  "asset": "rifle",
-  "source": "built-in"
+  "beats": Array.from({length:12},(_,i)=>i*.082),
+  "asset": "salt-mg",
+  "source": "Workshop"
  },
  "vesper-shoulder": {
   "archetype": "missile",
