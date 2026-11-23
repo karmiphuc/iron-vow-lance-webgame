@@ -88,7 +88,7 @@ const armoryOptions=Object.fromEntries(Object.keys(ARMORY_CLASSES).map(key=>[key
 ]));
 const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
 const FRAMES=[{name:'WARDEN',model:'WDN–07',role:'ASSAULT',color:'#899681',hp:160,arm:92,leg:110,move:4,armor:5,cost:75000},{name:'KESTREL',model:'KST–12',role:'RECON',color:'#b6a37c',hp:126,arm:78,leg:100,move:5,armor:2,cost:50000},{name:'BASILISK',model:'BSK–04',role:'SUPPORT',color:'#708c92',hp:180,arm:100,leg:90,move:3,armor:7,cost:105000}];
-const PILOTS=[{name:'Mara Voss',call:'ROOK',skill:'Overdrive',desc:'+2 AP this turn. Once per battle.',color:'#9cae8b'},{name:'Jin Takeda',call:'GHOST',skill:'Deadeye',desc:'Next attack deals 50% more damage. Once per battle.',color:'#c1a477'},{name:'Elena Ortiz',call:'ANCHOR',skill:'Field repair',desc:'Restore 45 body HP. Once per battle.',color:'#83a4ac'}];
+const PILOTS=[{name:'Mara Voss',call:'ROOK',skill:'Overdrive',desc:'+2 AP this turn. Once per battle.',color:'#9cae8b',fee:1400},{name:'Jin Takeda',call:'GHOST',skill:'Deadeye',desc:'Next attack deals 50% more damage. Once per battle.',color:'#c1a477',fee:1400},{name:'Elena Ortiz',call:'ANCHOR',skill:'Field repair',desc:'Restore 45 body HP. Once per battle.',color:'#83a4ac',fee:1400}];
 const HIRES=[
  {name:'Nadi Sato',call:'SCOUT',skill:'Target Paint',desc:'Mark a hostile within 6 tiles. The next allied attack gains 20 percentage points of accuracy. Once per battle.',color:'#9fc19a',glyph:'binoculars',fee:1100},
  {name:'Dax Mercer',call:'MARSHAL',skill:'Command Relay',desc:'Spend 1 AP to order another pilot within 5 tiles. Their next paid attack this round costs up to 2 AP less. Once per battle.',color:'#d3b07b',glyph:'shield-chevron',fee:1500},
@@ -831,6 +831,30 @@ function stockHull(i){
  return{weapon:frame.weapon||(i===2?'missile':'rifle'),melee:frame.melee,condition:100,upgrade:0};
 }
 function fresh(){return{version:1,day:1,credits:4500,rep:0,wins:0,kills:0,itemInventory:true,owned:['rifle','rifle','missile'],units:PILOTS.map((_,i)=>({...stockHull(i),level:1,xp:0})),history:[]}}
+// Keep one close-assault, one mobile and one long-range kit in every opening lance.
+const STARTING_KITS=[
+ [{weapon:'rifle',melee:'cleaver'},{weapon:'shotgun',melee:'tonfa'}],
+ [{weapon:'rifle',shield:'bulwark-shield'},{weapon:'sidewinder',shield:'bulwark-shield'}],
+ [{weapon:'sidewinder',shoulder:'missile'},{weapon:'watchman'}]
+];
+const STARTING_PILOTS=[['rook','sapper'],['ghost','scout'],['anchor','retriever']];
+const STARTING_LIVERIES=PAINT_PRESETS.filter(([name])=>
+ ['Field Olive','Dune','Slate','Arctic','Midnight','Hazard'].includes(name));
+function newCareer(random=Math.random){
+ const career=fresh(),liveries=[...STARTING_LIVERIES];
+ const pickIndex=choices=>Math.floor(random()*choices.length);
+ career.training=career.units.map((unit,slot)=>{
+  const kits=STARTING_KITS[slot],pilots=STARTING_PILOTS[slot];
+  unit.pilotId=pilots[pickIndex(pilots)];
+  Object.assign(unit,kits[pickIndex(kits)]);
+  const [livery]=liveries.splice(pickIndex(liveries),1);
+  PAINT_CHANNELS.forEach(([channel],index)=>setPaintChannel(unit,channel,livery[index+1]));
+  const paths=PILOT_TREES[pilotKind(unit.pilotId)];
+  return [paths[pickIndex(paths)].nodes[0].id];
+ });
+ career.owned=fittedItems(career);
+ return career;
+}
 const mechKills=(pilot,frame,career=save)=>career.mechMastery?.[pilotId(pilot)]?.kills[frame]??0;
 const mechSlotCount=kills=>kills>=MECH_MASTERY_KILLS?2:1;
 function enableMechComputers(){
@@ -976,12 +1000,15 @@ const benchMode=/(?:^|[?&])bench=(rig|war)(?:&|$)/.exec(window.location?.search?
 const benchRig=benchMode==='rig',benchWar=benchMode==='war';
 const saltWorksTrial=benchWar&&/(?:^|[?&])trial=salt-works(?:&|$)/.test(window.location?.search??'');
 const lionTrial=/(?:^|[?&])lion=(cleaver|hatchet|breaker)(?:&|$)/.exec(window.location?.search??'')?.[1];
-let save,storedCareer=null,careerStale=false,careerDB=null,databaseCareer;
+let save,needsInitialSave=false,storedCareer=null,careerStale=false,careerDB=null,databaseCareer;
 let pendingCareerWrite=Promise.resolve();
 const queuedCareerWrites=[];
 if(!benchWar&&!benchRig)try{storedCareer=localStorage.getItem(CAREER_STORAGE)}catch{}
 function loadStoredCareer(raw){
- try{save=loadCareer(JSON.parse(raw))??fresh()}catch{save=fresh()}
+ let career;
+ try{career=loadCareer(JSON.parse(raw))}catch{}
+ needsInitialSave=!career;
+ save=career??newCareer();
 }
 if(lionTrial||benchWar||benchRig)save=fresh();
 else loadStoredCareer(storedCareer);
@@ -2471,7 +2498,7 @@ window.IronVowHangarNavigation=Object.freeze({
 function bind(){
  document.querySelectorAll('[data-primary]').forEach(button=>button.onclick=()=>navigatePrimary(button.dataset.primary));
  if($('#journal-back'))$('#journal-back').onclick=returnFromJournal;
- document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='journal'){openJournal();return;}journalOrigin=null;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}if(destination==='contracts')contractPortSelection=companyPort();page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-equip-right]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equipRight,'right'));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress in this browser. Export a backup first if you want to keep it.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=fresh();overworldSelection=null;persist();closeModal();render()}}]);
+ document.querySelectorAll('[data-patch]').forEach(b=>b.onclick=()=>{save.units[selected].condition=Math.max(patchLimit(),save.units[selected].condition);persist();render();toast('Emergency field patch applied. Full repairs recommended.')});document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{if(battle)return;const destination=b.dataset.page;if(destination==='journal'){openJournal();return;}journalOrigin=null;if(destination==='ship'){navigateHangarRoute('ship');return;}if(destination==='hangar'){navigateHangarRoute('facilities');return;}if(destination==='overworld'){showOverworld();sound('click');return;}if(destination==='contracts')contractPortSelection=companyPort();page=destination;if(page==='workshop')workshopView='assigned';render();sound('click')});document.querySelectorAll('[data-select]').forEach(b=>b.onclick=()=>{selected=+b.dataset.select;render();sound('click')});document.querySelectorAll('[data-deploy]').forEach(b=>b.onclick=()=>prepareSortie(+b.dataset.deploy));document.querySelectorAll('[data-equip]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equip));document.querySelectorAll('[data-equip-right]').forEach(b=>b.onclick=()=>equipWeapon(b.dataset.equipRight,'right'));document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>{let cost=repairCost(selected);if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;save.units[selected].condition=100;persist();render();toast('Chassis restored to full integrity')});document.querySelectorAll('[data-upgrade]').forEach(b=>b.onclick=()=>{let u=save.units[selected],cost=1800+u.upgrade*1200;if(save.credits<cost)return toast('Insufficient credits');save.credits-=cost;u.upgrade++;persist();render();toast('Chassis reinforcement installed')});if($('#export')){$('#export').onclick=()=>{let blob=new Blob([JSON.stringify(save,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='iron-vow-career.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{try{let n=JSON.parse(await e.target.files[0].text());const restored=importCareer(n);toast(restored?'Career and active sortie restored':n.version===2&&n.sortie?'Foundry career imported. Start a new sortie.':'Career backup restored')}catch{toast('Invalid career backup')}};$('#reset').onclick=()=>modal('NEW CAREER?','This replaces your company progress and rolls a new starting lance. Export a backup first if you want to keep this career.',[{text:'KEEP MY CAREER',fn:closeModal},{text:'START FRESH',fn:()=>{save=newCareer();overworldSelection=null;persist();closeModal();render()}}]);
  $('#attack-camera').onclick=()=>{attackCameraEnabled=!attackCameraEnabled;try{localStorage.setItem('iron-vow-attack-camera',attackCameraEnabled?'on':'off')}catch{}render()};
  }}
 function validHull(u,frame,owned=[]){
@@ -4455,6 +4482,7 @@ function checkExternalCareer(){
 function startGame(){
  if(careerStale)return;
  if(lionTrial){startLionTrial(lionTrial);startAudio(false);requestAnimationFrame(draw);return}
+ if(needsInitialSave){needsInitialSave=false;persist();}
  const resumedSortie=restoreSortie();if(resumedSortie)page='contracts';else if(save.transit)page='overworld';render();startAudio(false);requestAnimationFrame(draw);
  if(resumedSortie){toast('Sortie resumed. Your company is still in the fight.');if(resumedSortie.enemyPending)void endTurn()}
  window.addEventListener('storage',event=>{

@@ -1,6 +1,7 @@
 const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 module.exports=function createSimulation(options={}){
  const noop=()=>{},nodes=new Map(),storage=options.storage||new Map(),events=new Map();
+ if(!options.newCareer&&!options.lion&&!storage.has('iron-vow-career'))storage.set('iron-vow-career',JSON.stringify(require('./fixtures/stock-career.json')));
  function node(s){if(!nodes.has(s))nodes.set(s,{innerHTML:'',textContent:'',hidden:s==='#modal',classList:{add:noop,remove:noop},style:{},dataset:{},setAttribute:noop,focus:noop,addEventListener:(name,fn)=>events.set(s+':'+name,fn),querySelectorAll:()=>[],getContext:()=>ctx});return nodes.get(s)}
  const gradient={addColorStop:noop};const ctx=new Proxy({createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get:(t,k)=>k in t?t[k]:noop,set:(t,k,v)=>(t[k]=v,true)});
  class ImageStub{constructor(){this.complete=true;this.naturalWidth=1024;this.naturalHeight=1024;this.width=1024;this.height=1024}}
