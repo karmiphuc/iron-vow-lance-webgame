@@ -27,7 +27,7 @@ const carbine='needle-carbine',scatter='flechette-scattergun',knife='signal-knif
  sim.sandbox.seen=seen;
  run(`captureRandom=()=>1;const engageScout=engage;engage=(a,t,p,w)=>{if(a.frame===ASHIGARU_FRAME)seen.push(w.id);return engageScout(a,t,p,w)}`);
  for(const [range,right,left,expected,finishRange] of [[8,1,1,carbine,3],[2,1,1,scatter,2],[1,1,1,knife,1],
-  [4,0,1,knife,1],[1,1,0,scatter,1],[1,0,0,null,1]]){
+  [4,0,1,knife,1],[1,1,0,scatter,2],[1,0,0,null,1]]){
   seen.length=0;
   run(`createBattle(0);{
    const u=${scout},a=current();

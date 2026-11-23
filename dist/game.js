@@ -310,27 +310,32 @@ const SALTJACK_FRAME=FRAMES.push({name:'SALTJACK',model:'SJ–04',role:'LINE ASS
  brief:'A rifle chassis built for industrial fields. Ships with the standard Kestrel AR-8. Its primary mount also accepts the Salt Works MG-12.'})-1;
 const SALT_WORKS_GARRISON_FRAME=FRAMES.push({name:'SALT WORKS GARRISON',model:'SJ–04G',role:'YARD DEFENSE',color:'#596949',
  hp:172,arm:98,leg:109,move:3,armor:6,weapon:'rifle',primaryOptions:SALT_WORKS_PRIMARIES,native:'saltworks-garrison',enemyOnly:true,fixedLivery:true})-1;
+// Name, player-facing effect, preferred distance, and positioning priority.
 const MECH_SIGNATURES={
- 0:['Steady Aim','First direct shot before moving gains +6 aim.'],
- 1:['High Spot','A hit from high ground gives the next allied shot +5 aim.'],
- 2:['Counter Screen','A missile hit gives the immediate counter −15 aim.'],
- 3:['Breach Salvo','Direct fire cuts Brace reduction by 15 points.'],
- 4:['Relay Guidance','Missiles gain +1 range against painted targets.'],
- 5:['Fire and Fade','Take one free step after firing each turn.'],
- 6:['Riposte','Melee counters deal +20% damage.'],
- 7:['Siege Anchor','First missile salvo while braced deals +15% damage.'],
- 8:['Shield Lock','First braced shield block takes 20% less arm damage.'],
- 9:['Close Scatter','Adjacent scatter shots deal +15% damage.'],
- [BASTION_FRAME]:['Covering Fire','Use your counter to return fire for an adjacent ally.'],
- [HELLBREAKER]:['Brace Breaker','Melee hits remove the target’s Brace.'],
- [CITADEL_FRAME]:['Marked Barrage','Mark a tile one turn before firing a missile barrage.'],
- [VANGUARD_FRAME]:['Charge','Melee deals +20% damage after moving at least two tiles.'],
- [REAVER_FRAME]:['Suppressing Fire','A direct hit to the weapon arm gives the target’s next shot −10 aim.'],
- [BULWARK_FRAME]:['Shield Bash','Bulwark’s bash pushes the target one tile. Other frames push with melee hits. Requires a clear destination.'],
- [ASHIGARU_FRAME]:['Range Discipline','Ashigaru switches to flechettes up close. Other frames gain +5 aim on adjacent strikes or ranged shots from two or more tiles.'],
- [AERO_FRAME]:['Jumpjet','Jump up to five tiles for 2 AP, once per sortie.'],
- [SHOGUN_FRAME]:['Siegebreaker','Direct fire cuts Brace reduction by 20 points.'],
- [CAIRN_FRAME]:['Braced Aim','Direct shots gain +4 aim while braced.']
+ 0:['Steady Aim','Open from a planted position. Your first direct shot before moving gains +6 aim.',4,'hold'],
+ 1:['High Spot','Fight from elevation. A high-ground hit gives the next allied shot +5 aim.',5,'high'],
+ 2:['Counter Screen','Support the line with guided fire. A missile hit gives the immediate counter −15 aim.',7,'screen'],
+ 3:['Breach Salvo','Close on defended targets. Direct fire cuts Brace reduction by 25 points within four tiles and 15 points beyond.',3,'push'],
+ 4:['Relay Guidance','Stay behind the line. Missiles reach one tile farther against painted targets.',8,'screen'],
+ 5:['Fire and Fade','Trade a burst and move. Take one free step after firing each turn.',4,'mobile'],
+ 6:['Riposte','Hold adjacent ground. Melee counters deal +20% damage.',1,'push'],
+ 7:['Siege Anchor','Set up before launching. The first missile salvo while braced deals +15% damage.',7,'anchor'],
+ 8:['Shield Lock','Guard the approach. The first braced shield block takes 20% less arm damage.',3,'anchor'],
+ 9:['Close Scatter','Close for a clear shot. Adjacent scatter shots deal +15% damage.',1,'push'],
+ [BASTION_FRAME]:['Covering Fire','Stay beside the unit you are protecting. Use your counter to return fire for an adjacent ally.',4,'escort'],
+ [HELLBREAKER]:['Brace Breaker','Force defenders out of position. Melee hits remove the target’s Brace.',1,'push'],
+ [CITADEL_FRAME]:['Marked Barrage','Shelter behind the line. Mark a tile one turn before firing a guided barrage.',7,'screen'],
+ [LINE_INFANTRY_FRAME]:['Paired Advance','Stay beside another friendly mech. Direct attacks gain +5 aim while adjacent to one.',3,'escort'],
+ [LINE_ELITE_FRAME]:['Prepared Response','Hold the line. Braced ranged counters deal +10% damage.',4,'anchor'],
+ [VANGUARD_FRAME]:['Charge','Run into contact. Your first paid melee strike after moving at least two tiles deals +20% damage each turn.',1,'push'],
+ [REAVER_FRAME]:['Suppressing Fire','Pressure armed targets. A direct hit to the weapon arm gives the target’s next shot −10 aim.',4,'hold'],
+ [BULWARK_FRAME]:['Shield Bash','Hold adjacent ground. Bulwark’s bash pushes the target one tile into a clear space. Other frames push with melee hits.',1,'push'],
+ [ASHIGARU_FRAME]:['Range Discipline','Keep two to three tiles of space while the carbine works. Ashigaru switches to flechettes up close. Other frames gain +5 aim on adjacent strikes or ranged shots from two or more tiles.',3,'mobile'],
+ [AERO_FRAME]:['Jumpjet','Take an unexpected angle. Jump up to five tiles for 2 AP, once per sortie.',1,'push'],
+ [SHOGUN_FRAME]:['Siegebreaker','Break a defensive line at range. Direct fire cuts Brace reduction by 20 points.',5,'hold'],
+ [CAIRN_FRAME]:['Braced Aim','Hold a firing lane. Direct shots gain +4 aim while braced.',4,'anchor'],
+ [SALTJACK_FRAME]:['Sustained Burst','Keep steady pressure at midrange. Bursts fired from four or more tiles gain +6 aim.',5,'hold'],
+ [SALT_WORKS_GARRISON_FRAME]:['Yard Defense','Cover the yard from behind obstacles. Direct shots from cover gain +8 aim.',5,'screen']
 };
 const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
 function hasMechSkill(u,frame){return Boolean(u?.mechSkills&&(u.frame===frame||u.mechSkills.includes(frame)))}
@@ -778,7 +783,7 @@ const extraMovement=u=>Boolean(u?.alive&&mobile(u)&&u.ap>=EXTRA_MOVE_AP&&!u.extr
 const movementLimit=u=>freeMovement(u)+Number(extraMovement(u));
 const spent=u=>Boolean(u?.alive&&u.ap===0&&(!movementLimit(u)||
  !neighborTiles(u.x,u.z).some(([x,z])=>onBoard(x,z)&&!battle.cover.has(x+','+z)&&!occupied(x,z))));
-function resetMovement(u){u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed'])delete u.mechState[key]}
+function resetMovement(u){u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key]}
 function startAction(u){u.moveLeft=0;u.actionPhase=true}
 const chassisParts=(frame,hull,training)=>({body:frame.hp+hull.upgrade*25+(training?.body??0),right:frame.arm,left:frame.arm,legs:frame.leg});
 const chassisArmor=(frame,hull,training)=>frame.armor+hull.upgrade*2+(training?.armor??0);
@@ -2352,7 +2357,7 @@ function render(){
   ${!openHands(frame)?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">${f.primaryOptions?'PRIMARY MOUNT.':'FACTORY ARMAMENT.'}</h2><div class="inline-help"><small>${f.primaryOptions?'COMPATIBLE WEAPONS':'INTEGRATED WEAPONS'}</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
   </div>
   <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="compare" ${bindWorkshop.disclosures?.compare?'open':''}><summary>Compare chassis</summary>${chassisAssignments(selected,training)}</details>
-  <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}${MECH_SIGNATURES[frame]?`<button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button>`:''}</details>`:chassisAssignments(selected,training)}</div>`;
+  <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}${MECH_SIGNATURES[frame]?`<p class="note"><strong>${MECH_SIGNATURES[frame][0]}</strong> · ${MECH_SIGNATURES[frame][1]}</p><button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER</button>`:''}</details>`:chassisAssignments(selected,training)}</div>`;
   if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY / PILOTS</div><h1>HUMAN AT THE CORE.</h1><div class="company-context" role="group" aria-label="Company services"><button data-page="inn">Hiring Desk</button><button data-page="career">Career Record</button></div></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
    <div class="grid">${LANCE_SLOTS.map(i=>pilotCard(pilotClass(i),save.units[i],trainingEffects(i),FRAMES[pilotFrame(i)].name,`id="train-pilot-${i}" data-train-pilot="${i}"`,trainingPoints(i))).join('')}
    ${dutyRoster().map(id=>{
@@ -2540,7 +2545,7 @@ function validMechState(state){
   if(key==='moved')return Number.isInteger(value)&&value>=0&&value<=battle.size.width*battle.size.depth;
   if(key==='spot')return value&&battle.units.some(u=>u.id===value.source&&u.team===value.team);
   if(key==='lock')return value&&Number.isInteger(value.x)&&Number.isInteger(value.z)&&onBoard(value.x,value.z)&&Number.isInteger(value.turn)&&value.turn>=1&&value.turn<=10000;
-  return ['fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','disrupted','basilisk'].includes(key)&&typeof value==='boolean';
+  return ['fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed','disrupted','basilisk'].includes(key)&&typeof value==='boolean';
  });
 }
 function validShip(career){
@@ -2854,7 +2859,7 @@ function jumpjetDestination(u,target){
  return best;
 }
 const {hitOdds,shotsPerAttack,roundWeight}=window.IRON_VOW_SIM;
-const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,FREE_HAND_COUNTER});
+const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,FREE_HAND_COUNTER});
 let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>ruleRandom(),chargedLimbShot});
 function shotContacts(w,profile,rounds,impacts){
  const spread=w.scatter?(reducedMotion?.021:.046):0;
@@ -3351,7 +3356,7 @@ const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recor
  attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
  beginAttackCamera:(...args)=>beginAttackCamera(...args),closeAttackCamera,shoot,
  BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
- freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,roundAP,resetMovement,highGroundAim
+ freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
 });
 function engage(attacker,defender,part,weapon){if(!attacker?.alive||!defender?.alive)return Promise.resolve(null);return resolveExchange(attacker,defender,part,weapon)}
 function surrenderEligible(u,opponents){
@@ -3372,17 +3377,19 @@ function trySurrender(u,opponents){
  return true;
 }
 function checkEnd(){if(!battle)return true;if(!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
+const enemyDoctrine=u=>u.kind==='helicopter'?[5,'mobile']:u.kind==='tank'?[4,'hold']:MECH_SIGNATURES[u.frame]?.slice(2);
 const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
- unitWeapon,targetParts,combatRange,launchesMissiles,movementLimit,isArmed,shoulderWeapon,workingWeapon,trySurrender,
- resetMovement:(u)=>resetMovement(u),renderBattle:()=>renderBattle(),
- distance:(a,b)=>distance(a,b),meleeWeapon:(u)=>meleeWeapon(u),scoutWeapon:(u,t)=>scoutWeapon(u,t),
- canUseWeapon:(u,w)=>canUseWeapon(u,w),attackObstruction:(u,t,w)=>attackObstruction(u,t,w),
- hasMechSkill:(u,frame)=>hasMechSkill(u,frame),paths:(u)=>paths(u),
- canJumpjet:(u)=>canJumpjet(u),jumpjetDestination:(u,t)=>jumpjetDestination(u,t),
- useJumpjet:(u,x,z)=>useJumpjet(u,x,z),moveUnit:(u,x,z,cost)=>moveUnit(u,x,z,cost),
- engage:(u,t,p,w)=>engage(u,t,p,w),
- checkEnd:()=>checkEnd(),addLog:(line)=>addLog(line),
+ unitWeapon,combatRange,launchesMissiles,movementLimit,isArmed,shoulderWeapon,workingWeapon,trySurrender,
+ resetMovement,renderBattle:()=>renderBattle(),distance,meleeWeapon,scoutWeapon,canUseWeapon,attackObstruction,
+ hasMechSkill,paths,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
+ doctrine:enemyDoctrine,paidAttackAP,freeMovement,extraMoveAP:EXTRA_MOVE_AP,jumpjetAP:JUMPJET_AP,
+ braceCost,braceUnit,startAction,barrageTarget,inCover,highGroundAim,reactionWeapon,
+ forecast:(u,t,w,reaction=false)=>{
+  const shot=salvoWeapon(u,w),hit=hitOdds(hitChance(u,t,shotPart(u,shot,reaction),shot,reaction),dodgeChance(t));
+  const part=activeShield(t)?'left':'body';
+  return {part,damage:attackBudget(u,t,part,shot,reaction)*hit.hit*(1+hit.crit*(shotsPerAttack(shot)>1?1:.5))};
+ }
 });
 async function endTurn(){
  if(!battle||battle.busy||careerStale)return;
