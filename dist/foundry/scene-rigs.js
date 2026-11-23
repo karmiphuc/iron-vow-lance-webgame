@@ -349,7 +349,8 @@ function draw(u,t,pose,scope,model,custom){
  const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive||u.surrendered,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
-  airborne:world?.airborne,targeting:world?.targeting,attacking:Boolean(u.attack),artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
+  airborne:world?.airborne,moveAge:step&&u.motion?t-u.motion.start:0,targeting:world?.targeting,attacking:Boolean(u.attack),
+  artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
   readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
  const animate=v2?.animate??animateMech;
  const previous=entry.groundRoot;

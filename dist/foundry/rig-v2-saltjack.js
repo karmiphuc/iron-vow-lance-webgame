@@ -144,6 +144,8 @@ function livePose(m,I,dt,t,state){
  state.idle=idle;
  const guard=idle&&state.uprightGuard?1:0;
  state.guard=I.reducedMotion?guard:damp(state.guard,guard,10,dt);
+ // End the idle carry on the move clock, even if the opening poses were skipped.
+ if(I.moving)state.guard=Math.min(state.guard,1-between(I.moveAge??0,0,.12));
  state.brace=I.reducedMotion?0:damp(state.brace,Math.max(I.brace??0,(I.readyRelease??0)*.87),12,dt);
  state.shouldered=I.reducedMotion?ready:damp(state.shouldered,ready,13,dt);
  state.walk=I.reducedMotion?0:damp(state.walk,I.moving?1:0,I.moving?9:8,dt);
