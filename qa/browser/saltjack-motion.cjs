@@ -1,12 +1,16 @@
 const assert=require('node:assert/strict');
+const firstRifles=require('./salt-rifle-roll.cjs');
 
 module.exports=async function checkSaltjackMotion({page,origin,mobile,tap}){
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.addInitScript(()=>localStorage.setItem('iron-vow-attack-camera','off'));
+ await firstRifles.install(page);
  const trial=new URL('?bench=war&trial=salt-works',origin).href;
  await page.goto(trial,{waitUntil:'domcontentloaded'});
+ const first=await firstRifles.assertFirst(page,'rifle');
  await checkCombatReady(page,mobile,tap);
- await page.goto(trial,{waitUntil:'domcontentloaded'});
+ await page.reload({waitUntil:'domcontentloaded'});
+ const reloaded=await firstRifles.assertFirst(page,'rifle');
  await page.waitForFunction(()=>IronVowScene.ready&&battle?.units.length===2&&battle.units.every(unit=>
   IronVowScene.models.get(unit.id)?.entry?.primary?.id==='rifle'),null,{timeout:90000});
 
@@ -61,7 +65,7 @@ module.exports=async function checkSaltjackMotion({page,origin,mobile,tap}){
      if(unit.motion){
       const {entry}=IronVowScene.models.get(unit.id),m=entry.m;
       samples.push({shift:m.rig.pelvis.position.x,freeArmDrop:freeArmDrop(m),moveAge:entry.time-unit.motion.start,
-       carryUp:entry.primary.muzzle.getWorldDirection(new THREE.Vector3()).y,feet:m.rig.legs.map((leg,i)=>{
+       carryUp:entry.primary.muzzle.getWorldDirection(new THREE.Vector3()).y,roll:saltRiflePose(entry).roll,feet:m.rig.legs.map((leg,i)=>{
        const state=m.legs[i],pos=world(leg.an);
        const floor=IronVowScene.groundAt(pos.x,pos.z)+m.dims.ankleH*m.scale;
        return {pos:pos.toArray(),land:state.planted.toArray(),lift:state.swing,floor,
@@ -170,6 +174,7 @@ module.exports=async function checkSaltjackMotion({page,origin,mobile,tap}){
   const shifts=move.samples.map(sample=>sample.shift);
   assert.ok(Math.min(...shifts)<-.11&&Math.max(...shifts)>.11,'The chassis transfers weight to both sides');
   assert.ok(move.samples.every(sample=>sample.freeArmDrop>.70),'Marching keeps the free hand low');
+  assert.ok(move.samples.every(sample=>sample.roll>.98),'The optic remains on top through the first step and the sustained march');
   const marching=move.samples.filter(sample=>sample.moveAge>=.12);
   assert.ok(marching.length>=4&&marching.every(sample=>sample.carryUp<.60),
    `Frame ${move.frame} lowers the rifle for the sustained march: ${JSON.stringify(marching.map(({moveAge,carryUp})=>({moveAge,carryUp})))}`);
@@ -211,6 +216,12 @@ module.exports=async function checkSaltjackMotion({page,origin,mobile,tap}){
  console.log(JSON.stringify({frames:checks.motion.map(({frame,plants})=>({frame,plants})),rounds:launch.length,
   impactCount:impact.length,carriageKick,hitPitch,death:checks.death.map(({frame,samples,contact})=>({frame,contact,
    samples:samples.map(({age,height,roll,knees,forwardSplit})=>({age,height,roll,knees,forwardSplit}))}))}));
+ const alternate=await page.context().newPage();
+ try{
+  await firstRifles.install(alternate,'salt-mg');
+  await alternate.goto(trial,{waitUntil:'domcontentloaded'});
+  console.log(JSON.stringify({firstRiflePose:{trial:first,reload:reloaded,alternate:await firstRifles.assertFirst(alternate,'salt-mg')}}));
+ }finally{await alternate.close();}
 };
 
 async function checkCombatReady(page,mobile,tap){
@@ -283,12 +294,14 @@ async function checkCombatReady(page,mobile,tap){
  const alignment=async()=>page.evaluate(()=>{
   const [hero,enemy]=battle.units,entry=IronVowScene.models.get(hero.id).entry,muzzle=entry.primary.muzzle;
   const direction=IronVowScene.partPoint(enemy,'body').sub(muzzle.getWorldPosition(new THREE.Vector3())).normalize();
-  return muzzle.getWorldDirection(new THREE.Vector3()).dot(direction);
+  return {aim:muzzle.getWorldDirection(new THREE.Vector3()).dot(direction),roll:saltRiflePose(entry).roll};
  });
  await page.waitForFunction(()=>IronVowScene.models.get(current().id).entry.m.saltMotion.shouldered>.995);
- assert.ok(await alignment()>.995,'Selecting the Garrison shoulders the actual rifle and tracks its body');
+ const acquired=await alignment();
+ assert.ok(acquired.aim>.995&&acquired.roll>.90,`Selecting the Garrison tracks its body with the rifle upright: ${JSON.stringify(acquired)}`);
  await tap('#brace');
- assert.ok(await alignment()>.995,'Bracing keeps the rifle on the acquired target');
+ const braced=await alignment();
+ assert.ok(braced.aim>.995&&braced.roll>.90,`Bracing keeps the rifle upright and on target: ${JSON.stringify(braced)}`);
  const enemyAttack=await page.evaluate(async()=>{
   const [hero,enemy]=battle.units;
   const random=ruleRandom,visualRandom=Math.random;

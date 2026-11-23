@@ -139,7 +139,10 @@ function livePose(m,I,dt,t,state){
  }
  m.recoil*=Math.exp(-dt*9);
  const ready=Math.max(I.targeting?1:0,I.readyRelease??0,I.brace??0);
- const idle=!I.moving&&!I.airborne&&!I.attacking&&ready<.01&&!I.armDead;
+ // Initialize the mounted weapon's first visible pose in low carry. A guard
+ // can be selected once this idle has lasted long enough to see the carry.
+ const armedFor=t-(state.armedAt??t);
+ const idle=armedFor>=.25&&!I.moving&&!I.airborne&&!I.attacking&&ready<.01&&!I.armDead;
  if(idle&&!state.idle)state.uprightGuard=Math.random()<.5;
  state.idle=idle;
  const guard=idle&&state.uprightGuard?1:0;
@@ -188,7 +191,7 @@ function livePose(m,I,dt,t,state){
  // Swing the bore forward as the shoulder draws the rifle in. Interpolating
  // the carriage's local roll would sweep the barrel sideways across the hull.
  const barrelPitch=mix(1.17,0,state.guard)*(1-gun)+1.56*gun;
- orientRifle(joints.Carriage,m.cont,rest.Carriage,V(.065*(1-gun),Math.cos(barrelPitch),Math.sin(barrelPitch)+sway*.12));
+ orientRifle(joints.Carriage,m.cont,V(.065*(1-gun),Math.cos(barrelPitch),Math.sin(barrelPitch)+sway*.12));
  joints.Carriage.position.y=state.carriageY+.25*kick;
  state.visorMat.emissiveIntensity=m.wrecked?0:1;
  state.stackMat.emissiveIntensity=m.wrecked?0:1;
@@ -231,14 +234,16 @@ function floorClearance(m,I){
  return Number.isFinite(minimum)?minimum:0;
 }
 
-function orientRifle(carriage,body,rest,direction,weight=1){
- carriage.quaternion.copy(rest);
- const world=carriage.getWorldQuaternion(Q());
- const bore=V(0,-1,0).applyQuaternion(world);
- const target=direction.applyQuaternion(body.getWorldQuaternion(Q())).normalize();
- const turn=Q().setFromUnitVectors(bore,target);
- const aimed=carriage.parent.getWorldQuaternion(Q()).invert().multiply(turn.multiply(world));
- carriage.quaternion.slerp(aimed,weight);
+function orientRifle(carriage,body,direction,weight=1){
+ // Production mounts turn local +Z (bore) into carriage -Y and local +Y
+ // (optic) into carriage +Z. Solve both axes so a correct muzzle direction
+ // cannot retain the roll from the film prop's authored carriage.
+ const bore=direction.normalize();
+ const right=V(1,0,0).addScaledVector(bore,-bore.x).normalize();
+ const top=bore.clone().cross(right);
+ const local=Q().setFromRotationMatrix(new T.Matrix4().makeBasis(right,bore.negate(),top));
+ const target=carriage.parent.getWorldQuaternion(Q()).invert().multiply(body.getWorldQuaternion(Q())).multiply(local);
+ carriage.quaternion.slerp(target,weight);
 }
 
 function fallPose(m,I,state){
@@ -285,7 +290,8 @@ function fallPose(m,I,state){
  blendRotation(joints.Shoulder_L,fall.angles.Shoulder_L,arms,-.75+.34*tip,.1,-.31);
  blendRotation(joints.Arm_L,fall.angles.Arm_L,arms,.14,0,-.11);
  blendRotation(joints.Elbow_L,fall.angles.Elbow_L,arms,-.44-.36*tip,0,-.20);
- orientRifle(joints.Carriage,cont,fall.angles.Carriage,V(.08+.58*tip,.065+.06*tip,1),between(age,.045,.38));
+ joints.Carriage.quaternion.copy(fall.angles.Carriage);
+ orientRifle(joints.Carriage,cont,V(.08+.58*tip,.065+.06*tip,1),between(age,.045,.38));
  joints.Carriage.position.y=mix(fall.carriage,state.carriageY,buckle);
 
  if(tip>0){
@@ -407,7 +413,12 @@ function build(unit,source,clips,workshopMounts){
   source,clips,animate,worldScale:scale,nativeShield:true,
   targetingBlend:()=>mech.saltMotion.shouldered,
   pose(entry,u,pose,t,armory){
-   entry.primary=equipment.fit('R',u.weapon,armory);
+   const weapon=equipment.fit('R',u.weapon,armory);
+   if(weapon!==entry.primary){
+    mech.saltMotion.armedAt=weapon?t:null;
+    mech.saltMotion.guard=0;
+   }
+   entry.primary=weapon;
    if(entry.primary){
     entry.primary.mount.visible=u.hp.right>0;
     entry.primary.aimPivot=aimPivot;

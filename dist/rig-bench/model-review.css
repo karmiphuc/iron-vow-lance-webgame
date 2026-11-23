@@ -1,0 +1,29 @@
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; background:#192126; color:#e1e8eb; font:15px Arial,sans-serif; }
+main { height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
+header, footer {
+ display:flex; align-items:center; gap:16px;
+ padding:12px clamp(14px,4vw,45px);
+ background:#202a30;
+}
+header a { display:inline-flex; align-items:center; min-height:44px; color:inherit; }
+h1 { margin:0; font-size:22px; letter-spacing:.01em; }
+header span { color:#b2c0c7; }
+section { position:relative; overflow:hidden; }
+canvas { display:block; width:100%; height:100%; touch-action:none; }
+footer { flex-wrap:wrap; gap:8px; }
+button, select {
+ min-height:44px; padding:8px 14px;
+ font:inherit; color:inherit; background:#27353d;
+ border:1px solid #596d76; border-radius:4px;
+}
+button[aria-pressed="true"] { color:#18241d; background:#ccdaa8; border-color:#ccdaa8; }
+label { display:flex; gap:7px; align-items:center; margin-left:auto; }
+#status { position:absolute; top:12px; left:18px; }
+@media(max-width:650px) {
+ header { gap:8px; }
+ header span { font-size:12px; }
+ footer { padding:6px; }
+ button, select { font-size:13px; padding:7px 8px; }
+ label { margin-left:0; }
+}

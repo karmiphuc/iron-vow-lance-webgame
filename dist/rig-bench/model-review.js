@@ -1,4 +1,23 @@
+const modelReview = {
+ giza: {
+  center:3.48,
+  views:{
+   quarter:[-.49, .15, 8.55], front:[.005, .075, 8.55], side:[-Math.PI / 2, .07, 8.55],
+   rear:[2.7, .14, 8.55], board:[.73, .62, 11.2]
+  }
+ },
+ husky: {
+  center:2.65,
+  views:{
+   quarter:[.53, .205, 6.49], front:[.005, .075, 7.25], side:[Math.PI / 2 - .095, .13, 6.72],
+   rear:[2.7, .14, 7.2], board:[.73, .62, 11.2]
+  }
+ }
+};
+
 (async () => {
+ const modelId = document.body.dataset.model;
+ const {center, views} = modelReview[modelId];
  const canvas = document.querySelector('canvas');
  const viewport = canvas.parentElement;
  const controls = document.querySelector('footer');
@@ -65,7 +84,7 @@
  grid.material.transparent = true;
  scene.add(grid);
 
- const asset = await new T.GLTFLoader().loadAsync('giza.glb');
+ const asset = await new T.GLTFLoader().loadAsync(modelId + ".glb");
  const model = asset.scene;
  scene.add(model);
  model.traverse(object => {
@@ -76,13 +95,6 @@
  const hip = vector(0, 0, 0);
  const mixer = new T.AnimationMixer(model);
  const clips = new Map(asset.animations.map(clip => [clip.name, clip]));
- const views = {
-  quarter:[-.49, .15, 8.55],
-  front:[.005, .075, 8.55],
-  side:[-Math.PI / 2, .07, 8.55],
-  rear:[2.7, .14, 8.55],
-  board:[.73, .62, 11.2]
- };
  let azimuth, elevation, span, mode, action, drag;
  let time = 0;
  let previousTime = performance.now();
@@ -156,13 +168,13 @@
   });
   camera.updateProjectionMatrix();
   model.updateMatrixWorld(true);
-  const target = vector(0, 3.48, chassis.position.z);
+  const target = vector(0, center, chassis.position.z);
   if (mode === 'Fall') {
    // Follow the pelvis through the drop while leaving both feet in frame.
    const settle = Math.min(1, Math.max(0, (time - .55) / .8));
    const follow = settle * settle * (3 - 2 * settle);
    pelvis.getWorldPosition(hip);
-   target.set(hip.x * .55, 3.48 - 2.08 * follow, hip.z);
+   target.set(hip.x * .55, center + (1.4 - center) * follow, hip.z);
   }
   const offset = vector(
    Math.sin(azimuth) * Math.cos(elevation),
@@ -195,6 +207,6 @@
  status.hidden = true;
  requestAnimationFrame(frame);
 })().catch(error => {
- document.querySelector('#status').textContent = 'The Giza viewer could not load. Return to Rig Bench or reload to try again.';
+ document.querySelector('#status').textContent = 'The model viewer could not load. Return to Rig Bench or reload to try again.';
  console.error(error);
 });
