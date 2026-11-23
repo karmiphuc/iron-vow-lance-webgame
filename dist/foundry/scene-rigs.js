@@ -218,10 +218,10 @@ const oneHandGuns=new Set(['rifle','shotgun','sidewinder','trident','forge','emb
 const longGuns=new Set(['rail','obelisk','watchman','rampart','falcon']);
 const cuttingWeapons=new Set(['blade','cleaver','hatchet']);
 const shieldPoses={'bulwark-shield':'buckler','citadel-shield':'tower'};
-function combatReadyPose(u,{m,primary,secondary,shield}){
+function combatReadyPose(u,{m,primary,secondary,shield,shoulderWeapon}){
  if(!primary?.muzzle||u.lionTrial)return;
  const {spine,arms}=m.rig;
- if(u.frame===2)return primary.carrier===spine?'pod':undefined;
+ if(u.frame===2)return primary===shoulderWeapon||primary.carrier===spine?'pod':undefined;
  if(primary.mount.parent!==arms.R.so)return;
  const compact=oneHandGuns.has(primary.id),striker=u.frame===5||m.cairn;
  if(u.shield){
@@ -311,7 +311,7 @@ function draw(u,t,pose,scope,model,custom){
    const pod=arsenal.mount(armory,shoulderId==='vesper-shoulder'?'missile':shoulderId,socket);
    if(pod){
     pod.mount.rotation.x=0;
-    entry.shoulderWeapon={...pod,carrier:m.rig.spine,subsystem:'right',aimPivot:()=>pod.mount};
+    entry.shoulderWeapon={...pod,carrier:socket,subsystem:'right',aimPivot:()=>pod.mount};
    }
    if(!handId)entry.primarySocket=socket;
   }
@@ -344,7 +344,7 @@ function draw(u,t,pose,scope,model,custom){
  m.primaryWeapon=standardEquipment&&u.hp.right>0&&fittedGun?.mount.parent===R.so&&
   (oneHandGuns.has(fittedGun.id)||longGuns.has(fittedGun.id))?fittedGun:null;
  const readyPose=!pose.stage&&!pose.preview&&world?.groundAt?combatReadyPose(u,entry):undefined;
- const aimFromArm=barrel?.carrier!==m.rig.spine&&!(barrel&&barrel.mount.parent===entry.primarySocket);
+ const aimFromArm=barrel?.carrier!==m.rig.spine&&!(barrel&&(barrel===entry.shoulderWeapon||barrel.mount.parent===entry.primarySocket));
  const playbackRate=world&&step?(u.motion.playbackRate??1):1;
  const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive||u.surrendered,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
