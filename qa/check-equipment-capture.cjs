@@ -92,6 +92,21 @@ const checkpoint=require('./fixtures/equipment-capture.json');
  lost.run('finish(false)');
  assert.equal(lost.run('save.captured'),undefined);
  assert.equal(lost.run("copies(save.owned,'trident')"),0);
+ // Choose a real Vanta reward roll that would give the MG from unfiltered stock.
+ for(const reputation of [179,180]){
+  const yard=simulate({reducedMotion:true});
+  const received=yard.run(`(()=>{
+   save.rep=${reputation};createBattle(SALT_WORKS_CONTRACT,false,false,[0]);
+   const stock=portStock('corridor').weapons;
+   for(let seed=0;seed<1000;seed++){
+    const roll=equipmentRoll([save.world?.seed??0,seed,save.day,'salt-works'].join('/'));
+    if(roll%5>=2||stock[Math.floor(roll/5)%stock.length]!=='salt-mg')continue;
+    battle.terrainSeed=seed;finish(true);return save.owned.includes('salt-mg');
+   }
+   throw Error('Missing deterministic Salt Works reward roll');
+  })()`);
+  assert.equal(received,reputation===180,'Vanta salvage respects the MG reputation threshold');
+ }
  const loot=new Set();
  for(let seed=0;seed<10;seed++){
   const sortie=simulate({reducedMotion:true});

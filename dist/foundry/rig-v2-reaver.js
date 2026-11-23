@@ -12,7 +12,7 @@ root.IronVowRigV2.register(16,{
    const rest=mount.position.clone();
    const recoilDirection=muzzle.getWorldDirection(V3()).applyQuaternion(carrier.getWorldQuaternion(new T.Quaternion()).invert());
    let firedAt=-Infinity;
-   const cannon={id:'rifle',mount,carrier,muzzle,bounds:()=>bounds(name),
+   const cannon={id:'rifle',subsystem:side==='L'?'left':'right',mount,carrier,muzzle,bounds:()=>bounds(name),
     onLaunch(time){firedAt=time;},
     pose(visible,time){
      const age=time-firedAt;
@@ -28,6 +28,7 @@ root.IronVowRigV2.register(16,{
   }
   const right=cannons.R,left=cannons.L;
   right.aimPivot=marker=>marker===left.muzzle?rig.arms.L.wr:undefined;
+  left.aimPivot=()=>rig.arms.L.wr;
   const axis=V3(),delta=new T.Quaternion();
   return {
    boundsNames:['RECOIL_CARRIAGE_R','RECOIL_CARRIAGE_L'],

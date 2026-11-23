@@ -1,16 +1,17 @@
 /* Actual GLB geometry and shipped arsenal animation, without a GPU. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+globalThis.createImageBitmap=async()=>({width:1,height:1});
 globalThis.window=globalThis;globalThis.self=globalThis;
 const root=path.resolve(__dirname,'../dist');
 for(const name of ['rig-bench/vendor/three.min.js','rig-bench/vendor/GLTFLoader.js','armory-visuals.js'])vm.runInThisContext(fs.readFileSync(path.join(root,name),'utf8'),{filename:name});
 // Classification and physical mounts must survive removal of the sprite metadata.
 const expansionIds=['sidewinder','trident','forge','ember','watchman','falcon','cerberus',
- 'obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax'];
+ 'obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax','salt-mg'];
 delete globalThis.IRON_VOW_EXPANSION_ART;
 for(const name of ['foundry/production-arsenal.js','scene/weapon-fx.js'])vm.runInThisContext(fs.readFileSync(path.join(root,name),'utf8'),{filename:name});
 const buffer=name=>{const b=fs.readFileSync(path.join(root,'rig-bench',name));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);};
 (async()=>{
- const A=IronVowProductionArsenal,source=await A.load(buffer('weapons.glb'),buffer('expansion-weapons.glb'),buffer('shields.glb'));
+ const A=IronVowProductionArsenal,source=await A.load(buffer('weapons.glb'),buffer('expansion-weapons.glb'),buffer('shields.glb'),buffer('salt-mg.glb'));
  for(const [id,scale] of [['bulwark-shield',2],['citadel-shield',2.25]]){
   const original=source.getObjectByName(id),socket=new THREE.Group();
   const shield=A.mountShield(source,id,socket);
