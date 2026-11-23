@@ -79,7 +79,7 @@
   }
   return {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
  }
- function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,FREE_HAND_COUNTER}){
+ function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
 const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee);
 // Part whose accuracy a shot uses: charged shots keep the old limb accuracy, every other shot uses the body.
@@ -90,6 +90,8 @@ function specialtyAim(a,t,w,direct){
  if(hasMechSkill(a,LINE_INFANTRY_FRAME)&&battleUnits()?.some(ally=>ally.id!==a.id&&ally.alive&&!ally.kind&&ally.team===a.team&&distance(a,ally)===1))aim+=.05;
  if(w.burst&&distance(a,t)>=4&&hasMechSkill(a,SALTJACK_FRAME))aim+=.06;
  if(inCover(a)&&hasMechSkill(a,SALT_WORKS_GARRISON_FRAME))aim+=.08;
+ if(a.mechState?.moved&&distance(a,t)<=3&&hasMechSkill(a,HUSKY_FRAME))aim+=.08;
+ if(!a.mechState?.moved&&distance(a,t)>=5&&hasMechSkill(a,GIZA_FRAME))aim+=.06;
  return aim;
 }
 function mechAim(a,t,w,reaction){
@@ -123,6 +125,7 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const limb=limbPart(part),limbPower=limb?(training?.limbPower??0):0;
  const reactionPower=(reaction?(training?.reactionPower??0):0)+
   (reaction&&w.melee&&hasMechSkill(a,6)?.20:0)+
+  (w.melee&&t.brace&&hasMechSkill(a,VYZOV_FRAME)?.15:0)+
   (reaction&&!w.melee&&a.brace&&hasMechSkill(a,LINE_ELITE_FRAME)?.10:0)+
   (a.brace&&launchesMissiles(w)&&hasMechSkill(a,7)&&!a.mechState?.behemothUsed?.15:0)+
   (w.scatter&&distance(a,t)===1&&hasMechSkill(a,9)?.15:0)+
@@ -227,7 +230,7 @@ function reactionWeapon(defender,attacker){
   getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
   attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,
   useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,
-  trySurrender=()=>false,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
+  trySurrender=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
   doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,freeMovement=movementLimit,extraMoveAP=1,jumpjetAP=2,
   braceCost=()=>2,braceUnit=u=>{u.brace=true},startAction=()=>{},barrageTarget=()=>null,
   inCover=()=>false,highGroundAim=()=>0,reactionWeapon=()=>null,
@@ -359,7 +362,7 @@ function reactionWeapon(defender,attacker){
     if(trySurrender(enemy,allies)){if(checkEnd())return true;continue;}
     const arms=weapons(enemy);
     const patrol=enemy.frame===VANGUARD_FRAME||enemy.frame===BULWARK_FRAME||enemy.frame===ASHIGARU_FRAME;
-    const detection=soloPatrol?12:Math.max(patrol?8:5,...arms.map(w=>w.range+Number(!enemy.kind)));
+    const detection=soloPatrol?12:Math.max(patrol?8:5,tacticalRange(enemy),...arms.map(w=>w.range+Number(!enemy.kind)));
     const active=battle.legacy||
      allies.some(t=>distance(enemy,t)<=detection)||
      Object.keys(enemy.hp).some(part=>enemy.hp[part]<enemy.max?.[part]);
@@ -371,6 +374,12 @@ function reactionWeapon(defender,attacker){
      const position=bestPosition(enemy,allies,friends,role);
      if(position.jet)await useJumpjet(enemy,position.x,position.z);
      else if(position.cost)await moveUnit(enemy,position.x,position.z,position.cost);
+    }
+    if(tryTactical&&await tryTactical(enemy,allies)){
+     renderBattle();
+     if(checkEnd())return true;
+     if(!enemy.alive)continue;
+     allies=opponents();
     }
     let choice=bestAttack(enemy,allies);
     if(!soloPatrol)braceIfUseful(enemy,allies,choice);

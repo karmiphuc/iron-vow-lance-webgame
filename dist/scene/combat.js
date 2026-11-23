@@ -33,16 +33,18 @@ root.IronVowCombat={create(scene,api){
  const profileFor=(actor,w)=>root.IronVowWeaponFX.get(w.id);
  function launch(actor,target,w,index,contacts,guard){
   api.sync(actor);api.sync(target);
+  const mounted=api.models.get(actor.id)?.entry;
+  const giza=w.id==='giza-salvo'||actor.attack?.tactical==='double-cannon';
+  const ability=giza?mounted?.m.nativeV2?.abilityWeapon:null;
   const profile=profileFor(actor,w),kind=profile.archetype;
   if(kind==='blade')return;
-  const mounted=api.models.get(actor.id)?.entry;
-  const socket=profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):
+  const socket=ability?'shoulderMuzzle'+(index%2?'2':''):profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):
    mounted?.primary?.alternate&&index%2?'muzzle2':shotMuzzle(actor,w.id,index);
   const selected=contacts.filter(c=>c.index===index||w.scatter&&index===0),contact=selected[0]||contacts[0];
   const part=guard?'shield':contact?.part||'body',to=point(target,part);
   if(contact&&!contact.hit)to.add(V3(.6,0,.4));
   const native=mounted?.m.nativeV2,shoulder=socket.startsWith('shoulderMuzzle'),alternate=socket.endsWith('2');
-  const weapon=shoulder?mounted?.shoulderWeapon??mounted?.primary:mounted?.primary;
+  const weapon=ability||(shoulder?mounted?.shoulderWeapon??mounted?.primary:mounted?.primary);
   if(weapon){
    const indexed=weapon.muzzles?.[index%weapon.muzzles.length];
    if(indexed)weapon.muzzle=indexed;
@@ -51,7 +53,7 @@ root.IronVowCombat={create(scene,api){
    root.IronVowFoundry.aimMounted(mounted.m,native||shoulder?{muzzle:selected}:weapon,to,1,pivot);
    native?.sync();
   }
-  const from=point(actor,socket);
+  const from=ability?(alternate?ability.muzzle2:ability.muzzle).getWorldPosition(V3()):point(actor,socket);
   const flight=Math.max(.025,contact?.travel||attackProfile(actor,w.id).travel);
   const entry=mounted,barrel=alternate&&weapon?.alternate||weapon;
   const expectedMarker=alternate?barrel?.muzzle2||barrel?.muzzle:barrel?.muzzle;
@@ -88,6 +90,25 @@ root.IronVowCombat={create(scene,api){
   }
   const source=model||{wpn:{},yaw:0,recoil:0,s:{pitch:{v:0},kx:{v:0},kz:{v:0}}};source.wpn=source.wpn||{};
   effect.fireFX(source,shotTarget,kind,part,{at:clock,index,origin:from,target:shotTarget,targets,flights,flight:shotFlight,arrival:at=>{effect.explode(at,false);log('arrival',{actor:actor.id,weapon:w.id,index,point:at.toArray(),expected:shotTarget.toArray()});}});
+ }
+ function crossMortar(unit,tiles,flight=.8){
+  api.sync(unit);
+  const m=api.models.get(unit.id)?.entry?.m,mortar=m?.nativeV2?.mortar;
+  if(!mortar||!tiles?.length)return false;
+  mortar.firedAt=clock;
+  const origin=mortar.muzzle.getWorldPosition(V3());
+  log('mortar-launch',{actor:unit.id,origin:origin.toArray(),tiles});
+  if(!reducedMotion){
+   fx.glow(origin,0xffc068,3.1,.17);fx.smoke(origin,4,1.6,0xc4bdb0,.54,.85,1.5,.3);
+  }
+  for(const {x,z} of tiles){
+   const target=api.world(x,z);
+   if(!reducedMotion)fx.missile(origin,target,Math.min(13,4.5+origin.distanceTo(target)*.27),flight,point=>{
+    effect.explode(point,false);
+    log('mortar-arrival',{actor:unit.id,x,z,point:point.toArray()});
+   });
+  }
+  return !reducedMotion;
  }
  function landed(actor,target,w,contact,guard){
   api.sync(actor);api.sync(target);
@@ -180,6 +201,6 @@ root.IronVowCombat={create(scene,api){
   const slow=typeof deathSlowmo==='function'&&deathSlowmo(clock)?DEATH_TIME.rate:1;
   effect.update(t,Math.min(.05,dt)*slow);
  }
- return {launch,landed,dodge,evade,step,update,history,fx,dispose:()=>effect.dispose(),clear:()=>{pelletPoints=new WeakMap();groundQueue=[];effect.clear();}};
+ return {launch,landed,dodge,evade,step,crossMortar,update,history,fx,dispose:()=>effect.dispose(),clear:()=>{pelletPoints=new WeakMap();groundQueue=[];effect.clear();}};
 }};
 })(window);
