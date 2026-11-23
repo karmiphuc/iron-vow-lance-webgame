@@ -59,6 +59,8 @@ def script(path):
     if path == "game.js":
         for link in ("rig-bench/index.html", "foundry/studio.html"):
             content = content.replace(f'href="{link}"', f'href="{site}{link}"')
+    if path == "rig-bench/workbench.js":
+        content = content.replace('href="rig-bench/giza.html"', f'href="{site}rig-bench/giza.html"')
     return f"<script>{content}</script>"
 
 page = (dist / "index.html").read_text()

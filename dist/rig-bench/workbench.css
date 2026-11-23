@@ -14,6 +14,7 @@ body.rig-bench-v3 { background:#152128; }
 .bench-heading,.bench-actions { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem; }
 .bench-heading h1 { margin:0 auto 0 0; font-size:1.25rem; }
 .bench-controls a { color:#a4e3d2; }
+.bench-model-review { display:inline-flex; align-items:center; min-height:44px; }
 .bench-controls details { border-top:1px solid #53676b; padding-top:.5rem; }
 .bench-controls summary { cursor:pointer; }
 .bench-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.35rem .5rem; margin-top:.45rem; }

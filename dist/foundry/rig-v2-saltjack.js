@@ -138,8 +138,16 @@ function livePose(m,I,dt,t,state){
   spring(S[name],horizontal?56:72,horizontal?11:10,dt);
  }
  m.recoil*=Math.exp(-dt*9);
+ const ready=Math.max(I.targeting?1:0,I.readyRelease??0,I.brace??0);
+ const idle=!I.moving&&!I.airborne&&!I.attacking&&ready<.01&&!I.armDead;
+ if(idle&&!state.idle)state.uprightGuard=Math.random()<.5;
+ state.idle=idle;
+ const guard=idle&&state.uprightGuard?1:0;
+ state.guard=I.reducedMotion?guard:damp(state.guard,guard,10,dt);
+ // End the idle carry on the move clock, even if the opening poses were skipped.
+ if(I.moving)state.guard=Math.min(state.guard,1-between(I.moveAge??0,0,.12));
  state.brace=I.reducedMotion?0:damp(state.brace,Math.max(I.brace??0,(I.readyRelease??0)*.87),12,dt);
- state.shouldered=I.reducedMotion?0:damp(state.shouldered,Math.max((I.brace??0)*.65,I.readyRelease??0),13,dt);
+ state.shouldered=I.reducedMotion?ready:damp(state.shouldered,ready,13,dt);
  state.walk=I.reducedMotion?0:damp(state.walk,I.moving?1:0,I.moving?9:8,dt);
  const brake=state.brace,walk=state.walk;
  const support=state.swing?1-state.swing.index:1-state.next;
@@ -167,8 +175,8 @@ function livePose(m,I,dt,t,state){
  const action=clamp(walk+brake+Math.abs(impact)*3),gun=state.shouldered;
  const sway=lean*.12;
  const aimYaw=clamp(angle(m.yaw,I.face),-.68,.68)*brake;
- const idle=I.reducedMotion?0:Math.sin(t*2.25)*.011;
- rig.spine.rotation.set(.035+walk*.09+.08*brake-.12*kick+impact*1.8+idle,aimYaw+sway+sideHit*.6,-lean*.09+sideHit*1.18,'YXZ');
+ const breath=I.reducedMotion?0:Math.sin(t*2.25)*.011;
+ rig.spine.rotation.set(.035+walk*.09+.08*brake-.12*kick+impact*1.8+breath,aimYaw+sway+sideHit*.6,-lean*.09+sideHit*1.18,'YXZ');
  rig.neck.rotation.set(-.065+brake*.05-impact*.7,(1-brake)*Math.sin(t*.9)*.10,sideHit*.3);
  blendRotation(joints.Shoulder_R,rest.Shoulder_R,gun,-.10-.38*gun+.09*kick,0,-.045);
  blendRotation(joints.Arm_R,rest.Arm_R,gun,-.09-.14*gun,0,-.07);
@@ -179,7 +187,7 @@ function livePose(m,I,dt,t,state){
  blendRotation(joints.Elbow_L,rest.Elbow_L,action,-.30-.13*brake-sway+clamp(S.arm.x,-.22,.23),-.13,0);
  // Swing the bore forward as the shoulder draws the rifle in. Interpolating
  // the carriage's local roll would sweep the barrel sideways across the hull.
- const barrelPitch=gun*1.53;
+ const barrelPitch=mix(1.17,0,state.guard)*(1-gun)+1.56*gun;
  orientRifle(joints.Carriage,m.cont,rest.Carriage,V(.065*(1-gun),Math.cos(barrelPitch),Math.sin(barrelPitch)+sway*.12));
  joints.Carriage.position.y=state.carriageY+.25*kick;
  state.visorMat.emissiveIntensity=m.wrecked?0:1;
@@ -239,47 +247,60 @@ function fallPose(m,I,state){
  if(!state.fall){
   const angles=Object.fromEntries(Object.entries(joints).map(([name,node])=>[name,node.quaternion.clone()]));
   state.fall={angles,pelvis:rig.pelvis.position.clone(),feet:m.legs.map(foot=>foot.foot.clone()),
-   yaw:m.yaw,carriage:joints.Carriage.position.y};
+   yaw:m.yaw,carriage:joints.Carriage.position.y,pelvisRotation:rig.pelvis.quaternion.clone()};
  }
  const fall=state.fall;
  const buckle=between(age,.035,.55),tip=down?0:clamp((age-.48)/.44)**1.65;
- const fold=down?0:between(age,.46,.79);
+ const give=down?0:between(age,.06,.36),reach=down?0:between(age,.24,.51);
  const settle=down?0:between(age,.92,1.47);
  const bounce=down||age<.92||age>=1.47?0:Math.sin(PI*settle)*(1-settle)*.075;
- const targetHeight=down?1.29:1.11;
  cont.rotation.set(0,fall.yaw,0,'YXZ');
- rig.pelvis.position.copy(fall.pelvis).lerp(V(.24,targetHeight,.20),buckle);
+ rig.pelvis.position.copy(fall.pelvis).lerp(down?V(.24,1.29,.20):V(-.34,.96,.26),buckle);
+ // Drop the failing left hip while the opposite shoe still carries the chassis.
+ blendRotation(rig.pelvis,fall.pelvisRotation,give,.13,.22,.27);
  for(const [i,leg] of rig.legs.entries()){
+  const failed=i===0;
   const foot=fall.feet[i].clone();
+  if(!down){
+   const slide=failed?V(-.13,0,-.40).multiplyScalar(give):V(.20,0,.67).multiplyScalar(reach);
+   foot.add(slide.multiplyScalar(m.scale).applyAxisAngle(V(0,1,0),fall.yaw));
+  }
   if(I.groundAt)foot.y=mix(foot.y,I.groundAt(foot.x,foot.z)+m.dims.ankleH*m.scale,buckle);
-  solveLeg(m,leg,foot,fall.yaw+leg.toe);
-  blendRotation(leg.hip,leg.hip.quaternion.clone(),fold,i===0?-.83:-1.54,0,i===0?-.26:-.65);
-  blendRotation(leg.kn,leg.kn.quaternion.clone(),fold,i===0?1.65:2.45,0,0);
-  blendRotation(leg.an,leg.an.quaternion.clone(),fold,-.44,leg.toe,0);
+  if(failed)foot.y+=.31*give*m.scale;
+  solveLeg(m,leg,foot,fall.yaw+leg.toe+(failed?-.18:.24)*reach,failed?.48*give:0);
+  // The failed shin tucks under the hull. The other shoe releases late and
+  // swings out ahead of it, so the feet cannot land side by side.
+  const release=down?0:between(age,failed?.21:.61,failed?.78:.96);
+  blendRotation(leg.hip,leg.hip.quaternion.clone(),release,failed?-1.02:-1.59,failed?.04:.32,failed?.04:-.21);
+  blendRotation(leg.kn,leg.kn.quaternion.clone(),release,failed?2.38:1.12,0,0);
+  blendRotation(leg.an,leg.an.quaternion.clone(),release,failed?-.87:.35,leg.toe,failed?.12:-.18);
  }
  const arms=buckle*.62+tip*.38;
  blendRotation(rig.spine,fall.angles.Thorax,buckle,.56-.37*tip,.12,-.12);
  blendRotation(rig.neck,fall.angles.Optics,buckle,.50-.09*tip,.21,.08);
- blendRotation(joints.Shoulder_R,fall.angles.Shoulder_R,arms,-.09-.14*tip,0,-.29);
+ // Swing the weapon onto the high side so the shoulder carries the impact.
+ blendRotation(joints.Shoulder_R,fall.angles.Shoulder_R,arms,-.09-.14*tip,0,-.29+.82*tip);
  blendRotation(joints.Arm_R,fall.angles.Arm_R,arms,-.23,0,-.13);
  blendRotation(joints.Elbow_R,fall.angles.Elbow_R,arms,-.96-.35*tip,-.12,0);
- blendRotation(joints.Shoulder_L,fall.angles.Shoulder_L,arms,-.75+.24*tip,.1,.29);
- blendRotation(joints.Arm_L,fall.angles.Arm_L,arms,.18,0,.04);
- blendRotation(joints.Elbow_L,fall.angles.Elbow_L,arms,-.44,0,-.20);
- orientRifle(joints.Carriage,cont,fall.angles.Carriage,V(.08,.065,1),between(age,.045,.38));
+ blendRotation(joints.Shoulder_L,fall.angles.Shoulder_L,arms,-.75+.34*tip,.1,-.31);
+ blendRotation(joints.Arm_L,fall.angles.Arm_L,arms,.14,0,-.11);
+ blendRotation(joints.Elbow_L,fall.angles.Elbow_L,arms,-.44-.36*tip,0,-.20);
+ orientRifle(joints.Carriage,cont,fall.angles.Carriage,V(.08+.58*tip,.065+.06*tip,1),between(age,.045,.38));
  joints.Carriage.position.y=mix(fall.carriage,state.carriageY,buckle);
 
  if(tip>0){
   const pelvisBefore=rig.pelvis.getWorldPosition(V());
-  cont.rotation.set(.08*tip,fall.yaw+.13*tip,(-1.48-.08*settle)*tip,'YXZ');
+  cont.rotation.set((.36-.04*settle)*tip,fall.yaw-.25*tip,(1.36+.14*settle)*tip,'YXZ');
   const pelvisAfter=rig.pelvis.getWorldPosition(V());
-  const drift=V(.61*tip,0,.24*tip).applyAxisAngle(V(0,1,0),fall.yaw);
+  const drift=V(-.55*tip,0,.42*tip).applyAxisAngle(V(0,1,0),fall.yaw);
   cont.position.add(pelvisBefore.sub(pelvisAfter)).add(drift);
   cont.position.y-=tip*.34*m.scale;
  }
  if(buckle>0){
   const clearance=floorClearance(m,I);
-  cont.position.y+=tip>=1?-.012-clearance+bounce:Math.max(0,-.012-clearance);
+  // Take up the remaining gap as the shoulder hits, without a final snap to the floor.
+  const landing=down?0:between(age,.72,.92);
+  cont.position.y+=Math.max(0,-.012-clearance)-Math.max(0,clearance+.012)*landing+bounce;
  }
  state.visorMat.emissiveIntensity=1-buckle;
  state.stackMat.emissiveIntensity=1-buckle;
@@ -381,9 +402,10 @@ function build(unit,source,clips,workshopMounts){
  const aimPivot=()=>mount;
  mech.live=id;
  mech.scale=scale;mech.cont.scale.setScalar(scale);
- mech.saltMotion={joints,rest,readyHeight:dims.py,carriageY:mount.position.y,next:0,balance:0,brace:0,shouldered:0,walk:0,visorMat,stackMat};
+ mech.saltMotion={joints,rest,readyHeight:dims.py,carriageY:mount.position.y,next:0,balance:0,brace:0,shouldered:0,guard:0,walk:0,visorMat,stackMat};
  mech.nativeV2={
   source,clips,animate,worldScale:scale,nativeShield:true,
+  targetingBlend:()=>mech.saltMotion.shouldered,
   pose(entry,u,pose,t,armory){
    entry.primary=equipment.fit('R',u.weapon,armory);
    if(entry.primary){

@@ -349,7 +349,8 @@ function draw(u,t,pose,scope,model,custom){
  const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive||u.surrendered,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
-  airborne:world?.airborne,artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
+  airborne:world?.airborne,moveAge:step&&u.motion?t-u.motion.start:0,targeting:world?.targeting,attacking:Boolean(u.attack),
+  artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
   readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
  const animate=v2?.animate??animateMech;
  const previous=entry.groundRoot;
@@ -388,11 +389,12 @@ function draw(u,t,pose,scope,model,custom){
   entry.secondary.mount.visible=u.alive&&u.hp[u.meleeHand==='right'?'right':'left']>0;
   arsenal.animate(entry.secondary,pose);
  }
- if(world&&u.alive&&u.hp[barrel?.subsystem||'right']>0&&!melee&&aim>.01){
+ const mountAim=Math.max(aim??0,world?.targeting?v2?.targetingBlend?.()??0:0);
+ if(world&&u.alive&&u.hp[barrel?.subsystem||'right']>0&&!melee&&mountAim>.01){
   const pivot=barrel?.aimPivot?.(barrel.muzzle)||(entry.primarySocket?entry.primary.mount:null);
-  aimMounted(m,barrel,world.aim,Math.min(1,aim),pivot);
+  aimMounted(m,barrel,world.aim,Math.min(1,mountAim),pivot);
   if(v2&&barrel?.muzzle2&&barrel.aimPivot&&barrel.aimPivot(barrel.muzzle2)!==pivot){
-   aimMounted(m,{muzzle:barrel.muzzle2},world.aim,Math.min(1,aim),barrel.aimPivot(barrel.muzzle2));
+   aimMounted(m,{muzzle:barrel.muzzle2},world.aim,Math.min(1,mountAim),barrel.aimPivot(barrel.muzzle2));
   }
  }
  v2?.sync();
