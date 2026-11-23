@@ -270,13 +270,14 @@ function fallPose(m,I,state){
  const arms=buckle*.62+tip*.38;
  blendRotation(rig.spine,fall.angles.Thorax,buckle,.56-.37*tip,.12,-.12);
  blendRotation(rig.neck,fall.angles.Optics,buckle,.50-.09*tip,.21,.08);
- blendRotation(joints.Shoulder_R,fall.angles.Shoulder_R,arms,-.09-.14*tip,0,-.29);
+ // Swing the weapon onto the high side so the shoulder carries the impact.
+ blendRotation(joints.Shoulder_R,fall.angles.Shoulder_R,arms,-.09-.14*tip,0,-.29+.82*tip);
  blendRotation(joints.Arm_R,fall.angles.Arm_R,arms,-.23,0,-.13);
  blendRotation(joints.Elbow_R,fall.angles.Elbow_R,arms,-.96-.35*tip,-.12,0);
  blendRotation(joints.Shoulder_L,fall.angles.Shoulder_L,arms,-.75+.34*tip,.1,-.31);
  blendRotation(joints.Arm_L,fall.angles.Arm_L,arms,.14,0,-.11);
  blendRotation(joints.Elbow_L,fall.angles.Elbow_L,arms,-.44-.36*tip,0,-.20);
- orientRifle(joints.Carriage,cont,fall.angles.Carriage,V(.08,.065,1),between(age,.045,.38));
+ orientRifle(joints.Carriage,cont,fall.angles.Carriage,V(.08+.58*tip,.065+.06*tip,1),between(age,.045,.38));
  joints.Carriage.position.y=mix(fall.carriage,state.carriageY,buckle);
 
  if(tip>0){

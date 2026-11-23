@@ -124,6 +124,20 @@ module.exports=async function checkSaltjackMotion({page,origin}){
    unit.hp.body=0;beginDestruction(unit);
   }
   const death=dying.map(unit=>({frame:unit.frame,samples:[]}));
+  const terrainGap=root=>{
+   let gap=Infinity;
+   const point=new THREE.Vector3();
+   root.traverseVisible(mesh=>{
+    if(!mesh.isMesh)return;
+    const position=mesh.geometry.attributes.position,data=position.array??position.data.array;
+    const divisor=position.normalized&&data instanceof Int16Array?32767:1;
+    for(let i=0;i<position.count;i++){
+     point.fromBufferAttribute(position,i).divideScalar(divisor).applyMatrix4(mesh.matrixWorld);
+     gap=Math.min(gap,point.y-IronVowScene.groundAt(point.x,point.z));
+    }
+   });
+   return gap;
+  };
   for(const age of [0,.33,.55,.76,.92,1.5,2.2,4]){
    // Render in increasing scene time for both field rigs.
    IronVowScene.render(enemy.deathTime+destructionTime(enemy,age),1/60);
@@ -136,6 +150,12 @@ module.exports=async function checkSaltjackMotion({page,origin}){
     death[i].samples.push({age,roll:m.cont.rotation.z,height:spine.y-ground,knees,
      forwardSplit:ankles[1].clone().sub(ankles[0]).dot(forward),
      matrix:m.cont.matrixWorld.toArray(),ankles:ankles.map(ankle=>ankle.toArray())});
+    if(age===1.5){
+     const gun=IronVowScene.models.get(unit.id).entry.primary.mount;
+     const weapon=terrainGap(gun);
+     gun.visible=false;
+     try{death[i].contact={weapon,hull:terrainGap(m.body)};}finally{gun.visible=true;}
+    }
    }
   }
   return {asset,motion,weapon,death};
@@ -168,7 +188,7 @@ module.exports=async function checkSaltjackMotion({page,origin}){
   assert.deepEqual(round.origin,round.expectedOrigin);
  }
  assert.ok(carriageKick>.06&&hitPitch<-.04,`The firing carriage and receiving torso react: ${carriageKick}, ${hitPitch}`);
- for(const {frame,samples} of checks.death){
+ for(const {frame,samples,contact} of checks.death){
   const [standing,givingWay,kneel,,,,settled,held]=samples;
   assert.ok(givingWay.knees[0]-givingWay.knees[1]>.28,`Frame ${frame} loses the left knee first: ${givingWay.knees}`);
   assert.ok(standing.height-Math.min(givingWay.height,kneel.height)>.50,
@@ -177,10 +197,12 @@ module.exports=async function checkSaltjackMotion({page,origin}){
    `Frame ${frame} comes to rest on its side: roll ${settled.roll}, spine height ${settled.height}`);
   assert.ok(settled.knees[0]-settled.knees[1]>1&&settled.forwardSplit>1,
    `Frame ${frame} rests with one leg folded and the other ahead: ${settled.knees}, ${settled.forwardSplit}`);
+  assert.ok(Math.abs(contact.hull)<.08&&contact.weapon>.20,
+   `Frame ${frame} puts its armor on the terrain with its rifle clear: ${JSON.stringify(contact)}`);
   assert.deepEqual(held.matrix,settled.matrix);
   assert.deepEqual(held.ankles,settled.ankles);
  }
  console.log(JSON.stringify({frames:checks.motion.map(({frame,plants})=>({frame,plants})),rounds:launch.length,
-  impactCount:impact.length,carriageKick,hitPitch,death:checks.death.map(({frame,samples})=>({frame,
+  impactCount:impact.length,carriageKick,hitPitch,death:checks.death.map(({frame,samples,contact})=>({frame,contact,
    samples:samples.map(({age,height,roll,knees,forwardSplit})=>({age,height,roll,knees,forwardSplit}))}))}));
 };
