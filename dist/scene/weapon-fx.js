@@ -486,6 +486,12 @@ const profiles={
   },
   "style": "knife"
  },
+ "salt-rifle": {
+  "archetype": "rifle",
+  "beats": [0, 0.105, 0.21, 0.315],
+  "asset": "rifle",
+  "source": "built-in"
+ },
  "vesper-shoulder": {
   "archetype": "missile",
   "beats": [

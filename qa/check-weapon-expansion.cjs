@@ -8,7 +8,7 @@ const createSimulation=require('./sim-harness.cjs');
   strike:['watchman','falcon','cerberus','obelisk','parallax'],
   melee:['hatchet','pike','tonfa','anchor-hammer']
  };
- assert.equal(run('WEAPONS.filter(w=>w.motion).length'),14);
+ assert.equal(run('WEAPONS.filter(w=>w.motion&&!w.builtIn).length'),14);
  const legacy=[
   ['rifle',36,5,3,0],['shotgun',60,3,3,1500],['missile',45,7,4,2400],
   ['rail',70,8,5,3600],['hailstorm',49,5,4,2200],['rampart',61,6,5,2900],

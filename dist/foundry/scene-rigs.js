@@ -271,7 +271,7 @@ function draw(u,t,pose,scope,model,custom){
  }
  if(!u.alive&&u.downReason!=='pilot'&&pose.explosion>=.65&&!m.wrecked){wreckMech(m);m.wrecked=true}
  const world=pose.world,face=world?.face??pose.heading??facing*Math.PI/4,aim=pose.aim;
- if(!world)m.yaw=face;else{m.scale=.9;m.cont.scale.setScalar(.9);}
+ if(!world)m.yaw=face;else{m.scale=v2?.worldScale??.9;m.cont.scale.setScalar(m.scale);}
  const paired=!world&&u.motion?.stepBeats!=null;
  const step=u.hp.legs>0&&!pose.reducedMotion&&Boolean(world?u.motion&&!world.airborne:paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
@@ -351,6 +351,7 @@ function draw(u,t,pose,scope,model,custom){
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
   airborne:world?.airborne,artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
   readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
+ const animate=v2?.animate??animateMech;
  const previous=entry.groundRoot;
  // Subdivide elapsed playback so slow render frames do not skip foot plants
  // or send a large integration step through the existing springs.
@@ -363,9 +364,9 @@ function draw(u,t,pose,scope,model,custom){
    const fraction=i/count;
    sample.pos.copy(previous).lerp(pos,fraction);
    sample.ground=previous.y+(world.y-previous.y)*fraction;
-   animateMech(m,sample,stepTime,t-realTime*(1-fraction));
+   animate(m,sample,stepTime,t-realTime*(1-fraction));
   }
- }else animateMech(m,input,dt,t);
+ }else animate(m,input,dt,t);
  if(world)(entry.groundRoot??=V3()).set(pos.x,world.y,pos.z);
  // A rig with its own firing stance (m.fireStance) leads with its left foot instead of this generic right-foot step.
  if(!world&&prime>0&&u.hp.legs>0&&u.alive&&!artillery&&!Number.isFinite(mortarAge)&&!m.fireStance){
