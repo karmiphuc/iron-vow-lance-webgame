@@ -36,7 +36,7 @@ Three regional contracts feature hulls sold at their home port. A recovered wrec
 | --- | --- | --- |
 | Ridge Mast | Whiteout Patrol · 1 seat | **Husky** scouts ahead with six free tiles of movement. Move before taking a scattergun shot within three tiles for +8 aim. |
 | Vanta Shipyards | Kiln Nine · 2 seats | **Giza** holds a firing lane with its rifle. Once per battle, Double Cannon deploys both shoulder guns against one hostile within six tiles. |
-| Halcyon Outpost | Broken Grid · 2 seats | **Vyzov** closes with its powered fist. Once per battle, Cross Mortar targets a tile within seven tiles and strikes the center and four orthogonal neighbors. Friendly units in the cross take damage. |
+| Halcyon Outpost | Broken Grid · 2 seats | **Vyzov** has a 20-base-damage powered fist for adjacent targets. Once per battle, Cross Mortar targets a tile within seven tiles and strikes the center and four orthogonal neighbors. Friendly units in the cross take damage. |
 
 Use **Port Services → Market** to buy a regional chassis, then **Workshop → Storage** to assign it. Each deployed Giza and Vyzov carries its own charge. Confirming the special normally costs 3 AP.
 

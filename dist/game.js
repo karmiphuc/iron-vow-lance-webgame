@@ -28,7 +28,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'locust',rounds:2,name:'Locust MRL-24',type:'GUIDED MISSILE RACKS',damage:47,range:8,ap:4,builtIn:true,guided:true,desc:'Alternating launches from the two shoulder racks. Guided missiles ignore cover penalties.'},
  {id:'breach-gauntlet',name:'Breach Gauntlet',type:'ACTUATED GRIPPER',damage:53,range:1,ap:3,builtIn:true,melee:true,desc:'A braced punch from the left gripper. Strongest when the enemy closes in.'},
  {id:'pulse-bash',name:'Pulse Bash',type:'EMITTER STRIKE',damage:33,range:1,ap:2,builtIn:true,melee:true,desc:'A quick close-range strike with the left emitter housing.'},
- {id:'vyzov-knuckle',name:'Pile Knuckle',type:'POWERED FIST',damage:52,range:1,ap:3,builtIn:true,melee:true,hand:'right',motion:'breaker'},
+ {id:'vyzov-knuckle',name:'Pile Knuckle',type:'POWERED FIST',damage:20,range:1,ap:3,builtIn:true,melee:true,hand:'right',motion:'breaker',desc:'An adjacent strike for 20 base damage before armor.'},
  {id:'aegis-cleave',name:'Charged Arc Cleaver',type:'REACTOR CLEAVE',damage:38,range:1,ap:5,builtIn:true,melee:true,hand:'right'},
  {id:'aegis-bash',name:'Charged Shield Bash',type:'HYDRAULIC IMPACT',damage:40,range:1,ap:5,builtIn:true,melee:true},
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
@@ -40,7 +40,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'giza-salvo',name:'Double Cannon',type:'SHOULDER CANNONS',burst:2,damage:92,range:6,ap:3,weight:0,price:0,builtIn:true,tactical:'double-cannon',motion:'rampart',desc:'Once per battle, fire both shoulder cannons at one hostile.'},
  {id:'vyzov-cross',name:'Cross Mortar',type:'AREA MORTAR',damage:54,range:7,ap:3,weight:0,price:0,builtIn:true,tactical:'cross-mortar',motion:'rampart',desc:'Once per battle, shell one tile and its orthogonal neighbors. Friendly fire applies.'},
 ];
-const FREE_HAND_COUNTER={id:'free-hand',damage:10,range:1,ap:0,melee:true};
+const FREE_HAND_COUNTER={id:'free-hand',damage:10,maxImpact:10,range:1,ap:0,melee:true};
 const BURST_BONUS=1.15;
 const volleyBudget=(w,amount)=>Math.round(amount*(w.burst?BURST_BONUS:w.salvoScale??1));
 const burstLabel=w=>w.scatter?w.burst+' PELLETS':w.burst?w.burst+' RD BURST':'';

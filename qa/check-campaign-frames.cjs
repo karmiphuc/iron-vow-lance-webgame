@@ -38,3 +38,29 @@ const fixture=require('./fixtures/broken-grid-spent-mortar.json');
 const resumed=simulate({storage:new Map([['iron-vow-career',JSON.stringify(fixture)]])});
 assert.ok(resumed.run("battle.contract.id==='broken-grid'&&current().tacticalUsed&&!canTactical(current())"));
 assert.ok(resumed.run("battle.units.some(u=>u.team==='enemy'&&u.frame===VYZOV_FRAME&&!u.tacticalUsed)"));
+
+// Use the resolved health delta, including the critical-hit stage after armor.
+async function checkFistBalance(){
+ const {run}=simulate({reducedMotion:true,random:()=>.1});
+ run(`
+  const prepare=frame=>{
+   battle=null;Object.assign(save.units[0],stockHull(frame),{frame});createBattle(1,false,true,[0]);enableMechComputers();
+   const actor=current(),target=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+   actor.x=2;actor.z=target.z=4;target.x=3;target.armor=5;target.brace=false;target.reacted=true;
+   return [actor,target];
+  };
+  let [actor,target]=prepare(VYZOV_FRAME),hp=target.hp.body;
+ `);
+ assert.equal(run("unitWeapon(actor).damage"),20);
+ await run("engage(actor,target,'body',unitWeapon(actor))");
+ assert.equal(run("hp-target.hp.body"),15,'stock Vyzov lands a 15 HP punch into five armor');
+ run("[actor,target]=prepare(HUSKY_FRAME);actor.hp.right=0;const fist=reactionWeapon(actor,target);hp=target.hp.body;");
+ assert.equal(run("fist.id"),'free-hand');
+ await run("shoot(actor,target,'body',fist,true)");
+ assert.equal(run("hp-target.hp.body"),5,'a stock Husky fallback punch pays armor');
+ run("actor.level=50;actor.training={meleeHit:2};ruleRandom=()=>.85;const legs=target.hp.legs;");
+ await run("shoot(actor,target,'body',fist,true)");
+ assert.equal(run("legs-target.hp.legs"),10,'a high-level critical free-hand reaction respects its final cap');
+ console.log('PASS actual fist hits against five armor: Vyzov 15 HP, Husky 5 HP, boosted Husky capped at 10 HP');
+}
+checkFistBalance().catch(error=>{console.error(error);process.exitCode=1;});

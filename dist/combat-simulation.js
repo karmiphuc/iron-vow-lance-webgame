@@ -196,7 +196,7 @@ function planVolley(a,t,aimed,w,reaction){
  for(const part of hits.keys()){
   const weight=rounds.reduce((sum,r)=>r.hit&&r.part===part?sum+roundWeight(r,count):sum,0);
   const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*weight/count));
-  if(amount>0)impacts.push({part,amount});
+  if(amount>0)impacts.push({part,amount:Math.min(amount,w.maxImpact??Infinity)});
  }
  return {rounds,impacts,landed,dodged:evades===count,guard:Boolean(shield&&landed)};
 }
