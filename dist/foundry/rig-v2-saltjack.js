@@ -239,23 +239,33 @@ function fallPose(m,I,state){
  if(!state.fall){
   const angles=Object.fromEntries(Object.entries(joints).map(([name,node])=>[name,node.quaternion.clone()]));
   state.fall={angles,pelvis:rig.pelvis.position.clone(),feet:m.legs.map(foot=>foot.foot.clone()),
-   yaw:m.yaw,carriage:joints.Carriage.position.y};
+   yaw:m.yaw,carriage:joints.Carriage.position.y,pelvisRotation:rig.pelvis.quaternion.clone()};
  }
  const fall=state.fall;
  const buckle=between(age,.035,.55),tip=down?0:clamp((age-.48)/.44)**1.65;
- const fold=down?0:between(age,.46,.79);
+ const give=down?0:between(age,.06,.36),reach=down?0:between(age,.24,.51);
  const settle=down?0:between(age,.92,1.47);
  const bounce=down||age<.92||age>=1.47?0:Math.sin(PI*settle)*(1-settle)*.075;
- const targetHeight=down?1.29:1.11;
  cont.rotation.set(0,fall.yaw,0,'YXZ');
- rig.pelvis.position.copy(fall.pelvis).lerp(V(.24,targetHeight,.20),buckle);
+ rig.pelvis.position.copy(fall.pelvis).lerp(down?V(.24,1.29,.20):V(-.34,.96,.26),buckle);
+ // Drop the failing left hip while the opposite shoe still carries the chassis.
+ blendRotation(rig.pelvis,fall.pelvisRotation,give,.13,.22,.27);
  for(const [i,leg] of rig.legs.entries()){
+  const failed=i===0;
   const foot=fall.feet[i].clone();
+  if(!down){
+   const slide=failed?V(-.13,0,-.40).multiplyScalar(give):V(.20,0,.67).multiplyScalar(reach);
+   foot.add(slide.multiplyScalar(m.scale).applyAxisAngle(V(0,1,0),fall.yaw));
+  }
   if(I.groundAt)foot.y=mix(foot.y,I.groundAt(foot.x,foot.z)+m.dims.ankleH*m.scale,buckle);
-  solveLeg(m,leg,foot,fall.yaw+leg.toe);
-  blendRotation(leg.hip,leg.hip.quaternion.clone(),fold,i===0?-.83:-1.54,0,i===0?-.26:-.65);
-  blendRotation(leg.kn,leg.kn.quaternion.clone(),fold,i===0?1.65:2.45,0,0);
-  blendRotation(leg.an,leg.an.quaternion.clone(),fold,-.44,leg.toe,0);
+  if(failed)foot.y+=.31*give*m.scale;
+  solveLeg(m,leg,foot,fall.yaw+leg.toe+(failed?-.18:.24)*reach,failed?.48*give:0);
+  // The failed shin tucks under the hull. The other shoe releases late and
+  // swings out ahead of it, so the feet cannot land side by side.
+  const release=down?0:between(age,failed?.21:.61,failed?.78:.96);
+  blendRotation(leg.hip,leg.hip.quaternion.clone(),release,failed?-1.02:-1.59,failed?.04:.32,failed?.04:-.21);
+  blendRotation(leg.kn,leg.kn.quaternion.clone(),release,failed?2.38:1.12,0,0);
+  blendRotation(leg.an,leg.an.quaternion.clone(),release,failed?-.87:.35,leg.toe,failed?.12:-.18);
  }
  const arms=buckle*.62+tip*.38;
  blendRotation(rig.spine,fall.angles.Thorax,buckle,.56-.37*tip,.12,-.12);
@@ -263,23 +273,25 @@ function fallPose(m,I,state){
  blendRotation(joints.Shoulder_R,fall.angles.Shoulder_R,arms,-.09-.14*tip,0,-.29);
  blendRotation(joints.Arm_R,fall.angles.Arm_R,arms,-.23,0,-.13);
  blendRotation(joints.Elbow_R,fall.angles.Elbow_R,arms,-.96-.35*tip,-.12,0);
- blendRotation(joints.Shoulder_L,fall.angles.Shoulder_L,arms,-.75+.24*tip,.1,.29);
- blendRotation(joints.Arm_L,fall.angles.Arm_L,arms,.18,0,.04);
- blendRotation(joints.Elbow_L,fall.angles.Elbow_L,arms,-.44,0,-.20);
+ blendRotation(joints.Shoulder_L,fall.angles.Shoulder_L,arms,-.75+.34*tip,.1,-.31);
+ blendRotation(joints.Arm_L,fall.angles.Arm_L,arms,.14,0,-.11);
+ blendRotation(joints.Elbow_L,fall.angles.Elbow_L,arms,-.44-.36*tip,0,-.20);
  orientRifle(joints.Carriage,cont,fall.angles.Carriage,V(.08,.065,1),between(age,.045,.38));
  joints.Carriage.position.y=mix(fall.carriage,state.carriageY,buckle);
 
  if(tip>0){
   const pelvisBefore=rig.pelvis.getWorldPosition(V());
-  cont.rotation.set(.08*tip,fall.yaw+.13*tip,(-1.48-.08*settle)*tip,'YXZ');
+  cont.rotation.set((.36-.04*settle)*tip,fall.yaw-.25*tip,(1.36+.14*settle)*tip,'YXZ');
   const pelvisAfter=rig.pelvis.getWorldPosition(V());
-  const drift=V(.61*tip,0,.24*tip).applyAxisAngle(V(0,1,0),fall.yaw);
+  const drift=V(-.55*tip,0,.42*tip).applyAxisAngle(V(0,1,0),fall.yaw);
   cont.position.add(pelvisBefore.sub(pelvisAfter)).add(drift);
   cont.position.y-=tip*.34*m.scale;
  }
  if(buckle>0){
   const clearance=floorClearance(m,I);
-  cont.position.y+=tip>=1?-.012-clearance+bounce:Math.max(0,-.012-clearance);
+  // Take up the remaining gap as the shoulder hits, without a final snap to the floor.
+  const landing=down?0:between(age,.72,.92);
+  cont.position.y+=Math.max(0,-.012-clearance)-Math.max(0,clearance+.012)*landing+bounce;
  }
  state.visorMat.emissiveIntensity=1-buckle;
  state.stackMat.emissiveIntensity=1-buckle;

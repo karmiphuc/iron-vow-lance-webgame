@@ -119,15 +119,24 @@ module.exports=async function checkSaltjackMotion({page,origin}){
   const impact=log.filter(e=>e.type==='impact'&&e.target===enemy.id);
   const weapon={compression:steady.dims.py-brace,launch,impact,carriageKick:Math.max(...kicks)-Math.min(...kicks),
    hitPitch:Math.min(...hits),freeArmDrop:Math.min(...arms)};
-  enemy.hp.body=0;beginDestruction(enemy);
-  const death=[];
+  const dying=[enemy,hero];
+  for(const unit of dying){
+   unit.hp.body=0;beginDestruction(unit);
+  }
+  const death=dying.map(unit=>({frame:unit.frame,samples:[]}));
   for(const age of [0,.33,.55,.76,.92,1.5,2.2,4]){
+   // Render in increasing scene time for both field rigs.
    IronVowScene.render(enemy.deathTime+destructionTime(enemy,age),1/60);
-   const m=rig(enemy),spine=world(m.rig.spine);
-   const ground=IronVowScene.groundAt(spine.x,spine.z);
-   death.push({age,root:m.cont.position.toArray(),roll:m.cont.rotation.z,
-    height:spine.y-ground,
-    matrix:m.cont.matrixWorld.toArray(),ankles:m.rig.legs.map(leg=>world(leg.an).toArray())});
+   for(const [i,unit] of dying.entries()){
+    const m=rig(unit),spine=world(m.rig.spine);
+    const ground=IronVowScene.groundAt(spine.x,spine.z);
+    const knees=m.rig.legs.map(leg=>leg.kn.rotation.x);
+    const ankles=m.rig.legs.map(leg=>world(leg.an));
+    const forward=new THREE.Vector3(Math.sin(m.yaw),0,Math.cos(m.yaw));
+    death[i].samples.push({age,roll:m.cont.rotation.z,height:spine.y-ground,knees,
+     forwardSplit:ankles[1].clone().sub(ankles[0]).dot(forward),
+     matrix:m.cont.matrixWorld.toArray(),ankles:ankles.map(ankle=>ankle.toArray())});
+   }
   }
   return {asset,motion,weapon,death};
  });
@@ -159,11 +168,19 @@ module.exports=async function checkSaltjackMotion({page,origin}){
   assert.deepEqual(round.origin,round.expectedOrigin);
  }
  assert.ok(carriageKick>.06&&hitPitch<-.04,`The firing carriage and receiving torso react: ${carriageKick}, ${hitPitch}`);
- const [standing,,kneel,,,,settled,held]=checks.death;
- assert.ok(standing.height-kneel.height>.6,'The wreck buckles before tipping');
- assert.ok(Math.abs(settled.roll)>1.4&&settled.height<2.7&&settled.height>0,'The wreck comes to rest on its side at board height');
- assert.deepEqual(held.matrix,settled.matrix);
- assert.deepEqual(held.ankles,settled.ankles);
+ for(const {frame,samples} of checks.death){
+  const [standing,givingWay,kneel,,,,settled,held]=samples;
+  assert.ok(givingWay.knees[0]-givingWay.knees[1]>.28,`Frame ${frame} loses the left knee first: ${givingWay.knees}`);
+  assert.ok(standing.height-Math.min(givingWay.height,kneel.height)>.50,
+   `Frame ${frame} buckles before tipping: standing ${standing.height}, folding ${givingWay.height}, kneeling ${kneel.height}`);
+  assert.ok(Math.abs(settled.roll)>1.4&&settled.height>0,
+   `Frame ${frame} comes to rest on its side: roll ${settled.roll}, spine height ${settled.height}`);
+  assert.ok(settled.knees[0]-settled.knees[1]>1&&settled.forwardSplit>1,
+   `Frame ${frame} rests with one leg folded and the other ahead: ${settled.knees}, ${settled.forwardSplit}`);
+  assert.deepEqual(held.matrix,settled.matrix);
+  assert.deepEqual(held.ankles,settled.ankles);
+ }
  console.log(JSON.stringify({frames:checks.motion.map(({frame,plants})=>({frame,plants})),rounds:launch.length,
-  impactCount:impact.length,carriageKick,hitPitch,death:checks.death.map(({age,height,roll})=>({age,height,roll}))}));
+  impactCount:impact.length,carriageKick,hitPitch,death:checks.death.map(({frame,samples})=>({frame,
+   samples:samples.map(({age,height,roll,knees,forwardSplit})=>({age,height,roll,knees,forwardSplit}))}))}));
 };
