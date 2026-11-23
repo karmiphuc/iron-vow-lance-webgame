@@ -8,6 +8,8 @@ const {extname,join,resolve,sep}=require('node:path');
 const {chromium,devices}=require('playwright');
 const checkNavigation=require('./browser/navigation.cjs');
 const checkCampaign=require('./browser/campaign.cjs');
+const checkStartingLance=require('./browser/starting-lance.cjs');
+const stockCareer=JSON.stringify(require('./fixtures/stock-career.json'));
 const checkLivePortraits=require('./browser/live-portraits.cjs');
 const checkWardenRigBench=require('./browser/warden-rig-bench.cjs');
 const checkBulwarkBench=require('./browser/bulwark-bench.cjs');
@@ -98,7 +100,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkLimbLoss,checkFieldArt,checkNavigation,checkCombatReadability,checkCombatDuel,checkDecisionUI,sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkEquipmentHardpoints,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkGizaReview,checkHuskyReview,checkStockV2,checkMechLoadoutPoses,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkOverworld,checkOverworldLiving,checkOverworldPortEvents,checkHangar,checkHangarLive,checkWorkshopTurntable,checkWorkshopPaint,checkWorkshopPortraits,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkWarMode,checkRigWorkbench,checkSaltWorks,checkSaltjackMotion]){
+async function checkBrowser(origin,scenarios=[checkLimbLoss,checkFieldArt,checkNavigation,checkCombatReadability,checkCombatDuel,checkDecisionUI,sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkLionTrial,checkPairedWalk,checkMechComputer,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkEquipmentHardpoints,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkGizaReview,checkHuskyReview,checkStockV2,checkMechLoadoutPoses,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkStartingLance,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkOverworld,checkOverworldLiving,checkOverworldPortEvents,checkHangar,checkHangarLive,checkWorkshopTurntable,checkWorkshopPaint,checkWorkshopPortraits,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkWarMode,checkRigWorkbench,checkSaltWorks,checkSaltjackMotion]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
  const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
  const cpuFlows=new Set(['checkCombatDuel','checkPairedWalk','checkMechComputer','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster']);
@@ -124,6 +126,9 @@ async function checkBrowser(origin,scenarios=[checkLimbLoss,checkFieldArt,checkN
     ...(process.env.IRON_VOW_SOFTWARE_QA?{deviceScaleFactor:.5}:{}),
     reducedMotion:'reduce'
    });
+   if(scenario!==checkStartingLance)await context.addInitScript(({origin,career})=>{
+    if(location.origin===origin&&localStorage.getItem('iron-vow-career')===null)localStorage.setItem('iron-vow-career',career);
+   },{origin:url.origin,career:stockCareer});
    const cpuFlow=Boolean(process.env.IRON_VOW_SOFTWARE_QA&&cpuFlows.has(scenario.name));
    if(cpuFlow)await context.addInitScript(()=>{
     // These cases assert UI/rules or temporary 2D sheet data. The separate visual
