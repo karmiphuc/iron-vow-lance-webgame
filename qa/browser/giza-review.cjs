@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 
 module.exports = async function checkGizaReview({page, origin, tap}) {
  await page.goto(new URL('?bench=rig', origin).href, {waitUntil:'domcontentloaded'});
- await tap('.bench-model-review');
+ await tap('.bench-model-review[href="rig-bench/giza.html"]');
  await page.waitForURL(url => url.origin === new URL(origin).origin &&
   /^\/rig-bench\/giza(?:\.html)?$/.test(url.pathname)
  );

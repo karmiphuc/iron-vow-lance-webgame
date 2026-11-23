@@ -38,7 +38,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  document.body.classList.add('rig-bench-v3');
  $('ui').innerHTML=`
  <section class="bench-controls" aria-label="Rig Bench controls">
-  <div class="bench-heading"><h1>Rig Bench</h1><a href="?bench=war">War</a><a class="bench-model-review" href="rig-bench/giza.html">Giza model</a><a href="?view=workshop">Workshop</a></div>
+  <div class="bench-heading"><h1>Rig Bench</h1><a href="?bench=war">War</a><a class="bench-model-review" href="rig-bench/giza.html">Giza model</a><a class="bench-model-review" href="rig-bench/husky.html">Husky model</a><a href="?view=workshop">Workshop</a></div>
   <label>Chassis<select id="bench-frame"></select></label>
   <details open><summary>Loadout</summary><div class="bench-fields">
    <label>Primary<select id="bench-primary"></select></label><label>Melee<select id="bench-melee"></select></label>
