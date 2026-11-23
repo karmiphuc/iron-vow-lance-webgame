@@ -6,6 +6,7 @@ module.exports=async function checkMechComputer({page,mobile,origin,tap}){
  await page.goto(workshop,{waitUntil:'domcontentloaded'});
  await tap('[data-workshop-detail="stats"] > summary');
  await page.locator('[data-mech-pilot="0"]').waitFor();
+ assert.match(await page.locator('[data-workshop-detail="stats"]').innerText(),/first direct shot before moving gains \+6 aim/i);
  await page.evaluate(()=>{save.mechMastery={[pilotId(0)]:{kills:{0:24,1:5,2:5}}}});
  const open=async()=>{if(!await page.locator('[data-workshop-detail="stats"]').evaluate(el=>el.open))await tap('[data-workshop-detail="stats"] > summary');await tap('[data-mech-pilot="0"]');};
  const computer=page.locator('.mech-computer');
@@ -48,7 +49,7 @@ module.exports=async function checkMechComputer({page,mobile,origin,tap}){
 
  const rebuilt=await page.evaluate(()=>{
   battle=null;save.credits=1000000;page='workshop';workshopView='assigned';
-  return Object.keys(MECH_SIGNATURES).map(Number).filter(frame=>FRAMES[frame].enemyOnly).map(frame=>{
+  return Object.keys(MECH_SIGNATURES).map(Number).filter(frame=>FRAMES[frame].enemyOnly&&salvageableHull(frame)).map(frame=>{
    (save.salvage??={})[frame]=1;
    return {frame,ready:acquireHull(frame,true),signature:MECH_SIGNATURES[frame][0]};
   });
