@@ -199,7 +199,7 @@ function build(config,unit,source,clips){
   parts[part].push({m:mesh,np:!mesh.material.userData.paint});
  });
  const ownedMaterials=[...materials.values()];
- const visorMat=ownedMaterials.find(material=>/optical|optic|collimator/i.test(material.name));
+ const visorMat=ownedMaterials.find(material=>/optical|optic|collimator/i.test(material.name))??new T.MeshStandardMaterial();
  const stackMat=new T.MeshStandardMaterial();
  const dims={py:pelvis.position.y,spY:spine.position.y,neck:neck.position.toArray(),hipY:legs[0].hip.position.y,
   hipX:Math.abs(legs[0].hip.position.x),shX:Math.abs(arms.R.sh.position.x),shY:arms.R.sh.position.y,

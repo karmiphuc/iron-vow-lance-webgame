@@ -17,7 +17,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  await tap('[data-bay="market"]');
  assert.equal(await page.getByRole('heading',{name,exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(contract=>{Math.random=()=>0;save.overworld={port:CONTRACTS[contract].id,arrears:0};},contract);
+ await page.evaluate(contract=>{ruleRandom=()=>0;save.overworld={port:CONTRACTS[contract].id,arrears:0};},contract);
  await ensureContractOffer(page,contract);
  await navigate(page,'contracts',tap,mobile);
  await selectContract(page,{template:contract});await tap(`[data-deploy="${contract}"]`);
@@ -86,7 +86,21 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  assert.ok(fit.fieldColors.every(coverage=>coverage>.2),'The visible Block camo uses both enemy livery colors: '+JSON.stringify(fit.fieldColors));
  assert.ok(fit.paintedWithTextures&&fit.bareWeapon&&fit.chassisMaterials>=6&&fit.productionRifle,JSON.stringify(fit));
 
+ if(contract===2)await page.evaluate(frame=>{
+  const unit=battle.units.find(unit=>unit.frame===frame),target=current();
+  const free=(x,z)=>!battle.units.some(other=>other.alive&&other!==unit&&other!==target&&other.x===x&&other.z===z);
+  // Corridor's current AI can hold behind its ridge. Give this mount test a legal firing lane.
+  for(let z=1;z<battle.size.depth-1;z++)for(let x=1;x<battle.size.width-3;x++){
+   const lane=[0,1,2].map(dx=>terrainCell(x+dx,z));
+   if(!lane.every(tile=>tile.level===lane[0].level)||!free(x,z)||!free(x+2,z))continue;
+   Object.assign(unit,{x,z,vx:x,vz:z});
+   Object.assign(target,{x:x+2,z,vx:x+2,vz:z});
+   return;
+  }
+  throw Error('Corridor fixture needs a clear rifle lane');
+ },frame);
  for(let turn=1;turn<=turns;turn++){
+  if(contract===2)await page.evaluate(frame=>{battle.units.find(unit=>unit.frame===frame).blackout={hold:true};},frame);
   await tap('#end');
   if(turn===turns&&proof){
    await page.waitForFunction(frame=>activeCinematic?.actor.frame===frame&&activeCinematic.phase==='fire',frame);

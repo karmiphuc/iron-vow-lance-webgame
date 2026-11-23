@@ -10,6 +10,30 @@ module.exports=async function checkCampaignNativeRigs({page,origin,tap}){
  await page.emulateMedia({reducedMotion:'no-preference'});
  await page.addInitScript(()=>localStorage.setItem('iron-vow-attack-camera','off'));
  await page.goto(new URL('/',origin).href,{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>window.IronVowFoundry&&window.IronVowRigV2&&typeof stockHull==='function');
+ const previews=await page.evaluate(async()=>{
+  const frame=24,unit={...stockHull(frame),frame};
+  const viewer=IronVowFoundry;
+  const built=[];
+  for(let i=0;i<2;i++){
+   viewer.retainPreview(frame);
+   await IronVowRigV2.load([unit],'preview');
+   let entry;
+   for(let attempt=0;!entry&&attempt<120;attempt++){
+    entry=viewer.preview(unit,foundryModel(frame));
+    if(!entry)await new Promise(resolve=>requestAnimationFrame(resolve));
+   }
+   if(!entry)throw Error('Husky preview never rendered');
+   const {ownedMaterials,visorMat,stackMat}=entry.m.build;
+   const disposed=new Map([...new Set([...ownedMaterials,visorMat,stackMat])].map(mat=>[mat,0]));
+   for(const mat of disposed.keys())mat.addEventListener('dispose',()=>disposed.set(mat,disposed.get(mat)+1));
+   viewer.retainPreview(null);
+   built.push({visor:visorMat.name,materials:ownedMaterials.length,exactOnce:[...disposed.values()].every(count=>count===1)});
+  }
+  return built;
+ });
+ assert.ok(previews.every(({visor,materials,exactOnce})=>visor==='Amber optical glass'&&materials>1&&exactOnce),
+  'Each repeated Husky preview has its authored optic and disposes its owned materials once');
  for(const profile of profiles){
   await page.evaluate(({id,contract})=>__ironVow.start({
    seed:42,contract:CONTRACTS.findIndex(c=>c.id===contract),frames:[id],loadouts:[stockHull(id)]
