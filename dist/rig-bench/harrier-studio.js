@@ -13,11 +13,11 @@
     card.position.set(x,y,z);card.lookAt(0,1,0);room.add(card);
   }
   const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(room,.08).texture;pmrem.dispose();
-  const camera=new T.PerspectiveCamera(26,1,.01,40);
+  const camera=new T.PerspectiveCamera(26,1,.35,40);
   const controls=new T.OrbitControls(camera,renderer.domElement);
   controls.enableDamping=true;controls.minDistance=2;controls.maxDistance=11;controls.maxPolarAngle=Math.PI*.51;
   function resetCamera() {
-    controls.target.set(0,1.15,0);camera.position.set(2.96,1.57,5.86);controls.update();
+    controls.target.set(0,1.06,.025);camera.position.set(3.67,1.10,5.33);controls.update();
   }
   resetCamera();
   const {root,joints,materials}=HarrierRig.buildTrueMech();scene.add(root);

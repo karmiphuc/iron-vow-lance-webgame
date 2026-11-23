@@ -154,6 +154,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
  function selectFrame(id){
   const next=lookup.get(String(id));if(!next)throw Error('Unknown Bench frame '+id);
   void setClipSource('current');
+  const priorFrame=frame.frame;
   frame=lowerFrame=next;$('harrier-studio').hidden=next.frame!==22;$('bench-frame').value=id;walk=false;aim=false;
   select('bench-clip-source',[['current','Live rig'],...(frame.archive?[['archive','Authored archive']]:[])],'current');
   $('bench-walk').setAttribute('aria-pressed','false');$('bench-aim').setAttribute('aria-pressed','false');
@@ -161,6 +162,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   unit={id:'bench-main',index:0,frame:next.frame,rig:next.rig,lionTrial:next.lionTrial,team,...next.stock};
   modules=frame.mix?{core:frame.model,arms:frame.model,legs:frame.model}:undefined;
   group='all';$('bench-group').value='all';setClip('');clipList='';
+  if(view==='orbit'&&(next.frame===22||priorFrame===22))setView('orbit');
   reset(true);refreshLoadout();
  }
  function setView(name){
@@ -168,6 +170,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   if(view==='lineup'||name==='lineup')reset();
   view=name;$('bench-view').value=view;
   [, ,az,el,dist]=cameras.get(view);
+  if(view==='orbit'&&frame.frame===22){az=.60;el=.012;dist=9.7;}
  }
  function updateClipList(){
   const clips=availableClips(),key=clipSource+'|'+clips.map(c=>c.name).join('|');
@@ -248,8 +251,11 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   const mobile=innerWidth/innerHeight<1;
   const [, , , , ,fov,center]=cameras.get(view);
   camera.aspect=innerWidth/innerHeight;camera.fov=fov;
+  const harrierOrbit=view==='orbit'&&frame.frame===22;
+  if(harrierOrbit&&!mobile)camera.setViewOffset(innerWidth,innerHeight,-innerWidth*.105,0,innerWidth,innerHeight);
+  else if(camera.view?.enabled)camera.clearViewOffset();
   camera.updateProjectionMatrix();
-  const y=view==='hip'?(entry?.m.rig.pelvis.position.y??3)-.4:center;
+  const y=harrierOrbit?2.44:view==='hip'?(entry?.m.rig.pelvis.position.y??3)-.4:center;
   target.set(0,y,view==='lineup'?0:advance);
   const d=dist*(mobile?(view==='lineup'?1.17:1.32):1);
   camera.position.set(Math.sin(az)*Math.cos(el)*d,Math.sin(el)*d,Math.cos(az)*Math.cos(el)*d).add(target);

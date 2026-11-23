@@ -211,8 +211,8 @@ function supportGrip(m,arm,weight){
    The last two arm angles, when supplied, turn the shoulder and roll the wrist. */
 const readyPoses={
   // The Harrier leads on its gauntlet side. Its weapon hangs outboard of the rear leg.
-  harrier:{restPose:true,pelvis:[-.0321,.0011,0],pelvisTurn:-.14,pelvisRoll:-.025,footShift:-.028,feet:[.112,.123,.118],
-    spine:[.16,.12,.164],neck:[-.05,.04,0]},
+  harrier:{restPose:true,pelvis:[-.03214,-.05266,0],pelvisTurn:-.35,pelvisRoll:-.05563,footShift:-.03064,feet:[.27902,.21692,.18744],
+    spine:[.215,.225,.164],neck:[-.05,.04,0]},
   striker:{pelvis:[.045,-.085,.027],feet:[.075,.275,.17],spine:[.145,.23,-.045],neck:[-.05,.07,.025],
     gun:{aim:[6.7,0,13],grip:D=>[D.shX*.12,-D.up*.72,D.fo*.93]},support:true},
   buckler:{pelvis:[.03,-.052,.028],feet:[.075,.24,.24],spine:[.135,.32,-.035],neck:[-.045,.125,0],

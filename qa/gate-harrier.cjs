@@ -18,6 +18,9 @@ async function main() {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => {
+      if(message.type()==='error'||/WebGL.*(?:INVALID_|CONTEXT_LOST)|shader error/i.test(message.text()))errors.push(message.text());
+    });
     const capture = name => saveWebp(page, path.join(out, name + '.webp'));
     await page.goto(new URL('rig-bench/harrier.html', origin).href);
     await page.waitForFunction(() => window.harrierStudio?.animator.phase > 0);
@@ -27,7 +30,14 @@ async function main() {
     });
     assert.deepEqual(studio,[-.2,.2,.18,.24,1.1,1.05]);
     await capture('studio');
-    await page.mouse.move(800,420); await page.mouse.down(); await page.mouse.move(1190,425,{steps:8}); await page.mouse.up();
+    const glError=()=>page.evaluate(()=> (window.harrierStudio?.renderer||IronVowRenderer.get()).getContext().getError());
+    assert.equal(await glError(),0);
+    const front=await page.evaluate(()=>harrierStudio.camera.position.toArray());
+    assert.ok(Math.atan2(front[0],front[2])>.56);
+    await page.evaluate(()=>{const {camera,controls}=harrierStudio;camera.position.set(6.4,1.24,0);controls.update();});
+    await capture('studio-profile');
+    await page.locator('#reset').click();
+    await page.mouse.move(610,420); await page.mouse.down(); await page.mouse.move(1115,425,{steps:12}); await page.mouse.up();
     await page.waitForFunction(()=>harrierStudio.camera.position.z < -4.0);
     await capture('studio-reverse');
     await page.locator('#walk').click();
@@ -35,27 +45,26 @@ async function main() {
     await page.locator('#reset').click();
     await page.locator('summary').click();
     await page.locator('#joint').selectOption('lFinger0');
+    const fingerRest=await page.evaluate(()=>harrierStudio.joints.lFinger0.rotation.x);
     await page.locator('#rx').fill('0.55');
-    await page.waitForFunction(() => Math.abs(harrierStudio.joints.lFinger0.rotation.x-.55)<.001);
+    await page.waitForFunction(rest => Math.abs(harrierStudio.joints.lFinger0.rotation.x-rest-.55)<.001,fingerRest);
     await page.locator('#roughness').fill('0.8');
     await page.waitForFunction(() => harrierStudio.materials.armor.roughness===.8);
     await page.locator('#reset').click();
-    await page.waitForFunction(() => harrierStudio.materials.armor.roughness===.56 && harrierStudio.joints.lFinger0.rotation.x===0);
+    await page.waitForFunction(rest => harrierStudio.materials.armor.roughness===.56 && Math.abs(harrierStudio.joints.lFinger0.rotation.x-rest)<.001,fingerRest);
     await page.goto(new URL('?bench=rig&frame=22', origin).href);
     await page.locator('#harrier-studio').waitFor({state:'visible'});
     await page.waitForFunction(() => window.__bench?.state?.model === 'harrier' && __bench.state.metrics?.triangles);
     await page.waitForFunction(() => document.querySelector('#bench-metrics')?.textContent.includes('triangles'));
-    await page.mouse.move(746,450);
-    await page.mouse.down();
-    await page.mouse.move(635,437,{steps:6});
-    await page.mouse.up();
-    await page.mouse.wheel(0,-480);
     await page.waitForFunction(() => {
       const feet=__bench.state.metrics.feet;
-      return Math.abs(feet[0].ankle[2]-feet[1].ankle[2])>.62 &&
-        __bench.state.metrics.stance>1.67 && __bench.state.metrics.stance<1.88 && feet.every(f=>f.error<.035);
+      return Math.abs(feet[0].ankle[2]-feet[1].ankle[2])>1.25 &&
+        __bench.state.metrics.stance>2.79 && __bench.state.metrics.stance<2.96 && feet.every(f=>f.error<.035);
     });
+    const camera=await page.evaluate(()=>__bench.state.camera);
+    assert.ok(Math.atan2(camera[0],camera[2])>.56 && Math.hypot(camera[0],camera[2])<10);
     await capture('rig-bench');
+    assert.equal(await glError(),0);
     await page.goto(new URL('?view=workshop', origin).href);
     const frame = await page.evaluate(() => {
       save.credits = FRAMES[HARRIER_FRAME].cost;
@@ -78,8 +87,8 @@ async function main() {
       const [left,right] = m.rig.legs.map(leg=>pos(leg.an));
       return {knees:m.rig.legs.map(leg=>leg.kn.rotation.x), hipWidth:2*m.dims.hipX,track:left.x-right.x, stagger:left.z-right.z, soleDifference:Math.abs(left.y-right.y), spread:pos(m.rig.arms.L.wr).x-pos(m.rig.arms.L.sh).x};
     });
-    assert.ok(Math.abs(stance.hipWidth-1)<.001 && stance.track>1.96 && stance.track<2.04 &&
-      stance.stagger>.84 && stance.stagger<.92 && stance.knees.every(bend=>bend>=.18 && bend<=.24) &&
+    assert.ok(Math.abs(stance.hipWidth-1)<.001 && stance.track>3.17 && stance.track<3.27 &&
+      stance.stagger>1.43 && stance.stagger<1.53 && stance.knees.every(bend=>bend>=.18 && bend<=.24) &&
       stance.spread>.25 && stance.soleDifference<.01, JSON.stringify(stance));
     await capture('workshop');
     await page.evaluate(() => { deploy(0, false, [0]); closeModal(); });
@@ -125,7 +134,9 @@ async function main() {
       return { spent: ap - unit.ap, hit: Object.keys(before).some(key => enemy.hp[key] < before[key]) };
     });
     assert.ok(shot.spent > 0 && shot.hit, JSON.stringify(shot));
+    assert.equal(await glError(),0);
     assert.deepEqual(errors, []);
+    console.log('PASS: studio, rig bench and sortie WebGL error state 0; zero browser console errors.');
     console.log('PASS Harrier purchase, assignment, reload, Sidewinder mount, three-tile walk, animated knee, left-arm loss and Sidewinder damage.', result.triangles, 'triangles.', gait, stance);
   } finally { await browser.close(); }
 }
