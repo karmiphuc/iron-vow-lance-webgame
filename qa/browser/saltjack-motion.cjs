@@ -218,7 +218,10 @@ async function checkCombatReady(page,mobile,tap){
  const setup=await page.evaluate(async()=>{
   const [hero,enemy]=battle.units;
   const actors=[hero,enemy];
-  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  // The rig caps its pose step on slow frames. Measure the accumulated pose time.
+  const settle=async duration=>{
+   for(let elapsed=0;elapsed<duration;elapsed+=Math.min(.042,frameDt))await new Promise(requestAnimationFrame);
+  };
   const bore=unit=>IronVowScene.models.get(unit.id).entry.primary.muzzle.getWorldDirection(new THREE.Vector3());
   const sample=()=>actors.map(unit=>bore(unit).y);
   const idle=async pick=>{
@@ -226,11 +229,11 @@ async function checkCombatReady(page,mobile,tap){
    Math.random=()=>pick;
    try{
     for(const unit of actors)Object.assign(unit,{brace:true,braceBlend:1});
-    await wait(230);
+    await settle(.23);
     for(const unit of actors)Object.assign(unit,{brace:false,braceBlend:0});
-    await wait(650);
+    await settle(.65);
     const first=sample();
-    await wait(250);
+    await settle(.25);
     return [first,sample()];
    }finally{Math.random=random;}
   };
@@ -268,7 +271,6 @@ async function checkCombatReady(page,mobile,tap){
   const projected=IronVowScene.projectWorld(IronVowScene.models.get(enemy.id).proxy.position);
   const points=[0,8,-8,16,-16].flatMap(dx=>[0,8,-8,16,-16].map(dy=>({x:projected.x+dx,y:projected.y+dy})));
   return points.find(({x,y})=>document.elementFromPoint(x,y)===document.querySelector('#scene')&&IronVowScene.pick(x,y)===enemy);
-
  });
  assert.ok(setup.guard.flat().every(up=>up>.95),`Both randomly selected guards carry upright: ${setup.guard}`);
  assert.ok(setup.rest.flat().every(up=>up>.15&&up<.60),`Both other idle samples carry the rifle forward: ${setup.rest}`);
@@ -292,7 +294,10 @@ async function checkCombatReady(page,mobile,tap){
   const random=ruleRandom,visualRandom=Math.random;
   ruleRandom=()=>.005;Math.random=()=>.99;
   const start=IronVowScene.combat.history.length;
-  try{await shoot(enemy,hero,'body');await new Promise(resolve=>setTimeout(resolve,650));}
+  try{
+   await shoot(enemy,hero,'body');
+   for(let elapsed=0;elapsed<.65;elapsed+=Math.min(.042,frameDt))await new Promise(requestAnimationFrame);
+  }
   finally{ruleRandom=random;Math.random=visualRandom;}
   const shots=IronVowScene.combat.history.slice(start).filter(event=>event.type==='launch'&&event.actor===enemy.id);
   const entry=IronVowScene.models.get(enemy.id).entry;
