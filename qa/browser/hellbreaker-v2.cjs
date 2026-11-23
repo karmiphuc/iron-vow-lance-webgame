@@ -76,6 +76,8 @@ module.exports=async function checkHellbreakerV2({page,mobile,origin,tap,out}){
   assert.ok(gap(foot.actual,previous.actual)<.002,'A planted authored ankle holds in world space');planted++;
  }
  assert.ok(planted>0);
+ // Hold this turn's firing lane so the active doctrine cannot close to gauntlet range.
+ await page.evaluate(()=>{window.hellbreakerFixture.foe.blackout={hold:true};});
  await tap('#end');
  await page.waitForFunction(()=>battle?.turn===2&&!battle.busy,null,{timeout:60000});
  const ranged=await page.evaluate(()=>({shots:window.hellbreakerFixture.shots,
