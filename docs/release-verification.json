@@ -79,46 +79,44 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 141,
+    "siteVersion": 142,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "765618e21f2ecce9098fb84590a462c7f1da585d",
-    "githubCommit": "df2014293e306545855505de30b756d295c41059",
-    "distTree": "41665b3393e73b647bf2dcdfbd462ad6a2b9f096",
-    "verifiedAt": "2026-11-24T13:18:03.398Z",
-    "localReleaseSourceSha256": "2adf1d22fcdf6252eb3ebf1e0c2ebe1a5259fbfef9a9143b1d95afe31b84de61",
-    "simulationSuites": 85,
+    "sourceCommit": "8fb55c1b4a40d8080c1cfa33a4b3a4a254f4ed99",
+    "githubCommit": "defaab783c0637bba4dd0db0cdeae52fbf81dd77",
+    "distTree": "0915b7f6c9651a6b132e9a1048ad78540feabee9",
+    "verifiedAt": "2026-11-24T13:47:04.008Z",
+    "localReleaseSourceSha256": "b9af018714a502c212b57bbd4761c008a5753a13d1b993480b609e049c47b120",
+    "simulationSuites": 86,
     "localBrowser": {
-      "desktop": 6,
-      "touch": 6,
+      "desktop": 4,
+      "touch": 4,
       "result": "passed",
       "scenarios": [
-        "checkDuelTerrain",
-        "checkReaver",
-        "checkAeroReview",
+        "checkShields",
         "checkRosterScale",
-        "checkWorkshopPortraits",
-        "checkPilotClasses"
+        "checkRigWorkbench",
+        "checkNightjarStop"
       ]
     },
-    "liveFilesCompared": 171,
+    "liveFilesCompared": 173,
     "liveBrowser": {
       "desktop": 2,
       "touch": 2,
       "result": "passed",
       "scenarios": [
-        "checkReaver",
-        "checkRosterScale"
+        "checkRosterScale",
+        "checkNightjarStop"
       ]
     },
+    "liveSortie": "Blind Crossing deployed and reloaded. Both alternating braking contacts completed after the move.",
     "environment": {
       "browser": "Chromium",
       "touch": "iPhone emulation",
-      "graphics": "Software WebGL",
       "nativeIPad": "unverified"
     },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_02b0d8d47c208191927bdd3a708779f6",
-    "deploymentId": "appgdep_6b058e2dc0588191931d4b12ec0aee22",
-    "evidence": "design/roster-scale/README.md"
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_45d47fc372848191a2c8ae2b1ade832f",
+    "deploymentId": "appgdep_6b0594c807b88191bacb96baf1c77dbd",
+    "evidence": "design/nightjar/README.md"
   },
   "publishedReleaseHistory": [
     {
@@ -472,6 +470,48 @@
         "The initial Sites publication attempt failed; retrying the identical saved version succeeded.",
         "Version 110 was saved only; the spacing-corrected version 111 is published."
       ]
+    },
+    {
+      "siteVersion": 141,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "765618e21f2ecce9098fb84590a462c7f1da585d",
+      "githubCommit": "df2014293e306545855505de30b756d295c41059",
+      "distTree": "41665b3393e73b647bf2dcdfbd462ad6a2b9f096",
+      "verifiedAt": "2026-11-24T13:18:03.398Z",
+      "localReleaseSourceSha256": "2adf1d22fcdf6252eb3ebf1e0c2ebe1a5259fbfef9a9143b1d95afe31b84de61",
+      "simulationSuites": 85,
+      "localBrowser": {
+        "desktop": 6,
+        "touch": 6,
+        "result": "passed",
+        "scenarios": [
+          "checkDuelTerrain",
+          "checkReaver",
+          "checkAeroReview",
+          "checkRosterScale",
+          "checkWorkshopPortraits",
+          "checkPilotClasses"
+        ]
+      },
+      "liveFilesCompared": 171,
+      "liveBrowser": {
+        "desktop": 2,
+        "touch": 2,
+        "result": "passed",
+        "scenarios": [
+          "checkReaver",
+          "checkRosterScale"
+        ]
+      },
+      "environment": {
+        "browser": "Chromium",
+        "touch": "iPhone emulation",
+        "graphics": "Software WebGL",
+        "nativeIPad": "unverified"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_02b0d8d47c208191927bdd3a708779f6",
+      "deploymentId": "appgdep_6b058e2dc0588191931d4b12ec0aee22",
+      "evidence": "design/roster-scale/README.md"
     }
   ]
 }
