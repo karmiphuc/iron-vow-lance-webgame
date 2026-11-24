@@ -3740,7 +3740,7 @@ function beginDestruction(u,reason='body',sequence=null){
  }
  if(!u.kind&&u.deathYaw==null){
   // Save the actual rendered yaw. Tactical facing can differ while aiming or turning.
-  const yaw=window.IronVowScene?.mechYaw(u)??(displayedHeading(u)+Math.PI/4);
+  const yaw=window.IronVowScene?.mechYaw?.(u)??(displayedHeading(u)+Math.PI/4);
   u.deathYaw=Math.atan2(Math.sin(yaw),Math.cos(yaw));
  }
  u.downReason=reason;
