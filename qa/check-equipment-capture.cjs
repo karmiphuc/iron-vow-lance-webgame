@@ -101,7 +101,7 @@ const checkpoint=require('./fixtures/equipment-capture.json');
    for(let seed=0;seed<1000;seed++){
     const roll=equipmentRoll([save.world?.seed??0,seed,save.day,'salt-works'].join('/'));
     if(roll%5>=2||stock[Math.floor(roll/5)%stock.length]!=='salt-mg')continue;
-    battle.terrainSeed=seed;finish(true);return save.owned.includes('salt-mg');
+    battle.terrainSeed=seed;const casualty=battle.units.find(u=>u.team==='enemy'&&!u.kind);casualty.frame=0;casualty.hp.pilot=0;beginDestruction(casualty,'pilot');finish(true);return save.owned.includes('salt-mg');
    }
    throw Error('Missing deterministic Salt Works reward roll');
   })()`);
@@ -110,8 +110,8 @@ const checkpoint=require('./fixtures/equipment-capture.json');
  const loot=new Set();
  for(let seed=0;seed<10;seed++){
   const sortie=simulate({reducedMotion:true});
-  loot.add(sortie.run(`createBattle(0);battle.terrainSeed=${seed};finish(true);save.owned.slice(3).join('/')`));
+  loot.add(sortie.run(`createBattle(1);battle.terrainSeed=${seed};const casualty=battle.units.find(u=>u.team==='enemy'&&!u.kind);casualty.hp.pilot=0;beginDestruction(casualty,'pilot');finish(true);save.owned.slice(3).join('/')`));
  }
- assert.ok(loot.has('')&&loot.size>2,'victories may award different equipment or no equipment');
+ assert.ok(loot.has('')&&loot.size>2,'eligible recoveries may award different equipment or no equipment');
  console.log('PASS physical copy counts, port rotation, right-hand melee and shield, shoulder loss and half salvos, surrender threshold, checkpoint, capture payout and refit');
 })().catch(error=>{console.error(error);process.exitCode=1});
