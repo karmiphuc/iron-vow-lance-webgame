@@ -52,7 +52,9 @@ assert.equal(result.impacts[0].amount,40,'pellets share shell accuracy and roll 
 p=planner([.95],{chance:1.19,dodge:.10});
 assert.equal(p.plan({},target,'body',{},false).dodged,true,'overflow cannot override a dodge');
 const host=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
-assert.ok(host.indexOf('src="combat-simulation.js"')>0&&host.indexOf('src="combat-simulation.js"')<host.indexOf('src="game.js'));
+const simulationScript=host.search(/src="combat-simulation\.js[?"]/);
+const gameScript=host.search(/src="game\.js[?"]/);
+assert.ok(simulationScript>=0&&gameScript>simulationScript);
 const bench=fs.readFileSync(path.join(root,'dist/rig-bench/index.html'),'utf8');
 assert.match(bench,/bench\.searchParams\.set\('bench','rig'\)/,'Rig Bench opens the same engine host');
 // Golden result for seed 42: includes a braced target, reaction bonus, aircraft target and the production
