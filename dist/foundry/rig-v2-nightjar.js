@@ -167,7 +167,7 @@ function animate(m,input,dt,t){
  const weight=(state.swing?.i===0?-1:1)*wave*run;
  const brakeAge=state.brake?.age??1;
  const loadBeat=(a,b,c)=>ease(brakeAge,a,b)-ease(brakeAge,b,c);
- const carry=loadBeat(0,.20,.70),load=loadBeat(.10,.19,.32)+1.25*loadBeat(.29,.39,.65);
+ const carry=loadBeat(0,.20,.70),load=loadBeat(.10,.19,.32)+1.60*loadBeat(.325,.392,.66);
  const brakeHeading=(state.brake?.heading??m.yaw)-m.yaw;
  const strideLoad=state.swing&&!state.swing.settle?(1-ease(state.swing.p,0,.30))*run:0;
  const breath=input.reducedMotion?0:Math.sin(t*2)*.018;
