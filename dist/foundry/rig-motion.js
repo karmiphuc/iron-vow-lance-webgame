@@ -321,6 +321,9 @@ function animateMech(m,I,dt,t){
   if(m.wasAirborne&&!I.airborne){for(const L of m.legs)L.settle={from:L.foot.clone(),t:0,dur:.15};settling=true;}
   m.wasAirborne=Boolean(I.airborne);
   const artilleryPreparing=D.quad&&!I.moving&&Boolean(I.artillery||Number.isFinite(I.mortarAge));
+  // On the battle board the pelvis adapts to planted terrain contacts below.
+  // Testing full reach against the uncompressed idle pose restarts the same step every time it lands.
+  const groundedStance=I.groundAt&&I.alive&&!I.airborne&&!I.moving&&vs<.3;
   const pitches=[];
   r.legs.forEach((l,i)=>{const L=m.legs[i],lead=F&&l.restX>0;
     let homeX=l.restX-(lead?F.narrow*fs:0),homeZ=l.restZ+(F?(lead?F.step:-F.back)*fs:0);
@@ -338,7 +341,7 @@ function animateMech(m,I,dt,t){
     if(I.groundAt&&I.alive&&!I.airborne)home.y=I.groundAt(home.x,home.z)+D.ankleH*sc;
     const hip=l.hip.getWorldPosition(V3()),reach=legReach(l,D)*sc,ph=((g+(l.phase??i*.5)+(L.phaseOffset||0))%1+1)%1;
     const lifting=I.moving&&!dead&&ph>=duty;
-    const strained=!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
+    const strained=!groundedStance&&!lifting&&!L.swing&&!L.settle&&(!dead||pd)&&!I.noPlant&&hip.distanceTo(L.planted)>reach-Math.max(.04,1.5*vs*dt);
     if(strained){L.settle={from:L.planted.clone(),t:0,dur:.26};settling=true;}
     if(I.noPlant||I.legsDead||(dead&&!pd)){L.foot.copy(home);L.planted.copy(home);L.swing=false;L.settle=null;
       if(lead&&!dead&&!I.legsDead){L.foot.y+=F.lift*Math.sin(PI*fs)*sc;pitch=.3*Math.sin(PI*fs);}}
