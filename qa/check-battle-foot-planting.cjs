@@ -200,6 +200,64 @@ async function main(){
  }
  assert.ok(peak>.52&&peak<.78,'battle aiming retains the authored recoil: '+peak);
  saker.attack=null;S.clearCombat();
+ // Exercise the travel between the contact poses. Endpoint-only checks miss
+ // the old left-knee flip and repeated placement steps in both directions.
+ for(const hz of [30,60]){
+  const contacts=[];
+  const drawStance=level=>{
+   time+=1/hz;
+   return S.draw(saker,time,{aim:level,brace:level,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+    world:{x:0,y:0,z:0,face:0,heading:0,speed:0,aim:target,groundAt,onStep:(_,p,i)=>contacts.push(i)}},scope,saker.foundry,'rig-v2').m;
+  };
+  S.clearCombat();
+  const standing=drawStance(0);
+  const position=node=>standing.cont.worldToLocal(node.getWorldPosition(R.V3()));
+  const leg=standing.rig.legs[0],gathered=position(leg.an);
+  for(const level of [1,0]){
+   contacts.length=0;
+   let hip=position(standing.rig.pelvis),knee=position(leg.kn),velocity=R.V3();
+   for(let j=0;j<2.2*hz;j++){
+    drawStance(level);
+    const nextHip=position(standing.rig.pelvis),nextKnee=position(leg.kn);
+    const speed=nextKnee.clone().sub(knee).multiplyScalar(hz);
+    assert.ok((nextHip.y-hip.y)*(level?-1:1)>-.001,'continuous weight transfer without a pelvis rebound');
+    assert.ok((nextKnee.y-knee.y)*(level?-1:1)>-.001,'rear knee approaches and leaves the ground once');
+    assert.ok(speed.distanceTo(velocity)*hz<65,'bounded rear-knee acceleration through the full arc');
+    hip=nextHip;knee=nextKnee;velocity=speed;
+   }
+   assert.deepEqual(contacts,level?[1,0]:[0,1],'each foot takes its load once, in reverse order on the rise');
+  }
+  assert.ok(position(leg.an).distanceTo(gathered)<.003,'rear ankle returns to its original standing contact');
+  let last=position(leg.kn);
+  for(const [level,duration] of [[1,.78],[0,.28],[1,.30],[0,2]]){
+   for(let j=0;j<duration*hz;j++){
+    drawStance(level);
+    const next=position(leg.kn);
+    assert.ok(next.distanceTo(last)*hz<5,'interrupted kneel reverses without a position snap');
+    last=next;
+   }
+  }
+  assert.ok(position(leg.an).distanceTo(gathered)<.003,'interrupted transition also recovers its standing contact');
+ }
+ // A move order may arrive while the rear instep is still fully extended.
+ S.clearCombat();
+ let ankleRotation;
+ for(let i=0;i<185;i++){
+  const walking=i>=145,brace=i>=15&&!walking?1:0;
+  saker.motion=walking?{playbackRate:1}:null;time+=1/60;
+  const {m}=S.draw(saker,time,{aim:brace,brace,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:0,z:Math.max(0,i-145)*4/60,face:0,heading:0,speed:walking?4:0,aim:target,groundAt}},scope,saker.foundry,'rig-v2');
+  const ankle=m.rig.legs[0].an,rotation=ankle.getWorldQuaternion(new T.Quaternion());
+  if(walking){
+   assert.ok(ankleRotation.angleTo(rotation)<.23,'immediate move unrolls rear foot continuously');
+   for(let j=0;j<m.saker.soleHull.length;j+=2){
+    const {y}=ankle.localToWorld(R.V3(0,m.saker.soleHull[j],m.saker.soleHull[j+1]));
+    assert.ok(y>-.004,'unrolling instep stays above terrain');
+   }
+  }
+  ankleRotation=rotation;
+ }
+ S.clearCombat();
  let doubleSupport=0,hipLow=Infinity,hipHigh=-Infinity,heelRise=0,footSpan=0;
  const landings=[];
  for(let i=0;i<180;i++){

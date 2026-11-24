@@ -5,14 +5,77 @@ const T=root.THREE,R=root.IronVowFoundryRig,V=R.V3,up=V(0,1,0),scale=1.36,ankle=
 const clamp=x=>Math.max(0,Math.min(1,x));
 const smooth=x=>{const p=clamp(x);return p*p*(3-2*p);};
 const ramp=(t,a,b)=>smooth((t-a)/(b-a));
+const transfer=.40;
 const follow=(x,y,k,dt)=>x+(y-x)*(1-Math.exp(-k*dt));
-function sole(m,input,leg,lead){
- const sign=Math.sign(leg.restX),lock=m.saker.aim;
+function sole(m,input,leg,lead,lock=m.saker.aim){
+ const sign=Math.sign(leg.restX);
  const p=V(leg.restX+sign*.13*lock,0,leg.restZ*(1-m.saker.run)-sign*(sign<0?1.72:1.92)*lock).multiplyScalar(scale)
   .applyAxisAngle(up,m.yaw).add(m.cont.position);
  p.x+=lead*Math.sin(input.heading);p.z+=lead*Math.cos(input.heading);
  p.y=(input.groundAt?.(p.x,p.z)??input.ground??0)+ankle*scale;
  return p;
+}
+function startLegBlend(m){
+ const joints=[m.rig.pelvis,...m.rig.legs.flatMap(leg=>[leg.hip,leg.kn,leg.an]),m.saker.kneeRest];
+ m.saker.handoff={elapsed:0,joints:joints.map(node=>({node,position:node.position.clone(),rotation:node.quaternion.clone()}))};
+}
+// Blend from the outgoing joint configuration when a step interrupts a
+// stance, or a stance interrupts a step, keeping the rotating sole clear.
+function blendInterruptedStep(m,input,dt){
+ const {saker:s,cont,rig}=m,handoff=s.handoff;
+ const blend=ramp(handoff.elapsed,0,.52);
+ for(const {node,position,rotation} of handoff.joints){
+  node.position.lerp(position,1-blend);node.quaternion.slerp(rotation,1-blend);
+ }
+ // The intermediate ankle rotates through toe-down. Keep its lowest
+ // support point on the terrain while preserving the blended knee plane.
+ for(const leg of rig.legs){
+  leg.an.updateWorldMatrix(true,false);
+  let clearance=0;
+  for(let j=0;j<s.soleHull.length;j+=2){
+   const point=leg.an.localToWorld(V(0,s.soleHull[j],s.soleHull[j+1]));
+   clearance=Math.max(clearance,(input.groundAt?.(point.x,point.z)??input.ground??0)-point.y);
+  }
+  if(clearance>.0001){
+   const ankleWorld=leg.an.getWorldQuaternion(new T.Quaternion()),target=leg.an.getWorldPosition(V());
+   target.y+=clearance;
+   const knee=cont.worldToLocal(leg.kn.getWorldPosition(V()));
+   leg.bendPole.copy(knee).sub(cont.worldToLocal(leg.hip.getWorldPosition(V()))).normalize();
+   R.solveWorldLeg(m,leg,target,m.yaw,0);
+   leg.an.quaternion.copy(leg.kn.getWorldQuaternion(new T.Quaternion()).invert().multiply(ankleWorld));
+  }
+ }
+ handoff.elapsed+=dt;
+ if(blend===1)s.handoff=null;
+}
+// A single reversible phase places the lead foot, transfers the load, then
+// extends the rear instep. Reversing mid-transition retraces the same arc.
+function stanceContacts(m,input,phase,dt){
+ const s=m.saker;
+ if(!s.stance){
+  if(m.legs.some(foot=>foot.swing))startLegBlend(m);
+  s.stance=m.legs.map((foot,i)=>{
+   const leg=m.rig.legs[i];
+   const standing=s.phase>.98?sole(m,input,leg,0,0):foot.foot.clone();
+   standing.y=(input.groundAt?.(standing.x,standing.z)??input.ground??0)+ankle*scale;
+   return {standing,kneeling:sole(m,input,leg,0,1),progress:0};
+  });
+  s.swing=null;
+ }
+ const progress=[ramp(phase,transfer,1),ramp(phase,0,transfer)];
+ for(const [i,contact] of s.stance.entries()){
+  const foot=m.legs[i],u=progress[i];
+  foot.foot.copy(contact.standing).lerp(contact.kneeling,u);
+  const ground=input.groundAt?.(foot.foot.x,foot.foot.z)??input.ground??0;
+  const lift=Math.sin(Math.PI*u)*(i===0?.095:.135);
+  foot.foot.y=ground+(ankle+lift)*scale;
+  foot.swing=u>0&&u<1;
+  if(!foot.swing){
+   foot.planted.copy(foot.foot);
+   if(contact.progress!==u&&dt>0)input.onStep?.(m,foot.foot.clone().addScaledVector(up,-ankle*scale),i,.68);
+  }
+  contact.progress=u;
+ }
 }
 // Keep a full world contact while the other shoe swings. A newly requested
 // brace or halt gets actual repositioning steps, including the rear knee tuck.
@@ -20,9 +83,28 @@ function contacts(m,input,dt,travel,reset){
  const s=m.saker,walking=input.alive&&input.moving&&!input.legsDead&&!input.reducedMotion;
  const homes=m.rig.legs.map(leg=>sole(m,input,leg,0));
  if(reset||input.reducedMotion){
-  s.swing=null;
+  s.swing=null;s.stance=null;s.handoff=null;
   m.legs.forEach((foot,i)=>{foot.planted.copy(homes[i]);foot.foot.copy(homes[i]);foot.swing=false;});
+  if(!walking&&input.alive&&!input.legsDead&&s.phase>0){
+   s.stance=m.rig.legs.map(leg=>({standing:sole(m,input,leg,0,0),kneeling:sole(m,input,leg,0,1),progress:0}));
+   stanceContacts(m,input,s.phase,0);
+  }
   return;
+ }
+ if(!walking&&input.alive&&!input.legsDead&&(s.phase>0||s.stance)){
+  stanceContacts(m,input,s.phase,dt);
+  if(s.phase===0)s.stance=null;
+  return;
+ }
+ if(s.stance){
+  // A move order can arrive before the ankle has unrolled. Preserve the
+  // outgoing joint transforms and let the first walking step take them up.
+  if(walking&&s.phase>.01){
+   startLegBlend(m);
+   s.next=0;
+  }
+  m.legs.forEach(foot=>{foot.swing=false;foot.planted.copy(foot.foot);});
+  s.stance=null;
  }
  if(s.swing?.walking&&!walking){s.next=s.swing.i;s.swing=null;}
  if(!s.swing){
@@ -70,10 +152,9 @@ function kneeClearance(m,input,leg,shoe){
  if(tangent.lengthSq()<.00001)tangent.crossVectors(axis,vertical).multiplyScalar(Math.sign(leg.restX));
  pole.copy(vertical).multiplyScalar(fraction).addScaledVector(tangent.normalize(),Math.sqrt(1-fraction*fraction));
 }
-// Plant the rear instep and kneepad first, then fit the pelvis to the
-// two fixed contacts. A firing impulse never re-solves their positions.
+// The rotating rear shoe follows its actual instep profile on the terrain.
 function rearRest(m,input,ankleLocal,weight){
- const {saker:s,cont,rig}=m,leg=rig.legs[0];
+ const {saker:s,cont}=m,leg=m.rig.legs[0];
  const pitch=2.74*weight,cs=Math.cos(pitch),sn=Math.sin(pitch);
  const base=cont.localToWorld(ankleLocal.clone());
  const heading=m.yaw+leg.toe*(1-weight);
@@ -86,19 +167,57 @@ function rearRest(m,input,ankleLocal,weight){
   depth=Math.max(depth,(ground-baseline)/m.scale-cs*y+sn*z);
  }
  const anklePos=ankleLocal.clone();anklePos.y+=depth-ankle;
- const knee=anklePos.clone();knee.z+=leg.legB;
- for(let sample=0;sample<2;sample++){
-  const world=cont.localToWorld(knee.clone());
-  const ground=input.groundAt?.(world.x,world.z)??input.ground??0;
-  knee.y=(ground-cont.position.y)/m.scale+.438;
-  knee.z=anklePos.z+Math.sqrt(Math.max(.01,leg.legB**2-(anklePos.y-knee.y)**2));
+ return {ankle:cont.localToWorld(anklePos),pitch};
+}
+// Reconstruct the gathered knee from the same pole as the ground solver.
+function standingKnee(leg,hip,anklePos){
+ const axis=anklePos.clone().sub(hip),length=Math.min(axis.length(),leg.legA+leg.legB-.002);
+ axis.normalize();
+ const along=(leg.legA**2-leg.legB**2+length**2)/(2*length);
+ const pole=V(.16,0,1);pole.addScaledVector(axis,-pole.dot(axis)).normalize();
+ return hip.clone().addScaledVector(axis,along).addScaledVector(pole,Math.sqrt(Math.max(0,leg.legA**2-along**2)));
+}
+// With the front shoe planted, guide the rear thigh through vertical. Allocate
+// its increasing vertical span to lowering the knee, then its decreasing span
+// to lowering the hip. Neither joint needs to bounce to take up the difference.
+function moveRearLeg(m,input,stance,phase){
+ const {cont,rig}=m,leg=rig.legs[0],u=ramp(phase,transfer,1);
+ const stand=cont.worldToLocal(stance.standing.clone());
+ const base=cont.worldToLocal(stance.kneeling.clone());
+ const end=cont.worldToLocal(rearRest(m,input,base,1).ankle);
+ const startHip=leg.hip.position.clone().add(V(.045,1.94,.29));
+ const startKnee=standingKnee(leg,startHip,stand);
+ const finalKnee=end.clone();finalKnee.z+=leg.legB;
+ for(let j=0;j<2;j++){
+  const point=cont.localToWorld(finalKnee.clone());
+  finalKnee.y=((input.groundAt?.(point.x,point.z)??input.ground??0)-cont.position.y)/m.scale+.438;
+  finalKnee.z=end.z+Math.sqrt(Math.max(.01,leg.legB**2-(end.y-finalKnee.y)**2));
  }
- const hip=cont.worldToLocal(leg.hip.getWorldPosition(V()));
- const dx=knee.x-hip.x,dz=knee.z-hip.z;
- const height=knee.y+Math.sqrt(Math.max(.01,leg.legA**2-dx*dx-dz*dz));
- const settled=weight*ramp(-anklePos.z,.90,1.78);
- rig.pelvis.position.y+=(height-hip.y)*settled;
- return {knee,ankle:cont.localToWorld(anklePos),pitch,settled};
+ const finalHip=leg.hip.position.clone().add(V(.13,0,.19));
+ const initial=startKnee.clone().sub(startHip).setY(0);
+ const delta=finalKnee.clone().sub(finalHip).setY(0).sub(initial);
+ const deepest=clamp(-initial.dot(delta)/Math.max(.000001,delta.lengthSq()));
+ const vertical=t=>Math.sqrt(Math.max(.01,leg.legA**2-initial.clone().addScaledVector(delta,t).lengthSq()));
+ const drop=startKnee.y-finalKnee.y-(vertical(deepest)-vertical(0));
+ const knee=startKnee.clone().lerp(finalKnee,u);
+ knee.y=startKnee.y-(vertical(Math.min(u,deepest))-vertical(0))-drop*u;
+ rig.pelvis.position.set(.045+.085*u,knee.y+vertical(u)-leg.hip.position.y,.29-.10*u);
+ // Solve the trailing ankle behind this knee on its shin-length arc. Sample
+ // terrain under the moving instep again at the resulting fore-aft position.
+ const anchor=stand.clone().lerp(base,u);
+ let rest;
+ for(let j=0;j<3;j++){
+  const world=cont.localToWorld(anchor.clone());
+  const floor=input.groundAt?.(world.x,world.z)??input.ground??0;
+  anchor.y=(floor-cont.position.y)/m.scale+ankle+.13*Math.sin(Math.PI*u);
+  rest=rearRest(m,input,anchor,u);
+  const anklePos=cont.worldToLocal(rest.ankle.clone());
+  anchor.z=knee.z-Math.sqrt(Math.max(.01,leg.legB**2-(anklePos.y-knee.y)**2-(anchor.x-knee.x)**2));
+ }
+ m.legs[0].foot.copy(cont.localToWorld(anchor.clone()));
+ if(!m.legs[0].swing)m.legs[0].planted.copy(m.legs[0].foot);
+ rest.ankle.x=m.legs[0].foot.x;rest.ankle.z=m.legs[0].foot.z;
+ return {...rest,knee};
 }
 function animate(m,input,dt,t){
  const s=m.saker,{rig,cont}=m,alive=input.alive,old=cont.position.clone();
@@ -107,12 +226,22 @@ function animate(m,input,dt,t){
  const reset=!m.init||travel>5,heading=input.moving?input.heading:input.face;
  const turn=Math.atan2(Math.sin(heading-m.yaw),Math.cos(heading-m.yaw));
  if(reset)m.yaw=heading;else if(alive)m.yaw+=turn*(1-Math.exp(-dt*12));cont.rotation.set(0,m.yaw,0);
+ if(!input.moving||s.handoff)cont.updateWorldMatrix(true,false);
  if(Number.isFinite(input.attack?.fireAt))s.lastFire=input.attack.fireAt;
  const age=t-(s.lastFire??Infinity);
  const hold=1-ramp(age,.27,.7);
  const shotHold=age>=0?1-ramp(age,.80,1.06):0;
  const ready=alive&&input.armed?Math.max(input.brace||0,input.attacking?(Number.isFinite(input.attack?.fireAt)?hold:1):0,shotHold,(input.readyRelease||0)*hold,input.targeting?.86:0):0;
- s.aim=input.reducedMotion?ready:follow(s.aim,ready,ready>s.aim?8.5:5.4,dt);
+ // Limit travel through the stance even if gameplay requests full aim in a
+ // single tick. Acceleration is continuous when a request reverses partway.
+ const target=input.moving?0:clamp(ready);
+ const velocity=T.MathUtils.clamp((target-s.phase)*10,-.79,.89);
+ s.phaseSpeed=follow(s.phaseSpeed,velocity,18,dt);
+ s.phase=clamp(s.phase+s.phaseSpeed*dt);
+ if(input.reducedMotion||Math.abs(target-s.phase)<.0005&&Math.abs(s.phaseSpeed)<.015){
+  s.phase=target;s.phaseSpeed=0;
+ }
+ s.aim=smooth(s.phase);
  s.run=follow(s.run,input.moving&&alive&&!input.reducedMotion?1:0,10,dt);
  s.contactAge+=dt;contacts(m,input,dt,travel,reset);m.init=true;
  const lock=s.aim,run=s.run,p=s.swing?.p??0;
@@ -133,8 +262,13 @@ function animate(m,input,dt,t){
  rig.pelvis.position.set(.065*support+.13*lock+s.evadeSign*.36*lift,h,.22*run+.19*lock);
  rig.pelvis.rotation.set(.085*run*(1-lock),0,-.027*support+.40*down);
  rig.pelvis.position.y=R.supportHeight(m,input,h)+lift*.48;
- const deployed=ramp(lock,.16,.70)*(1-lift)*(alive&&!input.legsDead?1:0);
- const rest=deployed>0?rearRest(m,input,back,deployed):null;
+ const contact=s.stance?.[0],enter=ramp(s.phase,0,transfer);
+ const deployed=ramp(s.phase,transfer,1)*(1-lift)*(alive&&!input.legsDead?1:0);
+ let rest=null;
+ if(contact&&!lift){
+  if(s.phase>transfer)rest=moveRearLeg(m,input,contact,s.phase);
+  else rig.pelvis.position.set(.045*enter,2.24-.30*enter,.29*enter);
+ }
  // The collar and visor face the firing lane. Recoil travels through the
  // wrist, arm and shoulder carriage while the kneeling base bears the load.
  rig.spine.position.set(0,.22+.16*lock,-.13*rise);
@@ -160,19 +294,19 @@ function animate(m,input,dt,t){
   shoe.x+=Math.sin(m.yaw+leg.toe)*advance*scale;
   shoe.z+=Math.cos(m.yaw+leg.toe)*advance*scale;
   if(i===0&&rest){shoe.copy(rest.ankle);pitch=rest.pitch;}
-  kneeClearance(m,input,leg,shoe);
   if(i===0&&rest){
    const hip=cont.worldToLocal(leg.hip.getWorldPosition(V()));
-   leg.bendPole.lerp(rest.knee.clone().sub(hip).normalize(),rest.settled);
-  }
+   leg.bendPole.copy(rest.knee).sub(hip).normalize();
+  }else kneeClearance(m,input,leg,shoe);
   R.solveWorldLeg(m,leg,shoe,m.yaw+leg.toe*(i===0?1-deployed:1),pitch);
  });
  const shoeRest=s.kneeRest;
  shoeRest.position.set(0,0,0);shoeRest.quaternion.identity();
  if(rest){
   const level=cont.getWorldQuaternion(new T.Quaternion()).multiply(new T.Quaternion().setFromAxisAngle(V(1,0,0),Math.PI/2));
-  shoeRest.quaternion.slerp(shoeRest.parent.getWorldQuaternion(new T.Quaternion()).invert().multiply(level),rest.settled);
+  shoeRest.quaternion.slerp(shoeRest.parent.getWorldQuaternion(new T.Quaternion()).invert().multiply(level),deployed);
   // The sprung pad takes up contact as the shin rolls onto it.
+  shoeRest.updateWorldMatrix(true,false);
   let compression=0;
   for(const x of [-.188,.188])for(const y of [-.185,.071]){
    const pad=shoeRest.localToWorld(V(x,y,.438));
@@ -183,6 +317,7 @@ function animate(m,input,dt,t){
    shoeRest.position.copy(shoeRest.parent.worldToLocal(center));
   }
  }
+ if(s.handoff)blendInterruptedStep(m,input,dt);
  for(const [side,sign] of [['L',1],['R',-1]]){
   const mantle=s.mantles[side];mantle.rotation.set(-.09-.12*lock+sign*.047*stride+.12*rise,sign*.045,-sign*.06);
  }
@@ -232,7 +367,7 @@ function build(unit,source){
  const breech=get('Breech'),slide=get('Slide'),muzzle=get('Muzzle');
  const gun={id:'merlin-38',mount:breech,carrier:arms.R.wr,recoil:slide,muzzle,subsystem:'right',aimPivot:()=>breech};
  const {L,R:right}=arms;
- m.saker={breech,slide,aim:0,run:0,contactAge:1,next:1,swing:null,kneeRest:get('KneeRestL'),soleHull:get('AnkleL').userData.soleHull,dodgeAt:-100,evadeSign:1,
+ m.saker={breech,slide,aim:0,phase:0,phaseSpeed:0,stance:null,run:0,contactAge:1,next:1,swing:null,kneeRest:get('KneeRestL'),soleHull:get('AnkleL').userData.soleHull,dodgeAt:-100,evadeSign:1,
   mantles:{L:get('MantleL'),R:get('MantleR')},recoilPitch:0,
   rightLinks:{hip:right.sh,kn:right.el,an:right.wr,restX:-1,legA:right.el.position.length(),legB:right.wr.position.length(),bendPole:V(-.86,.58,.52)},
   leftLinks:{hip:L.sh,kn:L.el,an:L.wr,restX:1,legA:L.el.position.length(),legB:L.wr.position.length(),bendPole:V(.58,0,-1)}};
