@@ -31,6 +31,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'vyzov-knuckle',name:'Pile Knuckle',type:'POWERED FIST',damage:20,range:1,ap:3,builtIn:true,melee:true,hand:'right',motion:'breaker',desc:'An adjacent strike for 20 base damage before armor.'},
  {id:'aegis-cleave',name:'Charged Arc Cleaver',type:'REACTOR CLEAVE',damage:38,range:1,ap:5,builtIn:true,melee:true,hand:'right'},
  {id:'aegis-bash',name:'Charged Shield Bash',type:'HYDRAULIC IMPACT',damage:40,range:1,ap:5,builtIn:true,melee:true},
+ {id:'quill-lance',name:'Quill S-7',type:'INTEGRAL MARKSMAN RIFLE',damage:32,range:8,ap:4,aim:.06,builtIn:true,hand:'left',motion:'rifle',desc:'A single low-impulse round from the Nightjar’s left shoulder cradle.'},
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
  {id:'flechette-scattergun',name:'Flechette scattergun',type:'SCOUT SCATTERGUN',burst:12,scatter:true,damage:31,range:2,ap:5,builtIn:true,effect:'shotgun',scout:'scatter'},
  {id:'signal-knife',name:'Signal knife',type:'SCOUT KNIFE',damage:26,range:1,ap:5,builtIn:true,effect:'cleaver',scout:'knife',melee:true,pierce:.4},
@@ -50,8 +51,11 @@ const SHIELDS=[
 ];
 const shieldItem=id=>SHIELDS.find(item=>item.id===id);
 const AEGIS_TOWER={id:'aegis-tower',name:'Aegis Tower Shield',reduction:.20};
-const equippedShield=u=>u?.frame===BULWARK_FRAME?AEGIS_TOWER:shieldItem(u?.shield);
-const activeShield=u=>u?.alive&&u.hp.left>0?equippedShield(u):undefined;
+const NIGHTJAR_BUCKLER={...shieldItem('bulwark-shield'),hand:'right'};
+const shieldHand=u=>equippedShield(u)?.hand??'left';
+const shieldArmLabel=u=>shieldHand(u).toUpperCase()+' ARM';
+const equippedShield=u=>u?.frame===NIGHTJAR_FRAME?NIGHTJAR_BUCKLER:u?.frame===BULWARK_FRAME?AEGIS_TOWER:shieldItem(u?.shield);
+const activeShield=u=>u?.alive&&u.hp[shieldHand(u)]>0?equippedShield(u):undefined;
 const shieldPercent=shield=>Math.round(shield.reduction*100)+'%';
 const SHIELD_HELP='Every landed hit goes to the left arm for 0 AP, from any direction. The arm takes reduced damage and absorbs the whole hit that breaks it. A shield occupies the melee slot. Repair the arm to restore the shield.';
 const HOSTILE_LIVERIES=[
@@ -337,6 +341,10 @@ const GIZA_FRAME=FRAMES.push({name:'GIZA',model:'GZ–09',role:'SIEGE GUNNER',co
 const VYZOV_FRAME=FRAMES.push({name:'VYZOV',model:'VZ–11',role:'MORTAR RAIDER',color:'#6c735d',
  hp:158,arm:102,leg:125,move:5,armor:4,cost:275000,weapon:'vyzov-knuckle',native:'vyzov',fixedLivery:true,marketPort:'frontier',
  brief:'Halcyon Outpost raider. Its powered fist breaks braced positions. Once per battle, the shoulder mortar hits a tile and its four orthogonal neighbors, including friendlies.'})-1;
+const NIGHTJAR_FRAME=FRAMES.push({name:'NIGHTJAR',model:'NJ–07',role:'MOBILE SNIPER',color:'#526c70',
+ hp:108,arm:56,leg:87,move:6,armor:2,dodge:.15,weapon:'quill-lance',native:'nightjar',
+ enemyOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
+ brief:'A four-point firing stance drops to a two-legged run. Its left shoulder carries the integral Quill. A right-hand buckler intercepts incoming hits until the arm breaks.'})-1;
 // Name, player-facing effect, preferred distance, and positioning priority.
 const MECH_SIGNATURES={
  0:['Steady Aim','Open from a planted position. Your first direct shot before moving gains +6 aim.',4,'hold'],
@@ -365,6 +373,7 @@ const MECH_SIGNATURES={
  [SALT_WORKS_GARRISON_FRAME]:['Yard Defense','Cover the yard from behind obstacles. Direct shots from cover gain +8 aim.',5,'screen'],
  [HUSKY_FRAME]:['Running Snap','Move before firing. Direct shots from within three tiles gain +8 aim after moving.',3,'mobile'],
  [GIZA_FRAME]:['Range Table','Hold position. Direct shots from five or more tiles gain +6 aim before moving.',5,'hold'],
+ [NIGHTJAR_FRAME]:['Rangefinder','Keep seven tiles of separation. After firing, take a free step toward cover or preferred range. The right buckler reduces intercepted damage by 20%.',7,'mobile'],
  [VYZOV_FRAME]:['Guard Breaker','Melee attacks deal +15% damage against braced targets.',1,'push']
 };
 const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
@@ -413,7 +422,11 @@ CONTRACTS.push(
  {id:'broken-grid',port:'frontier',field:2,seats:2,hostiles:[VYZOV_FRAME,HUSKY_FRAME],
   name:'Broken Grid',place:'HALCYON OUTPOST · RUNOFF BASIN',tag:'RAIDER HUNT',pay:8200,difficulty:3,
   desc:'A Vyzov mortar raider and its Husky spotter hold the basin. Spread your lance to deny the mortar a clustered target.',
-  deployment:[[12,6],[7,12],['tank',4,14]]}
+  deployment:[[12,6],[7,12],['tank',4,14]]},
+ {id:'blind-crossing',port:'brine',field:1,seats:1,hostiles:[NIGHTJAR_FRAME],
+  name:'Blind Crossing',place:'BRINE CAUSEWAY · SPILLWAY',tag:'SNIPER INTERCEPT',pay:4100,difficulty:1,
+  desc:'Cross the spillway under a Nightjar’s rifle. Its right-hand buckler can absorb a hit. Use the cargo stacks to close the gap.',
+  deployment:[[8,11]]}
 );
 const contractPort=contract=>contract.port??contract.id;
 const OLD_SORTIE_CONTRACTS=['relay','corridor','frontier'];
@@ -3275,7 +3288,7 @@ function renderBattle(){
   const shotStatus=obstruction||(!inRange?'OUT OF RANGE':
    [elevationAim?'HIGH GROUND +'+Math.round(elevationAim*100)+' AIM':'',launchesMissiles(chosen)&&ridgeBlocks(u,target)?'ARC OVER RIDGE':'',inCover(target)&&!chosen.melee&&!launchesMissiles(chosen)?'COVER':''].filter(Boolean).join(' · ')||'IN RANGE');
   const barrage=u&&target?barrageStatus(u,target,chosen):'';
-  const shotPreview=inRange&&!obstruction?(barrage||attackPreview(u,target,chosen)+(targetShield?' → LEFT ARM':'')):'';
+  const shotPreview=inRange&&!obstruction?(barrage||attackPreview(u,target,chosen)+(targetShield?' → '+shieldArmLabel(target):'')):'';
   const contacts=battle.units.filter(t=>t.team==='enemy'&&t.alive).length;
   const missile=shoulderWeapon(u),canMissile=canUseWeapon(u,missile);
   const tactical=tacticalSpec(u),tacticalAction=tacticalWeapon(u);
@@ -3647,14 +3660,14 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:result});
   addLog(dodged?t.name+' dodged '+a.name+'’s attack.':a.name+' missed '+t.name+'.');
  }else{
-  const label=guard?'SHIELD / LEFT ARM':t.kind?'HULL':PART_LABEL[actual];
+  const label=guard?'SHIELD / '+shieldArmLabel(t):t.kind?'HULL':PART_LABEL[actual];
   const failsafe=disabled.includes('body')&&t.training?.repairFailsafe&&!t.skill;
   if(failsafe){t.skill=true;t.skillTime=clock;fieldRepair(t);duelSkill(t,'Failsafe')}
-  const broken=guard&&t.hp.left===0;
+  const broken=guard&&t.hp[shieldHand(t)]===0;
   const crits=rounds.filter(round=>round.critical).length;
   const critLabel=crits?(rounds.length>1?' · '+crits+' CRIT':' · CRIT'):'';
   const volleyText=landed+'/'+rounds.length+(w.scatter?' PELLETS':' HITS')+' / −'+lost+' HP';
-  if(sequence)sequence.result=(broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' LEFT ARM':failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':rounds.length>1?volleyText:'−'+d+' '+label)+critLabel;
+  if(sequence)sequence.result=(broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' '+shieldArmLabel(t):failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':rounds.length>1?volleyText:'−'+d+' '+label)+critLabel;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:(broken?'SHIELD ARM LOST':guard?'BLOCK · −'+d:rounds.length>1?volleyText:'−'+d+' '+label)+critLabel});
   const report=w.burst&&!guard?impacts.map(({part,amount})=>(t.kind?'HULL':PART_LABEL[part])+' −'+amount).join(' · '):label+' −'+d;
   addLog(a.name+(w.scout?' · '+w.name:'')+' → '+t.name+' / '+report+critLabel);
@@ -3719,7 +3732,8 @@ function awardCombatKill(actor,target){
 function engage(attacker,defender,part,weapon){if(!attacker?.alive||!defender?.alive)return Promise.resolve(null);return resolveExchange(attacker,defender,part,weapon)}
 function surrenderEligible(u,opponents){
  if(u.kind||!u.alive)return false;
- if(u.hp.pilot<8||u.hp.body*100<u.max.body*15||u.hp.right*100<u.max.right*15)return true;
+ const arm=unitWeapon(u).hand??'right';
+ if(u.hp.pilot<8||u.hp.body*100<u.max.body*15||u.hp[arm]*100<u.max[arm]*15)return true;
  const range=[unitWeapon(u),shoulderWeapon(u)].some(w=>w&&!w.melee&&workingWeapon(u,w));
  const strike=[meleeWeapon(u),unitWeapon(u)].find(w=>w?.melee&&workingWeapon(u,w));
  if(range||canTactical(u))return false;
@@ -3775,7 +3789,7 @@ const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  braceCost,braceUnit,startAction,barrageTarget,inCover,highGroundAim,reactionWeapon,
  forecast:(u,t,w,reaction=false)=>{
   const shot=salvoWeapon(u,w),hit=hitOdds(hitChance(u,t,shotPart(u,shot,reaction),shot,reaction),dodgeChance(t));
-  const part=activeShield(t)?'left':'body';
+  const part=activeShield(t)?shieldHand(t):'body';
   return {part,damage:attackBudget(u,t,part,shot,reaction)*hit.hit*(1+hit.crit*(shotsPerAttack(shot)>1?1:.5))};
  }
 });
@@ -3853,7 +3867,8 @@ function finish(win){
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
  const surrendered=win?b.units.filter(u=>u.surrendered&&u.team==='enemy'):[];
  const gear=surrendered.flatMap(u=>portableItems(u));
- for(const u of surrendered){
+ const intact=surrendered.filter(u=>playerHull(u.frame));
+ for(const u of intact){
   const captured=save.captured??={};
   captured[u.frame]=(captured[u.frame]??0)+1;
  }
@@ -3910,13 +3925,13 @@ function finish(win){
  const buttons=[{text:'COMPANY RECORD',fn:closeModal},{text:'REPAIR & REFIT',fn:()=>{closeModal();page='workshop';workshopView='assigned';render()}}];
  if(benchWar)buttons.unshift({text:'WAR REPORT',fn:showWarReport});
  if(saltWorksTrial)buttons.unshift({text:'REPLAY TRIAL',fn:()=>window.__bench.newBattle(saltWorksTrialOptions)});
- if(recovered.length||surrendered.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
+ if(recovered.length||intact.length)buttons.push({text:'VIEW SALVAGE',fn:()=>{closeModal();page='workshop';workshopView='salvage';render()}});
  const points=totalTrainingPoints();
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
  if(online)buttons.push({text:'TRAIN DECK',fn:()=>{closeModal();navigateHangarRoute('ship')}});
  if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();navigateHangarRoute('facilities')}});
  modal(win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'The field is yours. Your pilots return with experience and recovered enemy components.':'Your pilots have been recovered. Combat damage persists.'}</p>
-  ${stat('CONTRACT PAYMENT',money(reward))}${campaignWin?stat('CAMPAIGN',campaignWin.name+(campaignWin.credits?' · '+money(campaignWin.credits):'')):''}${lean?stat('LEAN LANCE','+'+lean+' XP PER DEPLOYED PILOT'):''}${cachePay?stat('LOADING-YARD SALVAGE',money(cachePay)):''}${bonus?stat('REGIONAL BONUS',bonus.label):''}${c.fixedPay?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${surrendered.length?stat('INTACT CAPTURES',surrendered.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
+  ${stat('CONTRACT PAYMENT',money(reward))}${campaignWin?stat('CAMPAIGN',campaignWin.name+(campaignWin.credits?' · '+money(campaignWin.credits):'')):''}${lean?stat('LEAN LANCE','+'+lean+' XP PER DEPLOYED PILOT'):''}${cachePay?stat('LOADING-YARD SALVAGE',money(cachePay)):''}${bonus?stat('REGIONAL BONUS',bonus.label):''}${c.fixedPay?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${intact.length?stat('INTACT CAPTURES',intact.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
   ${costs?stat('CREW WAGES',money(costs.wages))+stat('TRAIN UPKEEP',money(costs.ship))+stat('HULL UPKEEP',money(costs.hulls))+
    (costs.arrearsPaid?stat('ARREARS PAID',money(costs.arrearsPaid)):'')+(save.overworld.arrears?stat('OPERATING ARREARS',money(save.overworld.arrears)):'')+
    stat('NET CREDITS',money(pay-costs.paid-costs.arrearsPaid)):''}
@@ -4023,6 +4038,7 @@ MECH_MOTION[SHOGUN_FRAME]={...MECH_MOTION[3],mass:1.66};
 MECH_MOTION[HUSKY_FRAME]={step:.48,mass:.98,playbackRate:1};
 MECH_MOTION[GIZA_FRAME]={step:.63,mass:1.54,playbackRate:1};
 MECH_MOTION[VYZOV_FRAME]={step:.51,mass:1.21,playbackRate:1};
+MECH_MOTION[NIGHTJAR_FRAME]={step:.32,mass:.78,playbackRate:2.15};
 MECH_MOTION[SALTJACK_FRAME]={step:.59,mass:1.40,playbackRate:1};
 MECH_MOTION[SALT_WORKS_GARRISON_FRAME]={step:.64,mass:1.46,playbackRate:1};
 const clamp01=v=>Math.max(0,Math.min(1,v));
@@ -4034,6 +4050,7 @@ const ATTACK_PROFILES={
  rail:{raise:.39,beats:[0],travel:.075,recover:.47},
  missile:{raise:.35,beats:[0,.17],travel:1.0,recover:.39},   // lofted 45-degree flight (was .42 on a flat arc)
  hailstorm:{raise:.36,beats:[0,.06,.12,.18,.24,.30,.36],travel:.09,recover:.39},
+ 'quill-lance':{raise:.48,beats:[0],travel:.10,recover:.43,effect:'rifle'},
  rampart:{raise:.31,beats:[0],travel:.13,recover:.48},
  rivet:{raise:.28,beats:[0],interval:.072,travel:.095,recover:.38,effect:'hailstorm',feed:true},
  parallax:{raise:.72,beats:[0],travel:.075,recover:.56,effect:'rail',charge:true},
@@ -4655,7 +4672,7 @@ function duelSkill(u,name){if(activeCinematic)duelBanner={text:name,ally:u.team=
 function drawDuelHealth(sequence){
  const {actor,target,cameraBeat,phase,part,contact}=sequence;
  const unit=cameraBeat==='hit'||cameraBeat==='flight'||(!cameraBeat&&phase==='result')?target:actor;
- const struck=contact?.hit?contact.part:part==='shield'?'left':part;
+ const struck=contact?.hit?contact.part:part==='shield'?shieldHand(target):part;
  const parts=unit===target&&struck!=='body'&&unit.max[struck]>0?['body',struck]:['body'];
  const width=Math.min(280,W-32),gap=12,cellWidth=(width-24-gap*(parts.length-1))/parts.length;
  const x=(W-width)/2,y=H-64;
@@ -4665,7 +4682,7 @@ function drawDuelHealth(sequence){
  ctx.fillStyle='#e2e9e6';ctx.fillText(unit.name,x+12,y+15,width-24);
  for(const [i,p] of parts.entries()){
   const left=x+12+i*(cellWidth+gap),ratio=clamp01(unit.hp[p]/unit.max[p]);
-  const label=unit.kind?'HULL':struck==='left'&&part==='shield'&&p==='left'?'SHIELD':HEALTH_LABEL[p];
+  const label=unit.kind?'HULL':part==='shield'&&p===shieldHand(target)?'SHIELD':HEALTH_LABEL[p];
   ctx.font='600 10px Inter,Arial,sans-serif';
   ctx.fillStyle='#dce7e2';ctx.fillText(label+' '+unit.hp[p]+'/'+unit.max[p],left,y+30,cellWidth);
   ctx.fillStyle='#293e4a';ctx.fillRect(left,y+35,cellWidth,5);
@@ -5094,7 +5111,7 @@ if(benchRig){
   primaries:id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME?INFANTRY_PRIMARIES:
    id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:frame.primaryOptions,
   melees:breachLoadout(id)?['cleaver']:undefined,
-  shield:canFitShield(id),pod:breachLoadout(id),
+  fixedShield:id===NIGHTJAR_FRAME?NIGHTJAR_BUCKLER:undefined,shield:canFitShield(id),pod:breachLoadout(id),
   archive:id===0?'rig-bench/warden-painted.glb':prototypeArchives[id]?'rig-bench/prototypes/'+prototypeArchives[id]+'.glb':null
  }));
  frames.push({id:'lion',frame:0,lionTrial:true,name:'LION',fixed:true,authored:true,quad:false,stock:{weapon:'rifle',melee:'cleaver',upgrade:0},melees:LION_TRIAL_WEAPONS});

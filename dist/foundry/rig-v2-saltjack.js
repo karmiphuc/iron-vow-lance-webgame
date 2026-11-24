@@ -79,54 +79,6 @@ function feet(m,I,state,dt,distance,direction){
  }
 }
 
-// Exact 3D two-link solve. The knee bends along the chassis' forward vector
-// while the bottom of the shoe keeps its own world orientation.
-function solveLeg(m,leg,position,ankleYaw,pitch=0){
- const hip=m.cont.worldToLocal(leg.hip.getWorldPosition(V()));
- const target=m.cont.worldToLocal(position.clone()).sub(hip);
- const a=leg.legA,b=leg.legB,length=clamp(target.length(),Math.abs(a-b)+.008,a+b-.002);
- const axis=target.normalize();
- if(axis.lengthSq()<.01)axis.set(0,-1,0);
- const pole=V(Math.sign(leg.restX)*.08,0,1);
- pole.addScaledVector(axis,-pole.dot(axis)).normalize();
- const along=(a*a-b*b+length*length)/(2*length);
- const upper=axis.clone().multiplyScalar(along).addScaledVector(pole,Math.sqrt(Math.max(0,a*a-along*along))).normalize();
- const lower=axis.multiplyScalar(length).addScaledVector(upper,-a).normalize();
- const hinge=upper.clone().cross(lower).normalize(),up=upper.clone().negate();
- const basis=new T.Matrix4().makeBasis(hinge,up,hinge.clone().cross(up));
- const hipWorld=Q().setFromRotationMatrix(basis).premultiply(m.cont.getWorldQuaternion(Q()));
- leg.hip.quaternion.copy(leg.hip.parent.getWorldQuaternion(Q()).invert().multiply(hipWorld));
- leg.kn.rotation.set(upper.angleTo(lower),0,0);
- const shoeWorld=Q().setFromEuler(new T.Euler(pitch,ankleYaw,0,'YXZ'));
- leg.an.quaternion.copy(leg.kn.getWorldQuaternion(Q()).invert().multiply(shoeWorld));
-}
-// Let the pelvis compress as a foot reaches its limit across stride and grade.
-function supportHeight(m,I,desired){
- const pelvis=m.rig.pelvis,world=m.cont;
- // Move the hips over a loaded shoe when an opening or turning step
- // reaches its horizontal limit. The world contact itself never slides.
- const rootQ=world.getWorldQuaternion(Q()).invert();
- for(const [i,leg] of m.rig.legs.entries()){
-  const state=m.legs[i];
-  if(state.swing)continue;
-  const offset=state.foot.clone().sub(leg.hip.getWorldPosition(V())).setY(0);
-  const distance=offset.length(),limit=(leg.legA+leg.legB-.16)*m.scale;
-  if(distance<=limit)continue;
-  offset.multiplyScalar(Math.min(distance-limit,.35)/(distance*m.scale)).applyQuaternion(rootQ);
-  pelvis.position.add(offset);
- }
- const pelvisHome=world.localToWorld(pelvis.position.clone());
- for(const [i,leg] of m.rig.legs.entries()){
-  const hip=leg.hip.getWorldPosition(V()),foot=m.legs[i].foot;
-  const length=(leg.legA+leg.legB-.035)*m.scale;
-  const horizontal=Math.hypot(foot.x-hip.x,foot.z-hip.z);
-  const height=Math.sqrt(Math.max(.03,length*length-horizontal*horizontal));
-  const safe=(foot.y+height-world.position.y-(hip.y-pelvisHome.y))/m.scale;
-  desired=Math.min(desired,safe);
- }
- return Math.max(I.airborne?2.15:.92,desired);
-}
-
 function blendRotation(node,rest,weight,x,y,z,order='YXZ'){
  const pose=Q().setFromEuler(new T.Euler(x,y,z,order));
  node.quaternion.copy(rest).slerp(pose,clamp(weight));
@@ -165,12 +117,12 @@ function livePose(m,I,dt,t,state){
  const push=V(clamp(S.kx.x,-.28,.28),0,clamp(S.kz.x,-.28,.28)).applyAxisAngle(V(0,1,0),-m.yaw);
  rig.pelvis.position.set(lean*.23+push.x,h,brake*.15+push.z);
  rig.pelvis.rotation.set(walk*.055+brake*.06,0,-lean*.075);
- rig.pelvis.position.y=supportHeight(m,I,h);
+ rig.pelvis.position.y=R.supportHeight(m,I,h);
  for(const [i,leg] of rig.legs.entries()){
   const foot=m.legs[i],progress=state.swing?.index===i?state.swing.age:0;
   const toe=leg.toe*(1-.72*walk);
   const pitch=foot.swing?.12*Math.sin(2*PI*clamp(progress)):0;
-  solveLeg(m,leg,foot.foot,m.yaw+toe,pitch);
+  R.solveWorldLeg(m,leg,foot.foot,m.yaw+toe,pitch);
  }
 
  // Hip transfer, waist traverse and carriage-first kick follow Saltjack's
@@ -272,7 +224,7 @@ function fallPose(m,I,state){
   }
   if(I.groundAt)foot.y=mix(foot.y,I.groundAt(foot.x,foot.z)+m.dims.ankleH*m.scale,buckle);
   if(failed)foot.y+=.31*give*m.scale;
-  solveLeg(m,leg,foot,fall.yaw+leg.toe+(failed?-.18:.24)*reach,failed?.48*give:0);
+  R.solveWorldLeg(m,leg,foot,fall.yaw+leg.toe+(failed?-.18:.24)*reach,failed?.48*give:0);
   // The failed shin tucks under the hull. The other shoe releases late and
   // swings out ahead of it, so the feet cannot land side by side.
   const release=down?0:between(age,failed?.21:.61,failed?.78:.96);

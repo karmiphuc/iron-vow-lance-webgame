@@ -50,6 +50,54 @@ function setPartState(m,part,st){
 function wreckMech(m){m.body.traverse(o=>{if(!o.isMesh||!o.material)return;const base=o.userData.base||o.material;if(base.userData&&base.userData.paint)o.material=VC.wreckOf(base);});m.build.visorMat.emissiveIntensity=0;m.build.stackMat.emissiveIntensity=0;}
 
 /* ---------- mech animation ---------- */
+// Exact 3D two-link solve. The knee bends along the chassis' forward vector
+// while the bottom of the shoe keeps its own world orientation.
+function solveWorldLeg(m,leg,position,ankleYaw,pitch=0){
+ const hip=m.cont.worldToLocal(leg.hip.getWorldPosition(V3()));
+ const target=m.cont.worldToLocal(position.clone()).sub(hip);
+ const a=leg.legA,b=leg.legB,length=clamp(target.length(),Math.abs(a-b)+.008,a+b-.002);
+ const axis=target.normalize();
+ if(axis.lengthSq()<.01)axis.set(0,-1,0);
+ const pole=leg.bendPole?.clone()??V3(Math.sign(leg.restX)*.08,0,1);
+ pole.addScaledVector(axis,-pole.dot(axis)).normalize();
+ const along=(a*a-b*b+length*length)/(2*length);
+ const upper=axis.clone().multiplyScalar(along).addScaledVector(pole,Math.sqrt(Math.max(0,a*a-along*along))).normalize();
+ const lower=axis.multiplyScalar(length).addScaledVector(upper,-a).normalize();
+ const hinge=upper.clone().cross(lower).normalize(),up=upper.clone().negate();
+ const basis=new T.Matrix4().makeBasis(hinge,up,hinge.clone().cross(up));
+ const hipWorld=new T.Quaternion().setFromRotationMatrix(basis).premultiply(m.cont.getWorldQuaternion(new T.Quaternion()));
+ leg.hip.quaternion.copy(leg.hip.parent.getWorldQuaternion(new T.Quaternion()).invert().multiply(hipWorld));
+ leg.kn.rotation.set(upper.angleTo(lower),0,0);
+ const shoeWorld=new T.Quaternion().setFromEuler(new T.Euler(pitch,ankleYaw,0,'YXZ'));
+ leg.an.quaternion.copy(leg.kn.getWorldQuaternion(new T.Quaternion()).invert().multiply(shoeWorld));
+}
+// Let the pelvis compress as a foot reaches its limit across stride and grade.
+function supportHeight(m,I,desired){
+ const pelvis=m.rig.pelvis,world=m.cont;
+ // Move the hips over a loaded shoe when an opening or turning step
+ // reaches its horizontal limit. The world contact itself never slides.
+ const rootQ=world.getWorldQuaternion(new T.Quaternion()).invert();
+ for(const [i,leg] of m.rig.legs.entries()){
+  const state=m.legs[i];
+  if(state.swing)continue;
+  const offset=state.foot.clone().sub(leg.hip.getWorldPosition(V3())).setY(0);
+  const distance=offset.length(),limit=(leg.legA+leg.legB-.16)*m.scale;
+  if(distance<=limit)continue;
+  offset.multiplyScalar(Math.min(distance-limit,.35)/(distance*m.scale)).applyQuaternion(rootQ);
+  pelvis.position.add(offset);
+ }
+ const pelvisHome=world.localToWorld(pelvis.position.clone());
+ for(const [i,leg] of m.rig.legs.entries()){
+  const hip=leg.hip.getWorldPosition(V3()),foot=m.legs[i].foot;
+  const length=(leg.legA+leg.legB-.035)*m.scale;
+  const horizontal=Math.hypot(foot.x-hip.x,foot.z-hip.z);
+  const height=Math.sqrt(Math.max(.03,length*length-horizontal*horizontal));
+  const safe=(foot.y+height-world.position.y-(hip.y-pelvisHome.y))/m.scale;
+  desired=Math.min(desired,safe);
+ }
+ return Math.max(I.airborne?2.15:.92,desired);
+}
+
 function solveLeg(m,leg,t,pitch){VC.solveLeg(m.rig,m.dims,leg,t,pitch);}
 const legReach=(leg,dims)=>(leg.legA??dims.legA)+(leg.legB??dims.legB);
 const _a=V3(),_b=V3(),_c=V3();
@@ -536,5 +584,5 @@ function mountPoints(m){
  }
  return m.mountPoints;
 }
-window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,createMech,animateMech,lungeK,MEL,MORTAR,behemothBrace,setPartState,wreckMech,mountPoints};
+window.IronVowFoundryRig={V3,pixels,ground,worldSpan,parts,buildRig,createMech,solveWorldLeg,supportHeight,animateMech,lungeK,MEL,MORTAR,behemothBrace,setPartState,wreckMech,mountPoints};
 })();

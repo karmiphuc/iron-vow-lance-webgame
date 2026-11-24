@@ -70,6 +70,32 @@ async function main(){
   }
   if(!phases.walk.contacts)failures.push(`${u.name} / ${terrain}: walking produced zero footfalls`);
  }
+ // Nightjar uses the front pair as planted knuckles, then carries both under
+ // the shell while the four-link hind limbs run. Verify the shipped geometry.
+ const sniper=units.find(u=>u.name==='NIGHTJAR');
+ S.clearCombat();
+ let distance=0,widest=0,plantError=0,foldHeight=0;
+ function sample(moving,aim=0){
+  time+=1/60;
+  if(moving)distance+=8/60;
+  sniper.motion=moving?{playbackRate:1,start:0}:null;
+  return S.draw(sniper,time,{aim,recoil:0,brace:aim,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:0,z:distance,face:0,heading:0,groundAt:()=>0,speed:moving?8:0,aim:R.V3(0,3,distance+15)}},
+   scope,sniper.foundry,'rig-v2').m;
+ }
+ const initial=sample(false),standingHeight=initial.rig.pelvis.position.y;
+ for(const arm of initial.nightjar.forelegs)assert.ok(arm.an.getWorldPosition(R.V3()).distanceTo(arm.contact)<.03,'front claw arrives on its pad');
+ for(let frame=0;frame<240;frame++){
+  const m=sample(true),toes=m.rig.legs.map(l=>l.an.getWorldPosition(R.V3()));
+  for(const [i,foot] of m.legs.entries())if(!foot.swing)plantError=Math.max(plantError,toes[i].distanceTo(foot.foot));
+  widest=Math.max(widest,Math.abs(toes[0].z-toes[1].z));
+  foldHeight=Math.max(foldHeight,Math.min(...m.nightjar.forelegs.map(arm=>arm.an.getWorldPosition(R.V3()).y)));
+ }
+ assert.ok(widest>3.4&&foldHeight>2.5&&plantError<.025,'split stride, both forelimbs tucked and planted hind claw: '+[widest,foldHeight,plantError]);
+ let braced;
+ for(let frame=0;frame<160;frame++)braced=sample(false,1);
+ assert.ok(braced.rig.pelvis.position.y<standingHeight-.55,'chassis settles between its contacts');
+ for(const arm of braced.nightjar.forelegs)assert.ok(arm.an.getWorldPosition(R.V3()).distanceTo(arm.contact)<.03,'four-point firing support');
  for(const u of units)for(const downReason of ['body','pilot']){
   S.clearCombat();
   const draw=(face,deathAge,reducedMotion=false)=>{

@@ -202,6 +202,12 @@ const profiles={
    0.14
   ]
  },
+ "quill-lance": {
+  "archetype": "rifle",
+  "beats": [0],
+  "source": "built-in",
+  "asset": null
+ },
  "watchman": {
   "archetype": "shotgun",
   "beats": [

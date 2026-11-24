@@ -154,7 +154,8 @@ window.IronVowWorld=(()=>{
   ids.forEach((port,i)=>{for(let slot=0;slot<counts[i];slot++)result.push(offer(seed,port,postedDay,slot));});
   // Salt Works reserves Vanta's fourth slot. Existing offer IDs stay stable across upgrades.
   result.push(offer(seed,'corridor',postedDay,3,4),
-   offer(seed,'ridge',postedDay,3,5),offer(seed,'corridor',postedDay,4,6),offer(seed,'frontier',postedDay,3,7));
+   offer(seed,'ridge',postedDay,3,5),offer(seed,'corridor',postedDay,4,6),offer(seed,'frontier',postedDay,3,7),
+   offer(seed,'brine',postedDay,3,8));
   return result;
  }
  function validWorld(w){

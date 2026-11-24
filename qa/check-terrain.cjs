@@ -25,7 +25,7 @@ const checks=JSON.parse(run(`JSON.stringify(CONTRACTS.map((_,i)=>{
  }
  return {valid,unique:maps.size};
 }))`));
-assert.deepEqual(checks,Array(8).fill({valid:true,unique:24}),'all contracts vary terrain, preserve deployment and connected ground, and retain valid slopes');
+assert.deepEqual(checks,Array(9).fill({valid:true,unique:24}),'all contracts vary terrain, preserve deployment and connected ground, and retain valid slopes');
 const saved=JSON.stringify(fixture);
 const resumed=simulate({storage:new Map([[key,saved]]),reducedMotion:true});
 assert.equal(resumed.run('JSON.stringify(captureSortie())'),JSON.stringify(fixture.sortie));

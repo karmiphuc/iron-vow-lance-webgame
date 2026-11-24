@@ -26,7 +26,7 @@ const GUN_VOICES={
 };
 // Extra weapons keep their current gameplay timing and share only their acoustic family.
 for(const [name,family,rate,gain] of [
- ['sidewinder','rifle',1.16,.67],['trident','rifle',.94,.82],['needle-carbine','rifle',1.10,.67],['salt-mg','hailstorm',.88,.86],
+ ['quill-lance','rifle',1.04,.78],['sidewinder','rifle',1.16,.67],['trident','rifle',.94,.82],['needle-carbine','rifle',1.10,.67],['salt-mg','hailstorm',.88,.86],
  ['watchman','rifle',.88,.88],['rivet','hailstorm',.87,.75],['forge','rampart',1.16,.84],
  ['falcon','rampart',1.10,.86],['giza-salvo','morrow',.95,1.04],['vyzov-cross','rampart',.78,.84],['flechette-scattergun','shotgun',1.14,.78],
  ['ember','rail',1.20,.67],['parallax','rail',.86,.73],['obelisk','rail',.74,.84],
