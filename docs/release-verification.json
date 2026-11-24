@@ -79,40 +79,35 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 111,
+    "siteVersion": 141,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "f1b951cd39f0843210300bcbce23c3d9aad5774d",
-    "githubCommit": "e63c8fb9ea0baef8494c96fb455c3367021e56ea",
-    "distTree": "3bab3bfcea7f1d348ea964bee62835e1cfbed614",
-    "verifiedAt": "2026-11-18T06:18:01.366Z",
-    "localReleaseSourceSha256": "ecd6353ee47c72c64ca53b8a3ad22f41cf74d94cf957737c70fb36651e0d94e1",
-    "simulationSuites": 70,
+    "sourceCommit": "765618e21f2ecce9098fb84590a462c7f1da585d",
+    "githubCommit": "df2014293e306545855505de30b756d295c41059",
+    "distTree": "41665b3393e73b647bf2dcdfbd462ad6a2b9f096",
+    "verifiedAt": "2026-11-24T13:18:03.398Z",
+    "localReleaseSourceSha256": "2adf1d22fcdf6252eb3ebf1e0c2ebe1a5259fbfef9a9143b1d95afe31b84de61",
+    "simulationSuites": 85,
     "localBrowser": {
-      "desktop": 1,
-      "touch": 1,
+      "desktop": 6,
+      "touch": 6,
       "result": "passed",
       "scenarios": [
-        "checkNavigation"
+        "checkDuelTerrain",
+        "checkReaver",
+        "checkAeroReview",
+        "checkRosterScale",
+        "checkWorkshopPortraits",
+        "checkPilotClasses"
       ]
     },
-    "layoutViewports": [
-      "320x700",
-      "1024x1366",
-      "1366x1024"
-    ],
-    "liveFilesCompared": 168,
+    "liveFilesCompared": 171,
     "liveBrowser": {
-      "desktop": 7,
-      "touch": 7,
+      "desktop": 2,
+      "touch": 2,
       "result": "passed",
       "scenarios": [
-        "checkNavigation",
-        "checkCampaign",
-        "checkShip",
-        "checkOverworld",
-        "checkHangar",
-        "checkWorkshopTurntable",
-        "checkCareerTabs"
+        "checkReaver",
+        "checkRosterScale"
       ]
     },
     "environment": {
@@ -121,14 +116,9 @@
       "graphics": "Software WebGL",
       "nativeIPad": "unverified"
     },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_cd9265eba3508191a426159adc7e3d7e",
-    "deploymentId": "appgdep_6afd428c51a08191b6adc971259551cc",
-    "evidence": "design/navigation/summary.json",
-    "notes": [
-      "Eight department tabs replaced by three contextual destinations.",
-      "The initial Sites publication attempt failed; retrying the identical saved version succeeded.",
-      "Version 110 was saved only; the spacing-corrected version 111 is published."
-    ]
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_02b0d8d47c208191927bdd3a708779f6",
+    "deploymentId": "appgdep_6b058e2dc0588191931d4b12ec0aee22",
+    "evidence": "design/roster-scale/README.md"
   },
   "publishedReleaseHistory": [
     {
@@ -430,6 +420,58 @@
       "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_5c791159b4348191b7dc60a621053f75",
       "deploymentId": "appgdep_6afd39d966f481919424d4371bfc218f",
       "evidence": "design/field-liveries/summary.json"
+    },
+    {
+      "siteVersion": 111,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "f1b951cd39f0843210300bcbce23c3d9aad5774d",
+      "githubCommit": "e63c8fb9ea0baef8494c96fb455c3367021e56ea",
+      "distTree": "3bab3bfcea7f1d348ea964bee62835e1cfbed614",
+      "verifiedAt": "2026-11-18T06:18:01.366Z",
+      "localReleaseSourceSha256": "ecd6353ee47c72c64ca53b8a3ad22f41cf74d94cf957737c70fb36651e0d94e1",
+      "simulationSuites": 70,
+      "localBrowser": {
+        "desktop": 1,
+        "touch": 1,
+        "result": "passed",
+        "scenarios": [
+          "checkNavigation"
+        ]
+      },
+      "layoutViewports": [
+        "320x700",
+        "1024x1366",
+        "1366x1024"
+      ],
+      "liveFilesCompared": 168,
+      "liveBrowser": {
+        "desktop": 7,
+        "touch": 7,
+        "result": "passed",
+        "scenarios": [
+          "checkNavigation",
+          "checkCampaign",
+          "checkShip",
+          "checkOverworld",
+          "checkHangar",
+          "checkWorkshopTurntable",
+          "checkCareerTabs"
+        ]
+      },
+      "environment": {
+        "browser": "Chromium",
+        "touch": "iPhone emulation",
+        "graphics": "Software WebGL",
+        "nativeIPad": "unverified"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_cd9265eba3508191a426159adc7e3d7e",
+      "deploymentId": "appgdep_6afd428c51a08191b6adc971259551cc",
+      "evidence": "design/navigation/summary.json",
+      "notes": [
+        "Eight department tabs replaced by three contextual destinations.",
+        "The initial Sites publication attempt failed; retrying the identical saved version succeeded.",
+        "Version 110 was saved only; the spacing-corrected version 111 is published."
+      ]
     }
   ]
 }
