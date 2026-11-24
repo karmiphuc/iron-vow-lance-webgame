@@ -17,6 +17,19 @@ window.IronVowOverworldView = (() => {
     </aside>`;
   }
 
+  function directory(data) {
+    const regions = ['Central Line', 'North Divide', 'Salt March'];
+    return `<details class="rail-directory">
+      <summary>Rail network · ${data.ports.length} stops</summary>
+      <div class="rail-directory-list">${regions.map(region => {
+        const ports = data.ports.filter(port => (port.region || 'Central Line') === region);
+        return `<section><h3>${region}</h3><div>${ports.map(port =>
+          `<button type="button" data-rail-directory="${escapeHtml(port.id)}"${port.id === data.selected ? ' aria-current="true"' : ''}>
+             <b>${escapeHtml(port.name)}</b>${port.role ? `<small>${escapeHtml(port.role)}</small>` : ''}
+           </button>`).join('')}</div></section>`;
+      }).join('')}</div>
+    </details>`;
+  }
   function render(data) {
     const selected = data.ports.find(port => port.id === data.selected);
     const current = data.ports.find(port => port.id === data.current);
@@ -62,9 +75,14 @@ window.IronVowOverworldView = (() => {
       <button type="button" class="chart-reset" data-chart-reset aria-label="Recenter chart">Recenter</button>
       <aside class="chart-port-card" aria-label="Selected railhead">
         <h2>${escapeHtml(selected.name)}</h2>
+        ${!data.departing && !data.transitEvent ? directory(data) : ''}
         ${!data.departing && !data.transitEvent ? `<details class="chart-strategy">
           <summary>${data.reward?.available ? escapeHtml(data.reward.label) : 'Regional dispatch'}${data.pressure?.active ? ' · disruption' : ''}</summary>
           <div class="chart-strategy-detail">
+        ${selected.launchAP ? '<p>Forward staging · +1 AP for the lance in round one.</p>' : ''}
+        ${selected.intel ? '<p>Signals post · exact hostile intel on local contracts.</p>' : ''}
+        ${selected.repairCap ? '<p>Repair depot · at least 25% off the standard repair rate.</p>' : ''}
+        ${data.freight ? `<p>Shared freight today · ${escapeHtml(data.ports.find(port => port.id === data.freight.from).name)} to ${escapeHtml(data.ports.find(port => port.id === data.freight.to).name)} · 20% off base freight.</p>` : ''}
         ${data.reward ? `<p>${data.reward.available ? escapeHtml(data.reward.label) + ' · through Day ' + data.reward.until : data.reward.claimed ? 'Regional bonus claimed' : 'Regional bonus expired by arrival'}</p>` : ''}
         ${data.standing ? `<p>${data.standing >= 6 ? 'Freight partner · 25% base freight discount' : 'Local standing ' + data.standing + ' / 6 for freight discount'}</p>` : ''}
         ${data.pressure?.next && !data.departing ? `<p class="chart-warning">${escapeHtml(data.pressure.next.name)} · counter at ${escapeHtml(data.ports.find(port => port.id === data.pressure.next.port).name)} by Day ${data.pressure.next.until}</p>` : ''}

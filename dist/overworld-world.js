@@ -6,12 +6,21 @@ window.IronVowWorld=(()=>{
   Object.freeze({id:'corridor',name:'Vanta Shipyards',x:63,y:57}),
   Object.freeze({id:'frontier',name:'Halcyon Outpost',x:85,y:27}),
   Object.freeze({id:'ridge',name:'Ridge Mast',x:35,y:75}),
-  Object.freeze({id:'haven',name:'Haven Reach',x:72,y:80})
+  Object.freeze({id:'haven',name:'Haven Reach',x:72,y:80}),
+  Object.freeze({id:'cinder',name:'Cinder Junction',x:13,y:40,region:'North Divide',role:'Freight exchange'}),
+  Object.freeze({id:'glass',name:'Glasswatch',x:25,y:17,region:'North Divide',role:'Signals post',intel:true}),
+  Object.freeze({id:'iron',name:'Iron Pass',x:57,y:16,region:'North Divide',role:'Forward staging',launchAP:1}),
+  Object.freeze({id:'brine',name:'Brine Causeway',x:25,y:91,region:'Salt March',role:'Road transfer'}),
+  Object.freeze({id:'mercy',name:'Mercy Yard',x:54,y:88,region:'Salt March',role:'Repair depot',repairCap:75}),
+  Object.freeze({id:'black',name:'Black Basin',x:88,y:64,region:'Salt March',role:'Forward staging',launchAP:1})
  ]);
  const ROUTES=Object.freeze([
   ['picket','relay',1,120],['relay','corridor',1,180],['corridor','frontier',2,260],['picket','corridor',1,850],
-  ['picket','ridge',1,140],['ridge','haven',2,220],['haven','corridor',1,150],['haven','frontier',2,240]
- ].map(([from,to,days,fuel])=>Object.freeze({from,to,days,fuel})));
+  ['picket','ridge',1,140],['ridge','haven',2,220],['haven','corridor',1,150],['haven','frontier',2,240],
+  ['picket','cinder',1,160],['cinder','glass',1,130],['glass','iron',1,165],['iron','relay',2,180],['iron','frontier',2,250],
+  ['ridge','brine',1,110,true],['brine','mercy',1,155,true],['mercy','haven',1,170],['mercy','black',1,210,true],['black','frontier',1,235]
+ ].map(([from,to,days,fuel,road])=>Object.freeze({from,to,days,fuel,road:!!road})));
+ const originalRoutes=ROUTES.slice(0,8),outerRoutes=ROUTES.slice(8);
  const ids=PORTS.map(port=>port.id),known=id=>ids.includes(id);
  const edge=(from,to)=>ROUTES.find(r=>r.from===from&&r.to===to||r.from===to&&r.to===from);
  const integer=n=>Number.isSafeInteger(n)&&n>=0;
@@ -35,7 +44,13 @@ window.IronVowWorld=(()=>{
   corridor:{gear:'forge',label:'Forge SG-12',window:2},
   frontier:{xp:60,label:'+60 XP per deployed pilot',window:2},
   ridge:{gear:'pike',label:'Pilum Pike',window:1},
-  haven:{repair:20,label:'+20% integrity to each assigned hull',window:2}
+  haven:{repair:20,label:'+20% integrity to each assigned hull',window:2},
+  cinder:{standing:2,label:'+2 extra local standing',window:2},
+  glass:{xp:50,label:'+50 XP per deployed pilot',window:3},
+  iron:{gear:'falcon',label:'Falcon AC-7',window:3},
+  brine:{credits:780,label:'780 CR cargo recovery bonus',window:3},
+  mercy:{repair:25,label:'+25% integrity to each assigned hull',window:3},
+  black:{gear:'cerberus',label:'Cerberus RP-6',window:3}
  };
  function regionalReward(offer,day,history){
   const reward=REWARDS[offer.port];
@@ -55,12 +70,14 @@ window.IronVowWorld=(()=>{
  }
  function railNetwork(world,history){
   const {active}=railPressure(world,history);
+  const freight=freightToday(world);
   return {ports:PORTS,routes:ROUTES.map(route=>{
    const relief=[route.from,route.to].some(port=>(world.standings[port]??0)>=6);
    const toll=active&&edge(active.from,active.to)===route?active.cost:0;
-   const discount=relief?Math.floor(route.fuel*.25):0;
-   return {...route,fuel:route.fuel+toll-discount,toll,discount,
-    road:route.from==='ridge'&&route.to==='haven'||route.from==='haven'&&route.to==='corridor'};
+   const shared=freight.from===route.from&&freight.to===route.to;
+   const discount=Math.floor(route.fuel*(Number(relief)*.25+Number(shared)*.20));
+   return {...route,fuel:route.fuel+toll-discount,toll,discount,shared,
+    road:route.road||route.from==='ridge'&&route.to==='haven'||route.from==='haven'&&route.to==='corridor'};
   })};
  }
  function offer(seed,port,postedDay,slot,featuredTemplate){
@@ -71,7 +88,7 @@ window.IronVowWorld=(()=>{
  }
  function pool(seed,day){
   const postedDay=period(day),result=[];
-  const counts=ids.map(port=>port==='picket'&&postedDay===1?1+hash(seed,port,postedDay,'count')%3:hash(seed,port,postedDay,'count')%4);
+  const counts=ids.map(port=>port==='picket'&&postedDay===1?1+hash(seed,port,postedDay,'count')%3:PORTS.find(site=>site.id===port).region?1+hash(seed,port,postedDay,'count')%2:hash(seed,port,postedDay,'count')%4);
   const response=ids.indexOf(pressureFor(seed,postedDay).port);
   counts[response]=Math.max(1,counts[response]);
   ids.forEach((port,i)=>{for(let slot=0;slot<counts[i];slot++)result.push(offer(seed,port,postedDay,slot));});
@@ -114,20 +131,27 @@ window.IronVowWorld=(()=>{
   if(!validWorld(world)||!pool(world.seed,world.day).some(o=>o.id===id)||world.consumed.includes(id))return null;
   return {...world,consumed:[...world.consumed,id],scouted:world.scouted.filter(offerId=>offerId!==id),pendingEvents:[...world.pendingEvents],resolvedEvents:[...world.resolvedEvents],standings:{...world.standings}};
  }
- function markersFor(seed,day){
+ function freightToday(world){
+  // Paired with a campaign-day fare, so the activity has a reason to be on the chart.
+  const index=(hash(world.seed,'shared freight')%outerRoutes.length+world.day%outerRoutes.length)%outerRoutes.length;
+  const {from,to}=outerRoutes[index];
+  return {id:'freight',kind:'freight',from,to,day:world.day,fraction:.32+(world.day%5)*.09};
+ }
+ function markersFor(seed,day,routes=originalRoutes){
   return ['storm','patrol'].map((kind,i)=>{
-   const route=ROUTES[(hash(seed,kind)%ROUTES.length+(day%ROUTES.length)*(i+1))%ROUTES.length];
+   const route=routes[(hash(seed,kind)%routes.length+(day%routes.length)*(i+1))%routes.length];
+   const id=routes===originalRoutes?kind:'outer-'+kind;
    let idHash=0;
-   for(const c of kind)idHash=(Math.imul(idHash,31)+c.charCodeAt(0))>>>0;
+   for(const c of id)idHash=(Math.imul(idHash,31)+c.charCodeAt(0))>>>0;
    const fraction=.2+(((day%61)*17+idHash%41)%61)/100;
    const from=PORTS.find(port=>port.id===route.from),to=PORTS.find(port=>port.id===route.to);
    const x=(from.x+(to.x-from.x)*fraction)/100,y=(from.y+(to.y-from.y)*fraction)/100;
-   return {id:kind,kind,from:route.from,to:route.to,day,fraction,x,y};
+   return {id,kind,from:route.from,to:route.to,day,fraction,x,y};
   });
  }
  function markersAt(world,day=world?.day){
   if(!validWorld(world)||!integer(day)||day<world.day)return null;
-  return markersFor(world.seed,day);
+  return [...markersFor(world.seed,day),...markersFor(world.seed,day,outerRoutes)];
  }
  const MARKET={
   picket:{faction:'Karst Wardens',frames:[0,1,2],weapons:['rifle','sidewinder','trident','cleaver']},
@@ -135,13 +159,20 @@ window.IronVowWorld=(()=>{
   corridor:{faction:'Vanta Combine',frames:[6,7,8,22],weapons:['rampart','forge','piledriver','pike','salt-mg']},
   frontier:{faction:'Halcyon Guard',frames:[5,7,10],weapons:['cerberus','obelisk','anchor-hammer','rivet']},
   ridge:{faction:'Ridge Freeholders',frames:[0,3,8],weapons:['shotgun','breaker','falcon','blade']},
-  haven:{faction:'Haven Salvors',frames:[2,4,9],weapons:['missile','hailstorm','ember','hatchet']}
+  haven:{faction:'Haven Salvors',frames:[2,4,9],weapons:['missile','hailstorm','ember','hatchet']},
+  cinder:{faction:'Cinder Freight Guild',frames:[1,2],weapons:['sidewinder','hailstorm','rampart']},
+  glass:{faction:'Glasswatch Signals',frames:[1,5],weapons:['watchman','rail','tonfa']},
+  iron:{faction:'Iron Pass Garrison',frames:[3,8],weapons:['falcon','pike','breaker']},
+  brine:{faction:'Causeway Haulers',frames:[2,7],weapons:['shotgun','missile','cleaver']},
+  mercy:{faction:'Mercy Engineering',frames:[0,8],weapons:['trident','blade','piledriver']},
+  black:{faction:'Basin Prospectors',frames:[6,7],weapons:['cerberus','obelisk','anchor-hammer']}
  };
  function portProfile(seed,port){
   if(!integer(seed)||seed>0xffffffff||!known(port))return null;
   const h=hash(seed,port,'market');
+  const cap=PORTS.find(site=>site.id===port).repairCap??115;
   return {port,faction:MARKET[port].faction,frames:[...MARKET[port].frames],weapons:[...MARKET[port].weapons],
-   repairPercent:85+(h>>>8)%31};
+   repairPercent:Math.min(cap,85+(h>>>8)%31)};
  }
  function setStanding(world,port,value){
   if(!validWorld(world)||!known(port)||!Number.isInteger(value)||value< -100||value>100)return null;
@@ -161,7 +192,7 @@ window.IronVowWorld=(()=>{
   const day=Number(m[1]),legDay=Number(m[2]),index=Number(m[3]),from=m[4],to=m[5];
   if(!integer(day)||day<1||day>maxDay||!integer(legDay)||legDay<day||!integer(index)||index>=PORTS.length-1||!edge(from,to)||
    String(day)!==m[1]||String(legDay)!==m[2]||String(index)!==m[3]||hash(seed,day,legDay,index,from,to,'incident')%3!==0)return null;
-  const hazards=markersFor(seed,legDay).filter(marker=>marker.from===from&&marker.to===to||marker.from===to&&marker.to===from);
+  const hazards=markersFor(seed,legDay,originalRoutes.includes(edge(from,to))?originalRoutes:outerRoutes).filter(marker=>marker.from===from&&marker.to===to||marker.from===to&&marker.to===from);
   const kind=hazards.some(marker=>marker.kind==='storm')?'weather':hazards.some(marker=>marker.kind==='patrol')?'patrol':null;
   const e=kind?EVENTS.find(event=>event.kind===kind):EVENTS[hash(seed,day,legDay,index,from,to,'kind')%3];
   return {id,day,legDay,from,to,kind:e.kind,choices:e.choices.map(choice=>({...choice}))};
@@ -198,5 +229,5 @@ window.IronVowWorld=(()=>{
   return {world:{...world,consumed:[...world.consumed],scouted:[...world.scouted],pendingEvents:world.pendingEvents.filter(pending=>pending!==id),resolvedEvents,standings:{...world.standings}},
    choiceId,effect:{credits:choice.credits,hullCondition:choice.hullCondition,delayDays:choice.delayDays,rep:choice.rep,port:event.to}};
  }
- return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,regionalReward,railPressure,railNetwork,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
+ return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,regionalReward,railPressure,railNetwork,freightToday,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
 })();
