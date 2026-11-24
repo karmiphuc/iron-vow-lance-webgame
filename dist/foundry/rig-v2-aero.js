@@ -17,7 +17,8 @@ root.IronVowRigV2.register(19,{
   const blades=new Map();
   for(const id of ['blade','breaker','cleaver','piledriver']){
    const name='melee.'+id,model=bone(name),mount=driver(name,sockets.L);
-   blades.set(id,{id,model,mount,tip:marker('strike.tip.'+id,mount),bounds:()=>bounds(name)});
+   const meleeStyle=id==='piledriver'?'thrust':id==='breaker'?'maul':'sweep';
+   blades.set(id,{id,model,mount,meleeStyle,tip:marker('strike.tip.'+id,mount),bounds:()=>bounds(name)});
   }
   const shoulder=new T.Group();
   shoulder.position.set(rig.arms.R.sh.position.x,rig.arms.R.sh.position.y+.6,-.35);

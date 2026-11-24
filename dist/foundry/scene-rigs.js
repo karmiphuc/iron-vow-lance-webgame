@@ -351,7 +351,7 @@ function draw(u,t,pose,scope,model,custom){
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
   airborne:world?.airborne,moveAge:step&&u.motion?t-u.motion.start:0,targeting:world?.targeting,attacking:Boolean(u.attack),
   artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
-  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion,
+  readyMeleeMountPitch:entry.secondary?.gripPitch??0,reducedMotion:pose.reducedMotion,
   armed:Boolean(fittedGun&&u.hp[fittedGun.subsystem||'right']>0),attack:u.attack,hitTime:u.hitTime,ability:pose.nativeAbility};
  const animate=v2?.animate??animateMech;
  const previous=entry.groundRoot;
@@ -389,6 +389,10 @@ function draw(u,t,pose,scope,model,custom){
  if(standardEquipment&&entry.secondary){
   entry.secondary.mount.visible=u.alive&&u.hp[u.meleeHand==='right'?'right':'left']>0;
   arsenal.animate(entry.secondary,pose);
+ }
+ if(u.alive){
+  const side=u.meleeHand==='right'?'R':'L';
+  arsenal.poseMelee(entry.secondary,side,m.yaw,pose.strikeKind===u.melee?pose.strikeProgress:0,world?.aim);
  }
  const mountAim=Math.max(aim??0,world?.targeting?v2?.targetingBlend?.()??0:0);
  if(world&&u.alive&&u.hp[barrel?.subsystem||'right']>0&&!melee&&mountAim>.01){
@@ -450,7 +454,7 @@ function previewHealth(unit){
 }
 function previewKey(u,scope,angle){
  const {hp,max}=previewHealth(u);
- return JSON.stringify([scope,u.frame,u.team||'ally',Boolean(u.lionTrial),u.paintFinish,u.paint,u.trim,u.weapon,u.melee,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
+ return JSON.stringify([scope,u.frame,u.team||'ally',Boolean(u.lionTrial),u.paintFinish,u.paint,u.trim,u.weapon,u.melee,u.meleeHand,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
 }
 function preview(u,model,custom,angle=0,scope='preview'){
  if(rigV2?.applies(u))custom='rig-v2';
