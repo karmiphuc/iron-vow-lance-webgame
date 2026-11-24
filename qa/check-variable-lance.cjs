@@ -1,0 +1,76 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const simulate=require('./sim-harness.cjs');
+
+async function main(){
+ const sim=simulate({seed:42,reducedMotion:true});
+ const run=code=>sim.run(code);
+ const state=code=>JSON.parse(run('JSON.stringify('+code+')'));
+ run(`
+  save=newCareer(()=>0);
+  save.world=worldRules.createWorld(3,1);
+  save.overworld={port:'frontier',arrears:0};
+  save.credits=30000;
+  save.rep=100;
+  save.wins=10;
+  save.ship={levels:{drop:2}};
+  save.units.forEach(unit=>unit.level=3);
+  var offer=worldRules.offersAt(save.world,'frontier').find(item=>item.templateIndex===3);
+  if(!offer)throw Error('Frontier campaign fixture needs its depot offer.');
+  var frames=FRAMES.map((_,i)=>i).filter(i=>i>=3&&playerHull(i)).slice(0,3);
+  save.reserve=Object.fromEntries(frames.map(frame=>[frame,stockHull(frame)]));
+  for(const kind of [3,4,5])hirePilot(kind);
+  save.owned=fittedItems(save);
+  var original=JSON.stringify(save);
+  var extra=frames.map((frame,i)=>({frame,pilotId:pilotId(i+3),staged:i===2}));
+  var frontier=()=>worldRules.offersAt(save.world,'frontier').find(item=>item.templateIndex===3);
+  var enemyRoster=()=>battle.units.filter(unit=>unit.team==='enemy').map(unit=>[unit.id,unit.kind,unit.frame]);
+  var reload=()=>{save=loadCareer(JSON.parse(JSON.stringify(save)));return restoreSortie()!==null};
+ `);
+ assert.equal(run('operationCapacity()'),6);
+ assert.equal(run('save.reservePilots.scout.level'),2);
+ assert.deepEqual(state('[leanXP(5,3),leanXP(5,4),leanXP(5,5),leanXP(5,6)]'),[30,15,0,0]);
+ run('deploy(3,false,[0,1,2],null,null,frontier(),[])');
+ const foes=state('enemyRoster()');
+ const regionalXP=run('regionalReward(battle.offer)?.xp??0');
+ assert.equal(run('battle.units.filter(unit=>unit.team==="ally").length'),3);
+ assert.equal(run('reload()'),true);
+ run('Object.assign(battle.units[1],{x:9,z:13});');
+ await run('endTurn()');
+ assert.equal(run('battle.operation.cache'),true);
+ run('Object.assign(battle.units[0],{x:8,z:10});');
+ await run('endTurn()');
+ assert.equal(run('save.units[0].xp'),130+regionalXP);
+ assert.equal(run('save.reservePilots.scout.xp'),40);
+ assert.equal(run('save.history.at(-1).win'),true);
+ const leanPay=run('save.history.at(-1).pay');
+ assert.equal(run('worldOfferById(offer.id)'),null);
+ run('save=JSON.parse(original); deploy(3,false,[0,1,2],null,null,frontier(),extra)');
+ assert.deepEqual(state('enemyRoster()'),foes);
+ assert.equal(run('battle.units.filter(unit=>unit.team==="ally").length'),5);
+ assert.equal(run('reload()'),true);
+ run('completeRound(); completeRound(); completeRound(); placeDepotWave(DEPOT_AIR); battle.operation.wave=true; callReserve()');
+ assert.equal(run('battle.units.filter(unit=>unit.team==="ally").length'),6);
+ assert.equal(run('battle.units.filter(unit=>unit.kind==="helicopter").length'),3);
+ const positions=state('battle.units.map(unit=>[unit.id,unit.x,unit.z])');
+ if(process.argv.includes('--write-fixture')){
+  fs.writeFileSync(path.join(__dirname,'fixtures','frontier-staged-reserve-v9.json'),JSON.stringify(state('save'),null,2)+'\n');
+ }
+ assert.equal(run('reload()'),true);
+ assert.deepEqual(state('battle.units.map(unit=>[unit.id,unit.x,unit.z])'),positions);
+ run('battle.operation.cache=true;Object.assign(battle.units[0],{x:8,z:10});');
+ await run('endTurn()');
+ assert.equal(run('save.units[0].xp'),100+regionalXP);
+ assert.ok(run('save.reservePilots.scout.xp+(save.reservePilots.scout.level>=3?200:0)')>=140,'mentorship applies to the recruit on a win');
+ assert.equal(run('save.recruitMentorship.scout'),1);
+ assert.ok(run('save.history.at(-1).pay')>=leanPay);
+ run('save=JSON.parse(original);deploy(3,false,[0,1,2],null,null,frontier(),[]);battle.turn=6;');
+ await run('endTurn()');
+ assert.equal(run('save.history.at(-1).win'),false);
+ assert.equal(run('save.units[0].xp'),20);
+ const fixture=fs.readFileSync(path.join(__dirname,'fixtures','frontier-staged-reserve-v9.json'),'utf8');
+ assert.equal(run('save=loadCareer(JSON.parse('+JSON.stringify(fixture)+'));restoreSortie()!==null&&battle.operation.called&&battle.operation.wave'),true);
+ console.log('PASS fixed threat and pay, lean XP, available reserve bays, staged entry, depot objectives, mentorship and live v9 save replay.');
+}
+main().catch(error=>{console.error(error);process.exitCode=1});

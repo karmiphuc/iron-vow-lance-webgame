@@ -12,6 +12,13 @@ const modelReview = {
    quarter:[.53, .205, 6.49], front:[.005, .075, 7.25], side:[Math.PI / 2 - .095, .13, 6.72],
    rear:[2.7, .14, 7.2], board:[.73, .62, 11.2]
   }
+ },
+ vyzov: {
+  center:3.25,
+  views:{
+   quarter:[-.49,.15,8.7], front:[.005,.075,8.7], side:[-Math.PI/2,.07,8.7],
+   rear:[2.7,.14,8.7], board:[.73,.62,11.2]
+  }
  }
 };
 
@@ -92,7 +99,7 @@ const modelReview = {
  });
  const chassis = model.getObjectByName('Chassis');
  const pelvis = model.getObjectByName('Pelvis');
- const hip = vector(0, 0, 0);
+ const hip = vector(0, 0, 0),travel = vector(0,0,0);
  const mixer = new T.AnimationMixer(model);
  const clips = new Map(asset.animations.map(clip => [clip.name, clip]));
  let azimuth, elevation, span, mode, action, drag;
@@ -168,7 +175,8 @@ const modelReview = {
   });
   camera.updateProjectionMatrix();
   model.updateMatrixWorld(true);
-  const target = vector(0, center, chassis.position.z);
+  chassis.getWorldPosition(travel);
+  const target = vector(travel.x, center, travel.z);
   if (mode === 'Fall') {
    // Follow the pelvis through the drop while leaving both feet in frame.
    const settle = Math.min(1, Math.max(0, (time - .55) / .8));

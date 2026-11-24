@@ -48,11 +48,11 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  await page.evaluate(()=>{save.dispatch={day:save.day,sizes:[3,2,1,3]};persist()});
  await ensureContractOffer(page,0);
  await nav('contracts');
- assert.match(await page.locator('.contract-grid article').first().innerText(),/3 MECHS \+ AUX OPTION/);
+ assert.match(await page.locator('.contract-grid article').first().innerText(),/3 MECHS RECOMMENDED · 4 MAX/);
  await selectContract(page,{template:0});await tap('[data-deploy="0"]');
- await tap('#use-aux');
- assert.equal(await page.locator('#aux-pilot').inputValue(),'scout');
- assert.equal(await page.locator('#aux-frame').inputValue(),'6');
+ await page.locator('[data-extra-mode]').selectOption('launch');
+ assert.equal(await page.locator('[data-extra-pilot]').inputValue(),'scout');
+ assert.equal(await page.locator('[data-extra-hull]').inputValue(),'6');
  await fit('.modalbox');
  await tap('#modal-1');
  await fit('.unitbuttons');
@@ -62,7 +62,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  else await page.keyboard.press('4');
  assert.equal(await page.evaluate(()=>selected),3);
  const snapshot=await page.evaluate(async()=>{await pendingCareerWrite;return JSON.parse(localStorage.getItem('iron-vow-career')).sortie});
- assert.equal(snapshot.version,8);
+ assert.equal(snapshot.version,9);
  assert.equal(snapshot.units[3].ap,9);
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('[data-unit="3"].active').waitFor();

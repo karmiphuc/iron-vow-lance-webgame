@@ -11,7 +11,7 @@ const rigV2=root.IronVowRigV2;
 let renderer,kit,scene,camera,battleRef,terrainRef,board,units,overlays,selection,targetRing,sun,pathGroup,combat;
 let rockContacts,cliffMesh;
 let cameraReady=false,duelSky=null,duelSequence,duelSetup,lightningAt=4,lightning=0;
-const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),groundMeshes=[],coverMeshes=[];
+const models=new Map(),aimTargets=new Map(),mortarCues=new Map(),nativeCues=new Map(),groundMeshes=[],coverMeshes=[];
 const raycaster=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(V3(0,1,0),0);
 const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){
@@ -117,7 +117,7 @@ function clear(){
  if(board)root.IronVowEnvironmentAssets?.cancel(board);
  combat?.dispose();combat=null;
  for(const record of models.values())if(record.vehicle)root.IronVowVehicles.release(record.vehicle);
- root.IronVowFoundry?.clearCombat();root.IronVowVehicles.clear();models.clear();aimTargets.clear();mortarCues.clear();
+ root.IronVowFoundry?.clearCombat();root.IronVowVehicles.clear();models.clear();aimTargets.clear();mortarCues.clear();nativeCues.clear();
  rigV2.clear();
  if(scene){sun?.shadow.map?.dispose();disposeTree(scene);}
  kit?.dispose();kit=null;scene=null;battleRef=null;rockContacts=null;cliffMesh=null;groundMeshes.length=coverMeshes.length=0;
@@ -342,7 +342,7 @@ function attachmentPoint(unit,part='body'){
   ...m.nativeV2?.anchors,...mounts,muzzle:entry.primary?.muzzle||mounts.muzzle,muzzle2:entry.primary?.muzzle2||entry.primary?.muzzle||mounts.muzzle2,
   shoulderMuzzle:entry.shoulderWeapon?.muzzle||(entry.primarySocket?entry.primary?.muzzle:mounts.shoulderMuzzle),
   shoulderMuzzle2:entry.shoulderWeapon?.muzzle2||(entry.primarySocket?(entry.primary?.muzzle2||entry.primary?.muzzle):mounts.shoulderMuzzle2),
-  meleeTip:entry.secondary?.tip,mortarMuzzle:m.mortar?.muzzle,shield:entry.shield?.face})[part];
+  meleeTip:entry.secondary?.tip,mortarMuzzle:m.mortar?.muzzle??m.nativeV2?.anchors?.mortarMuzzle,shield:entry.shield?.face})[part];
  return node?.getWorldPosition(V3())||partPoint(unit,part);
 }
 function projectWorld(point){const p=point.clone().project(camera);return{x:(p.x+1)*innerWidth/2,y:(1-p.y)*innerHeight/2,z:p.z};}
@@ -480,6 +480,8 @@ function prepareUnit(u,t){
   const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
   if(airborne)p.y+=jumpjetHeight(u,t);
   const mortar=mortarCues.get(u.id);if(mortar){pose.mortarAge=t-mortar.at;if(pose.mortarAge>=2.1)mortarCues.delete(u.id);}
+  const ability=nativeCues.get(u.id);
+  if(ability){if(t-ability.at<ability.duration&&u.alive)pose.nativeAbility=ability;else nativeCues.delete(u.id);}
   const motion=u.motion,heading=motion?Math.atan2(motion.toX-motion.fromX,motion.toZ-motion.fromZ):(displayedHeading(u)+Math.PI/4);
   const defending=u.alive&&!u.attack&&!motion&&!reducedMotion&&activeCinematic?.target===u;
   const guardPoint=defending?unitRoot(activeCinematic.actor):null;
@@ -528,7 +530,10 @@ function prepareUnit(u,t){
 function updateOverlays(){
  const selectedUnit=current(),ready=battle.phase==='player'&&!battle.busy;
  const reach=selectedUnit&&ready&&action==='move'?paths(selectedUnit):null,jump=selectedUnit&&ready&&action==='jumpjet';
- const w=selectedUnit&&ready&&action!=='move'&&!jump?selectedWeapon(selectedUnit):null;
+ const w=selectedUnit&&ready&&action!=='move'&&action!=='tactical'&&!jump?selectedWeapon(selectedUnit):null;
+ const plan=ready?currentTacticalPlan():null;
+ const footprint=plan&&new Set(plan.tiles.map(tile=>tile.x+','+tile.z));
+ const danger=plan&&new Set(plan.friendly.map(actor=>actor.x+','+actor.z));
  const colors=overlays.geometry.attributes.color,indices=[];
  for(let z=0;z<battle.size.depth;z++)for(let x=0;x<battle.size.width;x++){
   const key=x+','+z,index=z*battle.size.width+x;let color;
@@ -536,9 +541,10 @@ function updateOverlays(){
   if(jump&&jumpjetLanding(selectedUnit,x,z))color=0x619fcb;
   if(w&&!battle.cover.has(key)&&distance(selectedUnit,{x,z})>0&&distance(selectedUnit,{x,z})<=weaponRange(w,selectedUnit.training)&&!attackObstruction(selectedUnit,{x,z},w))color=0xc48469;
   if(ready&&hover?.x===x&&hover?.z===z)color=0xe7be6e;
+  if(footprint?.has(key))color=danger.has(key)?0xff665b:0xefb557;
   if(color!==undefined){const c=kit.C(color);for(const i of new Set(overlays.userData.indices[index]))colors.setXYZ(i,c.r,c.g,c.b);indices.push(...overlays.userData.indices[index]);}
  }
- colors.needsUpdate=true;overlays.geometry.setIndex(indices);
+ colors.needsUpdate=true;overlays.geometry.setIndex(indices);overlays.material.opacity=plan?.32:.20;
  for(const [ring,u] of [[selection,selectedUnit],[targetRing,battle.units.find(u=>u.alive&&u.id===lockedTarget)]]){ring.visible=Boolean(u);if(u)ring.position.copy(unitRoot(u)).add(V3(0,.04,0));}
  const spot=moveTap??hover,path=selectedUnit&&reach?.get(spot?.x+','+spot?.z)>0?route(selectedUnit,spot.x,spot.z):[];
  let previous=selectedUnit;
@@ -605,6 +611,14 @@ root.IronVowScene={mechYaw:u=>models.get(u.id)?.entry?.m.yaw,isLive,render,proje
  overlayInfo(){return {triangles:overlays.geometry.index.count/3,path:pathGroup.children.filter(m=>m.visible).map(m=>({position:m.position.toArray(),color:m.material.color.getHex()})),selected:selection.visible,target:targetRing.visible};},
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
  mortarPresentation(unit,at=clock){if(models.get(unit.id)?.entry?.m?.mortar)mortarCues.set(unit.id,{at,fired:false});},
+ nativeAbility(unit,name,at=clock,target){
+  const duration=name==='giza-salvo'?3.12:name==='vyzov-cross'?1.4:0;
+  if(!duration)return false;
+  nativeCues.set(unit.id,{name,at,duration});
+  if(name==='giza-salvo'&&target?.hp)aimTargets.set(unit.id,{target,part:'body'});
+  return true;
+ },
+ crossMortar(unit,tiles,flight){return combat?.crossMortar(unit,tiles,flight)??false;},
  get combat(){return combat;},get camera(){return camera;},get scene(){return scene;},get models(){return models;},
  get loadFailed(){return root.IronVowEnvironmentAssets?.status(board)==='error'||Boolean(scene&&battleRef===battle&&battle?.units.some(u=>(
   u.kind?root.IronVowVehicles.status(u.kind):rigV2.status(u)

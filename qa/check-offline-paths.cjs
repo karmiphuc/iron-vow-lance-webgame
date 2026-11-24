@@ -12,6 +12,7 @@ functions=[node for node in tree.body if isinstance(node,ast.FunctionDef) and no
 assert len(functions)==2
 files={'style.css':'@import url("fonts.css?rev=2"); .hero{background:url(assets/pic.webp)}',
        'fonts.css':'body{color:red}',
+       'rig-bench/workbench.js':'<a href="rig-bench/vyzov.html">Vyzov</a>',
        'game.js':'<a href="rig-bench/index.html">bench</a>'}
 class FakePath:
  def __truediv__(self, path):
@@ -25,6 +26,7 @@ css=namespace['stylesheet']('style.css?rev=1')
 assert 'body{color:red}' in css and 'data:image/example' in css, css
 js=namespace['script']('game.js?rev=3')
 assert 'https://example.test/rig-bench/index.html' in js, js
+assert 'https://example.test/rig-bench/vyzov.html' in namespace['script']('rig-bench/workbench.js')
 print('PASS offline cache-busted CSS and script paths')
 `;
 const result=spawnSync('python3',['-c',python,join(__dirname,'../tools/package_offline.py')],{encoding:'utf8'});

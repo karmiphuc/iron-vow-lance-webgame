@@ -7,10 +7,13 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  await page.waitForURL('**/?bench=rig');
  await page.waitForFunction(()=>window.__bench?.state?.metrics);
  const entries=await page.locator('#bench-frame option').evaluateAll(nodes=>nodes.map(node=>[node.value,node.text]));
- const catalog=await page.evaluate(()=>WEAPONS.map(({id,builtIn,shoulder,melee})=>({id,builtIn,shoulder,melee})));
+ const catalog=await page.evaluate(()=>WEAPONS.map(({id,builtIn,shoulder,melee,tactical})=>({id,builtIn,shoulder,melee,tactical})));
  const mounted=new Set();
 
- assert.equal(entries.length,25);
+ assert.equal(entries.length,28);
+ for(const [id, name] of [['24','HUSKY'],['25','GIZA'],['26','VYZOV']]){
+  assert.ok(entries.some(([frame,label])=>frame===id&&label.toUpperCase()===name),name+' has its own bench entry');
+ }
  assert.ok(entries.some(([id,name])=>id==='21'&&name==='CAIRN'),'Cairn retains its own bench entry');
  assert.ok(entries.some(([id,name])=>id==='22'&&name==='SALTJACK'));
  assert.ok(entries.some(([id,name])=>id==='23'&&name==='SALT WORKS GARRISON'));
@@ -22,7 +25,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
   assert.ok(state.metrics.height>1&&state.metrics.feet.every(foot=>Number.isFinite(foot.error)),name);
   models.push(state.model);
  }
- assert.equal(new Set(models).size,25);
+ assert.equal(new Set(models).size,28);
  await page.evaluate(()=>__bench.selectFrame(10));
  await page.waitForFunction(()=>__bench.state.clips.length===6);
  if(out&&!mobile)await require('./save-webp.cjs')(page,join(out,'rig-bench.webp'));
@@ -100,7 +103,12 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
   }
   mounted.add(id);
  }
- assert.deepEqual([...mounted].sort(),catalog.map(w=>w.id).sort(),'Every actual catalog weapon mounts');
+ // These attacks belong to the authored chassis. The campaign rig scenario
+ // verifies their real launch and strike contacts without a separate mount.
+ const intrinsic=catalog.filter(w=>w.builtIn&&(w.tactical||w.id==='vyzov-knuckle')).map(w=>w.id).sort();
+ assert.deepEqual(intrinsic,['giza-salvo','vyzov-cross','vyzov-knuckle']);
+ assert.deepEqual([...mounted].sort(),catalog.filter(w=>!intrinsic.includes(w.id)).map(w=>w.id).sort(),
+  'Every separately mounted catalog weapon mounts');
  await page.evaluate(()=>__bench.selectFrame(5));
  for(const part of ['legs','core','arms']){
   const other=await page.locator('#bench-'+part+' option').evaluateAll(nodes=>nodes.find(n=>n.value!==n.parentElement.value).value);
