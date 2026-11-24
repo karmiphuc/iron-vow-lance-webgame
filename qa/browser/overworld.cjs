@@ -89,6 +89,9 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  assert.equal(state.overworld?.port||'picket','picket');
  assert.deepEqual(state.world,initial.world,'opening the chart keeps the seeded world unchanged');
  await forecast({cost:510,cash:3990,day:2});
+ await tap('.chart-strategy > summary');
+ assert.match(await page.locator('.chart-strategy-detail').innerText(),/Relay blockade.*Day 4/i);
+ await tap('.chart-strategy > summary');
  await noOverflow('#ui');
  assert.equal(await page.evaluate(()=>IronVowRenderer.metrics().contexts),1,'chart uses the shared WebGL context');
 
@@ -140,7 +143,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  await tap('#withdraw');
  await tap('#modal-1');
  const debrief=page.getByRole('dialog',{name:'LANCE EXTRACTED.'});
- assert.match(await debrief.innerText(),/CREW WAGES[\s\S]*210 CR[\s\S]*SHIP UPKEEP[\s\S]*75 CR[\s\S]*HULL UPKEEP[\s\S]*105 CR/);
+ assert.match(await debrief.innerText(),/CREW WAGES[\s\S]*210 CR[\s\S]*TRAIN UPKEEP[\s\S]*75 CR[\s\S]*HULL UPKEEP[\s\S]*105 CR/);
  const afterWithdrawal=await snapshot();
  assert.equal(afterWithdrawal.day,3);
  assert.equal(afterWithdrawal.credits,3600);

@@ -30,14 +30,14 @@ window.IronVowOverworldView = (() => {
       </button>`).join('');
     const markers = data.ports.map(port => `
       <button type="button" class="chart-port${port.id === data.current ? ' is-current' : ''}" data-overworld-port="${port.id}"
-        aria-label="${escapeHtml(port.name)}${port.id === data.current ? ', current mooring' : ''}" aria-pressed="${port.id === data.selected}"${port.id === data.current ? ' aria-current="location"' : ''}>
+        aria-label="${escapeHtml(port.name)}${port.id === data.current ? ', current railhead' : ''}" aria-pressed="${port.id === data.selected}"${port.id === data.current ? ' aria-current="location"' : ''}>
         <span class="chart-port-mark" aria-hidden="true"></span><b>${escapeHtml(port.name)}</b>
       </button>`).join('');
     const cost = quote ? `<details class="chart-detail chart-cost-detail">
       <summary aria-label="Travel cost breakdown"><small>Cost</small><strong data-chart-cost>${credits(quote.total)}</strong></summary>
       <div class="chart-detail-card"><h3>Transit costs</h3><dl>
-        ${[['Fuel', quote.fuel], ['Crew wages', quote.wages], ['Ship upkeep', quote.ship], ['Hull upkeep', quote.hulls]].map(([label, amount]) => `<div><dt>${label}</dt><dd>${credits(amount)}</dd></div>`).join('')}
-      </dl>${data.holdArrears || data.arrears ? `<p class="chart-warning">Arrears ${credits(data.holdArrears || data.arrears)}</p>` : ''}</div>
+        ${[['Route charges', quote.fuel], ['Crew wages', quote.wages], ['Train upkeep', quote.ship], ['Hull upkeep', quote.hulls]].map(([label, amount]) => `<div><dt>${label}</dt><dd>${credits(amount)}</dd></div>`).join('')}
+      </dl>${quote.toll ? `<p class="chart-warning">Includes ${credits(quote.toll)} in disruption surcharges</p>` : ''}${quote.discount ? `<p>Includes ${credits(quote.discount)} in freight discounts</p>` : ''}${data.holdArrears || data.arrears ? `<p class="chart-warning">Arrears ${credits(data.holdArrears || data.arrears)}</p>` : ''}</div>
     </details>` : '';
     const readiness = `<details class="chart-detail chart-lance-detail">
       <summary aria-label="Lance readiness on arrival"><small>Lance</small><strong>${ready}/${data.readiness.length}<span class="chart-ready-pips" aria-hidden="true">${data.readiness.map(unit => `<i class="${unit.wound ? 'is-wounded' : unit.condition < 30 ? 'is-damaged' : 'is-ready'}"></i>`).join('')}</span></strong></summary>
@@ -58,12 +58,21 @@ window.IronVowOverworldView = (() => {
 
     return `<div class="overworld-page chart-page">
       <div id="chart-viewport" class="chart-viewport" tabindex="0" role="group" aria-label="Halyard chart table. Drag to pan, pinch to zoom. Use arrow keys to pan and Home to recenter.">${markers}</div>
-      <div class="chart-heading"><span class="eyebrow">IVS HALYARD / BRIDGE</span><h1>CHART TABLE</h1><p>${data.departing ? 'In transit' : data.transitEvent ? 'Transit report' : 'Moored'} · ${escapeHtml(current.name)}</p></div>
+      <div class="chart-heading"><span class="eyebrow">HALYARD / DISPATCH</span><h1>CHART TABLE</h1><p>${data.departing ? 'In transit' : data.transitEvent ? 'Transit report' : 'At railhead'} · ${escapeHtml(current.name)}</p></div>
       <button type="button" class="chart-reset" data-chart-reset aria-label="Recenter chart">Recenter</button>
-      <aside class="chart-port-card" aria-label="Selected mooring">
-        <h2>${escapeHtml(selected.name)}</h2>${data.arrivingContracts < data.contractCount && quote ? `<small class="chart-expiry-warning">${data.contractCount - data.arrivingContracts} expire en route</small>` : ''}
+      <aside class="chart-port-card" aria-label="Selected railhead">
+        <h2>${escapeHtml(selected.name)}</h2>
+        ${!data.departing && !data.transitEvent ? `<details class="chart-strategy">
+          <summary>${data.reward?.available ? escapeHtml(data.reward.label) : 'Regional dispatch'}${data.pressure?.active ? ' · disruption' : ''}</summary>
+          <div class="chart-strategy-detail">
+        ${data.reward ? `<p>${data.reward.available ? escapeHtml(data.reward.label) + ' · through Day ' + data.reward.until : data.reward.claimed ? 'Regional bonus claimed' : 'Regional bonus expired by arrival'}</p>` : ''}
+        ${data.standing ? `<p>${data.standing >= 6 ? 'Freight partner · 25% base freight discount' : 'Local standing ' + data.standing + ' / 6 for freight discount'}</p>` : ''}
+        ${data.pressure?.next && !data.departing ? `<p class="chart-warning">${escapeHtml(data.pressure.next.name)} · counter at ${escapeHtml(data.ports.find(port => port.id === data.pressure.next.port).name)} by Day ${data.pressure.next.until}</p>` : ''}
+        ${data.pressure?.active && !data.departing ? `<p class="chart-warning">${escapeHtml(data.pressure.active.name)} active · +${credits(data.pressure.active.cost)} on the affected line through Day ${data.pressure.active.until}</p>` : ''}${data.arrivingContracts < data.contractCount && quote ? `<small class="chart-expiry-warning">${data.contractCount - data.arrivingContracts} expire en route</small>` : ''}
+          </div>
+        </details>` : ''}
         <div class="chart-port-actions"><button type="button" data-chart-contracts="${selected.id}"${data.transitEvent || data.departing ? ' disabled' : ''}>Contracts ${data.contractCount ?? 1}</button><button type="button" class="chart-services-link" data-port-services="${escapeHtml(selected.id)}" aria-haspopup="dialog" aria-expanded="${!!data.portServices && !data.transitEvent}"${data.transitEvent || data.departing ? ' disabled' : ''}>Services</button></div>
-        <button type="button" class="navigation-quiet chart-ship-upgrades" data-page="ship">Ship Upgrades</button>
+        <button type="button" class="navigation-quiet chart-ship-upgrades" data-page="ship">Train Upgrades</button>
       </aside>
       <div class="chart-course">${forecast}</div>
       ${data.transitEvent ? transitReport(data.transitEvent) : data.portServices ? window.IronVowPortView.render(data.portServices) : ''}

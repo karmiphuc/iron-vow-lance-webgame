@@ -1,7 +1,7 @@
 /* A physical relief chart aboard the Halyard. Uses the sole shared renderer.
  * Viewport/scissor ownership follows scene/workshop.js:114–155, which adapts
  * docs/reference/claude/mercenary-command.html:2078–2110. Terrain is deterministic
- * code-native geometry; the carrier is authored in Blender (tools/authoring/halyard).
+ * code-native geometry, including the ground transports.
  */
 (function (root) {
   'use strict';
@@ -200,7 +200,7 @@
         for (const x of [-.65, .65]) for (const z of [-.45, .45]) box(town, .27, .65, .27, ochre, x, .48, z);
         box(town, 1.1, .45, .15, ochre, 0, .45, -.49); box(town, .5, .55, .48, dark, .05, .52, 0);
       }
-      // Every settlement has a real mooring mast and crosspiece.
+      // A signal mast marks each railhead.
       const mastZ = .30;
       mesh(town, new T.CylinderGeometry(.065, .13, 1.12, 8), dark, 0, .64, mastZ);
       box(town, .56, .065, .09, pale, 0, 1.13, mastZ);
@@ -214,12 +214,39 @@
     scene.add(routeGroup, sensorGroup, markerGroup, ship);
     const state = { renderer, scene, camera, ports, portHits, routeGroup, sensorGroup, markerGroup, catalog: catalogKey(data.ports), markerPositions: [], sensorRadius: 0, ship, routeHits: [], shipReady: false, light, reliefMap };
     stage = state;
-    new T.GLTFLoader().load('assets/overworld/halyard.glb', gltf => {
-      if (stage !== state) { disposeTree(gltf.scene); return; }
-      gltf.scene.scale.setScalar(.215); gltf.scene.rotation.y = -.16;
-      gltf.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-      ship.add(gltf.scene); state.shipReady = true; if (host) host.dataset.halyard = 'ready';
-    }, undefined, error => { if (stage === state && host) host.dataset.halyard = 'error'; console.error('Halyard model failed to load', error); });
+    // Small relief-table model of the locomotive, workshop car and low-loader.
+    for (const [index, x] of [1.0,0,-1.0].entries()) {
+      box(ship,.88,.10,.46,dark,x,.15,0);
+      for (const end of [-.29,.29]) for (const side of [-.225,.225]) {
+        const wheel=mesh(ship,new T.CylinderGeometry(.095,.095,.055,10),black,x+end,.09,side);
+        wheel.rotation.x=Math.PI/2;
+      }
+      if(index<2){
+        box(ship,.78,index===0?.33:.36,.39,index===0?ochre:steel,x,.37,0);
+        box(ship,.79,.055,.43,dark,x,.56,0);
+        box(ship,.065,.09,.39,pale,x+.36,.41,0);
+      }else{
+        box(ship,.62,.30,.31,steel,x,.36,0);
+        box(ship,.32,.17,.35,ochre,x-.06,.52,0);
+        box(ship,.72,.035,.42,pale,x,.21,0);
+      }
+      if(index<2)box(ship,.18,.075,.12,dark,x-.5,.16,0);
+    }
+    const lowLoader=new T.Group();
+    scene.add(lowLoader);
+    box(lowLoader,1.36,.12,.48,dark,-.05,.16,0);
+    box(lowLoader,.33,.32,.41,ochre,.47,.33,0);
+    box(lowLoader,.065,.10,.33,pale,.64,.40,0);
+    box(lowLoader,.53,.31,.34,steel,-.29,.36,0);
+    for(const axle of [-.60,-.36,.48])for(const side of [-.235,.235]){
+      const wheel=mesh(lowLoader,new T.CylinderGeometry(.115,.115,.09,10),black,axle,.11,side);
+      wheel.rotation.x=Math.PI/2;
+    }
+    lowLoader.visible=false;
+    state.lowLoader=lowLoader;
+    ship.scale.setScalar(.72);
+    state.shipReady = true;
+    if (host) host.dataset.halyard = 'ready';
     updateRoutes();
     updateWorld();
   }
@@ -264,7 +291,7 @@
         hit.userData.pathKey = key; stage.routeGroup.add(hit); stage.routeHits.push(hit);
       }
     }
-    for (const route of data.routes) add([route.from, route.to], 0x91a4a0, .019, false, null);
+    for (const route of data.routes) add([route.from, route.to], route.toll ? 0xd5856a : 0x91a4a0, route.toll ? .046 : .019, !!route.road, null);
     for (const option of data.routeOptions || []) {
       const path = option.path || option, key = option.key || path.join('>');
       if (key !== selected) add(path, colors.cyan, .02, true, key, .10);
@@ -460,8 +487,9 @@
     camera.position.set(panX + Math.sin(azimuth) * Math.cos(elevation) * distance, Math.sin(elevation) * distance, panZ + Math.cos(elevation) * Math.cos(azimuth) * distance);
     camera.lookAt(panX, 0, panZ); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
     const current = stage.ports[data.current]?.ground;
+    ship.visible=true;stage.lowLoader.visible=false;
     if (current) {
-      ship.position.copy(current); ship.position.x += 1.0; ship.position.z += .1; ship.position.y += 1.23 + (reducedMotion ? 0 : Math.sin(time * .65) * .025);
+      ship.position.copy(current); ship.position.x += 1.0; ship.position.z += .1; ship.position.y = Math.max(heightAt(ship.position.x,ship.position.z)+.26,.52);
       if (data.departure?.path?.length > 1) {
         const departure = data.departure;
         const progress = clamp((performance.now() - departure.startedAt) / Math.max(1, departure.duration || 1400), 0, 1);
@@ -473,12 +501,16 @@
           if (remaining <= lengths[i] || i === lengths.length - 1) {
             const fraction = clamp(remaining / Math.max(.001, lengths[i]), 0, 1);
             ship.position.copy(waypoints[i]).lerp(waypoints[i + 1], fraction);
-            ship.position.x += 1; ship.position.z += .1;
-            // Follow every leg, lifting above the relief and settling at the mast.
-            const lift = reducedMotion ? 0 : Math.sin(Math.PI * progress) * 1.1;
-            ship.position.y = Math.max(ship.position.y, heightAt(ship.position.x, ship.position.z)) + 1.23 + lift;
+            ship.position.y = Math.max(heightAt(ship.position.x,ship.position.z)+.26,.52);
+            const from=departure.path[i],to=departure.path[i+1];
+            const edge=data.routes.find(route=>route.from===from&&route.to===to||route.to===from&&route.from===to);
             const direction = new T.Vector3().subVectors(waypoints[i + 1], waypoints[i]);
-            if (!reducedMotion) ship.rotation.y = Math.atan2(-direction.z, direction.x) + Math.PI;
+            ship.rotation.y = Math.atan2(-direction.z, direction.x);
+            if(edge?.road){
+              ship.visible=false;stage.lowLoader.visible=true;
+              stage.lowLoader.position.copy(ship.position);
+              stage.lowLoader.rotation.y=ship.rotation.y;
+            }
             break;
           }
           remaining -= lengths[i];
