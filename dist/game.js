@@ -415,6 +415,36 @@ CONTRACTS.push(
   desc:'A Vyzov mortar raider and its Husky spotter hold the basin. Spread your lance to deny the mortar a clustered target.',
   deployment:[[12,6],[7,12],['tank',4,14]]}
 );
+const INTERCEPTS={
+ armor:CONTRACTS.push({id:'rail-armor',name:'Rail interception · Armored patrol',field:0,difficulty:1,pay:0,
+  hostiles:[0,HUSKY_FRAME],deployment:[[7,10],[12,8],['tank',4,13]]})-1,
+ air:CONTRACTS.push({id:'rail-air',name:'Rail interception · Air patrol',field:1,difficulty:1,pay:0,
+  hostiles:[1,HUSKY_FRAME],deployment:[[7,11],[14,6],['helicopter',10,16]]})-1
+};
+function validInterception(career){
+ const event=career.interception;
+ if(event===undefined)return true;
+ return !!event&&!!career.world&&Object.hasOwn(INTERCEPTS,event.kind)&&
+  Number.isSafeInteger(event.day)&&event.day<=career.day&&event.port===career.overworld?.port&&
+  event.from!==event.port&&!!railhead(event.from)&&
+  worldRules.blockades(career.world,career.history,event.day).some(patrol=>patrol.id===event.id&&patrol.port===event.port&&patrol.kind===event.kind);
+}
+function launchInterception(){
+ const event=save.interception;
+ if(!event||battle||save.transit||overworldDeparture||careerStale)return;
+ const slots=LANCE_SLOTS.filter(i=>save.units[i].condition>=30);
+ if(!slots.length){
+  delete save.interception;save.overworld.port=event.from;delete save.overworld.lastExpense;
+  overworldSelection=event.from;page='overworld';persist();toast('No battle-ready chassis. Halyard fell back to '+portName(event.from)+'.');return;
+ }
+ createBattle(INTERCEPTS[event.kind],false,false,slots,false);
+ battle.interception=event;
+ surveyTerrain(equipmentRoll(event.id+'/'+event.port+'/'+save.world.seed));
+ enableMechComputers();
+ addLog('Enemy patrol blocking '+portName(event.port)+'. No contract payout.');
+ selected=slots[0];action='move';effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;
+ page='contracts';persist();
+}
 const contractPort=contract=>contract.port??contract.id;
 const OLD_SORTIE_CONTRACTS=['relay','corridor','frontier'];
 const overworld=window.IronVowOverworld,worldRules=window.IronVowWorld;
@@ -574,10 +604,12 @@ function pooledContractsPage(){
   }).join('')||'<div class="offer-empty"><h2>No open offers</h2><p>Check another railhead or hold for the next dispatch.</p><button data-page="overworld">OPEN CHART</button></div>'}</div></div>`;
 }
 function travelTo(destination,from=companyPort(),expectedCost,path=[from,destination],withEvents=false){
- if(save.transit||battle||careerStale||(!careerDB&&!careerIsCurrent())||from!==companyPort())return false;
+ if(save.transit||save.interception||battle||careerStale||(!careerDB&&!careerIsCurrent())||from!==companyPort())return false;
  if(!Array.isArray(path)||path[0]!==from||path.at(-1)!==destination)return false;
  const quote=overworld.itineraryQuote(path,overworld.operatingRates(save),save.credits,save.overworld?.arrears??0,careerNetwork());
  if(!quote||quote.total>save.credits||expectedCost!==undefined&&quote.total!==expectedCost||!Number.isSafeInteger(save.day+quote.days))return false;
+ const contact=withEvents?worldRules.firstBlockade(save.world,save.history,path):null;
+ if(contact&&contact.path.length!==path.length)return false;
  const queued=save.world&&withEvents?worldRules.queueTransitEvents(save.world,path):save.world;
  if(save.world&&!queued)return false;
  const nextWorld=queued?worldRules.advanceWorld(queued,save.day+quote.days):null;
@@ -590,6 +622,10 @@ function travelTo(destination,from=companyPort(),expectedCost,path=[from,destina
  if(save.reserve)save.reserve=rest.reserve;
  if(save.wounds)save.wounds=rest.wounds;
  save.credits-=quote.total;save.day+=quote.days;delete save.dispatch;
+ if(contact){
+  const {id,port,kind,day}=contact;
+  save.interception={id,port,kind,day,from};
+ }
  const {days,fuel,wages,ship,hulls,total}=quote;
  save.overworld={port:destination,arrears:save.overworld?.arrears??0,
   lastExpense:{kind:'travel',day:save.day,destination,days,fuel,wages,ship,hulls,total,paid:total,arrearsPaid:0}};
@@ -1364,6 +1400,7 @@ function restoreSortie(){
  const legacy=currentVersion?saved.legacy:saved.version===1;
  const contractId=currentVersion?saved.contract:integer(saved.contract,0,OLD_SORTIE_CONTRACTS.length-1)?OLD_SORTIE_CONTRACTS[saved.contract]:null;
  const contractIndex=CONTRACTS.findIndex(c=>c.id===contractId);
+ const interception=Object.values(INTERCEPTS).includes(contractIndex);
  const slots=saved.version>=6?saved.slots:LANCE_SLOTS;
  const operation=saved.version===9?saved.operation:null;
  const aux=saved.version===8?saved.aux??null:null,launchAP=saved.version>=8?saved.launchAP??0:0;
@@ -1372,6 +1409,8 @@ function restoreSortie(){
  const regular=Array.isArray(slots)&&operation?slots.filter(slot=>slot<AUX_SLOT):aux&&Array.isArray(slots)?slots.slice(0,-1):slots;
  const shipValid=saved.version<8||!legacy&&integer(launchAP,0,Number(shipLevel('drop')>0)+regionalLaunchAP(saved.offer))&&(!aux||Array.isArray(slots)&&slots.at(-1)===AUX_SLOT&&validAux(aux));
  let valid=[1,2,3,4,5,6,7,8,9].includes(saved.version)&&validSlots(regular)&&shipValid&&(!legacy||slots.length===3)&&typeof legacy==='boolean'&&(saved.version<4||typeof saved.stockHostiles==='boolean')&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&slots.includes(saved.selected)&&['move','fire','strike','missile'].includes(saved.action)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
+ if(interception||save.interception)valid=valid&&interception&&!!save.interception&&
+  INTERCEPTS[save.interception.kind]===contractIndex&&!legacy&&!save.transit&&!saved.offer&&!saved.operation&&!saved.aux;
  if(saved.version===9){
   const recommended=operationRecommendation(CONTRACTS[contractIndex],saved.offer);
   valid=valid&&operation&&typeof operation==='object'&&recommended>0&&operation.recommended===recommended&&regular.length>=operationMinimum(recommended)&&
@@ -1398,6 +1437,7 @@ function restoreSortie(){
  if(valid){
   createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true,saved.reaverHostiles===true,saved.bulwarkHostile===true,saved.ashigaruHostile===true,saved.aeroMelee??null,saved.relayLead??0,operation);
   if(saved.offer)battle.offer=Object.freeze({...saved.offer});
+  if(interception)battle.interception=save.interception;
   if(saved.campaignSupport!==undefined){
    const expected=worldRules.campaignSupport(save.strategy,saved.offer?.port,saved.offer?.acceptedDay);
    valid=!!expected&&expected===saved.campaignSupport&&addCampaignSupport(expected);
@@ -2135,16 +2175,20 @@ function showOverworld(destination=companyPort(),routeKey=null){
 function chartRouteOptions(from,destination){
  const rates=overworld.operatingRates(save);
  const network=careerNetwork();
- const routes=overworld.routeOptions(from,destination,network).map(path=>{
+ const options=overworld.routeOptions(from,destination,network).map(itinerary=>{
+  const encounter=worldRules.firstBlockade(save.world,save.history,itinerary);
+  const path=encounter?.path??itinerary;
   const quote=overworld.itineraryQuote(path,rates,save.credits,save.overworld?.arrears??0,network);
   const stop=network.ports.find(port=>port.id===path[1]);
   const legs=path.slice(1).map((port,i)=>network.routes.find(route=>route.from===path[i]&&route.to===port||route.to===path[i]&&route.from===port));
   const toll=legs.reduce((sum,leg)=>sum+(leg.toll??0),0),discount=legs.reduce((sum,leg)=>sum+(leg.discount??0),0);
-  return {...quote,toll,discount,key:path.join('>'),label:path.length===2?(legs[0].road?'Low-loader':legs[0].fuel>=850&&!toll?'Priority rail':'Direct rail'):'Via '+stop.name.split(' ')[0]+(legs.some(leg=>leg.road)?' · road link':'')};
- }).sort((a,b)=>a.days-b.days||a.total-b.total);
+  return {...quote,toll,discount,encounter,key:path.join('>'),label:path.length===2?(legs[0].road?'Low-loader':legs[0].fuel>=850&&!toll?'Priority rail':'Direct rail'):'Via '+stop.name.split(' ')[0]+(legs.some(leg=>leg.road)?' · road link':'')};
+ });
+ const routes=[...new Map(options.map(route=>[route.key,route])).values()].sort((a,b)=>a.days-b.days||a.total-b.total);
  if(routes.length<=3)return routes;
  const cheapest=[...routes].sort((a,b)=>a.total-b.total||a.days-b.days)[0];
- const choices=[...new Map([routes[0],cheapest].map(route=>[route.key,route])).values()];
+ const clear=routes.find(route=>!route.encounter);
+ const choices=[...new Map([routes[0],cheapest,clear].filter(Boolean).map(route=>[route.key,route])).values()];
  if(choices.length===1)choices.push(routes[1]);
  return choices;
 }
@@ -2152,7 +2196,8 @@ function chartData(){
  const world=ensureWorld(),network=careerNetwork(),departure=overworldDeparture;
  const current=departure?.from??companyPort(),selected=overworldSelection??current;
  const routeOptions=chartRouteOptions(current,selected);
- const planned=save.transit?null:routeOptions.find(route=>route.key===overworldRouteKey)??(save.transit?null:routeOptions[0]);
+ const planned=save.transit?null:routeOptions.find(route=>route.key===overworldRouteKey)??
+  routeOptions.find(route=>!route.encounter||route.encounter.port===selected)??routeOptions[0];
  const rates=overworld.operatingRates(save);
  const holdSettlement=overworldHoldPreview?overworld.settleExpenses(save.credits,save.overworld?.arrears??0,rates.total):null;
  const quote=overworldHoldPreview?{days:1,fuel:0,...rates,cashAfterArrival:holdSettlement.credits,path:[]}:departure?.quote??planned??null;
@@ -2163,15 +2208,15 @@ function chartData(){
  const origin=network.ports.find(port=>port.id===current);
  const markers=world?worldRules.markersAt(world).filter(marker=>Math.hypot((marker.x*100-origin.x)*.22,(marker.y*100-origin.y)*.17)<=sensorRange):[];
  const arrival=save.day+(quote?.days??0),offers=world?availableOffers(selected,arrival):[];
- const bestOffer=offers.find(offer=>offer.availableOnArrival);
+ const bestOffer=quote?.encounter?null:offers.find(offer=>offer.availableOnArrival);
  const reward=bestOffer?regionalReward(bestOffer,arrival):null;
  const pressure=world?worldRules.railPressure(world,save.history):null;
  const freight=world?worldRules.freightToday(world):null;
  if(freight)markers.push(freight);
  const standing=world?.standings[selected]??0;
  return {ports:network.ports,routes:network.routes,current,selected,path:quote?.path??[],pathKey:quote?.path.join('>')??'',routeOptions,quote,
-  reward,pressure,freight,standing,campaign:!!save.strategy,day:departure?.day??save.day,credits:save.credits,arrears:save.overworld?.arrears??0,readiness,
-  confirming:!!overworldConfirmation,departing:!!departure,departure,holding:overworldHoldPreview,contractCount:offers.length,arrivingContracts:offers.filter(offer=>offer.availableOnArrival).length,markers,sensorRange,sensorPort:current,holdArrears:holdSettlement?.arrears??0,
+  reward,pressure,freight,occupations:worldRules.blockades(world,save.history),standing,campaign:!!save.strategy,day:departure?.day??save.day,credits:save.credits,arrears:save.overworld?.arrears??0,readiness,
+  confirming:!!overworldConfirmation,departing:!!departure,departure,holding:overworldHoldPreview,contractCount:offers.length,arrivingContracts:quote?.encounter?0:offers.filter(offer=>offer.availableOnArrival).length,markers,sensorRange,sensorPort:current,holdArrears:holdSettlement?.arrears??0,
   portServices:portSheetOpen&&!departure&&!save.transit?portServicesData(selected):null,transitEvent:!departure?transitEventData():null,
   sceneReady:window.IronVowChart?.snapshot().shipReady??false};
 }
@@ -2217,7 +2262,7 @@ function bindOverworld(){
    return;
   }
   const day=save.day,before=save.units.map(unit=>unit.condition),quote=current.quote;
-  if(!travelTo(current.selected,current.current,quote.total,current.path,true)){
+  if(!travelTo(current.path.at(-1),current.current,quote.total,current.path,true)){
    overworldConfirmation=null;render();toast('Transit is no longer available.');return;
   }
   overworldConfirmation=null;
@@ -2499,6 +2544,7 @@ function nav(){
 function stat(name,val,ratio){return `<div class="stat"><span>${name}</span><b>${val}</b></div>${ratio!==undefined?`<div class="bar"><i style="width:${ratio}%"></i></div>`:''}`}
 function render(){
  if(benchRig)return;
+  launchInterception();
   if(page!=='overworld'||battle){window.IronVowChart?.close();if(page!=='journal'){overworldDeparture=null;overworldConfirmation=null;portSheetOpen=false;}}
   nav(); if(battle){window.IronVowWorkshop?.close();syncHangar();renderBattle();return}
   const frame=pilotFrame(selected),f=FRAMES[frame],u=save.units[selected],p=pilotProfile(selected),w=unitWeapon({...u,frame}),training=trainingEffects(selected);
@@ -2544,7 +2590,7 @@ function render(){
     const kind=pilotKind(id),u=save.reservePilots[id];
     return pilotCard(kind,u,effectsForTraining(kind,u.training),'RELIEF PILOT',`data-reserve-training="${id}"`,reliefTrainingPoints(id));
    }).join('')}</div></div>`;
-  if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1><a class="rig-bench-link" href="?bench=rig">OPEN RIG BENCH</a></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?'FULFILLED / +'+money(h.pay):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button></div></section></div>`;
+  if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1><a class="rig-bench-link" href="?bench=rig">OPEN RIG BENCH</a></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?(h.occupation?'PATROL CLEARED':'FULFILLED / +'+money(h.pay)):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button></div></section></div>`;
   if(page==='journal')$('#ui').innerHTML=`<div class="page journal-page"><button type="button" id="journal-back" class="navigation-quiet">← Back to ${journalOrigin?({bridge:'Bridge',bay:'Mech Bay',company:'Company'}[journalOrigin.parent]):'Company'}</button><div class="pagehead"><div><div class="eyebrow">OPERATIONS / REFERENCE</div><h1>FIELD JOURNAL.</h1></div></div>${journalMarkup(journalPage)}</div>`;
   navigationContext();
   window.IronVowArmoryUI?.enhance(document);
@@ -2692,7 +2738,7 @@ function validSave(s){
  if(s.ship!==undefined&&!validShip(s))return false;
  if(s.world!==undefined&&(!worldRules?.validWorld(s.world)||s.world.day!==s.day))return false;
  if(s.strategy!==undefined&&(!s.world||!worldRules.validCampaign(s.strategy,s.day)))return false;
- if(!validTransit(s))return false;
+ if(!validTransit(s)||!validInterception(s))return false;
  if(s.overworld!==undefined&&(!overworld.validState(s.overworld,careerNetwork(s).ports)||s.overworld.lastExpense?.day>s.day))return false;
  if(s.hangar!==undefined&&!validHangar(s))return false;
  if(s.duty!==undefined&&(!Array.isArray(s.duty)||s.duty.length>hangarLevel('cabins',s)||
@@ -3001,7 +3047,7 @@ function openRepair(slot){
 }
 function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null,offer=null,extra=null){
  const contract=CONTRACTS[i];
- if(save.transit||battle||!contract||!validSlots(slots)||contract.seats&&(legacy||slots.length!==contract.seats))return;
+ if(save.transit||save.interception||battle||!contract||Object.values(INTERCEPTS).includes(i)||!validSlots(slots)||contract.seats&&(legacy||slots.length!==contract.seats))return;
  if(crew!==null){
   const active=activeRosterIds();
   if(legacy||!dutyRoster().length||!Array.isArray(crew)||crew.length!==slots.length||
@@ -3849,7 +3895,7 @@ function settleShip(win,allies,promotions){
 }
 function finish(win){
  if(battle.lionTrial){battle.busy=false;startLionTrial(current()?.melee??lionTrial);return}
- const b=battle,c=b.contract,promotions=[];
+ const b=battle,c=b.contract,promotions=[],interception=b.interception;
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
  const surrendered=win?b.units.filter(u=>u.surrendered&&u.team==='enemy'):[];
  const gear=surrendered.flatMap(u=>portableItems(u));
@@ -3859,7 +3905,7 @@ function finish(win){
  }
  if(win&&!b.legacy&&!benchWar){
   const roll=equipmentRoll([save.world?.seed??0,b.terrainSeed??0,save.day,c.id].join('/'));
-  const stock=(portStock(b.offer?.port??contractPort(c))?.weapons??[]).filter(id=>id!=='salt-mg'||save.rep>=weapon(id).rep);
+  const stock=(portStock(b.offer?.port??interception?.port??contractPort(c))?.weapons??[]).filter(id=>id!=='salt-mg'||save.rep>=weapon(id).rep);
   if(stock.length&&roll%5<2)gear.push(stock[Math.floor(roll/5)%stock.length]);
  }
  save.owned.push(...gear);
@@ -3874,17 +3920,21 @@ function finish(win){
  const seats=b.operation?.recommended??b.slots.filter(slot=>slot<AUX_SLOT).length;
  const lean=b.operation&&win?leanXP(seats,b.slots.filter(slot=>slot<AUX_SLOT).length+b.operation.extra.length):0;
  const cachePay=win&&b.operation?.cache?700:0;
- const reward=win?worldContractPay(c,seats,b.offer):0;
- const premium=win?reward-worldContractPay(c,seats,b.offer,0):0;
- const salvage=win&&!c.fixedPay?450+c.difficulty*200+(b.legacy?0:180*b.units.filter(u=>u.kind).length):0;
+ const reward=win&&!interception?worldContractPay(c,seats,b.offer):0;
+ const premium=win&&!interception?reward-worldContractPay(c,seats,b.offer,0):0;
+ const salvage=win&&!interception&&!c.fixedPay?450+c.difficulty*200+(b.legacy?0:180*b.units.filter(u=>u.kind).length):0;
  const offeredBonus=win&&!benchWar?regionalReward(b.offer,b.offer?.acceptedDay):null;
  const bonus=offeredBonus?.available?offeredBonus:null;
  if(bonus?.gear)save.owned.push(bonus.gear);
  const campaignWin=win&&b.offer?worldRules.campaignResult(save.strategy,b.offer.port,save.day,c===CONTRACTS[SALT_WORKS_CONTRACT]):null;
  if(campaignWin)save.strategy=campaignWin.campaign;
- const recoveryBonus=retriever?.training?.wreckBonus??0,pay=reward+salvage+recoveryBonus+cachePay+(bonus?.credits??0)+(campaignWin?.credits??0);
- save.credits+=pay;save.rep+=win?c.difficulty*10:0;if(win)save.wins++;
- const costs=benchWar?null:settleSortieCosts(b.offer?.port??contractPort(c));
+ const recoveryBonus=interception?0:retriever?.training?.wreckBonus??0,pay=reward+salvage+recoveryBonus+cachePay+(bonus?.credits??0)+(campaignWin?.credits??0);
+ save.credits+=pay;save.rep+=win?c.difficulty*10:0;if(win&&!interception)save.wins++;
+ const costs=benchWar||interception?null:settleSortieCosts(b.offer?.port??contractPort(c));
+ if(interception){
+  delete save.interception;
+  if(!win){save.overworld.port=interception.from;delete save.overworld.lastExpense;}
+ }
  const allies=b.units.filter(u=>u.team==='ally');
  for(const u of allies){
   const hull=sortieHull(u);
@@ -3900,7 +3950,7 @@ function finish(win){
  const {serviced,online}=settleShip(win,allies,promotions);
  if(bonus?.repair)for(const hull of save.units)hull.condition=Math.min(100,hull.condition+bonus.repair);
  const baseOnline=win?advanceHangar():null;
- save.history.push({name:c.name,day:save.day,win,pay,...(b.offer?{offerId:b.offer.id,port:b.offer.port}:{})});save.history=save.history.slice(-100);save.day++;delete save.dispatch;
+ save.history.push({name:c.name,day:save.day,win,pay,...(interception?{occupation:interception.id,port:interception.port}:{}),...(b.offer?{offerId:b.offer.id,port:b.offer.port}:{})});save.history=save.history.slice(-100);save.day++;delete save.dispatch;
  if(save.world){
   if(b.offer){const standing=save.world.standings[b.offer.port]??0;save.world=worldRules.setStanding(save.world,b.offer.port,Math.max(-100,Math.min(100,standing+(win?2+(bonus?.standing??0):-1))));}
   save.world=worldRules.advanceWorld(save.world,save.day);
@@ -3915,8 +3965,8 @@ function finish(win){
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
  if(online)buttons.push({text:'TRAIN DECK',fn:()=>{closeModal();navigateHangarRoute('ship')}});
  if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();navigateHangarRoute('facilities')}});
- modal(win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'The field is yours. Your pilots return with experience and recovered enemy components.':'Your pilots have been recovered. Combat damage persists.'}</p>
-  ${stat('CONTRACT PAYMENT',money(reward))}${campaignWin?stat('CAMPAIGN',campaignWin.name+(campaignWin.credits?' · '+money(campaignWin.credits):'')):''}${lean?stat('LEAN LANCE','+'+lean+' XP PER DEPLOYED PILOT'):''}${cachePay?stat('LOADING-YARD SALVAGE',money(cachePay)):''}${bonus?stat('REGIONAL BONUS',bonus.label):''}${c.fixedPay?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${surrendered.length?stat('INTACT CAPTURES',surrendered.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
+ modal(interception?(win?'PATROL CLEARED.':'HALYARD FELL BACK.'):win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'The field is yours. Your pilots return with experience and recovered enemy components.':interception?'Halyard returned to '+portName(interception.from)+'. Combat damage persists.':'Your pilots have been recovered. Combat damage persists.'}</p>
+  ${interception?stat('ENCOUNTER PAYOUT',money(0)):stat('CONTRACT PAYMENT',money(reward))}${campaignWin?stat('CAMPAIGN',campaignWin.name+(campaignWin.credits?' · '+money(campaignWin.credits):'')):''}${lean?stat('LEAN LANCE','+'+lean+' XP PER DEPLOYED PILOT'):''}${cachePay?stat('LOADING-YARD SALVAGE',money(cachePay)):''}${bonus?stat('REGIONAL BONUS',bonus.label):''}${c.fixedPay||interception?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${surrendered.length?stat('INTACT CAPTURES',surrendered.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
   ${costs?stat('CREW WAGES',money(costs.wages))+stat('TRAIN UPKEEP',money(costs.ship))+stat('HULL UPKEEP',money(costs.hulls))+
    (costs.arrearsPaid?stat('ARREARS PAID',money(costs.arrearsPaid)):'')+(save.overworld.arrears?stat('OPERATING ARREARS',money(save.overworld.arrears)):'')+
    stat('NET CREDITS',money(pay-costs.paid-costs.arrearsPaid)):''}
@@ -4712,7 +4762,7 @@ function draw(ts){
   window.IronVowChart?.render(clock,dt,W,H,reducedMotion);
   if(window.IronVowChart?.snapshot().shipReady){const status=$('.chart-load-status');if(status)status.textContent='';}
   if(overworldDeparture&&performance.now()-overworldDeparture.startedAt>=overworldDeparture.duration){
-   overworldDeparture=null;render();$('[data-transit-choice]:not(:disabled)')?.focus({preventScroll:true});toast('Moored at '+portName(companyPort())+'.');
+   overworldDeparture=null;render();if(!battle){$('[data-transit-choice]:not(:disabled)')?.focus({preventScroll:true});toast('Moored at '+portName(companyPort())+'.');}
   }
  }else if(mode==='hangar')window.IronVowHangarRuntime?.render(clock,dt,canvas.getBoundingClientRect(),reducedMotion);
  else if(mode==='workshop')window.IronVowWorkshop?.paint(clock,dt,W,H,reducedMotion);
