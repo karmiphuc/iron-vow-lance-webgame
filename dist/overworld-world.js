@@ -24,6 +24,45 @@ window.IronVowWorld=(()=>{
   return n>>>0;
  }
  const period=day=>Math.floor((day-1)/4)*4+1;
+ const PRESSURES=[
+  {port:'relay',name:'Relay blockade',from:'relay',to:'corridor',cost:550},
+  {port:'ridge',name:'Ridge freight seizure',from:'picket',to:'ridge',cost:450},
+  {port:'haven',name:'Haven junction embargo',from:'haven',to:'frontier',cost:650}
+ ];
+ const REWARDS={
+  picket:{credits:650,label:'650 CR supply bonus',window:3},
+  relay:{xp:40,label:'+40 XP per deployed pilot',window:1},
+  corridor:{gear:'forge',label:'Forge SG-12',window:2},
+  frontier:{xp:60,label:'+60 XP per deployed pilot',window:2},
+  ridge:{gear:'pike',label:'Pilum Pike',window:1},
+  haven:{repair:20,label:'+20% integrity to each assigned hull',window:2}
+ };
+ function regionalReward(offer,day,history){
+  const reward=REWARDS[offer.port];
+  if(!reward)return null;
+  const until=offer.postedDay+reward.window;
+  const claimed=history.some(entry=>entry.win&&entry.port===offer.port&&entry.offerId&&entry.day>=offer.postedDay&&entry.day<=until);
+  return {...reward,until,available:!claimed&&day<=until,claimed};
+ }
+ function pressureFor(seed,start){
+  return PRESSURES[start===1?0:hash(seed,start,'pressure')%PRESSURES.length];
+ }
+ function railPressure(world,history){
+  const start=period(world.day);
+  const stopped=(pressure,from)=>history.some(entry=>entry.win&&entry.offerId&&entry.port===pressure.port&&entry.day>=from&&entry.day<=from+3);
+  const next=pressureFor(world.seed,start),prior=start>1?pressureFor(world.seed,start-4):null;
+  return {next:stopped(next,start)?null:{...next,until:start+3},active:prior&&!stopped(prior,start-4)?{...prior,until:start+3}:null};
+ }
+ function railNetwork(world,history){
+  const {active}=railPressure(world,history);
+  return {ports:PORTS,routes:ROUTES.map(route=>{
+   const relief=[route.from,route.to].some(port=>(world.standings[port]??0)>=6);
+   const toll=active&&edge(active.from,active.to)===route?active.cost:0;
+   const discount=relief?Math.floor(route.fuel*.25):0;
+   return {...route,fuel:route.fuel+toll-discount,toll,discount,
+    road:route.from==='ridge'&&route.to==='haven'||route.from==='haven'&&route.to==='corridor'};
+  })};
+ }
  function offer(seed,port,postedDay,slot,featuredTemplate){
   const h=hash(seed,port,postedDay,slot);
   const base=port==='picket'&&postedDay===1?0:hash(seed,port,postedDay,'template')%4;
@@ -33,7 +72,8 @@ window.IronVowWorld=(()=>{
  function pool(seed,day){
   const postedDay=period(day),result=[];
   const counts=ids.map(port=>port==='picket'&&postedDay===1?1+hash(seed,port,postedDay,'count')%3:hash(seed,port,postedDay,'count')%4);
-  if(counts.every(count=>count===0))counts[0]=1;
+  const response=ids.indexOf(pressureFor(seed,postedDay).port);
+  counts[response]=Math.max(1,counts[response]);
   ids.forEach((port,i)=>{for(let slot=0;slot<counts[i];slot++)result.push(offer(seed,port,postedDay,slot));});
   // Salt Works reserves Vanta's fourth slot. Existing offer IDs stay stable across upgrades.
   result.push(offer(seed,'corridor',postedDay,3,4));
@@ -158,5 +198,5 @@ window.IronVowWorld=(()=>{
   return {world:{...world,consumed:[...world.consumed],scouted:[...world.scouted],pendingEvents:world.pendingEvents.filter(pending=>pending!==id),resolvedEvents,standings:{...world.standings}},
    choiceId,effect:{credits:choice.credits,hullCondition:choice.hullCondition,delayDays:choice.delayDays,rep:choice.rep,port:event.to}};
  }
- return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
+ return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,regionalReward,railPressure,railNetwork,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
 })();
