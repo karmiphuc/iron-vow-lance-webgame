@@ -117,8 +117,12 @@ function hitChance(a,t,part,w=weapon(a.weapon),reaction=false){
 }
 function shieldProtection(target){
  if(target.team!=='ally')return 0;
- const guardian=battleUnits()?.find(u=>u.training?.shieldNet);
- return guardian&&guardian!==target&&guardian.alive&&guardian.brace&&distance(guardian,target)===1?guardian.training.shieldNet:0;
+ let protection=0;
+ for(const guardian of battleUnits()??[]){
+  if(guardian.team===target.team&&guardian!==target&&guardian.alive&&guardian.brace&&guardian.training?.shieldNet&&distance(guardian,target)===1)
+   protection=Math.max(protection,guardian.training.shieldNet);
+ }
+ return protection;
 }
 function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const training=a.training,weaponPower=(w.melee?training?.meleePower:training?.rangedPower)??0;

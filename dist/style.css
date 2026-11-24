@@ -251,8 +251,19 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
 @media(max-width:760px){
  header{backdrop-filter:none;background:#0e1417}
 }
-.training-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.training-paths,.pilot-licenses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.training-paths.single-doctrine{grid-template-columns:1fr}
+.pilot-licenses{margin:12px 0;padding:10px;border:1px solid var(--line);min-width:0}
+.pilot-licenses legend{color:var(--muted);padding:0 6px}
+.pilot-licenses button{display:grid;text-align:left;min-height:44px;overflow-wrap:anywhere}
+.pilot-licenses button[aria-pressed="true"]{border-color:var(--accent)}
+.pilot-licenses small{font-size:12px;line-height:1.35;letter-spacing:0;text-transform:none}
+.pilot-licenses .note{grid-column:1/-1}
+#pilot-retrain,#field-license{min-height:44px}
+#pilot-retrain{margin-bottom:10px}
+.wiki-licenses{font-size:12px;line-height:1.5;color:var(--muted)}
 .training-path{display:grid;grid-template-rows:auto 1fr}
+.training-path:has(>small){grid-template-rows:auto auto 1fr}
 .training-path h2{display:flex;align-items:center;gap:6px;font-size:25px;margin:0 0 8px}
 .training-path h2 .ui-icon{width:18px;height:18px}
 .training-path ol{list-style:none;margin:0;padding:0;display:grid;grid-template-rows:repeat(3,1fr);gap:8px}
@@ -280,7 +291,7 @@ body:has(.move-preview:not([hidden])) :is(.shot-readout,.reaction-row,.target-to
  .modalbox:has(.training-paths) .buttons{margin-top:12px}
  .wiki-paths{grid-template-columns:1fr}
 }
-@media(max-width:360px){.training-paths{grid-template-columns:1fr}}
+@media(max-width:560px){.training-paths,.pilot-licenses{grid-template-columns:1fr}.training-path ol{grid-template-rows:none}.training-path button{min-height:64px}}
 .unitbuttons button.spent{opacity:.37;filter:saturate(.38);background:#0d151c;border-color:#39434b}
 .unitbuttons button.spent img{filter:brightness(.52) grayscale(1)}
 .bay-tabs button{text-transform:uppercase;justify-content:space-between}
