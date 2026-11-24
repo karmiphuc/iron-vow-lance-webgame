@@ -18,7 +18,7 @@ async function main(){
   save.units.forEach(unit=>unit.level=3);
   var offer=worldRules.offersAt(save.world,'frontier').find(item=>item.templateIndex===3);
   if(!offer)throw Error('Frontier campaign fixture needs its depot offer.');
-  var frames=FRAMES.map((_,i)=>i).filter(i=>i>=3&&playerHull(i)).slice(0,3);
+  var frames=FRAMES.map((_,i)=>i).filter(i=>i>=3&&playerHull(i)).slice(0,2).concat(VYZOV_FRAME);
   save.reserve=Object.fromEntries(frames.map(frame=>[frame,stockHull(frame)]));
   for(const kind of [3,4,5])hirePilot(kind);
   save.owned=fittedItems(save);

@@ -466,6 +466,7 @@ function updateCamera(t,dt){
 function prepareUnit(u,t){
  let record=models.get(u.id),object;
  if(u.kind){
+  if(root.IronVowVehicles.status(u.kind)===undefined)root.IronVowVehicles.load([u.kind]);
   if(root.IronVowVehicles.status(u.kind)!=='ready')return;
   if(!record){
    record={vehicle:root.IronVowVehicles.create(u.kind)};models.set(u.id,record);
@@ -477,6 +478,7 @@ function prepareUnit(u,t){
    RISE/TERRAIN_RISE,{target,recoil,impact});
   object=record.vehicle.object;
  }else{
+  if(rigV2.applies(u)&&rigV2.status(u)===undefined)void rigV2.load([u]);
   const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
   if(airborne)p.y+=jumpjetHeight(u,t);
   const mortar=mortarCues.get(u.id);if(mortar){pose.mortarAge=t-mortar.at;if(pose.mortarAge>=2.1)mortarCues.delete(u.id);}

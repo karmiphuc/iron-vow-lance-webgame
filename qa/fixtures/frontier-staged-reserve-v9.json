@@ -12,8 +12,7 @@
     "rifle",
     "bulwark-shield",
     "sidewinder",
-    "missile",
-    "rifle"
+    "missile"
   ],
   "units": [
     {
@@ -104,8 +103,8 @@
       "condition": 100,
       "upgrade": 0
     },
-    "5": {
-      "weapon": "rifle",
+    "26": {
+      "weapon": "vyzov-knuckle",
       "condition": 100,
       "upgrade": 0
     }
@@ -173,7 +172,7 @@
           "staged": false
         },
         {
-          "frame": 5,
+          "frame": 26,
           "pilotId": "sapper",
           "staged": true
         }
@@ -305,11 +304,11 @@
         "extraStep": false,
         "reacted": false,
         "hp": {
-          "body": 135,
+          "body": 158,
           "pilot": 67,
-          "right": 85,
-          "left": 85,
-          "legs": 95
+          "right": 102,
+          "left": 102,
+          "legs": 125
         },
         "ap": 8,
         "brace": false,
