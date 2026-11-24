@@ -10,8 +10,8 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
  const catalog=await page.evaluate(()=>WEAPONS.map(({id,builtIn,shoulder,melee,tactical})=>({id,builtIn,shoulder,melee,tactical})));
  const mounted=new Set();
 
- assert.equal(entries.length,28);
- for(const [id, name] of [['24','HUSKY'],['25','GIZA'],['26','VYZOV']]){
+ assert.equal(entries.length,29);
+ for(const [id, name] of [['24','HUSKY'],['25','GIZA'],['26','VYZOV'],['27','NIGHTJAR']]){
   assert.ok(entries.some(([frame,label])=>frame===id&&label.toUpperCase()===name),name+' has its own bench entry');
  }
  assert.ok(entries.some(([id,name])=>id==='21'&&name==='CAIRN'),'Cairn retains its own bench entry');
@@ -25,7 +25,7 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
   assert.ok(state.metrics.height>1&&state.metrics.feet.every(foot=>Number.isFinite(foot.error)),name);
   models.push(state.model);
  }
- assert.equal(new Set(models).size,28);
+ assert.equal(new Set(models).size,29);
  await page.evaluate(()=>__bench.selectFrame(10));
  await page.waitForFunction(()=>__bench.state.clips.length===6);
  if(out&&!mobile)await require('./save-webp.cjs')(page,join(out,'rig-bench.webp'));
@@ -86,7 +86,8 @@ module.exports=async function checkRigWorkbench({page,origin,mobile,out}){
 
  const integrated=[[3,'weapon','morrow'],[4,'weapon','locust'],[4,'melee','pulse-bash'],[11,'melee','breach-gauntlet'],
   [17,'weapon','aegis-cleave'],[17,'melee','aegis-bash'],[18,'weapon','needle-carbine'],[18,'melee','signal-knife'],
-  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder','missile'],[22,'weapon','rifle'],[23,'weapon','rifle'],[23,'weapon','salt-mg']];
+  [18,'weapon','flechette-scattergun'],[20,'pod','vesper-shoulder','missile'],[22,'weapon','rifle'],[23,'weapon','rifle'],[23,'weapon','salt-mg'],
+  [16,'weapon','reaver-autocannon','rifle'],[27,'weapon','quill-lance']];
  for(const [frame,slot,id,mountId=id] of integrated){
   await page.evaluate(frame=>__bench.selectFrame(frame),frame);
   if(id==='flechette-scattergun'||id==='salt-mg')await page.locator('#bench-primary').selectOption(id);

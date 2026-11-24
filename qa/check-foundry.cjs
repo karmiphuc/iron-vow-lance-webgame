@@ -138,7 +138,7 @@ async function exerciseRigAdapter(){
 
 (async()=>{
  const sim=simulate({random:()=>0}),{run}=sim;
- assert.equal(run('FRAMES.length'),27);
+ assert.equal(run('FRAMES.length'),28);
  assert.equal(run('[HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME].join()'),'24,25,26');
  assert.equal(run('SALTJACK_FRAME'),22);
  assert.equal(run('SALT_WORKS_GARRISON_FRAME'),23);

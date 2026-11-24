@@ -1,0 +1,32 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+async function check(){
+ const game=simulate({reducedMotion:true,random:()=>.10}),{run}=game;
+ run("save.overworld={port:'brine',arrears:0};ensureWorld();persist()");
+ assert.deepEqual(Array.from(run('CONTRACTS.slice(8,11).map(c=>c.id)')),['rail-armor','rail-air','blind-crossing'],'preserve both published interception slots');
+ const offer=run("availableOffers('brine').find(o=>CONTRACTS[o.templateIndex].id==='blind-crossing').id");
+ game.node('#aux-pilot').options=[];game.node('#use-aux').checked=false;
+ run('prepareWorldOffer('+JSON.stringify(offer)+')');game.node('#modal-1').onclick();
+ const saved=simulate({storage:new Map(game.storage)});
+ assert.equal(saved.run("battle.contract.id+'/'+battle.units.find(u=>u.team==='enemy').frame"),'blind-crossing/27');
+ run("const n=battle.units.find(u=>u.team==='enemy'),a=current(),gun=unitWeapon(n);a.x=3;n.x=8;n.z=a.z=5;battle.cover.clear();battle.field={};a.shield=null;a.armor=5;a.reacted=true;n.reacted=true;");
+ assert.equal(run("!playerHull(n.frame)&&!salvageableHull(n.frame)&&!equipmentItem(gun.id)&&livingNetwork.ports.every(p=>!portStock(p.id).frames.includes(n.frame))"),true);
+ assert.equal(run("gun.range===8&&mobility(n)>=6&&enemyDoctrine(n)[0]===7"),true);
+ run('let start=a.hp.body;let ap=n.ap;ruleRandom=()=>.10;');
+ await run("engage(n,a,'body',gun)");
+ assert.equal(run('start-a.hp.body'),27);assert.equal(run('ap-n.ap'),4);
+ run("a.weapon='watchman';a.level=1;a.training={};n.armor=2;n.brace=false;const body=n.hp.body,left=n.hp.left,right=n.hp.right;");
+ await run("shoot(a,n,'body',unitWeapon(a),true)");
+ assert.equal(run('right-n.hp.right'),36);assert.equal(run('n.hp.body'),run('body'));assert.equal(run('n.hp.left'),run('left'));
+ run('n.hp.right=1');await run("shoot(a,n,'body',unitWeapon(a),true)");
+ assert.ok(run('n.hp.right===0&&!activeShield(n)&&n.hp.left===left&&n.hp.body===body&&workingWeapon(n,gun)'));
+ await run("shoot(a,n,'body',unitWeapon(a),true)");assert.ok(run('n.hp.body<body'));
+ run('n.hp.left=0');assert.ok(run('!workingWeapon(n,gun)'));
+ run("n.surrendered=true;n.alive=false;finish(true)");assert.ok(run('!save.captured?.[NIGHTJAR_FRAME]&&!save.salvage?.[NIGHTJAR_FRAME]&&!save.owned.includes(gun.id)&&validSave(save)'));
+ const ai=simulate({reducedMotion:true,random:()=>.1}).run;
+ ai("createBattle(CONTRACTS.findIndex(c=>c.id==='blind-crossing'),false,false,[0]);enableMechComputers();const n=battle.units.find(u=>u.team==='enemy'),a=current();a.x=a.vx=3;n.x=n.vx=6;a.z=n.z=a.vz=n.vz=9;battle.cover.clear();battle.field={};a.shield=null;ruleRandom=()=>.10;captureRandom=()=>1;const start=a.hp.body;");
+ await ai("runEnemyTurn()");
+ assert.ok(ai('distance(a,n)===7&&n.mechState.moved===4&&start-a.hp.body===54&&n.ap===0'),'AI opens a seven-tile firing lane and spends its AP on two light shots');
+ console.log('PASS Blind Crossing deploy/reload, hostile-only chassis and integral gun, 8-tile range, 27 HP through 5 armor for 4 AP, right buckler 45 → 36 HP, break without spill, independent gun loss and surrender settlement');
+}
+check().catch(e=>{console.error(e);process.exitCode=1});

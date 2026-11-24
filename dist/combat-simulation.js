@@ -190,7 +190,7 @@ function planVolley(a,t,aimed,w,reaction){
  for(let i=0;i<count;i++){
   const roll=shell??ruleRandom(),dodged=dodge>0&&roll>=1-dodge,hit=!dodged&&roll<odds.hit;
   let part=table[0][0];
-  if(shield&&hit)part='left';
+  if(shield&&hit)part=shield.hand??'left';
   else if(hit&&table.length>1)part=pickWeighted(table,ruleRandom());
   // Ordinary rounds use the upper end of their hit interval for crits.
   // Pellets share a shell hit roll, so their crit checks roll separately.
@@ -353,6 +353,20 @@ function reactionWeapon(defender,attacker){
    }
    return best;
   }
+  function sniperExit(u,opponents,preferred){
+   const score=cell=>{
+    const nearest=Math.min(...opponents.map(t=>distance(cell,t)));
+    return (inCover(cell)?4:0)-Math.abs(preferred-nearest);
+   };
+   let value=score(u),best={cost:0};
+   for(const [tile,cost] of paths(u)){
+    if(cost!==1)continue;
+    const [x,z]=tile.split(',').map(Number),candidate={...u,x,z};
+    const next=score(candidate);
+    if(next>value){best={x,z,cost};value=next;}
+   }
+   return best;
+  }
   function braceIfUseful(u,opponents,attack){
    if(u.kind||u.brace||u.ap<braceCost(u))return;
    const cost=braceCost(u);
@@ -409,7 +423,7 @@ function reactionWeapon(defender,attacker){
     }
     if(!enemy.alive)continue;
     if(enemy.mechState?.valkyrieStep&&!enemy.blackout?.hold){
-     const position=bestPosition(enemy,allies,friends,role);
+     const position=enemy.weapon==='quill-lance'?sniperExit(enemy,allies,role[0]):bestPosition(enemy,allies,friends,role);
      if(position.cost&&!position.jet)await moveUnit(enemy,position.x,position.z,position.cost);
     }
     if(!soloPatrol)braceIfUseful(enemy,allies,null);
@@ -492,7 +506,7 @@ function reactionWeapon(defender,attacker){
    if(!reaction&&!w.melee&&a.mechSkills){
     const state=mechState(a);
     if(!launchesMissiles(w))state.fired=true;
-    if(hasMechSkill(a,5)&&!state.valkyrieUsed){state.valkyrieUsed=true;state.valkyrieStep=true}
+    if((hasMechSkill(a,5)||w.id==='quill-lance')&&!state.valkyrieUsed){state.valkyrieUsed=true;state.valkyrieStep=true}
    }
    if(!w.melee&&!launchesMissiles(w)&&a.mechState)delete a.mechState.disrupted;
    if(a.brace&&launchesMissiles(w)&&hasMechSkill(a,7))mechState(a).behemothUsed=true;

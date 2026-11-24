@@ -89,7 +89,10 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   const melee=frame.fixed?stockList(frame.melees||[frame.stock.melee]):arsenalIds(weapons.filter(w=>!w.builtIn&&!w.shoulder&&w.melee));
   select('bench-primary',guns,unit.weapon);
   select('bench-melee',[['','Empty'],...melee],unit.melee??'');
-  select('bench-shield',[['','Empty'],...shields.filter(()=>frame.shield).map(s=>[s.id,s.name])],unit.shield??'');
+  if(frame.fixedShield){
+   select('bench-shield',[[frame.fixedShield.id,frame.fixedShield.name+' · right hand']],frame.fixedShield.id);
+  }else select('bench-shield',[['','Empty'],...shields.filter(()=>frame.shield).map(s=>[s.id,s.name])],unit.shield??'');
+  $('bench-shield').disabled=Boolean(frame.fixedShield);
   select('bench-shoulder',[['','Empty'],...arsenalIds(weapons.filter(w=>w.shoulder&&frame.pod))],unit.shoulder??'');
   $('bench-fire-pod').hidden=!frame.pod;$('bench-fire-pod').disabled=!unit.shoulder||clipSource==='archive';
   select('bench-kit',[0,1,2,3].slice(0,frame.mix?4:1).map(i=>[i,i?'Kit '+i:'Factory']),unit.upgrade);
@@ -184,7 +187,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   const melee=primary?.melee&&fire>strike&&!firePod?primary:inventory.get(source.melee);
   const strikeAt=melee===primary?fire:strike;
   const age=time-fire,hit=time-strikeAt,profile=gun&&!gun.melee?attackProfile(source,gun.id):null;
-  const beats=profile?.beats??[],firing=isActive&&source.alive&&source.hp[firePod?'body':'right']>0&&profile&&age>=0&&age<profile.raise+(beats.at(-1)??0)+profile.travel+profile.recover;
+  const beats=profile?.beats??[],firing=isActive&&source.alive&&source.hp[firePod?'body':gun?.hand??'right']>0&&profile&&age>=0&&age<profile.raise+(beats.at(-1)??0)+profile.travel+profile.recover;
   const striking=isActive&&source.alive&&melee&&source.hp[melee.hand??'left']>0&&hit>=0&&hit<1.1;
   if(firing||striking)source.attack={kind:striking?melee.id:gun.id,start:striking?strikeAt:fire};
   const muzzleAge=age-(profile?.raise??0);
