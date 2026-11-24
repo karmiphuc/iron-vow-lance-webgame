@@ -79,42 +79,83 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 143,
+    "siteVersion": 144,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "9ac95bd3e096d769859a9a4883e65812f5e40cd4",
-    "githubCommit": "bc7c7ded21215519bfb1e0b05de2a0df748fa3dc",
-    "distTree": "ca8f9ae0e608066054ff6745bce4f2af578b5c11",
-    "verifiedAt": "2026-11-24T14:39:30.501Z",
-    "localReleaseSourceSha256": "132f3de1592bb32d144478d5920c0c90df494f63946d4070f974ebc5900fc0ed",
-    "simulationSuites": 87,
+    "sourceCommit": "8dec7b37be85e83e866c37e27316f215f9b966e7",
+    "githubCommit": "026171fd1fc3dc684ebb2e628176ceea827c1d0f",
+    "distTree": "4b241388e0d2c5d55fb704ac38943252dc6b0c5a",
+    "verifiedAt": "2026-11-24T15:52:14.477Z",
+    "localReleaseSourceSha256": "075cc5f03e7f23f8336111e6cd340dc5a0ff98e736efdd9b01c45318c703baf4",
+    "simulationSuites": 88,
     "localBrowser": {
-      "desktop": 2,
-      "touch": 2,
+      "desktop": 5,
+      "touch": 5,
       "result": "passed",
       "scenarios": [
-        "checkMovePreview",
-        "checkRidgeCombat"
+        "checkCombatDuel",
+        "checkMechComputer",
+        "checkComSkills",
+        "checkOverworld",
+        "checkPilotClasses"
       ]
     },
     "liveFilesCompared": 173,
     "liveBrowser": {
-      "desktop": 2,
-      "touch": 2,
+      "desktop": 1,
+      "touch": 1,
       "result": "passed",
       "scenarios": [
-        "checkMovePreview",
-        "checkRidgeCombat"
-      ]
+        "checkComSkills"
+      ],
+      "transport": "Production responses through the configured Node HTTPS proxy."
     },
     "environment": {
-      "browser": "Chromium",
-      "touch": "iPhone emulation",
+      "browser": "Chromium headless shell",
+      "touch": "iPad-sized emulation for COM Skills",
       "nativeIPad": "unverified"
     },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_ab9c2bdc16148191ab06c6d9ce4d29b6",
-    "deploymentId": "appgdep_6b05a03023108191a1f7542bc6b82853"
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_5159340de0dc81919162a264d5a3abd4",
+    "deploymentId": "appgdep_6b05b2230f0881919fda4df03dd87ee7",
+    "featurePullRequest": 93,
+    "browserFixturePullRequest": 94
   },
   "publishedReleaseHistory": [
+    {
+      "siteVersion": 143,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "9ac95bd3e096d769859a9a4883e65812f5e40cd4",
+      "githubCommit": "bc7c7ded21215519bfb1e0b05de2a0df748fa3dc",
+      "distTree": "ca8f9ae0e608066054ff6745bce4f2af578b5c11",
+      "verifiedAt": "2026-11-24T14:39:30.501Z",
+      "localReleaseSourceSha256": "132f3de1592bb32d144478d5920c0c90df494f63946d4070f974ebc5900fc0ed",
+      "simulationSuites": 87,
+      "localBrowser": {
+        "desktop": 2,
+        "touch": 2,
+        "result": "passed",
+        "scenarios": [
+          "checkMovePreview",
+          "checkRidgeCombat"
+        ]
+      },
+      "liveFilesCompared": 173,
+      "liveBrowser": {
+        "desktop": 2,
+        "touch": 2,
+        "result": "passed",
+        "scenarios": [
+          "checkMovePreview",
+          "checkRidgeCombat"
+        ]
+      },
+      "environment": {
+        "browser": "Chromium",
+        "touch": "iPhone emulation",
+        "nativeIPad": "unverified"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_ab9c2bdc16148191ab06c6d9ce4d29b6",
+      "deploymentId": "appgdep_6b05a03023108191a1f7542bc6b82853"
+    },
     {
       "siteVersion": 103,
       "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
