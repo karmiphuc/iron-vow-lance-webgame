@@ -6,8 +6,8 @@ const world=W.createWorld(12345,1),snapshot=JSON.stringify(world);
 assert(W.validWorld(world));
 assert(W.validOptionalWorld(undefined));
 assert.equal(W.validOptionalWorld(null),false);
-assert.equal(W.PORTS.length,6);
-assert.equal(W.ROUTES.length,8);
+assert.equal(W.PORTS.length,12);
+assert.equal(W.ROUTES.length,18);
 assert.deepEqual(W.createWorld(12345,1),world);
 const offers=W.offersAt(world,'picket');
 assert(offers.length>=1&&offers.length<=3);
@@ -78,7 +78,7 @@ assert.notDeepEqual(W.portProfile(12345,'picket').weapons,W.portProfile(12345,'f
 const catalog=JSON.parse(require('./sim-harness.cjs')().run('JSON.stringify(WEAPONS.filter(w=>!w.builtIn&&!w.shoulder).map(w=>w.id))'));
 const stock=W.PORTS.flatMap(port=>W.portProfile(12345,port.id).weapons);
 assert.deepEqual([...new Set(stock)].sort(),catalog.sort());
-assert.deepEqual(W.PORTS.map(port=>W.portProfile(12345,port.id).faction),
+assert.deepEqual(W.PORTS.slice(0,6).map(port=>W.portProfile(12345,port.id).faction),
  ['Karst Wardens','Relay Union','Vanta Combine','Halcyon Guard','Ridge Freeholders','Haven Salvors']);
 assert.equal(W.portProfile(1,'unknown'),null);
 const route=['picket','relay','corridor'];

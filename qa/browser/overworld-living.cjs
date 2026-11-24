@@ -13,7 +13,7 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  });
  await navigate(page,'overworld',tap,mobile);
  await page.locator('#chart-viewport').waitFor();
- await page.waitForFunction(()=>IronVowChart.snapshot().ready&&IronVowChart.snapshot().portCount===6);
+ await page.waitForFunction(()=>IronVowChart.snapshot().ready&&IronVowChart.snapshot().portCount===12);
 
  const assertMastLayout=async(label)=>{
   await page.waitForTimeout(120);
@@ -22,7 +22,7 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
    return{id:node.dataset.overworldPort,visible:style.visibility!=='hidden'&&style.display!=='none'&&rect.width>0&&rect.height>0,
     left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom};
   }));
-  assert.equal(layout.length,6,label+' renders all six port controls');
+  assert.equal(layout.length,12,label+' renders all twelve port controls');
   const visible=layout.filter(port=>port.visible),overlaps=[];
   for(let i=0;i<visible.length;i++)for(let j=i+1;j<visible.length;j++){
    const a=visible[i],b=visible[j],width=Math.min(a.right,b.right)-Math.max(a.left,b.left),height=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
@@ -36,7 +36,7 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
   assert.equal(actual,expected,'the chart draws the coverage radius for the current mooring and deck');
  };
 
- assert.equal(await page.locator('[data-overworld-port]').count(),6,'all six moorings have chart controls');
+ assert.equal(await page.locator('[data-overworld-port]').count(),12,'all twelve railheads have chart controls');
  await page.setViewportSize({width:320,height:735});
  await assertMastLayout('phone chart');
  await page.setViewportSize({width:1024,height:1366});
@@ -44,6 +44,16 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  await page.setViewportSize({width:1366,height:1024});
  await assertMastLayout('iPad landscape chart');
  await checkSensor();
+ await tap('.rail-directory > summary');
+ assert.equal(await page.locator('[data-rail-directory]').count(),12);
+ await tap('[data-rail-directory="iron"]');
+ assert.equal(await page.locator('[data-overworld-port="iron"]').getAttribute('aria-pressed'),'true');
+ await tap('.chart-strategy > summary');
+ assert.match(await page.locator('.chart-strategy-detail').innerText(),/Forward staging.*\+1 AP/i);
+ await tap('.chart-strategy > summary');
+ await tap('.rail-directory > summary');
+ await tap('[data-rail-directory="picket"]');
+
 
  const beforeHold=await page.evaluate(()=>({day:save.day,credits:save.credits,cost:window.IronVowOverworld.operatingRates(save).total,world:save.world}));
  const markersBefore=await page.evaluate(()=>IronVowChart.snapshot().markers);

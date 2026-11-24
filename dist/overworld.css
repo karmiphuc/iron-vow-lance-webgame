@@ -134,3 +134,17 @@ body[data-view="overworld"] #ui{overflow:hidden;background:transparent}
 .chart-strategy summary{color:#f0ce95;cursor:pointer;min-height:44px;padding:12px 0}
 .chart-strategy-detail{position:absolute;z-index:9;right:0;top:100%;width:min(280px,calc(100vw - 38px));padding:12px;background:#182327;border:1px solid #7b91897a;box-shadow:0 8px 22px #0a141780}
 .chart-port-card .chart-strategy-detail p{display:block;margin:.35rem 0;font-size:.8rem;line-height:1.4}
+
+.rail-directory{position:relative}
+.rail-directory>summary{cursor:pointer;min-height:44px;padding:12px 0;font-size:.8rem;color:#d4e4d8}
+.rail-directory-list{position:absolute;right:0;top:100%;z-index:11;width:min(350px,calc(100vw - 38px));max-height:50vh;overflow:auto;overscroll-behavior:contain;padding:10px;background:#182327;border:1px solid #7b91897a;box-shadow:0 8px 22px #0a141780}
+.rail-directory-list h3{font-size:.85rem;margin:8px 0 4px;color:#f0ce95}
+.rail-directory-list section>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+.chart-port-card .rail-directory-list button{min-width:0;width:100%;white-space:normal;padding:4px 7px;font-size:.75rem}
+.rail-directory-list small{display:block;color:#bbc6c0}
+.rail-directory-list [aria-current]{border-color:#e5b66d}
+
+@media(max-width:520px){
+ .chart-outer-port:not([aria-current]):not([aria-pressed="true"]){width:44px;justify-content:center}
+ .chart-outer-port:not([aria-current]):not([aria-pressed="true"]) b{display:none}
+}

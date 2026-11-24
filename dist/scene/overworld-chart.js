@@ -162,16 +162,16 @@
     for (const port of data.ports) {
       const p = portPosition(port), base = heightAt(p.x, p.z) + .08 + (port.id === 'ridge' ? .48 : 0), town = new T.Group(); town.position.set(p.x, base, p.z); scene.add(town);
       box(town, port.id === 'ridge' ? .8 : 1.55, .1, 1.4, dark, 0, 0, 0);
-      if (port.id === 'picket') {
+      if (port.id === 'picket'||port.id==='cinder') {
         // Three exposed limestone benches and a quarry crane.
         for (let i = 0; i < 3; i++) box(town, 1.2 - i * .22, .18, .42, pale, -.4, .08 + i * .16, -.65 - i * .18);
         beam(town, new T.Vector3(-.75, .1, .25), new T.Vector3(-.75, 1.05, .25), .055, dark);
         beam(town, new T.Vector3(-.75, 1.05, .25), new T.Vector3(.15, 1.05, .25), .055, dark);
-      } else if (port.id === 'relay') {
+      } else if (port.id === 'relay'||port.id==='glass') {
         for (const x of [-.56, .56]) for (const z of [-.3, .3]) beam(town, new T.Vector3(x, 0, z), new T.Vector3(x * .3, 1.35, z * .3), .045, dark);
         for (let i = 0; i < 3; i++) beam(town, new T.Vector3(-.5 + i * .1, i * .4, -.3), new T.Vector3(.4 - i * .1, (i + 1) * .4, -.2), .03, dark);
         for (const x of [-.65, .6]) { const dish = mesh(town, new T.SphereGeometry(.27, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), pale, x, .55, .42); dish.rotation.z = .6; }
-      } else if (port.id === 'corridor') {
+      } else if (port.id === 'corridor'||port.id==='mercy') {
         for (const z of [-.65, .1]) { box(town, 1.7, .38, .48, dark, -.2, .22, z); const roof = mesh(town, new T.CylinderGeometry(.25, .25, 1.7, 10, 1, false, 0, Math.PI), dark, -.2, .41, z); roof.rotation.z = Math.PI / 2; }
         for (const x of [-.8, .8]) { box(town, .065, .8, .065, ochre, x, .4, .8); } box(town, 1.75, .06, .08, ochre, 0, .8, .8);
       } else if (port.id === 'ridge') {
@@ -185,7 +185,7 @@
         box(town, .4, .36, .45, dark, -.15, .24, -.1);
         const relay = mesh(town, new T.ConeGeometry(.18, .25, 10), pale, -.18, .58, -.12);
         relay.rotation.z = -.6;
-      } else if (port.id === 'haven') {
+      } else if (port.id === 'haven'||port.id==='brine') {
         // Coastal carrier cradle and a cantilever loading crane over the water.
         box(town, 1.8, .2, .55, pale, 0, -.1, -.42);
         for (const x of [-.65, .65]) {
@@ -291,7 +291,7 @@
         hit.userData.pathKey = key; stage.routeGroup.add(hit); stage.routeHits.push(hit);
       }
     }
-    for (const route of data.routes) add([route.from, route.to], route.toll ? 0xd5856a : 0x91a4a0, route.toll ? .046 : .019, !!route.road, null);
+    for (const route of data.routes) add([route.from, route.to], route.toll ? 0xd5856a : route.shared ? 0xe4bf73 : 0x91a4a0, route.toll || route.shared ? .046 : .019, !!route.road, null);
     for (const option of data.routeOptions || []) {
       const path = option.path || option, key = option.key || path.join('>');
       if (key !== selected) add(path, colors.cyan, .02, true, key, .10);
@@ -329,7 +329,7 @@
     }
     for (const marker of data.markers || []) {
       const a = stage.ports[marker.from]?.ground, b = stage.ports[marker.to]?.ground;
-      if (!a || !b || !['storm', 'patrol'].includes(marker.kind)) continue;
+      if (!a || !b || !['storm', 'patrol','freight'].includes(marker.kind)) continue;
       // Day-indexed movement is reproducible after reload and independent of frame rate.
       let hash = 0; for (const c of marker.id || marker.kind) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
       const fraction = Number.isFinite(marker.fraction) ? clamp(marker.fraction, 0, 1)
@@ -348,6 +348,13 @@
         for (let i = 0; i <= 24; i++) { const x = -.95 + i / 24 * 1.9; front.push(new T.Vector3(x, -.18, -.30 + Math.sin(i / 24 * Math.PI) * .17)); }
         stroke(group, front, colors.cyan, .85);
         stroke(group, [new T.Vector3(-.08, .24, 0), new T.Vector3(-.22, -.07, 0), new T.Vector3(.03, -.04, 0), new T.Vector3(-.04, -.34, 0)], colors.amber);
+      } else if(marker.kind==='freight'){
+        const cargo=new T.MeshStandardMaterial({color:linear(0xe4bf73),roughness:.83});
+        for(let i=0;i<3;i++){
+          const wagon=new T.Mesh(new T.BoxGeometry(.25,.17,.27),cargo);
+          wagon.position.set(0,0,.16+i*.33); group.add(wagon);
+        }
+        stroke(group,[new T.Vector3(0,-.15,-.15),new T.Vector3(0,-.15,1)],colors.amber,.8);
       } else {
         // Three small swept patrol craft in a clear wedge formation.
         const patrolMaterial = new T.MeshStandardMaterial({ color: linear(0x9f6a56), roughness: .8 });
@@ -440,7 +447,7 @@
         const next = rectangle(candidate);
         if (![...blocked, ...placed].some(other => intersects(next, other))) { rect = next; break; }
       }
-      // A full viewport scan handles dense zoomed/panned views without hiding controls.
+      // Try the full viewport before deferring a label to the rail directory.
       if (!rect) {
         const free = [];
         for (let top = 7; top + height <= frame.height - 7; top += 12) for (let left = 7; left + width <= frame.width - 7; left += 12) {
@@ -448,15 +455,17 @@
           if (![...blocked, ...placed].some(other => intersects(next, other))) free.push(next);
         }
         free.sort((a, b) => Math.hypot(a.left - preferred.left, a.top - preferred.top) - Math.hypot(b.left - preferred.left, b.top - preferred.top));
-        rect = free[0] || rectangle(preferred);
+        rect = free[0];
       }
+      const show = visible && !!rect;
+      rect ??= rectangle(preferred);
       const overlaps = placed.filter(other => intersects(rect, other)).map(other => other.id);
       const blockedCount = blocked.filter(other => intersects(rect, other)).length;
       const displacement = Math.hypot(rect.left - preferred.left, rect.top - preferred.top);
-      result[id] = { x: anchor.x, y: anchor.y, visible, rect, displacement, overlaps, blockedCount };
-      if (visible) placed.push({ ...rect, id });
+      result[id] = { x: anchor.x, y: anchor.y, visible:show, rect, displacement, overlaps, blockedCount };
+      if (show) placed.push({ ...rect, id });
       if (button) {
-        button.style.transform = 'none'; button.style.left = rect.left + 'px'; button.style.top = rect.top + 'px'; button.style.visibility = visible ? 'visible' : 'hidden';
+        button.style.transform = 'none'; button.style.left = rect.left + 'px'; button.style.top = rect.top + 'px'; button.style.visibility = show ? 'visible' : 'hidden';
         let leader = host.querySelector('[data-chart-port-leader="' + id + '"]');
         if (!leader && host.ownerDocument) {
           leader = host.ownerDocument.createElement('span'); leader.dataset.chartPortLeader = id; leader.setAttribute('aria-hidden', 'true');
@@ -464,7 +473,7 @@
         }
         if (leader) {
           const x = clamp(anchor.x, rect.left, rect.right), y = clamp(anchor.y, rect.top, rect.bottom);
-          Object.assign(leader.style, { display: visible && displacement > 8 ? 'block' : 'none', left: anchor.x + 'px', top: anchor.y + 'px', width: Math.hypot(x - anchor.x, y - anchor.y) + 'px', transform: 'rotate(' + Math.atan2(y - anchor.y, x - anchor.x) + 'rad)' });
+          Object.assign(leader.style, { display: show && displacement > 8 ? 'block' : 'none', left: anchor.x + 'px', top: anchor.y + 'px', width: Math.hypot(x - anchor.x, y - anchor.y) + 'px', transform: 'rotate(' + Math.atan2(y - anchor.y, x - anchor.x) + 'rad)' });
         }
       }
     }
