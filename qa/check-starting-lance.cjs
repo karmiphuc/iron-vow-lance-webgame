@@ -32,7 +32,7 @@ const coverage=sim.run(`(()=>{
  }
  return JSON.stringify(variants.map(slot=>Object.fromEntries(Object.entries(slot).map(([key,values])=>[key,values.size]))));
 })()`);
-assert.deepEqual(JSON.parse(coverage),Array.from({length:3},()=>({pilot:2,kit:2,livery:6,training:4})));
+assert.deepEqual(JSON.parse(coverage),Array.from({length:3},()=>({pilot:2,kit:2,livery:6,training:6})));
 sim.run('save=newCareer(()=>.99)');
 for(const kind of [0,1,2]){
  assert.equal(sim.run(`hirePilot(${kind})`),true,'Unrolled original pilots remain recruitable');

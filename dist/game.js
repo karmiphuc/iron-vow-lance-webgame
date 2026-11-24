@@ -121,7 +121,7 @@ const pilotId=i=>CREW[i].id??CREW[i].call.toLowerCase();
 const pilotKind=id=>CREW.findIndex((_,kind)=>pilotId(kind)===id);
 const pilotClass=(i,career=save)=>pilotKind(career.units[i].pilotId??pilotId(i));
 const pilotProfile=i=>CREW[pilotClass(i)];
-const TRAINING_LEVELS=[1,3,5,6,8,10],TRAINING_POINT_LEVELS=[1,2,3,4,5,6,8,10],DOCTRINE_RANK=2;
+const TRAINING_LEVELS=[1,2,5,6,8,10],TRAINING_POINT_LEVELS=[1,2,3,4,5,6,8,10],DOCTRINE_RANK=2;
 const PILOT_TREES=[
  [
   {name:'Vanguard',glyph:'arrows-out-cardinal',nodes:[
@@ -268,6 +268,80 @@ const PILOT_TREES=[
    ]}
   ]
 ];
+// Each third doctrine gives the pilot a second battlefield job on compatible hulls.
+const CROSS_DOCTRINES=[
+ ['Escort','shield-chevron',[
+  ['Convoy Plate','+15 body HP',{body:15}],['Cover Drill','+10 percentage points of Brace protection',{brace:.10}],
+  ['Close Escort','While Braced, adjacent allies take 15% less damage',{shieldNet:.15}],
+  ['Guard Step','+1 free movement tile',{move:1}],['Fast Cover','Brace costs 1 AP',{braceAP:1}],
+  ['Escort Net','While Braced, adjacent allies take 25% less damage',{shieldNet:.25}]]],
+ ['Skirmisher','arrows-out-cardinal',[
+  ['Quick Step','+1 free movement tile',{move:1}],['Corner Shot','+5 percentage points of ranged accuracy',{rangedHit:.05}],
+  ['Set Position','While Braced, ranged fire ignores cover penalties',{braceAim:true}],
+  ['Quick Set','Brace costs 1 AP',{braceAP:1}],['Long Retreat','+1 tile of ranged counter reach',{counterRange:1}],
+  ['Watch the Exit','Firing a counter also Braces',{counterBrace:true}]]],
+ ['Section Gunner','crosshair',[
+  ['Stable Mount','+5 percentage points of ranged accuracy',{rangedHit:.05}],['Battery Feed','+10% ranged power',{rangedPower:.10}],
+  ['Covering Fire','While Braced, ranged fire ignores cover penalties',{braceAim:true}],
+  ['Counter Battery','+20% reaction damage',{reactionPower:.20}],['Long Lane','+1 tile of ranged reach',{range:1}],
+  ['Fire Shelter','While Braced, adjacent allies take 15% less damage',{shieldNet:.15}]]],
+ ['Infiltrator','lightning',[
+  ['Close Optics','+5 percentage points of ranged accuracy',{rangedHit:.05}],['Joint Map','+10% power against arms and legs',{limbPower:.10}],
+  ['Cut the Feed','Hits on arms or legs bypass at least half of armor',{limbPierce:.5}],
+  ['Quiet Entry','+1 free movement tile',{move:1}],['Weapon Isolation','Destroy an arm to stop that attack’s counter',{armJam:true}],
+  ['Clean Withdrawal','Firing a counter also Braces',{counterBrace:true}]]],
+ ['Bodyguard','shield-chevron',[
+  ['Guard Plate','+1 armor',{armor:1}],['Catch the Hit','+10 percentage points of Brace protection',{brace:.10}],
+  ['Protection Detail','While Braced, adjacent allies take 20% less damage',{shieldNet:.20}],
+  ['Quick Screen','Brace costs 1 AP',{braceAP:1}],['Watch Sector','+20% reaction damage',{reactionPower:.20}],
+  ['Close Watch','Firing a counter also Braces',{counterBrace:true}]]],
+ ['Shock Trooper','lightning',[
+  ['Impact Drill','+10% melee power',{meleePower:.10}],['Recoil Plating','+1 armor',{armor:1}],
+  ['Opening Strike','Strike costs 1 less AP',{strikeAP:1}],
+  ['Drive Home','Melee bypasses at least half of armor',{meleePierce:.5}],['Shock Guard','A successful Strike also Braces',{strikeBrace:true}],
+  ['Follow the Breach','A Strike that disables a unit refunds 1 AP',{strikeRefund:1}]]],
+ ['Interceptor','crosshair',[
+  ['Reaction Drills','+10% reaction damage',{reactionPower:.10}],['Intercept Optics','+1 tile of ranged counter reach',{counterRange:1}],
+  ['Wide Arc','While Braced, ranged counters reach 2 tiles farther',{braceCounterRange:2}],
+  ['Emergency Set','Brace costs 1 AP',{braceAP:1}],['Return Burst','+25% reaction damage total',{reactionPower:.25}],
+  ['Relay Screen','Firing a counter also Braces',{counterBrace:true}]]],
+ ['Convoy Guard','shield-chevron',[
+  ['Brace Harness','+10 percentage points of Brace protection',{brace:.10}],['Recovery Plates','+15 body HP',{body:15}],
+  ['Mobile Screen','While Braced, adjacent allies take 15% less damage',{shieldNet:.15}],
+  ['Pursuit Route','+1 free movement tile',{move:1}],['Field Cover','Brace costs 1 AP',{braceAP:1}],
+  ['Hold for Extraction','While Braced, adjacent allies take 25% less damage',{shieldNet:.25}]]]
+];
+CROSS_DOCTRINES.forEach(([name,glyph,nodes],kind)=>PILOT_TREES[kind].push({name,glyph,nodes:nodes.map(([name,label,effects],rank)=>({
+ id:pilotId(kind)+'-third-'+(rank+1),name,label,effects
+}))}));
+const FIELD_LICENSES={
+ guard:{name:'Cover Detail',label:'Brace an unbraced ally within two tiles.',team:'ally',range:2},
+ paint:{name:'Target Designator',label:'Mark a hostile within five tiles. The next allied attack gains 20 accuracy points.',team:'enemy',range:5},
+ jam:{name:'Signal Jammer',label:'Jam a hostile within four tiles. It loses its counter and 20 accuracy points this round.',team:'enemy',range:4},
+ repair:{name:'Limb Service',label:'Restore up to 20 HP to one working limb on yourself or an ally within two tiles.',team:'ally',range:2},
+ relay:{name:'Fire Control',label:'An ally within four tiles spends up to 2 fewer AP on their next paid attack this round.',team:'ally',range:4},
+ patch:{name:'Hull Service',label:'Restore up to 30 body HP to yourself or an ally within two tiles.',team:'ally',range:2}
+};
+const PILOT_LICENSES=[
+ ['guard','paint','repair'],['jam','relay','patch'],['guard','jam','relay'],['guard','jam','patch'],
+ ['paint','repair','patch'],['guard','paint','jam'],['guard','paint','repair'],['guard','relay','patch']
+];
+const fieldLicense=kind=>save.pilotLicenses?.[pilotId(kind)];
+const RETRAIN_DAYS=30;
+const retrainWait=kind=>Math.max(0,(save.pilotRetrained?.[pilotId(kind)]??-RETRAIN_DAYS)+RETRAIN_DAYS-save.day);
+function resetPilotTraining(i){
+ const reserve=typeof i==='string',record=reserve?save.reservePilots?.[i]:save.units[i];
+ if(battle||!record)return false;
+ const kind=reserve?pilotKind(i):pilotClass(i);
+ const learned=reserve?record.training:learnedTraining(i);
+ if(!learned.length||retrainWait(kind))return false;
+ if(reserve)record.training=[];
+ else save.training[i]=[];
+ (save.pilotRetrained??={})[pilotId(kind)]=save.day;
+ persist();return true;
+}
+const selectedDoctrine=(kind,learned)=>PILOT_TREES[kind].find(path=>learned.includes(path.nodes[DOCTRINE_RANK].id));
+
 FRAMES.push(
  {name:'GATECRASHER',model:'HV–09',role:'BREACH',color:'#a94e3c',hp:198,arm:112,leg:116,move:2,armor:8,cost:350000,
   native:'gatecrasher',weapon:'morrow',brief:'The twin cannon is standard. Fit an Arc Cleaver or a right-shoulder Vesper pod in the Workshop.'},
@@ -1069,7 +1143,7 @@ function trainingStatus(i,id,learned,level){
  if(!branch)return 'UNKNOWN';
  const rank=branch.nodes.findIndex(node=>node.id===id);
  if(learned.includes(id))return 'LEARNED';
- const doctrine=branches.find(path=>learned.includes(path.nodes[DOCTRINE_RANK].id));
+ const doctrine=selectedDoctrine(i,learned);
  if(rank>=DOCTRINE_RANK&&doctrine&&doctrine!==branch)return rank===DOCTRINE_RANK?'CAPSTONE CHOSEN':'OTHER DOCTRINE';
  if(level<TRAINING_LEVELS[rank])return 'LEVEL '+TRAINING_LEVELS[rank];
  if(rank===1&&!branches.some(path=>learned.includes(path.nodes[0].id)))return 'NEEDS LV 1 SKILL';
@@ -1082,7 +1156,9 @@ function trainingEffects(i){
 }
 function effectsForTraining(kind,learned){
  const effects={};
- for(const path of PILOT_TREES[kind])for(const node of path.nodes)if(learned.includes(node.id))Object.assign(effects,node.effects);
+ for(const path of PILOT_TREES[kind])for(const node of path.nodes)if(learned.includes(node.id)){
+  for(const [key,value] of Object.entries(node.effects))effects[key]=typeof value==='number'?Math.max(effects[key]??0,value):value;
+ }
  return effects;
 }
 function learnTraining(i,id){
@@ -1291,7 +1367,7 @@ function captureSortie(enemyPending=false){
   ...(battle.relayLead?{relayLead:battle.relayLead}:{}),
   ...(battle.terrainSeed!==null?{terrainSeed:battle.terrainSeed}:{}),
   ...(battle.mechComputers?{mechComputers:true}:{}),
-  units:battle.units.map(u=>({surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,jumpjetUsed:u.jumpjetUsed||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
+  units:battle.units.map(u=>({surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,licenseUsed:u.licenseUsed||undefined,jumpjetUsed:u.jumpjetUsed||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
 }
 function dispatchSizes(){
  if(save.dispatch?.day!==save.day){
@@ -1466,6 +1542,10 @@ function restoreSortie(){
      (u.pilot===RETRIEVER?(recoveryUsed===undefined&&!state.skill||integer(recoveryUsed,1,uses)&&state.skill===(recoveryUsed===uses)):recoveryUsed===undefined);
     if(valid){u.breach=breach;u.blackout=blackout;u.recoveryUsed=recoveryUsed}
    }
+   if(valid&&state.licenseUsed!==undefined){
+    valid=state.licenseUsed===true&&u.team==='ally'&&u.level>=3&&Boolean(fieldLicense(u.pilot));
+    if(valid)u.licenseUsed=true;
+   }
    if(valid&&state.infantryWeapon!==undefined){
     valid=isLineInfantry(u)&&INFANTRY_PRIMARIES.includes(state.infantryWeapon);
     if(valid)u.weapon=state.infantryWeapon;
@@ -1532,24 +1612,37 @@ function infoTip(label,description){
 const helpHint=()=>`<span class="info-hint">${icon('info')} <span class="mouse-help">Hover or focus for help</span><span class="touch-help">Tap or hold for help</span></span>`;
 const MOVE_HELP='Move with working legs. Fire, Strike, Brace and most pilot skills end the free allowance.';
 const COUNTER_HELP='One reaction per round for 0 AP. Equipped melee strikes adjacent ground attackers first. Guns return fire in range. Missile launchers cannot counter. A working free hand can punch an adjacent ground attacker for 5–10 damage if no weapon can reply.';
-const FOUNDATION_HELP='Either level 1 skill opens both level 3 skills.';
+const FOUNDATION_HELP='Any level 1 skill opens all three level 2 skills. At level 5, choose a doctrine. Field licenses give you a separate action from level 3.';
 function learnReserveTraining(id,skill){
  const pilot=save.reservePilots?.[id];
  if(battle||!pilot||!dutyRoster().includes(id)&&!hangarLevel('personnel')||trainingStatus(pilotKind(id),skill,pilot.training,pilot.level)!=='TRAIN')return false;
  pilot.training.push(skill);persist();return true;
+}
+function setFieldLicense(kind,level,id){
+ if(battle||level<3||id&&!PILOT_LICENSES[kind]?.includes(id))return false;
+ const licenses=save.pilotLicenses??={};
+ if(id)licenses[pilotId(kind)]=id;
+ else delete licenses[pilotId(kind)];
+ persist();return true;
 }
 function trainingTree(i,advanced){
  const reserve=typeof i==='string';
  const kind=reserve?pilotKind(i):pilotClass(i),pilot=CREW[kind];
  const level=reserve?save.reservePilots[i].level:save.units[i].level;
  const learned=reserve?save.reservePilots[i].training:learnedTraining(i);
+ const canTrain=!reserve||dutyRoster().includes(i)||hangarLevel('personnel');
+ const wait=retrainWait(kind);
  advanced??=level>=6&&PILOT_TREES[kind].some(path=>learned.includes(path.nodes[DOCTRINE_RANK].id));
  const start=advanced?DOCTRINE_RANK+1:0,end=advanced?TRAINING_LEVELS.length:DOCTRINE_RANK+1;
- const paths=PILOT_TREES[kind].map(path=>`<section class="training-path" aria-label="${path.name}">
+ const doctrine=selectedDoctrine(kind,learned);
+ const meleeEffects=['meleePower','meleeHit','meleePierce','strikeAP','strikeBrace','strikeRefund'];
+ const paths=PILOT_TREES[kind].filter(path=>!advanced||!doctrine||path===doctrine).map(path=>`<section class="training-path" aria-label="${path.name}">
   <h2>${icon(path.glyph)} ${path.name}</h2>
+  ${!reserve&&!save.units[i].melee&&path.nodes.some(node=>meleeEffects.some(key=>Object.hasOwn(node.effects,key)))?'<small class="training-rule">Fit a melee weapon to use the Strike bonuses.</small>':''}
   <ol>${path.nodes.slice(start,end).map((node,index)=>{
    const rank=start+index;
-    const status=trainingStatus(kind,node.id,learned,level);
+    const eligibility=trainingStatus(kind,node.id,learned,level);
+    const status=!canTrain&&eligibility==='TRAIN'?'NEEDS ACADEMY OR DUTY':eligibility;
    return `<li><button type="button" data-learn="${node.id}" data-training-state="${status}" ${status==='TRAIN'?'':'disabled'}>
     <span class="training-rank">LV ${TRAINING_LEVELS[rank]}${rank===DOCTRINE_RANK?' · DOCTRINE':rank===TRAINING_LEVELS.length-1?' · MASTERY':''}</span>
     <strong>${node.name}</strong><span class="training-effect">${node.label}</span>
@@ -1558,12 +1651,31 @@ function trainingTree(i,advanced){
   }).join('')}</ol>
  </section>`).join('');
  modal(pilot.call+' TRAINING',`<div class="stat-heading training-head">
-   <span>LEVEL ${level} · ${earnedTraining(level)-learned.length} PT AVAILABLE</span><span>ONE DOCTRINE ${infoTip('pilot training','Earn one point at levels 1 through 6, then at 8 and 10. '+FOUNDATION_HELP+' Your level 5 doctrine opens its advanced ranks.')}</span>
+   <span>LEVEL ${level} · ${earnedTraining(level)-learned.length} PT AVAILABLE</span><span>${doctrine?.name.toUpperCase()??'CHOOSE ONE DOCTRINE'} ${infoTip('pilot training','Earn one point at levels 1 through 6, then at 8 and 10. '+FOUNDATION_HELP+' Your level 5 doctrine opens its advanced ranks.')}</span>
   </div><div class="reference-tabs" aria-label="Training ranks">
    <button type="button" data-training-stage="foundation" aria-pressed="${!advanced}">FOUNDATION · 1–5</button>
    <button type="button" data-training-stage="advanced" aria-pressed="${advanced}">ADVANCED · 6–10</button>
-  </div>${advanced?'':`<small class="training-rule">${FOUNDATION_HELP}</small>`}<div class="training-paths${advanced?'':' shared-foundation'}">${paths}</div>`,[{text:'DONE',fn:closeModal}]);
+  </div><fieldset class="pilot-licenses"><legend>Field license</legend>
+   ${level<3?'<p class="note">Unlocks at level 3. Equip one additional action per sortie.</p>':''}
+   ${PILOT_LICENSES[kind].map(id=>`<button type="button" data-license="${id}" ${level<3?'disabled':''} aria-pressed="${fieldLicense(kind)===id}"><strong>${FIELD_LICENSES[id].name}</strong><small>${FIELD_LICENSES[id].label}</small></button>`).join('')}
+  </fieldset>${learned.length?`<button type="button" id="pilot-retrain" ${wait?'disabled':''}>${wait?'RETRAIN IN '+wait+' DAYS':'RETRAIN · REFUND '+learned.length+' PT'}</button>`:''}
+  ${!canTrain?'<p class="note">Assign this pilot to active duty or build the Reserve Academy to spend training points.</p>':''}
+  ${advanced?'':`<small class="training-rule">${FOUNDATION_HELP}</small>`}<div class="training-paths${advanced&&doctrine?' single-doctrine':advanced?'':' shared-foundation'}">${paths}</div>`,[{text:'DONE',fn:closeModal}]);
  document.querySelectorAll('[data-training-stage]').forEach(button=>button.onclick=()=>trainingTree(i,button.dataset.trainingStage==='advanced'));
+ const refreshTraining=showAdvanced=>{
+  render();
+  modalReturnFocus=$(reserve?`[data-reserve-training="${i}"]`:'#train-pilot-'+i);
+  trainingTree(i,showAdvanced);
+ };
+ const retrain=$('#pilot-retrain');
+ if(retrain)retrain.onclick=()=>modal('RETRAIN '+pilot.call,`<p>Refund ${learned.length} training points. Your pilot keeps their level, XP and field license. Retraining is available every ${RETRAIN_DAYS} campaign days.</p>`,
+  [{text:'BACK',fn:()=>trainingTree(i,advanced)},{text:'REFUND POINTS',fn:()=>{if(resetPilotTraining(i))refreshTraining(false)}}]);
+ document.querySelectorAll('[data-license]').forEach(button=>button.onclick=()=>{
+  const id=button.dataset.license;
+  if(!setFieldLicense(kind,level,fieldLicense(kind)===id?'':id))return;
+  refreshTraining(advanced);
+  $(`[data-license="${id}"]`)?.focus({preventScroll:true});
+ });
  $('#modal .modalbox').scrollTop=0;
  $('#modal [data-training-stage][aria-pressed="true"]')?.focus({preventScroll:true});
  document.querySelectorAll('[data-learn]').forEach(button=>button.onclick=()=>{
@@ -2151,11 +2263,12 @@ function pilotMark(kind,style=''){
  return `<img class="${style}${kind<PILOTS.length?'':' recruit-portrait'}" src="${portrait}" alt="${pilot.name}">`;
 }
 function pilotCard(kind,u,training,assignment,control,points){
- const pilot=CREW[kind],wound=woundLabel(pilotId(kind)),next=nextLevelXP(u.level);
+ const pilot=CREW[kind],wound=woundLabel(pilotId(kind)),next=nextLevelXP(u.level),license=FIELD_LICENSES[fieldLicense(kind)];
  return `<article class="card pilot-card"><div class="pilot-image">${pilotMark(kind)}</div><div class="pilot-details">
   <div class="eyebrow">${pilot.call} / ${assignment}</div><h2>${pilot.name}</h2>${wound?`<span class="tag wound-status">${wound}</span>`:''}
   ${stat('PILOT LEVEL',String(u.level).padStart(2,'0'))}${stat('EXPERIENCE',u.xp+' / '+next,Math.min(100,100*u.xp/next))}
   <div class="pilot-skill">${icon(pilot.glyph??['lightning','crosshair','first-aid-kit'][kind])}<h3>${pilot.skill}</h3>${infoTip(pilot.skill,skillDescription(kind,training))}</div>
+  ${license?`<p class="note">FIELD LICENSE · ${license.name}</p>`: ''}
   <button type="button" ${control} class="training-open ${points?'primary':''}">TRAINING TREE <span>${points} PT</span></button>
   <button type="button" class="computer-open" data-mech-pilot="${kind}">MECH COMPUTER</button>
  </div></article>`;
@@ -2586,9 +2699,9 @@ function render(){
   <details class="workshop-disclosure workshop-wide-detail" data-workshop-detail="stats" ${bindWorkshop.disclosures?.stats?'open':''}><summary>Sortie stats & computer</summary>${workshopStats(selected,f,u,training)}${MECH_SIGNATURES[frame]?`<p class="note">${MECH_SIGNATURES[frame][1]}</p><button class="computer-open" type="button" data-mech-pilot="${pilotClass(selected)}">MECH COMPUTER · ${MECH_SIGNATURES[frame][0]}</button>`:''}</details>`:chassisAssignments(selected,training)}</div>`;
   if(page==='pilots')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY / PILOTS</div><h1>HUMAN AT THE CORE.</h1><div class="company-context" role="group" aria-label="Company services"><button data-page="inn">Hiring Desk</button><button data-page="career">Career Record</button></div></div><p>${totalTrainingPoints()} TRAINING PT AVAILABLE<br>+5% WEAPON POWER PER LEVEL</p></div>
    <div class="grid">${LANCE_SLOTS.map(i=>pilotCard(pilotClass(i),save.units[i],trainingEffects(i),FRAMES[pilotFrame(i)].name,`id="train-pilot-${i}" data-train-pilot="${i}"`,trainingPoints(i))).join('')}
-   ${dutyRoster().map(id=>{
+   ${Object.keys(save.reservePilots??{}).map(id=>{
     const kind=pilotKind(id),u=save.reservePilots[id];
-    return pilotCard(kind,u,effectsForTraining(kind,u.training),'RELIEF PILOT',`data-reserve-training="${id}"`,reliefTrainingPoints(id));
+    return pilotCard(kind,u,effectsForTraining(kind,u.training),dutyRoster().includes(id)?'RELIEF PILOT':'RESERVE PILOT',`data-reserve-training="${id}"`,reliefTrainingPoints(id));
    }).join('')}</div></div>`;
   if(page==='career')$('#ui').innerHTML=`<div class="page"><div class="pagehead"><div><div class="eyebrow">COMPANY RECORD / ONGOING CAREER</div><h1>LEAVE A MARK.</h1><a class="rig-bench-link" href="?bench=rig">OPEN RIG BENCH</a></div><span class="rank">${save.rep>=100?'VETERAN COMPANY':save.rep>=30?'RECOGNIZED LANCE':'INDEPENDENT OUTFIT'}</span></div><div class="career-stats"><div><span class="eyebrow">COMPANY RESERVES</span><h2>${money(save.credits)}</h2><p>Reinvest in weapons, armor and the machines that bring your pilots home.</p></div><div><span class="eyebrow">FULFILLED CONTRACTS</span><h2>${String(save.wins).padStart(2,'0')}</h2><p>${save.kills} enemy machines neutralized. ${save.rep} reputation earned.</p></div><div><span class="eyebrow">DEPLOYMENT DAY</span><h2>${String(save.day).padStart(3,'0')}</h2><p>Progress saves in this browser. Export a backup to carry your company with you.</p></div></div><section class="history"><span class="eyebrow">AFTER-ACTION RECORD</span>${save.history.length?save.history.slice().reverse().map(h=>`<div class="history-row"><span>${h.name}<small>DAY ${String(h.day).padStart(3,'0')}</small></span><b>${h.win?(h.occupation?'PATROL CLEARED':'FULFILLED / +'+money(h.pay)):'LANCE WITHDRAWN'}</b></div>`).join(''):'<p style="margin-top:24px">No sorties recorded. Your first contract is waiting.</p>'}<div class="settings"><button id="export">EXPORT CAREER</button><button id="import">IMPORT BACKUP</button><input hidden type="file" id="file" accept="application/json"><button id="attack-camera" aria-pressed="${attackCameraEnabled}">ATTACK CAM ${attackCameraEnabled?'ON':'OFF'}</button><button id="reset">NEW CAREER</button></div></section></div>`;
   if(page==='journal')$('#ui').innerHTML=`<div class="page journal-page"><button type="button" id="journal-back" class="navigation-quiet">← Back to ${journalOrigin?({bridge:'Bridge',bay:'Mech Bay',company:'Company'}[journalOrigin.parent]):'Company'}</button><div class="pagehead"><div><div class="eyebrow">OPERATIONS / REFERENCE</div><h1>FIELD JOURNAL.</h1></div></div>${journalMarkup(journalPage)}</div>`;
@@ -2724,6 +2837,8 @@ function validSave(s){
     !s.owned.every(id=>shieldItem(id)||WEAPONS.some(w=>w.id===id&&!w.builtIn))||!Array.isArray(s.history)||s.history.length>500||
     !s.history.every(h=>h&&CONTRACTS.some(c=>c.name===h.name)&&Number.isFinite(h.day)&&typeof h.win==='boolean'&&Number.isFinite(h.pay))||
     !Array.isArray(s.units)||s.units.length!==PILOTS.length)return false;
+ if(s.pilotRetrained!==undefined&&!validRecord(s.pilotRetrained,([id,day])=>pilotKind(id)>=0&&Number.isSafeInteger(day)&&day>=1&&day<=s.day))return false;
+ if(s.pilotLicenses!==undefined&&!validRecord(s.pilotLicenses,([id,license])=>PILOT_LICENSES[pilotKind(id)]?.includes(license)))return false;
  if(!s.units.every((u,i)=>u&&Number.isInteger(pilotFrame(i,s))&&validHull(u,pilotFrame(i,s),s.owned)&&
     Number.isSafeInteger(u.level)&&u.level>0&&u.level<10000&&Number.isFinite(u.xp)&&u.xp>=0))return false;
  const frames=new Set(s.units.map((_,i)=>pilotFrame(i,s)));
@@ -2886,9 +3001,10 @@ function pilotWiki(){
   ${CREW.map((pilot,i)=>`<details class="wiki-pilot"><summary><b>${pilot.call}</b><span>${roles[i]} · ${pilot.skill}</span></summary>
    <div class="wiki-profile"><div class="wiki-profile-head">${pilotMark(i,'pilot-thumb')}<div><span class="eyebrow">${pilot.name} / SIGNATURE SKILL</span><p><b>${pilot.skill}</b> · ${pilot.desc}</p></div></div>
     <div class="wiki-paths">${PILOT_TREES[i].map((path,index)=>`<section aria-label="${path.name}">
-     <h3>${icon(path.glyph)} ${path.name}</h3><p>${tactics[i][index]}</p>
+     <h3>${icon(path.glyph)} ${path.name}</h3>${tactics[i][index]?`<p>${tactics[i][index]}</p>`: ''}
      <ol>${path.nodes.map((node,rank)=>`<li><small>LV ${TRAINING_LEVELS[rank]}${rank===DOCTRINE_RANK?' · DOCTRINE':''}</small><b>${node.name}</b><span>${node.label}</span></li>`).join('')}</ol>
     </section>`).join('')}</div>
+    <h3>Field licenses · level 3</h3><ul class="wiki-licenses">${PILOT_LICENSES[i].map(id=>`<li><b>${FIELD_LICENSES[id].name}</b> · ${FIELD_LICENSES[id].label}</li>`).join('')}</ul>
    </div></details>`).join('')}
   <p class="pilot-credit">Recruit portraits by <a href="https://sakpix.itch.io/cyberpunk-portrait-pack-free-200-sci-fi-character-portraits">SakPix</a> · Cyberpunk Portrait Pack (Free Edition)</p>
  </section>`;
@@ -3324,6 +3440,8 @@ function renderBattle(){
   const shotPreview=inRange&&!obstruction?(barrage||attackPreview(u,target,chosen)+(targetShield?' → LEFT ARM':'')):'';
   const contacts=battle.units.filter(t=>t.team==='enemy'&&t.alive).length;
   const missile=shoulderWeapon(u),canMissile=canUseWeapon(u,missile);
+  const id=u&&u.level>=3?fieldLicense(u.pilot):null;
+  const licenseButton=id?`<button id="field-license" class="pilot-license-action" title="${FIELD_LICENSES[id].label}" ${ready&&!u.licenseUsed&&u.ap>=2&&licenseTargets(u,id).length?'':'disabled'}>${icon('shield-chevron')}<span>${FIELD_LICENSES[id].name}<small> · ${u.licenseUsed?'USED':'2 AP'}</small></span></button>`:'';
   const tactical=tacticalSpec(u),tacticalAction=tacticalWeapon(u);
   const tacticalButton=tactical?`<button id="tactical" class="${action==='tactical'?'active':''}" aria-pressed="${action==='tactical'}" ${ready&&canTactical(u)?'':'disabled'}>${icon('crosshair')}<span>${tactical.name}<small> · ${u.tacticalUsed?'USED':paidAttackAP(u,tacticalAction)+' AP'}</small></span></button>`:'';
 
@@ -3353,7 +3471,7 @@ function renderBattle(){
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
   <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':'')+' · LEVEL CHANGE +1 AP':'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH'}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   ${tacticalPreviewMarkup(u)}
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
   const reserveButton=$('#call-sortie-reserve');
   if(reserveButton)reserveButton.onclick=callReserve;
@@ -3361,6 +3479,7 @@ function renderBattle(){
   bindTacticalMap();
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy)selectUnit(+b.dataset.unit)});
   $('#move').onclick=()=>{if(canMove){action='move';renderBattle();persist()}};$('#fire').onclick=()=>{action='fire';renderBattle();persist()};$('#strike').onclick=()=>{if(canStrike){action='strike';renderBattle();persist()}};$('#skill').onclick=skill;
+  if(licenseButton)$('#field-license').onclick=chooseLicenseTarget;
   if(tacticalButton)$('#tactical').onclick=()=>{
    if(!canTactical(u))return;
    if(action==='tactical')cancelTactical();
@@ -3466,6 +3585,44 @@ function chooseSupportTarget(u){
  modal(pilot.skill.toUpperCase(),`<div class="stat-heading"><span class="eyebrow">${skillCost(kind,u.training)} AP / SELECT ${hostileSkill(kind)?'HOSTILE':'ALLY'}</span>${infoTip(pilot.skill,skillDescription(kind,u.training))}</div>
   <div class="seat-choices">${targets.map((target,i)=>`<button type="button" data-support-target="${i}"><b>${target.name}${target===u?' · SELF':''}</b><small>${distance(u,target)} tiles away${kind===4?' · '+target.ap+' AP':kind===RETRIEVER?' · '+recoveryParts(target,u.training).map(part=>PART_LABEL[part]).join(' / '):''}</small></button>`).join('')}</div>`,[{text:'CANCEL',fn:closeModal}]);
  for(const button of document.querySelectorAll('[data-support-target]'))button.onclick=()=>useSupportSkill(u,targets[Number(button.dataset.supportTarget)]);
+}
+function licenseTargets(u,id){
+ const license=FIELD_LICENSES[id];
+ if(!license)return [];
+ return battle.units.filter(target=>{
+  if(!target.alive||target===u&&id!=='repair'&&id!=='patch'||target.team!==license.team||distance(u,target)>license.range)return false;
+  if(id==='guard')return !target.brace;
+  if(id==='paint')return !target.painted;
+  if(id==='jam')return !target.blackout;
+  if(id==='relay')return !target.order;
+  if(id==='repair')return ['right','left','legs'].some(part=>target.hp[part]>0&&target.hp[part]<target.max[part]);
+  return target.hp.body<target.max.body;
+ });
+}
+function useFieldLicense(u,target){
+ const id=u&&fieldLicense(u.pilot);
+ if(!id||!battle||battle.busy||battle.phase!=='player'||current()!==u||u.level<3||u.licenseUsed||u.ap<2||!licenseTargets(u,id).includes(target))return false;
+ u.ap-=2;startAction(u);u.licenseUsed=true;
+ if(id==='guard')braceUnit(target);
+ else if(id==='paint')target.painted={shots:1,aim:.20,power:0};
+ else if(id==='jam')target.blackout={aim:.20,ap:0,hold:false};
+ else if(id==='relay')target.order={shots:1,discount:2,aim:0,power:0,keepMove:false};
+ else if(id==='patch')target.hp.body=Math.min(target.max.body,target.hp.body+30);
+ else{
+  const part=['right','left','legs'].filter(p=>target.hp[p]>0&&target.hp[p]<target.max[p]).sort((a,b)=>target.hp[a]/target.max[a]-target.hp[b]/target.max[b])[0];
+  target.hp[part]=Math.min(target.max[part],target.hp[part]+20);
+ }
+ addLog(CREW[u.pilot].call+' used '+FIELD_LICENSES[id].name+' on '+target.name+'.');
+ closeModal();renderBattle();persist();return true;
+}
+function chooseLicenseTarget(){
+ const u=current(),id=u&&fieldLicense(u.pilot);
+ if(!id||u.level<3||u.licenseUsed||u.ap<2||battle.busy||battle.phase!=='player')return;
+ const license=FIELD_LICENSES[id],targets=licenseTargets(u,id);
+ if(!targets.length)return;
+ modal(license.name.toUpperCase(),`<p>${license.label} · 2 AP</p><div class="seat-choices">${targets.map((target,i)=>
+  `<button type="button" data-license-target="${i}">${target.name} · ${distance(u,target)} tiles</button>`).join('')}</div>`,[{text:'CANCEL',fn:closeModal}]);
+ document.querySelectorAll('[data-license-target]').forEach(button=>button.onclick=()=>useFieldLicense(u,targets[Number(button.dataset.licenseTarget)]));
 }
 function skill(){
  const u=current();if(!u||u.skill||battle.busy||spent(u)||u.ap<skillCost(u.pilot,u.training))return;
