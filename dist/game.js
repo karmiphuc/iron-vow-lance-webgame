@@ -121,7 +121,7 @@ const pilotId=i=>CREW[i].id??CREW[i].call.toLowerCase();
 const pilotKind=id=>CREW.findIndex((_,kind)=>pilotId(kind)===id);
 const pilotClass=(i,career=save)=>pilotKind(career.units[i].pilotId??pilotId(i));
 const pilotProfile=i=>CREW[pilotClass(i)];
-const TRAINING_LEVELS=[1,2,5,6,8,10],TRAINING_POINT_LEVELS=[1,2,3,4,5,6,8,10],DOCTRINE_RANK=2;
+const TRAINING_LEVELS=[1,3,5,6,8,10],TRAINING_POINT_LEVELS=[1,2,3,4,5,6,8,10],DOCTRINE_RANK=2;
 const PILOT_TREES=[
  [
   {name:'Vanguard',glyph:'arrows-out-cardinal',nodes:[
@@ -1612,7 +1612,7 @@ function infoTip(label,description){
 const helpHint=()=>`<span class="info-hint">${icon('info')} <span class="mouse-help">Hover or focus for help</span><span class="touch-help">Tap or hold for help</span></span>`;
 const MOVE_HELP='Move with working legs. Fire, Strike, Brace and most pilot skills end the free allowance.';
 const COUNTER_HELP='One reaction per round for 0 AP. Equipped melee strikes adjacent ground attackers first. Guns return fire in range. Missile launchers cannot counter. A working free hand can punch an adjacent ground attacker for 5–10 damage if no weapon can reply.';
-const FOUNDATION_HELP='Any level 1 skill opens all three level 2 skills. At level 5, choose a doctrine. Field licenses give you a separate action from level 3.';
+const FOUNDATION_HELP='Any level 1 skill opens all three level 3 skills. At level 5, choose a doctrine. Field licenses give you a separate action from level 3.';
 function learnReserveTraining(id,skill){
  const pilot=save.reservePilots?.[id];
  if(battle||!pilot||!dutyRoster().includes(id)&&!hangarLevel('personnel')||trainingStatus(pilotKind(id),skill,pilot.training,pilot.level)!=='TRAIN')return false;

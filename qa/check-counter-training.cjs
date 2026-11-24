@@ -22,7 +22,7 @@ function checkTraining(){
   assert.equal(learn(paths[(foundation+1)%3][2]),true,'either foundation can lead to either doctrine');
   assert.equal(learn(paths[foundation][2]),false,'one level 5 doctrine');
  }
- console.log('PASS all eight pilots can cross-train any level 2 skill from any foundation, with points and reload preserved');
+ console.log('PASS all eight pilots can cross-train any level 3 skill from any foundation, with points and reload preserved');
 }
 
 async function checkCounters(){
