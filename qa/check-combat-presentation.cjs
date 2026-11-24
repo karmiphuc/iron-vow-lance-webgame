@@ -124,12 +124,16 @@ const simulate=require('./sim-harness.cjs');
  // The attack camera rushed the brace, step-up and priming.
  assert.deepEqual(JSON.parse(run("JSON.stringify(CINEMATIC_PACE)")),{step:1.6,aimHold:.45});
 
- // FM3 duel feedback: no HP strip over the duel (owner did not approve it); a damage number pops at each landed round, a part
- // that breaks names itself, and nothing lingers after the camera closes.
+ // The attack camera shows the featured unit's live health. Damage numbers
+ // and part breaks continue to draw at their impact points.
  run("globalThis.duelist=battle.units.find(u=>u.team==='enemy'&&!u.kind);window.IronVowScene.projectWorld=()=>({x:320,y:200});window.IronVowScene.partPoint=()=>({clone(){return {x:1,y:2,z:3}}})");
  run("globalThis.fills=[];globalThis.words=[];ctx.fillRect=(...a)=>fills.push(a);ctx.fillText=(text)=>words.push(String(text));");
  run("activeCinematic={actor:current(),target:duelist,w:unitWeapon(current()),phase:'fire',part:'body'};duelNumbers.length=0;duelBanner=null;drawAttackCamera()");
- assert.equal(run('fills.length'),0,'The duel draws no HP strip or banner box');
+ assert.ok(run("fills.length===3&&words.includes(current().name)"),'Release shows the shooter’s health');
+ run("duelist.hp.left=duelist.max.left/2;activeCinematic.cameraBeat='hit';activeCinematic.part='left';fills.length=0;words.length=0;drawAttackCamera()");
+ assert.ok(run("words.includes(duelist.name)&&words.includes('L ARM '+duelist.hp.left+'/'+duelist.max.left)&&fills[4][2]===fills[3][2]/2"),'Impact shows current hull and half-health subsystem meters');
+ run("duelist.hp.left=0;fills.length=0;drawAttackCamera()");
+ assert.equal(run("fills[4][2]"),0,'A destroyed subsystem has an empty meter');
  const hitPoint="{clone(){return {x:1,y:2,z:3}}}";
  run(`window.IronVowDuelHit(duelist,${hitPoint},{damage:7,before:20,after:13,part:'left'},false);window.IronVowDuelHit(duelist,${hitPoint},{damage:13,before:13,after:0,part:'left'},false)`);
  assert.deepEqual(JSON.parse(run('JSON.stringify(duelNumbers.map(n=>n.text))')),['7','13','L ARM'],'Each landed round pops its damage; a destroyed part names itself');
@@ -155,5 +159,5 @@ const simulate=require('./sim-harness.cjs');
  run('reducedMotion=true');
  assert.equal(run('deathSlowmo(clock+.1)'),false,'Reduced motion never slows the scene');
  run('reducedMotion=false');
- console.log('PASS combat presentation: short tracers, 45-degree missiles, fireball hits, misses strike the ground, bounded shell recoil, directional hit reactions, no fire on wrecks, miss evade, cinematic pacing, damage numbers without an HP strip, slow-motion deaths');
+ console.log('PASS combat presentation: short tracers, 45-degree missiles, fireball hits, misses strike the ground, bounded shell recoil, directional hit reactions, no fire on wrecks, miss evade, cinematic pacing, live duel health meters and damage numbers, slow-motion deaths');
 })().catch(e=>{console.error(e);process.exit(1);});

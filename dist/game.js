@@ -4259,8 +4259,7 @@ function battlefield(t){
 const ATTACK_PART_LABEL={body:'BODY',pilot:'PILOT',right:'R ARM',left:'L ARM',legs:'LEGS'};
 
 // FM3 duel feedback (owner, 2026-11-22): damage numbers pop at each impact point, a destroyed part names itself in red, a missed
-// volley reads MISS / DODGE, and skills get a slanted banner (blue ally, orange enemy). No HP strip: the owner keeps the duel
-// clear of health bars (approved demo, minus the strip).
+// volley reads MISS / DODGE, and skills get a slanted banner (blue ally, orange enemy).
 const duelNumbers=[];
 let duelBanner=null;
 // Each popped number takes the lowest slot no live number holds: three across, rows climbing, so a long burst cascades
@@ -4278,8 +4277,30 @@ window.IronVowDuelHit=(u,point,contact,guard)=>{
 };
 function duelText(u,text){const point=window.IronVowScene?.partPoint?.(u,'body');if(point&&activeCinematic)duelPush({point:point.clone(),text,at:clock,color:'#f5dbb1',big:true});}
 function duelSkill(u,name){if(activeCinematic)duelBanner={text:name,ally:u.team==='ally',at:clock};}
+function drawDuelHealth(sequence){
+ const {actor,target,cameraBeat,phase,part,contact}=sequence;
+ const unit=cameraBeat==='hit'||cameraBeat==='flight'||(!cameraBeat&&phase==='result')?target:actor;
+ const struck=contact?.hit?contact.part:part==='shield'?'left':part;
+ const parts=unit===target&&struck!=='body'&&unit.max[struck]>0?['body',struck]:['body'];
+ const width=Math.min(280,W-32),gap=12,cellWidth=(width-24-gap*(parts.length-1))/parts.length;
+ const x=(W-width)/2,y=H-64;
+ ctx.save();
+ ctx.fillStyle='#101820eb';ctx.fillRect(x,y,width,48);
+ ctx.textAlign='left';ctx.font='700 11px Inter,Arial,sans-serif';
+ ctx.fillStyle='#e2e9e6';ctx.fillText(unit.name,x+12,y+15,width-24);
+ for(const [i,p] of parts.entries()){
+  const left=x+12+i*(cellWidth+gap),ratio=clamp01(unit.hp[p]/unit.max[p]);
+  const label=unit.kind?'HULL':struck==='left'&&part==='shield'&&p==='left'?'SHIELD':HEALTH_LABEL[p];
+  ctx.font='600 10px Inter,Arial,sans-serif';
+  ctx.fillStyle='#dce7e2';ctx.fillText(label+' '+unit.hp[p]+'/'+unit.max[p],left,y+30,cellWidth);
+  ctx.fillStyle='#293e4a';ctx.fillRect(left,y+35,cellWidth,5);
+  ctx.fillStyle=HEALTH_COLORS[healthTone(ratio)];ctx.fillRect(left,y+35,cellWidth*ratio,5);
+ }
+ ctx.restore();
+}
 function drawAttackCamera(){
  const sequence=activeCinematic;if(!sequence)return;
+ drawDuelHealth(sequence);
  // damage numbers at the impact point, rising and fading
  ctx.save();ctx.textAlign='center';
  for(let i=duelNumbers.length-1;i>=0;i--){
