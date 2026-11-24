@@ -70,7 +70,7 @@ function recruit(kind,path=null,slot=0){
  await j('endTurn()');
  for(let i=0;i<20&&pending.run('battle?.busy');i++)await pending.flush();
  assert.equal(pending.run('battle.turn'),2);
- assert.equal(j('t.ap'),4,'Blackout leaves 10 AP at turn start and limits rifle fire to two shots');
+ assert.equal(j('t.ap'),3,'Blackout reduces the solo patrol to 6 AP before its rifle volley');
  assert.equal(j('t.blackout'),undefined);
  assert.equal(pending.run('JSON.stringify(captureSortie())'),j('JSON.stringify(captureSortie())'));
  const screen=recruit(6,1),s=screen.run;
