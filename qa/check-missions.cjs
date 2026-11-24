@@ -8,16 +8,22 @@ const playerTurn=`(async()=>{
    if(!targets.length)break;
    const armed=targets.filter(t=>isArmed(t)),priority=armed.length?armed:targets;
    const available=priority.filter(t=>distance(ally,t)<=w.range&&!attackObstruction(ally,t,w)).sort((a,b)=>a.hp.body-b.hp.body);
-   if(available.length&&canUseWeapon(ally,w)){
-    if(ally.index<2&&!ally.skill)skill();const target=available[0];await engage(ally,target,'body',w);if(checkEnd())return;continue;
+   const canShoot=available.length&&canUseWeapon(ally,w);
+   const firingScore=(a,t)=>{
+    const enemyWeapon=unitWeapon(t),firingLane=distance(a,t)<=enemyWeapon.range&&!attackObstruction(t,a,enemyWeapon);
+    const returnAim=firingLane?highGroundAim(t,a,enemyWeapon):0;
+    return Math.max(0,distance(a,t)-w.range)*20+(attackObstruction(a,t,w)?12+distance(a,t)*2:0)-highGroundAim(a,t,w)*22+returnAim*24-(inCover(a)?3:0);
+   };
+   const positions=[...movementPlans(ally).values()].filter(plan=>plan.tiles>0).flatMap(plan=>priority.map(t=>({...plan,t})));
+   const best=positions.filter(p=>!canShoot||(p.ap+w.ap<=ally.ap&&distance(p,p.t)<=w.range&&!attackObstruction(p,p.t,w)))
+    .map(p=>({...p,score:firingScore(p,p.t)+p.tiles*.5+p.ap+(p.ap>ally.ap-w.ap?4:0)})).sort((a,b)=>a.score-b.score)[0];
+   const old=Math.min(...(canShoot?available:priority).map(t=>firingScore(ally,t)));
+   if(best&&best.score<old-(canShoot?2:0)){
+    await moveUnit(ally,best.x,best.z);continue;
    }
-   if(!movementLimit(ally))break;
-   const firingScore=(a,t)=>Math.max(0,distance(a,t)-w.range)*20+(attackObstruction(a,t,w)?12+distance(a,t)*2:0);
-   const positions=[...paths(ally)].filter(([,cost])=>cost>0).flatMap(([key,cost])=>{const[x,z]=key.split(',').map(Number);return priority.map(t=>({x,z,cost,t}))});
-   const best=positions.map(p=>({...p,score:firingScore(p,p.t)+p.cost*.5+(Math.max(0,p.cost-freeMovement(ally))>ally.ap-w.ap?4:0)-(inCover(p)?1:0)})).sort((a,b)=>a.score-b.score)[0];
-   const old=Math.min(...priority.map(t=>firingScore(ally,t)));
-   if(!best||best.score>=old)break;
-   await moveUnit(ally,best.x,best.z,best.cost);
+   if(!canShoot)break;
+   if(ally.index<2&&!ally.skill)skill();
+   await engage(ally,available[0],'body',w);if(checkEnd())return;
   }
   if(battle&&ally.alive&&ally.ap>=2&&!ally.brace){startAction(ally);ally.ap-=2;ally.brace=true}
  }
