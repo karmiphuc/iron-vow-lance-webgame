@@ -102,7 +102,7 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
   foe.hp.right=right?foe.max.right:0;foe.hp.left=left?foe.max.left:0;
   IronVowScene.render(clock,.016);
   renderBattle();
-  const ready={...foe,ap:roundAP(foe.training)};
+  const ready={...foe,ap:apCapacity(foe)};
   return {visible:['R','L'].map(side=>source.getObjectByName('RECOIL_CARRIAGE_'+side).visible),
    plates:['right','left'].map(part=>entry.m.build.parts[part].filter(item=>item.detach&&item.m.visible).length),
    armed:isArmed(foe),shoots:canUseWeapon(ready,unitWeapon(ready)),status:document.querySelector('#target-panel .combat-status').textContent};

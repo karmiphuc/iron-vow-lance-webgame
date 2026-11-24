@@ -40,18 +40,18 @@ const create=require('./sim-harness.cjs');
  const sim2=create({random:()=>0});
  sim2.run(`createBattle(0);selected=0;globalThis.calls=0;
   battle.units.forEach((u,i)=>{u.x=3+i;u.z=5;u.vx=u.x;u.vz=u.z});battle.cover=new Set();`);
- sim2.run(`globalThis.driver=window.IRON_VOW_SIM.createEnemyTurn({getBattle:()=>battle,enemyAPCapacity,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,targetParts,canUseWeapon,attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:async()=>{calls++},checkEnd:()=>true,isArmed,addLog,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME})`);
+ sim2.run(`globalThis.driver=window.IRON_VOW_SIM.createEnemyTurn({getBattle:()=>battle,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,targetParts,canUseWeapon,attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:async()=>{calls++},checkEnd:()=>true,isArmed,addLog,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME})`);
  assert.equal(await sim2.run('driver.runEnemyTurn()'),true);
  assert.equal(sim2.run('calls'),1);
  // Load the module without game.js globals: every rule dependency must be injected.
  const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
  const context={window:{}};vm.createContext(context);
  vm.runInContext(fs.readFileSync(path.join(__dirname,'../dist/combat-simulation.js'),'utf8'),context);
- const scout={frame:5,team:'enemy',alive:true,x:0,z:0,hp:{right:1},ap:0};
+ const scout={frame:5,team:'enemy',alive:true,x:0,z:0,hp:{right:1},ap:14};
  const ally={team:'ally',alive:true,x:1,z:0,hp:{body:5}};
  const blade={id:'scout',ap:3,range:1};
  const isolated=context.window.IRON_VOW_SIM.createEnemyTurn({getBattle:()=>({units:[scout,ally],turn:1}),
-  enemyAPCapacity:()=>14,resetMovement:()=>{},renderBattle:()=>{},unitWeapon:()=>({range:1}),
+  resetMovement:()=>{},renderBattle:()=>{},unitWeapon:()=>({range:1}),
   distance:(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.z-b.z),meleeWeapon:()=>blade,
   scoutWeapon:()=>blade,targetParts:()=>['right'],canUseWeapon:()=>true,
   attackObstruction:()=>false,combatRange:()=>1,launchesMissiles:()=>false,hasMechSkill:()=>false,

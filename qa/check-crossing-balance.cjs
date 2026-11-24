@@ -6,7 +6,7 @@ const simulate = require('./sim-harness.cjs');
 const escortPolicy = `async () => {
  const flint = crew[2];
  if (flint.alive) {
-  if (flint.z < 12) flint.distressOrder = {kind:'move',x:3,z:12};
+  if (flint.z < 13) flint.distressOrder = {kind:'move',x:3,z:13};
   else delete flint.distressOrder;
  }
  for (const u of battle.units.filter(t => t.team === 'ally' && !t.distressAlly && t.alive)) {
@@ -16,7 +16,7 @@ const escortPolicy = `async () => {
    return foes.map(t => ({
     plan,t,
     reachable:canUseWeapon(next,w) && distance(next,t)<=combatRange(next,t,w) && !attackObstruction(next,t,w),
-    score:(t.kind==='tank'?10:0)+(1-t.hp.body/t.max.body)*15-Math.abs(distance(next,t)-w.range)*2-plan.ap*.3+Number(inCover(next))*2
+    score:(t.kind==='tank'?3:0)+Math.max(0,6-distance(t,flint))*3+(1-t.hp.body/t.max.body)*15-Math.abs(distance(next,t)-w.range)*2-plan.ap*.3+Number(inCover(next))*2
    }));
   });
   choices.sort((a,b) => Number(b.reachable)-Number(a.reachable) || b.score-a.score);

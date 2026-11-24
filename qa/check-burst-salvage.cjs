@@ -64,7 +64,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('calls'),1,'shotgun rolls the shell once');
  run("Math.random=()=>0;foe.shield='bulwark-shield';foe.hp.left=1;const shielded={...foe.hp};const ap=ally.ap");
  await run("shoot(ally,foe,'body',weapon('shotgun'))");
- assert.equal(run('ally.ap'),run('ap-3'));
+ assert.equal(run('ally.ap'),run('ap-2'));
  assert.equal(run('foe.hp.left'),0);
  assert.ok(run("['body','pilot','right','legs'].every(p=>foe.hp[p]===shielded[p])"));
  run("foe.armor=0;foe.hp={body:1,pilot:1,right:1,left:1,legs:1};delete foe.shield;ally.ap=8;const kills=save.kills;const xp=save.units[0].xp");

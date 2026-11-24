@@ -4,7 +4,7 @@ const simulate=require('./sim-harness.cjs');
 (async()=>{
  const sim=simulate({random:()=>0,reducedMotion:true}),{run}=sim;
  run(`createBattle(0);battle.cover.clear();battle.field={};const rook=current(),hostile=battle.units[3];
-  Object.assign(hostile,{x:2,z:14,ap:12,melee:'blade'});
+  Object.assign(hostile,{x:2,z:14,ap:6,melee:'blade'});
   const cues=[];sound=type=>cues.push(type);`);
  assert.equal(run('rook.ap'),14);
  assert.equal(run('movementLimit(rook)'),5);
@@ -15,10 +15,10 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('movementLimit(rook)'),3);
  assert.ok(run("cues.indexOf('step')>=0"));
  const rookHP=run('rook.hp.body');
- assert.equal(run('counterCost(hostile,rook,meleeWeapon(hostile))'),6);
+ assert.equal(run('counterCost(hostile,rook,meleeWeapon(hostile))'),3);
  await run("engage(rook,hostile,'body',weapon('rifle'))");
  assert.equal(run('rook.ap'),9);
- assert.equal(run('hostile.ap'),6);
+ assert.equal(run('hostile.ap'),3);
  assert.equal(run('hostile.reacted'),true);
  assert.equal(run('Boolean(rook.reacted)'),false);
  assert.equal(run('movementLimit(rook)'),3);
@@ -26,7 +26,7 @@ const simulate=require('./sim-harness.cjs');
  await run('moveUnit(rook,1,13)');
  assert.equal(run('rook.ap'),8);
  assert.equal(run('movementLimit(rook)'),2);
- assert.equal(run('reactionWeapon({...hostile,ap:5},rook)'),null,'blade cannot counter beyond an adjacent tile');
+ assert.equal(run('reactionWeapon({...hostile,ap:3},rook)'),null,'blade cannot counter beyond an adjacent tile');
  await run('moveUnit(rook,1,14)');
  await run("engage(rook,hostile,'body',weapon('rifle'))");
  assert.equal(run('hostile.ap'),0,'a second counter spends the remaining AP');
@@ -82,13 +82,13 @@ const simulate=require('./sim-harness.cjs');
   const workshop=stats.node('#ui').innerHTML;
   assert.equal((workshop.match(/data-chassis=/g)||[]).length,3);
   const actual=JSON.parse(stats.run(`createBattle(0);JSON.stringify({
-   name:current().name,free:movementLimit(current()),armor:current().armor,ap:current().ap,
+   name:current().name,free:movementLimit(current()),armor:current().armor,ap:apCapacity(current()),
    hp:current().hp,max:current().max,primary:unitWeapon(current()),melee:selectedWeapon(current(),'strike')
   })`));
   assert.ok(workshop.includes(actual.name+' / SORTIE STATS'));
   for(const [label,value] of [
    ['Movement range',actual.free+' tiles'],
-   ['Armor',actual.armor],['AP capacity',actual.ap],
+   ['Armor',actual.armor],['Usable AP',actual.ap+' / '+actual.ap],
    ...Object.entries(actual.max).filter(([part])=>part!=='pilot').map(([part,max])=>[
     stats.run(`PART_LABEL.${part}`),actual.hp[part]+' / '+max+' HP']),
    ['Pilot',actual.hp.pilot+' HP']
@@ -125,14 +125,14 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(exec('reactionWeapon(ally,foe)'),null);
  exec('ally.hp.right=ally.max.right;ally.hp.left=ally.max.left;ally.ap=12;foe.ap=8');
  await exec("engage(foe,ally,'body',unitWeapon(foe))");
- assert.equal(exec('ally.ap'),7);
+ assert.equal(exec('ally.ap'),10);
  assert.equal(exec('foe.ap'),5);
  assert.equal(exec('ally.reacted'),true);
  assert.equal(exec('Boolean(foe.reacted)'),false,'a counter cannot trigger a counter');
  const foeHP=exec('foe.hp.body');
  await exec("engage(foe,ally,'body',unitWeapon(foe))");
  assert.ok(exec('foe.hp.body')<foeHP,'second reaction is legal with enough AP');
- assert.equal(exec('ally.ap'),2);
+ assert.equal(exec('ally.ap'),8);
  exec('foe.reacted=true;foe.x=17;foe.z=18;battle.units=[ally,foe]');
  await exec('endTurn()');
  assert.equal(exec('battle.turn'),2);

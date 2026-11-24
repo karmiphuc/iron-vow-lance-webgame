@@ -13,7 +13,7 @@ assert.equal(sim.run(`(()=>{
  save.world=worldRules.createWorld(42,1);save.overworld={port:'iron',arrears:0};
  const offer=availableOffers('iron')[0],size=CONTRACTS[offer.templateIndex].seats??dispatchSizes()[offer.templateIndex];
  deploy(offer.templateIndex,false,LANCE_SLOTS.slice(0,size),null,null,offer);
- if(!battle||battle.launchAP!==1||!battle.units.filter(u=>u.team==='ally').every(u=>u.ap===roundAP(u.training)+1))return false;
+ if(!battle||battle.launchAP!==1||!battle.units.filter(u=>u.team==='ally').every(u=>u.ap===Math.min(BASE_AP+1,apCapacity(u))))return false;
  const snapshot=JSON.stringify(captureSortie());
  battle=null;
  return Boolean(restoreSortie())&&JSON.stringify(captureSortie())===snapshot;

@@ -79,13 +79,13 @@ const setTimeout = (callback, ms) => {
  poses=[];capture=true;
  await run("shoot(current(),battle.units[3],'body',selectedWeapon(current(),'strike'))");
  capture=false;
- assert.equal(run('current().ap'),6);
+ assert.equal(run('current().ap'),7);
  assert.ok(poses.some(p=>p.fired&&p.strike>.5&&Math.abs(p.windup-.34*1.05)<1e-6));
  run('selected=1;battle.units[5].x=4;battle.units[5].z=18');
  poses=[];capture=true;
  await run("shoot(current(),battle.units[5],'body',weapon('pulse-bash'))");
  capture=false;
- assert.equal(run('current().ap'),7);
+ assert.equal(run('current().ap'),8);
  assert.ok(poses.some(p=>p.fired&&p.strike>.5&&Math.abs(p.windup-.34*1.05)<1e-6));
  assert.ok(run('battle.units[5].hp.body<battle.units[5].max.body'));
  run('persist()');

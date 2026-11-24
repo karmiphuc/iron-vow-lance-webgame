@@ -28,6 +28,7 @@ const ids=['cleaver','breaker','piledriver','blade'];
    battle.units=[t,u];battle.cover.clear();
    Object.assign(u,{x:7,z:11,vx:7,vz:11});
    Object.assign(t,{x:7,z:15,vx:7,vz:15});
+   t.max.body=t.hp.body=1000;
    if(save.day===2)for(const [x,z] of neighborTiles(u.x,u.z))battle.cover.add(x+","+z);
   }`);
   if(day===3)assert.equal(run('isArmed(battle.units[1])&&canUseWeapon(battle.units[1],meleeWeapon(battle.units[1]))'),true);

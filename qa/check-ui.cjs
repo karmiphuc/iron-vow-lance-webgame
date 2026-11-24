@@ -46,7 +46,7 @@ function checkHangarNavigation(){
 (async()=>{assert.equal(warnings.length,0);assert.equal(document.body.dataset.view,'ship');assert.equal(document.querySelectorAll('#nav button').length,3,'Primary navigation');assert.equal(document.querySelectorAll('.ship-facility').length,4);click('[data-hangar-deck="mechs"]');assert.equal(document.querySelectorAll('.command-deck [data-select]').length,2);assert.equal(document.querySelectorAll('[data-hangar-hotspot]').length,1,'Facilities is the Mech Bay hotspot');
 checkHangarNavigation();
 click('#field-journal');assert.equal(document.body.dataset.view,'journal');
-assert.equal(document.querySelectorAll('.manual-topics > div').length,9);
+assert.equal(document.querySelectorAll('.manual-topics > div').length,10);
 assert.match(document.querySelector('.manual-topics').textContent,/all hits go to the left arm/);
 click('[data-journal="wiki"]');assert.equal(document.querySelectorAll('.wiki-pilot').length,8);
 assert.equal(document.querySelectorAll('.wiki-paths li').length,144);
@@ -59,7 +59,7 @@ assert.equal(get('.rig-bench-link').getAttribute('href'),'?bench=rig&frame=0');
 
 run('save.dispatch={day:save.day,sizes:[3,2,1,3]}');click('#nav [data-primary="bridge"]');click('[data-chart-contracts]');assert.equal(document.querySelectorAll('[data-world-offer]').length,2);click('[data-deploy="0"]');assert.equal(run('battle'),null);click('#modal-1');assert.equal(run('battle.units.length'),7);assert.equal(get('#modal').hidden,false);click('#modal-0');assert.equal(get('#modal').hidden,true);
 assert.equal(document.querySelectorAll('[data-part]').length,5);assert.equal(document.querySelectorAll('.parts button, .parts [aria-pressed]').length,0,'target part health is read-only: nothing to aim');assert.equal(document.querySelectorAll('[data-unit]').length,3);
-click('[data-unit="0"]');click('#skill');assert.equal(run('current().ap'),16);assert.equal(get('#skill').disabled,true);click('#brace');assert.equal(run('current().ap'),14);assert.equal(run('current().brace'),true);click('#fire');assert.equal(run('action'),'fire');assert.equal(run("typeof targetPart"),'undefined','no player part selection state');
+click('[data-unit="0"]');run('current().ap=12');click('#skill');assert.equal(run('current().ap'),14);assert.equal(get('#skill').disabled,true);click('#brace');assert.equal(run('current().ap'),12);assert.equal(run('current().brace'),true);click('#fire');assert.equal(run('action'),'fire');assert.equal(run("typeof targetPart"),'undefined','no player part selection state');
 // UI and game-command assertions only. Real scene rendering and captures run in Chromium.
 run("selected=0;battle.units[0].x=3;battle.units[0].z=5;battle.units[0].vx=3;battle.units[0].vz=5;battle.units[3].x=4;battle.units[3].z=5;battle.units[3].vx=4;battle.units[3].vz=5;lockedTarget=battle.units[3].id;Math.random=()=>0");await run("shoot(current(),battle.units[3],'body')");assert.ok(run('battle.units[3].hp.body')<run('battle.units[3].max.body'));run('renderBattle()');
 context.innerWidth=390;context.innerHeight=844;run('resize()');run('renderBattle()');click('#target-toggle');assert.equal(document.body.dataset.targetPanel,'open');assert.equal(document.querySelectorAll('button[data-part]').length,0);click('#close-target');assert.equal(document.body.dataset.targetPanel,'closed');context.innerWidth=1440;context.innerHeight=1024;run('resize();renderBattle()');

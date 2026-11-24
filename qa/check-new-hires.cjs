@@ -62,6 +62,7 @@ function recruit(kind,path=null,slot=0){
  j('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1];t.x=1;t.z=12;let before=hitChance(t,a,"body");useSupportSkill(a,t)');
  assert.equal(j('a.ap'),13);
  assert.equal(j('reactionStatus(t)'), 'JAMMED');
+ assert.equal(j('t.ap'),10,'Blackout immediately drains four AP from the patrol');
  assert.equal(j('reactionWeapon(t,a)'),null);
  assert.ok(j('hitChance(t,a,"body")<before'));
  assert.deepEqual(JSON.parse(resume(jammer).run('JSON.stringify(battle.units[1].blackout)')),{aim:.4,ap:4,hold:false});
@@ -70,7 +71,7 @@ function recruit(kind,path=null,slot=0){
  await j('endTurn()');
  for(let i=0;i<20&&pending.run('battle?.busy');i++)await pending.flush();
  assert.equal(pending.run('battle.turn'),2);
- assert.equal(j('t.ap'),3,'Blackout reduces the solo patrol to 6 AP before its rifle volley');
+ assert.equal(j('t.ap'),14,'the patrol recovers AP after both phases');
  assert.equal(j('t.blackout'),undefined);
  assert.equal(pending.run('JSON.stringify(captureSortie())'),j('JSON.stringify(captureSortie())'));
  const screen=recruit(6,1),s=screen.run;
