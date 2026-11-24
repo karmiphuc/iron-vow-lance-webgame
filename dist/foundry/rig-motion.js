@@ -253,7 +253,7 @@ function animateMech(m,I,dt,t){
   if(!m.init){m.yaw=I.face;cont.rotation.y=m.yaw;cont.position.set(I.pos.x,I.ground||0,I.pos.z);cont.updateMatrixWorld(true);
     r.legs.forEach((l,i)=>{const h=cont.localToWorld(V3(l.restX,D.ankleH,l.restZ));if(I.groundAt&&I.alive)h.y=I.groundAt(h.x,h.z)+D.ankleH*sc;m.legs[i].planted.copy(h);m.legs[i].foot.copy(h);});m.init=true;}
   cont.position.set(I.pos.x+S.kx.x,I.ground||0,I.pos.z+S.kz.x);
-  const targetYaw=I.moving?I.heading:I.face,oldYaw=m.yaw;let nextYaw=dampAngle(oldYaw,targetYaw,I.moving?8:4.5,dt);
+  const targetYaw=I.moving?I.heading:I.face,oldYaw=m.yaw;let nextYaw=I.alive?dampAngle(oldYaw,targetYaw,I.moving?8:4.5,dt):oldYaw;
   if(I.groundAt&&I.alive&&!I.moving){
     const supports=r.legs.map((l,i)=>({leg:l,state:m.legs[i]})).filter(({state:L})=>!L.swing&&!L.settle&&!L.poseLift);
     // Each planted support limits the body's turn until its next real step makes room.

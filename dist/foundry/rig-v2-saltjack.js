@@ -296,7 +296,7 @@ function fallPose(m,I,state){
 
  if(tip>0){
   const pelvisBefore=rig.pelvis.getWorldPosition(V());
-  cont.rotation.set((.36-.04*settle)*tip,fall.yaw-.25*tip,(1.36+.14*settle)*tip,'YXZ');
+  cont.rotation.set((.36-.04*settle)*tip,fall.yaw,(1.36+.14*settle)*tip,'YXZ');
   const pelvisAfter=rig.pelvis.getWorldPosition(V());
   const drift=V(-.55*tip,0,.42*tip).applyAxisAngle(V(0,1,0),fall.yaw);
   cont.position.add(pelvisBefore.sub(pelvisAfter)).add(drift);
@@ -320,7 +320,7 @@ function animate(m,I,dt,t){
  cont.position.set(I.pos.x,I.ground??0,I.pos.z);
  const motion=cont.position.clone().sub(old).setY(0);
  const distance=motion.length();
- if(first||I.reducedMotion)m.yaw=I.moving?I.heading:I.face;
+ if(first||I.alive&&I.reducedMotion)m.yaw=I.moving?I.heading:I.face;
  else if(I.alive)m.yaw+=angle(m.yaw,I.moving?I.heading:I.face)*(1-Math.exp(-dt*(I.moving?12:6)));
  cont.rotation.set(0,m.yaw,0,'YXZ');
  if(first||I.alive&&distance>stepLength*2){

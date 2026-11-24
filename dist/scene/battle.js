@@ -411,10 +411,11 @@ function updateCamera(t,dt){
   const up=V3(0,1,0);
   // One mech fills a little over half the frame height (the strip below takes the rest), three-quarter front, lens at a third of its height looking up at it.
   const single=(unit,facing,angle,lift,push)=>{
-   const record=models.get(unit.id),h=record?.height??6,base=unitRoot(unit),center=base.clone().add(V3(0,h*.5,0));
+   const record=models.get(unit.id),h=record?.height??6,base=unitRoot(unit);
+   const center=record?.vehicle?record.vehicle.body.getWorldPosition(V3()):base.clone().add(V3(0,h*.5,0));
    const dist=h/(1.0*Math.tan(halfV))*push,want=unit.team==='ally'?1:-1;
    for(const s of [1,-1]){
-    const at=center.clone().addScaledVector(rot(facing,s*angle),dist);at.y=base.y+h*.34+lift;
+    const at=center.clone().addScaledVector(rot(facing,s*angle),dist);at.y=center.y-h*.16+lift;
     // lead room: the subject sits a little behind centre, space ahead of where it faces
     const look=center.clone().addScaledVector(facing,dist*Math.tan(halfH)*.22);
     const right=look.clone().sub(at).normalize().cross(up);
@@ -469,7 +470,11 @@ function prepareUnit(u,t){
   if(!record){
    record={vehicle:root.IronVowVehicles.create(u.kind)};models.set(u.id,record);
   }
-  root.IronVowVehicles.update(record.vehicle,u,t,world(u.vx,u.vz),displayedHeading(u),reducedMotion,RISE/TERRAIN_RISE);
+  const attackGoal=u.attack&&aimTargets.get(u.id);
+  const target=attackGoal?partPoint(attackGoal.target,attackGoal.part):null;
+  const {recoil,impact}=animationPose(u,hitstopTime(u,t));
+  root.IronVowVehicles.update(record.vehicle,u,t,world(u.vx,u.vz),displayedHeading(u),reducedMotion,
+   RISE/TERRAIN_RISE,{target,recoil,impact});
   object=record.vehicle.object;
  }else{
   const pose=animationPose(u,hitstopTime(u,t)),p=unitRoot(u),airborne=Boolean(u.motion?.jumpjet&&!reducedMotion);
@@ -495,7 +500,7 @@ function prepareUnit(u,t){
   const targetRoot=goal?unitRoot(goal.target):p.clone();
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
-  const face=guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
+  const face=!u.alive?(u.deathYaw??heading):guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
   pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,targeting:Boolean(readyContact||acquiredShot),lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
   const custom=rigV2.applies(u)?'rig-v2':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
@@ -594,7 +599,7 @@ function pan(dx,dy){
  if(!a||!b)return;fieldCamera.x=Math.max(-.5,Math.min(battle.size.width-.5,fieldCamera.x+(a.x-b.x)/TILE));fieldCamera.z=Math.max(-.5,Math.min(battle.size.depth-.5,fieldCamera.z+(a.z-b.z)/TILE));
 }
 const overviewZoom=.47*3.4/TILE;
-root.IronVowScene={isLive,render,project,projectWorld,screenTile,pick,pan,partPoint,attachmentPoint,labelPoint,groundAt,world,clear,overviewZoom,
+root.IronVowScene={mechYaw:u=>models.get(u.id)?.entry?.m.yaw,isLive,render,project,projectWorld,screenTile,pick,pan,partPoint,attachmentPoint,labelPoint,groundAt,world,clear,overviewZoom,
  get terrainMetrics(){return {tilePitch:TILE,levelRise:RISE,gridStyle:'corner-ticks',surface:'rock-cut-bluffs-with-graded-access'};},
  get covers(){return coverMeshes.map(m=>({min:m.userData.bounds.min.toArray(),max:m.userData.bounds.max.toArray()}));},
  overlayInfo(){return {triangles:overlays.geometry.index.count/3,path:pathGroup.children.filter(m=>m.visible).map(m=>({position:m.position.toArray(),color:m.material.color.getHex()})),selected:selection.visible,target:targetRing.visible};},

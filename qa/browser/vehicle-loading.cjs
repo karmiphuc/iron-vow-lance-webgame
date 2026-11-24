@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 
 module.exports=async function vehicleLoading({page,origin}){
- const asset='**/assets/vehicles/tank.glb';
+ const asset=/\/assets\/vehicles\/tank\.glb(?:\?|$)/;
  let release;
  const hold=new Promise(resolve=>{release=resolve;});
  await page.route(asset,async route=>{await hold;await route.continue();});

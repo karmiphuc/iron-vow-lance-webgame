@@ -187,17 +187,69 @@ def helicopter():
  # Red cheeks and the canopy surround keep the gunship's faction legible against black armor.
  return [(0,-.988,.205),(-.405,-.223,.32),(.405,-.223,.32)]
 
-def consolidate_vehicle_meshes(scene):
- # Match the existing motion export's base geometry. The still-image render
- # uses the higher-detail bevel modifiers separately.
+def motion_node(scene, name, position, parent=None, role=None):
+ node=bpy.data.objects.new(name,None)
+ scene.collection.objects.link(node)
+ node.location=position
+ if role:node['vehicleJoint']=role
+ if parent:attach(node,parent)
+ return node
+
+
+def attach(node,parent):
+ bpy.context.view_layer.update()
+ world=node.matrix_world.copy()
+ node.parent=parent
+ node.matrix_world=world
+
+
+def rig_vehicle(scene,kind,muzzle):
  meshes=[obj for obj in scene.objects if obj.type=='MESH']
- bpy.ops.object.select_all(action='DESELECT')
- for obj in meshes:
-  obj.modifiers.clear()
-  obj.select_set(True)
- bpy.context.view_layer.objects.active=meshes[0]
- bpy.ops.object.join()
- bpy.context.object.name='Vehicle hull'
+ groups={}
+ if kind=='tank':
+  turret=motion_node(scene,'Turret traverse',(0,.036,.356),role='turret')
+  gun=motion_node(scene,'Cannon elevation',(0,-.48,muzzle[2]),turret,'gun')
+  slide=motion_node(scene,'Cannon recoil',(0,-.48,muzzle[2]),gun,'slide')
+  above_ring=False
+  for obj in meshes:
+   name=obj.name
+   if name.startswith('Turret bearing'):
+    above_ring=True
+    groups.setdefault(('Hull',None),[]).append(obj)
+   elif name.startswith(('Smooth bore','Thermal sleeve','Fume extractor','Muzzle reinforced','Dark cannon')):
+    groups.setdefault(('Barrel',slide),[]).append(obj)
+   elif name.startswith(('Recessed road wheel','Road wheel armored hub')):
+    # Match each visible hub to the wheel on its axle.
+    axle=(math.copysign(.484,obj.location.x),obj.location.y*1.20,obj.location.z*.80)
+    groups.setdefault(('Wheel',axle),[]).append(obj)
+   elif above_ring and not name.startswith(('Engine cooling','Engine vent')):
+    groups.setdefault(('Turret shell',turret),[]).append(obj)
+   else:
+    groups.setdefault(('Hull',None),[]).append(obj)
+ else:
+  gun=motion_node(scene,'Chin gun traverse',(0,-.48,muzzle[2]),role='gun')
+  slide=motion_node(scene,'Chain gun recoil',(0,-.48,muzzle[2]),gun,'slide')
+  main=motion_node(scene,'Main rotor',(0,.11,.96),role='rotor')
+  tail=motion_node(scene,'Tail rotor',(.14,.30+(1.02-.30)*1.30,.71),role='tailRotor')
+  for obj in meshes:
+   name=obj.name
+   group=('Fuselage',None)
+   if name.startswith(('Composite rotor blade','Rotor tip marking','Rotor hub')):group=('Main rotor blades',main)
+   if name.startswith(('Tail rotor blade','Tail rotor hub')):group=('Tail rotor blades',tail)
+   if name.startswith(('Chain gun receiver','Long chin gun','Chin muzzle')):group=('Chain gun',slide)
+   groups.setdefault(group,[]).append(obj)
+ for (name,parent),objects in groups.items():
+  if name=='Wheel':parent=motion_node(scene,'Road wheel axle',parent,role='wheel')
+  bpy.ops.object.select_all(action='DESELECT')
+  for obj in objects:
+   obj.modifiers.clear()
+   obj.select_set(True)
+  bpy.context.view_layer.objects.active=objects[0]
+  if len(objects)>1:bpy.ops.object.join()
+  mesh=bpy.context.object
+  mesh.name=name
+  if parent:attach(mesh,parent)
+ return slide
 
 
 def export_vehicle_motion(output):
@@ -220,12 +272,13 @@ def export_vehicle_motion(output):
    for obj in list(scene.objects):
     bpy.data.objects.remove(obj,do_unlink=True)
    muzzles=build()
-   consolidate_vehicle_meshes(scene)
+   slide=rig_vehicle(scene,file.stem,muzzles[0])
    for name,point in [('muzzle',muzzles[0]),('body',(0,0,body_height))]:
     marker=bpy.data.objects.new(name,None)
     marker.location=point
     marker['vehicleAnchor']=name
     scene.collection.objects.link(marker)
+    if name=='muzzle':attach(marker,slide)
    result=bpy.ops.export_scene.gltf(filepath=str(file),export_format='GLB',
     use_active_scene=True,export_extras=True,export_animations=False,
     export_cameras=False,export_lights=False)
