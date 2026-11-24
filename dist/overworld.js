@@ -60,7 +60,9 @@ window.IronVowOverworld=(()=>{
  function travelRest(career,days){
   if(!record(career)||!nonnegative(days))return null;
   const repair=career.ship?.levels?.repair??0,crew=career.ship?.levels?.crew??0;
-  const service=hull=>({...hull,condition:Math.min(100,hull.condition+repair*12*days)});
+  const finish=career.strategy?.projects.workshop;
+ const overhaulDays=Number.isSafeInteger(finish)?Math.min(days,Math.max(0,career.day+days-finish+1)):0;
+ const service=hull=>({...hull,condition:Math.min(100,hull.condition+repair*12*days+8*overhaulDays)});
   const units=(career.units??[]).map(service);
   const reserve=Object.fromEntries(Object.entries(career.reserve??{}).map(([id,hull])=>[id,service(hull)]));
   const wounds=Object.fromEntries(Object.entries(career.wounds??{}).flatMap(([id,remaining])=>{
