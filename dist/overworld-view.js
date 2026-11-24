@@ -62,10 +62,15 @@ window.IronVowOverworldView = (() => {
       <button type="button" class="chart-reset" data-chart-reset aria-label="Recenter chart">Recenter</button>
       <aside class="chart-port-card" aria-label="Selected railhead">
         <h2>${escapeHtml(selected.name)}</h2>
-        ${data.reward ? `<p class="chart-strategy">${data.reward.available ? escapeHtml(data.reward.label) + ' · through Day ' + data.reward.until : data.reward.claimed ? 'Regional bonus claimed' : 'Regional bonus expired by arrival'}</p>` : ''}
-        ${data.standing ? `<p class="chart-strategy">${data.standing >= 6 ? 'Freight partner · 25% base freight discount' : 'Local standing ' + data.standing + ' / 6 for freight discount'}</p>` : ''}
-        ${data.pressure?.next && !data.departing ? `<p class="chart-strategy chart-warning">${escapeHtml(data.pressure.next.name)} · counter at ${escapeHtml(data.ports.find(port => port.id === data.pressure.next.port).name)} by Day ${data.pressure.next.until}</p>` : ''}
-        ${data.pressure?.active && !data.departing ? `<p class="chart-strategy chart-warning">${escapeHtml(data.pressure.active.name)} active · +${credits(data.pressure.active.cost)} on the affected line through Day ${data.pressure.active.until}</p>` : ''}${data.arrivingContracts < data.contractCount && quote ? `<small class="chart-expiry-warning">${data.contractCount - data.arrivingContracts} expire en route</small>` : ''}
+        ${!data.departing && !data.transitEvent ? `<details class="chart-strategy">
+          <summary>${data.reward?.available ? escapeHtml(data.reward.label) : 'Regional dispatch'}${data.pressure?.active ? ' · disruption' : ''}</summary>
+          <div class="chart-strategy-detail">
+        ${data.reward ? `<p>${data.reward.available ? escapeHtml(data.reward.label) + ' · through Day ' + data.reward.until : data.reward.claimed ? 'Regional bonus claimed' : 'Regional bonus expired by arrival'}</p>` : ''}
+        ${data.standing ? `<p>${data.standing >= 6 ? 'Freight partner · 25% base freight discount' : 'Local standing ' + data.standing + ' / 6 for freight discount'}</p>` : ''}
+        ${data.pressure?.next && !data.departing ? `<p class="chart-warning">${escapeHtml(data.pressure.next.name)} · counter at ${escapeHtml(data.ports.find(port => port.id === data.pressure.next.port).name)} by Day ${data.pressure.next.until}</p>` : ''}
+        ${data.pressure?.active && !data.departing ? `<p class="chart-warning">${escapeHtml(data.pressure.active.name)} active · +${credits(data.pressure.active.cost)} on the affected line through Day ${data.pressure.active.until}</p>` : ''}${data.arrivingContracts < data.contractCount && quote ? `<small class="chart-expiry-warning">${data.contractCount - data.arrivingContracts} expire en route</small>` : ''}
+          </div>
+        </details>` : ''}
         <div class="chart-port-actions"><button type="button" data-chart-contracts="${selected.id}"${data.transitEvent || data.departing ? ' disabled' : ''}>Contracts ${data.contractCount ?? 1}</button><button type="button" class="chart-services-link" data-port-services="${escapeHtml(selected.id)}" aria-haspopup="dialog" aria-expanded="${!!data.portServices && !data.transitEvent}"${data.transitEvent || data.departing ? ' disabled' : ''}>Services</button></div>
         <button type="button" class="navigation-quiet chart-ship-upgrades" data-page="ship">Train Upgrades</button>
       </aside>
