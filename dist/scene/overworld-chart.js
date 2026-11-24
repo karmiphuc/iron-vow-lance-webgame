@@ -75,30 +75,38 @@
     light.shadow.normalBias = .036; light.shadow.radius = 3; scene.add(light);
     const rim = new T.DirectionalLight(linear(0x91bcc8), .55); rim.position.set(7, 8, -10); scene.add(rim);
     // Thick chamfered table rim, with an inset water surface rather than a floating diagram.
+    // Allow room for the buildings and train beyond the outermost railhead.
+    const positions = data.ports.map(portPosition);
+    const halfWidth = Math.max(11.28, ...positions.map(p => Math.abs(p.x) + 2));
+    const halfDepth = Math.max(5.97, ...positions.map(p => Math.abs(p.z) + 1.8));
+    const width = halfWidth * 2, depth = halfDepth * 2;
+    const frameGroup = new T.Group();
+    frameGroup.scale.set(width / 22.56, 1, depth / 11.94);
+    scene.add(frameGroup);
     const outline = new T.Shape();
     outline.moveTo(-11.6, -6.7); outline.lineTo(11.6, -6.7); outline.lineTo(12, -6.3); outline.lineTo(12, 6.3);
     outline.lineTo(11.6, 6.7); outline.lineTo(-11.6, 6.7); outline.lineTo(-12, 6.3); outline.lineTo(-12, -6.3); outline.closePath();
     const slab = new T.ExtrudeGeometry(outline, { depth: .56, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: .12, bevelThickness: .12 });
-    slab.rotateX(-Math.PI / 2); mesh(scene, slab, steel, 0, -.6, 0);
+    slab.rotateX(-Math.PI / 2); mesh(frameGroup, slab, steel, 0, -.6, 0);
     // Recessed relief insert, gasket, brushed metal rail and flush deck screws.
     const gasket = mat('gasket', 0x111818), rail = mat('rail', 0x667571, .65);
-    box(scene, 22.76, .19, 12.14, gasket, 0, -.01, 0);
+    box(frameGroup, 22.76, .19, 12.14, gasket, 0, -.01, 0);
     const screws = new T.InstancedMesh(new T.CylinderGeometry(.049, .049, .016, 8), rail, 24);
     const screw = new T.Matrix4();
     let fastener = 0;
     for (const z of [-6.28, 6.28]) {
-      box(scene, 22.92, .052, .075, rail, 0, .03, z);
+      box(frameGroup, 22.92, .052, .075, rail, 0, .03, z);
       for (let x = -10.45; x <= 10.5; x += 1.9) screws.setMatrixAt(fastener++, screw.makeTranslation(x, .066, z));
     }
-    scene.add(screws);
-    for (const x of [-11.49, 11.49]) box(scene, .075, .052, 12.55, rail, x, .03, 0);
+    frameGroup.add(screws);
+    for (const x of [-11.49, 11.49]) box(frameGroup, .075, .052, 12.55, rail, x, .03, 0);
 
     // Lithographic terrain colors follow elevation, moisture and exposed rock.
     const vertices = [], uvs = [], indices = [], nx = 164, nz = 88;
     const deep = linear(0x173039), shoal = linear(0x41666a), silt = linear(0x9d997a);
     const grass = linear(0x68755a), stone = linear(0xa39a81), cliff = linear(0x626962);
     const dry = linear(0x886b50), c = new T.Color();
-    const width = 22.56, depth = 11.94;
+
     for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
       const u = i / nx, v = j / nz, x = (u - .5) * width, z = (v - .5) * depth;
       vertices.push(x, heightAt(x, z), z);
@@ -139,12 +147,12 @@
     const bulkhead = mat('bulkhead', 0x28343a, .4), trim = mat('trim', 0x526063, .52);
     const deck = mat('deck', 0x151d20, .15);
     box(scene, 52, .24, 19, deck, 0, -1.28, .6);
-    box(scene, 35, 1.18, .6, bulkhead, 0, -.48, -8.9);
-    box(scene, 35, .14, .76, trim, 0, .16, -8.9);
+    box(scene, 35, 1.18, .6, bulkhead, 0, -.48, -(halfDepth + 3));
+    box(scene, 35, .14, .76, trim, 0, .16, -(halfDepth + 3));
     for (const x of [-15, -8, 0, 8, 15]) {
-      beam(scene, new T.Vector3(x, .12, -8.9), new T.Vector3(x * .91, 8.8, -10.6), .25, bulkhead);
+      beam(scene, new T.Vector3(x, .12, -(halfDepth + 3)), new T.Vector3(x * .91, 8.8, -(halfDepth + 4.7)), .25, bulkhead);
     }
-    box(scene, 35, .29, .56, bulkhead, 0, 8.8, -10.6);
+    box(scene, 35, .29, .56, bulkhead, 0, 8.8, -(halfDepth + 4.7));
     const skyGeometry = new T.PlaneGeometry(90, 55, 56, 30);
     const skyPositions = skyGeometry.attributes.position, skyColors = [];
     const zenith = linear(0x223b4c), horizon = linear(0xb3bab1), cloud = linear(0x849795);
@@ -212,7 +220,7 @@
     }
     const routeGroup = new T.Group(), sensorGroup = new T.Group(), markerGroup = new T.Group(), ship = new T.Group();
     scene.add(routeGroup, sensorGroup, markerGroup, ship);
-    const state = { renderer, scene, camera, ports, portHits, routeGroup, sensorGroup, markerGroup, catalog: catalogKey(data.ports), markerPositions: [], sensorRadius: 0, ship, routeHits: [], shipReady: false, light, reliefMap };
+    const state = { halfWidth, halfDepth, renderer, scene, camera, ports, portHits, routeGroup, sensorGroup, markerGroup, catalog: catalogKey(data.ports), markerPositions: [], sensorRadius: 0, ship, routeHits: [], shipReady: false, light, reliefMap };
     stage = state;
     // Small relief-table model of the locomotive, workshop car and low-loader.
     for (const [index, x] of [1.0,0,-1.0].entries()) {
@@ -492,7 +500,19 @@
     const elevation = portrait ? Math.max(tilt, 1.12) : tilt;
     const azimuth = yaw + (portrait ? .74 : 0);
     // Fit the complete table in both orientations, keeping the lip in foreground.
-    const distance = Math.max(23.5, (portrait ? 42 : 39) / camera.aspect) / zoom;
+    const verticalSlope = Math.tan(camera.fov * Math.PI / 360);
+    const horizontalSlope = verticalSlope * camera.aspect;
+    let fitted = 0;
+    for (const x of [-stage.halfWidth, stage.halfWidth]) {
+      for (const z of [-stage.halfDepth, stage.halfDepth]) {
+        const across = x * Math.cos(azimuth) - z * Math.sin(azimuth);
+        const along = x * Math.sin(azimuth) + z * Math.cos(azimuth);
+        const towards = along * Math.cos(elevation);
+        fitted = Math.max(fitted, towards + Math.abs(across) / horizontalSlope,
+          towards + Math.abs(along * Math.sin(elevation)) / verticalSlope);
+      }
+    }
+    const distance = fitted * 1.055 / zoom;
     camera.position.set(panX + Math.sin(azimuth) * Math.cos(elevation) * distance, Math.sin(elevation) * distance, panZ + Math.cos(elevation) * Math.cos(azimuth) * distance);
     camera.lookAt(panX, 0, panZ); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
     const current = stage.ports[data.current]?.ground;

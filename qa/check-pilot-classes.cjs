@@ -14,7 +14,10 @@ for(let kind=0;kind<8;kind++){
  assert.equal(new Set(licenses).size,3);
  run(`save.units[${slot}].level=2`);
  const third=tracks[2].nodes;
- assert.ok(run(`learnTraining(${slot},'${third[0].id}')&&learnTraining(${slot},'${third[1].id}')`));
+ assert.ok(run(`learnTraining(${slot},'${third[0].id}')`));
+ assert.equal(run(`learnTraining(${slot},'${third[1].id}')`),false);
+ run(`save.units[${slot}].level=3`);
+ assert.ok(run(`learnTraining(${slot},'${third[1].id}')`));
  assert.equal(run(`setFieldLicense(${kind},2,'${licenses[0]}')`),false);
  run(`save.units[${slot}].level=10`);
  assert.ok(run(`setFieldLicense(${kind},10,'${licenses[0]}')`));
