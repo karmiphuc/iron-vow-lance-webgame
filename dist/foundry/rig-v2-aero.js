@@ -4,7 +4,7 @@
 const T=root.THREE,V3=root.IronVowFoundryRig.V3;
 const arsenal=root.IronVowProductionArsenal;
 root.IronVowRigV2.register(19,{
- id:'aero',assetPath:'rig-bench/rig-v2/aero.glb',factoryLivery:true,
+ id:'aero',assetPath:'rig-bench/rig-v2/aero.glb',factoryLivery:true,scale:1.25,
  setup({bone,driver,marker,bounds,rig,workshopMounts}){
   const sockets={};
   for(const side of ['L','R']){

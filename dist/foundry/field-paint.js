@@ -16,9 +16,10 @@ const palettes={
  shrike:['#a8a18a','#888975','#696d61','#c6c3a7','#747769','#ba965e'],
  basilisk:['#87969a','#6f8083','#526468','#a7b5ac','#596e72','#b9a273'],
  valk:['#c7c9be','#acb5ab','#84938e','#e0deca','#456587','#b55e52'],
+ aero:['#54665c','#414f48','#303e3b','#929580','#48544e','#546166'],
  cairn:['#899aa2','#707f86','#586962','#aab7b6','#41505a','#a39b76'],
  kestrel:sand,gatecrasher:iron,cicada:olive,behemoth:sand,aegis:olive,bastion:blue,hellbreaker:iron,citadel:blue,
- infantry:olive,elite:blue,gravemaw:olive,reaver:iron,bulwark:olive,ashigaru:olive,aero:olive,shogun:blue,lion:sand
+ infantry:olive,elite:blue,gravemaw:olive,reaver:iron,bulwark:olive,ashigaru:olive,shogun:blue,lion:sand
 };
 const blocks=[
  [[-50,12],[65,12],[65,32],[104,32],[104,67],[54,67],[54,84],[-50,84]],
