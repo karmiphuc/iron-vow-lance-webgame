@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 const T=root.THREE,R=root.IronVowFoundryRig,V=R.V3,up=V(0,1,0);
-const scale=1.08,stepLength=3*scale,ankleHeight=.095;
+const scale=1.04,stepLength=3*scale,ankleHeight=.095;
 const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,v));
 const approach=(a,b,rate,dt)=>T.MathUtils.lerp(a,b,1-Math.exp(-rate*dt));
 const smooth=v=>{const t=clamp(v);return t*t*(3-2*t);};
@@ -197,7 +197,7 @@ function animate(m,input,dt,t){
  shieldArm(m,input,state,spring,lock,dt,reset);
  // Travel retracts the carriage to the left cheek. At rest the hand catches
  // the grip inboard, under the sight. The trunnion tracks the target above it.
- breech.position.set(.65+.55*run-.08*lock,.50+.12*run,1.74-1.43*run+.08*lock);
+ breech.position.set(.65+.55*run-.08*lock,.50+.12*run,1.56-1.25*run+.26*lock);
  orient(m,breech,new T.Euler(.10*(1-lock)-.018*lock-.045*run+.26*down,0,-.025*(1-lock),'YXZ'));
  const link=state.link,local=breech.position.clone().sub(link.position);
  link.quaternion.setFromUnitVectors(V(0,0,1),local.clone().normalize());
