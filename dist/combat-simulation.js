@@ -27,14 +27,14 @@
  const roundWeight=(round,count)=>round.critical?(count>1?2:1.5):1;
  const BREACH_LIMBS=Object.freeze(['right','left','legs']);
  const pilotHitChance=training=>Math.min(PILOT_HIT_MAX,Math.max(PILOT_HIT_MIN,PILOT_HIT_BASE+(training?.pilotHit??0)*PILOT_HIT_TRAINING));
- function createTerrainRules({getBattle,onBoard,movementLimit,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
+ function createTerrainRules({getBattle,onBoard,movementLimit,moveAP=()=>1,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
   function occupied(x,z){return getBattle().units.some(u=>u.alive&&u.x===x&&u.z===z)}
   const neighborTiles=(x,z)=>[[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
   const reverseStepOrder=(p,x,z)=>p.x>x?0:p.x<x?1:p.z>z?2:3;
   const terrainLevel=(x,z)=>getBattle()?.field?.cells?(terrainCell(x,z)?.level??0):0;
   const elevationCost=(u,x,z,a,b)=>u.kind==='helicopter'?0:Number(terrainLevel(x,z)!==terrainLevel(a,b));
   function movementPlans(u,flight=false){
-   const {cover}=getBattle(),limit=movementLimit(u);
+   const {cover}=getBattle(),limit=movementLimit(u),apPerTile=moveAP(u);
    const origin={x:u.x,z:u.z,tiles:0,ap:0,elevationAP:0};
    const start=u.x+','+u.z,best=new Map([[start,origin]]);
    let frontier=new Map([[start,origin]]);
@@ -47,7 +47,7 @@
      const key=x+','+z;
      if(!onBoard(x,z)||occupied(x,z)||(u.kind!=='helicopter'&&cover.has(key)))continue;
      const elevationAP=plan.elevationAP+elevationCost(u,plan.x,plan.z,x,z);
-     const ap=tiles+elevationAP;
+     const ap=tiles*apPerTile+elevationAP;
      if(ap>(u.ap??Infinity)||elevationAP>=(priorElevation.get(key)??Infinity))continue;
      const incumbent=next.get(key);
      if(incumbent&&(ap>incumbent.ap||ap===incumbent.ap&&
@@ -270,7 +270,7 @@ function reactionWeapon(defender,attacker){
   attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementPlans,movementLimit,canJumpjet,jumpjetDestination,
   useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,
   trySurrender=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
-  doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,jumpjetCost=()=>2,
+  doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,moveAP=()=>1,jumpjetCost=()=>2,
   braceCost=()=>2,braceUnit=u=>{u.brace=true},barrageTarget=()=>null,
   inCover=()=>false,highGroundAim=()=>0,reactionWeapon=()=>null,
   forecast=(_,t,w)=>({part:'body',damage:w.damage??10})
@@ -370,7 +370,7 @@ function reactionWeapon(defender,attacker){
    }else if(movementLimit(u)>0)for(const [key,cost] of paths(u)){
     if(cost===0)continue;
     const [x,z]=key.split(',').map(Number);
-    consider(x,z,cost,cost);
+    consider(x,z,cost,cost*moveAP(u));
    }
    if((!best.shot||role[1]==='push'&&!best.shot.weapon.melee)&&canJumpjet(u))for(const t of opponents){
     const landing=jumpjetDestination(u,t);

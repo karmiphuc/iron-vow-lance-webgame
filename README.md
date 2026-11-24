@@ -114,7 +114,7 @@ Foundry backups exported by the donor's v2 game can be imported from Career. The
 
 A mech starts with 14 AP before training and deployment bonuses. It recovers up to 12 AP at the start of its turn. Movement, attacks, counters and other combat actions use the same pool. Initiated attacks, including tactical specials, can spend at most 8 AP per unit per turn.
 
-Movement costs 1 AP per tile, plus 1 AP for each uphill or downhill transition. A mech can split movement around attacks until its remaining Mobility or AP runs out. Jumpjet uses movement range and costs at least 2 AP.
+Each chassis has a fixed tile allowance for the whole turn. Standard drives spend 1 AP per tile. Heavy chassis and Javelin tanks spend 2 AP per tile. Each uphill or downhill transition adds 1 AP. A mech can split movement around attacks until its remaining Mobility or AP runs out. Jumpjet uses movement range and costs at least 2 AP.
 
 A surviving mech can counter each eligible incoming attack as long as it can pay. Counters cost the weapon’s AP plus 3 at 1–2 tiles, 2 at 3–4 tiles or 1 farther away. An adjacent free-hand counter costs 4 AP. Counters cannot trigger another counter.
 

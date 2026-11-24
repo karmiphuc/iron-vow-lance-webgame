@@ -54,7 +54,7 @@ const setTimeout = (callback, ms) => {
   poses=[];capture=true;
   await run(`moveUnit(current(),${x},${z},1)`);
   capture=false;
-  assert.equal(run('current().ap'),13);
+  assert.equal(run('current().ap'),index===0?12:13);
   assert.ok(new Set(poses.filter(p=>p.walking).map(p=>p.phase)).size>8,id+' advances the live gait clock');
   poses=[];
   const before=run('battle.units[4].hp.body');
@@ -64,7 +64,7 @@ const setTimeout = (callback, ms) => {
   await run("shoot(current(),battle.units[4],'body')");
   capture=false;
   run('battle.busy=false');
-  assert.equal(run('current().ap'),9);
+  assert.equal(run('current().ap'),index===0?8:9);
   assert.ok(run('battle.units[4].hp.body')<before);
   assert.ok(poses.some(p=>p.priming&&p.advanced),id+' takes a forward step before releasing');
   assert.ok(poses.some(p=>p.fired&&p.aim>.9&&Math.abs(p.windup-.42*56/30)<1e-6),id+' preserves its release timing');
@@ -79,7 +79,7 @@ const setTimeout = (callback, ms) => {
  poses=[];capture=true;
  await run("shoot(current(),battle.units[3],'body',selectedWeapon(current(),'strike'))");
  capture=false;
- assert.equal(run('current().ap'),7);
+ assert.equal(run('current().ap'),6);
  assert.ok(poses.some(p=>p.fired&&p.strike>.5&&Math.abs(p.windup-.34*1.05)<1e-6));
  run('selected=1;battle.units[5].x=4;battle.units[5].z=18');
  poses=[];capture=true;

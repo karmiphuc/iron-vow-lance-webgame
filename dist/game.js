@@ -97,7 +97,7 @@ const armoryOptions=Object.fromEntries(Object.keys(ARMORY_CLASSES).map(key=>[key
  key==='shields'?SHIELDS:[...RANGED,...MELEE].filter(w=>armoryClass(w)===key).sort((a,b)=>a.price-b.price)
 ]));
 const validPaint=value=>typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value);
-const FRAMES=[{name:'WARDEN',model:'WDN–07',role:'ASSAULT',color:'#899681',hp:160,arm:92,leg:110,move:4,armor:5,cost:75000},{name:'KESTREL',model:'KST–12',role:'RECON',color:'#b6a37c',hp:126,arm:78,leg:100,move:5,armor:2,cost:50000},{name:'BASILISK',model:'BSK–04',role:'SUPPORT',color:'#708c92',hp:180,arm:100,leg:90,move:3,armor:7,cost:105000}];
+const FRAMES=[{name:'WARDEN',model:'WDN–07',role:'ASSAULT',color:'#899681',hp:160,arm:92,leg:110,move:4,armor:5,cost:75000},{name:'KESTREL',model:'KST–12',role:'RECON',color:'#b6a37c',hp:126,arm:78,leg:100,move:5,armor:2,cost:50000},{name:'BASILISK',model:'BSK–04',role:'SUPPORT',color:'#708c92',hp:180,arm:100,leg:90,move:3,moveAP:2,armor:7,cost:105000}];
 const PILOTS=[{name:'Mara Voss',call:'ROOK',skill:'Overdrive',desc:'+2 AP this turn. Once per battle.',color:'#9cae8b',fee:1400},{name:'Jin Takeda',call:'GHOST',skill:'Deadeye',desc:'Next attack deals 50% more damage. Once per battle.',color:'#c1a477',fee:1400},{name:'Elena Ortiz',call:'ANCHOR',skill:'Field repair',desc:'Restore 45 body HP. Once per battle.',color:'#83a4ac',fee:1400}];
 const HIRES=[
  {name:'Nadi Sato',call:'SCOUT',skill:'Target Paint',desc:'Mark a hostile within 6 tiles. The next allied attack gains 20 percentage points of accuracy. Once per battle.',color:'#9fc19a',glyph:'binoculars',fee:1100},
@@ -350,7 +350,7 @@ function resetPilotTraining(i){
 const selectedDoctrine=(kind,learned)=>PILOT_TREES[kind].find(path=>learned.includes(path.nodes[DOCTRINE_RANK].id));
 
 FRAMES.push(
- {name:'GATECRASHER',model:'HV–09',role:'BREACH',color:'#a94e3c',hp:198,arm:112,leg:116,move:2,armor:8,cost:350000,
+ {name:'GATECRASHER',model:'HV–09',role:'BREACH',color:'#a94e3c',hp:198,arm:112,leg:116,move:2,moveAP:2,armor:8,cost:350000,
   native:'gatecrasher',weapon:'morrow',brief:'The twin cannon is standard. Fit an Arc Cleaver or a right-shoulder Vesper pod in the Workshop.'},
  {name:'CICADA',model:'ML–14',role:'FIRE SUPPORT',color:'#81885e',hp:148,arm:84,leg:95,move:3,armor:4,cost:300000,
   native:'cicada',weapon:'locust',melee:'pulse-bash',brief:'The integrated Locust racks fire guided missiles across cover. Keep the launcher behind the line.'}
@@ -359,10 +359,10 @@ FRAMES.push(
 FRAMES.push(
  {name:'VALKYRIE',model:'VLK–01',role:'STRIKER',color:'#c9ccd0',hp:135,arm:85,leg:95,move:5,armor:3,foundry:3,cost:180000,weapon:'rifle'},
  {name:'ONI',model:'ONI–09',role:'DUELIST',color:'#8a3a40',hp:150,arm:105,leg:100,move:5,armor:4,foundry:4,cost:205000,weapon:'rifle',melee:'blade'},
- {name:'BEHEMOTH',model:'BHM–22',role:'ARTILLERY',color:'#8f8a68',hp:210,arm:90,leg:150,move:3,armor:8,foundry:5,cost:400000,weapon:'missile'},
+ {name:'BEHEMOTH',model:'BHM–22',role:'ARTILLERY',color:'#8f8a68',hp:210,arm:90,leg:150,move:3,moveAP:2,armor:8,foundry:5,cost:400000,weapon:'missile'},
  {name:'AEGIS',model:'AGS–07',role:'ASSAULT',color:'#899681',hp:165,arm:94,leg:108,move:4,armor:5,foundry:0,cost:145000,weapon:'rifle'},
  {name:'SHRIKE',model:'SHK–12',role:'RECON',color:'#b6a37c',hp:118,arm:76,leg:103,move:5,armor:2,foundry:1,cost:50000,weapon:'shotgun'},
- {name:'BASTION',model:'BST–04',role:'HEAVY SUPPORT',color:'#708c92',hp:188,arm:100,leg:105,move:3,armor:7,foundry:2,cost:260000,weapon:'rifle',rig:'bastion'}
+ {name:'BASTION',model:'BST–04',role:'HEAVY SUPPORT',color:'#708c92',hp:188,arm:100,leg:105,move:3,moveAP:2,armor:7,foundry:2,cost:260000,weapon:'rifle',rig:'bastion'}
 );
 const BASTION_FRAME=FRAMES.length-1;
 const playerHull=frame=>Boolean(FRAMES[frame]&&(!FRAMES[frame].enemyOnly||FRAMES[frame].salvageOnly||FRAMES[frame].captureOnly));
@@ -383,7 +383,7 @@ const CITADEL_FRAME=FRAMES.push({...FRAMES[BASTION_FRAME],name:'CITADEL',model:'
 const LINE_INFANTRY_FRAME=FRAMES.push({name:'LINE INFANTRY',model:'LI-01',role:'STANDARD',color:'#7b8259',
  hp:151,arm:87,leg:98,move:4,armor:4,weapon:'rifle',foundry:6,enemyOnly:true,captureOnly:true,fixedWeapons:true})-1;
 const LINE_ELITE_FRAME=FRAMES.push({name:'LINE INFANTRY ELITE',model:'LI-02',role:'ELITE',color:'#526e86',
- hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true,captureOnly:true,fixedWeapons:true})-1;
+ hp:185,arm:104,leg:112,move:3,moveAP:2,armor:8,weapon:'rifle',foundry:7,enemyOnly:true,captureOnly:true,fixedWeapons:true})-1;
 const INFANTRY_PRIMARIES=['rifle','trident','shotgun'];
 const isLineInfantry=u=>u.team==='enemy'&&(u.frame===LINE_INFANTRY_FRAME||u.frame===LINE_ELITE_FRAME);
 const VANGUARD_FRAME=FRAMES.push({name:'GRAVEMAW',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
@@ -391,14 +391,14 @@ const VANGUARD_FRAME=FRAMES.push({name:'GRAVEMAW',model:'MECH-01',role:'CLOSE AS
 const REAVER_FRAME=FRAMES.push({name:'REAVER',model:'RV-04',role:'MEDIUM+',color:'#a1242c',
  hp:172,arm:98,leg:114,move:4,armor:6,cost:190000,weapon:'rifle',foundry:9,enemyOnly:true,salvageOnly:true,fixedWeapons:true})-1;
 const BULWARK_FRAME=FRAMES.push({name:'BULWARK-AEGIS',model:'M02',role:'MELEE GUARD',color:'#415946',
- hp:166,arm:86,leg:110,move:3,armor:6,cost:245000,weapon:'aegis-cleave',melee:'aegis-bash',foundry:10,enemyOnly:true,salvageOnly:true,fixedWeapons:true})-1;
+ hp:166,arm:86,leg:110,move:3,moveAP:2,armor:6,cost:245000,weapon:'aegis-cleave',melee:'aegis-bash',foundry:10,enemyOnly:true,salvageOnly:true,fixedWeapons:true})-1;
 const ASHIGARU_FRAME=FRAMES.push({name:'ASHIGARU',model:'IV-S07',role:'HOSTILE SCOUT',color:'#385644',
  hp:82,arm:45,leg:72,move:6,armor:1,cost:95000,weapon:'needle-carbine',melee:'signal-knife',foundry:12,enemyOnly:true,salvageOnly:true,fixedWeapons:true,fixedLivery:true})-1;
 const AERO_FRAME=FRAMES.push({name:'AERO',model:'IV-03',role:'ELITE RECON',color:'#385647',
  hp:134,arm:84,leg:108,move:6,armor:3,cost:400000,weapon:'rifle',melee:'blade',
  foundry:11,noSalvage:true,fixedLivery:true,dodge:.15,jumpjet:true})-1;
 const SHOGUN_FRAME=FRAMES.push({name:'SHOGUN',model:'HV–12',role:'FLAGSHIP ASSAULT',color:'#3978a8',
- hp:238,arm:124,leg:138,move:3,armor:10,cost:500000,weapon:'morrow',native:'shogun',
+ hp:238,arm:124,leg:138,move:3,moveAP:2,armor:10,cost:500000,weapon:'morrow',native:'shogun',
  brief:'A flagship assault chassis with layered armor and a planted stride. The Morrow twin cannon is standard.'})-1;
 const CAIRN_FRAME=FRAMES.push({name:'CAIRN',model:'CRN–01',role:'LINE ASSAULT',color:'#899aa2',
  hp:155,arm:94,leg:105,move:4,armor:5,cost:180000,weapon:'rifle',foundry:3,rig:'cairn',
@@ -413,7 +413,7 @@ const HUSKY_FRAME=FRAMES.push({name:'HUSKY',model:'HSK–05',role:'TRAIL SCOUT',
  hp:139,arm:82,leg:122,move:5,armor:3,cost:65000,weapon:'shotgun',primaryOptions:['shotgun'],native:'husky',fixedLivery:true,marketPort:'ridge',
  brief:'Ridge Mast trail scout. Its black-and-white chassis carries a scattergun for running down isolated targets.'})-1;
 const GIZA_FRAME=FRAMES.push({name:'GIZA',model:'GZ–09',role:'SIEGE GUNNER',color:'#73785d',
- hp:192,arm:103,leg:118,move:3,armor:8,cost:215000,weapon:'rifle',primaryOptions:['rifle'],native:'giza',fixedLivery:true,marketPort:'corridor',
+ hp:192,arm:103,leg:118,move:3,moveAP:2,armor:8,cost:215000,weapon:'rifle',primaryOptions:['rifle'],native:'giza',fixedLivery:true,marketPort:'corridor',
  brief:'Vanta Shipyards gunner. Its rifle holds a firing lane. Once per battle, Double Cannon brings both shoulder guns onto one hostile.'})-1;
 const VYZOV_FRAME=FRAMES.push({name:'VYZOV',model:'VZ–11',role:'MORTAR RAIDER',color:'#6c735d',
  hp:158,arm:102,leg:125,move:5,armor:4,cost:275000,weapon:'vyzov-knuckle',native:'vyzov',fixedLivery:true,marketPort:'frontier',
@@ -443,7 +443,7 @@ const MECH_SIGNATURES={
  [REAVER_FRAME]:['Suppressing Fire','Pressure armed targets. A direct hit to the weapon arm gives the target’s next shot −10 aim.',4,'hold'],
  [BULWARK_FRAME]:['Shield Bash','Hold adjacent ground. Bulwark’s bash pushes the target one tile into a clear space. Other frames push with melee hits.',1,'push'],
  [ASHIGARU_FRAME]:['Range Discipline','Keep two to three tiles of space while the carbine works. Ashigaru switches to flechettes up close. Other frames gain +5 aim on adjacent strikes or ranged shots from two or more tiles.',3,'mobile'],
- [AERO_FRAME]:['Jumpjet','Take an unexpected angle. Jump up to five tiles for 2 AP, once per sortie.',1,'push'],
+ [AERO_FRAME]:['Jumpjet','Take an unexpected angle. Jump up to five tiles with the chassis’s movement rate and a 2 AP minimum, once per sortie.',1,'push'],
  [SHOGUN_FRAME]:['Siegebreaker','Break a defensive line at range. Direct fire cuts Brace reduction by 20 points.',5,'hold'],
  [CAIRN_FRAME]:['Braced Aim','Hold a firing lane. Direct shots gain +4 aim while braced.',4,'anchor'],
  [SALTJACK_FRAME]:['Sustained Burst','Keep steady pressure at midrange. Bursts fired from four or more tiles gain +6 aim.',5,'hold'],
@@ -457,7 +457,7 @@ const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
 function hasMechSkill(u,frame){return Boolean(u?.mechSkills&&(u.frame===frame||u.mechSkills.includes(frame)))}
 const AERO_MELEE=['cleaver','breaker','piledriver','blade'];
 const JUMPJET_RANGE=5,JUMPJET_AP=2;
-const JUMPJET_HELP='Leap over cover and units to a clear tile within '+JUMPJET_RANGE+' tiles. Costs 1 AP per tile (minimum '+JUMPJET_AP+' AP) and uses remaining movement range. Once per sortie. Requires working legs.';
+const JUMPJET_HELP='Leap over cover and units to a clear tile within '+JUMPJET_RANGE+' tiles. Uses the chassis’s AP per tile (minimum '+JUMPJET_AP+' AP) and remaining movement range. Once per sortie. Requires working legs.';
 const dailyAeroMelee=()=>AERO_MELEE[(save.day-1)%AERO_MELEE.length];
 const chassisEvade=frame=>frame.dodge??.08;
 const dodgeChance=u=>u&&!u.kind&&FRAMES[u.frame]?chassisEvade(FRAMES[u.frame]):0;
@@ -997,7 +997,7 @@ function patchStoredHull(frame){
  hull.condition=patchLimit();persist();return true;
 }
 const VEHICLES={
- tank:{name:'JAVELIN TANK',hp:64,armor:5,move:4,step:.18,xp:20,altitude:0,wreckAt:.18,muzzle:[.11105,.76273],center:[.52,.674],gun:{id:'rampart',name:'85 mm cannon',damage:27,range:5,ap:4}},
+ tank:{name:'JAVELIN TANK',hp:64,armor:5,move:4,moveAP:2,step:.18,xp:20,altitude:0,wreckAt:.18,muzzle:[.11105,.76273],center:[.52,.674],gun:{id:'rampart',name:'85 mm cannon',damage:27,range:5,ap:4}},
  helicopter:{name:'KITE GUNSHIP',hp:43,armor:1,move:6,step:.15,xp:25,altitude:.82,wreckAt:.48,muzzle:[.28168,.75768],center:[.45,.584],gun:{id:'rifle',name:'Chin autocannon',damage:19,range:5,ap:4}}
 };
 const NEW_BOARD={width:18,depth:20};
@@ -1017,6 +1017,8 @@ const EMPTY_HAND=Object.freeze({id:'unarmed',name:'Free hand',type:'EMPTY',range
 const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:u.frame===REAVER_FRAME?REAVER_AUTOCANNON:u.weapon==null||launcherId(u.weapon)?shoulderWeapon(u)??EMPTY_HAND:weapon(u.weapon);
 const isArmed=u=>u.kind||[unitWeapon(u),shoulderWeapon(u),meleeWeapon(u)].some(w=>workingWeapon(u,w));
 const chassisMobility=(frame,legacy=false,training)=>frame.move+(legacy?0:1)+(training?.move??0);
+const chassisMoveAP=frame=>frame?.moveAP??1;
+const moveAP=u=>chassisMoveAP(u.kind?VEHICLES[u.kind]:FRAMES[u.frame]);
 const mobility=u=>u.kind?VEHICLES[u.kind].move:chassisMobility(FRAMES[u.frame],battle.legacy,u.training);
 const mobile=u=>u.kind||u.hp.legs>0;
 const movementLimit=u=>u?.alive&&mobile(u)?u.moveLeft??mobility(u):0;
@@ -1659,7 +1661,7 @@ function infoTip(label,description){
  return `<button type="button" class="info-tip" aria-label="Help for ${label}" data-help="${escaped}">${icon('info')}</button>`;
 }
 const helpHint=()=>`<span class="info-hint">${icon('info')} <span class="mouse-help">Hover or focus for help</span><span class="touch-help">Tap or hold for help</span></span>`;
-const MOVE_HELP='Spend 1 AP per tile, plus 1 AP per elevation change. Move before or after attacking up to your remaining chassis range. Ground mechs need working legs.';
+const MOVE_HELP='Spend your chassis’s AP per tile, plus 1 AP per elevation change. Move before or after attacking up to your remaining chassis range. Ground mechs need working legs.';
 const COUNTER_HELP='Return fire while you can afford the weapon cost plus 3 AP at 1–2 tiles, 2 AP at 3–4 tiles, or 1 AP farther away. A free-hand punch costs 4 AP. Missile launchers cannot counter.';
 const FOUNDATION_HELP='Any level 1 skill opens all three level 3 skills. At level 5, choose a doctrine. Field licenses give you a separate action from level 3.';
 function learnReserveTraining(id,skill){
@@ -1746,6 +1748,7 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
  const reach=weaponRange(primary,training);
  const stats=[
   ['Movement range',chassisMobility(frame,false,training)+' tiles',MOVE_HELP],
+  ['Movement cost',chassisMoveAP(frame)+' AP / tile',MOVE_HELP],
   ...(frame.dodge?[['Dodge',Math.round(frame.dodge*100)+'%','Chance to evade an incoming round or shell.']]:[]),
   ...(frame.jumpjet?[['Jumpjet',JUMPJET_RANGE+' tiles / '+JUMPJET_AP+'+ AP',JUMPJET_HELP]]:[]),
   ['Armor',armor,'Losing the left arm reduces armor to '+damagedArmor(armor)+'.'],
@@ -1916,7 +1919,7 @@ function chassisAssignments(i,training){
    <img ${chassisPicture(index,hull,1)} alt="" loading="lazy">
    <span class="eyebrow">${frame.model} / ${frame.role}</span><h3>${frame.name}</h3>
    <p>${salvaged?intact?intact+' intact · '+bodies+' recovered':bodies+' recovered '+(bodies===1?'body':'bodies')+' · '+rebuildIntegrity()+'% rebuilt':hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
-   <dl><div><dt>Move range</dt><dd>${chassisMobility(frame,false,training)}</dd></div><div><dt>Armor</dt><dd>${chassisArmor(frame,hull,training)}</dd></div><div><dt>Body</dt><dd>${body}</dd></div><div><dt>Each arm</dt><dd>${right}</dd></div><div><dt>Legs</dt><dd>${legs}</dd></div><div><dt>Fire AP</dt><dd>${weaponAP(primary,training)}</dd></div></dl>
+   <dl><div><dt>Movement</dt><dd>${chassisMobility(frame,false,training)} tiles · ${chassisMoveAP(frame)} AP each</dd></div><div><dt>Armor</dt><dd>${chassisArmor(frame,hull,training)}</dd></div><div><dt>Body</dt><dd>${body}</dd></div><div><dt>Each arm</dt><dd>${right}</dd></div><div><dt>Legs</dt><dd>${legs}</dd></div><div><dt>Fire AP</dt><dd>${weaponAP(primary,training)}</dd></div></dl>
    <small>${primary.name} · ${weaponRange(primary,training)} tiles</small>
    <small>${shield?shield.name+' · −'+shieldPercent(shield)+' arm damage':melee?melee.name+' · '+weaponAP(melee,training)+' AP':'No melee'}</small>
    <small>Counter · ${counterSummary(primary,melee,training,shield)} · Uses AP</small>
@@ -3019,7 +3022,7 @@ function modal(title,body,buttons){if(careerStale)return;moveTap=null;if($('#mod
 function closeModal(){if(careerStale)return;closeHelp();$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
 function quickOrders(){
  const topics=[
-  ['arrows-out-cardinal','Move','1 AP / tile',MOVE_HELP+' Cross terraces on foot. Obstacles block movement and give cover to adjacent units. Drag to pan, or use the map and zoom controls.'],
+  ['arrows-out-cardinal','Move','1–2 AP / tile',MOVE_HELP+' Cross terraces on foot. Obstacles block movement and give cover to adjacent units. Drag to pan, or use the map and zoom controls.'],
   ['crosshair','Fire','Pick a hostile and fire','Every round that hits rolls its own location: about 55% body, 25% arms, 20% legs and a small chance of the cockpit. Destroyed parts are skipped. High ground gives direct fire +10 aim. Ridges block guns, while missiles arc over them. Body or cockpit loss disables a mech. Arms and legs affect weapons, armor and movement.'],
   ['crosshair','Strike','Adjacent ground targets','Equip melee in the Workshop. Strike needs a working arm on the equipped side. Gunships require ranged attacks and can cross cover. Missiles ignore cover.'],
   ['shield-chevron','Brace','1–2 AP · blocks 50% or more','Brace lasts until your next turn. Training can reduce the cost. Pilot skills can be used once per battle.'],
@@ -3269,7 +3272,7 @@ function startLionTrial(id){
  render();
 }
 const {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim}=window.IRON_VOW_SIM.createTerrainRules({
- getBattle:()=>battle,onBoard,movementLimit,terrainCell,helicopterHeight:()=>VEHICLES.helicopter.altitude/TERRAIN_RISE,
+ getBattle:()=>battle,onBoard,movementLimit,moveAP,terrainCell,helicopterHeight:()=>VEHICLES.helicopter.altitude/TERRAIN_RISE,
  canReachTarget,launchesMissiles
 });
 let tacticalAim=null;
@@ -3384,7 +3387,7 @@ async function enemyTactical(u,opponents){
  await executeTactical(u,best);
  return true;
 }
-const jumpjetCost=(u,x,z)=>Math.max(JUMPJET_AP,distance(u,{x,z}));
+const jumpjetCost=(u,x,z)=>Math.max(JUMPJET_AP,moveAP(u)*distance(u,{x,z}));
 function canJumpjet(u){
  return Boolean(u?.alive&&(FRAMES[u.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME))&&u.hp.legs>0&&movementLimit(u)>0&&u.ap>=JUMPJET_AP&&!u.jumpjetUsed);
 }
@@ -3519,7 +3522,7 @@ function renderBattle(){
    ${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${counterStatus}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
-  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?movementLimit(u)+' TILES LEFT · 1 AP / TILE · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
+  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?movementLimit(u)+' TILES LEFT · '+moveAP(u)+' AP / TILE · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   ${tacticalPreviewMarkup(u)}
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+movementLimit(t)+' MOVE<br>'+attackAPLeft(t)+' / '+ATTACK_AP_LIMIT+' ATTACK AP<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
@@ -4034,7 +4037,7 @@ const allyAt=([x,z])=>battle.units.some(u=>u.team==='ally'&&u.alive&&u.x===x&&u.
 function checkEnd(){if(!battle)return true;if(!depotOperation()&&!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
 const enemyDoctrine=u=>u.kind==='helicopter'?[5,'mobile']:u.kind==='tank'?[4,'hold']:MECH_SIGNATURES[u.frame]?.slice(2);
 const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
- getBattle:()=>battle,enemyAPCapacity,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
+ getBattle:()=>battle,enemyAPCapacity,moveAP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
  unitWeapon,combatRange,launchesMissiles,movementLimit,isArmed:u=>isArmed(u)||canTactical(u),shoulderWeapon,workingWeapon,trySurrender,tryTactical:enemyTactical,tacticalRange:u=>canTactical(u)?tacticalWeapon(u).range:0,
  resetMovement,renderBattle:()=>renderBattle(),distance,meleeWeapon,scoutWeapon,canUseWeapon,attackObstruction,
  hasMechSkill,paths,movementPlans,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
