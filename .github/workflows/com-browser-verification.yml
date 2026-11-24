@@ -1,0 +1,23 @@
+name: COM browser verification
+on:
+  push:
+    branches: [codex/com-browser-verification]
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      IRON_VOW_QA_SCENARIOS: checkComSkills,checkPilotClasses,checkOverworld,checkMechComputer
+      IRON_VOW_QA_TIMEOUT_MS: 90000
+      IRON_VOW_SOFTWARE_QA: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: git rev-parse HEAD^:dist && git rev-parse HEAD:dist
+      - run: npm run setup:qa
+      - run: npx --prefix qa playwright install --with-deps chromium
+      - run: npm run test:browser
