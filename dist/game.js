@@ -892,7 +892,7 @@ const freeMovement=u=>u&&u.alive&&mobile(u)?u.mechState?.valkyrieStep?1:!u.actio
 const extraMovement=u=>Boolean(u?.alive&&mobile(u)&&u.ap>=EXTRA_MOVE_AP&&!u.extraStep);
 const movementLimit=u=>freeMovement(u)+Number(extraMovement(u));
 const spent=u=>Boolean(u?.alive&&u.ap===0&&(!movementLimit(u)||
- !neighborTiles(u.x,u.z).some(([x,z])=>onBoard(x,z)&&!battle.cover.has(x+','+z)&&!occupied(x,z))));
+ paths(u).size<=1));
 function resetMovement(u){u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key]}
 function startAction(u){u.moveLeft=0;u.actionPhase=true}
 const chassisParts=(frame,hull,training)=>({body:frame.hp+hull.upgrade*25+(training?.body??0),right:frame.arm,left:frame.arm,legs:frame.leg});
@@ -3058,8 +3058,8 @@ function startLionTrial(id){
  focusBattleCamera(lion,true);
  render();
 }
-const {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim}=window.IRON_VOW_SIM.createTerrainRules({
- getBattle:()=>battle,onBoard,movementLimit,terrainCell,helicopterHeight:()=>VEHICLES.helicopter.altitude/TERRAIN_RISE,
+const {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim}=window.IRON_VOW_SIM.createTerrainRules({
+ getBattle:()=>battle,onBoard,movementLimit,freeMovement,extraMoveAP:EXTRA_MOVE_AP,terrainCell,helicopterHeight:()=>VEHICLES.helicopter.altitude/TERRAIN_RISE,
  canReachTarget,launchesMissiles
 });
 let tacticalAim=null;
@@ -3268,7 +3268,7 @@ function renderBattle(){
   const targetStatus=[target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role:'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
   battlefieldReady=window.IronVowScene?.ready!==false;
   battlefieldLoadFailed=Boolean(window.IronVowScene?.loadFailed);
-  const ready=battle.phase==='player'&&!battle.busy&&battlefieldReady,canMove=Boolean(u&&movementLimit(u)),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
+  const ready=battle.phase==='player'&&!battle.busy&&battlefieldReady,canMove=Boolean(u&&paths(u).size>1),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
   const obstruction=u&&target?attackObstruction(u,target,chosen):'';
   const inRange=Boolean(u&&target&&distance(u,target)<=combatRange(u,target,chosen));
   const elevationAim=inRange?highGroundAim(u,target,chosen):0;
@@ -3305,7 +3305,7 @@ function renderBattle(){
    ${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${counterStatus}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
-  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':''):'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH'}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
+  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':'')+' · LEVEL CHANGE +1 AP':'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH'}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   ${tacticalPreviewMarkup(u)}
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
@@ -3446,7 +3446,7 @@ async function useJumpjet(u,x,z){
  if(turning)await turning;
  const duration=reducedMotion?.12:.70;
  u.x=x;u.z=z;
- u.motion={fromX,fromZ,toX:x,toZ:z,start:clock,duration,jumpjet:true,gaitBase:0,stepIndex:0,totalSteps:1};
+ u.motion={fromX,fromZ,toX:x,toZ:z,start:clock,duration,jumpjet:true,jetLift:1.35+.75*Math.abs(terrainLevel(x,z)-terrainLevel(fromX,fromZ)),gaitBase:0,stepIndex:0,totalSteps:1};
  sound('hydraulic',.95);
  await delay(duration*1000);
  u.vx=x;u.vz=z;u.motion=null;u.landTime=clock;
@@ -3456,9 +3456,15 @@ async function useJumpjet(u,x,z){
  return true;
 }
 async function moveUnit(u,x,z){
- const steps=route(u,x,z);
- if(!steps.length)return;
- spendMovement(u,steps.length);
+ const plan=movementPlans(u).get(x+','+z);
+ if(!plan?.tiles)return;
+ const steps=route(u,x,z,plan);
+ spendMovement(u,plan.tiles,plan.elevationAP);
+ let prior=u;
+ for(const step of steps){
+  step.hop=!u.kind&&Boolean(elevationCost(u,prior.x,prior.z,step.x,step.z));
+  prior=step;
+ }
  const twoStep=!u.kind&&!reducedMotion;
  // Playback is separate from the gait's authored time, stride and mass.
  const playbackRate=twoStep&&!u.lionTrial?(MECH_MOTION[u.frame].playbackRate??3):1;
@@ -3470,7 +3476,7 @@ async function moveUnit(u,x,z){
   for(let i=0;i<steps.length;){
    const dx=steps[i].x-fromX,dz=steps[i].z-fromZ;
    let end=i+1;
-   while(end<steps.length&&steps[end].x-steps[end-1].x===dx&&steps[end].z-steps[end-1].z===dz)end++;
+   while(!steps[i].hop&&end<steps.length&&!steps[end].hop&&steps[end].x-steps[end-1].x===dx&&steps[end].z-steps[end-1].z===dz)end++;
    const length=end-i;
    for(let step=i;step<end;step++)segments[step]={index:step-i,length};
    fromX=steps[end-1].x;fromZ=steps[end-1].z;i=end;
@@ -3479,19 +3485,23 @@ async function moveUnit(u,x,z){
  for(let i=0;i<steps.length;i++){
   const p=steps[i],fromX=u.x,fromZ=u.z;
   const turning=turnToward(u,p.x-fromX,p.z-fromZ);if(turning)await turning;
-  u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration,playbackRate,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length,segment:segments[i]};
-  if(twoStep)u.motion.stepBeats=0;
-  if(u.kind)sound(u.kind==='tank'?'track':'rotor');
+  const hop=p.hop&&!reducedMotion,stepDuration=hop?Math.max(.46,duration):duration;
+  u.x=p.x;u.z=p.z;u.motion={fromX,fromZ,toX:p.x,toZ:p.z,start:clock,duration:stepDuration,playbackRate,gaitBase:gaitBase+i,stepIndex:i,totalSteps:steps.length};
+  if(hop){u.motion.jumpjet=true;u.motion.jetLift=1.35;}
+  else if(twoStep){u.motion.segment=segments[i];u.motion.stepBeats=0;}
+  if(hop)sound('hydraulic',.65);
+  else if(u.kind)sound(u.kind==='tank'?'track':'rotor');
   else{
    u.motion.gaitCues=walkSoundMarkers(u.motion,twoStep);
    advanceGaitCues(u,0);
   }
-  await delay(duration*1000);
-  if(twoStep)twoStepContacts(u,1);
+  await delay(stepDuration*1000);
+  if(twoStep&&!hop)twoStepContacts(u,1);
   advanceGaitCues(u,1);
   u.vx=p.x;u.vz=p.z;u.motion=null;
-  if(!twoStep||segments[i].index===segments[i].length-1)u.landTime=clock;
-  if(!twoStep&&!u.kind)effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});
+  if(hop||!twoStep||segments[i].index===segments[i].length-1)u.landTime=clock;
+  if(hop)sound('step',.85);
+  if((hop||!twoStep)&&!u.kind)effects.push({type:'step',x:p.x,z:p.z,t:1,mass:MECH_MOTION[u.frame].mass,side:FRAMES[u.frame].native?-1:(gaitBase+i)%2?1:-1});
  }
  u.walkCount=gaitBase+steps.length;
 }
@@ -3770,7 +3780,7 @@ const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
  unitWeapon,combatRange,launchesMissiles,movementLimit,isArmed:u=>isArmed(u)||canTactical(u),shoulderWeapon,workingWeapon,trySurrender,tryTactical:enemyTactical,tacticalRange:u=>canTactical(u)?tacticalWeapon(u).range:0,
  resetMovement,renderBattle:()=>renderBattle(),distance,meleeWeapon,scoutWeapon,canUseWeapon,attackObstruction,
- hasMechSkill,paths,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
+ hasMechSkill,paths,movementPlans,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
  doctrine:enemyDoctrine,paidAttackAP,freeMovement,extraMoveAP:EXTRA_MOVE_AP,jumpjetAP:JUMPJET_AP,
  braceCost,braceUnit,startAction,barrageTarget,inCover,highGroundAim,reactionWeapon,
  forecast:(u,t,w,reaction=false)=>{
@@ -3996,7 +4006,7 @@ function turnToward(u,dx,dz,sequence){
 function jumpjetHeight(u,t){
  if(reducedMotion||!u.motion?.jumpjet)return 0;
  const progress=clamp01((t-u.motion.start)/u.motion.duration);
- return 1.35*Math.sin(progress*Math.PI);
+ return (u.motion.jetLift??1.35)*Math.sin(progress*Math.PI);
 }
 
 // Chassis weight and stride timing for combat movement and audio.
@@ -4556,8 +4566,8 @@ const MOVE_SHOT_STYLE={
  arc:{color:'#c6c2ff',glyph:'⤴',label:'Arc'},
  mark:{color:'#ffbe86',glyph:'◎',label:'Barrage'}
 };
-function previewMoveShots(u,spot,cost){
- const from={...u,x:spot.x,z:spot.z,ap:u.ap-(cost>freeMovement(u)?EXTRA_MOVE_AP:0),mechState:{...u.mechState,moved:(u.mechState?.moved??0)+cost}};
+function previewMoveShots(u,spot,plan){
+ const from={...u,x:spot.x,z:spot.z,ap:u.ap-plan.ap,mechState:{...u.mechState,moved:(u.mechState?.moved??0)+plan.tiles}};
  const guns=[selectedWeapon(from,'fire'),shoulderWeapon(from)].filter(w=>canUseWeapon(from,w));
  const shots=[];
  for(const target of battle.units){
@@ -4621,12 +4631,12 @@ function battlefield(t){
    ctx.fillStyle=color;ctx.fillText(label,point.x,point.y-12);
   }
  }
- const u=current(),reachable=u&&battle.phase==='player'&&!battle.busy&&action==='move'?paths(u):null;
- const moveTile=reachable&&!targetPanelOpen&&$('#modal').hidden?(moveTap??hover):null,cost=moveTile&&reachable.get(moveTile.x+','+moveTile.z);
- const preview=cost>0?previewMoveShots(u,moveTile,cost):null;showMovePreview(preview?moveTile:null,preview);
+ const u=current(),reachable=u&&battle.phase==='player'&&!battle.busy&&action==='move'?movementPlans(u):null;
+ const moveTile=reachable&&!targetPanelOpen&&$('#modal').hidden?(moveTap??hover):null,plan=moveTile&&reachable.get(moveTile.x+','+moveTile.z);
+ const preview=plan?.tiles?previewMoveShots(u,moveTile,plan):null;showMovePreview(preview?moveTile:null,preview);
  for(const unit of battle.units)if(unit.alive)drawUnitReadout(unit,(unit.kind?1.2:2.35)+jumpjetHeight(unit,t));
- if(reachable)for(const [key,cost] of reachable)if(cost>0){const [x,z]=key.split(',').map(Number);if(inCover({x,z}))drawCoverMarker(x,z);}
- if(cost>0){const p=project(moveTile.x,.15,moveTile.z);ctx.fillStyle='#0b141ddd';ctx.fillRect(p.x-28,p.y-26,56,18);ctx.fillStyle='#bfe4ee';ctx.font='600 11px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(cost+' AP',p.x,p.y-13);}
+ if(reachable)for(const [key,move] of reachable)if(move.tiles){const [x,z]=key.split(',').map(Number);if(inCover({x,z}))drawCoverMarker(x,z);}
+ if(plan?.tiles){const p=project(moveTile.x,.15,moveTile.z);ctx.fillStyle='#0b141ddd';ctx.fillRect(p.x-28,p.y-26,56,18);ctx.fillStyle='#bfe4ee';ctx.font='600 11px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(plan.ap?plan.ap+' AP':'FREE',p.x,p.y-13);}
  drawEffects(t);
 }
 
