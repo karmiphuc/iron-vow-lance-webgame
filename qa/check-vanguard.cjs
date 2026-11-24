@@ -69,7 +69,12 @@ const vanguard='battle.units.find(u=>u.frame===VANGUARD_FRAME)';
  assert.equal(run('surrenderChecks'),1,'the damaged weapon arm triggers one surrender roll before the fallback strike');
  assert.equal(shotKinds[0],'piledriver');
 
- run('if(battle){for(const u of battle.units)if(u.team==="enemy")u.alive=false;finish(true)}');
+ run(`save=fresh();battle=null;deploy(2,false,[0,1]);
+  for(const u of battle.units.filter(u=>u.team==='enemy')){
+   if(u.frame===VANGUARD_FRAME){u.hp.pilot=0;beginDestruction(u,'pilot')}
+   else {u.hp.body=0;beginDestruction(u)}
+  }
+  finish(true)`);
  assert.equal(run('save.salvage?.[VANGUARD_FRAME]'),1);
  console.log('PASS Vanguard Hard+ roster, existing and new checkpoints, melee pursuit, Hailstorm fallback and acquisition gates');
 })().catch(error=>{console.error(error);process.exitCode=1});

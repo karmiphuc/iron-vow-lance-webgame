@@ -25,7 +25,7 @@ for(const slots of [[0],[0,2],[0,1,2]]){
  assert.equal(restored.run('battle.units.find(u=>u.team==="enemy").frame'),11);
 }
 
-run('for(const u of battle.units)if(u.team==="enemy"){u.alive=false;u.hp.body=u.frame===HELLBREAKER?0:30}finish(true)');
+run('for(const u of battle.units)if(u.team==="enemy"){u.alive=false;u.hp.body=30;if(u.frame===HELLBREAKER)u.hp.pilot=0}finish(true)');
 assert.equal(run('save.salvage[HELLBREAKER]'),1);
 assert.equal(run('acquireHull(HELLBREAKER)'),false);
 assert.equal(run('assignChassis(0,HELLBREAKER)'),false);

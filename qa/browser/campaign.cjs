@@ -188,7 +188,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
    hellbreaker.m.nativeV2?.source&&gatecrasher.m.nativeV2.source!==hellbreaker.m.nativeV2.source;
  });
  await page.evaluate(()=>{
-  for(const u of battle.units)if(u.team==='enemy'){u.alive=false;u.hp.body=0}
+  for(const u of battle.units)if(u.team==='enemy'){u.alive=false;if(u.frame===HELLBREAKER)u.hp.pilot=0;else u.hp.body=0}
   finish(true);
  });
  const salvage=page.getByRole('button',{name:'VIEW SALVAGE'});

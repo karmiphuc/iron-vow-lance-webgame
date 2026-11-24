@@ -76,12 +76,27 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run('save.kills'),run('kills+1'));
  assert.equal(run('save.units[0].xp'),run('xp+35'));
 
+ const destroyed=simulate(),d=destroyed.run;
+ d(`createBattle(0,false,false,[0]);const ownedBefore=save.owned.length;
+  const payBefore=worldContractPay(battle.contract,1,battle.offer);
+  for(const u of battle.units.filter(u=>u.team==='enemy')){
+   u.hp.body=0;if(!u.kind)u.hp.pilot=0;beginDestruction(u);
+  }
+  finish(true)`);
+ assert.equal(d('save.salvage'),undefined,'a simultaneous hull and pilot kill destroys the hull');
+ assert.equal(d('save.captured'),undefined);
+ assert.equal(d('save.owned.length'),d('ownedBefore'));
+ assert.equal(d('save.history.at(-1).pay'),d('payBefore'));
+ assert.doesNotMatch(destroyed.node('#modal').innerHTML,/VIEW SALVAGE|SCRAP BONUS|EQUIPMENT RECOVERED/);
+
  const recovery=simulate(),r=recovery.run;
- r("save.day=4;deploy(1,false,[0]);closeModal();persist()");
+ r("save.day=4;deploy(1,false,[0]);closeModal()");
  assert.equal(r('battle.units[1].frame'),9);
+ r("const casualty=battle.units[1];casualty.hp.pilot=0;beginDestruction(casualty,'pilot');persist()");
  const resumed=simulate({storage:new Map(recovery.storage)}),reload=resumed.run;
  assert.equal(reload('battle.units[1].frame'),9,'exact rotated hull survives reload');
- reload("for(const u of battle.units.filter(u=>u.team==='enemy')){u.hp.body=0;beginDestruction(u)};finish(true)");
+ assert.equal(reload('battle.units[1].downReason'),'pilot');
+ reload("for(const u of battle.units.filter(u=>u.team==='enemy'&&u.alive)){u.hp.body=0;beginDestruction(u)}finish(true)");
  assert.equal(reload('save.salvage[9]'),1);
  assert.equal(reload('save.salvage[0]'),undefined);
  reload("save.credits=rebuildPrice(9);acquireHull(9,true)");

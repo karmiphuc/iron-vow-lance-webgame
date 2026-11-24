@@ -124,7 +124,7 @@ module.exports=async function checkHellbreakerV2({page,mobile,origin,tap,out}){
    if(!node.geometry||geometries.has(node.geometry))return;
    geometries.set(node.geometry,0);node.geometry.addEventListener('dispose',()=>geometries.set(node.geometry,geometries.get(node.geometry)+1));
   });
-  foe.hp.body=0;foe.alive=false;finish(true);
+  foe.hp.pilot=0;foe.alive=false;finish(true);
   return {noStrike,leftRemoved,salvage:save.salvage?.[HELLBREAKER],market:hullOnMarket(HELLBREAKER),
    geometries:geometries.size,exactOnce:[...geometries.values()].every(count=>count===1),removed:!entry.m.cont.parent,contexts:IronVowRenderer.metrics().contexts};
  });
