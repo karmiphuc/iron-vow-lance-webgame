@@ -350,7 +350,12 @@ function animateMech(m,I,dt,t){
       if(I.moving)land.addScaledVector(dir,stepLen*duty*.5);
       if(I.groundAt)land.y=I.groundAt(land.x,land.z)+D.ankleH*sc;else land.y=home.y;
       L.foot.lerpVectors(step.from,land,smoother(q));L.foot.y+=Math.sin(PI*q)*.45*sc;
-      if(q>=1){L.planted.copy(floorWithin(land,hip,reach));L.foot.copy(L.planted);L.settle=null;L.swing=false;I.onStep&&I.onStep(m,L.planted,i,.45);}
+      if(q>=1){
+        // A stationary landing uses the grounded pelvis solve below. Clamping
+        // to the raised hip can land short of home and start another recovery step.
+        L.planted.copy(groundedStance?land:floorWithin(land,hip,reach));
+        L.foot.copy(L.planted);L.settle=null;L.swing=false;I.onStep&&I.onStep(m,L.planted,i,.45);
+      }
     }
     else if(I.moving&&!dead){
       if(ph<duty){if(L.swing){L.swing=false;L.planted.copy(floorWithin(L.to,hip,reach));I.onStep&&I.onStep(m,L.planted,i);}L.foot.copy(L.planted);}
