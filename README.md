@@ -30,6 +30,16 @@ Each of the six moorings posts up to three rotating contracts with expiry dates.
 
 Vanta Shipyards also posts **Salt Works**, a one-seat interception contract against the Salt Works Garrison. Both mechs start with the Kestrel AR-8. Vanta stocks the Salt Works MG-12 caseless machine gun at 180 reputation. Buy Saltjack in the Workshop market or Vanta's port stock. The **Salt Works Trial** in Rig Bench supplies Saltjack and uses the normal combat controls without affecting your career.
 
+Three regional contracts feature hulls sold at their home port. A recovered wreck can also be rebuilt in the Workshop.
+
+| Port | Contract | Chassis |
+| --- | --- | --- |
+| Ridge Mast | Whiteout Patrol · 1 seat | **Husky** scouts ahead with six free tiles of movement. Move before taking a scattergun shot within three tiles for +8 aim. |
+| Vanta Shipyards | Kiln Nine · 2 seats | **Giza** holds a firing lane with its rifle. Once per battle, Double Cannon deploys both shoulder guns against one hostile within six tiles. |
+| Halcyon Outpost | Broken Grid · 2 seats | **Vyzov** has a 20-base-damage powered fist for adjacent targets. Once per battle, Cross Mortar targets a tile within seven tiles and strikes the center and four orthogonal neighbors. Friendly units in the cross take damage. |
+
+Use **Port Services → Market** to buy a regional chassis, then **Workshop → Storage** to assign it. Each deployed Giza and Vyzov carries its own charge. Confirming the special normally costs 3 AP.
+
 After deploying, select a unit, and click highlighted tiles to move. Choose Fire and click an enemy to shoot it; there is no part aiming, and every round that hits rolls its own location (about 55% body, 25% arms, 20% legs). Each attack that hits the body has a 1–5% chance to redirect one body round into the cockpit. Destroy the body to neutralize an enemy. Destroy its weapon arm to disable firing, legs to stop movement, or shield arm to reduce armor. Cover lowers hit chance except for missiles. Actions use the unit's movement and AP allowances. Each pilot has a unique once-per-battle skill. End Turn advances the enemy lance.
 
 Keyboard: 1–3 selects a unit; M moves; F fires; Q activates a skill; E ends the turn. Mouse/touch supports every action. Sound is opt-in.

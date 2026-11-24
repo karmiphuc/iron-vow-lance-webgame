@@ -71,7 +71,7 @@ const simulate=require('./sim-harness.cjs');
  const count=stats.run('FRAMES.length');
  for(let frame=0;frame<count;frame++){
   if(!stats.run(`playerHull(${frame})`))continue;
-  stats.run(`save=fresh();battle=null;save.credits=FRAMES[${frame}].cost+10000;if(FRAMES[${frame}].captureOnly){save.captured={[${frame}]:1};acquireHull(${frame},true)}if(FRAMES[${frame}].salvageOnly){save.salvage={[${frame}]:1};acquireHull(${frame},true)}assignChassis(0,${frame},true);save.units[0].upgrade=2;save.units[0].condition=57;page='workshop';render()`);
+  stats.run(`save=fresh();battle=null;save.credits=FRAMES[${frame}].cost+10000;if(FRAMES[${frame}].marketPort){save.overworld={port:FRAMES[${frame}].marketPort,arrears:0};ensureWorld();persist();buyPortHull(${frame})}if(FRAMES[${frame}].captureOnly){save.captured={[${frame}]:1};acquireHull(${frame},true)}if(FRAMES[${frame}].salvageOnly){save.salvage={[${frame}]:1};acquireHull(${frame},true)}assignChassis(0,${frame},true);save.units[0].upgrade=2;save.units[0].condition=57;page='workshop';render()`);
   assert.equal(stats.run('pilotFrame(0)'),frame);
   const workshop=stats.node('#ui').innerHTML;
   assert.equal((workshop.match(/data-chassis=/g)||[]).length,3);

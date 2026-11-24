@@ -80,3 +80,23 @@ header .icon{min-height:44px;min-width:44px}
  .contract-workspace .offer-card h2{font-size:30px}
  .page>.pagehead h1{font-size:32px}
 }
+
+body[data-view="combat"] .tactical-preview{
+ position:fixed;left:16px;bottom:calc(var(--combat-hud-height,136px) + var(--combat-hud-bottom,16px) + 44px);
+ display:flex;flex-wrap:wrap;align-items:center;gap:8px;max-width:min(530px,calc(100% - 32px));
+ padding:10px 12px;background:#151e23f5;border:1px solid #d29d56;color:#f2eee1;pointer-events:auto;z-index:3
+}
+.tactical-preview p{flex:1 1 220px;margin:0;font-size:13px}
+.tactical-preview button{min-height:44px}
+.tactical-danger{display:block;color:#ff9788;margin-top:4px}
+body[data-view="combat"] .tactical-hint{display:none}
+@media(max-width:760px){
+ body[data-view="combat"] .tactical-preview{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:min(340px,calc(100% - 32px));
+  bottom:calc(var(--combat-hud-height,136px) + var(--combat-hud-bottom,16px) + 8px);
+ }
+ .tactical-preview p{grid-column:1/-1}
+}
+
+body[data-view="combat"] .battle-links #call-sortie-reserve{min-height:44px}
+.map-pin.operation-marker{background:#f5d796;color:#132027;border:1px solid #2a3438}

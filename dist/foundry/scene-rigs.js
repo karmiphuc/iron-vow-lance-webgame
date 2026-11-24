@@ -351,7 +351,8 @@ function draw(u,t,pose,scope,model,custom){
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
   airborne:world?.airborne,moveAge:step&&u.motion?t-u.motion.start:0,targeting:world?.targeting,attacking:Boolean(u.attack),
   artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
-  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion};
+  readyMeleeMountPitch:entry.secondary?.mount.rotation.x??0,reducedMotion:pose.reducedMotion,
+  armed:Boolean(fittedGun&&u.hp[fittedGun.subsystem||'right']>0),attack:u.attack,hitTime:u.hitTime,ability:pose.nativeAbility};
  const animate=v2?.animate??animateMech;
  const previous=entry.groundRoot;
  // Subdivide elapsed playback so slow render frames do not skip foot plants
@@ -377,12 +378,12 @@ function draw(u,t,pose,scope,model,custom){
  }
  // UI previews keep the body centered while the shared animator solves the gait.
  if(!world&&step)m.cont.position.set(0,0,0);
- m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||m.rig.arms.L.so}:barrel||{};
+ m.wpn=melee?{...entry.secondary,muzzle:entry.secondary?.tip||v2?.strikeContact?.(pose.strikeKind)||m.rig.arms.L.so}:barrel||{};
  if(!v2?.nativeShield)arsenal.poseShield(entry.shield,u,face+m.readyShieldTurn);
  if(standardEquipment&&entry.primary&&entry.primary!==entry.shoulderWeapon){
   entry.primary.mount.visible=u.alive&&u.hp.right>0;
   if(arsenal.isExpansion(u.weapon))arsenal.animate(entry.primary,pose);
-  else entry.primary.recoil.position.z=-Math.abs(pose.recoil)*.22;
+  else entry.primary.recoil.position.z=u.attack?.kind==='giza-salvo'?0:-Math.abs(pose.recoil)*.22;
  }
  if(standardEquipment&&entry.shoulderWeapon)entry.shoulderWeapon.mount.visible=u.alive&&u.hp.body>0&&u.hp.right>0;
  if(standardEquipment&&entry.secondary){

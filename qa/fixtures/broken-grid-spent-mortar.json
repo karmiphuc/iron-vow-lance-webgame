@@ -1,0 +1,193 @@
+{
+  "version": 1,
+  "day": 1,
+  "credits": 32500,
+  "rep": 0,
+  "wins": 0,
+  "kills": 0,
+  "itemInventory": true,
+  "owned": [
+    "rifle",
+    "rifle",
+    "missile"
+  ],
+  "units": [
+    {
+      "weapon": "vyzov-knuckle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0,
+      "frame": 26
+    },
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "missile",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    }
+  ],
+  "history": [],
+  "world": {
+    "version": 1,
+    "seed": 42,
+    "day": 1,
+    "consumed": [
+      "offer:frontier:1:3"
+    ],
+    "scouted": [],
+    "pendingEvents": [],
+    "resolvedEvents": [],
+    "standings": {}
+  },
+  "overworld": {
+    "port": "frontier",
+    "arrears": 0
+  },
+  "reserve": {
+    "0": {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0
+    }
+  },
+  "sortie": {
+    "version": 7,
+    "contract": "broken-grid",
+    "legacy": false,
+    "stockHostiles": false,
+    "slots": [
+      0,
+      1
+    ],
+    "turn": 1,
+    "selected": 0,
+    "action": "move",
+    "part": "body",
+    "enemyPending": false,
+    "offer": {
+      "id": "offer:frontier:1:3",
+      "templateIndex": 7,
+      "port": "frontier",
+      "postedDay": 1,
+      "expiryDay": 4,
+      "payPercent": 108,
+      "acceptedDay": 1
+    },
+    "hardVanguard": true,
+    "terrainSeed": 429496729,
+    "mechComputers": true,
+    "units": [
+      {
+        "x": 1,
+        "z": 16,
+        "face": 1,
+        "heading": 2.356194490192345,
+        "moveLeft": 0,
+        "actionPhase": true,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 158,
+          "pilot": 70,
+          "right": 102,
+          "left": 102,
+          "legs": 125
+        },
+        "ap": 5,
+        "brace": false,
+        "skill": false,
+        "boost": false,
+        "tacticalUsed": true
+      },
+      {
+        "x": 2,
+        "z": 18,
+        "face": 1,
+        "heading": 2.356194490192345,
+        "moveLeft": 6,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 126,
+          "pilot": 55,
+          "right": 78,
+          "left": 78,
+          "legs": 100
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 12,
+        "z": 6,
+        "face": -1,
+        "heading": -2.356194490192345,
+        "moveLeft": 6,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 208,
+          "pilot": 70,
+          "right": 102,
+          "left": 102,
+          "legs": 125
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 7,
+        "z": 12,
+        "face": -1,
+        "heading": -2.356194490192345,
+        "moveLeft": 6,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 189,
+          "pilot": 55,
+          "right": 82,
+          "left": 82,
+          "legs": 122
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 4,
+        "z": 14,
+        "face": -1,
+        "heading": -2.356194490192345,
+        "moveLeft": 4,
+        "actionPhase": false,
+        "extraStep": false,
+        "reacted": false,
+        "hp": {
+          "body": 80
+        },
+        "ap": 8,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      }
+    ]
+  }
+}

@@ -116,7 +116,7 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  await page.reload({waitUntil:'domcontentloaded'});
  await page.waitForFunction(id=>battle?.offer?.id===id,scoutOffer.id);
  assert.equal(await page.evaluate(()=>Object.isFrozen(battle.offer)),true,'the accepted terms restore as a snapshot');
- const payout=await page.evaluate(()=>({credits:save.credits,reward:worldContractPay(battle.contract,battle.slots.length,battle.offer)+(regionalReward(battle.offer,battle.offer.acceptedDay)?.available?regionalReward(battle.offer,battle.offer.acceptedDay).credits??0:0),cost:window.IronVowOverworld.operatingRates(save).total}));
+ const payout=await page.evaluate(()=>({credits:save.credits,reward:worldContractPay(battle.contract,battle.operation?.recommended??battle.slots.length,battle.offer)+(regionalReward(battle.offer,battle.offer.acceptedDay)?.available?regionalReward(battle.offer,battle.offer.acceptedDay).credits??0:0),cost:window.IronVowOverworld.operatingRates(save).total}));
  assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(save.world))),checkpointWorld,'the consumed offer remains stable in the active checkpoint');
  await page.evaluate(async()=>{finish(true);closeModal();await pendingCareerWrite});
  await page.waitForFunction(id=>save.history.at(-1)?.offerId===id&&save.day===3,scoutOffer.id);

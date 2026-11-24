@@ -25,7 +25,7 @@ const checks=JSON.parse(run(`JSON.stringify(CONTRACTS.map((_,i)=>{
  }
  return {valid,unique:maps.size};
 }))`));
-assert.deepEqual(checks,Array(5).fill({valid:true,unique:24}),'all contracts vary terrain, preserve deployment and connected ground, and retain valid slopes');
+assert.deepEqual(checks,Array(8).fill({valid:true,unique:24}),'all contracts vary terrain, preserve deployment and connected ground, and retain valid slopes');
 const saved=JSON.stringify(fixture);
 const resumed=simulate({storage:new Map([[key,saved]]),reducedMotion:true});
 assert.equal(resumed.run('JSON.stringify(captureSortie())'),JSON.stringify(fixture.sortie));
@@ -37,4 +37,4 @@ assert.equal(again.run('JSON.stringify(battle.field.cells)'),terrain,'terrain is
 const corrupt=JSON.parse(saved);
 corrupt.sortie.terrainSeed=-1;
 assert.equal(simulate({storage:new Map([[key,JSON.stringify(corrupt)]])}).run('battle'),null);
-console.log('PASS 120 seeded maps, connected terrain, valid slopes and save-stable terrain; raycast picking is tested in Chromium');
+console.log('PASS '+checks.length*24+' seeded maps, connected terrain, valid slopes and save-stable terrain; raycast picking is tested in Chromium');

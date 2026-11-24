@@ -520,6 +520,30 @@ const profiles={
   },
   "source": "counter"
  },
+ "giza-salvo": {
+  "archetype": "shotgun",
+  "beats": [0,.35],
+  "asset": null,
+  "barrels": 2,
+  "pellets": 1,
+  "source": "body skill"
+ },
+ "vyzov-cross": {
+  "archetype": "missile",
+  "beats": [0],
+  "asset": null,
+  "socket": "mortarMuzzle",
+  "source": "body skill"
+ },
+ "vyzov-knuckle": {
+  "archetype": "blade",
+  "beats": [0],
+  "asset": null,
+  "socket": "right",
+  "style": "thrust",
+  "timeline": {"wind":.38,"contact":.46,"strike":.5,"hold":.72,"end":1.1,"hitstop":.085,"maxLunge":2.6},
+  "source": "built-in"
+ },
  "behemoth-mortar": {
   "archetype": "missile",
   "beats": [
