@@ -9,7 +9,7 @@ const load=record=>simulate({storage:new Map([[key,JSON.stringify(record)]]),ran
 const saved=sim=>JSON.parse(sim.storage.get(key));
 const snapshot=sim=>JSON.parse(sim.run('JSON.stringify(save)'));
 const roundTrip=sim=>load(saved(sim));
-const withoutWorld=record=>{const {world,itemInventory,...legacyFields}=record;legacyFields.owned=[...new Set(legacyFields.owned)];return legacyFields};
+const withoutWorld=record=>{const {world,itemInventory,readinessStart,...legacyFields}=record;legacyFields.owned=[...new Set(legacyFields.owned)];return legacyFields};
 const quote=(sim,path)=>JSON.parse(sim.run(`JSON.stringify(window.IronVowOverworld.itineraryQuote(${JSON.stringify(path)},window.IronVowOverworld.operatingRates(save),save.credits,save.overworld?.arrears??0))`));
 const travel=(sim,destination,from,cost,path)=>sim.run(`travelTo(${JSON.stringify(destination)},${JSON.stringify(from)},${cost===undefined?'undefined':cost},${JSON.stringify(path)})`);
 
