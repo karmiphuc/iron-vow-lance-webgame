@@ -530,7 +530,8 @@ function launchInterception(){
  }
  createBattle(INTERCEPTS[event.kind],false,false,slots,false);
  battle.interception=event;
- surveyTerrain(equipmentRoll(event.id+'/'+event.port+'/'+save.world.seed));
+ const seed=equipmentRoll(event.id+'/'+event.port+'/'+save.world.seed);
+ startBattleCom(seed);surveyTerrain(seed);
  enableMechComputers();
  addLog('Enemy patrol blocking '+portName(event.port)+'. No contract payout.');
  selected=slots[0];action='move';effects=[];hover=null;lockedTarget=null;targetPanelOpen=false;
@@ -689,7 +690,7 @@ function pooledContractsPage(){
    const intel=revealed||contract.hostiles?contacts+' MECH'+(contacts===1?'':'S'):Math.min(contacts,offer.intel.minMechs)+'–'+Math.max(contacts,offer.intel.maxMechs)+' MECHS';
    return `<article class="card offer-card"><div class="eyebrow">${contract.tag} · ${local?'LOCAL':'REMOTE'}</div><h2>${contract.name}</h2><p>${contract.desc}</p>
     <div class="offer-terms">${stat('PAYMENT',money(worldContractPay(contract,size,offer)))}${stat('EXPIRES','DAY '+offer.expiryDay)}${stat('LANCE',size+' MECH'+(size===1?'':'S')+(operationRecommendation(contract,offer)?' RECOMMENDED · '+operationCapacity()+' MAX':shipLevel('drop')===2?' + AUX OPTION':''))}${stat('CONTACTS',intel+(contract.difficulty>=2&&!revealed?' · HEAVY LIKELY':''))}</div>
-    ${regionalRewardMarkup(offer)}${campaignContractNote(offer)}${revealed?`<div class="offer-intel">${contractIntel(offer.templateIndex,Math.min(3,size),{reveal:offer.scouted||campaignIntel(port),local,variable:Boolean(operationRecommendation(contract,offer))})}</div>`:contract.hostiles?'':`<button type="button" data-scout-offer="${offer.id}" ${save.credits<90?'disabled':''}>SCOUT · 90 CR</button>`}
+    <p class="note">${readinessNote()}</p>${regionalRewardMarkup(offer)}${campaignContractNote(offer)}${revealed?`<div class="offer-intel">${contractIntel(offer.templateIndex,Math.min(3,size),{reveal:offer.scouted||campaignIntel(port),local,variable:Boolean(operationRecommendation(contract,offer))})}</div>`:contract.hostiles?'':`<button type="button" data-scout-offer="${offer.id}" ${save.credits<90?'disabled':''}>SCOUT · 90 CR</button>`}
     <button class="primary full" data-deploy="${offer.templateIndex}" data-world-offer="${offer.id}">${local?'PREPARE SORTIE':'PLOT COURSE'} ${icon('arrow-right')}</button>
     ${offer.templateIndex===SALT_WORKS_CONTRACT?'<a class="rig-bench-link" href="?bench=war&amp;trial=salt-works">PLAY SALT WORKS TRIAL</a>':''}</article>`;
   }).join('')||'<div class="offer-empty"><h2>No open offers</h2><p>Check another railhead or hold for the next dispatch.</p><button data-page="overworld">OPEN CHART</button></div>'}</div></div>`;
@@ -1077,7 +1078,176 @@ function stockHull(i){
  const frame=FRAMES[i];
  return{weapon:frame.weapon||(i===2?'missile':'rifle'),melee:frame.melee,condition:100,upgrade:0};
 }
-function fresh(){return{version:1,day:1,credits:4500,rep:0,wins:0,kills:0,itemInventory:true,owned:['rifle','rifle','missile'],units:PILOTS.map((_,i)=>({...stockHull(i),level:1,xp:0})),history:[]}}
+const COM_SKILLS=Object.freeze({
+ rof:{name:'ROF Up I',rate:10,slots:1,frames:[4,0],text:'Compatible automatic guns fire 50% more rounds in one volley.'},
+ rof2:{name:'ROF Up II',rate:5,slots:2,frames:[4,SALTJACK_FRAME],text:'Compatible automatic guns fire twice as many rounds in one volley.'},
+ combo:{name:'Combo Strike',rate:8,slots:2,frames:[0,ASHIGARU_FRAME],text:'Attack the same target with the other equipped hand for 0 AP.'},
+ shell:{name:'Second Shell',rate:5,slots:1,frames:[3,GIZA_FRAME],text:'Fire one free follow-up with a braced cannon.'},
+ shield:{name:'Shield Brace',rate:10,slots:1,frames:[0,BASTION_FRAME],text:'A functional shield reduces damage from the incoming volley by 30%.'},
+ chaff:{name:'Chaff',rate:8,slots:1,frames:[2,CITADEL_FRAME],text:'Missile-support chassis halve the first landed missile hit.'},
+ bulkhead:{name:'Emergency Bulkhead',rate:5,slots:2,frames:[3,BASTION_FRAME],text:'Once per sortie, a lethal arm or leg hit leaves the part at 1 HP.'},
+ riposte:{name:'Riposte',rate:10,slots:1,frames:[6,VYZOV_FRAME],text:'A paid melee counter gets a free second strike.'},
+ covering:{name:'Covering',rate:10,slots:1,frames:[0,BASTION_FRAME],text:'An attack on an ally within two tiles can trigger a free shot at 65% accuracy.'},
+ overwatch:{name:'Overwatch',rate:5,slots:2,frames:[1,NIGHTJAR_FRAME],text:'An attack on an ally can trigger a free shot at 65% accuracy from any legal firing position.'},
+ squad:{name:'Firing Squad',rate:8,slots:2,frames:[1,GIZA_FRAME],text:'On a direct shot, a linked partner with a different angle can fire for 0 AP.'},
+ gang:{name:'Melee Gang',rate:10,slots:2,frames:[6,VYZOV_FRAME],text:'On a melee attack, a linked partner adjacent on a different side can strike for 0 AP.'},
+});
+const COM_LESSONS=6,COM_SORTIE_CREDITS=3;
+const comIds=Object.keys(COM_SKILLS);
+const comPilot=u=>u?.team==='ally'&&!u.kind?pilotId(u.pilot):null;
+const comRecord=(id,career=save)=>career.comPilots?.[id]??{progress:{},installed:[]};
+const comKnown=(record,id)=>(record.progress[id]??0)>=COM_LESSONS;
+const validComLoadout=(ids,record)=>Array.isArray(ids)&&ids.length<=3&&new Set(ids).size===ids.length&&
+ ids.every(id=>Object.hasOwn(COM_SKILLS,id)&&comKnown(record,id))&&
+ ids.reduce((total,id)=>total+COM_SKILLS[id].slots,0)<=3&&!(ids.includes('rof')&&ids.includes('rof2'));
+function validCareerCom(career){
+ if(career.readinessStart!==undefined&&(!Number.isSafeInteger(career.readinessStart)||career.readinessStart<1||career.readinessStart>career.day))return false;
+ return career.comPilots===undefined||validRecord(career.comPilots,([pilot,record])=>pilotKind(pilot)>=0&&record&&
+  validRecord(record.progress,([id,n])=>Object.hasOwn(COM_SKILLS,id)&&Number.isInteger(n)&&n>=0&&n<=COM_LESSONS)&&
+  validComLoadout(record.installed,record)&&(record.partner===undefined||record.partner!==pilot&&pilotKind(record.partner)>=0));
+}
+const readinessWeek=(day,career=save)=>Math.max(1,1+Math.floor((day-(career.readinessStart??day))/7));
+function readinessNote(day=save.day){
+ const week=readinessWeek(day),next=(save.readinessStart??save.day)+week*7;
+ return 'Enemy readiness · Week '+week+' · Next increase on day '+next;
+}
+function applyReadiness(unit,week){
+ if(unit.team!=='enemy')return;
+ const bonus=Math.min(.15,(week-1)*.03);
+ for(const part of Object.keys(unit.max)){
+  if(part==='pilot')continue;
+  const extra=Math.round(unit.max[part]*bonus);
+  unit.max[part]+=extra;unit.hp[part]+=extra;
+ }
+ unit.armor+=Math.min(3,Math.floor((week-1)/2));
+}
+function startBattleCom(seed){
+ battle.com={week:readinessWeek(save.day),rng:seed>>>0,practice:{},assists:{},bulkhead:{}};
+ setupBattleCom();
+}
+function validBattleCom(com,turn){
+ const natural=(n,max)=>Number.isInteger(n)&&n>=0&&n<=max;
+ const unitId=id=>/^(ally|enemy)\d{1,2}$/.test(id);
+ return com&&natural(com.week,readinessWeek(save.day))&&com.week>=1&&natural(com.rng,0xffffffff)&&
+  validRecord(com.assists,([id,n])=>unitId(id)&&natural(n,turn))&&
+  validRecord(com.bulkhead,([id,used])=>unitId(id)&&used===true)&&
+  validRecord(com.practice,([pilot,skills])=>pilotKind(pilot)>=0&&validRecord(skills,([id,v])=>
+   Object.hasOwn(COM_SKILLS,id)&&v&&natural(v.count,COM_SORTIE_CREDITS)&&natural(v.turn,turn)));
+}
+function setupBattleCom(){
+ for(const u of battle.units)applyReadiness(u,battle.com.week);
+ if(battle.com.week>=4&&!battle.interception&&(battle.operation?.recommended??battle.slots.length)>=2){
+  const tile=[16,15,17,14].find(x=>!battle.cover.has(x+',2')&&!battle.units.some(u=>u.x===x&&u.z===2));
+  if(tile!==undefined){
+   const kind=battle.com.week>=7&&battle.com.week%2?'helicopter':'tank';
+   const unit=makeVehicle(kind,battle.contract.deployment.length+3,tile,2);
+   applyReadiness(unit,battle.com.week);resetMovement(unit);battle.units.push(unit);
+   addLog('Week '+battle.com.week+' readiness · Additional '+VEHICLES[kind].name+'.');
+  }
+ }
+}
+function comRandom(){
+ if(!battle?.com)return ruleRandom();
+ const com=battle.com;
+ com.rng=(com.rng+0x6d2b79f5)>>>0;
+ let t=Math.imul(com.rng^(com.rng>>>15),1|com.rng);
+ t=(t+Math.imul(t^(t>>>7),61|t))^t;
+ return ((t^(t>>>14))>>>0)/4294967296;
+}
+function comOdds(candidates,scale=1){
+ const combined=candidates.reduce((sum,c)=>sum+COM_SKILLS[c.id].rate,0);
+ return candidates.map(c=>({...c,rate:COM_SKILLS[c.id].rate*scale*Math.min(1,15/combined)}));
+}
+function drawCom(candidates,scale=1){
+ if(!candidates.length)return null;
+ let roll=comRandom()*100;
+ for(const c of comOdds(candidates,scale)){roll-=c.rate;if(roll<0)return c;}
+ return null;
+}
+function installedCom(u){
+ const pilot=comPilot(u);
+ if(pilot)return comRecord(pilot).installed;
+ if(u.kind||!u.alive)return [];
+ const week=battle.com.week;
+ if(week<4)return [];
+ if(u.index===0)return week>=7?['rof2','overwatch']:['rof'];
+ return u.index===1&&week>=5?['covering','shield']:[];
+}
+function comPractice(u,candidates){
+ const pilot=comPilot(u);
+ if(!pilot)return;
+ const record=comRecord(pilot);
+ for(const {id} of candidates){
+  if(comKnown(record,id)||!COM_SKILLS[id].frames.includes(u.frame))continue;
+  const practice=battle.com.practice[pilot]??={};
+  if((practice[id]?.count??0)>=COM_SORTIE_CREDITS||practice[id]?.turn===battle.turn)continue;
+  practice[id]={count:(practice[id]?.count??0)+1,turn:battle.turn};
+ }
+}
+function settleComPractice(){
+ const learned=[];
+ for(const [pilot,practice] of Object.entries(battle.com?.practice??{})){
+  const records=save.comPilots??={};
+  const record=records[pilot]??={progress:{},installed:[]};
+  for(const [id,{count}] of Object.entries(practice)){
+   const progress=record.progress[id]??0;
+   record.progress[id]=Math.min(COM_LESSONS,progress+count);
+   learned.push(CREW[pilotKind(pilot)].call+' · '+COM_SKILLS[id].name+' '+(comKnown(record,id)?'learned':record.progress[id]+'/'+COM_LESSONS));
+  }
+ }
+ return learned;
+}
+function comRequirement(id,hull){
+ const w=unitWeapon(hull);
+ if(id.startsWith('rof')&&!burstComWeapon(w))return 'Requires an automatic burst gun.';
+ if((id==='covering'||id==='overwatch'||id==='squad')&&!directComWeapon(w))return 'Requires a direct-fire gun.';
+ if(id==='chaff'&&!COM_SKILLS.chaff.frames.includes(hull.frame))return 'Requires integrated countermeasures.';
+ if(id==='shield'&&!equippedShield(hull))return 'Requires a shield.';
+ if((id==='gang'||id==='riposte')&&!w.melee&&!meleeWeapon(hull))return 'Requires a melee weapon.';
+ if(id==='combo'&&!meleeWeapon(hull))return 'Requires a second hand weapon.';
+ return '';
+}
+function openComSkills(kind){
+ if(battle)return;
+ const id=pilotId(kind),record=comRecord(id);
+ const slot=LANCE_SLOTS.find(i=>pilotClass(i)===kind);
+ const hull=slot===undefined?null:{...save.units[slot],frame:pilotFrame(slot)};
+ const used=record.installed.reduce((sum,key)=>sum+COM_SKILLS[key].slots,0);
+ const pilotKinds=new Set([...LANCE_SLOTS.map(slot=>pilotClass(slot)),...Object.keys(save.reservePilots??{}).map(pilotKind)]);
+ const controls=comIds.filter(key=>comKnown(record,key)).map(key=>{
+  const skill=COM_SKILLS[key],fitted=record.installed.includes(key);
+  const candidate=fitted?record.installed.filter(i=>i!==key):[...record.installed,key];
+  const requirement=hull?comRequirement(key,hull):'';
+  return '<div class="computer-signature"><b>'+skill.name+' · '+skill.rate+'% · '+skill.slots+' MEM</b><p>'+skill.text+'</p>'+(requirement?'<p class="note">'+requirement+'</p>':'')+
+   '<button class="computer-open com-choice" type="button" data-com-skill="'+key+'" '+(validComLoadout(candidate,record)?'':'disabled')+'>'+(fitted?'Remove':'Install')+'</button></div>';
+ }).join('');
+ const training=comIds.filter(key=>!comKnown(record,key)).map(key=>{
+  const skill=COM_SKILLS[key];
+  return '<li><b>'+skill.name+' · '+(record.progress[key]??0)+'/'+COM_LESSONS+'</b><p>'+skill.frames.map(frame=>FRAMES[frame].name).join(' / ')+' · '+skill.text+'</p></li>';
+ }).join('');
+ modal('COM SKILLS · '+CREW[kind].call,'<section class="mech-computer"><div class="computer-progress"><span>MEMORY '+used+' / 3</span><span>PILOT LOADOUT</span></div>'+
+  '<label>Linked pilot<select id="com-partner"><option value="">Unassigned</option>'+[...pilotKinds].filter(other=>other!==kind).map(other=>'<option value="'+pilotId(other)+'" '+(record.partner===pilotId(other)?'selected':'')+'>'+CREW[other].call+'</option>').join('')+'</select></label>'+
+  (controls||'<p>Fly a teaching chassis and use the matching tactic to learn its routine.</p>')+
+  '<details><summary class="com-choice">Training progress</summary><ul>'+training+'</ul></details></section>',
+  [{text:'DONE',fn:closeModal}]);
+ document.querySelectorAll('[data-com-skill]').forEach(button=>button.onclick=()=>{
+  if(!careerIsCurrent()||battle)return;
+  const skill=button.dataset.comSkill;
+  const next=record.installed.includes(skill)?record.installed.filter(key=>key!==skill):[...record.installed,skill];
+  if(!validComLoadout(next,record))return;
+  record.installed=next;(save.comPilots??={})[id]=record;persist();openComSkills(kind);
+  document.querySelector('[data-com-skill="'+skill+'"]')?.focus();
+ });
+ $('#com-partner').onchange=event=>{
+  if(!careerIsCurrent()||battle)return;
+  const partner=event.target.value;
+  if(partner&&partner!==id&&pilotKinds.has(pilotKind(partner)))record.partner=partner;
+  else delete record.partner;
+  (save.comPilots??={})[id]=record;persist();
+ };
+}
+
+function fresh(){return{version:1,day:1,readinessStart:1,credits:4500,rep:0,wins:0,kills:0,itemInventory:true,owned:['rifle','rifle','missile'],units:PILOTS.map((_,i)=>({...stockHull(i),level:1,xp:0})),history:[]}}
 // Keep one close-assault, one mobile and one long-range kit in every opening lance.
 const STARTING_KITS=[
  [{weapon:'rifle',melee:'cleaver'},{weapon:'shotgun',melee:'tonfa'}],
@@ -1381,6 +1551,7 @@ function persist(enemyPending=false){
 }
 function captureSortie(enemyPending=false){
  return{version:battle.operation?9:battle.aux||battle.launchAP?8:7,apRules:SHARED_AP_RULES,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action:['jumpjet','tactical'].includes(action)?'move':action,part:'body',enemyPending,
+  ...(battle.com?{com:battle.com}:{}),
   ...(battle.offer?{offer:{...battle.offer}}:{}),
   ...(battle.operation?{operation:battle.operation}:{}),...(battle.campaignSupport?{campaignSupport:battle.campaignSupport}:{}),...(battle.aux?{aux:battle.aux}:{}),...(battle.launchAP?{launchAP:battle.launchAP}:{}),
   ...(battle.frontierHellbreaker?{frontierHellbreaker:true}:{}),
@@ -1539,6 +1710,7 @@ function restoreSortie(){
  valid=valid&&(saved.terrainSeed===undefined||saved.version>=7&&!legacy&&integer(saved.terrainSeed,0,0xffffffff));
  valid=valid&&(saved.mechComputers===undefined||saved.mechComputers===true&&saved.version>=7&&!legacy);
  valid=valid&&(saved.offer===undefined||!legacy&&validAcceptedOffer(saved.offer)&&saved.offer.templateIndex===contractIndex);
+ if(valid&&saved.com!==undefined)valid=!legacy&&validBattleCom(saved.com,saved.turn);
  if(valid){
   createBattle(contractIndex,legacy,saved.version<4||saved.stockHostiles===true,regular,saved.frontierHellbreaker===true,aux,launchAP,saved.picketLineInfantry===true,saved.corridorElite===true,saved.hardVanguard===true,saved.reaverHostiles===true,saved.bulwarkHostile===true,saved.ashigaruHostile===true,saved.aeroMelee??null,saved.relayLead??0,operation);
   if(saved.offer)battle.offer=Object.freeze({...saved.offer});
@@ -1547,6 +1719,7 @@ function restoreSortie(){
    const expected=worldRules.campaignSupport(save.strategy,saved.offer?.port,saved.offer?.acceptedDay);
    valid=!!expected&&expected===saved.campaignSupport&&addCampaignSupport(expected);
   }
+  if(saved.com){battle.com=saved.com;setupBattleCom();}
   if(operation?.wave)placeDepotWave(DEPOT_AIR);
   if(operation?.called)placeReserve(staged,AUX_ENTRY_TILES[0]);
   if(saved.terrainSeed!==undefined)surveyTerrain(saved.terrainSeed);
@@ -2322,6 +2495,7 @@ function pilotCard(kind,u,training,assignment,control,points){
   ${license?`<p class="note">FIELD LICENSE · ${license.name}</p>`: ''}
   <button type="button" ${control} class="training-open ${points?'primary':''}">TRAINING TREE <span>${points} PT</span></button>
   <button type="button" class="computer-open" data-mech-pilot="${kind}">MECH COMPUTER</button>
+  <button type="button" class="computer-open com-choice" data-com-pilot="${kind}">COM SKILLS</button>
  </div></article>`;
 }
 function paymentRange(contract){
@@ -2371,7 +2545,7 @@ function chartData(){
  const sensorRange=4.5+shipLevel('office')*2.5;
  const origin=network.ports.find(port=>port.id===current);
  const markers=world?worldRules.markersAt(world).filter(marker=>Math.hypot((marker.x*100-origin.x)*.22,(marker.y*100-origin.y)*.17)<=sensorRange):[];
- const arrival=save.day+(quote?.days??0),offers=world?availableOffers(selected,arrival):[];
+ const arrival=departure?save.day:save.day+(quote?.days??0),offers=world?availableOffers(selected,arrival):[];
  const bestOffer=quote?.encounter?null:offers.find(offer=>offer.availableOnArrival);
  const reward=bestOffer?regionalReward(bestOffer,arrival):null;
  const pressure=world?worldRules.railPressure(world,save.history):null;
@@ -2379,7 +2553,7 @@ function chartData(){
  if(freight)markers.push(freight);
  const standing=world?.standings[selected]??0;
  return {ports:network.ports,routes:network.routes,current,selected,path:quote?.path??[],pathKey:quote?.path.join('>')??'',routeOptions,quote,
-  reward,pressure,freight,occupations:worldRules.blockades(world,save.history),standing,campaign:!!save.strategy,day:departure?.day??save.day,credits:save.credits,arrears:save.overworld?.arrears??0,readiness,
+  reward,pressure,freight,readinessForecast:readinessNote(arrival),occupations:worldRules.blockades(world,save.history),standing,campaign:!!save.strategy,day:departure?.day??save.day,credits:save.credits,arrears:save.overworld?.arrears??0,readiness,
   confirming:!!overworldConfirmation,departing:!!departure,departure,holding:overworldHoldPreview,contractCount:offers.length,arrivingContracts:quote?.encounter?0:offers.filter(offer=>offer.availableOnArrival).length,markers,sensorRange,sensorPort:current,holdArrears:holdSettlement?.arrears??0,
   portServices:portSheetOpen&&!departure&&!save.transit?portServicesData(selected):null,transitEvent:!departure?transitEventData():null,
   sceneReady:window.IronVowChart?.snapshot().shipReady??false};
@@ -2702,6 +2876,7 @@ function nav(){
  document.body.dataset.targetPanel=targetPanelOpen?'open':'closed';document.body.dataset.view=battle?'combat':page;document.body.dataset.navigationParent=parent;document.body.dataset.hangarView=hangarDeck;document.body.dataset.workshopMode=workshopView;
  $('#nav').innerHTML=[['bridge','Bridge'],['bay','Mech Bay'],['company','Company']].map(([id,label])=>`<button type="button" data-primary="${id}" class="${id===parent?'active':''}" ${id===parent?'aria-current="page"':''} ${battle?'disabled':''}>${label}${id==='company'&&points?`<span class="training-badge" title="${points} training points available">${points}</span>`:''}</button>`).join('');
  const journal=$('#field-journal');if(journal){journal.disabled=!!battle;journal.setAttribute('aria-pressed',String(page==='journal'));journal.onclick=openJournal;}
+ $('#day').title=readinessNote();
  $('#credits').textContent=money(save.credits);$('#day').textContent='DAY '+String(save.day).padStart(3,'0');
 }
 
@@ -2760,6 +2935,7 @@ function render(){
   window.IronVowArmoryUI?.enhance(document);
   window.IronVowMenus?.enhance(document);
   bind();
+  for(const button of document.querySelectorAll('[data-com-pilot]'))button.onclick=()=>openComSkills(Number(button.dataset.comPilot));
   for(const button of document.querySelectorAll('[data-mech-pilot]'))button.onclick=()=>{
    const kind=Number(button.dataset.mechPilot),slot=LANCE_SLOTS.find(i=>pilotClass(i)===kind);
    openMechComputer(kind,slot===undefined?undefined:pilotFrame(slot));
@@ -2888,6 +3064,7 @@ function validSave(s){
     !s.owned.every(id=>shieldItem(id)||WEAPONS.some(w=>w.id===id&&!w.builtIn))||!Array.isArray(s.history)||s.history.length>500||
     !s.history.every(h=>h&&CONTRACTS.some(c=>c.name===h.name)&&Number.isFinite(h.day)&&typeof h.win==='boolean'&&Number.isFinite(h.pay))||
     !Array.isArray(s.units)||s.units.length!==PILOTS.length)return false;
+ if(!validCareerCom(s))return false;
  if(s.pilotRetrained!==undefined&&!validRecord(s.pilotRetrained,([id,day])=>pilotKind(id)>=0&&Number.isSafeInteger(day)&&day>=1&&day<=s.day))return false;
  if(s.pilotLicenses!==undefined&&!validRecord(s.pilotLicenses,([id,license])=>PILOT_LICENSES[pilotKind(id)]?.includes(license)))return false;
  if(!s.units.every((u,i)=>u&&Number.isInteger(pilotFrame(i,s))&&validHull(u,pilotFrame(i,s),s.owned)&&
@@ -2980,6 +3157,7 @@ function loadCareer(record){
   migrateEquipment(record);
   const gatecrasher=record.units.find((_,i)=>pilotFrame(i,record)===3)??record.reserve?.[3];
   if(gatecrasher?.melee==='breach-gauntlet')delete gatecrasher.melee;
+  record.readinessStart??=record.day;
   return restoreTraining(record);
  }
  // The donor uses indices 0–5 for its machines, in a different order from Sites.
@@ -3004,6 +3182,7 @@ function loadCareer(record){
  const {day,credits,rep,wins,kills,history,owned}=record;
  const migrated={version:1,day,credits,rep,wins,kills,history,owned,units,reserve};
  if(!validSave(migrated))return null;
+ migrated.readinessStart=migrated.day;
  return migrateEquipment(migrated);
 }
 function importCareer(record){
@@ -3152,7 +3331,7 @@ function prepareSortie(i,offer=null){
    return `<div class="sortie-seat"><button type="button" data-sortie-seat="${slot}" aria-pressed="${chosen.has(slot)}" ${!canFly?'disabled':''}><b>${frame}${active.length?'':' · '+pilot.call}</b><small>${save.units[slot].condition}% INTEGRITY${canFly?'':' · REPAIR NEEDED'}${!active.length&&woundDays(draft.get(slot))?' · '+woundLabel(draft.get(slot)):''}</small></button>
     ${active.length&&canFly?`<label class="sortie-crew">Pilot<select data-sortie-pilot="${slot}" aria-label="Pilot for ${frame}">${options}</select></label>`:''}</div>`;
   }).join('')}</div>
-  ${regionalRewardMarkup(offer)}${campaignContractNote(offer)}${recommended?operationChoices():ready.length>=size?auxiliaryChoices():''}${recommended&&contract.id==='frontier'?'<p class="note">Capture the command yard at 8,10 by round 6. Gunship arrives round 4. Optional salvage at 9,13.</p>':''}
+  <p class="note">${readinessNote()}</p>${regionalRewardMarkup(offer)}${campaignContractNote(offer)}${recommended?operationChoices():ready.length>=size?auxiliaryChoices():''}${recommended&&contract.id==='frontier'?'<p class="note">Capture the command yard at 8,10 by round 6. Gunship arrives round 4. Optional salvage at 9,13.</p>':''}
   <p class="note" id="sortie-count" aria-live="polite"></p>`,
   [{text:'CANCEL',fn:closeModal},...(ready.length<minimum?[{text:'OPEN WORKSHOP',fn:()=>openRepair(LANCE_SLOTS.find(slot=>!ready.includes(slot)))}]:[
    {text:'DEPLOY',fn:()=>{if(chosen.size>=minimum&&!battle&&!careerStale&&companyPort()===port){
@@ -3245,7 +3424,7 @@ function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null,offer=null,e
  }
  if(!legacy){
   const seed=Math.floor(ruleRandom()*4294967296);
-  surveyTerrain(seed);
+  startBattleCom(seed);surveyTerrain(seed);
   for(const u of battle.units)if(isLineInfantry(u))u.weapon=INFANTRY_PRIMARIES[(seed+u.index)%INFANTRY_PRIMARIES.length];
   enableMechComputers();
  }
@@ -3409,7 +3588,95 @@ function jumpjetDestination(u,target){
 }
 const {hitOdds,shotsPerAttack,roundWeight}=window.IRON_VOW_SIM;
 const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,FREE_HAND_COUNTER});
-let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>ruleRandom(),chargedLimbShot});
+let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>comRandom(),chargedLimbShot});
+const legalComWeapon=(a,t,w)=>Boolean(a?.alive&&t?.alive&&!a.blackout&&workingWeapon(a,w)&&
+ distance(a,t)<=combatRange(a,t,w)&&!attackObstruction(a,t,w));
+const directComWeapon=w=>Boolean(w&&!w.melee&&!w.tactical&&!launchesMissiles(w)&&w!==REAVER_AUTOCANNON);
+const burstComWeapon=w=>Boolean(directComWeapon(w)&&w.burst&&!w.scatter);
+const comBearing=(a,t)=>Math.abs(a.x-t.x)>=Math.abs(a.z-t.z)?Math.sign(a.x-t.x)*1:Math.sign(a.z-t.z)*2;
+function comAttackOptions(a,t,w,reaction=false,chain=false){
+ if(!battle.com||a.kind||a.blackout||!legalComWeapon(a,t,w)||w.tactical)return [];
+ if(reaction)return w.melee&&w!==FREE_HAND_COUNTER?[{id:'riposte',a,w}]:[];
+ const options=[];
+ if(burstComWeapon(w))options.push({id:'rof',a,w},{id:'rof2',a,w});
+ if(a.brace&&directComWeapon(w)&&/cannon/i.test(w.type)&&!w.burst)options.push({id:'shell',a,w});
+ const other=[unitWeapon(a),meleeWeapon(a)].find(weapon=>weapon&&weapon.id!==w.id&&
+  (weapon.melee||directComWeapon(weapon))&&weapon.ap<=4&&weaponSubsystem(a,weapon)!==weaponSubsystem(a,w)&&legalComWeapon(a,t,weapon));
+ if(other&&(w.melee||directComWeapon(w))&&w.ap<=4)options.push({id:'combo',a,w:other});
+ if(chain)return options;
+ const pilot=comPilot(a),linked=pilot?comRecord(pilot).partner:null;
+ const partner=battle.units.find(u=>u!==a&&u.team===a.team&&u.alive&&!u.kind&&
+  (pilot?linked&&comPilot(u)===linked:true)&&battle.com.assists[u.id]!==battle.turn);
+ if(partner&&comBearing(a,t)!==comBearing(partner,t)){
+  const gun=unitWeapon(partner),blade=[meleeWeapon(partner),gun].find(weapon=>weapon?.melee&&legalComWeapon(partner,t,weapon));
+  if(w.melee&&blade)options.push({id:'gang',a:partner,w:blade});
+  if(directComWeapon(w)&&directComWeapon(gun)&&gun.ap<=4&&legalComWeapon(partner,t,gun))options.push({id:'squad',a:partner,w:gun});
+ }
+ return options;
+}
+function comAttackRoll(a,t,w,reaction=false,chain=false){
+ const options=comAttackOptions(a,t,w,reaction,chain);
+ if(!chain)comPractice(a,options);
+ return drawCom(options.filter(c=>installedCom(a).includes(c.id)),chain?.5:1);
+}
+function comBoostWeapon(w,id){
+ const factor=id==='rof'?1.5:id==='rof2'?2:1;
+ return factor===1?w:{...w,burst:Math.floor(w.burst*factor),comBaseRounds:w.burst};
+}
+function announceCom(a,id){
+ const name=COM_SKILLS[id].name;
+ duelSkill(a,name.toUpperCase());addLog(a.name+' · '+name);
+}
+async function shootCom(c,t,sequence,accuracy=1,exchange=null){
+ if(!c||!legalComWeapon(c.a,t,c.w))return;
+ announceCom(c.a,c.id);
+ if(c.id==='squad'||c.id==='gang')battle.com.assists[c.a.id]=battle.turn;
+ await shoot(c.a,t,'body',comBoostWeapon(c.w,c.id),true,sequence,{accuracy},exchange);
+}
+function comSupportOptions(attacker,defender,practice=false){
+ if(!battle.com||!attacker.alive)return [];
+ const candidates=new Map();
+ for(const ally of battle.units){
+  if(ally===defender||ally.team!==defender.team||ally.kind)continue;
+  const gun=unitWeapon(ally);
+  if(!directComWeapon(gun)||!legalComWeapon(ally,attacker,gun))continue;
+  const options=[{id:'overwatch',a:ally,w:gun}];
+  if(distance(ally,defender)<=2)options.push({id:'covering',a:ally,w:gun});
+  if(practice)comPractice(ally,options);
+  for(const option of options){
+   if(!installedCom(ally).includes(option.id))continue;
+   const aim=displayedAttackOdds(ally,attacker,gun).hit;
+   if(!candidates.has(option.id)||aim>candidates.get(option.id).aim)candidates.set(option.id,{...option,aim});
+  }
+ }
+ return [...candidates.values()];
+}
+async function comSupport(attacker,defender,sequence,exchange){
+ const proc=drawCom(comSupportOptions(attacker,defender,true));
+ if(proc)await shootCom(proc,attacker,sequence,.65,exchange);
+}
+function comDefend(a,t,w,contacts,exchange){
+ if(!battle.com||t.kind||!exchange||exchange.defence.has(t.id))return;
+ const landed=contacts.filter(hit=>hit.hit&&hit.amount>0);
+ if(!landed.length)return;
+ const options=[];
+ if(activeShield(t))options.push({id:'shield'});
+ if(launchesMissiles(w)&&COM_SKILLS.chaff.frames.includes(t.frame))options.push({id:'chaff'});
+ const pending={...t.hp};
+ const lethal=landed.find(hit=>limbPart(hit.part)&&pending[hit.part]>0&&(pending[hit.part]-=hit.amount)<=0);
+ if(lethal&&!battle.com.bulkhead[t.id])options.push({id:'bulkhead'});
+ comPractice(t,options);
+ const installed=options.filter(c=>installedCom(t).includes(c.id));
+ if(!installed.length)return;
+ exchange.defence.add(t.id);
+ const proc=drawCom(installed);
+ if(!proc)return;
+ announceCom(t,proc.id);
+ if(proc.id==='shield')for(const hit of landed)hit.amount=Math.max(1,Math.round(hit.amount*.7));
+ if(proc.id==='chaff')landed[0].amount=Math.max(1,Math.round(landed[0].amount*.5));
+ if(proc.id==='bulkhead')lethal.comBulkhead=true;
+}
+
 function shotContacts(w,profile,rounds,impacts){
  const spread=w.scatter?(reducedMotion?.021:.046):0;
  const contacts=(rounds.length>1?rounds:profile.beats.map(()=>rounds[0])).map(({part,hit,critical},index)=>({
@@ -3439,8 +3706,11 @@ function attackPreview(a,t,w){
  // Nobody aims: a normal shot is rolled against the body, and each landed round then rolls its own location.
  const {hit,crit}=displayedAttackOdds(a,t,w),multi=shotsPerAttack(w)>1;
  const damage=attackBudget(a,t,shotPart(a,w,false),w);
+ const routines=comOdds(comAttackOptions(a,t,w).filter(c=>installedCom(a).includes(c.id)));
+ const com=routines.map(({id,rate})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'%').join(' / ');
+ const support=comOdds(comSupportOptions(a,t)).map(({id,rate,aim})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'% ('+Math.round(aim*.65)+'% hit)').join(' / ');
  const odds=hit+'%'+(w.scatter?' SHELL':multi?'/ROUND':' HIT');
- return odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG');
+ return (com?com+' · ':'')+odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG')+(support?' · Enemy '+support:'');
 }
 function barrageTarget(u){
  const lock=u.mechState?.lock;
@@ -3478,7 +3748,8 @@ function renderBattle(){
   const counterStatus=counter?(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED')+' / '+counterCost(target,u,counter)+' AP':
    targetReaction==='READY'?'NO REPLY FROM HERE':targetReaction;
   const targetShield=activeShield(target);
-  const targetStatus=[target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
+  const targetCom=target&&battle.com?installedCom(target).map(id=>COM_SKILLS[id].name).join(' / '):'';
+  const targetStatus=[targetCom?'COM '+targetCom:'',target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
   battlefieldReady=window.IronVowScene?.ready!==false;
   battlefieldLoadFailed=Boolean(window.IronVowScene?.loadFailed);
   const ready=battle.phase==='player'&&!battle.busy&&battlefieldReady,canMove=Boolean(u&&paths(u).size>1),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
@@ -3760,10 +4031,11 @@ async function moveUnit(u,x,z){
  }
  u.walkCount=gaitBase+steps.length;
 }
-async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
+async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null,exchange=null){
  const reaverBattery=w.id===REAVER_AUTOCANNON.id;
  if((reaverBattery||launcherId(w.id))&&!workingWeapon(a,w))return;
  w=salvoWeapon(a,w);
+ if(bonus)w={...w,comBonus:true};
  window.IronVowScene?.aimAt(a,t,part);
  if(t.kind)part='body';
  if(attackObstruction(a,t,w))return;
@@ -3774,7 +4046,8 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   Object.assign(sequence,{actor:a,target:t,w,part,reaction,phase:'aim',result:'',resultAt:null,fireAt:null,contacts:null,contact:null});
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
- const fullProfile=attackProfile(a,w.id),profile=w.salvoScale&&launcherId(w.id)?{...fullProfile,beats:fullProfile.beats.slice(0,w.rounds)}:fullProfile;
+ const normalProfile=attackProfile(a,w.id);
+ const fullProfile=w.comBaseRounds?{...normalProfile,beats:Array.from({length:w.burst},(_,i)=>i*(normalProfile.beats[1]??.105))}:normalProfile,profile=w.salvoScale&&launcherId(w.id)?{...fullProfile,beats:fullProfile.beats.slice(0,w.rounds)}:fullProfile;
  const paired=reaverBattery&&w.rounds===REAVER_AUTOCANNON.rounds;
  const power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
  const weaponVoice=a.kind==='tank'?'javelin':a.kind==='helicopter'?'kite':w.id;
@@ -3785,10 +4058,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(!muted&&gunBankLoad)await gunBankLoad;
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
- const expenditure=spendAttack(a,t,w,part,reaction);
+ const expenditure=bonus?{paid:0,charged:false}:spendAttack(a,t,w,part,reaction);
  if(!expenditure)return;
  const {paid,charged}=expenditure;
- if(a.boost&&sequence&&!sequence.skipped)duelSkill(a,'Deadeye');
+ if(!bonus&&a.boost&&sequence&&!sequence.skipped)duelSkill(a,'Deadeye');
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
  const shoulder=launcherId(w.id)&&w.id!=='locust',clip=w.melee?'strike':'fire';
  const plantedCleaver=breachLoadout(a.frame)&&w.id==='cleaver';
@@ -3837,8 +4110,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  a.fireTime=clock;a.attack.fireAt=clock;
  if(power)a.attack.stage='release';
  if(sequence){sequence.phase='fire';sequence.fireAt=clock}
- const {rounds,impacts,landed,dodged,guard}=planVolley(a,t,part,w,reaction);
+ const {rounds,impacts,landed,dodged,guard}=planVolley(a,t,part,bonus?.accuracy<1?{...w,comAccuracy:bonus.accuracy}:w,reaction);
  const contacts=shotContacts(w,profile,rounds,impacts),flight=contacts.at(-1).at;
+ comDefend(a,t,w,contacts,exchange);
  if(sequence)sequence.contacts=contacts;
  recordVolley(a,t,w,reaction,guard);
  const hit=landed>0,actual=impacts.find(impact=>impact.part===part)?.part??impacts[0]?.part??part;
@@ -3888,6 +4162,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(sequence)sequence.contact=event;
   if(rockets&&!sequence?.skipped)sound(event.hit?'missileImpact':'groundBlast',event.index?.83:.71,{pan:hitPan()});
   if(!event.hit)continue;
+  if(event.comBulkhead&&t.hp[event.part]>0){
+   event.amount=Math.min(event.amount,t.hp[event.part]-1);battle.com.bulkhead[t.id]=true;
+  }
   const broken=applyImpact(t,event);
   if(!sequence?.skipped)window.IronVowScene?.combat?.landed(a,t,w,event,guard);
   d+=event.amount;lost+=event.damage;
@@ -3953,7 +4230,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  }
  if(power){a.attack.resumeAt=clock;a.attack.stage='recovery';}
  if(sequence&&!sequence.skipped)$('#shot-status').textContent='Impact. '+sequence.result;
- a.boost=keepBoost;
+ if(!bonus)a.boost=keepBoost;
  const recover=native&&!reducedMotion?Math.max(.12,native.duration-windup-flight):profile.recover;
  a.attack.returnAt=clock+recover;
  const settle=recover+(primeDuration?ATTACK_STEP.returnDuration:0);
@@ -3973,11 +4250,24 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(ownsCamera&&sequence)closeAttackCamera(sequence);
  }
 }
+async function shootExchange(a,t,part,w,reaction,sequence,exchange){
+ const proc=comAttackRoll(a,t,w,reaction);
+ const boost=proc?.id==='rof'||proc?.id==='rof2';
+ if(boost)announceCom(a,proc.id);
+ const jammed=await shoot(a,t,part,boost?comBoostWeapon(w,proc.id):w,reaction,sequence,null,exchange);
+ if(!proc)return jammed;
+ if(!boost)await shootCom(proc,t,sequence,1,exchange);
+ if(!reaction&&t.alive&&a.alive){
+  const chain=comAttackRoll(a,t,w,false,true);
+  if(chain)await shootCom(chain,t,sequence,1,exchange);
+ }
+ return jammed;
+}
 const {reactionStatus,reactionWeapon,counterCost}=window.IRON_VOW_SIM.createReactionRules({weaponAP,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
 const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound}=window.IRON_VOW_SIM.createCombatTransactions({
  getBattle:()=>battle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
  attackObstruction,mechState,paidAttackAP,addLog,toast,
- beginAttackCamera:(...args)=>beginAttackCamera(...args),closeAttackCamera,shoot,
+ beginAttackCamera:(...args)=>beginAttackCamera(...args),closeAttackCamera,shoot:shootExchange,comSupport,
  BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
  counterCost,grantMove,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
 });
@@ -4020,6 +4310,7 @@ function placeReserve(index,tile){
 }
 function placeDepotWave(tile){
  const index=battle.contract.deployment.length,u=makeVehicle('helicopter',index,...tile);
+ if(battle.com)applyReadiness(u,battle.com.week);
  battle.units.push(u);
  resetMovement(u);
 }
@@ -4120,6 +4411,7 @@ function settleShip(win,allies,promotions){
 function finish(win){
  if(battle.lionTrial){battle.busy=false;startLionTrial(current()?.melee??lionTrial);return}
  const b=battle,c=b.contract,promotions=[],interception=b.interception;
+ const comProgress=settleComPractice();
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
  const surrendered=win?b.units.filter(u=>u.surrendered&&u.team==='enemy'):[];
  const gear=surrendered.flatMap(u=>portableItems(u));
@@ -4197,6 +4489,7 @@ function finish(win){
    stat('NET CREDITS',money(pay-costs.paid-costs.arrearsPaid)):''}
   ${premium?stat('DISPATCH PREMIUM INCLUDED','+'+money(premium)):''}${serviced?stat('HULLS SERVICED',serviced):''}${online?stat('TRAIN UPGRADE ONLINE',online):''}
   ${baseOnline?stat('HANGAR FACILITY ONLINE',baseOnline):''}
+  ${comProgress.length?stat('COM TRAINING',comProgress.join(' · ')):''}
   ${promotions.length?stat('PROMOTED',promotions.join(' · ')):''}`,buttons);
 }
 // Canvas overlay for tactical labels, markers and floating text.

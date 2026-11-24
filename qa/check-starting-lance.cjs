@@ -6,7 +6,7 @@ const sim=createSimulation({newCareer:true});
 assert.equal(sim.run('validSave(save)'),true);
 assert.equal(sim.storage.get('iron-vow-career'),sim.run('JSON.stringify(save)'),'First career is saved immediately');
 assert.equal(createSimulation({storage:sim.storage,newCareer:true}).run('JSON.stringify(save)'),sim.storage.get('iron-vow-career'));
-assert.deepEqual(JSON.parse(createSimulation().run('JSON.stringify(save)')),stock);
+assert.deepEqual(JSON.parse(createSimulation().run('JSON.stringify(save)')),{...stock,readinessStart:stock.day});
 
 const coverage=sim.run(`(()=>{
  const variants=LANCE_SLOTS.map(()=>({pilot:new Set(),kit:new Set(),livery:new Set(),training:new Set()}));

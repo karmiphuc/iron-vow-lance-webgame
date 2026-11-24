@@ -96,7 +96,7 @@ window.IronVowOverworldView = (() => {
         ${!data.departing&&!data.transitEvent?`<button type="button" class="navigation-quiet chart-ship-upgrades" data-campaign-board>${data.campaign?'Campaign operations':'Directorate campaign'}</button>`:''}
         <button type="button" class="navigation-quiet chart-ship-upgrades" data-page="ship">Train Upgrades</button>
       </aside>
-      <div class="chart-course">${forecast}</div>
+      <div class="chart-course">${forecast}${data.readinessForecast?`<p class="readiness-note">${escapeHtml(data.readinessForecast)}</p>`:''}</div>
       ${data.transitEvent ? transitReport(data.transitEvent) : data.portServices ? window.IronVowPortView.render(data.portServices) : ''}
       <div class="chart-load-status" role="status">${data.sceneReady ? '' : 'Preparing chart'}</div>
     </div>`;
