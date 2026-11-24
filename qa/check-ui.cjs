@@ -49,7 +49,7 @@ click('#field-journal');assert.equal(document.body.dataset.view,'journal');
 assert.equal(document.querySelectorAll('.manual-topics > div').length,9);
 assert.match(document.querySelector('.manual-topics').textContent,/all hits go to the left arm/);
 click('[data-journal="wiki"]');assert.equal(document.querySelectorAll('.wiki-pilot').length,8);
-assert.equal(document.querySelectorAll('.wiki-paths li').length,96);
+assert.equal(document.querySelectorAll('.wiki-paths li').length,144);
 click('#nav [data-primary="bay"]');click('[data-hangar-deck="base"]');
 assert.equal(document.body.dataset.view,'hangar');assert.equal(document.querySelectorAll('.base-room').length,4);
 click('[data-hangar-deck="mechs"]');

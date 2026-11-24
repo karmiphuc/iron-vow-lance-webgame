@@ -8,8 +8,8 @@ const ease=x=>{const q=clamp(x);return q*q*(3-2*q);};
 const range=(x,a,b)=>ease((x-a)/(b-a));
 const configs=[
  {frame:24,id:'husky',stride:.95,sway:.15,lift:.34,drop:.09,period:1.44},
- {frame:25,id:'giza',stride:.89,sway:.17,lift:.31,drop:.12,period:1.44},
- {frame:26,id:'vyzov',stride:1.08,sway:.085,lift:.32,drop:.055,period:1.4}
+ {frame:25,id:'giza',scale:.90,stride:.89,sway:.17,lift:.31,drop:.12,period:1.44},
+ {frame:26,id:'vyzov',scale:.93,stride:1.08,sway:.085,lift:.32,drop:.055,period:1.4}
 ];
 
 function clipData(source,clips){
@@ -220,8 +220,9 @@ function build(config,unit,source,clips){
   fist=marker(arms.R.wr,'VyzovStrike',V(0,-.43,.18),V(0,-1,0));
  }
  mech.live=config.id;
+ mech.scale=config.scale??1;mech.cont.scale.setScalar(mech.scale);
  mech.campaignRig={motions,driven,chassis,body:config,shoulder,mortar};
- mech.nativeV2={source,clips,animate,worldScale:.96,
+ mech.nativeV2={source,clips,animate,worldScale:.96*mech.scale,
   abilityWeapon:shoulder?.weapon,mortar,anchors:mortar?{mortarMuzzle:mortar.muzzle}:undefined,
   meleeSide:kind=>kind==='vyzov-knuckle'?'R':undefined,
   strikeContact:kind=>kind==='vyzov-knuckle'?fist:undefined,

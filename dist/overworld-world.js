@@ -193,6 +193,27 @@ window.IronVowWorld=(()=>{
   if(!validWorld(world)||!pool(world.seed,world.day).some(o=>o.id===id)||world.consumed.includes(id))return null;
   return {...world,consumed:[...world.consumed,id],scouted:world.scouted.filter(offerId=>offerId!==id),pendingEvents:[...world.pendingEvents],resolvedEvents:[...world.resolvedEvents],standings:{...world.standings}};
  }
+ function blockades(world,history,day=world?.day){
+  if(!world||day<5)return [];
+  const rotation=period(day);
+  return [['North Divide','armor'],['Salt March','air']].flatMap(([region,kind])=>{
+   const stops=PORTS.filter(port=>port.region===region);
+   const port=stops[(hash(world.seed,kind,'occupation')%stops.length+(rotation-5)/4)%stops.length].id;
+   const id='occupation:'+kind+':'+rotation;
+   return history.some(entry=>entry.win&&entry.occupation===id)?[]:[{id,port,kind}];
+  });
+ }
+ function firstBlockade(world,history,path){
+  if(!world)return null;
+  let day=world.day;
+  for(let i=1;i<path.length;i++){
+   const leg=edge(path[i-1],path[i]);if(!leg)return null;
+   day+=leg.days;
+   const patrol=blockades(world,history,day).find(entry=>entry.port===path[i]);
+   if(patrol)return {...patrol,day,path:path.slice(0,i+1)};
+  }
+  return null;
+ }
  function freightToday(world){
   // Paired with a campaign-day fare, so the activity has a reason to be on the chart.
   const index=(hash(world.seed,'shared freight')%outerRoutes.length+world.day%outerRoutes.length)%outerRoutes.length;
@@ -291,5 +312,5 @@ window.IronVowWorld=(()=>{
   return {world:{...world,consumed:[...world.consumed],scouted:[...world.scouted],pendingEvents:world.pendingEvents.filter(pending=>pending!==id),resolvedEvents,standings:{...world.standings}},
    choiceId,effect:{credits:choice.credits,hullCondition:choice.hullCondition,delayDays:choice.delayDays,rep:choice.rep,port:event.to}};
  }
- return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,regionalReward,railPressure,railNetwork,freightToday,CAMPAIGN_PROJECTS,startCampaign,validCampaign,projectOnline,campaignReports,queueCampaignProject,campaignResult,campaignSupport,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
+ return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,regionalReward,railPressure,railNetwork,freightToday,blockades,firstBlockade,CAMPAIGN_PROJECTS,startCampaign,validCampaign,projectOnline,campaignReports,queueCampaignProject,campaignResult,campaignSupport,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
 })();

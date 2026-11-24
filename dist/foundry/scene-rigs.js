@@ -157,15 +157,6 @@ function projectedAnchor(point){
  return [.5+(p.x-center.x)*.5,ground-(p.y-center.y)*.5];
 }
 function anchor(o){return projectedAnchor(o.getWorldPosition(V3()));}
-// Remap anchors framing a tall chassis back into the nominal UI surface.
-function tallAnchor(point,groundRow,span){
- camera.left=camera.bottom=-worldSpan*span/2;camera.right=camera.top=worldSpan*span/2;camera.updateProjectionMatrix();
- try{
-  const p=point.clone().project(camera),center=V3().project(camera);
-  const x=.5+(p.x-center.x)*.5,y=groundRow-(p.y-center.y)*.5;
-  return [.5+(x-.5)*span,(1-span)/2+y*span];
- }finally{camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}
-}
 
 
 function aimMounted(m,weapon,target,weight,node){
@@ -248,12 +239,15 @@ function draw(u,t,pose,scope,model,custom){
   const m=custom==='rig-v2'?rigV2.build(u,pose.stage||pose.previewScope||'battle'):
    buildRig(model,u.team,u.paint,u.team==='enemy'?'F'+(u.index+1):null,u.upgrade,u.trim,pose.modules);
   if(!m)return null;
+  // Keep authored size and the roster adjustment consistent across views.
+  const rosterScale=u.frame===8?.92:1; // Aegis uses the legacy Foundry kit.
+  const previewScale=m.scale*rosterScale,worldScale=(m.nativeV2?.worldScale??.9*m.scale)*rosterScale;
   // foundry/walk-tuning.js: approved step length, foot track, toe-out and footfall mass for this hull (the Lion trial rig keeps its own)
   window.IronVowWalk?.apply(m,u.lionTrial?null:u.frame,typeof MECH_MOTION!=='undefined'?MECH_MOTION[u.frame]?.mass:undefined);
   if(window.IronVowCairn?.applies(u.frame))window.IronVowCairn.fit(m,u,window.IronVowFieldPaint.finish(u));
   const coat=window.IronVowFieldPaint.create(u);
   if(coat)coat(m.body,m.build.ownedMaterials??=[]);
-  entry={m,coat,surface:pose.stage?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
+  entry={m,coat,previewScale,worldScale,surface:pose.stage?null:makeSurface(),stamp:null,anchors:{},previewScope:pose.previewScope};cache.set(key,entry);
  }
  if(entry.time>t)return {...entry,anchors:entry.previousAnchors||entry.anchors};
  const m=entry.m,v2=m.nativeV2,standardEquipment=!v2?.pose,equipmentScale=m.equipmentScale??1;
@@ -271,7 +265,9 @@ function draw(u,t,pose,scope,model,custom){
  }
  if(!u.alive&&u.downReason!=='pilot'&&pose.explosion>=.65&&!m.wrecked){wreckMech(m);m.wrecked=true}
  const world=pose.world,face=world?.face??pose.heading??facing*Math.PI/4,aim=pose.aim;
- if(!world)m.yaw=face;else{m.scale=v2?.worldScale??.9;m.cont.scale.setScalar(m.scale);}
+ m.scale=world?entry.worldScale:entry.previewScale;
+ m.cont.scale.setScalar(m.scale);
+ if(!world)m.yaw=face;
  const paired=!world&&u.motion?.stepBeats!=null;
  const step=u.hp.legs>0&&!pose.reducedMotion&&Boolean(world?u.motion&&!world.airborne:paired||pose.phase>0&&u.motion);
  const prime=pose.primeProgress;
@@ -290,7 +286,7 @@ function draw(u,t,pose,scope,model,custom){
  m.wasMoving=Boolean(step);
  m.travelRoot=paired?pos:null;
  m.aim.until=aim>.01?t+.01:-1;m.aim.blend=aim;
- // Aim at chest height of a like-sized target: level for every rig, including the larger live Warden.
+ // Aim at chest height of a like-sized target in previews.
  if(world)m.aim.point.copy(world.aim);else m.aim.point.set(Math.sin(face)*20,4*(m.scale||1),Math.cos(face)*20);
  m.recoil=world?Math.max(m.recoil,Math.abs(pose.recoil)*.58):Math.abs(pose.recoil)*.58;
  if(melee){
@@ -406,19 +402,16 @@ function draw(u,t,pose,scope,model,custom){
  if(v2&&u.upgrade&&!m.build.kits&&(pose.preview||pose.stage))VC.fitReinforcement(m,u.upgrade);
  if(pose.stage==='bench'&&pose.clip)v2?.scrub?.(pose.clip,pose.clipTime);
  m.cont.updateMatrixWorld(true);
- const span=m.previewSpan,groundRow=span?(ground-(1-span)/2)/span:ground;
  if(pose.stage)return entry;
  if(!world){
   setCamera(.46);
-  if(span){camera.left=camera.bottom=-worldSpan*span/2;camera.right=camera.top=worldSpan*span/2;camera.updateProjectionMatrix();}
-  try{paintRig(m,entry.surface,renderer,groundRow);}finally{camera.left=camera.bottom=-worldSpan/2;camera.right=camera.top=worldSpan/2;camera.updateProjectionMatrix();}
+  paintRig(m,entry.surface);
  }
- entry.span=span;
  const r=m.rig,mounts=mountPoints(m),primary=entry.primary,secondary=entry.secondary;
  for(const [name,object] of Object.entries({...mounts,body:r.spine,pilot:r.neck,
   right:r.arms.R.el,left:r.arms.L.el,legs:r.legs[0].kn,leadFoot:r.legs[1].an,
   muzzle:primary?.muzzle,muzzle2:primary?.muzzle2,meleeTip:secondary?.tip,mortarMuzzle:m.mortar?.muzzle,shield:entry.shield?.face})){
-  if(object)entry.anchors[name]=span?tallAnchor(object.getWorldPosition(V3()),groundRow,span):anchor(object);
+  if(object)entry.anchors[name]=anchor(object);
  }
  if(m.artilleryBrace){
   const shoes=r.legs.filter(leg=>leg.kneeShoe).map(leg=>leg.kneeShoe.localToWorld(V3(0,-.3155,.035)));

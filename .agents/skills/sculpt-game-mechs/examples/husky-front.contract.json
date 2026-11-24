@@ -1,0 +1,120 @@
+{
+  "view": "Husky front, standing, viewer-right arm",
+  "landmarks": {
+    "top": "Highest fixed chassis edge above cockpit (choose a point on the top edge, excluding shadows).",
+    "sole": "Lowest edge of a planted toe/sole, excluding its shadow.",
+    "cuff": "Lower rigid edge of viewer-right forearm cuff above exposed wrist.",
+    "apron": "Bottom edge of the narrow center plate between thighs, near its centerline.",
+    "elbow": "Viewer-right elbow hinge center; mark null if the axis is hidden.",
+    "wrist": "Viewer-right wrist swivel center; mark null when the center cannot be located within the stated error.",
+    "round": "Centers of distinct round dark marks inside the lower center-apron pocket. Count only that pocket.",
+    "vertical_slot": "Centers of distinct upright slot-shaped marks inside that pocket. Exclude borders and cast shadows.",
+    "horizontal_slot": "Centers of distinct horizontal slot-shaped marks inside that pocket. Exclude borders and cast shadows."
+  },
+  "reference": {
+    "view": "Husky front, standing, viewer-right arm",
+    "image": "private/reference-front.jpg",
+    "sha256": "b2a005503a3284d75799d192c3170898ec29a1adf8353d809961b7b93cb4b556",
+    "width": 650,
+    "height": 650,
+    "marks": {
+      "top": [
+        369,
+        43
+      ],
+      "sole": [
+        168,
+        605
+      ],
+      "cuff": [
+        498,
+        321
+      ],
+      "apron": [
+        325,
+        378
+      ],
+      "elbow": null,
+      "wrist": null,
+      "round": [
+        [
+          328,
+          364
+        ]
+      ],
+      "vertical_slot": [
+        [
+          320,
+          369
+        ]
+      ],
+      "horizontal_slot": [
+        [
+          328,
+          374
+        ]
+      ]
+    },
+    "error_px": 3
+  },
+  "checks": [
+    {
+      "id": "cuff_elevation",
+      "kind": "height",
+      "points": [
+        "cuff"
+      ],
+      "tolerance": 3
+    },
+    {
+      "id": "apron_elevation",
+      "kind": "height",
+      "points": [
+        "apron"
+      ],
+      "tolerance": 3
+    },
+    {
+      "id": "cuff_to_apron",
+      "kind": "gap",
+      "points": [
+        "cuff",
+        "apron"
+      ],
+      "tolerance": 3
+    },
+    {
+      "id": "elbow_to_wrist",
+      "kind": "span",
+      "points": [
+        "elbow",
+        "wrist"
+      ],
+      "tolerance": 3
+    },
+    {
+      "id": "round_marks",
+      "kind": "count",
+      "points": [
+        "round"
+      ],
+      "tolerance": 0
+    },
+    {
+      "id": "vertical_slots",
+      "kind": "count",
+      "points": [
+        "vertical_slot"
+      ],
+      "tolerance": 0
+    },
+    {
+      "id": "horizontal_slots",
+      "kind": "count",
+      "points": [
+        "horizontal_slot"
+      ],
+      "tolerance": 0
+    }
+  ]
+}

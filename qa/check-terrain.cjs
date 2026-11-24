@@ -3,7 +3,7 @@ const fixture=require('./fixtures/terrain-sortie.json');
 const simulate=require('./sim-harness.cjs');
 const key='iron-vow-career';
 const {run}=simulate({reducedMotion:true});
-const checks=JSON.parse(run(`JSON.stringify(CONTRACTS.map((_,i)=>{
+const checks=JSON.parse(run(`JSON.stringify(CONTRACTS.map((contract,i)=>{
  const maps=new Set();
  let valid=true;
  for(let seed=0;seed<24;seed++){
@@ -23,9 +23,13 @@ const checks=JSON.parse(run(`JSON.stringify(CONTRACTS.map((_,i)=>{
    valid&&=neighborTiles(x,z).every(([a,b])=>!onBoard(a,b)||Math.abs(terrainCell(a,b).level-cell.level)<=1);
   }
  }
- return {valid,unique:maps.size};
+ return {id:contract.id,valid,unique:maps.size};
 }))`));
-assert.deepEqual(checks,Array(9).fill({valid:true,unique:24}),'all contracts vary terrain, preserve deployment and connected ground, and retain valid slopes');
+assert.ok(checks.length);
+for(const {id,valid,unique} of checks){
+ assert.equal(valid,true,id+' preserves deployment, connected ground and valid slopes');
+ assert.equal(unique,24,id+' varies terrain across seeds');
+}
 const saved=JSON.stringify(fixture);
 const resumed=simulate({storage:new Map([[key,saved]]),reducedMotion:true});
 assert.equal(resumed.run('JSON.stringify(captureSortie())'),JSON.stringify(fixture.sortie));

@@ -16,42 +16,52 @@
  const roundWeight=(round,count)=>round.critical?(count>1?2:1.5):1;
  const BREACH_LIMBS=Object.freeze(['right','left','legs']);
  const pilotHitChance=training=>Math.min(PILOT_HIT_MAX,Math.max(PILOT_HIT_MIN,PILOT_HIT_BASE+(training?.pilotHit??0)*PILOT_HIT_TRAINING));
- function createTerrainRules({getBattle,onBoard,movementLimit,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
+ function createTerrainRules({getBattle,onBoard,movementLimit,freeMovement=movementLimit,extraMoveAP=1,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
   function occupied(x,z){return getBattle().units.some(u=>u.alive&&u.x===x&&u.z===z)}
   const neighborTiles=(x,z)=>[[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
-  function paths(u,flight=false){
-   const {cover}=getBattle();
-   const max=movementLimit(u),costs=new Map([[u.x+','+u.z,0]]),queue=[[u.x,u.z]];
-   for(let k=0;k<queue.length;k++){
-    const [x,z]=queue[k],cost=costs.get(x+','+z);
-    if(cost>=max)continue;
-    for(const [a,b] of neighborTiles(x,z)){
-     const key=a+','+b;
-     if(!onBoard(a,b)||costs.has(key)||occupied(a,b)||(u.kind!=='helicopter'&&cover.has(key)))continue;
-     costs.set(key,cost+1);queue.push([a,b]);
+  const reverseStepOrder=(p,x,z)=>p.x>x?0:p.x<x?1:p.z>z?2:3;
+  const terrainLevel=(x,z)=>getBattle()?.field?.cells?(terrainCell(x,z)?.level??0):0;
+  const elevationCost=(u,x,z,a,b)=>u.kind==='helicopter'?0:Number(terrainLevel(x,z)!==terrainLevel(a,b));
+  function movementPlans(u,flight=false){
+   const {cover}=getBattle(),limit=movementLimit(u),free=freeMovement(u);
+   const origin={x:u.x,z:u.z,tiles:0,ap:0,elevationAP:0};
+   const start=u.x+','+u.z,best=new Map([[start,origin]]);
+   let frontier=new Map([[start,origin]]);
+   const priorElevation=new Map([[start,0]]);
+   // Mobility and AP are separate budgets. Keep the cheapest route at each
+   // step count so a short climb and a longer flat detour can both compete.
+   for(let tiles=1;tiles<=limit&&frontier.size;tiles++){
+    const next=new Map();
+    for(const plan of frontier.values())for(const [x,z] of neighborTiles(plan.x,plan.z)){
+     const key=x+','+z;
+     if(!onBoard(x,z)||occupied(x,z)||(u.kind!=='helicopter'&&cover.has(key)))continue;
+     const elevationAP=plan.elevationAP+elevationCost(u,plan.x,plan.z,x,z);
+     const ap=elevationAP+(tiles>free?extraMoveAP:0);
+     if(ap>(u.ap??Infinity)||elevationAP>=(priorElevation.get(key)??Infinity))continue;
+     const incumbent=next.get(key);
+     if(incumbent&&(ap>incumbent.ap||ap===incumbent.ap&&
+       reverseStepOrder(plan,x,z)>=reverseStepOrder(incumbent.previous,x,z)))continue;
+     next.set(key,{x,z,tiles,elevationAP,ap,previous:plan});
     }
+    for(const [key,plan] of next){
+     priorElevation.set(key,plan.elevationAP);
+     if(plan.ap<(best.get(key)?.ap??Infinity))best.set(key,plan);
+    }
+    frontier=next;
    }
-   if(u.kind==='helicopter'&&!flight)for(const key of cover)costs.delete(key);
-   return costs;
+   if(u.kind==='helicopter'&&!flight)for(const key of cover)best.delete(key);
+   return best;
   }
-  function route(u,x,z){
-   const costs=paths(u,true),end=x+','+z;
-   if(!costs.has(end)||getBattle().cover.has(end))return [];
+  function paths(u,flight=false){return new Map([...movementPlans(u,flight)].map(([key,plan])=>[key,plan.tiles]));}
+  function route(u,x,z,plan=movementPlans(u).get(x+','+z)){
    const steps=[];
-   let a=x,b=z;
-   while(a!==u.x||b!==u.z){
-    steps.unshift({x:a,z:b});
-    const previous=neighborTiles(a,b).find(([q,r])=>costs.get(q+','+r)===costs.get(a+','+b)-1);
-    if(!previous)return [];
-    [a,b]=previous;
-   }
+   for(let node=plan;node?.previous;node=node.previous)steps.unshift({x:node.x,z:node.z});
    return steps;
   }
   function distance(a,b){return Math.abs(a.x-b.x)+Math.abs(a.z-b.z)}
   function inCover(t){return t.kind!=='helicopter'&&neighborTiles(t.x,t.z).some(([x,z])=>getBattle().cover.has(x+','+z))}
-  const HIGH_GROUND_AIM=.10;
-  const terrainLevel=u=>getBattle()?.field.cells?(terrainCell(u.x,u.z)?.level??0):0;
-  const fireLevel=u=>terrainLevel(u)+(u.kind==='helicopter'?helicopterHeight():0);
+  const HIGH_GROUND_AIM=.20;
+  const fireLevel=u=>terrainLevel(u.x,u.z)+(u.kind==='helicopter'?helicopterHeight():0);
   function ridgeBlocks(a,t){
    if(!getBattle()?.field.cells||a.x===t.x&&a.z===t.z)return false;
    const dx=t.x-a.x,dz=t.z-a.z,nx=Math.abs(dx),nz=Math.abs(dz),sx=Math.sign(dx),sz=Math.sign(dz);
@@ -75,9 +85,9 @@
   }
   function highGroundAim(a,t,w){
    if(a.kind||t.kind==='helicopter'||w.melee||launchesMissiles(w))return 0;
-   return HIGH_GROUND_AIM*Math.min(3,Math.max(0,terrainLevel(a)-terrainLevel(t)));
+   return HIGH_GROUND_AIM*Math.min(3,Math.max(0,terrainLevel(a.x,a.z)-terrainLevel(t.x,t.z)));
   }
-  return {occupied,neighborTiles,paths,route,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
+  return {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
  }
  function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
@@ -117,8 +127,12 @@ function hitChance(a,t,part,w=weapon(a.weapon),reaction=false){
 }
 function shieldProtection(target){
  if(target.team!=='ally')return 0;
- const guardian=battleUnits()?.find(u=>u.training?.shieldNet);
- return guardian&&guardian!==target&&guardian.alive&&guardian.brace&&distance(guardian,target)===1?guardian.training.shieldNet:0;
+ let protection=0;
+ for(const guardian of battleUnits()??[]){
+  if(guardian.team===target.team&&guardian!==target&&guardian.alive&&guardian.brace&&guardian.training?.shieldNet&&distance(guardian,target)===1)
+   protection=Math.max(protection,guardian.training.shieldNet);
+ }
+ return protection;
 }
 function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const training=a.training,weaponPower=(w.melee?training?.meleePower:training?.rangedPower)??0;
@@ -228,7 +242,7 @@ function reactionWeapon(defender,attacker){
  }
  function createEnemyTurn({
   getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
-  attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementLimit,canJumpjet,jumpjetDestination,
+  attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementPlans,movementLimit,canJumpjet,jumpjetDestination,
   useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,
   trySurrender=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
   doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,freeMovement=movementLimit,extraMoveAP=1,jumpjetAP=2,
@@ -307,7 +321,7 @@ function reactionWeapon(defender,attacker){
    const currentShot=best.shot,front=Math.min(...opponents.map(t=>distance(u,t)));
    function consider(x,z,cost,ap,jet=false){
     if(u.ap<ap)return;
-    const moved=distance(u,{x,z});
+    const moved=jet?distance(u,{x,z}):cost;
     const next={...u,x,z,ap:u.ap-ap,mechState:{...u.mechState,moved:(u.mechState?.moved??0)+moved}};
     const result=positionValue(next,opponents,friends,role);
     if(currentShot){
@@ -326,7 +340,9 @@ function reactionWeapon(defender,attacker){
     const value=result.value-cost*.75-ap*2-overextend-leaveKnife-bypass;
     if(value>best.value)best={...result,value,x,z,cost,jet};
    }
-   if(movementLimit(u)>0)for(const [key,cost] of paths(u)){
+   if(movementPlans){
+    for(const plan of movementPlans(u).values())if(plan.tiles)consider(plan.x,plan.z,plan.tiles,plan.ap);
+   }else if(movementLimit(u)>0)for(const [key,cost] of paths(u)){
     if(cost===0)continue;
     const [x,z]=key.split(',').map(Number);
     consider(x,z,cost,cost>freeMovement(u)?extraMoveAP:0);
@@ -472,7 +488,8 @@ function reactionWeapon(defender,attacker){
     if(sequence)closeAttackCamera(sequence);
    }
   }
-  function spendMovement(u,tiles){
+  function spendMovement(u,tiles,elevationAP=0){
+   u.ap-=elevationAP;
    if(u.mechSkills)mechState(u).moved=(u.mechState.moved??0)+tiles;
    const free=Math.min(freeMovement(u),tiles);
    u.moveLeft=freeMovement(u)-free;

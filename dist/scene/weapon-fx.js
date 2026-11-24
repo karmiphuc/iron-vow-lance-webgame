@@ -14,6 +14,12 @@ const profiles={
   "asset": "rifle",
   "source": "Workshop"
  },
+ "reaver-autocannon": {
+  "archetype": "rifle",
+  "beats": Array.from({length:8},(_,i)=>i*.11).flatMap(at=>[at,at]),
+  "asset": null,
+  "source": "Reaver native cannons"
+ },
  "shotgun": {
   "archetype": "shotgun",
   "beats": [
