@@ -81,18 +81,18 @@ const damageSplit=sim.run("shotContacts(weapon('morrow'),attackProfile(a,'morrow
 assert.equal(damageSplit,'40,20','the cinematic applies extra damage at the critical round’s own impact');
 // Exercise reaction selection through the reusable API, including blocked shots,
 // broken arms, shields, ranged counters and the two specialized frames.
-const rifle={id:'rifle'},blade={id:'blade',melee:true},hand={id:'hand',melee:true};
+const rifle={id:'rifle',ap:3},blade={id:'blade',ap:2,melee:true},hand={id:'hand',ap:0,melee:true};
 const reactions=context.window.IRON_VOW_SIM.createReactionRules({
  isArmed:u=>u.hp.left>0||u.hp.right>0,equippedShield:u=>u.shield,
  counterRange:(w,training,brace)=>training?.reach??0,unitWeapon:()=>rifle,
  distance:(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.z-b.z),
- scoutWeapon:()=>blade,attackObstruction:(a,t,w)=>a.blocked?'RIDGE BLOCK':'',
- meleeWeapon:()=>blade,BULWARK_FRAME:4,ASHIGARU_FRAME:5,FREE_HAND_COUNTER:hand
+ scoutWeapon:(u,t,canPay)=>canPay(blade)?blade:null,weaponAP:w=>w.ap,attackObstruction:(a,t,w)=>a.blocked?'RIDGE BLOCK':'',
+ meleeWeapon:u=>u.melee||u.frame===4?blade:null,BULWARK_FRAME:4,ASHIGARU_FRAME:5,FREE_HAND_COUNTER:hand
 });
-const unit=(extra={})=>({alive:true,x:0,z:0,hp:{left:10,right:10},training:{reach:3},...extra});
+const unit=(extra={})=>({alive:true,ap:14,x:0,z:0,hp:{left:10,right:10},training:{reach:3},...extra});
 const attacker=unit({x:1});
 assert.equal(reactions.reactionStatus(unit({blackout:true})),'JAMMED');
-assert.equal(reactions.reactionStatus(unit({reacted:true})),'USED');
+assert.equal(reactions.reactionStatus(unit({reacted:true})),'READY');
 assert.equal(reactions.reactionStatus(unit({kind:'helicopter'})),'UNAVAILABLE');
 assert.equal(reactions.reactionWeapon(unit({melee:true}),attacker),blade);
 assert.equal(reactions.reactionWeapon(unit({shield:true}),attacker),rifle);
@@ -106,7 +106,7 @@ assert.equal(reactions.reactionWeapon(unit(),unit({alive:false})),null);
 // The production game calls the same extracted API for reaction eligibility.
 assert.deepEqual(JSON.parse(sim.run(`JSON.stringify([reactionStatus(a),reactionStatus({...a,reacted:true}),
  reactionStatus({...a,blackout:{}}),reactionWeapon({...a,alive:false},t)])`)),
- ['READY','USED','JAMMED',null]);
+ ['READY','READY','JAMMED',null]);
 // Motion capture temporarily wraps the planner to force deterministic hits.
 assert.equal(sim.run(`(()=>{const original=planVolley;let called=false;
  try{planVolley=(...args)=>{called=true;return original(...args)};

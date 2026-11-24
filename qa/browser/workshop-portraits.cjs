@@ -67,7 +67,7 @@ module.exports=async function checkWorkshopPortraits({page,origin,tap,mobile}){
   if(!target)throw Error('Portrait gate needs a real hostile mech');
   lockedTarget=target.id;
   Object.assign(actor,{x:7,z:12,vx:7,vz:12,ap:12});
-  Object.assign(target,{x:7,z:14,vx:7,vz:14,reacted:true});
+  Object.assign(target,{x:7,z:14,vx:7,vz:14,noCounter:true});
   battle.cover.clear();ruleRandom=()=>0;
   focusBattleCamera(actor,true);renderBattle();
  });

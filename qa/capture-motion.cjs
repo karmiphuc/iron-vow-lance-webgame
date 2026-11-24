@@ -58,7 +58,7 @@ async function main(){
      save=fresh();createBattle(0,false,false,[0]);surveyTerrain(0);selected=0;const a=current(),b=battle.units.find(u=>u.team==='enemy'&&!u.kind);
      battle.units=[a,b];battle.cover.clear();for(const cell of battle.field.cells)cell.level=0;
      Object.assign(a,{x:8,z:10,vx:8,vz:10,heading:headingTo(1,0),attack:null});
-     Object.assign(b,{x:9,z:10,vx:9,vz:10,heading:headingTo(-1,0),reacted:true});
+     Object.assign(b,{x:9,z:10,vx:9,vz:10,heading:headingTo(-1,0),noCounter:true});
      if(action==='walk')Object.assign(b,{x:12,z:10,vx:12,vz:10});
      if(action==='destruction')Object.assign(b,{x:10,z:10,vx:10,vz:10});
      b.hp.body=b.max.body=action==='destruction'?1:10000;

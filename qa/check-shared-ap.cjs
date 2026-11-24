@@ -1,0 +1,40 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+const career=require('./fixtures/shared-ap-sortie.json');
+
+(async()=>{
+ const sim=simulate({storage:new Map([['iron-vow-career',JSON.stringify(career)]]),reducedMotion:true,random:()=>0});
+ const {run}=sim;
+ assert.deepEqual(JSON.parse(run('JSON.stringify(captureSortie())')),career.sortie);
+ assert.equal(run('current().ap'),9);
+ assert.equal(run('current().attackAPSpent'),3);
+ assert.equal(run('current().moveLeft'),3);
+ assert.equal(run('battle.units[3].ap'),10);
+ assert.equal(run('battle.units[3].reacted'),true);
+ run('const a=current(),e=battle.units[3];a.ap=14;a.attackAPSpent=7');
+ assert.equal(run("canUseWeapon(a,weapon('rifle'))"),false,'gaining shared AP does not restore the attack allowance');
+ run('a.ap=0;completeRound()');
+ assert.equal(run('a.ap'),12);
+ assert.equal(run('attackAPLeft(a)'),8);
+ assert.equal(run('a.moveLeft'),run('mobility(a)'));
+ run('a.ap=9;completeRound()');
+ assert.equal(run('a.ap'),14,'banked AP recovers up to capacity');
+
+ run(`createBattle(1,true,true);battle.cover.clear();
+  const caster=current(),victim=battle.units.find(u=>u.team==='enemy');
+  caster.frame=VYZOV_FRAME;caster.attackAPSpent=6;
+  const launcher=weapon('missile');victim.x=caster.x+1;victim.z=caster.z;
+  `);
+ assert.equal(run('canTactical(caster)'),false,'tactical attacks also obey the 8 AP ceiling');
+ run('caster.frame=CITADEL_FRAME;caster.mechSkills=[CITADEL_FRAME];caster.attackAPSpent=5');
+ const before=run('caster.ap');
+ await run("engage(caster,victim,'body',launcher)");
+ assert.equal(run('caster.ap'),before);
+ assert.equal(run('caster.mechState?.lock'),undefined);
+ run('caster.attackAPSpent=4');
+ await run("engage(caster,victim,'body',launcher)");
+ assert.equal(run('caster.ap'),before-4);
+ assert.equal(run('caster.attackAPSpent'),8);
+ assert.ok(run('caster.mechState?.lock?.turn===battle.turn'),'marking a delayed barrage spends attack AP exactly once');
+ console.log('PASS shared AP checkpoint round trip, carryover, recovery cap, attack refunds, tactical ceiling and delayed barrage spend');
+})().catch(error=>{console.error(error);process.exitCode=1});

@@ -91,8 +91,8 @@ async function observeLaunches(page,fixture,mode,weapon){
 async function moveWithGait(page,actor){
  const result=await page.evaluate(async actorId=>{
   const unit=battle.units.find(u=>u.id===actorId),move=__ironVow.legalMoves(actorId)
-   .filter(item=>item.cost>0&&item.cost<=freeMovement(unit)).sort((a,b)=>a.cost-b.cost)[0];
-  if(!move)throw Error('Gatecrasher must have a legal free tile move');
+   .filter(item=>item.cost>0&&item.cost<=movementLimit(unit)).sort((a,b)=>a.cost-b.cost)[0];
+  if(!move)throw Error('Gatecrasher must have a legal tile move');
   const samples=[];
   const settled=new Promise(resolve=>{
    const sample=()=>{

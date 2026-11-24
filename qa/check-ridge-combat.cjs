@@ -25,7 +25,7 @@ const simulate=require('./sim-harness.cjs');
  await run('shoot(a,t,"body",rifle)');
  assert.equal(run('JSON.stringify([a.ap,t.hp,t.reacted])'),before,'blocked attacks spend nothing and trigger no counter');
  await run('engage(a,t,"body",missile)');
- assert.ok(run('a.ap===ROUND_AP-missile.ap&&t.hp.body<t.max.body&&!t.reacted'),'missile hits without opening a blocked counter lane');
+ assert.ok(run('a.ap===BASE_AP-missile.ap&&t.hp.body<t.max.body&&!t.reacted'),'missile hits without opening a blocked counter lane');
 
  run('[a,t]=setupRidge();terrainCell(4,8).level=0;const flat=hitChance(a,t,"pilot",rifle);terrainCell(6,8).level=2');
  assert.ok(run('Math.abs(hitChance(a,t,"pilot",rifle)-flat-.40*(1-dodgeChance(t)))<1e-8'));

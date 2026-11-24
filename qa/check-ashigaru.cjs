@@ -26,20 +26,21 @@ const carbine='needle-carbine',scatter='flechette-scattergun',knife='signal-knif
  const seen=[];
  sim.sandbox.seen=seen;
  run(`captureRandom=()=>1;const engageScout=engage;engage=(a,t,p,w)=>{if(a.frame===ASHIGARU_FRAME)seen.push(w.id);return engageScout(a,t,p,w)}`);
- for(const [range,right,left,expected,finishRange] of [[8,1,1,carbine,3],[2,1,1,scatter,2],[1,1,1,knife,1],
-  [4,0,1,knife,1],[1,1,0,scatter,2],[1,0,0,null,1]]){
+ for(const [range,right,left,expected,finishRange] of [[8,1,1,carbine,3],[2,1,1,scatter,3],[1,1,1,knife,2],
+  [4,0,1,knife,1],[1,1,0,scatter,3],[1,0,0,null,1]]){
   seen.length=0;
   run(`createBattle(0);{
    const u=${scout},a=current();
    battle.units=battle.units.filter(x=>x===u||x===a);battle.cover.clear();
-   Object.assign(u,{x:8,z:${15-range},vx:8,vz:${15-range},reacted:true});a.reacted=true;
+   Object.assign(u,{x:8,z:${15-range},vx:8,vz:${15-range}});a.noCounter=true;
    Object.assign(a,{x:8,z:15,vx:8,vz:15});
    if(!${right})u.hp.right=0;if(!${left})u.hp.left=0;
   }`);
   await run('endTurn()');
   assert.deepEqual(seen,expected?[expected]:[]);
-  assert.equal(run(`distance(${scout},current())`),finishRange);
-  assert.equal(run(`reactionWeapon(${scout},current())?.id??null`),finishRange<=2?expected:null);
+  assert.equal(run(`distance(${scout},current())`),finishRange,JSON.stringify({range,right,left,finishRange}));
+  run(`${scout}.ap=BASE_AP`);
+  assert.equal(run(`reactionWeapon(${scout},current())?.id??null`),finishRange===1?expected:finishRange===2&&right?scatter:null,JSON.stringify({range,right,left,finishRange}));
  }
  run('createBattle(0);for(const u of battle.units)if(u.team==="enemy")u.alive=false;finish(true)');
  assert.equal(run('save.salvage?.[ASHIGARU_FRAME]'),undefined);

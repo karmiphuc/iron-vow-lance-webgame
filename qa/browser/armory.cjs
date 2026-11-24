@@ -144,7 +144,7 @@ async function checkCerberusSalvo(page,mobile,tap){
   if(!spot)throw Error('No clear Cerberus fixture');
   [actor.x,actor.z]=[actor.vx,actor.vz]=spot;
   [foe.x,foe.z]=[foe.vx,foe.vz]=[spot[0]+2,spot[1]-1];
-  foe.reacted=true;lockedTarget=foe.id;
+  foe.noCounter=true;lockedTarget=foe.id;
   focusBattleCamera(actor,true);renderBattle();
   window.armoryQA={actor,foe};
   return {hp:foe.hp.body,ap:actor.ap,damage:partDamage(actor,foe,'body',weapon('cerberus'))};

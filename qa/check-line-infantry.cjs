@@ -26,9 +26,9 @@ const {play}=require('./check-missions.cjs');
   assert.equal(run('battle.units.some(u=>u.frame===LINE_INFANTRY_FRAME)'),false);
  }
  assert.equal(run('hostileFrame(0,CONTRACTS[0],true)'),0);
- run('battle=null;deploy(0,false,[0]);closeModal()');
+ run('battle=null;deploy(0,false,[0]);closeModal();captureRandom=()=>1;const foe=battle.units[1];const near=[...movementPlans(foe).values()].find(p=>p.tiles===3&&p.z>foe.z);current().x=near.x;current().z=near.z');
  await run('endTurn()');
- assert.ok(run('battle.log.some(line=>line.startsWith("LINE INFANTRY 1 → WARDEN"))'));
+ assert.ok(run('battle.units.some(u=>u.frame===LINE_INFANTRY_FRAME&&u.attackAPSpent>0)'));
  assert.ok(run('targetParts(current()).some(part=>current().hp[part]<current().max[part])'));
  const resumed=simulate({...options,storage:new Map(sim.storage)});
  assert.equal(resumed.run('battle.units.find(u=>u.team==="enemy").frame'),frame);

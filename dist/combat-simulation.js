@@ -8,6 +8,17 @@
  // Chance per attack that strikes the body that one of its body rounds hits the cockpit instead. Training adds pilotHit*PILOT_HIT_TRAINING.
  const PILOT_HIT_BASE=.03,PILOT_HIT_TRAINING=.2,PILOT_HIT_MIN=.01,PILOT_HIT_MAX=.05;
  const HIT_CAP=.99;
+ const BASE_AP=14,AP_RECOVERY=12,ATTACK_AP_LIMIT=8;
+ const soloPicket=battle=>battle.contract?.id==='picket'&&(battle.operation?.recommended??battle.slots?.length)===1;
+ const attackAPLeft=u=>Math.max(0,ATTACK_AP_LIMIT-(u.attackAPSpent??0));
+ const canSpendAttack=(u,cost)=>u.ap>=cost&&attackAPLeft(u)>=cost;
+ function spendOffensiveAP(u,cost){
+  if(!canSpendAttack(u,cost))return false;
+  u.ap-=cost;
+  u.attackAPSpent=(u.attackAPSpent??0)+cost;
+  return true;
+ }
+ const recoverAP=(u,cap,penalty=0)=>Math.min(Math.max(0,cap-penalty),u.ap+AP_RECOVERY);
  const shotsPerAttack=w=>w.burst||w.rounds||1;
  const hitOdds=(accuracy,dodge=0)=>({
   hit:Math.min(HIT_CAP,1-dodge,accuracy),
@@ -16,14 +27,14 @@
  const roundWeight=(round,count)=>round.critical?(count>1?2:1.5):1;
  const BREACH_LIMBS=Object.freeze(['right','left','legs']);
  const pilotHitChance=training=>Math.min(PILOT_HIT_MAX,Math.max(PILOT_HIT_MIN,PILOT_HIT_BASE+(training?.pilotHit??0)*PILOT_HIT_TRAINING));
- function createTerrainRules({getBattle,onBoard,movementLimit,freeMovement=movementLimit,extraMoveAP=1,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
+ function createTerrainRules({getBattle,onBoard,movementLimit,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
   function occupied(x,z){return getBattle().units.some(u=>u.alive&&u.x===x&&u.z===z)}
   const neighborTiles=(x,z)=>[[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
   const reverseStepOrder=(p,x,z)=>p.x>x?0:p.x<x?1:p.z>z?2:3;
   const terrainLevel=(x,z)=>getBattle()?.field?.cells?(terrainCell(x,z)?.level??0):0;
   const elevationCost=(u,x,z,a,b)=>u.kind==='helicopter'?0:Number(terrainLevel(x,z)!==terrainLevel(a,b));
   function movementPlans(u,flight=false){
-   const {cover}=getBattle(),limit=movementLimit(u),free=freeMovement(u);
+   const {cover}=getBattle(),limit=movementLimit(u);
    const origin={x:u.x,z:u.z,tiles:0,ap:0,elevationAP:0};
    const start=u.x+','+u.z,best=new Map([[start,origin]]);
    let frontier=new Map([[start,origin]]);
@@ -36,7 +47,7 @@
      const key=x+','+z;
      if(!onBoard(x,z)||occupied(x,z)||(u.kind!=='helicopter'&&cover.has(key)))continue;
      const elevationAP=plan.elevationAP+elevationCost(u,plan.x,plan.z,x,z);
-     const ap=elevationAP+(tiles>free?extraMoveAP:0);
+     const ap=tiles+elevationAP;
      if(ap>(u.ap??Infinity)||elevationAP>=(priorElevation.get(key)??Infinity))continue;
      const incumbent=next.get(key);
      if(incumbent&&(ap>incumbent.ap||ap===incumbent.ap&&
@@ -216,37 +227,51 @@ function planVolley(a,t,aimed,w,reaction){
 }
  return planVolley;
  }
- function createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon=(u,w)=>w&&u.hp[w.melee?'left':'right']>0,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER}){
+ function createReactionRules({equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon=(u,w)=>w&&u.hp[w.melee?'left':'right']>0,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER,weaponAP}){
+const counterCost=(u,t,w)=>{
+ const range=distance(u,t);
+ return Math.max(1,weaponAP(w,u.training))+(range<=2?3:range<=4?2:1);
+};
+const freeHand=u=>u.hp.left>0&&!equippedShield(u)&&!(meleeWeapon(u)&&u.meleeHand!=='right');
 function reactionStatus(u){
- if(!u?.alive||u.kind)return 'UNAVAILABLE';
+ if(!u?.alive||u.kind||u.noCounter)return 'UNAVAILABLE';
  if(u.blackout)return 'JAMMED';
- if(u.reacted)return 'USED';
- if(u.frame===BULWARK_FRAME)return isArmed(u)?'READY':'UNAVAILABLE';
- return u.meleeHand==='right'&&workingWeapon(u,meleeWeapon(u))||u.hp.left>0&&!equippedShield(u)||workingWeapon(u,unitWeapon(u))&&counterRange(unitWeapon(u),u.training,u.brace)>0?'READY':'UNAVAILABLE';
+ const melee=meleeWeapon(u),primary=unitWeapon(u);
+ const reach=u.frame===BULWARK_FRAME?1:u.frame===ASHIGARU_FRAME?2:counterRange(primary,u.training,u.brace);
+ const costs=[];
+ if(workingWeapon(u,melee))costs.push(Math.max(1,weaponAP(melee,u.training))+3);
+ if(workingWeapon(u,primary)&&reach>0){
+  const range=primary.melee?1:reach;
+  costs.push(Math.max(1,weaponAP(primary,u.training))+(range<=2?3:range<=4?2:1));
+ }
+ if(u.frame!==BULWARK_FRAME&&u.frame!==ASHIGARU_FRAME&&freeHand(u))costs.push(4);
+ if(!costs.length)return 'UNAVAILABLE';
+ return u.ap>=Math.min(...costs)?'READY':'LOW AP';
 }
 function reactionWeapon(defender,attacker){
- if(reactionStatus(defender)!=='READY'||!attacker?.alive)return null;
- if(defender.frame===ASHIGARU_FRAME)return distance(defender,attacker)<=2?scoutWeapon(defender,attacker,true):null;
- const range=distance(defender,attacker),close=range===1&&defender.hp.left>0&&!equippedShield(defender)&&!attackObstruction(defender,attacker,FREE_HAND_COUNTER);
+ if(!defender?.alive||defender.kind||defender.noCounter||defender.blackout||!attacker?.alive)return null;
+ const affordable=w=>w&&defender.ap>=counterCost(defender,attacker,w);
+ if(defender.frame===ASHIGARU_FRAME)return distance(defender,attacker)<=2?scoutWeapon(defender,attacker,affordable):null;
+ const range=distance(defender,attacker),close=range===1&&freeHand(defender)&&!attackObstruction(defender,attacker,FREE_HAND_COUNTER);
  if(defender.frame===BULWARK_FRAME){
   const bash=meleeWeapon(defender),cut=unitWeapon(defender);
-  return range===1&&!attackObstruction(defender,attacker,cut)?(defender.hp.left>0?bash:defender.hp.right>0?cut:null):null;
+  return range===1&&!attackObstruction(defender,attacker,cut)?(defender.hp.left>0&&affordable(bash)?bash:defender.hp.right>0&&affordable(cut)?cut:null):null;
  }
  const melee=meleeWeapon(defender);
- if(range===1&&(defender.melee||defender.meleeHand==='right')&&workingWeapon(defender,melee)&&!attackObstruction(defender,attacker,melee))return melee;
+ if(range===1&&(defender.melee||defender.meleeHand==='right')&&workingWeapon(defender,melee)&&affordable(melee)&&!attackObstruction(defender,attacker,melee))return melee;
  const ranged=unitWeapon(defender),reach=counterRange(ranged,defender.training,defender.brace);
- if(workingWeapon(defender,ranged)&&reach&&range<=reach&&!attackObstruction(defender,attacker,ranged))return ranged;
- return close?FREE_HAND_COUNTER:null;
+ if(workingWeapon(defender,ranged)&&affordable(ranged)&&reach&&range<=(ranged.melee?1:reach)&&!attackObstruction(defender,attacker,ranged))return ranged;
+ return close&&affordable(FREE_HAND_COUNTER)?FREE_HAND_COUNTER:null;
 }
- return {reactionStatus,reactionWeapon};
+ return {reactionStatus,reactionWeapon,counterCost};
  }
  function createEnemyTurn({
-  getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
+  getBattle,enemyAPCapacity,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
   attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementPlans,movementLimit,canJumpjet,jumpjetDestination,
   useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,
   trySurrender=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
-  doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,freeMovement=movementLimit,extraMoveAP=1,jumpjetAP=2,
-  braceCost=()=>2,braceUnit=u=>{u.brace=true},startAction=()=>{},barrageTarget=()=>null,
+  doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,jumpjetCost=()=>2,
+  braceCost=()=>2,braceUnit=u=>{u.brace=true},barrageTarget=()=>null,
   inCover=()=>false,highGroundAim=()=>0,reactionWeapon=()=>null,
   forecast=(_,t,w)=>({part:'body',damage:w.damage??10})
  }){
@@ -260,7 +285,7 @@ function reactionWeapon(defender,attacker){
     return w?[w]:[];
    }
    return weapons(u,primary).filter(w=>{
-    if(!inReach(u,t,w)||(u.kind?u.ap<w.ap:!canUseWeapon(u,w)))return false;
+    if(!inReach(u,t,w)||(u.kind?!canSpendAttack(u,w.ap):!canUseWeapon(u,w)))return false;
     if(!launchesMissiles(w)||!hasMechSkill(u,CITADEL_FRAME))return true;
     if(u.mechState?.lock?.turn===turn)return false;
     const marked=barrageTarget(u);
@@ -276,7 +301,7 @@ function reactionWeapon(defender,attacker){
    const counter=reactionWeapon(t,u);
    const response=counter?forecast(t,u,counter,true).damage:0;
    const bodyRisk=u.hp?.body>0&&response>=u.hp.body*.65?.55:.27;
-   const count=u.kind?1:Math.max(1,Math.floor(u.ap/Math.max(1,paid(u,w))));
+   const count=u.kind?1:Math.max(1,Math.floor(Math.min(u.ap,attackAPLeft(u))/Math.max(1,paid(u,w))));
    const marking=launchesMissiles(w)&&hasMechSkill(u,CITADEL_FRAME)&&barrageTarget(u)!==t;
    const closeStrike=w.melee&&doctrine(u)?.[1]==='push'?10:0;
    const preference=u.frame===BULWARK_FRAME&&w.melee&&((getBattle().turn%2===1)===(w===unitWeapon(u)))?5:0;
@@ -345,11 +370,11 @@ function reactionWeapon(defender,attacker){
    }else if(movementLimit(u)>0)for(const [key,cost] of paths(u)){
     if(cost===0)continue;
     const [x,z]=key.split(',').map(Number);
-    consider(x,z,cost,cost>freeMovement(u)?extraMoveAP:0);
+    consider(x,z,cost,cost);
    }
    if((!best.shot||role[1]==='push'&&!best.shot.weapon.melee)&&canJumpjet(u))for(const t of opponents){
     const landing=jumpjetDestination(u,t);
-    if(landing)consider(landing.x,landing.z,1,jumpjetAP,true);
+    if(landing)consider(landing.x,landing.z,distance(u,landing),jumpjetCost(u,landing.x,landing.z),true);
    }
    return best;
   }
@@ -373,17 +398,18 @@ function reactionWeapon(defender,attacker){
    if(attack){
     const w=attack.weapon,ap=paid(u,w);
     const anchor=hasMechSkill(u,7)&&launchesMissiles(w)||hasMechSkill(u,8);
-    if(!anchor||Math.floor((u.ap-cost)/ap)!==Math.floor(u.ap/ap))return;
+    const budget=attackAPLeft(u);
+    if(!anchor||Math.floor(Math.min(u.ap-cost,budget)/ap)!==Math.floor(Math.min(u.ap,budget)/ap))return;
    }else if(doctrine(u)?.[1]!=='anchor'||!opponents.some(t=>weapons(t).some(w=>inReach(t,u,w))))return;
-   u.ap-=cost;startAction(u);braceUnit(u);addLog(u.name+' braces.');
+   u.ap-=cost;braceUnit(u);addLog(u.name+' braces.');
   }
   async function runEnemyTurn(){
    const battle=getBattle();
    const enemies=battle.units.filter(u=>u.team==='enemy'&&u.alive);
    // The solo introductory contract needs room for a first pilot to learn movement and cover.
-   const soloPatrol=battle.contract?.id==='picket'&&(battle.operation?.recommended??battle.slots?.length)===1;
+   const soloPatrol=soloPicket(battle);
    const opponents=()=>battle.units.filter(u=>u.team==='ally'&&u.alive);
-   for(const u of enemies){u.ap=ROUND_AP-(u.blackout?.ap??0);u.brace=false;resetMovement(u);}
+   for(const u of enemies){u.ap=recoverAP(u,enemyAPCapacity(battle,u),u.blackout?.ap??0);u.brace=false;resetMovement(u);}
    renderBattle();
    for(const enemy of enemies){
     if(!enemy.alive)continue;
@@ -414,16 +440,16 @@ function reactionWeapon(defender,attacker){
     let choice=bestAttack(enemy,allies);
     if(!soloPatrol)braceIfUseful(enemy,allies,choice);
     while(enemy.alive&&choice){
-     const before=enemy.ap;
+     const before=attackAPLeft(enemy);
      await engage(enemy,choice.target,'body',choice.weapon);renderBattle();
      if(checkEnd())return true;
-     if(enemy.kind||enemy.ap>=before)break;
+     if(enemy.kind||soloPatrol||attackAPLeft(enemy)>=before)break;
      allies=opponents();
      choice=bestAttack(enemy,allies);
     }
     if(!enemy.alive)continue;
-    if(enemy.mechState?.valkyrieStep&&!enemy.blackout?.hold){
-     const position=enemy.weapon==='quill-lance'?sniperExit(enemy,allies,role[0]):bestPosition(enemy,allies,friends,role);
+    if(!enemy.blackout?.hold&&allies.length&&(enemy.mechState?.valkyrieUsed||role[1]==='mobile'&&enemy.attackAPSpent>0&&weapons(enemy).some(w=>!w.melee))){
+     const position=sniperExit(enemy,allies,role[0]);
      if(position.cost&&!position.jet)await moveUnit(enemy,position.x,position.z,position.cost);
     }
     if(!soloPatrol)braceIfUseful(enemy,allies,null);
@@ -436,9 +462,9 @@ function reactionWeapon(defender,attacker){
  // Commands own gameplay mutations. The host supplies presentation, persistence and the current board.
  function createCombatTransactions({
   getBattle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
-  attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
+  attackObstruction,mechState,paidAttackAP,addLog,toast,
   beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
-  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
+  counterCost,grantMove,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
  }){
   function barrageRestriction(attacker,defender,w){
    if(!launchesMissiles(w)||!hasMechSkill(attacker,CITADEL_FRAME))return null;
@@ -448,7 +474,7 @@ function reactionWeapon(defender,attacker){
   }
 
   async function engage(attacker,defender,part,w){
-   if(attackObstruction(attacker,defender,w))return;
+   if(!canSpendAttack(attacker,paidAttackAP(attacker,w))||attackObstruction(attacker,defender,w))return;
    if(launchesMissiles(w)&&hasMechSkill(attacker,CITADEL_FRAME)){
     const state=mechState(attacker),restriction=barrageRestriction(attacker,defender,w);
     if(restriction==='pending'){addLog(attacker.name+' awaits its marked barrage next round.');return}
@@ -458,7 +484,7 @@ function reactionWeapon(defender,attacker){
      defender=marked;part=marked.hp[part]>0?part:'body';delete state.lock;
     }else{
      state.lock={x:defender.x,z:defender.z,turn:getBattle().turn};
-     attacker.ap-=paidAttackAP(attacker,w);startAction(attacker);
+     spendOffensiveAP(attacker,paidAttackAP(attacker,w));
      addLog(attacker.name+' marks tile '+defender.x+', '+defender.z+' for a missile barrage next round.');return;
     }
    }
@@ -471,7 +497,7 @@ function reactionWeapon(defender,attacker){
       if(!attacker.alive)break;
       if(guardian===defender||guardian.team!==defender.team||!hasMechSkill(guardian,BASTION_FRAME)||distance(guardian,defender)!==1)continue;
       const ranged=unitWeapon(guardian),reach=counterRange(ranged,guardian.training,guardian.brace);
-      if(reactionStatus(guardian)!=='READY'||guardian.hp.right<=0||ranged.melee||!reach||distance(guardian,attacker)>reach||attackObstruction(guardian,attacker,ranged))continue;
+      if(reactionStatus(guardian)!=='READY'||guardian.ap<counterCost(guardian,attacker,ranged)||guardian.hp.right<=0||ranged.melee||!reach||distance(guardian,attacker)>reach||attackObstruction(guardian,attacker,ranged))continue;
       guardian.reacted=true;addLog(guardian.name+' covers its adjacent ally.');
       await shoot(guardian,attacker,'body',ranged,true,sequence);
      }
@@ -488,17 +514,23 @@ function reactionWeapon(defender,attacker){
     if(sequence)closeAttackCamera(sequence);
    }
   }
-  function spendMovement(u,tiles,elevationAP=0){
-   u.ap-=elevationAP;
+  function spendMovement(u,tiles,ap){
+   u.ap-=ap;
+   u.moveLeft-=tiles;
    if(u.mechSkills)mechState(u).moved=(u.mechState.moved??0)+tiles;
-   const free=Math.min(freeMovement(u),tiles);
-   u.moveLeft=freeMovement(u)-free;
-   if(u.mechState?.valkyrieStep){delete u.mechState.valkyrieStep;u.moveLeft=0}
-   if(tiles>free){startAction(u);u.extraStep=true;u.ap-=EXTRA_MOVE_AP}
   }
-  function spendAttack(a,w,part,reaction){
-   const paid=reaction?0:paidAttackAP(a,w),charged=chargedLimbShot(a,w,part,reaction);
-   if(!reaction){if(!a.order?.keepMove&&!(charged&&a.training?.breachMove))startAction(a);a.ap-=paid}
+  function spendAttack(a,t,w,part,reaction){
+   const charged=chargedLimbShot(a,w,part,reaction);
+   if(reaction){
+    const paid=counterCost(a,t,w);
+    if(a.ap<paid)return null;
+    a.ap-=paid;
+    return {paid,charged};
+   }
+   const paid=paidAttackAP(a,w);
+   // Refunds replenish shared AP only. Offensive spending stays counted until the next turn.
+   if(!spendOffensiveAP(a,paid))return null;
+   if(a.order?.keepMove){grantMove(a);a.order.keepMove=false}
    return {paid,charged};
   }
   function recordVolley(a,t,w,reaction,guard){
@@ -506,7 +538,7 @@ function reactionWeapon(defender,attacker){
    if(!reaction&&!w.melee&&a.mechSkills){
     const state=mechState(a);
     if(!launchesMissiles(w))state.fired=true;
-    if((hasMechSkill(a,5)||w.id==='quill-lance')&&!state.valkyrieUsed){state.valkyrieUsed=true;state.valkyrieStep=true}
+    if((hasMechSkill(a,5)||w.id==='quill-lance')&&!state.valkyrieUsed){state.valkyrieUsed=true;grantMove(a)}
    }
    if(!w.melee&&!launchesMissiles(w)&&a.mechState)delete a.mechState.disrupted;
    if(a.brace&&launchesMissiles(w)&&hasMechSkill(a,7))mechState(a).behemothUsed=true;
@@ -533,7 +565,7 @@ function reactionWeapon(defender,attacker){
   function completeRound(){
    const battle=getBattle();
    battle.turn++;battle.phase='player';battle.busy=false;
-   battle.units.forEach(u=>{u.reacted=false;delete u.order;delete u.blackout;if(u.team==='ally'&&u.alive){u.ap=roundAP(u.training);u.brace=false;resetMovement(u)}});
+   battle.units.forEach(u=>{u.reacted=false;delete u.order;delete u.blackout;if(u.team==='ally'&&u.alive){u.ap=recoverAP(u,roundAP(u.training));u.brace=false;resetMovement(u)}});
   }
   return {barrageRestriction,engage,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound};
  }
@@ -609,5 +641,5 @@ function reactionWeapon(defender,attacker){
   }
   return {newBattle,step,run,runBattle,eventLog:()=>events.slice(),get state(){return report();},get running(){return working;}};
  }
- root.IRON_VOW_SIM=Object.freeze({hitOdds,shotsPerAttack,roundWeight,HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
+ root.IRON_VOW_SIM=Object.freeze({BASE_AP,AP_RECOVERY,ATTACK_AP_LIMIT,soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP,recoverAP,hitOdds,shotsPerAttack,roundWeight,HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
 })(typeof window==='undefined'?globalThis:window);

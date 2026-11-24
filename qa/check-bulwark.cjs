@@ -1,3 +1,4 @@
+const assertLegacySortie=require('./legacy-sortie-check.cjs');
 const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const {join}=require('node:path');
@@ -20,7 +21,7 @@ const cut='aegis-cleave',bash='aegis-bash';
  const oldCareer=readFileSync(join(__dirname,'fixtures/v61-frontier.json'),'utf8');
  const old=simulate({...options,storage:new Map([['iron-vow-career',oldCareer]])});
  assert.equal(old.run(`Boolean(${aegis})`),false);
- assert.equal(old.run('JSON.stringify(captureSortie())'),JSON.stringify(JSON.parse(oldCareer).sortie));
+ assertLegacySortie(assert,JSON.parse(old.run('JSON.stringify(captureSortie())')),JSON.parse(oldCareer).sortie);
  run('createBattle(3);persist()');
  const loaded=simulate({...options,storage:new Map(sim.storage)});
  assert.equal(loaded.run(`Boolean(${aegis})`),true);

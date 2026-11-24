@@ -132,10 +132,10 @@ const TRAINING_LEVELS=[1,3,5,6,8,10],TRAINING_POINT_LEVELS=[1,2,3,4,5,6,8,10],DO
 const PILOT_TREES=[
  [
   {name:'Vanguard',glyph:'arrows-out-cardinal',nodes:[
-   {id:'pathfinder',name:'Pathfinder',label:'+1 free tile',effects:{move:1}},
+   {id:'pathfinder',name:'Pathfinder',label:'+1 movement tile',effects:{move:1}},
    {id:'point-plate',name:'Point Plate',label:'+2 armor',effects:{armor:2}},
    {id:'redline',name:'Redline',label:'Overdrive grants +4 AP',effects:{overdrive:2}},
-   {id:'marching-orders',name:'Marching Orders',label:'Overdrive keeps your remaining free movement',effects:{overdriveMove:true}},
+   {id:'marching-orders',name:'Marching Orders',label:'Overdrive adds 1 tile of movement range',effects:{overdriveMove:true}},
    {id:'brace-drill',name:'Brace Drill',label:'Brace costs 1 AP',effects:{braceAP:1}},
    {id:'spearhead',name:'Spearhead',label:'Overdrive also Braces for free',effects:{overdriveBrace:true}}
   ]},
@@ -194,12 +194,12 @@ const PILOT_TREES=[
     {id:'scout-lock',name:'Perfect Track',label:'Target Paint covers 3 allied attacks',effects:{paintShots:3}}
    ]},
    {name:'Outrider',glyph:'arrows-out-cardinal',nodes:[
-    {id:'scout-stride',name:'Trailblazer',label:'+1 free movement tile',effects:{move:1}},
+    {id:'scout-stride',name:'Trailblazer',label:'+1 movement tile',effects:{move:1}},
     {id:'scout-armor',name:'Skirmish Plating',label:'+2 armor',effects:{armor:2}},
-    {id:'scout-drift',name:'Silent Mark',label:'Target Paint keeps free movement',effects:{paintMove:true}},
+    {id:'scout-drift',name:'Silent Mark',label:'Target Paint adds 1 tile of movement range',effects:{paintMove:true}},
     {id:'scout-screen',name:'Recon Screen',label:'Target Paint also Braces',effects:{paintBrace:true}},
     {id:'scout-range',name:'Forward Observer',label:'+1 tile ranged reach',effects:{range:1}},
-    {id:'scout-sprint',name:'Ghost Trail',label:'+2 free movement tiles total',effects:{move:2}}
+    {id:'scout-sprint',name:'Ghost Trail',label:'+2 movement tiles total',effects:{move:2}}
    ]}
   ],
   [
@@ -212,12 +212,12 @@ const PILOT_TREES=[
     {id:'marshal-barrage',name:'Grand Battery',label:'Command Relay discounts up to 3 AP per attack',effects:{relayDiscount:3}}
    ]},
    {name:'Maneuver',glyph:'arrows-out-cardinal',nodes:[
-    {id:'marshal-step',name:'Lead the Advance',label:'+1 free movement tile',effects:{move:1}},
+    {id:'marshal-step',name:'Lead the Advance',label:'+1 movement tile',effects:{move:1}},
     {id:'marshal-body',name:'Command Plating',label:'+25 body HP',effects:{body:25}},
     {id:'marshal-shield',name:'Hold the Line',label:'Command Relay also Braces the ordered ally',effects:{relayBrace:true}},
-    {id:'marshal-lane',name:'Clear the Lane',label:'Command Relay keeps the Marshal’s free movement',effects:{relayMove:true}},
+    {id:'marshal-lane',name:'Clear the Lane',label:'Command Relay adds 1 tile of movement range to the Marshal',effects:{relayMove:true}},
     {id:'marshal-budget',name:'Double Time',label:'+1 AP every round',effects:{roundAP:1}},
-    {id:'marshal-vector',name:'Moving Fire',label:'Ordered attack keeps the ally’s free movement',effects:{relayKeepMove:true}}
+    {id:'marshal-vector',name:'Moving Fire',label:'The first ordered attack adds 1 tile of movement range',effects:{relayKeepMove:true}}
    ]}
   ],
   [
@@ -230,9 +230,9 @@ const PILOT_TREES=[
     {id:'sapper-twin',name:'Twin Charge',label:'Prime two charged shots at once',effects:{breachShots:2}}
    ]},
    {name:'Mobile Demolition',glyph:'arrows-out-cardinal',nodes:[
-    {id:'sapper-route',name:'Breach Route',label:'+1 free movement tile',effects:{move:1}},
+    {id:'sapper-route',name:'Breach Route',label:'+1 movement tile',effects:{move:1}},
     {id:'sapper-liner',name:'Blast Liner',label:'+25 body HP',effects:{body:25}},
-    {id:'sapper-flow',name:'Running Fuse',label:'Priming and firing a charge keep free movement',effects:{breachMove:true}},
+    {id:'sapper-flow',name:'Running Fuse',label:'Priming a charge adds 1 tile of movement range',effects:{breachMove:true}},
     {id:'sapper-shield',name:'Blast Shield',label:'Priming a charge also Braces',effects:{breachBrace:true}},
     {id:'sapper-reach',name:'Stand-off Kit',label:'+1 tile ranged reach',effects:{range:1}},
     {id:'sapper-impulse',name:'Controlled Demolition',label:'A charged shot that destroys a limb refunds its attack AP',effects:{breachRefund:true}}
@@ -248,11 +248,11 @@ const PILOT_TREES=[
     {id:'signal-denial',name:'Total Denial',label:'Blackout drains 4 AP on the enemy turn',effects:{blackoutAP:4}}
    ]},
    {name:'Screen',glyph:'shield-chevron',nodes:[
-    {id:'signal-march',name:'Marching Array',label:'+1 free movement tile',effects:{move:1}},
+    {id:'signal-march',name:'Marching Array',label:'+1 movement tile',effects:{move:1}},
     {id:'signal-harden',name:'Hardened Cab',label:'+25 body HP',effects:{body:25}},
     {id:'signal-shield',name:'Screening Pulse',label:'Using Blackout also Braces',effects:{blackoutBrace:true}},
     {id:'signal-passive',name:'Passive Array',label:'Blackout costs 0 AP',effects:{blackoutFree:true}},
-    {id:'signal-roam',name:'Roaming Screen',label:'Blackout keeps free movement',effects:{blackoutMove:true}},
+    {id:'signal-roam',name:'Roaming Screen',label:'Blackout adds 1 tile of movement range',effects:{blackoutMove:true}},
     {id:'signal-anchor',name:'Lock the Drive',label:'Blackout also stops enemy movement for the round',effects:{blackoutHold:true}}
    ]}
   ],
@@ -267,8 +267,8 @@ const PILOT_TREES=[
    ]},
    {name:'Wreck Tech',glyph:'wrench',nodes:[
     {id:'retriever-bounty',name:'Salvage License',label:'+300 CR if the Retriever survives a win',effects:{wreckBonus:300}},
-    {id:'retriever-route',name:'Clear a Route',label:'+1 free movement tile',effects:{move:1}},
-    {id:'retriever-rolling',name:'Rolling Repair',label:'Recovery Rig keeps free movement',effects:{recoveryMove:true}},
+    {id:'retriever-route',name:'Clear a Route',label:'+1 movement tile',effects:{move:1}},
+    {id:'retriever-rolling',name:'Rolling Repair',label:'Recovery Rig adds 1 tile of movement range',effects:{recoveryMove:true}},
     {id:'retriever-patch',name:'Hot Swap',label:'Recovery Rig restores up to 50 HP',effects:{recoveryHP:50}},
     {id:'retriever-lift',name:'Heavy Lift',label:'Recover a second wreck if present and the Retriever survives the win',effects:{wreckExtra:1}},
     {id:'retriever-second',name:'Second Chance',label:'Use Recovery Rig twice per battle',effects:{recoveryTwice:true}}
@@ -280,10 +280,10 @@ const CROSS_DOCTRINES=[
  ['Escort','shield-chevron',[
   ['Convoy Plate','+15 body HP',{body:15}],['Cover Drill','+10 percentage points of Brace protection',{brace:.10}],
   ['Close Escort','While Braced, adjacent allies take 15% less damage',{shieldNet:.15}],
-  ['Guard Step','+1 free movement tile',{move:1}],['Fast Cover','Brace costs 1 AP',{braceAP:1}],
+  ['Guard Step','+1 movement tile',{move:1}],['Fast Cover','Brace costs 1 AP',{braceAP:1}],
   ['Escort Net','While Braced, adjacent allies take 25% less damage',{shieldNet:.25}]]],
  ['Skirmisher','arrows-out-cardinal',[
-  ['Quick Step','+1 free movement tile',{move:1}],['Corner Shot','+5 percentage points of ranged accuracy',{rangedHit:.05}],
+  ['Quick Step','+1 movement tile',{move:1}],['Corner Shot','+5 percentage points of ranged accuracy',{rangedHit:.05}],
   ['Set Position','While Braced, ranged fire ignores cover penalties',{braceAim:true}],
   ['Quick Set','Brace costs 1 AP',{braceAP:1}],['Long Retreat','+1 tile of ranged counter reach',{counterRange:1}],
   ['Watch the Exit','Firing a counter also Braces',{counterBrace:true}]]],
@@ -295,7 +295,7 @@ const CROSS_DOCTRINES=[
  ['Infiltrator','lightning',[
   ['Close Optics','+5 percentage points of ranged accuracy',{rangedHit:.05}],['Joint Map','+10% power against arms and legs',{limbPower:.10}],
   ['Cut the Feed','Hits on arms or legs bypass at least half of armor',{limbPierce:.5}],
-  ['Quiet Entry','+1 free movement tile',{move:1}],['Weapon Isolation','Destroy an arm to stop that attack’s counter',{armJam:true}],
+  ['Quiet Entry','+1 movement tile',{move:1}],['Weapon Isolation','Destroy an arm to stop that attack’s counter',{armJam:true}],
   ['Clean Withdrawal','Firing a counter also Braces',{counterBrace:true}]]],
  ['Bodyguard','shield-chevron',[
   ['Guard Plate','+1 armor',{armor:1}],['Catch the Hit','+10 percentage points of Brace protection',{brace:.10}],
@@ -315,7 +315,7 @@ const CROSS_DOCTRINES=[
  ['Convoy Guard','shield-chevron',[
   ['Brace Harness','+10 percentage points of Brace protection',{brace:.10}],['Recovery Plates','+15 body HP',{body:15}],
   ['Mobile Screen','While Braced, adjacent allies take 15% less damage',{shieldNet:.15}],
-  ['Pursuit Route','+1 free movement tile',{move:1}],['Field Cover','Brace costs 1 AP',{braceAP:1}],
+  ['Pursuit Route','+1 movement tile',{move:1}],['Field Cover','Brace costs 1 AP',{braceAP:1}],
   ['Hold for Extraction','While Braced, adjacent allies take 25% less damage',{shieldNet:.25}]]]
 ];
 CROSS_DOCTRINES.forEach(([name,glyph,nodes],kind)=>PILOT_TREES[kind].push({name,glyph,nodes:nodes.map(([name,label,effects],rank)=>({
@@ -429,7 +429,7 @@ const MECH_SIGNATURES={
  2:['Counter Screen','Support the line with guided fire. A missile hit gives the immediate counter −15 aim.',7,'screen'],
  3:['Breach Salvo','Close on defended targets. Direct fire cuts Brace reduction by 25 points within four tiles and 15 points beyond.',3,'push'],
  4:['Relay Guidance','Stay behind the line. Missiles reach one tile farther against painted targets.',8,'screen'],
- 5:['Fire and Fade','Trade a burst and move. Take one free step after firing each turn.',4,'mobile'],
+ 5:['Fire and Fade','Trade a burst and move. Gain 1 tile of movement range after firing each turn.',4,'mobile'],
  6:['Riposte','Hold adjacent ground. Melee counters deal +20% damage.',1,'push'],
  7:['Siege Anchor','Set up before launching. The first missile salvo while braced deals +15% damage.',7,'anchor'],
  8:['Shield Lock','Guard the approach. The first braced shield block takes 20% less arm damage.',3,'anchor'],
@@ -450,14 +450,14 @@ const MECH_SIGNATURES={
  [SALT_WORKS_GARRISON_FRAME]:['Yard Defense','Cover the yard from behind obstacles. Direct shots from cover gain +8 aim.',5,'screen'],
  [HUSKY_FRAME]:['Running Snap','Move before firing. Direct shots from within three tiles gain +8 aim after moving.',3,'mobile'],
  [GIZA_FRAME]:['Range Table','Hold position. Direct shots from five or more tiles gain +6 aim before moving.',5,'hold'],
- [NIGHTJAR_FRAME]:['Rangefinder','Keep seven tiles of separation. After firing, take a free step toward cover or preferred range. The right buckler reduces intercepted damage by 20%.',7,'mobile'],
+ [NIGHTJAR_FRAME]:['Rangefinder','Keep seven tiles of separation. After firing, gain 1 tile of movement range to reach cover or preferred range. The right buckler reduces intercepted damage by 20%.',7,'mobile'],
  [VYZOV_FRAME]:['Guard Breaker','Melee attacks deal +15% damage against braced targets.',1,'push']
 };
 const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
 function hasMechSkill(u,frame){return Boolean(u?.mechSkills&&(u.frame===frame||u.mechSkills.includes(frame)))}
 const AERO_MELEE=['cleaver','breaker','piledriver','blade'];
 const JUMPJET_RANGE=5,JUMPJET_AP=2;
-const JUMPJET_HELP='Leap over cover and units to a clear tile within '+JUMPJET_RANGE+' tiles. Costs '+JUMPJET_AP+' AP. Once per sortie. Requires working legs.';
+const JUMPJET_HELP='Leap over cover and units to a clear tile within '+JUMPJET_RANGE+' tiles. Costs 1 AP per tile (minimum '+JUMPJET_AP+' AP) and uses remaining movement range. Once per sortie. Requires working legs.';
 const dailyAeroMelee=()=>AERO_MELEE[(save.day-1)%AERO_MELEE.length];
 const chassisEvade=frame=>frame.dodge??.08;
 const dodgeChance=u=>u&&!u.kind&&FRAMES[u.frame]?chassisEvade(FRAMES[u.frame]):0;
@@ -1001,7 +1001,8 @@ const VEHICLES={
  helicopter:{name:'KITE GUNSHIP',hp:43,armor:1,move:6,step:.15,xp:25,altitude:.82,wreckAt:.48,muzzle:[.28168,.75768],center:[.45,.584],gun:{id:'rifle',name:'Chin autocannon',damage:19,range:5,ap:4}}
 };
 const NEW_BOARD={width:18,depth:20};
-const ROUND_AP=8,EXTRA_MOVE_AP=1,BRACE_AP=2;
+const {BASE_AP,AP_RECOVERY,ATTACK_AP_LIMIT,soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP}=window.IRON_VOW_SIM;
+const BRACE_AP=2,SHARED_AP_RULES=1,SOLO_PICKET_AP=10;
 const theaterLayouts=window.IRON_VOW_THEATERS;
 const dimensions=()=>battle?.size||NEW_BOARD;
 function onBoard(x,z){const {width,depth}=dimensions();return x>=0&&x<width&&z>=0&&z<depth}
@@ -1018,18 +1019,22 @@ const isArmed=u=>u.kind||[unitWeapon(u),shoulderWeapon(u),meleeWeapon(u)].some(w
 const chassisMobility=(frame,legacy=false,training)=>frame.move+(legacy?0:1)+(training?.move??0);
 const mobility=u=>u.kind?VEHICLES[u.kind].move:chassisMobility(FRAMES[u.frame],battle.legacy,u.training);
 const mobile=u=>u.kind||u.hp.legs>0;
-const freeMovement=u=>u&&u.alive&&mobile(u)?u.mechState?.valkyrieStep?1:!u.actionPhase?(u.moveLeft??mobility(u)):0:0;
-const extraMovement=u=>Boolean(u?.alive&&mobile(u)&&u.ap>=EXTRA_MOVE_AP&&!u.extraStep);
-const movementLimit=u=>freeMovement(u)+Number(extraMovement(u));
-const spent=u=>Boolean(u?.alive&&u.ap===0&&(!movementLimit(u)||
- paths(u).size<=1));
-function resetMovement(u){u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key]}
-function startAction(u){u.moveLeft=0;u.actionPhase=true}
+const movementLimit=u=>u?.alive&&mobile(u)?u.moveLeft??mobility(u):0;
+const spent=u=>Boolean(u?.alive&&u.ap===0);
+function grantMove(u){
+ u.moveBonus=(u.moveBonus??0)+1;
+ u.moveLeft++;
+}
+function resetMovement(u){
+ u.moveLeft=mobility(u);u.moveBonus=0;u.attackAPSpent=0;
+ if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key];
+}
 const chassisParts=(frame,hull,training)=>({body:frame.hp+hull.upgrade*25+(training?.body??0),right:frame.arm,left:frame.arm,legs:frame.leg});
 const chassisArmor=(frame,hull,training)=>frame.armor+hull.upgrade*2+(training?.armor??0);
 const damagedArmor=armor=>Math.floor(armor/2);
 const deploymentHP=(max,condition)=>Math.round(max*Math.max(.3,condition/100));
-const roundAP=training=>ROUND_AP+(training?.roundAP??0);
+const roundAP=training=>BASE_AP+(training?.roundAP??0);
+const enemyAPCapacity=(field,u)=>soloPicket(field)?SOLO_PICKET_AP:roundAP(u.training);
 const weaponAP=(w,training)=>w.ap-(w.melee?(training?.strikeAP??0):0);
 const weaponRange=(w,training)=>w.range+(w.melee?0:(training?.range??0));
 const launchesMissiles=w=>w?.id==='missile'||ATTACK_PROFILES[w?.id]?.effect==='missile';
@@ -1052,7 +1057,7 @@ function skillDescription(i,training){
  if(i===RETRIEVER)return `Restore ${training?.recoveryHP??30} HP to ${training?.recoveryAll?'each damaged limb':'the weakest damaged limb'} within ${recoveryRange(training)} tiles${training?.recoveryFloor?' (75% HP minimum)':''}. ${recoveryUses(training)} use(s) per battle. Destroyed legs stay down for the sortie.`;
  if(!training?.overdrive&&!training?.deadeye&&!training?.deadeyeRefund&&!training?.repair&&!training?.limbRepair)return PILOTS[i].desc;
  const descriptions=[
-  '+'+overdriveAP(training)+' AP this turn.'+(training?.overdriveMove?' Keeps free movement.':'')+(training?.overdriveBrace?' Also Braces.':''),
+  '+'+overdriveAP(training)+' AP this turn.'+(training?.overdriveMove?' Adds 1 tile of movement range.':'')+(training?.overdriveBrace?' Also Braces.':''),
   'Next attack gains '+Math.round((deadeyePower(training)-1)*100)+'% power.'+(training?.deadeyeCascade?' Stays primed on limb destruction.':training?.deadeyeRefund?' A ranged kill refunds the shot’s AP.':''),
   'Restore up to '+repairAmount(training)+' body HP.'+(training?.limbRepair?' Also restore '+training.limbRepair+' HP to '+(training.repairAll?'each':'the weakest')+' damaged limb. Destroyed legs stay down for the sortie.':'')+(training?.repairBrace?' Also Braces.':'')+(training?.repairFailsafe?' Triggers on lethal body damage if unused.':'')
  ];
@@ -1373,7 +1378,7 @@ function persist(enemyPending=false){
  }catch{warn()}
 }
 function captureSortie(enemyPending=false){
- return{version:battle.operation?9:battle.aux||battle.launchAP?8:7,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action:['jumpjet','tactical'].includes(action)?'move':action,part:'body',enemyPending,
+ return{version:battle.operation?9:battle.aux||battle.launchAP?8:7,apRules:SHARED_AP_RULES,contract:battle.contract.id,legacy:battle.legacy,stockHostiles:battle.stockHostiles,slots:battle.slots,turn:battle.turn,selected,action:['jumpjet','tactical'].includes(action)?'move':action,part:'body',enemyPending,
   ...(battle.offer?{offer:{...battle.offer}}:{}),
   ...(battle.operation?{operation:battle.operation}:{}),...(battle.campaignSupport?{campaignSupport:battle.campaignSupport}:{}),...(battle.aux?{aux:battle.aux}:{}),...(battle.launchAP?{launchAP:battle.launchAP}:{}),
   ...(battle.frontierHellbreaker?{frontierHellbreaker:true}:{}),
@@ -1387,7 +1392,7 @@ function captureSortie(enemyPending=false){
   ...(battle.relayLead?{relayLead:battle.relayLead}:{}),
   ...(battle.terrainSeed!==null?{terrainSeed:battle.terrainSeed}:{}),
   ...(battle.mechComputers?{mechComputers:true}:{}),
-  units:battle.units.map(u=>({surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,licenseUsed:u.licenseUsed||undefined,jumpjetUsed:u.jumpjetUsed||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
+  units:battle.units.map(u=>({surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,moveBonus:u.moveBonus??0,attackAPSpent:u.attackAPSpent??0,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,licenseUsed:u.licenseUsed||undefined,jumpjetUsed:u.jumpjetUsed||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
 }
 function dispatchSizes(){
  if(save.dispatch?.day!==save.day){
@@ -1467,6 +1472,7 @@ function createBattle(i,legacy=false,stockHostiles=legacy,slots=LANCE_SLOTS,fron
   const [kind,x,z]=spawn.length===3?spawn:[null,...spawn];
   const unit=kind?makeVehicle(kind,index,x,z):makeUnit(index,'enemy',x,z);
   if(!legacy)unit.face=Math.sign((allies[0][0]-allies[0][1])-(x-z))||-1;
+  unit.ap=enemyAPCapacity(battle,unit);
   resetMovement(unit);
   battle.units.push(unit);
  }
@@ -1487,12 +1493,13 @@ function surveyTerrain(seed){
 }
 function makeVehicle(kind,index,x,z){
  const {name,hp,armor,gun}=VEHICLES[kind],tier=battle.contract.difficulty-1,body=hp+tier*8;
- return{id:'enemy'+index,index,kind,team:'enemy',x,z,vx:x,vz:z,name:name+' '+(index+1),weapon:gun.id,level:1,armor:armor+tier,hp:{body},max:{body},ap:ROUND_AP,brace:false,skill:false,boost:false,alive:true};
+ return{id:'enemy'+index,index,kind,team:'enemy',x,z,vx:x,vz:z,name:name+' '+(index+1),weapon:gun.id,level:1,armor:armor+tier,hp:{body},max:{body},ap:BASE_AP,brace:false,skill:false,boost:false,alive:true};
 }
 function restoreSortie(){
  const saved=save.sortie;if(!saved)return null;
  const integer=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;
  const currentVersion=saved.version>=3;
+ const sharedAP=saved.apRules===SHARED_AP_RULES;
  const legacy=currentVersion?saved.legacy:saved.version===1;
  const contractId=currentVersion?saved.contract:integer(saved.contract,0,OLD_SORTIE_CONTRACTS.length-1)?OLD_SORTIE_CONTRACTS[saved.contract]:null;
  const contractIndex=CONTRACTS.findIndex(c=>c.id===contractId);
@@ -1504,7 +1511,7 @@ function restoreSortie(){
  const threat=operation?Math.min(3,operation.recommended):slots?.length-(aux?1:0);
  const regular=Array.isArray(slots)&&operation?slots.filter(slot=>slot<AUX_SLOT):aux&&Array.isArray(slots)?slots.slice(0,-1):slots;
  const shipValid=saved.version<8||!legacy&&integer(launchAP,0,Number(shipLevel('drop')>0)+regionalLaunchAP(saved.offer))&&(!aux||Array.isArray(slots)&&slots.at(-1)===AUX_SLOT&&validAux(aux));
- let valid=[1,2,3,4,5,6,7,8,9].includes(saved.version)&&validSlots(regular)&&shipValid&&(!legacy||slots.length===3)&&typeof legacy==='boolean'&&(saved.version<4||typeof saved.stockHostiles==='boolean')&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&slots.includes(saved.selected)&&['move','fire','strike','missile'].includes(saved.action)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
+ let valid=(saved.apRules===undefined||sharedAP&&saved.version>=7)&&[1,2,3,4,5,6,7,8,9].includes(saved.version)&&validSlots(regular)&&shipValid&&(!legacy||slots.length===3)&&typeof legacy==='boolean'&&(saved.version<4||typeof saved.stockHostiles==='boolean')&&contractIndex>=0&&(!legacy||CONTRACTS[contractIndex].legacyMechs>0)&&integer(saved.turn,1,10000)&&slots.includes(saved.selected)&&['move','fire','strike','missile'].includes(saved.action)&&typeof saved.enemyPending==='boolean'&&Array.isArray(saved.units);
  if(interception||save.interception)valid=valid&&interception&&!!save.interception&&
   INTERCEPTS[save.interception.kind]===contractIndex&&!legacy&&!save.transit&&!saved.offer&&!saved.operation&&!saved.aux;
  if(saved.version===9){
@@ -1548,7 +1555,13 @@ function restoreSortie(){
    const keptLaunchAP=u.team==='ally'&&(saved.turn===1||state?.hp?.body===0||state?.hp?.pilot===0);
    const maxAP=roundAP(u.training)+(u.pilot===0?overdriveAP(u.training):0)+(keptLaunchAP?launchAP:0);
    valid=!!state&&integer(state.x,0,battle.size.width-1)&&integer(state.z,0,battle.size.depth-1)&&(state.face===undefined||state.face===1||state.face===-1)&&!battle.cover.has(state.x+','+state.z)&&integer(state.ap,0,maxAP)&&typeof state.brace==='boolean'&&typeof state.skill==='boolean'&&typeof state.boost==='boolean'&&state.hp&&targetParts(u).every(p=>p==='pilot'&&saved.version<4&&state.hp.pilot===undefined||integer(state.hp[p],0,u.max[p]));
-   if(valid&&saved.version>=5)valid=integer(state.moveLeft,0,mobility(u))&&typeof state.actionPhase==='boolean'&&typeof state.extraStep==='boolean'&&(!state.actionPhase||state.moveLeft===0)&&(!state.extraStep||state.actionPhase)&&typeof state.reacted==='boolean'&&Number.isFinite(state.heading)&&Math.abs(state.heading)<=Math.PI;
+   if(valid&&saved.version>=5){
+    valid=typeof state.reacted==='boolean'&&Number.isFinite(state.heading)&&Math.abs(state.heading)<=Math.PI;
+    if(sharedAP)valid=valid&&integer(state.attackAPSpent,0,ATTACK_AP_LIMIT)&&integer(state.moveBonus,0,battle.units.length*2)&&
+     integer(state.moveLeft,0,mobility(u)+state.moveBonus);
+    else valid=valid&&integer(state.moveLeft,0,mobility(u))&&typeof state.actionPhase==='boolean'&&typeof state.extraStep==='boolean'&&
+     (!state.actionPhase||state.moveLeft===0)&&(!state.extraStep||state.actionPhase);
+   }
    if(valid&&saved.version>=6){
     const {painted,order}=state;
     valid=(painted===undefined||u.team==='enemy'&&painted&&integer(painted.shots,1,3)&&[.20,.30].includes(painted.aim)&&[0,.20].includes(painted.power))&&
@@ -1581,8 +1594,19 @@ function restoreSortie(){
    u.jumpjetUsed=state.jumpjetUsed===true;u.tacticalUsed=state.tacticalUsed===true;
    u.face=state.face??(u.team==='enemy'?1:-1);u.x=u.vx=state.x;u.z=u.vz=state.z;u.hp=Object.fromEntries(targetParts(u).map(part=>[part,state.hp[part]??u.max[part]]));u.ap=state.ap;u.brace=state.brace;u.skill=state.skill;u.boost=state.boost;u.alive=alive;u.surrendered=state.surrendered;u.downReason=alive?null:state.surrendered?'surrender':u.hp.body>0?'pilot':'body';
    if(!alive&&!u.kind&&Number.isFinite(state.deathYaw)&&Math.abs(state.deathYaw)<=Math.PI)u.deathYaw=state.deathYaw;
-   if(saved.version>=5){u.heading=FIELD_HEADINGS[headingIndex(state.heading)];u.face=Math.sign(Math.sin(u.heading));u.moveLeft=state.moveLeft;u.actionPhase=state.actionPhase;u.extraStep=state.extraStep;u.reacted=state.reacted}
-   else{u.heading=defaultHeading(u);if(u.ap<8||u.brace){startAction(u);u.extraStep=true}}
+   u.heading=saved.version>=5?FIELD_HEADINGS[headingIndex(state.heading)]:defaultHeading(u);
+   u.face=saved.version>=5?Math.sign(Math.sin(u.heading)):u.face;
+   u.reacted=state.reacted===true;
+   if(sharedAP){
+    u.moveLeft=state.moveLeft;u.moveBonus=state.moveBonus;u.attackAPSpent=state.attackAPSpent;
+   }else{
+    // Preserve the old turn's remaining allowance and infer expenditure when the save only records AP.
+    const oldPool=maxAP-(BASE_AP-8)-(u.pilot===0&&!(state.skill)?overdriveAP(u.training):0);
+    const acted=state.actionPhase??(u.ap<8||u.brace);
+    u.attackAPSpent=acted?Math.min(ATTACK_AP_LIMIT,Math.max(0,oldPool-u.ap)):0;
+    u.moveLeft=state.moveLeft??(acted?0:mobility(u));
+    if(u.mechState?.valkyrieStep){grantMove(u);delete u.mechState.valkyrieStep}
+   }
   }
   valid=valid&&battle.units.some(u=>u.team==='ally'&&u.alive)&&(depotOperation()||battle.units.some(u=>u.team==='enemy'&&u.alive));
  }
@@ -1624,19 +1648,19 @@ function reaverGunStatus(u){
  return count===2?'8 RD / GUN':count===1?'8 RD / '+(u.hp.right>0?'R GUN':'L GUN'):'GUNS OFFLINE';
 }
 const workingWeapon=(u,w)=>Boolean(w&&w!==EMPTY_HAND&&(!launcherId(w.id)||u.hp.body>0)&&u.hp[weaponSubsystem(u,w)]>0);
-function canUseWeapon(u,w){return Boolean(u&&workingWeapon(u,w)&&(!u.lionTrial||w.melee&&LION_TRIAL_WEAPONS.includes(w.id))&&u.ap>=paidAttackAP(u,w))}
-function scoutWeapon(u,target,reaction=false){
+function canUseWeapon(u,w){return Boolean(u&&workingWeapon(u,w)&&(!u.lionTrial||w.melee&&LION_TRIAL_WEAPONS.includes(w.id))&&canSpendAttack(u,paidAttackAP(u,w)))}
+function scoutWeapon(u,target,affordable=w=>canUseWeapon(u,w)){
  const range=distance(u,target);
  return [meleeWeapon(u),weapon('flechette-scattergun'),unitWeapon(u)].find(w=>w&&range<=w.range&&
-  !attackObstruction(u,target,w)&&(reaction?u.hp[weaponSubsystem(u,w)]>0:canUseWeapon(u,w)));
+  !attackObstruction(u,target,w)&&workingWeapon(u,w)&&affordable(w));
 }
 function infoTip(label,description){
  const escaped=description.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;');
  return `<button type="button" class="info-tip" aria-label="Help for ${label}" data-help="${escaped}">${icon('info')}</button>`;
 }
 const helpHint=()=>`<span class="info-hint">${icon('info')} <span class="mouse-help">Hover or focus for help</span><span class="touch-help">Tap or hold for help</span></span>`;
-const MOVE_HELP='Move with working legs. Fire, Strike, Brace and most pilot skills end the free allowance.';
-const COUNTER_HELP='One reaction per round for 0 AP. Equipped melee strikes adjacent ground attackers first. Guns return fire in range. Missile launchers cannot counter. A working free hand can punch an adjacent ground attacker for 5–10 damage if no weapon can reply.';
+const MOVE_HELP='Spend 1 AP per tile, plus 1 AP per elevation change. Move before or after attacking up to your remaining chassis range. Ground mechs need working legs.';
+const COUNTER_HELP='Return fire while you can afford the weapon cost plus 3 AP at 1–2 tiles, 2 AP at 3–4 tiles, or 1 AP farther away. A free-hand punch costs 4 AP. Missile launchers cannot counter.';
 const FOUNDATION_HELP='Any level 1 skill opens all three level 3 skills. At level 5, choose a doctrine. Field licenses give you a separate action from level 3.';
 function learnReserveTraining(id,skill){
  const pilot=save.reservePilots?.[id];
@@ -1721,12 +1745,11 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
  const kind=pilotClass(i),parts=chassisParts(frame,hull,training),armor=chassisArmor(frame,hull,training),primary=unitWeapon(loadout),melee=meleeWeapon(loadout),shield=equippedShield(loadout),pilot=CREW[kind];
  const reach=weaponRange(primary,training);
  const stats=[
-  ['Free movement',chassisMobility(frame,false,training)+' tiles',MOVE_HELP],
-  ['Extra movement','1 tile / '+EXTRA_MOVE_AP+' AP','One extra tile per round with working legs. It uses the last of your free movement.'],
+  ['Movement range',chassisMobility(frame,false,training)+' tiles',MOVE_HELP],
   ...(frame.dodge?[['Dodge',Math.round(frame.dodge*100)+'%','Chance to evade an incoming round or shell.']]:[]),
-  ...(frame.jumpjet?[['Jumpjet',JUMPJET_RANGE+' tiles / '+JUMPJET_AP+' AP',JUMPJET_HELP]]:[]),
+  ...(frame.jumpjet?[['Jumpjet',JUMPJET_RANGE+' tiles / '+JUMPJET_AP+'+ AP',JUMPJET_HELP]]:[]),
   ['Armor',armor,'Losing the left arm reduces armor to '+damagedArmor(armor)+'.'],
-  ['AP per round',roundAP(training)],
+  ['AP capacity',roundAP(training),'Recover up to '+AP_RECOVERY+' AP at the start of your turn. Initiated attacks can spend up to '+ATTACK_AP_LIMIT+' AP per turn.'],
   ...Object.entries(parts).map(([part,max])=>[PART_LABEL[part],deploymentHP(max,hull.condition)+' / '+max+' HP']),
   ['Pilot',CREW_HP[kind]+' HP']
  ];
@@ -1741,7 +1764,7 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
    ${shield?`<div>${icon('shield-chevron')} <span><b>Shield</b> 0 AP<small>${shield.name} · −${shieldPercent(shield)} arm damage</small></span>${infoTip('shield',SHIELD_HELP)}</div>`:''}
    <div>${icon('shield-chevron')} <span><b>Brace</b> ${braceCost(training)} AP<small>Blocks ${Math.round(braceReduction(training)*100)}% damage</small></span></div>
    <div>${icon('lightning')} <span><b>${pilot.skill}</b> ${skillCost(kind,training)} AP<small>${kind===RETRIEVER&&recoveryUses(training)===2?'Twice':'Once'} per battle</small></span>${infoTip(pilot.skill,skillDescription(kind,training))}</div>
-   <div>${icon('arrow-u-up-left')} <span><b>Counter</b> 0 AP<small>1 / round · ${counterSummary(primary,melee,training,shield)}</small></span>${infoTip('counterattack',COUNTER_HELP+(training.reactionPower?' This pilot gains 25% counterattack power.':'')+(training.braceCounterRange&&counterRange(primary,training)?' While Braced, ranged reach is '+counterRange(primary,training,true)+' tiles.':''))}</div>
+   <div>${icon('arrow-u-up-left')} <span><b>Counter</b> Uses AP<small>${counterSummary(primary,melee,training,shield)}</small></span>${infoTip('counterattack',COUNTER_HELP+(training.reactionPower?' This pilot gains 25% counterattack power.':'')+(training.braceCounterRange&&counterRange(primary,training)?' While Braced, ranged reach is '+counterRange(primary,training,true)+' tiles.':''))}</div>
   </div>
  </section>`;
 }
@@ -1893,11 +1916,11 @@ function chassisAssignments(i,training){
    <img ${chassisPicture(index,hull,1)} alt="" loading="lazy">
    <span class="eyebrow">${frame.model} / ${frame.role}</span><h3>${frame.name}</h3>
    <p>${salvaged?intact?intact+' intact · '+bodies+' recovered':bodies+' recovered '+(bodies===1?'body':'bodies')+' · '+rebuildIntegrity()+'% rebuilt':hull.condition+'% integrity'}${slot>=0&&!salvaged?' · '+pilotProfile(slot).call:''}</p>
-   <dl><div><dt>Free move</dt><dd>${chassisMobility(frame,false,training)}</dd></div><div><dt>Armor</dt><dd>${chassisArmor(frame,hull,training)}</dd></div><div><dt>Body</dt><dd>${body}</dd></div><div><dt>Each arm</dt><dd>${right}</dd></div><div><dt>Legs</dt><dd>${legs}</dd></div><div><dt>Fire AP</dt><dd>${weaponAP(primary,training)}</dd></div></dl>
+   <dl><div><dt>Move range</dt><dd>${chassisMobility(frame,false,training)}</dd></div><div><dt>Armor</dt><dd>${chassisArmor(frame,hull,training)}</dd></div><div><dt>Body</dt><dd>${body}</dd></div><div><dt>Each arm</dt><dd>${right}</dd></div><div><dt>Legs</dt><dd>${legs}</dd></div><div><dt>Fire AP</dt><dd>${weaponAP(primary,training)}</dd></div></dl>
    <small>${primary.name} · ${weaponRange(primary,training)} tiles</small>
    <small>${shield?shield.name+' · −'+shieldPercent(shield)+' arm damage':melee?melee.name+' · '+weaponAP(melee,training)+' AP':'No melee'}</small>
-   <small>Counter · ${counterSummary(primary,melee,training,shield)} · 0 AP</small>
-   ${frame.jumpjet?'<small>Jumpjet · '+JUMPJET_RANGE+' tiles / '+JUMPJET_AP+' AP · once per sortie</small>':''}
+   <small>Counter · ${counterSummary(primary,melee,training,shield)} · Uses AP</small>
+   ${frame.jumpjet?'<small>Jumpjet · '+JUMPJET_RANGE+' tiles / '+JUMPJET_AP+'+ AP · once per sortie</small>':''}
    ${frame.dodge?'<small>Dodge · '+Math.round(frame.dodge*100)+'% per incoming round or shell</small>':''}
    ${frame.marketPort?`<p>${frame.brief}</p>`:''}
    <div class="bay-actions">${salvaged?`<button data-rebuild="${index}" ${hullOwned(index)||!intact&&save.credits<rebuildPrice(index)?'disabled':''}>${hullOwned(index)?'HULL OWNED':intact?'RECOVER INTACT':'REBUILD · '+money(rebuildPrice(index))}</button><button data-recycle="${index}">RECYCLE · +${money(scrapPrice(index))}</button>`:view==='market'&&frame.marketPort?`<button data-frame-port="${frame.marketPort}">VIEW ${portName(frame.marketPort).toUpperCase()}</button>`:view==='market'?`<button data-buy-hull="${index}" ${save.credits<frame.cost?'disabled':''}>BUY · ${money(frame.cost)}</button>`:`<button data-chassis="${index}" aria-pressed="${index===assigned}" ${index===assigned?'disabled':''}>${index===assigned?'SELECTED':slot>=0?'SWAP WITH '+pilotProfile(slot).call:'ASSIGN TO '+pilotProfile(i).call}</button>`}</div>
@@ -1905,8 +1928,8 @@ function chassisAssignments(i,training){
   </article>`;
  }).join('');
  const empty={storage:'Storage is empty. Buy or rebuild a hull, or swap in a stored machine.',market:'Every catalogued hull is already owned.',salvage:'Clear a sortie to recover an enemy mech body.'};
- return `<section class="chassis-assignment" aria-label="Chassis comparison"><div class="stat-heading"><span class="eyebrow">COMPARE WITH ${pilotProfile(i).call}</span>${infoTip('chassis comparison','Stats use the selected pilot’s training. Free move is in tiles and part HP is maximum. Weapons, paint and condition stay with a swapped hull.'+(view==='salvage'?' Rebuild puts a stock hull into Storage at '+rebuildIntegrity()+'% integrity.':'')+(view==='market'?' Purchases go to Storage.':''))}</div>
-  <p class="bay-rules">${roundAP(training)} AP per round · Extra tile ${EXTRA_MOVE_AP} AP · Brace ${braceCost(training)} AP</p>
+ return `<section class="chassis-assignment" aria-label="Chassis comparison"><div class="stat-heading"><span class="eyebrow">COMPARE WITH ${pilotProfile(i).call}</span>${infoTip('chassis comparison','Stats use the selected pilot’s training. Movement range is in tiles and part HP is maximum. Weapons, paint and condition stay with a swapped hull.'+(view==='salvage'?' Rebuild puts a stock hull into Storage at '+rebuildIntegrity()+'% integrity.':'')+(view==='market'?' Purchases go to Storage.':''))}</div>
+  <p class="bay-rules">${roundAP(training)} max AP · ${AP_RECOVERY} AP recovery · Brace ${braceCost(training)} AP</p>
   ${choices?`<div class="bay-grid">${choices}</div>`:`<p class="bay-empty">${empty[view]}</p>`}
   ${view==='market'?'<a class="rig-bench-link" href="foundry/studio.html">INSPECT FOUNDRY MODELS →</a>':''}
  </section>`;
@@ -2996,12 +3019,12 @@ function modal(title,body,buttons){if(careerStale)return;moveTap=null;if($('#mod
 function closeModal(){if(careerStale)return;closeHelp();$('#modal').hidden=true;if(modalReturnFocus?.isConnected)modalReturnFocus.focus();modalReturnFocus=null}
 function quickOrders(){
  const topics=[
-  ['arrows-out-cardinal','Move','Free tiles, then +1 tile for '+EXTRA_MOVE_AP+' AP',MOVE_HELP+' Cross terraces on foot. Obstacles block movement and give cover to adjacent units. Drag to pan, or use the map and zoom controls.'],
+  ['arrows-out-cardinal','Move','1 AP / tile',MOVE_HELP+' Cross terraces on foot. Obstacles block movement and give cover to adjacent units. Drag to pan, or use the map and zoom controls.'],
   ['crosshair','Fire','Pick a hostile and fire','Every round that hits rolls its own location: about 55% body, 25% arms, 20% legs and a small chance of the cockpit. Destroyed parts are skipped. High ground gives direct fire +10 aim. Ridges block guns, while missiles arc over them. Body or cockpit loss disables a mech. Arms and legs affect weapons, armor and movement.'],
   ['crosshair','Strike','Adjacent ground targets','Equip melee in the Workshop. Strike needs a working arm on the equipped side. Gunships require ranged attacks and can cross cover. Missiles ignore cover.'],
   ['shield-chevron','Brace','1–2 AP · blocks 50% or more','Brace lasts until your next turn. Training can reduce the cost. Pilot skills can be used once per battle.'],
   ['shield-chevron','Shield','0 AP · all hits go to the left arm',SHIELD_HELP],
-  ['arrow-u-up-left','Counter','0 AP · 1 per round',COUNTER_HELP],
+  ['arrow-u-up-left','Counter','Weapon AP + range cost',COUNTER_HELP],
   ['lightning','End turn','The hostile lance acts','Select deployed units in the bottom bar. Neutralize all enemies to win. Tanks and gunships have hull HP and award pilot XP.'],
   ['wrench','Refit','Repair between sorties','Contracts earn credits, XP and reputation. Withdraw to bring surviving machines home. The career and completed actions save in this browser. An interrupted enemy phase restarts on reload.'],
   ['binoculars','Attack camera','Skip with Escape','Switch the camera off in Career if you prefer the tactical view.']
@@ -3236,7 +3259,7 @@ function startLionTrial(id){
  battle.units=[lion,target];
  battle.cover.clear();battle.field.cover={};
  Object.assign(lion,{lionTrial:true,name:'LION',melee:id,shield:null});
- Object.assign(target,{name:'PRACTICE TARGET',x:lion.x+1,z:lion.z,vx:lion.x+1,vz:lion.z,reacted:true});
+ Object.assign(target,{name:'PRACTICE TARGET',x:lion.x+1,z:lion.z,vx:lion.x+1,vz:lion.z,noCounter:true});
  target.max.body=target.hp.body=200;
  lion.heading=headingTo(1,0);lion.face=1;
  target.heading=headingTo(-1,0);target.face=-1;
@@ -3246,7 +3269,7 @@ function startLionTrial(id){
  render();
 }
 const {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim}=window.IRON_VOW_SIM.createTerrainRules({
- getBattle:()=>battle,onBoard,movementLimit,freeMovement,extraMoveAP:EXTRA_MOVE_AP,terrainCell,helicopterHeight:()=>VEHICLES.helicopter.altitude/TERRAIN_RISE,
+ getBattle:()=>battle,onBoard,movementLimit,terrainCell,helicopterHeight:()=>VEHICLES.helicopter.altitude/TERRAIN_RISE,
  canReachTarget,launchesMissiles
 });
 let tacticalAim=null;
@@ -3261,7 +3284,7 @@ function tacticalWeapon(u){
 }
 function canTactical(u){
  const w=tacticalWeapon(u);
- return Boolean(u?.alive&&w&&!u.tacticalUsed&&u.hp.body>0&&u.ap>=paidAttackAP(u,w)&&
+ return Boolean(u?.alive&&w&&!u.tacticalUsed&&u.hp.body>0&&canSpendAttack(u,paidAttackAP(u,w))&&
   (w.tactical!=='double-cannon'||u.hp.left>0&&u.hp.right>0));
 }
 function mortarCross(x,z){
@@ -3293,8 +3316,7 @@ async function executeTactical(u,plan){
   await engage(u,plan.target,'body',w);
   return;
  }
- u.ap-=paidAttackAP(u,w);
- startAction(u);
+ spendOffensiveAP(u,paidAttackAP(u,w));
  const {x,z}=plan.center;
  const turning=turnToward(u,x-u.x,z-u.z);
  if(turning)await turning;
@@ -3362,11 +3384,12 @@ async function enemyTactical(u,opponents){
  await executeTactical(u,best);
  return true;
 }
+const jumpjetCost=(u,x,z)=>Math.max(JUMPJET_AP,distance(u,{x,z}));
 function canJumpjet(u){
- return Boolean(u?.alive&&(FRAMES[u.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME))&&u.hp.legs>0&&u.ap>=JUMPJET_AP&&!u.jumpjetUsed);
+ return Boolean(u?.alive&&(FRAMES[u.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME))&&u.hp.legs>0&&movementLimit(u)>0&&u.ap>=JUMPJET_AP&&!u.jumpjetUsed);
 }
 function jumpjetLanding(u,x,z){
- return canJumpjet(u)&&onBoard(x,z)&&distance(u,{x,z})<=JUMPJET_RANGE&&
+ return canJumpjet(u)&&onBoard(x,z)&&distance(u,{x,z})<=Math.min(JUMPJET_RANGE,movementLimit(u))&&u.ap>=jumpjetCost(u,x,z)&&
   !battle.cover.has(x+','+z)&&!occupied(x,z);
 }
 function jumpjetDestination(u,target){
@@ -3449,8 +3472,8 @@ function renderBattle(){
   moveTap=null;
   nav();const u=current(),under=hover&&battle.units.find(t=>t.alive&&t.team==='enemy'&&t.x===hover.x&&t.z===hover.z),target=under||battle.units.find(t=>t.alive&&t.id===lockedTarget)||battle.units.find(t=>t.alive&&t.team==='enemy');
   const targetReaction=reactionStatus(target),counter=target&&u?reactionWeapon(target,u):null;
-  const counterStatus=counter?'READY / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):
-   targetReaction==='READY'?'OUT OF REACH':targetReaction;
+  const counterStatus=counter?(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED')+' / '+counterCost(target,u,counter)+' AP':
+   targetReaction==='READY'?'NO REPLY FROM HERE':targetReaction;
   const targetShield=activeShield(target);
   const targetStatus=[target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
   battlefieldReady=window.IronVowScene?.ready!==false;
@@ -3475,7 +3498,7 @@ function renderBattle(){
   const lionLoadout=battle.lionTrial?`<div class="lion-trial-loadout" role="group" aria-label="Lion trial weapon">
    ${LION_TRIAL_WEAPONS.map(id=>`<button type="button" data-lion-weapon="${id}" aria-pressed="${u?.melee===id}" ${battle.busy?'disabled':''}>${weapon(id).name}</button>`).join('')}
   </div>`:'';
-  const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${JUMPJET_HELP}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+' AP'}</span></span></button>`:'';
+  const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${JUMPJET_HELP}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+'+ AP'}</span></span></button>`:'';
   const staged=(!battle.operation?.called&&battle.operation?.extra.find(seat=>seat.staged))||null;
   const reserveControl=staged?`<button class="icon" id="call-sortie-reserve" ${ready&&battle.turn>=RESERVE_ENTRY_ROUND?'':'disabled'}>CALL ${CREW[pilotKind(staged.pilotId)].call}${battle.turn<RESERVE_ENTRY_ROUND?' · ROUND 2':''}</button>`:'';
   const warControls=benchWar?`<button type="button" class="icon" id="run-war" ${battle.busy||window.__bench.running?'disabled':''}>RUN WAR</button><button type="button" class="icon" id="war-report">REPORT</button><a class="icon" href="?bench=rig">RIG BENCH</a>`:'';
@@ -3496,9 +3519,9 @@ function renderBattle(){
    ${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${counterStatus}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
-  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':'')+' · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
+  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?movementLimit(u)+' TILES LEFT · 1 AP / TILE · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   ${tacticalPreviewMarkup(u)}
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+movementLimit(t)+' MOVE<br>'+attackAPLeft(t)+' / '+ATTACK_AP_LIMIT+' ATTACK AP<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
   const reserveButton=$('#call-sortie-reserve');
   if(reserveButton)reserveButton.onclick=callReserve;
@@ -3518,7 +3541,7 @@ function renderBattle(){
   if(confirm)confirm.onclick=()=>void commitTactical();
   if(jetButton)$('#jumpjet').onclick=()=>{if(canJumpjet(u)){action=action==='jumpjet'?'move':'jumpjet';targetPanelOpen=false;hover=null;renderBattle()}};
   if(missile)$('#missile').onclick=()=>{if(canMissile){action='missile';renderBattle();persist()}};
-  $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){startAction(u);u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
+  $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
   $('#end').onclick=endTurn;$('#manual').onclick=()=>guide();$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
   if(benchWar){
    $('#run-war').onclick=()=>{
@@ -3585,19 +3608,19 @@ function useSupportSkill(u,target){
  const t=u.training,kind=u.pilot;
  u.ap-=skillCost(kind,t);
  if(kind===3){
-  if(!t?.paintMove)startAction(u);
+  if(t?.paintMove)grantMove(u);
   target.painted={shots:t?.paintShots??1,aim:(20+(t?.paintAim?10:0))/100,power:t?.paintPower??0};
   if(t?.paintBrace)braceUnit(u);
  }else if(kind===4){
-  if(!t?.relayMove)startAction(u);
+  if(t?.relayMove)grantMove(u);
   target.order={shots:t?.relayShots??1,discount:t?.relayDiscount??2,aim:t?.relayAim??0,power:t?.relayPower??0,keepMove:!!t?.relayKeepMove};
   if(t?.relayBrace)braceUnit(target);
  }else if(kind===SIGNAL){
-  if(!t?.blackoutMove)startAction(u);
+  if(t?.blackoutMove)grantMove(u);
   target.blackout={aim:t?.blackoutAim??.20,ap:t?.blackoutAP??0,hold:!!t?.blackoutHold};
   if(t?.blackoutBrace)braceUnit(u);
  }else{
-  if(!t?.recoveryMove)startAction(u);
+  if(t?.recoveryMove)grantMove(u);
   recoverLimbs(target,t);
   u.recoveryUsed=(u.recoveryUsed??0)+1;
  }
@@ -3629,7 +3652,7 @@ function licenseTargets(u,id){
 function useFieldLicense(u,target){
  const id=u&&fieldLicense(u.pilot);
  if(!id||!battle||battle.busy||battle.phase!=='player'||current()!==u||u.level<3||u.licenseUsed||u.ap<2||!licenseTargets(u,id).includes(target))return false;
- u.ap-=2;startAction(u);u.licenseUsed=true;
+ u.ap-=2;u.licenseUsed=true;
  if(id==='guard')braceUnit(target);
  else if(id==='paint')target.painted={shots:1,aim:.20,power:0};
  else if(id==='jam')target.blackout={aim:.20,ap:0,hold:false};
@@ -3657,7 +3680,7 @@ function skill(){
  if(u.pilot===SAPPER&&u.hp.right<=0){toast('Repair the weapon arm to prime Breach Charge.');return}
  const limbs=u.pilot===2?repairableLimbs(u):[];
  if(u.pilot===2&&u.hp.body===u.max.body&&!limbs.length){toast('No repairable damage. Save this skill for later.');return}
- if(!u.training?.overdriveMove&&!u.training?.breachMove)startAction(u);
+ if((u.pilot===0&&u.training?.overdriveMove)||(u.pilot===SAPPER&&u.training?.breachMove))grantMove(u);
  u.skill=true;u.skillTime=clock;effects.push({type:'skill',kind:u.pilot,x:u.x,z:u.z,t:1});
  if(u.pilot===0){u.ap+=overdriveAP(u.training);if(u.training?.overdriveBrace)braceUnit(u)}
  if(u.pilot===1)u.boost=true;
@@ -3669,9 +3692,8 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function useJumpjet(u,x,z){
  if(!jumpjetLanding(u,x,z))return false;
  u.jumpjetUsed=true;
- u.ap-=JUMPJET_AP;
+ spendMovement(u,distance(u,{x,z}),jumpjetCost(u,x,z));
  const fromX=u.x,fromZ=u.z;
- if(u.mechSkills)mechState(u).moved=(u.mechState.moved??0)+distance(u,{x,z});
  const turning=turnToward(u,x-fromX,z-fromZ);
  if(turning)await turning;
  const duration=reducedMotion?.12:.70;
@@ -3689,7 +3711,7 @@ async function moveUnit(u,x,z){
  const plan=movementPlans(u).get(x+','+z);
  if(!plan?.tiles)return;
  const steps=route(u,x,z,plan);
- spendMovement(u,plan.tiles,plan.elevationAP);
+ spendMovement(u,plan.tiles,plan.ap);
  let prior=u;
  for(const step of steps){
   step.hop=!u.kind&&Boolean(elevationCost(u,prior.x,prior.z,step.x,step.z));
@@ -3760,7 +3782,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
  if(!muted&&gunBankLoad)await gunBankLoad;
  const aeroStrike=a.frame===AERO_FRAME&&AERO_MELEE.includes(w.id);
  const lionStrike=a.lionTrial&&LION_TRIAL_WEAPONS.includes(w.id);
- const {paid,charged}=spendAttack(a,w,part,reaction);
+ const expenditure=spendAttack(a,t,w,part,reaction);
+ if(!expenditure)return;
+ const {paid,charged}=expenditure;
  if(a.boost&&sequence&&!sequence.skipped)duelSkill(a,'Deadeye');
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
  const shoulder=launcherId(w.id)&&w.id!=='locust',clip=w.melee?'strike':'fire';
@@ -3946,13 +3970,13 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(ownsCamera&&sequence)closeAttackCamera(sequence);
  }
 }
-const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
+const {reactionStatus,reactionWeapon,counterCost}=window.IRON_VOW_SIM.createReactionRules({weaponAP,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
 const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound}=window.IRON_VOW_SIM.createCombatTransactions({
  getBattle:()=>battle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
- attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
+ attackObstruction,mechState,paidAttackAP,addLog,toast,
  beginAttackCamera:(...args)=>beginAttackCamera(...args),closeAttackCamera,shoot,
  BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
- freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
+ counterCost,grantMove,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
 });
 function awardCombatKill(actor,target){
  if(actor.team!=='ally'||target.team!=='enemy')return;
@@ -4010,12 +4034,12 @@ const allyAt=([x,z])=>battle.units.some(u=>u.team==='ally'&&u.alive&&u.x===x&&u.
 function checkEnd(){if(!battle)return true;if(!depotOperation()&&!battle.units.some(u=>u.alive&&u.team==='enemy')){finish(true);return true}if(!battle.units.some(u=>u.alive&&u.team==='ally')){finish(false);return true}return false}
 const enemyDoctrine=u=>u.kind==='helicopter'?[5,'mobile']:u.kind==='tank'?[4,'hold']:MECH_SIGNATURES[u.frame]?.slice(2);
 const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
- getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
+ getBattle:()=>battle,enemyAPCapacity,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
  unitWeapon,combatRange,launchesMissiles,movementLimit,isArmed:u=>isArmed(u)||canTactical(u),shoulderWeapon,workingWeapon,trySurrender,tryTactical:enemyTactical,tacticalRange:u=>canTactical(u)?tacticalWeapon(u).range:0,
  resetMovement,renderBattle:()=>renderBattle(),distance,meleeWeapon,scoutWeapon,canUseWeapon,attackObstruction,
  hasMechSkill,paths,movementPlans,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
- doctrine:enemyDoctrine,paidAttackAP,freeMovement,extraMoveAP:EXTRA_MOVE_AP,jumpjetAP:JUMPJET_AP,
- braceCost,braceUnit,startAction,barrageTarget,inCover,highGroundAim,reactionWeapon,
+ doctrine:enemyDoctrine,paidAttackAP,jumpjetCost,
+ braceCost,braceUnit,barrageTarget,inCover,highGroundAim,reactionWeapon,
  forecast:(u,t,w,reaction=false)=>{
   const shot=salvoWeapon(u,w),hit=hitOdds(hitChance(u,t,shotPart(u,shot,reaction),shot,reaction),dodgeChance(t));
   const part=activeShield(t)?shieldHand(t):'body';
@@ -4825,7 +4849,7 @@ function previewMoveShots(u,spot,plan){
   const odds=w&&!barrage?displayedAttackOdds(from,target,w):{hit:null,crit:0};
   shots.push({target,state,...odds});
  }
- return {shots,canFire:guns.length>0};
+ return {shots,canFire:guns.length>0,ap:plan.ap};
 }
 let movePreviewMarkup='';
 function showMovePreview(spot,preview){
@@ -4839,7 +4863,7 @@ function showMovePreview(spot,preview){
   const {color,glyph,label}=MOVE_SHOT_STYLE[state];
   return `<span class="move-contact" data-shot="${state}" style="--shot-color:${color}"><b aria-hidden="true">${glyph}</b> ${target.name} <span class="move-hit">${hit===null?'—':hit+'%'+(crit?' · '+crit+'% CRIT':'')}</span> <small>${label}</small></span>`;
  }).join('');
- const markup=`<div class="move-contacts">${labels||(preview.canFire?'NO TARGET IN RANGE':'NO SHOT')}</div>${moveTap?'<span class="move-confirm">TAP AGAIN TO MOVE</span>':''}`;
+ const markup=`<div class="move-contacts">${labels||(preview.canFire?'NO TARGET IN RANGE':'NO SHOT')}</div><span class="move-confirm">${preview.ap} AP${moveTap?' · TAP AGAIN TO MOVE':''}</span>`;
  if(!panel.hidden&&movePreviewMarkup===markup)return;
  movePreviewMarkup=markup;panel.innerHTML=markup;panel.hidden=false;hint.hidden=true;
 }
@@ -4879,7 +4903,7 @@ function battlefield(t){
  const preview=plan?.tiles?previewMoveShots(u,moveTile,plan):null;showMovePreview(preview?moveTile:null,preview);
  for(const unit of battle.units)if(unit.alive)drawUnitReadout(unit,(unit.kind?1.2:2.35)+jumpjetHeight(unit,t));
  if(reachable)for(const [key,move] of reachable)if(move.tiles){const [x,z]=key.split(',').map(Number);if(inCover({x,z}))drawCoverMarker(x,z);}
- if(plan?.tiles){const p=project(moveTile.x,.15,moveTile.z);ctx.fillStyle='#0b141ddd';ctx.fillRect(p.x-28,p.y-26,56,18);ctx.fillStyle='#bfe4ee';ctx.font='600 11px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(plan.ap?plan.ap+' AP':'FREE',p.x,p.y-13);}
+ if(plan?.tiles){const p=project(moveTile.x,.15,moveTile.z);ctx.fillStyle='#0b141ddd';ctx.fillRect(p.x-28,p.y-26,56,18);ctx.fillStyle='#bfe4ee';ctx.font='600 11px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(plan.ap+' AP',p.x,p.y-13);}
  drawEffects(t);
 }
 
@@ -5086,7 +5110,8 @@ canvas.addEventListener('pointerup',async e=>{
   const w=selectedWeapon(u,action,picked);
   if(!w)return toast('Equip a melee weapon in Workshop.');
   if(!workingWeapon(u,w))return toast(w.melee?'Melee arm destroyed. Switch to fire.':'Weapon arm destroyed. Move or brace to support your lance.');
- if(u.ap<paidAttackAP(u,w))return toast('Not enough AP. Select another unit or end your turn.');
+  if(attackAPLeft(u)<paidAttackAP(u,w))return toast('Attack AP limit reached. Move, brace or save AP for counters.');
+  if(u.ap<paidAttackAP(u,w))return toast('Not enough AP. Select another unit or end your turn.');
   const obstruction=attackObstruction(u,picked,w);
   if(obstruction){renderBattle();return toast(obstruction==='AIRBORNE'?'Use ranged fire.':'Ridge blocks fire.')}
   if(distance(u,picked)>combatRange(u,picked,w))return toast(w.melee?'Strike requires an adjacent target.':'Target out of range. Move closer.');
@@ -5237,9 +5262,9 @@ window.__ironVow=(()=>{
  function rulesSnapshot(){
   return {terrainSeed:battle?.terrainSeed??null,turn:battle?.turn??null,size:battle?.size??null,
    theater:battle?.contract.field??null,result:battle?null:save.history.at(-1)??null,log:battle?.log.slice()??[],
-   units:(battle?.units??[]).map(({id,frame,weapon,melee,shield,shoulder,kind,team,alive,hp,max,ap,x,z,reacted})=>
+   units:(battle?.units??[]).map(({id,frame,weapon,melee,shield,shoulder,kind,team,alive,hp,max,ap,x,z,moveLeft,attackAPSpent,reacted})=>
     ({id,frame:frame??null,weapon,melee:melee??null,shield:shield??null,shoulder:shoulder??null,kind:kind??null,team,alive,
-     hp:{...hp},max:{...max},ap,x,z,reacted:Boolean(reacted)}))};
+     hp:{...hp},max:{...max},ap,x,z,moveLeft,attackAPSpent,reacted:Boolean(reacted)}))};
  }
  return {start,snapshot,rulesSnapshot,contractCount:CONTRACTS.length,
   loadCareer(record){if(pending)throw Error('Finish the current operation before loading a fixture');skipAttackCamera();closeModal();battle=null;effects=[];clock=0;return importCareer(record);},

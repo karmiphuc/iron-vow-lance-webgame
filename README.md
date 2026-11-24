@@ -34,7 +34,7 @@ Three regional contracts feature hulls sold at their home port. A recovered wrec
 
 | Port | Contract | Chassis |
 | --- | --- | --- |
-| Ridge Mast | Whiteout Patrol · 1 seat | **Husky** scouts ahead with six free tiles of movement. Move before taking a scattergun shot within three tiles for +8 aim. |
+| Ridge Mast | Whiteout Patrol · 1 seat | **Husky** scouts ahead with six tiles of movement range. Move before taking a scattergun shot within three tiles for +8 aim. |
 | Vanta Shipyards | Kiln Nine · 2 seats | **Giza** holds a firing lane with its rifle. Once per battle, Double Cannon deploys both shoulder guns against one hostile within six tiles. |
 | Halcyon Outpost | Broken Grid · 2 seats | **Vyzov** has a 20-base-damage powered fist for adjacent targets. Once per battle, Cross Mortar targets a tile within seven tiles and strikes the center and four orthogonal neighbors. Friendly units in the cross take damage. |
 
@@ -112,8 +112,10 @@ Foundry backups exported by the donor's v2 game can be imported from Career. The
 
 ## Mobility and reactions
 
-Each mech can move up to its Mobility before its first action without spending AP. It can take one extra tile for 1 AP. The map marks free destinations in cyan and the paid extension in amber. A spent mech does not block selection of a reachable tile behind it.
+A mech starts with 14 AP before training and deployment bonuses. It recovers up to 12 AP at the start of its turn. Movement, attacks, counters and other combat actions use the same pool. Initiated attacks, including tactical specials, can spend at most 8 AP per unit per turn.
 
-Each surviving mech has one reaction per round. It uses an operational melee weapon against an adjacent ground attacker, or returns ranged fire if its weapon arm works and the attacker is in range. Reactions spend no AP and cannot trigger another reaction.
+Movement costs 1 AP per tile, plus 1 AP for each uphill or downhill transition. A mech can split movement around attacks until its remaining Mobility or AP runs out. Jumpjet uses movement range and costs at least 2 AP.
+
+A surviving mech can counter each eligible incoming attack as long as it can pay. Counters cost the weapon’s AP plus 3 at 1–2 tiles, 2 at 3–4 tiles or 1 farther away. An adjacent free-hand counter costs 4 AP. Counters cannot trigger another counter.
 
 Mechs and vehicles ease toward the next heading before crossing a tile. Each step uses a hydraulic lift cue and a weighted contact cue. The attack preparation uses the same sequence with a separate mechanical lock cue.
