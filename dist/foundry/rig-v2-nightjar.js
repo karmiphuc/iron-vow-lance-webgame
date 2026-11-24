@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 const T=root.THREE,R=root.IronVowFoundryRig,V=R.V3,up=V(0,1,0);
-const scale=1.34,stepLength=4.0,ankleHeight=.095;
+const scale=1.08,stepLength=3*scale,ankleHeight=.095;
 const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,v));
 const approach=(a,b,rate,dt)=>T.MathUtils.lerp(a,b,1-Math.exp(-rate*dt));
 const smooth=v=>{const t=clamp(v);return t*t*(3-2*t);};
@@ -39,7 +39,7 @@ function feet(m,input,state,travel,dt,reset){
   const i=state.next,foot=m.legs[i],rest=home(m,m.rig.legs[i],input);
   const catching=brake&&brake.steps<2;
   if(catching||walking&&travel>.001||!walking&&foot.foot.distanceTo(rest)>.25){
-   const stride=T.MathUtils.lerp(1.50,stepLength,ease(input.speed,3,7));
+   const stride=T.MathUtils.lerp(1.12*scale,stepLength,ease(input.speed,3,7));
    state.swing={i,p:0,settle:!walking,catching,stride,from:foot.foot.clone(),to:home(m,m.rig.legs[i],input,walking?stride*1.51:0)};
   }else if(!walking&&m.legs[1-i].foot.distanceTo(home(m,m.rig.legs[1-i],input))>.25)state.next=1-i;
  }
