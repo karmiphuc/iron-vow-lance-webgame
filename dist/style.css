@@ -565,3 +565,11 @@ body[data-view="workshop"] #world-scene{z-index:3}
  .ship-seat{flex-direction:column;align-items:flex-start;gap:1px}
  .ship-seat img{width:48px;height:48px}
 }
+
+.com-choice { min-height:44px; }
+.readiness-note {
+  margin:0;
+  padding:.5rem 1rem;
+  color:var(--muted,#a9b0aa);
+  font-size:.875rem;
+}

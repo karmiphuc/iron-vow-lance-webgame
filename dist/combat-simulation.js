@@ -157,7 +157,7 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
   (!reaction&&w.melee&&hasMechSkill(a,VANGUARD_FRAME)&&a.mechState?.moved>=2&&!a.mechState.chargeUsed?.20:0);
  const support=(a.team==='ally'?(t.painted?.power??0):0)+(reaction?0:a.order?.power??0);
  const charged=chargedLimbShot(a,w,part,reaction),breachPower=charged?training?.breachPower??.60:0;
- const power=w.damage*(1+.05*(a.level-1))*(a.boost?deadeyePower(training):1)*(1+weaponPower+limbPower+reactionPower+support+breachPower);
+ const power=w.damage*(1+.05*(a.level-1))*(a.boost&&!w.comBonus?deadeyePower(training):1)*(1+weaponPower+limbPower+reactionPower+support+breachPower);
  const armor=t.hp.left===0?damagedArmor(t.armor):t.armor;
  const pierce=Math.max(w.pierce??0,w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0,charged?training?.breachPierce??.50:0);
  const bracePiercing=!w.melee&&!launchesMissiles(w)?(Math.max(hasMechSkill(a,SHOGUN_FRAME)?.20:0,hasMechSkill(a,3)?(distance(a,t)<=4?.25:.15):0)):0;
@@ -188,7 +188,8 @@ function pickWeighted(entries,roll){
 function planVolley(a,t,aimed,w,reaction){
  const charged=chargedLimbShot(a,w,aimed,reaction);
  // Nobody aims: normal shots roll to hit against the body. Charged shots keep limb accuracy.
- const dodge=dodgeChance(t),odds=hitOdds(hitChance(a,t,charged?'right':'body',w,reaction),dodge);
+ const dodge=dodgeChance(t),accuracy=hitChance(a,t,charged?'right':'body',w,reaction);
+ const odds=hitOdds(w.comAccuracy===undefined?accuracy:Math.min(HIT_CAP,1-dodge,accuracy)*w.comAccuracy,dodge);
  const shield=activeShield(t),live=targetParts(t).filter(part=>t.hp[part]>0);
  const limbs=charged?BREACH_LIMBS.filter(part=>live.includes(part)):[];
  const frame=(charged?limbs:live.filter(part=>part!=='pilot')).map(part=>[part,HIT_LOCATION[part]??0]).filter(([,weight])=>weight>0);
@@ -220,7 +221,7 @@ function planVolley(a,t,aimed,w,reaction){
  const impacts=[];
  for(const part of hits.keys()){
   const weight=rounds.reduce((sum,r)=>r.hit&&r.part===part?sum+roundWeight(r,count):sum,0);
-  const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*weight/count));
+  const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*weight/(w.comBaseRounds??count)));
   if(amount>0)impacts.push({part,amount:Math.min(amount,w.maxImpact??Infinity)});
  }
  return {rounds,impacts,landed,dodged:evades===count,guard:Boolean(shield&&landed)};
@@ -463,7 +464,7 @@ function reactionWeapon(defender,attacker){
  function createCombatTransactions({
   getBattle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
   attackObstruction,mechState,paidAttackAP,addLog,toast,
-  beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
+  beginAttackCamera,closeAttackCamera,shoot,comSupport=()=>{},BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
   counterCost,grantMove,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
  }){
   function barrageRestriction(attacker,defender,w){
@@ -489,9 +490,11 @@ function reactionWeapon(defender,attacker){
     }
    }
    const sequence=beginAttackCamera(attacker,defender,w,part);
+   const exchange={defence:new Set()};
    const before=Object.values(defender.hp).reduce((sum,hp)=>sum+hp,0);
    try{
-    const jammed=await shoot(attacker,defender,part,w,false,sequence);
+    const jammed=await shoot(attacker,defender,part,w,false,sequence,exchange);
+    await comSupport(attacker,defender,sequence,exchange);
     if(Object.values(defender.hp).reduce((sum,hp)=>sum+hp,0)<before){
      for(const guardian of getBattle().units){
       if(!attacker.alive)break;
@@ -499,7 +502,7 @@ function reactionWeapon(defender,attacker){
       const ranged=unitWeapon(guardian),reach=counterRange(ranged,guardian.training,guardian.brace);
       if(reactionStatus(guardian)!=='READY'||guardian.ap<counterCost(guardian,attacker,ranged)||guardian.hp.right<=0||ranged.melee||!reach||distance(guardian,attacker)>reach||attackObstruction(guardian,attacker,ranged))continue;
       guardian.reacted=true;addLog(guardian.name+' covers its adjacent ally.');
-      await shoot(guardian,attacker,'body',ranged,true,sequence);
+      await shoot(guardian,attacker,'body',ranged,true,sequence,exchange);
      }
     }
     if(jammed){addLog(defender.name+' counter jammed.');return}
@@ -507,7 +510,7 @@ function reactionWeapon(defender,attacker){
     if(!counter)return;
     defender.reacted=true;
     addLog(defender.name+(counter===FREE_HAND_COUNTER?' counters with a free hand.':counter.melee?' counters in melee.':' returns fire.'));
-    await shoot(defender,attacker,'body',counter,true,sequence);
+    await shoot(defender,attacker,'body',counter,true,sequence,exchange);
     if(defender.training?.counterBrace)braceUnit(defender);
    }finally{
     if(defender.mechState)delete defender.mechState.basilisk;
