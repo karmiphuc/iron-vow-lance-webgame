@@ -79,23 +79,21 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 142,
+    "siteVersion": 143,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "8fb55c1b4a40d8080c1cfa33a4b3a4a254f4ed99",
-    "githubCommit": "defaab783c0637bba4dd0db0cdeae52fbf81dd77",
-    "distTree": "0915b7f6c9651a6b132e9a1048ad78540feabee9",
-    "verifiedAt": "2026-11-24T13:47:04.008Z",
-    "localReleaseSourceSha256": "b9af018714a502c212b57bbd4761c008a5753a13d1b993480b609e049c47b120",
-    "simulationSuites": 86,
+    "sourceCommit": "9ac95bd3e096d769859a9a4883e65812f5e40cd4",
+    "githubCommit": "bc7c7ded21215519bfb1e0b05de2a0df748fa3dc",
+    "distTree": "ca8f9ae0e608066054ff6745bce4f2af578b5c11",
+    "verifiedAt": "2026-11-24T14:39:30.501Z",
+    "localReleaseSourceSha256": "132f3de1592bb32d144478d5920c0c90df494f63946d4070f974ebc5900fc0ed",
+    "simulationSuites": 87,
     "localBrowser": {
-      "desktop": 4,
-      "touch": 4,
+      "desktop": 2,
+      "touch": 2,
       "result": "passed",
       "scenarios": [
-        "checkShields",
-        "checkRosterScale",
-        "checkRigWorkbench",
-        "checkNightjarStop"
+        "checkMovePreview",
+        "checkRidgeCombat"
       ]
     },
     "liveFilesCompared": 173,
@@ -104,19 +102,17 @@
       "touch": 2,
       "result": "passed",
       "scenarios": [
-        "checkRosterScale",
-        "checkNightjarStop"
+        "checkMovePreview",
+        "checkRidgeCombat"
       ]
     },
-    "liveSortie": "Blind Crossing deployed and reloaded. Both alternating braking contacts completed after the move.",
     "environment": {
       "browser": "Chromium",
       "touch": "iPhone emulation",
       "nativeIPad": "unverified"
     },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_45d47fc372848191a2c8ae2b1ade832f",
-    "deploymentId": "appgdep_6b0594c807b88191bacb96baf1c77dbd",
-    "evidence": "design/nightjar/README.md"
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_ab9c2bdc16148191ab06c6d9ce4d29b6",
+    "deploymentId": "appgdep_6b05a03023108191a1f7542bc6b82853"
   },
   "publishedReleaseHistory": [
     {
@@ -512,6 +508,46 @@
       "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_02b0d8d47c208191927bdd3a708779f6",
       "deploymentId": "appgdep_6b058e2dc0588191931d4b12ec0aee22",
       "evidence": "design/roster-scale/README.md"
+    },
+    {
+      "siteVersion": 142,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "8fb55c1b4a40d8080c1cfa33a4b3a4a254f4ed99",
+      "githubCommit": "defaab783c0637bba4dd0db0cdeae52fbf81dd77",
+      "distTree": "0915b7f6c9651a6b132e9a1048ad78540feabee9",
+      "verifiedAt": "2026-11-24T13:47:04.008Z",
+      "localReleaseSourceSha256": "b9af018714a502c212b57bbd4761c008a5753a13d1b993480b609e049c47b120",
+      "simulationSuites": 86,
+      "localBrowser": {
+        "desktop": 4,
+        "touch": 4,
+        "result": "passed",
+        "scenarios": [
+          "checkShields",
+          "checkRosterScale",
+          "checkRigWorkbench",
+          "checkNightjarStop"
+        ]
+      },
+      "liveFilesCompared": 173,
+      "liveBrowser": {
+        "desktop": 2,
+        "touch": 2,
+        "result": "passed",
+        "scenarios": [
+          "checkRosterScale",
+          "checkNightjarStop"
+        ]
+      },
+      "liveSortie": "Blind Crossing deployed and reloaded. Both alternating braking contacts completed after the move.",
+      "environment": {
+        "browser": "Chromium",
+        "touch": "iPhone emulation",
+        "nativeIPad": "unverified"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_45d47fc372848191a2c8ae2b1ade832f",
+      "deploymentId": "appgdep_6b0594c807b88191bacb96baf1c77dbd",
+      "evidence": "design/nightjar/README.md"
     }
   ]
 }
