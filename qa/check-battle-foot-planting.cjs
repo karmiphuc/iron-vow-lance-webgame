@@ -74,12 +74,13 @@ async function main(){
  const sniper=units.find(u=>u.name==='NIGHTJAR');
  S.clearCombat();
  let distance=0,widest=0,plantError=0,foldHeight=0;
+ const impacts=[];
  function sample(moving,aim=0,floor=()=>0){
   time+=1/60;
   if(moving)distance+=8/60;
   sniper.motion=moving?{playbackRate:1,start:0}:null;
   return S.draw(sniper,time,{aim,recoil:0,brace:aim,impact:0,strikeProgress:0,primeProgress:0,phase:0,
-   world:{x:0,y:floor(0,distance),z:distance,face:0,heading:0,groundAt:floor,speed:moving?8:0,aim:R.V3(0,3,distance+15)}},
+   world:{x:0,y:floor(0,distance),z:distance,face:0,heading:0,groundAt:floor,onStep:(m,p,i,amount)=>impacts.push({time,i,amount}),speed:moving?8:0,aim:R.V3(0,3,distance+15)}},
    scope,sniper.foundry,'rig-v2').m;
  }
  const initial=sample(false),standingHeight=initial.rig.pelvis.position.y;
@@ -109,7 +110,19 @@ async function main(){
   foldHeight=Math.max(foldHeight,Math.min(...m.nightjar.forelegs.map(arm=>arm.an.getWorldPosition(R.V3()).y)));
  }
  assert.ok(widest>3.4&&foldHeight>2.5&&plantError<.025,'split stride, both forelimbs tucked and planted hind claw: '+[widest,foldHeight,plantError]);
- let braced;
+ impacts.length=0;
+ const stopTime=time;
+ let braced,forward=-Infinity,minY=Infinity,quietZ;
+ for(let frame=0;frame<90;frame++){
+  braced=sample(false);
+  forward=Math.max(forward,braced.rig.pelvis.position.z);
+  minY=Math.min(minY,braced.rig.pelvis.position.y);
+  if(frame===65)quietZ=braced.rig.pelvis.position.z;
+ }
+ assert.equal(impacts.length,2,'two distinct braking impacts before rest');
+ assert.notEqual(impacts[0].i,impacts[1].i,'alternating catch steps');
+ assert.ok(impacts[0].time-stopTime<.20&&impacts[1].time-stopTime<.43&&impacts[1].amount>impacts[0].amount,'short first catch, heavier second plant');
+ assert.ok(forward-quietZ>.30&&minY<standingHeight-.21&&Math.abs(quietZ-braced.rig.pelvis.position.z)<.005,'body overruns the planted foot, compresses and settles');
  for(let frame=0;frame<160;frame++)braced=sample(false,1);
  assert.ok(braced.rig.pelvis.position.y<standingHeight-.55,'chassis settles between its contacts');
  checkGuardAndGrip(braced);

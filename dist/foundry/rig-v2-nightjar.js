@@ -21,10 +21,26 @@ function feet(m,input,state,travel,dt,reset){
   m.rig.legs.forEach((leg,i)=>{const foot=m.legs[i];foot.swing=false;foot.foot.copy(home(m,leg,input));foot.planted.copy(foot.foot);});
  }
  const walking=input.moving&&!input.reducedMotion;
+ // Carry the last stride into a short catch step and a second, heavier plant.
+ // Pick up the airborne foot first so the opposite claw keeps its world anchor.
+ if(walking&&state.brake&&state.swing){
+  state.next=state.swing.i;state.swing=null;
+ }
+ if(reset||walking||input.reducedMotion||!input.alive||input.legsDead)state.brake=null;
+ else if(state.wasWalking){
+  state.next=state.swing?.i??state.next;state.swing=null;
+  state.brake={age:0,steps:0,heading:state.travelHeading};
+ }
+ state.wasWalking=walking&&input.alive&&!input.legsDead;
+ if(walking&&travel>.001)state.travelHeading=input.heading;
+ const brake=state.brake;
+ if(brake){brake.age+=dt;if(brake.steps===2&&brake.age>.75)state.brake=null;}
  if(!state.swing){
   const i=state.next,foot=m.legs[i],rest=home(m,m.rig.legs[i],input);
-  if(walking&&travel>.001||!walking&&foot.foot.distanceTo(rest)>.25){
-   state.swing={i,p:0,settle:!walking,from:foot.foot.clone(),to:home(m,m.rig.legs[i],input,walking?stepLength*1.51:0)};
+  const catching=brake&&brake.steps<2;
+  if(catching||walking&&travel>.001||!walking&&foot.foot.distanceTo(rest)>.25){
+   const stride=T.MathUtils.lerp(1.50,stepLength,ease(input.speed,3,7));
+   state.swing={i,p:0,settle:!walking,catching,stride,from:foot.foot.clone(),to:home(m,m.rig.legs[i],input,walking?stride*1.51:0)};
   }else if(!walking&&m.legs[1-i].foot.distanceTo(home(m,m.rig.legs[1-i],input))>.25)state.next=1-i;
  }
  const swing=state.swing;
@@ -32,14 +48,17 @@ function feet(m,input,state,travel,dt,reset){
  if(!walking&&!swing.settle){
   swing.from.copy(m.legs[swing.i].foot);swing.to.copy(home(m,m.rig.legs[swing.i],input));swing.p=0;swing.settle=true;
  }
- swing.p=clamp(swing.p+(swing.settle?dt/.19:travel/stepLength));
- const movingFoot=m.legs[swing.i],sole=movingFoot.foot;movingFoot.swing=!swing.settle;
+ const catching=swing.catching&&brake;
+ const duration=catching?(brake.steps===0?.155:.215):.19;
+ swing.p=clamp(swing.p+(swing.settle?dt/duration:travel/swing.stride));
+ const movingFoot=m.legs[swing.i],sole=movingFoot.foot;movingFoot.swing=!swing.settle||Boolean(catching);
  sole.copy(swing.from).lerp(swing.to,smooth(swing.p));
  sole.y=Math.max(sole.y,(input.groundAt?.(sole.x,sole.z)??input.ground??0)+ankleHeight*scale);
- sole.y+=Math.sin(Math.PI*swing.p)*(swing.settle?.11:.42)*scale;
+ sole.y+=Math.sin(Math.PI*swing.p)*(catching?(brake.steps===0?.43:.32):swing.settle?.11:.42)*scale;
  if(swing.p===1){
   movingFoot.swing=false;movingFoot.planted.copy(sole);
-  if(!swing.settle)input.onStep?.(m,sole.clone().addScaledVector(up,-ankleHeight*scale),swing.i,.78);
+  if(!swing.settle||catching)input.onStep?.(m,sole.clone().addScaledVector(up,-ankleHeight*scale),swing.i,catching?(brake.steps===0?.84:1.20):.78);
+  if(catching)brake.steps++;
   state.next=1-swing.i;state.swing=null;
  }
 }
@@ -146,13 +165,18 @@ function animate(m,input,dt,t){
  const side=state.dodgeSign;
  const wave=state.swing?Math.sin(Math.PI*state.swing.p):0;
  const weight=(state.swing?.i===0?-1:1)*wave*run;
+ const brakeAge=state.brake?.age??1;
+ const loadBeat=(a,b,c)=>ease(brakeAge,a,b)-ease(brakeAge,b,c);
+ const carry=loadBeat(0,.20,.70),load=loadBeat(.10,.19,.32)+1.25*loadBeat(.29,.39,.65);
+ const brakeHeading=(state.brake?.heading??m.yaw)-m.yaw;
+ const strideLoad=state.swing&&!state.swing.settle?(1-ease(state.swing.p,0,.30))*run:0;
  const breath=input.reducedMotion?0:Math.sin(t*2)*.018;
  const hit=alive&&!input.reducedMotion?Math.exp(-Math.max(0,t-(input.hitTime??-100))*8):0;
- rig.pelvis.position.set(.09*weight+side*.48*spring-.28*collapse,
-  1.86-.82*lock+run*(.16+.21*wave)-.29*dodgeLoad+.30*spring-.79*down-.33*collapse-(input.legsDead?.36:0),
-  -.40+.14*lock+.10*run);
- rig.pelvis.rotation.set(-.04+.14*run+.12*down,0,-.055*weight+side*.17*spring+.43*collapse);
- rig.spine.rotation.set(.18+.10*run+.14*lock-.095*kick-.10*hit+breath+.32*collapse,
+ rig.pelvis.position.set(.15*weight+.43*carry*Math.sin(brakeHeading)+side*.48*spring-.28*collapse,
+  1.86-.82*lock+run*(.12+.22*wave)-.18*strideLoad-.29*load-.29*dodgeLoad+.30*spring-.79*down-.33*collapse-(input.legsDead?.36:0),
+  -.40+.14*lock+.10*run+.43*carry*Math.cos(brakeHeading));
+ rig.pelvis.rotation.set(-.04+.14*run+.12*down+.10*carry,0,-.055*weight+side*.17*spring+.43*collapse);
+ rig.spine.rotation.set(.18+.10*run+.14*lock+.12*carry-.07*load-.095*kick-.10*hit+breath+.32*collapse,
   -.045*(1-lock)+weight*.055,side*spring*.10+.12*hit+.40*collapse,'YXZ');
  rig.neck.rotation.set(-.095-.11*run+.045*lock,.09*Math.sin(t*.8)*(1-lock),0);
  for(const [i,leg] of rig.legs.entries()){

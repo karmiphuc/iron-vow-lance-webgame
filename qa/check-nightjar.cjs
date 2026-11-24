@@ -3,6 +3,7 @@ const simulate=require('./sim-harness.cjs');
 async function check(){
  const game=simulate({reducedMotion:true,random:()=>.10}),{run}=game;
  run("save.overworld={port:'brine',arrears:0};ensureWorld();persist()");
+ assert.deepEqual(Array.from(run('CONTRACTS.slice(8,11).map(c=>c.id)')),['rail-armor','rail-air','blind-crossing'],'preserve both published interception slots');
  const offer=run("availableOffers('brine').find(o=>CONTRACTS[o.templateIndex].id==='blind-crossing').id");
  game.node('#aux-pilot').options=[];game.node('#use-aux').checked=false;
  run('prepareWorldOffer('+JSON.stringify(offer)+')');game.node('#modal-1').onclick();

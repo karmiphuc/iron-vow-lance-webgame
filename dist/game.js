@@ -421,7 +421,7 @@ const VYZOV_FRAME=FRAMES.push({name:'VYZOV',model:'VZ–11',role:'MORTAR RAIDER'
 const NIGHTJAR_FRAME=FRAMES.push({name:'NIGHTJAR',model:'NJ–07',role:'MOBILE SNIPER',color:'#526c70',
  hp:108,arm:56,leg:87,move:6,armor:2,dodge:.15,weapon:'quill-lance',native:'nightjar',
  enemyOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
- brief:'A four-point firing stance drops to a two-legged run. Its left shoulder carries the integral Quill. A right-hand buckler intercepts incoming hits until the arm breaks.'})-1;
+ brief:'Two short braking steps settle it onto a firing tripod. Its left hand guides the integral Quill. A right-hand buckler intercepts incoming hits until the arm breaks.'})-1;
 // Name, player-facing effect, preferred distance, and positioning priority.
 const MECH_SIGNATURES={
  0:['Steady Aim','Open from a planted position. Your first direct shot before moving gains +6 aim.',4,'hold'],
@@ -499,11 +499,7 @@ CONTRACTS.push(
  {id:'broken-grid',port:'frontier',field:2,seats:2,hostiles:[VYZOV_FRAME,HUSKY_FRAME],
   name:'Broken Grid',place:'HALCYON OUTPOST · RUNOFF BASIN',tag:'RAIDER HUNT',pay:8200,difficulty:3,
   desc:'A Vyzov mortar raider and its Husky spotter hold the basin. Spread your lance to deny the mortar a clustered target.',
-  deployment:[[12,6],[7,12],['tank',4,14]]},
- {id:'blind-crossing',port:'brine',field:1,seats:1,hostiles:[NIGHTJAR_FRAME],
-  name:'Blind Crossing',place:'BRINE CAUSEWAY · SPILLWAY',tag:'SNIPER INTERCEPT',pay:4100,difficulty:1,
-  desc:'Cross the spillway under a Nightjar’s rifle. Its right-hand buckler can absorb a hit. Use the cargo stacks to close the gap.',
-  deployment:[[8,11]]}
+  deployment:[[12,6],[7,12],['tank',4,14]]}
 );
 const INTERCEPTS={
  armor:CONTRACTS.push({id:'rail-armor',name:'Rail interception · Armored patrol',field:0,difficulty:1,pay:0,
@@ -511,6 +507,11 @@ const INTERCEPTS={
  air:CONTRACTS.push({id:'rail-air',name:'Rail interception · Air patrol',field:1,difficulty:1,pay:0,
   hostiles:[1,HUSKY_FRAME],deployment:[[7,11],[14,6],['helicopter',10,16]]})-1
 };
+// Append after the two interception slots already persisted by live careers.
+CONTRACTS.push({id:'blind-crossing',port:'brine',field:1,seats:1,hostiles:[NIGHTJAR_FRAME],
+  name:'Blind Crossing',place:'BRINE CAUSEWAY · SPILLWAY',tag:'SNIPER INTERCEPT',pay:4100,difficulty:1,
+  desc:'Cross the spillway under a Nightjar’s rifle. Its right-hand buckler can absorb a hit. Use the cargo stacks to close the gap.',
+  deployment:[[8,11]]});
 function validInterception(career){
  const event=career.interception;
  if(event===undefined)return true;
