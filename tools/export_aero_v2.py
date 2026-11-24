@@ -23,6 +23,70 @@ def part_for(bone):
     if bone.endswith('.R'): return 'right'
     raise ValueError(f'Unclassified Aero bone {bone}')
 
+def flight_armor(scene, rig, objects):
+    """Fit faceted castings to the R10 rest joints. Ring dimensions are in chassis space."""
+    ceramic = objects['Shoulder | curved pauldron.L'].data.materials[0]
+    trim = next(mat for obj in objects.values() if obj.type == 'MESH'
+                for mat in obj.data.materials if mat and base(mat.name) == '02 | Black-green panel trim')
+    # Each section is (center X, center Y, height, half-width, half-depth).
+    # The clipped corners expose the lower lamination and leave clearance at each hinge.
+    sections = [
+        ('Shoulder | pivot skirt', 'pauldron', trim, [
+            (.76, .00, 3.39, .19, .21), (.74, -.02, 3.48, .28, .28),
+            (.65, -.01, 3.59, .21, .22)]),
+        ('Shoulder | swept flight cap', 'pauldron', ceramic, [
+            (.75, -.04, 3.495, .27, .265), (.74, -.04, 3.55, .34, .32),
+            (.66, -.01, 3.73, .23, .24), (.61, .01, 3.77, .15, .16)]),
+        ('Shoulder | leading rub rail', 'pauldron', trim, [
+            (.74, -.307, 3.52, .14, .013), (.74, -.34, 3.55, .16, .017),
+            (.72, -.32, 3.58, .12, .013)]),
+        ('Chest | lower intake cheek', 'chest', ceramic, [
+            (.28, -.39, 3.10, .10, .09), (.35, -.36, 3.23, .19, .14),
+            (.39, -.32, 3.29, .13, .10)]),
+        ('Forearm | outer gauntlet', 'forearm', ceramic, [
+            (1.00, -.02, 2.38, .12, .14), (.98, .00, 2.50, .17, .19),
+            (.93, .08, 2.83, .23, .21), (.90, .12, 2.92, .16, .15)]),
+        ('Forearm | inset cuff rail', 'forearm', trim, [
+            (.99, -.164, 2.48, .038, .016), (.96, -.175, 2.62, .053, .020),
+            (.93, -.145, 2.81, .041, .018)]),
+        ('Shin | outboard landing guard', 'shin', ceramic, [
+            (.75, .11, .38, .10, .12), (.70, .10, .65, .17, .18),
+            (.65, .14, .99, .21, .22), (.62, .18, 1.10, .17, .17)]),
+        ('Shin | replaceable skid', 'shin', trim, [
+            (.74, -.027, .46, .048, .017), (.70, -.089, .69, .068, .027),
+            (.65, -.086, .94, .065, .025), (.64, -.073, 1.01, .052, .018)]),
+    ]
+    outline = [(-.64, -1), (.53, -1), (1, -.52), (1, .52),
+               (.58, 1), (-.61, 1), (-1, .62), (-1, -.60)]
+    result = []
+    for side, sign in (('L', 1), ('R', -1)):
+        for name, joint, material, rings in sections:
+            vertices = [(sign * (x + u * width), y + v * depth, z)
+                        for x, y, z, width, depth in rings for u, v in outline]
+            n = len(outline)
+            faces = [tuple(reversed(range(n)))]
+            for row in range(len(rings)-1):
+                for j in range(n):
+                    a, b = row*n+j, row*n+(j+1)%n
+                    faces.append((a, b, b+n, a+n))
+            faces.append(tuple(range(len(vertices)-n, len(vertices))))
+            if sign < 0:
+                faces = [tuple(reversed(face)) for face in faces]
+            mesh = bpy.data.meshes.new(name+'.'+side)
+            mesh.from_pydata(vertices, [], faces)
+            mesh.materials.append(material)
+            mesh.update()
+            obj = bpy.data.objects.new(mesh.name, mesh)
+            scene.collection.objects.link(obj)
+            obj.parent, obj.parent_type = rig, 'BONE'
+            obj.parent_bone = 'chest' if joint == 'chest' else joint+'.'+side
+            result.append((obj, obj.parent_bone))
+    bpy.context.view_layer.update()
+    for obj, _ in result:
+        obj.data.transform(obj.matrix_world.inverted() @ rig.matrix_world)
+    return result
+
+
 def export_aero(source, output):
     source, output = Path(source).expanduser().resolve(strict=True), Path(output).expanduser().resolve()
     if source.suffix != '.blend' or output.suffix != '.glb' or output.exists(): raise ValueError('Use an existing source and a new GLB')
@@ -48,6 +112,15 @@ def export_aero(source, output):
         meshes = [(o, o.parent_bone) for o in scene.objects if o.type == 'MESH' and o.parent == rig]
         if len(meshes) < 500: raise ValueError(f'Unexpected chassis assembly {len(meshes)}')
         bpy.context.view_layer.update()
+        meshes.extend(flight_armor(scene, rig, objects))
+        # Lengthen the two toe shoes together around their metatarsal hinge.
+        # Preserve the ankle, planted tread plane, and heel clearance.
+        for obj, bone in meshes:
+            if bone.startswith('toe.'):
+                pivot = rig.matrix_world @ rig.data.bones[bone].head_local
+                stretch = Matrix.Translation(pivot) @ Matrix.Diagonal(Vector((1.10, 1.34, 1., 1.))) @ Matrix.Translation(-pivot)
+                obj.data = obj.data.copy()
+                obj.data.transform(obj.matrix_world.inverted() @ stretch @ obj.matrix_world)
         # Nozzle lip centers preserve the authored jet exit in the rest pose.
         anchors = []
         for side in ('L', 'R'):
@@ -140,7 +213,7 @@ def export_aero(source, output):
             if len(obj.data.loop_triangles) >= 300:
                 modifier = obj.modifiers.new('Aero web triangle budget', 'DECIMATE')
                 # Leave room for 9,556 triangles of Workshop equipment.
-                modifier.ratio = .29; modifier.use_collapse_triangulate = True
+                modifier.ratio = .255; modifier.use_collapse_triangulate = True
                 obj.modifiers.move(len(obj.modifiers)-1, 0)
                 bpy.context.view_layer.objects.active = obj
                 if bpy.ops.object.modifier_apply(modifier=modifier.name) != {'FINISHED'}: raise RuntimeError('Decimation failed')
