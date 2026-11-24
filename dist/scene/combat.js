@@ -64,7 +64,11 @@ root.IronVowCombat={create(scene,api){
   log('launch',{archetype:kind,expectedOrigin:expectedMarker?.getWorldPosition(V3()).toArray(),actorAlive:actor.alive,aimError,mounted:entry?.m?Boolean(barrel&&barrel.mount.parent===carrier):null,actor:actor.id,target:target.id,weapon:w.id,index,socket,origin:from.toArray(),targetPoint:to.toArray(),flight});
   barrel?.onLaunch?.(clock);
   const model=api.models.get(actor.id)?.entry?.m;
-  if(model){model.recoil=Math.max(model.recoil,.8);model.s.comp.v-=.28;}
+  if(model){
+   model.recoil=Math.max(model.recoil,.8);
+   const pairedReaver=w.id==='reaver-autocannon'&&weapon?.alternate;
+   model.s.comp.v-=pairedReaver?.14:.28;
+  }
   // Adapted from Claude Rig Bench shotgun fan (docs/reference/claude/rig-bench.html:1875-1883).
   // The shell's existing rule contacts own count, timing and damage. This deterministic
   // muzzle-normal disk only separates their rendered paths; it consumes no rule RNG.
@@ -123,7 +127,7 @@ root.IronVowCombat={create(scene,api){
   const m=api.models.get(target.id)?.entry?.m;
   if(m){
    // A shell can mark several parts, but its total push is bounded by one impact.
-   const portion=w.scatter?1/Math.max(1,w.burst):1;
+   const portion=w.scatter?1/Math.max(1,w.burst):w.id==='reaver-autocannon'?.5:1;
    const [kick,pitch]=impactMotion[profile.archetype]??impactMotion.rifle;
    const side=part==='right'?-1:part==='left'||part==='shield'?1:0;
    const spring=m.s;
