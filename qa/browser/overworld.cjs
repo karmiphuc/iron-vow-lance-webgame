@@ -114,7 +114,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  assert.equal(state.day,2);
  assert.equal(state.credits,3990);
  const {world:relayWorld,...relayFields}=state;
- assert.deepEqual(relayFields,{...arrived,itemInventory:true,owned:startingGear},'one-hop Relay travel preserves the starting equipment copies');
+ assert.deepEqual(relayFields,{...arrived,readinessStart:1,itemInventory:true,owned:startingGear},'one-hop Relay travel preserves the starting equipment copies');
  assert.deepEqual(relayWorld,await page.evaluate(()=>worldRules.createWorld(0,2)),'travel advances the seeded world by one day');
  assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),relayWorld),true);
  const relayArrival=JSON.parse(JSON.stringify(state));
@@ -251,7 +251,7 @@ module.exports=async function checkOverworld({context,page,mobile,origin,tap}){
  assert.equal(state.credits,beforePassing.credits,'passing the call adds no charge');
  assert.equal(state.day,beforePassing.day,'passing the call adds no delay');
  const {world:restedWorld,...restedFields}=state;
- assert.deepEqual(restedFields,{...restedArrival,itemInventory:true,owned:[...startingGear,'blade','rifle']},
+ assert.deepEqual(restedFields,{...restedArrival,readinessStart:1,itemInventory:true,owned:[...startingGear,'blade','rifle']},
   'two-day transit preserves equipment copies and applies the expected rest and expenses');
  assert.deepEqual(restedWorld,await page.evaluate(()=>worldRules.createWorld(0,3)),'successful two-day travel advances the world exactly once');
  assert.equal(await page.evaluate(world=>window.IronVowWorld.validWorld(world),restedWorld),true);
