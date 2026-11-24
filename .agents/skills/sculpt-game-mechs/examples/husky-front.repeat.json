@@ -1,0 +1,84 @@
+{
+  "reference": {
+    "view": "Husky front, standing, viewer-right arm",
+    "image": "private/reference-front.jpg",
+    "sha256": "b2a005503a3284d75799d192c3170898ec29a1adf8353d809961b7b93cb4b556",
+    "width": 650,
+    "height": 650,
+    "marks": {
+      "top": [
+        369,
+        44
+      ],
+      "sole": [
+        168,
+        605
+      ],
+      "cuff": [
+        498,
+        320
+      ],
+      "apron": [
+        325,
+        378
+      ],
+      "elbow": null,
+      "wrist": null,
+      "round": [
+        [
+          328,
+          364
+        ]
+      ],
+      "vertical_slot": [
+        [
+          320,
+          369
+        ]
+      ],
+      "horizontal_slot": [
+        [
+          328,
+          374
+        ]
+      ]
+    },
+    "error_px": 3
+  },
+  "candidate": {
+    "view": "Husky front, standing, viewer-right arm",
+    "image": "private/Husky Front.jpg",
+    "sha256": "8a813ad34b0eb9d2c8383113c1401dee4b0ec87f071ad5e710644b64109a208f",
+    "width": 840,
+    "height": 900,
+    "marks": {
+      "top": [
+        420,
+        111
+      ],
+      "sole": [
+        565,
+        844
+      ],
+      "cuff": [
+        649,
+        469
+      ],
+      "apron": [
+        419,
+        589
+      ],
+      "elbow": null,
+      "wrist": null,
+      "round": [
+        [
+          419,
+          568
+        ]
+      ],
+      "vertical_slot": [],
+      "horizontal_slot": []
+    },
+    "error_px": 2
+  }
+}

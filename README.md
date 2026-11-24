@@ -50,6 +50,8 @@ Contract rewards fund weapons, chassis, upgrades, and repairs. Pilot experience 
 
 ## Verification
 
+The [mech sculpting skill](.agents/skills/sculpt-game-mechs/SKILL.md) includes reference-matching guidance and a portable test suite for landmark placement, armor detail, joint proportions and left/right rig mappings. Run `python3 .agents/skills/sculpt-game-mechs/scripts/run_checks.py` with FFmpeg and Blender installed.
+
 Run `npm run setup:qa`, then `npm test` for the simulation suites. `npm run test:browser` checks desktop and touch behavior; `npm run test:release` runs the complete release gate. Browser checks require Chromium as described in [Release checks](qa/README.md). QA dependencies are development-only.
 
 The same release gate runs through `qa/site-package.cjs` before a Sites publication. `.openai/hosting.json` retains the existing Site identity. GitHub pushes do not automatically deploy the Site; use the Sites source and publication workflow when a deployment is requested.
