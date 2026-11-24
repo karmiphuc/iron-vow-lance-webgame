@@ -208,6 +208,7 @@ const profiles={
    0.14
   ]
  },
+ "merlin-38": {"archetype":"rifle","mount":"hand","asset":"watchman","socket":"muzzle"},
  "quill-lance": {
   "archetype": "rifle",
   "beats": [0],

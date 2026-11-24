@@ -34,6 +34,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'vyzov-knuckle',name:'Pile Knuckle',type:'POWERED FIST',damage:20,range:1,ap:3,builtIn:true,melee:true,hand:'right',motion:'breaker',desc:'An adjacent strike for 20 base damage before armor.'},
  {id:'aegis-cleave',name:'Charged Arc Cleaver',type:'REACTOR CLEAVE',damage:38,range:1,ap:5,builtIn:true,melee:true,hand:'right'},
  {id:'aegis-bash',name:'Charged Shield Bash',type:'HYDRAULIC IMPACT',damage:40,range:1,ap:5,builtIn:true,melee:true},
+ {id:'merlin-38',name:'Merlin 38',type:'INTEGRAL PRECISION RIFLE',damage:39,range:9,ap:5,aim:.08,builtIn:true,hand:'right',motion:'rifle',desc:'A medium-impact barrel on the Saker’s right wrist cradle.'},
  {id:'quill-lance',name:'Quill S-7',type:'INTEGRAL MARKSMAN RIFLE',damage:32,range:8,ap:4,aim:.06,builtIn:true,hand:'left',motion:'rifle',desc:'A single low-impulse round from the Nightjar’s left shoulder cradle.'},
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
  {id:'flechette-scattergun',name:'Flechette scattergun',type:'SCOUT SCATTERGUN',burst:12,scatter:true,damage:31,range:2,ap:5,builtIn:true,effect:'shotgun',scout:'scatter'},
@@ -422,6 +423,10 @@ const NIGHTJAR_FRAME=FRAMES.push({name:'NIGHTJAR',model:'NJ–07',role:'MOBILE S
  hp:108,arm:56,leg:87,move:6,armor:2,dodge:.15,weapon:'quill-lance',native:'nightjar',
  enemyOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
  brief:'Two short braking steps settle it onto a firing tripod. Its left hand guides the integral Quill. A right-hand buckler intercepts incoming hits until the arm breaks.'})-1;
+const SAKER_FRAME=FRAMES.push({name:'SAKER',model:'SK–38',role:'ROOFTOP MARKSMAN',color:'#928675',
+ hp:136,arm:72,leg:94,move:6,armor:4,dodge:.13,weapon:'merlin-38',native:'saker',
+ enemyOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
+ brief:'An armored biped that crosses open ground at a lope and drops low to sight along its right wrist. Its left hand stays free to catch the firing load.'})-1;
 // Name, player-facing effect, preferred distance, and positioning priority.
 const MECH_SIGNATURES={
  0:['Steady Aim','Open from a planted position. Your first direct shot before moving gains +6 aim.',4,'hold'],
@@ -450,6 +455,7 @@ const MECH_SIGNATURES={
  [SALT_WORKS_GARRISON_FRAME]:['Yard Defense','Cover the yard from behind obstacles. Direct shots from cover gain +8 aim.',5,'screen'],
  [HUSKY_FRAME]:['Running Snap','Move before firing. Direct shots from within three tiles gain +8 aim after moving.',3,'mobile'],
  [GIZA_FRAME]:['Range Table','Hold position. Direct shots from five or more tiles gain +6 aim before moving.',5,'hold'],
+ [SAKER_FRAME]:['Overwatch','Keeps eight tiles of separation and settles low to fire its integral right-hand rifle.',8,'mobile'],
  [NIGHTJAR_FRAME]:['Rangefinder','Keep seven tiles of separation. After firing, take a free step toward cover or preferred range. The right buckler reduces intercepted damage by 20%.',7,'mobile'],
  [VYZOV_FRAME]:['Guard Breaker','Melee attacks deal +15% damage against braced targets.',1,'push']
 };
@@ -512,6 +518,10 @@ CONTRACTS.push({id:'blind-crossing',port:'brine',field:1,seats:1,hostiles:[NIGHT
   name:'Blind Crossing',place:'BRINE CAUSEWAY · SPILLWAY',tag:'SNIPER INTERCEPT',pay:4100,difficulty:1,
   desc:'Cross the spillway under a Nightjar’s rifle. Its right-hand buckler can absorb a hit. Use the cargo stacks to close the gap.',
   deployment:[[8,11]]});
+CONTRACTS.push({id:'parapet',port:'ridge',field:0,seats:1,hostiles:[SAKER_FRAME],
+ name:'Parapet',place:'RIDGE STATION · ROOF LINE',tag:'MARKSMAN INTERCEPT',pay:4700,difficulty:2,
+ desc:'A Saker has taken the relay approach. Break its right arm to silence the Merlin before crossing the open lane.',
+ deployment:[[8,11]]});
 function validInterception(career){
  const event=career.interception;
  if(event===undefined)return true;
@@ -4271,6 +4281,7 @@ MECH_MOTION[SHOGUN_FRAME]={...MECH_MOTION[3],mass:1.66};
 MECH_MOTION[HUSKY_FRAME]={step:.48,mass:.98,playbackRate:1};
 MECH_MOTION[GIZA_FRAME]={step:.63,mass:1.54,playbackRate:1};
 MECH_MOTION[VYZOV_FRAME]={step:.51,mass:1.21,playbackRate:1};
+MECH_MOTION[SAKER_FRAME]={step:.38,mass:1.12,playbackRate:1.55};
 MECH_MOTION[NIGHTJAR_FRAME]={step:.32,mass:.78,playbackRate:2.15};
 MECH_MOTION[SALTJACK_FRAME]={step:.59,mass:1.40,playbackRate:1};
 MECH_MOTION[SALT_WORKS_GARRISON_FRAME]={step:.64,mass:1.46,playbackRate:1};
@@ -4284,6 +4295,7 @@ const ATTACK_PROFILES={
  rail:{raise:.39,beats:[0],travel:.075,recover:.47},
  missile:{raise:.35,beats:[0,.17],travel:1.0,recover:.39},   // lofted 45-degree flight (was .42 on a flat arc)
  hailstorm:{raise:.36,beats:[0,.06,.12,.18,.24,.30,.36],travel:.09,recover:.39},
+ 'merlin-38':{raise:.88,beats:[0],travel:.10,recover:.72,effect:'rifle'},
  'quill-lance':{raise:.48,beats:[0],travel:.10,recover:.43,effect:'rifle'},
  rampart:{raise:.31,beats:[0],travel:.13,recover:.48},
  rivet:{raise:.28,beats:[0],interval:.072,travel:.095,recover:.38,effect:'hailstorm',feed:true},

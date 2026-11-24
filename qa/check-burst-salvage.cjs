@@ -36,7 +36,7 @@ const simulate=require('./sim-harness.cjs');
    run('Math.random=()=>0');
   }
  }
- assert.ok(run("FRAMES.every((_,frame)=>['ally','enemy'].every(team=>dodgeChance({team,frame})===([AERO_FRAME,NIGHTJAR_FRAME].includes(frame)?.15:.08)))"));
+ assert.ok(run("FRAMES.every((_,frame)=>['ally','enemy'].every(team=>dodgeChance({team,frame})===([AERO_FRAME,NIGHTJAR_FRAME].includes(frame)?.15:frame===SAKER_FRAME?.13:.08)))"));
  assert.equal(run("dodgeChance({frame:0,kind:'tank'})"),0);
  run(`let evadeRolls=0;Math.random=()=>{evadeRolls++;return .93};
   const evadedShell=planVolley(ally,foe,'body',weapon('ember'),false);

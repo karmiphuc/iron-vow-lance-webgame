@@ -138,6 +138,27 @@ async function main(){
  for(let frame=0;frame<140;frame++)braced=sample(false,1,bank);
  const pad=braced.rig.arms.R.wr.getWorldPosition(R.V3());
  assert.ok(Math.abs(pad.y-bank(pad.x,pad.z)-braced.dims.ankleH*braced.scale)<.035,'third claw lands on sloped ground');
+ // Check the Saker's actual rear shin and foot against the board in its kneel.
+ S.clearCombat();
+ const saker=units.find(u=>u.name==='SAKER');
+ const target=R.V3(0,2,20);
+ const groundAt=()=>0;
+ let marksman;
+ for(let i=0;i<160;i++){
+  time+=1/60;
+  const aim=i<24?0:1;
+  marksman=S.draw(saker,time,{aim,brace:aim,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:0,z:0,face:0,heading:0,speed:0,aim:target,groundAt}},scope,saker.foundry,'rig-v2').m;
+  for(const leg of marksman.rig.legs){
+   assert.ok(leg.kn.getWorldPosition(R.V3()).y>.49*marksman.scale,'knee hinge clears the roof during brace entry');
+  }
+ }
+ const leftHand=marksman.rig.arms.L.wr.getWorldPosition(R.V3());
+ assert.ok(Math.abs(leftHand.y/marksman.scale-.536)<.025,'left hand reaches the bracing patch');
+ assert.equal(marksman.wpn.subsystem,'right');
+ assert.equal(marksman.wpn.mount.parent,marksman.rig.arms.R.wr);
+ const sight=target.clone().sub(marksman.wpn.muzzle.getWorldPosition(R.V3())).normalize();
+ assert.ok(marksman.wpn.muzzle.getWorldDirection(R.V3()).dot(sight)>.995,'wrist rifle tracks target from kneel');
  for(const u of units)for(const downReason of ['body','pilot']){
   S.clearCombat();
   const draw=(face,deathAge,reducedMotion=false)=>{
