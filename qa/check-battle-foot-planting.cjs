@@ -168,6 +168,8 @@ async function main(){
  assert.ok(Math.abs(leftHand.y/marksman.scale-.5226)<.025,'left hand reaches the bracing patch');
  assert.equal(marksman.wpn.subsystem,'right');
  assert.equal(marksman.wpn.mount.parent,marksman.rig.arms.R.wr);
+ const muzzleInReceiver=marksman.wpn.mount.worldToLocal(marksman.wpn.muzzle.getWorldPosition(R.V3()));
+ assert.ok(Math.abs(muzzleInReceiver.z-2.91*1.20)<.001,'muzzle socket follows the lengthened barrel');
  const sight=target.clone().sub(marksman.wpn.muzzle.getWorldPosition(R.V3())).normalize();
  assert.ok(marksman.wpn.muzzle.getWorldDirection(R.V3()).dot(sight)>.995,'wrist rifle tracks target from kneel');
  const hinge=marksman.rig.legs[1].kn.getWorldPosition(R.V3());
@@ -212,7 +214,10 @@ async function main(){
   S.clearCombat();
   const standing=drawStance(0);
   const position=node=>standing.cont.worldToLocal(node.getWorldPosition(R.V3()));
-  const leg=standing.rig.legs[0],gathered=position(leg.an);
+  const leg=standing.rig.legs[0],gathered=position(leg.an),standingKnee=position(leg.kn);
+  const pad=()=>standing.saker.kneeRest.localToWorld(R.V3(0,0,.438));
+  const barrelHeight=()=>standing.wpn.muzzle.getWorldDirection(R.V3()).y;
+  let kneePlant,heelAtContact;
   for(const level of [1,0]){
    contacts.length=0;
    let hip=position(standing.rig.pelvis),knee=position(leg.kn),velocity=R.V3();
@@ -220,12 +225,27 @@ async function main(){
     drawStance(level);
     const nextHip=position(standing.rig.pelvis),nextKnee=position(leg.kn);
     const speed=nextKnee.clone().sub(knee).multiplyScalar(hz);
+    if(level){
+     const groundContact=pad(),heel=position(leg.an);
+     if(!kneePlant){
+      assert.ok(Math.abs(nextKnee.z-standingKnee.z)<.34,'left knee drops beneath the body');
+      assert.ok(barrelHeight()>.82,'barrel stays raised until the pad lands, including during battle targeting');
+      if(groundContact.y<.003){kneePlant=groundContact;heelAtContact=heel;}
+     }else{
+      assert.ok(groundContact.distanceTo(kneePlant)<.009,'planted kneepad stays fixed while the foot unfolds');
+     }
+    }
     assert.ok((nextHip.y-hip.y)*(level?-1:1)>-.001,'continuous weight transfer without a pelvis rebound');
     assert.ok((nextKnee.y-knee.y)*(level?-1:1)>-.001,'rear knee approaches and leaves the ground once');
     assert.ok(speed.distanceTo(velocity)*hz<65,'bounded rear-knee acceleration through the full arc');
     hip=nextHip;knee=nextKnee;velocity=speed;
    }
    assert.deepEqual(contacts,level?[1,0]:[0,1],'each foot takes its load once, in reverse order on the rise');
+   if(level){
+    const heel=position(leg.an);
+    assert.ok(kneePlant&&heelAtContact.z-heel.z>.32&&heelAtContact.y-heel.y>.85,'rear heel unfolds behind the knee after touchdown');
+    assert.ok(Math.abs(barrelHeight())<.2,'barrel lowers onto its firing line after touchdown');
+   }
   }
   assert.ok(position(leg.an).distanceTo(gathered)<.003,'rear ankle returns to its original standing contact');
   let last=position(leg.kn);

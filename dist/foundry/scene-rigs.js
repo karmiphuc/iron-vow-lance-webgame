@@ -390,7 +390,7 @@ function draw(u,t,pose,scope,model,custom){
   const side=u.meleeHand==='right'?'R':'L';
   arsenal.poseMelee(entry.secondary,side,m.yaw,pose.strikeKind===u.melee?pose.strikeProgress:0,world?.aim);
  }
- const mountAim=Math.max(aim??0,world?.targeting?v2?.targetingBlend?.()??0:0);
+ const mountAim=Math.min(barrel?.aimLimit?.()??1,Math.max(aim??0,world?.targeting?v2?.targetingBlend?.()??0:0));
  if(world&&u.alive&&u.hp[barrel?.subsystem||'right']>0&&!melee&&mountAim>.01){
   const pivot=barrel?.aimPivot?.(barrel.muzzle)||(entry.primarySocket?entry.primary.mount:null);
   aimMounted(m,barrel,world.aim,Math.min(1,mountAim),pivot);
