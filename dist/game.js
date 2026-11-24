@@ -1616,19 +1616,24 @@ function trainingTree(i,advanced){
    <button type="button" data-training-stage="foundation" aria-pressed="${!advanced}">FOUNDATION · 1–5</button>
    <button type="button" data-training-stage="advanced" aria-pressed="${advanced}">ADVANCED · 6–10</button>
   </div><fieldset class="pilot-licenses"><legend>Field license</legend>
-   ${level<3?'<p class="note">Unlocks at level 3. Equip one additional action per sortie.</p>':
-    PILOT_LICENSES[kind].map(id=>`<button type="button" data-license="${id}" aria-pressed="${fieldLicense(kind)===id}"><strong>${FIELD_LICENSES[id].name}</strong><small>${FIELD_LICENSES[id].label}</small></button>`).join('')}
+   ${level<3?'<p class="note">Unlocks at level 3. Equip one additional action per sortie.</p>':''}
+   ${PILOT_LICENSES[kind].map(id=>`<button type="button" data-license="${id}" ${level<3?'disabled':''} aria-pressed="${fieldLicense(kind)===id}"><strong>${FIELD_LICENSES[id].name}</strong><small>${FIELD_LICENSES[id].label}</small></button>`).join('')}
   </fieldset>${learned.length?`<button type="button" id="pilot-retrain" ${wait?'disabled':''}>${wait?'RETRAIN IN '+wait+' DAYS':'RETRAIN · REFUND '+learned.length+' PT'}</button>`:''}
   ${!canTrain?'<p class="note">Assign this pilot to active duty or build the Reserve Academy to spend training points.</p>':''}
   ${advanced?'':`<small class="training-rule">${FOUNDATION_HELP}</small>`}<div class="training-paths${advanced&&doctrine?' single-doctrine':advanced?'':' shared-foundation'}">${paths}</div>`,[{text:'DONE',fn:closeModal}]);
  document.querySelectorAll('[data-training-stage]').forEach(button=>button.onclick=()=>trainingTree(i,button.dataset.trainingStage==='advanced'));
+ const refreshTraining=showAdvanced=>{
+  render();
+  modalReturnFocus=$(reserve?`[data-reserve-training="${i}"]`:'#train-pilot-'+i);
+  trainingTree(i,showAdvanced);
+ };
  const retrain=$('#pilot-retrain');
  if(retrain)retrain.onclick=()=>modal('RETRAIN '+pilot.call,`<p>Refund ${learned.length} training points. Your pilot keeps their level, XP and field license. Retraining is available every ${RETRAIN_DAYS} campaign days.</p>`,
-  [{text:'BACK',fn:()=>trainingTree(i,advanced)},{text:'REFUND POINTS',fn:()=>{if(resetPilotTraining(i))trainingTree(i,false)}}]);
+  [{text:'BACK',fn:()=>trainingTree(i,advanced)},{text:'REFUND POINTS',fn:()=>{if(resetPilotTraining(i))refreshTraining(false)}}]);
  document.querySelectorAll('[data-license]').forEach(button=>button.onclick=()=>{
   const id=button.dataset.license;
   if(!setFieldLicense(kind,level,fieldLicense(kind)===id?'':id))return;
-  trainingTree(i,advanced);
+  refreshTraining(advanced);
   $(`[data-license="${id}"]`)?.focus({preventScroll:true});
  });
  $('#modal .modalbox').scrollTop=0;
