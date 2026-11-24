@@ -37,7 +37,7 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  await tap('#modal-1');
  await page.evaluate(()=>{for(const u of battle.units)if(u.team==='enemy'){u.alive=false;u.hp.body=0}finish(true)});
  assert.match(await page.locator('.modalbox').innerText(),/HANGAR FACILITY ONLINE[\s\S]*Reserve Academy/i);
- assert.match(await page.locator('.modalbox').innerText(),/SHIP UPGRADE ONLINE[\s\S]*Broker Uplink/i);
+ assert.match(await page.locator('.modalbox').innerText(),/TRAIN UPGRADE ONLINE[\s\S]*Broker Uplink/i);
  await page.getByRole('button',{name:'HANGAR',exact:true}).last().click();
  await openCrew();
  await tap('[data-reserve-training="scout"]');
