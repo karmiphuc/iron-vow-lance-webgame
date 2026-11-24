@@ -71,7 +71,7 @@ async function observeLaunches(page,fixture,mode,weapon){
  },fixture);
  const results=await page.evaluate(async({actor,target,mode,weapon})=>{
   const unit=battle.units.find(u=>u.id===actor);
-  unit.ap=80;
+  unit.ap=80;unit.attackAPSpent=0;
   const start=IronVowScene.combat.history.length;
   await __ironVow.attack(actor,target,'body',mode);
   return IronVowScene.combat.__gatecrasherObservations.filter(item=>item.event.sequence>start&&item.event.weapon===weapon);
@@ -256,7 +256,7 @@ module.exports=async function checkGatecrasherV2({page,origin,mobile,out,frame=3
     const e=IronVowScene.models.get(actor).entry,p=e.secondary.tip.getWorldPosition(new THREE.Vector3()),n=e.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Cleaver Tip.L'));
     hits.push({damage:args[3].damage,tipError:p.distanceTo(n.getWorldPosition(new THREE.Vector3())),bounds:e.secondary.bounds().distanceToPoint(p)});
    }return result;};
-   const u=battle.units.find(u=>u.id===actor);u.ap=80;ruleRandom=()=>0;
+   const u=battle.units.find(u=>u.id===actor);u.ap=80;u.attackAPSpent=0;ruleRandom=()=>0;
    try{await __ironVow.attack(actor,target,'body','strike')}finally{combat.landed=old;}
    return hits;
   },cleaver);

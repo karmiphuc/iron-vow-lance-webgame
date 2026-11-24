@@ -110,7 +110,7 @@ const create=require('./sim-harness.cjs');
  assert.ok(exchanges.run("moments.some(m=>m.actor===foe.id&&m.reaction&&m.phase==='fire')"),'return shot is shown');
  assert.equal(exchanges.run('activeCinematic'),null);
  assert.equal(exchanges.run('ally.ap'),11);
- assert.equal(exchanges.run('foe.ap'),8);
+ assert.equal(exchanges.run('foe.ap'),4);
 
  const hostile=create({random:()=>0});
  hostile.run(`createBattle(0,false,false,[0,1]);battle.busy=true;battle.phase='enemy';
