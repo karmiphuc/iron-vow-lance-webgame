@@ -133,4 +133,30 @@ module.exports=async function checkOverworldLiving({page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>Boolean(battle)),false,'a finished sortie is not restored');
  assert.equal(reloadedPaid.credits,paid.credits,'a completed payout is not credited a second time');
  assert.deepEqual(reloadedPaid.history,paid.history);
+
+ await page.evaluate(async()=>{
+  save.day=5;save.world=worldRules.createWorld(42,5);save.credits=100000;
+  persist();await pendingCareerWrite;
+ });
+ await navigate(page,'overworld',tap,mobile);
+ await page.locator('#chart-viewport').waitFor();
+ await page.waitForFunction(()=>IronVowChart.snapshot().ready);
+ assert.equal(await page.locator('.chart-occupied').count(),2);
+ await tap('[data-overworld-port="brine"]');
+ assert.match(await page.locator('.chart-interception').innerText(),/Brine Causeway.*0 CR payout/i);
+ await tap('[data-overworld-travel]');
+ await tap('[data-overworld-confirm]');
+ await page.waitForFunction(()=>battle?.interception?.port==='brine');
+ await page.evaluate(async()=>{await pendingCareerWrite;});
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>battle?.interception?.kind==='air');
+ const patrolPayout=await page.evaluate(async()=>{
+  const before=save.credits;
+  for(const unit of battle.units.filter(unit=>unit.team==='enemy')){unit.alive=false;unit.hp.body=0;}
+  finish(true);await pendingCareerWrite;
+  return {before,after:save.credits,pay:save.history.at(-1).pay};
+ });
+ assert.equal(patrolPayout.before,patrolPayout.after);
+ assert.equal(patrolPayout.pay,0);
+ await page.getByRole('dialog',{name:'PATROL CLEARED.'}).waitFor();
 };

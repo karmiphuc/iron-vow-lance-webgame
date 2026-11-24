@@ -148,3 +148,7 @@ body[data-view="overworld"] #ui{overflow:hidden;background:transparent}
  .chart-outer-port:not([aria-current]):not([aria-pressed="true"]){width:44px;justify-content:center}
  .chart-outer-port:not([aria-current]):not([aria-pressed="true"]) b{display:none}
 }
+
+.chart-port.chart-occupied{border-color:#e0947c}
+.chart-occupied .chart-port-mark{background:#d5735f}
+.chart-interception{width:fit-content;max-width:100%;margin:0;padding:6px 10px;background:#332321;color:#ffd3c4;font-size:.82rem}
