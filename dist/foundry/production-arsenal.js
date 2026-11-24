@@ -9,6 +9,10 @@ const names={rifle:'kestrel',shotgun:'breacher',missile:'vesper',rail:'longbow',
 const expansion=new Set(['sidewinder','trident','forge','ember','watchman','falcon',
  'cerberus','obelisk','hatchet','pike','tonfa','anchor-hammer','rivet','parallax','salt-mg']);
 const rigs=window.IRON_VOW_EXPANSION_RIG??{};
+const meleeStyles={
+ cleaver:'sweep',blade:'sweep',hatchet:'sweep',breaker:'maul','anchor-hammer':'maul',
+ piledriver:'thrust',pike:'thrust',tonfa:'thrust'
+};
 const isExpansion=id=>expansion.has(id);
 const assetNodeName=id=>isExpansion(id)?id:Object.hasOwn(names,id)?names[id]:undefined;
 let arsenal;
@@ -91,9 +95,49 @@ function mount(scene,id,socket){
   model.position.sub(model.worldToLocal(grip.getWorldPosition(new T.Vector3())));
  }
  recoil.add(model);mount.add(recoil);socket.add(mount);
- return {id,model,mount,recoil,grip,axis:marker('axis'),muzzle:marker('muzzle'),
+ return {id,model,mount,recoil,grip,gripPitch:mount.rotation.x,meleeStyle:meleeStyles[id],axis:marker('axis'),muzzle:marker('muzzle'),
   muzzle2:marker('muzzle2'),tip:marker('tip'),base:marker('base'),spike,spikeRest:spike?.position.z,
   pivot,motion,pivotRest:pivot?(motion.kind==='spin'?pivot.rotation.z:pivot.position.z):0,belt,chargeMaterials,ownedMaterials};
+}
+// Work with the actual grip-to-tip vector. The stock, expansion and Aero
+// exports do not share the same forward axis or rest transform.
+function meleeBasis(forward,right,rotation){
+ right.addScaledVector(forward,-right.dot(forward)).normalize();
+ const up=new T.Vector3().crossVectors(forward,right);
+ return rotation.setFromRotationMatrix(new T.Matrix4().makeBasis(right,up,forward));
+}
+function poseMelee(weapon,side,heading,progress,target){
+ if(!weapon?.meleeStyle||!weapon.tip||!weapon.mount.visible)return;
+ const {mount,grip,tip,meleeStyle}=weapon;
+ if(!weapon.gripBasis){
+  const localPoint=node=>mount.worldToLocal(node.getWorldPosition(new T.Vector3()));
+  const shaft=localPoint(tip).sub(localPoint(grip??mount)).normalize();
+  const right=new T.Vector3(0,1,0).cross(shaft).normalize();
+  weapon.gripBasis=meleeBasis(shaft,right,new T.Quaternion()).invert();
+ }
+ const sign=side==='L'?1:-1,ram=meleeStyle==='thrust',maul=meleeStyle==='maul';
+ const sine=Math.sin(heading),cosine=Math.cos(heading);
+ const right=new T.Vector3(cosine,0,-sine);
+ const facing=new T.Vector3(sine,0,cosine);
+ const carry=new T.Vector3(0,ram?.14:.69,0).addScaledVector(right,sign*.22)
+  .addScaledVector(facing,ram?.96:.69).normalize();
+ const wind=new T.Vector3(0,ram?.24:.93,0).addScaledVector(right,sign*(ram?.32:maul?.24:.62))
+  .addScaledVector(facing,ram?.88:maul?-.34:.12).normalize();
+ if(progress>0){
+  const contact=target?target.clone().sub(mount.getWorldPosition(new T.Vector3())):facing.clone();
+  if(contact.lengthSq()<1e-6)contact.copy(facing);
+  contact.normalize();
+  const blend=(from,to)=>{const q=Math.min(1,Math.max(0,(progress-from)/(to-from)));return q*q*(3-2*q);};
+  if(progress<=.52)carry.lerp(wind,blend(0,.52));
+  else if(progress<=.81)carry.copy(wind).lerp(contact,blend(.52,.70));
+  else carry.lerp(contact,1-blend(.81,1));
+ }
+ carry.normalize();
+ // Use the chassis lateral axis to keep roll continuous when the blade is raised.
+ // A close target can be directly beside the fist, so keep a second reference.
+ if(Math.abs(right.dot(carry))>.98)right.set(0,1,0).cross(carry).normalize();
+ const rotation=meleeBasis(carry,right,new T.Quaternion()).multiply(weapon.gripBasis);
+ mount.quaternion.copy(mount.parent.getWorldQuaternion(new T.Quaternion()).invert().multiply(rotation));
 }
 function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,strikeProgress=0}={}){
  if(weapon.spike)weapon.spike.position.z=weapon.spikeRest+(strikeProgress>=.61&&strikeProgress<=.81?.5:0);
@@ -106,5 +150,5 @@ function animate(weapon,{weaponKick=0,weaponSpin=0,weaponFeed=0,weaponCharge=0,s
  if(kind==='spin')weapon.pivot.rotation.z=value;
  else weapon.pivot.position.z=value;
 }
-window.IronVowProductionArsenal={load,mount,isExpansion,assetNodeName,animate,mountShield,poseShield};
+window.IronVowProductionArsenal={load,mount,isExpansion,assetNodeName,animate,mountShield,poseShield,poseMelee};
 })();

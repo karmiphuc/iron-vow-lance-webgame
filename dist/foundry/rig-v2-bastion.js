@@ -48,7 +48,7 @@ root.IronVowRigV2.register(10,{
     rifleMount.position.copy(rifleRest).addScaledVector(rifleAxis,-Math.abs(pose.recoil||0)*.22);
     launcher.visible=rack.visible=shoulderOnline&&nativeMissile;
     rack.quaternion.copy(rackRest);
-    for(const blade of blades.values())blade.model.visible=blade.mount.visible=rightMelee?right:left&&blade===nativeBlade;
+    for(const blade of blades.values())blade.model.visible=blade.mount.visible=left&&blade===nativeBlade;
     if(nativeBlade?.auger){
      const {auger,augerRest,augerAxis}=nativeBlade,progress=pose.strikeProgress||0;
      auger.position.copy(augerRest).addScaledVector(augerAxis,progress>=.61&&progress<=.81?.5:0);
