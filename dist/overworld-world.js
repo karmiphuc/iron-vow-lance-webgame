@@ -52,6 +52,66 @@ window.IronVowWorld=(()=>{
   mercy:{repair:25,label:'+25% integrity to each assigned hull',window:3},
   black:{gear:'cerberus',label:'Cerberus RP-6',window:3}
  };
+ // Each counter has an opportunity window followed by a persistent consequence.
+ const CAMPAIGN_FRONTS=[
+  {id:'signals',name:'Blind the Divide',port:'glass',alternate:'cinder',opens:0,deadline:5,
+   effect:'Glasswatch loses free hostile intel until its jammer is taken offline.'},
+  {id:'armor',name:'Foundry Mobilization',port:'iron',alternate:'relay',opens:2,deadline:9,
+   effect:'A Javelin reinforces each North Divide sortie until you stop the mobilization.'},
+  {id:'air',name:'Salt March Air Wing',port:'black',alternate:'brine',opens:4,deadline:13,
+   effect:'A Kite reinforces each Salt March sortie until you ground the wing.'}
+ ];
+ const CAMPAIGN_PROJECTS={
+  signals:{name:'Signals network',cost:900,days:2,detail:'Opens an alternate counter railhead for each enemy operation and reveals exact enemy intel on all offer cards.'},
+  workshop:{name:'Mobile overhaul',cost:750,days:3,detail:'Adds 8 integrity per day to every hull serviced during travel or a hold.'},
+  ordnance:{name:'Reactor reserves',cost:1250,days:4,detail:'Grants +1 opening AP on contracts in both outer regions. Stacks with forward staging.'}
+ };
+ function startCampaign(day){return {start:day,projects:{},cleared:{}};}
+ function validCampaign(campaign,day){
+  if(campaign===undefined)return true;
+  if(!record(campaign)||!keys(campaign,['start','projects','cleared','victory'])||
+   !integer(campaign.start)||campaign.start<1||campaign.start>day||!record(campaign.projects)||!record(campaign.cleared))return false;
+  const projects=Object.entries(campaign.projects);
+  if(!projects.every(([id,finish])=>Object.hasOwn(CAMPAIGN_PROJECTS,id)&&integer(finish)&&finish>=campaign.start+CAMPAIGN_PROJECTS[id].days&&finish-CAMPAIGN_PROJECTS[id].days<=day))return false;
+  const ordered=[...projects].sort((a,b)=>a[1]-CAMPAIGN_PROJECTS[a[0]].days-(b[1]-CAMPAIGN_PROJECTS[b[0]].days));
+  if(ordered.some(([id,finish],i)=>i>0&&finish-CAMPAIGN_PROJECTS[id].days<ordered[i-1][1]))return false;
+  if(!Object.entries(campaign.cleared).every(([id,date])=>{
+   const front=CAMPAIGN_FRONTS.find(item=>item.id===id);
+   return !!front&&integer(date)&&date>=campaign.start+front.opens&&date<=day;
+  }))return false;
+  return campaign.victory===undefined||(integer(campaign.victory)&&campaign.victory<=day&&
+   CAMPAIGN_FRONTS.every(front=>integer(campaign.cleared[front.id])&&campaign.cleared[front.id]<campaign.victory));
+ }
+ const projectOnline=(campaign,id,day)=>campaign?.projects[id]!==undefined&&campaign.projects[id]<=day;
+ function campaignReports(campaign,day){
+  if(!campaign)return [];
+  return CAMPAIGN_FRONTS.map(front=>{
+   const opens=campaign.start+front.opens,deadline=campaign.start+front.deadline;
+   const ports=[front.port,...(projectOnline(campaign,'signals',day)?[front.alternate]:[])];
+   const status=campaign.cleared[front.id]!==undefined&&campaign.cleared[front.id]<=day?'secured':day<opens?'incoming':day>deadline?'active':'exposed';
+   return {...front,opens,deadline,ports,status};
+  });
+ }
+ function queueCampaignProject(campaign,id,day){
+  const project=Object.hasOwn(CAMPAIGN_PROJECTS,id)?CAMPAIGN_PROJECTS[id]:null;
+  if(!campaign||!project||Object.hasOwn(campaign.projects,id)||Object.values(campaign.projects).some(finish=>finish>day)||!integer(day+project.days))return null;
+  return {...campaign,projects:{...campaign.projects,[id]:day+project.days}};
+ }
+ function campaignResult(campaign,port,day,finalOperation=false){
+  if(!campaign||campaign.victory)return null;
+  const reports=campaignReports(campaign,day);
+  const final=finalOperation&&port==='corridor'&&reports.every(front=>front.status==='secured'&&campaign.cleared[front.id]<day);
+  const front=reports.find(entry=>['exposed','active'].includes(entry.status)&&entry.ports.includes(port));
+  if(final)return {campaign:{...campaign,victory:day},name:'Directorate depot secured',credits:5000};
+  if(front)return {campaign:{...campaign,cleared:{...campaign.cleared,[front.id]:day}},name:front.name+' stopped',credits:0};
+  return null;
+ }
+ function campaignSupport(campaign,port,day){
+  const region=PORTS.find(site=>site.id===port)?.region;
+  const front=region==='North Divide'?'armor':region==='Salt March'?'air':null;
+  if(!front||!campaignReports(campaign,day).some(report=>report.status==='active'&&report.id===front))return null;
+  return front==='armor'?'tank':'helicopter';
+ }
  function regionalReward(offer,day,history){
   const reward=REWARDS[offer.port];
   if(!reward)return null;
@@ -230,5 +290,5 @@ window.IronVowWorld=(()=>{
   return {world:{...world,consumed:[...world.consumed],scouted:[...world.scouted],pendingEvents:world.pendingEvents.filter(pending=>pending!==id),resolvedEvents,standings:{...world.standings}},
    choiceId,effect:{credits:choice.credits,hullCondition:choice.hullCondition,delayDays:choice.delayDays,rep:choice.rep,port:event.to}};
  }
- return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,regionalReward,railPressure,railNetwork,freightToday,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
+ return {PORTS,ROUTES,createWorld,validWorld,validOptionalWorld,advanceWorld,offersAt,scoutOffer,consumeOffer,markersAt,portProfile,setStanding,regionalReward,railPressure,railNetwork,freightToday,CAMPAIGN_PROJECTS,startCampaign,validCampaign,projectOnline,campaignReports,queueCampaignProject,campaignResult,campaignSupport,transitEvents,queueTransitEvents,pendingEvents,resolveEvent};
 })();

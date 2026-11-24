@@ -90,6 +90,7 @@ window.IronVowOverworldView = (() => {
           </div>
         </details>` : ''}
         <div class="chart-port-actions"><button type="button" data-chart-contracts="${selected.id}"${data.transitEvent || data.departing ? ' disabled' : ''}>Contracts ${data.contractCount ?? 1}</button><button type="button" class="chart-services-link" data-port-services="${escapeHtml(selected.id)}" aria-haspopup="dialog" aria-expanded="${!!data.portServices && !data.transitEvent}"${data.transitEvent || data.departing ? ' disabled' : ''}>Services</button></div>
+        ${!data.departing&&!data.transitEvent?`<button type="button" class="navigation-quiet chart-ship-upgrades" data-campaign-board>${data.campaign?'Campaign operations':'Directorate campaign'}</button>`:''}
         <button type="button" class="navigation-quiet chart-ship-upgrades" data-page="ship">Train Upgrades</button>
       </aside>
       <div class="chart-course">${forecast}</div>
