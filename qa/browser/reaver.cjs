@@ -63,7 +63,7 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
  const details=page.getByRole('complementary',{name:'Target subsystem details'});
  assert.equal(await details.isVisible(),true);
  assert.equal(await details.getByRole('heading',{name:gait.name,exact:true}).isVisible(),true);
- assert.match(await details.locator('.combat-status').innerText(),/MEDIUM\+/);
+ assert.match(await details.locator('.combat-status').innerText(),/MEDIUM\+ · 8 RD \/ GUN/);
  await tap('#close-target');
  assert.deepEqual(gait.locations,['LF','RF','LB','RB']);
  assert.ok(gait.arrived&&gait.samples.length>=2&&gait.samples.some(feet=>feet.some(foot=>foot.swing)),'The quad completes a legal step and articulates its ankles');
@@ -91,42 +91,61 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
     const point=marker.getWorldPosition(new THREE.Vector3());
     const direction=new THREE.Vector3(0,0,-1).applyQuaternion(marker.getWorldQuaternion(new THREE.Quaternion()));
     const error=direction.angleTo(new THREE.Vector3(...event.targetPoint).sub(point));
-    observed.push({event,point:point.toArray(),error,name:selected.muzzle.name,bounds:selected.bounds().distanceToPoint(point)});
+    observed.push({event,ap:foe.ap,point:point.toArray(),error,name:selected.muzzle.name,bounds:selected.bounds().distanceToPoint(point)});
    }
    return result;
   };
-  window.reaverFixture={foe,entry,source,observed};
+  window.reaverFixture={foe,entry,source,observed,ally:current(),lastImpact:0};
  });
  const loadout=async(right,left)=>page.evaluate(({right,left})=>{
   const {foe,entry,source}=window.reaverFixture;
   foe.hp.right=right?foe.max.right:0;foe.hp.left=left?foe.max.left:0;
   IronVowScene.render(clock,.016);
+  renderBattle();
   const ready={...foe,ap:roundAP(foe.training)};
   return {visible:['R','L'].map(side=>source.getObjectByName('RECOIL_CARRIAGE_'+side).visible),
    plates:['right','left'].map(part=>entry.m.build.parts[part].filter(item=>item.detach&&item.m.visible).length),
-   armed:isArmed(foe),shoots:canUseWeapon(ready,unitWeapon(ready))};
+   armed:isArmed(foe),shoots:canUseWeapon(ready,unitWeapon(ready)),status:document.querySelector('#target-panel .combat-status').textContent};
  },{right,left});
  async function fire(turn,sides){
+  const before=await page.evaluate(()=>window.reaverFixture.ally.hp.body);
   await tap('#end');
   await page.waitForFunction(turn=>battle?.turn===turn+1&&!battle.busy,turn,{timeout:60000});
-  const {shots,damage}=await page.evaluate(()=>{
-   const {foe,observed}=window.reaverFixture;
-   return {shots:observed.splice(0),damage:IronVowScene.combat.history.filter(event=>event.type==='impact'&&event.actor===foe.id&&event.weapon==='rifle').length};
+  const {shots,impacts,after}=await page.evaluate(()=>{
+   const fixture=window.reaverFixture;
+   const impacts=IronVowScene.combat.history.filter(event=>event.sequence>fixture.lastImpact&&event.type==='impact'&&event.actor===fixture.foe.id);
+   fixture.lastImpact=impacts.at(-1)?.sequence??fixture.lastImpact;
+   return {shots:fixture.observed.splice(0),impacts,after:fixture.ally.hp.body};
   });
-  assert.ok(shots.length>=sides.length&&shots.length%sides.length===0,JSON.stringify(shots));
-  for(const [i,{event,point,name,error,bounds}] of shots.entries()){
-   assert.equal(name,'muzzle.'+sides[i%sides.length]);
-   assert.equal(event.weapon,'rifle');
-   assert.ok(event.mounted&&event.aimError<8*Math.PI/180&&error<8*Math.PI/180&&bounds<.1,JSON.stringify({event,name,error,bounds}));
-   assert.ok(vectorDistance(event.origin,point)<1e-5,'The shot starts at the exported muzzle');
+  const perBurst=8*sides.length;
+  assert.equal(shots.length,2*perBurst,'The Reaver pays for two full bursts with its 8 AP');
+  assert.equal(impacts.length,shots.length,'Every launched projectile in this all-hit fixture reaches its target');
+  assert.equal(before-after,impacts.reduce((sum,event)=>sum+event.damage,0),'Applied body damage matches actual impacts');
+  const damage=[];
+  for(let offset=0;offset<shots.length;offset+=perBurst){
+   const volley=shots.slice(offset,offset+perBurst);
+   for(const [i,{event,point,name,error,bounds,ap}] of volley.entries()){
+    assert.equal(name,'muzzle.'+sides[i%sides.length]);
+    assert.equal(event.weapon,'reaver-autocannon');
+    assert.equal(event.index,i);
+    assert.equal(ap,5-3*offset/perBurst,'Each burst costs 3 AP once');
+    assert.ok(event.mounted&&event.aimError<8*Math.PI/180&&error<8*Math.PI/180&&bounds<.1,JSON.stringify({event,name,error,bounds}));
+    assert.ok(vectorDistance(event.origin,point)<1e-5,'The shot starts at the exported muzzle');
+    if(i>=sides.length)assert.ok(event.time>volley[i-sides.length].event.time,'Consecutive beats launch on different frames');
+    if(sides.length===2&&i%2===1){
+     assert.equal(event.time,volley[i-1].event.time,'Both barrels launch on the same frame');
+     assert.ok(vectorDistance(event.origin,volley[i-1].event.origin)>.1,'Paired rounds come from distinct barrels');
+    }
+   }
+   damage.push(impacts.slice(offset,offset+perBurst).reduce((sum,event)=>sum+event.damage,0));
   }
   return {reports:shots.length,damage};
  }
  const intact=await loadout(true,true);
  assert.deepEqual(intact.visible,[true,true]);
  assert.ok(intact.plates.every(count=>count>0)&&intact.armed&&intact.shoots);
- const dual=await fire(1,['R','L','R']);
- assert.equal(dual.damage,dual.reports,'All allocated contacts from the dual barrel volley reach the target');
+ const dual=await fire(1,['R','L']);
+ assert.deepEqual(dual.damage,[32,32]);
  if(out&&!mobile){
   fs.mkdirSync(out,{recursive:true});
   const png=await page.screenshot();
@@ -142,18 +161,21 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
  assert.deepEqual(rightOnly.visible,[true,false]);
  assert.deepEqual(rightOnly.plates,[intact.plates[0],0]);
  assert.ok(rightOnly.armed);
- const single=await fire(2,['R','R','R']);
- assert.equal(single.damage-dual.damage,single.reports);
+ assert.match(rightOnly.status,/8 RD \/ R GUN/);
+ const single=await fire(2,['R']);
+ assert.deepEqual(single.damage,[16,16]);
  const leftOnly=await loadout(false,true);
  assert.deepEqual(leftOnly.visible,[false,true]);
  assert.deepEqual(leftOnly.plates,[0,intact.plates[1]]);
  assert.ok(leftOnly.armed&&leftOnly.shoots,'An intact left autocannon can fire after right-arm loss');
- const leftBurst=await fire(3,['L','L','L']);
- assert.equal(leftBurst.damage-single.damage,leftBurst.reports);
+ assert.match(leftOnly.status,/8 RD \/ L GUN/);
+ const leftBurst=await fire(3,['L']);
+ assert.deepEqual(leftBurst.damage,[16,16]);
  const disarmed=await loadout(false,false);
  assert.deepEqual(disarmed.visible,[false,false]);
  assert.deepEqual(disarmed.plates,[0,0]);
  assert.ok(!disarmed.armed&&!disarmed.shoots,'Losing both arms disables the autocannons');
+ assert.match(disarmed.status,/GUNS OFFLINE/);
  // Keep the disarmed unit on the board for a complete enemy turn.
  await page.evaluate(()=>{captureRandom=()=>1;});
  await tap('#end');
@@ -172,5 +194,5 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
    geometries:geometries.size,disposedOnce:[...geometries.values()].every(count=>count===1),contexts:IronVowRenderer.metrics().contexts};
  });
  assert.ok(dispose.disarmed&&dispose.locked&&dispose.removed&&dispose.geometries>0&&dispose.disposedOnce&&dispose.contexts===1,JSON.stringify(dispose));
- return {planted,dualReports:dual.reports,rightOnlyReports:single.reports,leftOnlyReports:leftBurst.reports,geometries:dispose.geometries};
+ return {planted,dual,rightOnly:single,leftOnly:leftBurst,geometries:dispose.geometries};
 };

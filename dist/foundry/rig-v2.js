@@ -276,7 +276,7 @@ function build(unit,scope='battle'){
   visorMat:emissive('visor'),stackMat:emissive('stack'),ownedMaterials},profile.id,unit.team,unit.upgrade);
  mech.live=profile.id;
  mech.scale=profile.scale??1;mech.cont.scale.setScalar(mech.scale);
- mech.previewSpan=profile.previewSpan;mech.equipmentScale=profile.equipmentScale;
+ mech.equipmentScale=profile.equipmentScale;
  // Bind a fixed offset from each normalized driver to the authored bone,
  // in hierarchy order. The underlying skin weights and inverse binds stay intact.
  const pairs=[];

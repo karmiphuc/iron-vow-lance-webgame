@@ -3,6 +3,7 @@ const $=s=>document.querySelector(s),canvas=$('#scene');
 let ctx=canvas.getContext('2d');
 // The default rule RNG is unchanged; the required scene-test API can seed it independently of visual noise.
 let ruleRandom=()=>Math.random();
+const REAVER_ROUNDS_PER_GUN=8;
 const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,damage:36,range:5,ap:3,weight:14,price:0,desc:'Reliable burst fire. Balanced range and accuracy.'},{id:'shotgun',name:'Breacher SG-4',type:'SCATTER CANNON',burst:12,scatter:true,damage:60,range:3,ap:3,weight:18,price:1500,desc:'A landed shell throws pellets that each roll their own hit location unless a shield blocks it.'},{id:'missile',rounds:2,name:'Vesper MRL',type:'MISSILE POD',damage:45,range:7,ap:4,weight:22,price:2400,desc:'Guided ordnance ignores cover penalties. The launcher cannot counter.'},{id:'rail',name:'Longbow R-12',type:'RAIL CANNON',damage:70,range:8,ap:5,weight:26,price:3600,desc:'Precision anti-armor fire. Powerful, but demanding.'},
  {id:'hailstorm',name:'Hailstorm M-8',type:'ROTARY GUN',burst:12,damage:49,range:5,ap:4,weight:21,price:2200,desc:'Spins up for sustained fire at medium range.'},
  {id:'rampart',name:'Rampart AC-40',type:'AUTOCANNON',damage:61,range:6,ap:5,weight:25,price:2900,desc:'A single heavy shell with a longer reach than the scatter cannon.'},
@@ -25,6 +26,8 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'tonfa',name:'Ward Tonfa',type:'IMPACT BATON',damage:32,range:1,ap:2,weight:9,price:900,melee:true,motion:'cleaver',aim:.13,desc:'A controlled strike with 13 extra percentage points of accuracy. Best for hitting a specific part.'},
  {id:'anchor-hammer',name:'Anchor Hammer',type:'SIEGE HAMMER',damage:86,range:1,ap:5,weight:27,price:2750,melee:true,motion:'breaker',desc:'A slow overhead blow with a heavy counterweight. Commit to a single decisive strike.'},
  {id:'morrow',rounds:2,name:'Morrow AC-2',type:'TWIN AUTOCANNON',damage:59,range:6,ap:4,builtIn:true,desc:'Two staggered shells from a sliding carriage. Designed to break a line at medium range.'},
+ {id:'reaver-autocannon',rounds:REAVER_ROUNDS_PER_GUN*2,name:'RV-04 Autocannon',type:'TWIN AUTOCANNON',damage:32,range:5,ap:3,builtIn:true,motion:'rifle',
+  desc:'Each working cannon fires eight rounds. With both operational, they fire together. Losing one halves the volley’s damage budget.'},
  {id:'locust',rounds:2,name:'Locust MRL-24',type:'GUIDED MISSILE RACKS',damage:47,range:8,ap:4,builtIn:true,guided:true,desc:'Alternating launches from the two shoulder racks. Guided missiles ignore cover penalties.'},
  {id:'breach-gauntlet',name:'Breach Gauntlet',type:'ACTUATED GRIPPER',damage:53,range:1,ap:3,builtIn:true,melee:true,desc:'A braced punch from the left gripper. Strongest when the enemy closes in.'},
  {id:'pulse-bash',name:'Pulse Bash',type:'EMITTER STRIKE',damage:33,range:1,ap:2,builtIn:true,melee:true,desc:'A quick close-range strike with the left emitter housing.'},
@@ -991,7 +994,10 @@ function onBoard(x,z){const {width,depth}=dimensions();return x>=0&&x<width&&z>=
 function canReachTarget(w,target){return !(w.melee&&target.kind==='helicopter')}
 const asset=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
 const targetParts=u=>u?.kind?['body']:['body','pilot','right','left','legs'];
-const REAVER_AUTOCANNON={...weapon('rifle'),burst:0,name:'RV-04 Autocannon',type:'AUTOCANNON'};
+// Existing Reaver hulls still store 'rifle' as their fixed weapon token.
+const REAVER_AUTOCANNON=weapon('reaver-autocannon');
+const REAVER_SINGLE_CANNON={...REAVER_AUTOCANNON,rounds:REAVER_ROUNDS_PER_GUN,salvoScale:.5};
+const reaverGunCount=u=>Number(u.hp.right>0)+Number(u.hp.left>0);
 const EMPTY_HAND=Object.freeze({id:'unarmed',name:'Free hand',type:'EMPTY',range:0,ap:0,damage:0,weight:0});
 const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:u.frame===REAVER_FRAME?REAVER_AUTOCANNON:u.weapon==null||launcherId(u.weapon)?shoulderWeapon(u)??EMPTY_HAND:weapon(u.weapon);
 const isArmed=u=>u.kind||[unitWeapon(u),shoulderWeapon(u),meleeWeapon(u)].some(w=>workingWeapon(u,w));
@@ -1594,10 +1600,15 @@ function selectedWeapon(u,mode=action,target=null){
 const paidAttackAP=(u,w)=>w.tactical?w.ap:Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0));
 function pairedLauncher(u,w){return w.id==='locust'||u.frame===2&&w.id==='missile';}
 function salvoWeapon(u,w){
+ if(w.id===REAVER_AUTOCANNON.id)return reaverGunCount(u)===1?REAVER_SINGLE_CANNON:REAVER_AUTOCANNON;
  if(pairedLauncher(u,w)&&((u.hp.left>0)!==(u.hp.right>0)))return {...w,rounds:1,salvoScale:.5};
  return w;
 }
-function weaponSubsystem(u,w){return launcherId(w.id)?pairedLauncher(u,w)&&u.hp.right<=0?'left':'right':w===REAVER_AUTOCANNON&&u.hp.right<=0?'left':w.hand||(w.melee?(w.id===u.melee&&u.meleeHand==='right'?'right':'left'):'right')}
+function weaponSubsystem(u,w){return launcherId(w.id)?pairedLauncher(u,w)&&u.hp.right<=0?'left':'right':w.id===REAVER_AUTOCANNON.id&&u.hp.right<=0?'left':w.hand||(w.melee?(w.id===u.melee&&u.meleeHand==='right'?'right':'left'):'right')}
+function reaverGunStatus(u){
+ const count=reaverGunCount(u);
+ return count===2?'8 RD / GUN':count===1?'8 RD / '+(u.hp.right>0?'R GUN':'L GUN'):'GUNS OFFLINE';
+}
 const workingWeapon=(u,w)=>Boolean(w&&w!==EMPTY_HAND&&(!launcherId(w.id)||u.hp.body>0)&&u.hp[weaponSubsystem(u,w)]>0);
 function canUseWeapon(u,w){return Boolean(u&&workingWeapon(u,w)&&(!u.lionTrial||w.melee&&LION_TRIAL_WEAPONS.includes(w.id))&&u.ap>=paidAttackAP(u,w))}
 function scoutWeapon(u,target,reaction=false){
@@ -1911,7 +1922,7 @@ function assignChassis(i,frame,allowSwap=false){
 }
 function builtInLoadout(u,training,frame){
  const loadout={...u,frame};
- const fixed=[unitWeapon(loadout),!breachLoadout(frame)&&meleeWeapon(loadout)].filter(w=>w&&w!==EMPTY_HAND).map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w.melee&&w.hand!=='right'?'LEFT HAND':'PRIMARY'} / ${ARMORY_CLASSES[armoryClass(w)]}</span>${infoTip(w.name,w.desc||'Factory weapon.')}</div><h3>${w.name}</h3><small>${w.damage} BASE DMG / ${armoryReach(w,training)} / ${weaponAP(w,training)} AP</small></article>`).join('');
+ const fixed=[unitWeapon(loadout),!breachLoadout(frame)&&meleeWeapon(loadout)].filter(w=>w&&w!==EMPTY_HAND).map(w=>`<article class="fixed-loadout"><div class="stat-heading"><span class="eyebrow">${w===REAVER_AUTOCANNON?'BOTH ARMS':w.melee&&w.hand!=='right'?'LEFT HAND':'PRIMARY'} / ${ARMORY_CLASSES[armoryClass(w)]}</span>${infoTip(w.name,w.desc||'Factory weapon.')}</div><h3>${w.name}</h3><small>${w.damage} ${w===REAVER_AUTOCANNON?'BASE VOLLEY DMG':'BASE DMG'} / ${armoryReach(w,training)} / ${weaponAP(w,training)} AP</small></article>`).join('');
  if(!breachLoadout(frame)){
   const refits=[...fixedPrimaryOptions(frame),fixedMeleeOption(frame)].filter(Boolean);
   return fixed+(refits.length?'<div class="armory-grid">'+refits.map(id=>armoryCard(u,weapon(id),training)).join('')+'</div>':'')+
@@ -3427,17 +3438,19 @@ function renderBattle(){
   const counterStatus=counter?'READY / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):
    targetReaction==='READY'?'OUT OF REACH':targetReaction;
   const targetShield=activeShield(target);
-  const targetStatus=[target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role:'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
+  const targetStatus=[target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
   battlefieldReady=window.IronVowScene?.ready!==false;
   battlefieldLoadFailed=Boolean(window.IronVowScene?.loadFailed);
   const ready=battle.phase==='player'&&!battle.busy&&battlefieldReady,canMove=Boolean(u&&paths(u).size>1),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
   const obstruction=u&&target?attackObstruction(u,target,chosen):'';
   const inRange=Boolean(u&&target&&distance(u,target)<=combatRange(u,target,chosen));
   const elevationAim=inRange?highGroundAim(u,target,chosen):0;
-  const shotStatus=obstruction||(!inRange?'OUT OF RANGE':
+  const gunsOffline=chosen?.id===REAVER_AUTOCANNON.id&&!workingWeapon(u,chosen);
+  const shotStatus=gunsOffline?'GUNS OFFLINE':obstruction||(!inRange?'OUT OF RANGE':
    [elevationAim?'HIGH GROUND +'+Math.round(elevationAim*100)+' AIM':'',launchesMissiles(chosen)&&ridgeBlocks(u,target)?'ARC OVER RIDGE':'',inCover(target)&&!chosen.melee&&!launchesMissiles(chosen)?'COVER':''].filter(Boolean).join(' · ')||'IN RANGE');
   const barrage=u&&target?barrageStatus(u,target,chosen):'';
-  const shotPreview=inRange&&!obstruction?(barrage||attackPreview(u,target,chosen)+(targetShield?' → LEFT ARM':'')):'';
+  const shotPreview=inRange&&!obstruction&&!gunsOffline?(barrage||attackPreview(u,target,chosen)+(targetShield?' → LEFT ARM':'')):'';
+  const fireHint=gunsOffline?chosen.name+' · '+shotStatus:chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chosen.id===REAVER_AUTOCANNON.id?' · '+reaverGunStatus(u):'')+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH';
   const contacts=battle.units.filter(t=>t.team==='enemy'&&t.alive).length;
   const missile=shoulderWeapon(u),canMissile=canUseWeapon(u,missile);
   const id=u&&u.level>=3?fieldLicense(u.pilot):null;
@@ -3469,7 +3482,7 @@ function renderBattle(){
    ${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${counterStatus}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
-  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':'')+' · LEVEL CHANGE +1 AP':'SELECT MECH'):chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH'}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
+  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':'')+' · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   ${tacticalPreviewMarkup(u)}
   <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
@@ -3709,7 +3722,8 @@ async function moveUnit(u,x,z){
  u.walkCount=gaitBase+steps.length;
 }
 async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
- if(launcherId(w.id)&&!workingWeapon(a,w))return;
+ const reaverBattery=w.id===REAVER_AUTOCANNON.id;
+ if((reaverBattery||launcherId(w.id))&&!workingWeapon(a,w))return;
  w=salvoWeapon(a,w);
  window.IronVowScene?.aimAt(a,t,part);
  if(t.kind)part='body';
@@ -3721,7 +3735,8 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   Object.assign(sequence,{actor:a,target:t,w,part,reaction,phase:'aim',result:'',resultAt:null,fireAt:null,contacts:null,contact:null});
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
- const fullProfile=attackProfile(a,w.id),profile=w.salvoScale?{...fullProfile,beats:fullProfile.beats.slice(0,w.rounds)}:fullProfile;
+ const fullProfile=attackProfile(a,w.id),profile=w.salvoScale&&launcherId(w.id)?{...fullProfile,beats:fullProfile.beats.slice(0,w.rounds)}:fullProfile;
+ const paired=reaverBattery&&w.rounds===REAVER_AUTOCANNON.rounds;
  const power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
  const weaponVoice=a.kind==='tank'?'javelin':a.kind==='helicopter'?'kite':w.id;
  const shotPan=()=>combatAudioPan(a,sequence,(a.face||1)*-.23);
@@ -3817,9 +3832,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
    if(sequence?.skipped)continue;
    window.IronVowScene?.combat?.launch(a,t,w,event.index,contacts,guard);
    if(profile.melee)sound(power?.sound||weaponMotion(w.id));
-   else sound('gunReport',event.index?.93:1,{weaponVoice,
+   else sound('gunReport',paired?.63:event.index?.93:1,{weaponVoice,
     rate:rockets?(event.index?.90:1):rate,travel:profile.travel,lastReport:event.index===profile.beats.length-1,
-    pan:rockets?shotPan()+(event.index%2?.12:-.12):shotPan()});
+    pan:rockets||paired?shotPan()+(event.index%2?.12:-.12):shotPan()});
    continue;
   }
   if(event.plant){
@@ -3839,7 +3854,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   t.hitTime=clock;t.hitPart=event.part;t.hitParts=[event.part];t.hitDamage=event.damage;
   t.hitVector={x:hitX/hitLength,y:hitY/hitLength};
   if(sequence?.skipped)continue;
-  const light=Boolean(w.burst);
+  const light=Boolean(w.burst||reaverBattery);
   effects.push({type:'boom',target:t.id,part:event.part,x:t.x,z:t.z,t:1,light,broken,big:Boolean(power&&!reducedMotion),
    ...(guard?{shieldImpact:impact}:{})});
   shake=Math.max(shake,power?.shake??(broken?6:light?2.8:4));
@@ -3869,7 +3884,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   const volleyText=landed+'/'+rounds.length+(w.scatter?' PELLETS':' HITS')+' / −'+lost+' HP';
   if(sequence)sequence.result=(broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' LEFT ARM':failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':rounds.length>1?volleyText:'−'+d+' '+label)+critLabel;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:(broken?'SHIELD ARM LOST':guard?'BLOCK · −'+d:rounds.length>1?volleyText:'−'+d+' '+label)+critLabel});
-  const report=w.burst&&!guard?impacts.map(({part,amount})=>(t.kind?'HULL':PART_LABEL[part])+' −'+amount).join(' · '):label+' −'+d;
+  const report=(w.burst||reaverBattery)&&!guard?impacts.map(({part,amount})=>(t.kind?'HULL':PART_LABEL[part])+' −'+amount).join(' · '):label+' −'+d;
   addLog(a.name+(w.scout?' · '+w.name:'')+' → '+t.name+' / '+report+critLabel);
   if(failsafe)addLog(t.name+' triggered Failsafe.');
   if(!reaction&&w.melee&&a.training?.strikeBrace)braceUnit(a);
@@ -4245,6 +4260,7 @@ MECH_MOTION[SALT_WORKS_GARRISON_FRAME]={step:.64,mass:1.46,playbackRate:1};
 const clamp01=v=>Math.max(0,Math.min(1,v));
 function smoothRange(a,b,v){const p=clamp01((v-a)/(b-a));return p*p*(3-2*p)}
 function dampedImpulse(age,frequency=35,decay=15){return age>=0&&age<.8?Math.sin(age*frequency)*Math.exp(-age*decay):0}
+const REAVER_FIRE_BEATS=Array.from({length:REAVER_ROUNDS_PER_GUN},(_,i)=>i*.11);
 const ATTACK_PROFILES={
  rifle:{raise:.23,beats:[0,.09,.18],travel:.10,recover:.34},
  shotgun:{raise:.28,beats:[0],travel:.12,recover:.43},
@@ -4261,6 +4277,7 @@ const ATTACK_PROFILES={
  'giza-salvo':{raise:1.10,beats:[0,.35],interval:.35,travel:.14,recover:.48,effect:'rampart',alternate:true},
  'vyzov-cross':{raise:.45,beats:[0],travel:.80,recover:.48,effect:'rampart'},
  morrow:{raise:.784,beats:[0,.298667],travel:.14,recover:.48,effect:'rampart',alternate:true},
+ 'reaver-autocannon':{raise:.30,beats:REAVER_FIRE_BEATS.flatMap(at=>[at,at]),travel:.10,recover:.34,effect:'rifle',recoilBeats:REAVER_FIRE_BEATS},
  locust:{raise:.784,beats:[0,.298667],travel:1.05,recover:.39,effect:'missile',alternate:true},   // lofted (was .46)
  'breach-gauntlet':{raise:.357,beats:[0],travel:.21,recover:.41,melee:true,effect:'breaker'},
  'pulse-bash':{raise:.357,beats:[0],travel:.21,recover:.33,melee:true,effect:'cleaver'},
@@ -4279,8 +4296,9 @@ const VOLLEY_PROFILES=Object.fromEntries(WEAPONS.filter(w=>w.burst).map(w=>[
 ]));
 const LION_STRIKE_TIMING={raise:15/24,travel:3/24,recover:13/24};
 function attackProfile(actor,id){
- const volley=actor&&!actor.kind&&actor.frame!==REAVER_FRAME?VOLLEY_PROFILES[id]:null;
+ const volley=actor&&!actor.kind?VOLLEY_PROFILES[id]:null;
  const profile=volley??ATTACK_PROFILES[id],strike=actor?.frame===AERO_FRAME&&window.IRON_VOW_AERO_STRIKES?.[id];
+ if(id===REAVER_AUTOCANNON.id&&actor?.hp&&reaverGunCount(actor)<2)return {...profile,beats:REAVER_FIRE_BEATS};
  if(actor?.lionTrial&&LION_TRIAL_WEAPONS.includes(id))return {...profile,...LION_STRIKE_TIMING};
  return strike?{...profile,...strike.timing}:profile;
 }
@@ -4641,7 +4659,7 @@ function animationPose(u,t){
  }
  let recoil=0;const age=t-(u.fireTime??-100);
  const motion=weaponMotion(attack?.kind??u.weapon);
- if(!strikeKind&&!reducedMotion)for(const beat of profile.beats)recoil+=dampedImpulse(age-beat,motion==='missile'?32:42,motion==='rail'?12:18);
+ if(!strikeKind&&!reducedMotion)for(const beat of profile.recoilBeats??profile.beats)recoil+=dampedImpulse(age-beat,motion==='missile'?32:42,motion==='rail'?12:18);
  const impactAge=t-(u.hitTime??-100),impact=!reducedMotion?dampedImpulse(impactAge,28,11):0;
  const deathAge=u.alive?-1:destructionAge(u,t),death=u.alive||u.downReason==='pilot'||u.surrendered?0:reducedMotion?1:clamp01(deathAge/DESTRUCTION.end);
  const kneel=u.alive?0:reducedMotion?1:smoothRange(.04,DESTRUCTION.kneelEnd,deathAge);

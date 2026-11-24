@@ -34,7 +34,7 @@ module.exports=async function checkAshigaruV2({page,origin}){
    assert.ok(Math.abs(gait.py-3.032)<1e-3&&Math.abs(gait.ankleH-.49)<1e-3,JSON.stringify({py:gait.py,ankleH:gait.ankleH}));
    assert.ok(gait.samples.length>=2&&gait.samples.some(feet=>feet.some(f=>f.swing)),'Scout uses the live gait');let planted=0;
    for(const [i,feet] of gait.samples.entries())for(const [j,f] of feet.entries()){
-    assert.ok(f.binding<1e-5&&f.goal<.04&&f.sole>=f.floor-.05,JSON.stringify(f));const prev=gait.samples[i-1]?.[j];
+    assert.ok(f.binding<1e-5&&f.goal<.04&&Number.isFinite(f.sole)&&f.sole>=f.floor-.05,JSON.stringify(f));const prev=gait.samples[i-1]?.[j];
     if(!prev||f.swing||f.settle||prev.swing||prev.settle||distance(f.plant,prev.plant)>1e-5)continue;
     assert.ok(distance(f.p,prev.p)<.004&&Math.abs(f.p[1]-(f.floor+f.ankleHeight))<.04&&Math.abs(f.sole-f.floor)<.12,JSON.stringify(f));planted++;
    }assert.ok(planted>0,'Scout must plant at least one foot');console.log('Scout planted pairs',planted);
