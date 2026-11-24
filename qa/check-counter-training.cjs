@@ -2,11 +2,11 @@ const assert=require('node:assert/strict');
 const simulate=require('./sim-harness.cjs');
 
 function checkTraining(){
- for(let kind=0;kind<8;kind++)for(const foundation of [0,1]){
+ for(let kind=0;kind<8;kind++)for(const foundation of [0,1,2]){
   const sim=simulate(),run=sim.run,slot=kind<3?kind:0;
   if(kind>=3)assert.ok(run(`hirePilot(${kind})&&assignPilot(0,${kind})`));
   const paths=JSON.parse(run(`JSON.stringify(PILOT_TREES[${kind}].map(p=>p.nodes.map(n=>n.id)))`));
-  const [first,second]=paths;
+  const alternatives=paths.filter((_,index)=>index!==foundation).map(path=>path[1]);
   run(`save.units[${slot}].level=3`);
   const learn=id=>run(`learnTraining(${slot},${JSON.stringify(id)})`);
   for(const path of paths){
@@ -14,16 +14,15 @@ function checkTraining(){
    assert.equal(learn(path[1]),false);
   }
   assert.equal(learn(paths[foundation][0]),true);
-  assert.equal(learn(first[1]),true);
-  assert.equal(learn(second[1]),true);
+  for(const id of alternatives)assert.equal(learn(id),true);
   assert.equal(run(`trainingPoints(${slot})`),0);
   const reload=simulate({storage:new Map(sim.storage)});
-  assert.deepEqual(Array.from(reload.run(`learnedTraining(${slot})`)),[paths[foundation][0],first[1],second[1]]);
+  assert.deepEqual(Array.from(reload.run(`learnedTraining(${slot})`)),[paths[foundation][0],...alternatives]);
   run(`save.units[${slot}].level=5`);
-  assert.equal(learn(paths[1-foundation][2]),true,'either foundation can lead to either doctrine');
+  assert.equal(learn(paths[(foundation+1)%3][2]),true,'either foundation can lead to either doctrine');
   assert.equal(learn(paths[foundation][2]),false,'one level 5 doctrine');
  }
- console.log('PASS all eight classes can train both level 3 skills from either level 1 skill, with points and reload preserved');
+ console.log('PASS all eight pilots can cross-train any level 2 skill from any foundation, with points and reload preserved');
 }
 
 async function checkCounters(){

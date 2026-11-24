@@ -93,7 +93,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  assert.match(await page.locator('.workshop-actions').innerText(),/Recovery Rig 2 AP\s+Twice per battle/i);
  await nav('journal');await tap('[data-journal="wiki"]');
  assert.equal(await page.locator('.wiki-pilot').count(),8);
- assert.equal(await page.locator('.wiki-paths li').count(),96);
+ assert.equal(await page.locator('.wiki-paths li').count(),144);
  for(const i of [5,6,7]){
   await tap('.wiki-pilot:nth-of-type('+(i+1)+') summary');
   assert.equal(await page.locator('.wiki-pilot').nth(i).locator('li:visible').count(),12);

@@ -39,7 +39,8 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  assert.match(await page.locator('#duty-count').innerText(),/6 \/ 6/);
  assert.ok(await page.locator('[data-pilot-duty="retriever"]').isDisabled());
  await nav('pilots');
- assert.equal(await page.locator('.pilot-card').count(),6);
+ assert.equal(await page.locator('.pilot-card').count(),8);
+ await page.locator('[data-reserve-training="retriever"]').waitFor();
  await tap('[data-reserve-training="scout"]');
  await tap('[data-learn="scout-optics"]');
  await tap('#modal-0');
