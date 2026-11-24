@@ -3,6 +3,19 @@ const create=require('./sim-harness.cjs');
 
 const {run}=create();
 run('createBattle(0,false,false,[0]);globalThis.subject=battle.units[1]');
+const restoredYaw=run(`(()=>{
+ selected=0;action="move";createBattle(0,false,true);
+ const target=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+ window.IronVowScene={mechYaw:()=>-2.6};
+ target.hp.body=0;beginDestruction(target);
+ const id=target.id;
+ save.sortie=JSON.parse(JSON.stringify(captureSortie()));
+ window.IronVowScene=undefined;
+ if(!restoreSortie())throw Error("Could not restore test sortie");
+ return battle.units.find(u=>u.id===id).deathYaw;
+})()`);
+assert.ok(Math.abs(restoredYaw+2.6)<1e-10,'checkpoint preserves rendered destruction yaw');
+run('createBattle(0,false,false,[0]);globalThis.subject=battle.units[1]');
 const roster=JSON.parse(run(`JSON.stringify(FRAMES.map((frame,i)=>{
  const u={...subject,frame:i,hp:{...subject.hp},max:{...subject.max}};
  const pace=destructionPace(u);

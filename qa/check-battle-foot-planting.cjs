@@ -70,7 +70,31 @@ async function main(){
   }
   if(!phases.walk.contacts)failures.push(`${u.name} / ${terrain}: walking produced zero footfalls`);
  }
+ for(const u of units)for(const downReason of ['body','pilot']){
+  S.clearCombat();
+  const draw=(face,deathAge,reducedMotion=false)=>{
+   time+=1/60;
+   return S.draw(u,time,{
+    aim:0,recoil:0,brace:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,deathAge,reducedMotion,
+    world:{x:0,y:0,z:0,face,heading:face,aim:R.V3(12,4,20),groundAt:()=>0,speed:0}
+   },scope,u.foundry,V.applies(u)?'rig-v2':undefined).m.cont.rotation.y;
+  };
+  const facingDelta=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+  u.alive=true;u.motion=null;
+  const lastFacing=draw(-2.6,-1);
+  u.alive=false;u.downReason=downReason;
+  for(let i=0;i<=120;i++){
+   const facing=draw(Math.PI/2,i/60,i===1);
+   if(facingDelta(facing,lastFacing)>1e-6){
+    failures.push(`${u.name} / ${downReason}: collapse changed facing on frame ${i}`);
+    break;
+   }
+  }
+  S.clearCombat();
+  if(facingDelta(draw(lastFacing,2),lastFacing)>1e-6)failures.push(`${u.name} / ${downReason}: rebuilt wreck changed facing`);
+  u.alive=true;delete u.downReason;
+ }
  assert.equal(failures.length,0,failures.join('\n'));
- console.log(`PASS ${units.length} rigs on flat and sloped ground: planted idle, sustained fire, brace, and post-walk stance with walking footfalls`);
+ console.log(`PASS ${units.length} rigs on flat and sloped ground: planted idle, sustained fire, brace, and post-walk stance with walking footfalls, and body / pilot collapse facing`);
 }
 main().catch(error=>{console.error(error);process.exitCode=1});
