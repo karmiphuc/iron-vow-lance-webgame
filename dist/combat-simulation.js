@@ -550,6 +550,13 @@ function reactionWeapon(defender,attacker){
   }
   function applyImpact(t,event){
     const before=t.hp[event.part];
+    if(t.distressAlly&&(event.part==='body'||event.part==='pilot')){
+     const turn=getBattle().turn;
+     if(turn<=2){
+      const floor=Math.ceil(t.max[event.part]*(turn===1?.5:.2));
+      event.amount=Math.min(event.amount,Math.max(0,before-floor));
+     }
+    }
     t.hp[event.part]=Math.max(0,before-event.amount);
     event.before=before;event.after=t.hp[event.part];event.damage=before-t.hp[event.part];
    return before>0&&event.after===0;
