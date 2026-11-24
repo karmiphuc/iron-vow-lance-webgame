@@ -266,11 +266,11 @@ const PILOT_TREES=[
     {id:'retriever-refit',name:'Field Refit',label:'Recovered limbs finish at 75% HP or higher',effects:{recoveryFloor:.75}}
    ]},
    {name:'Wreck Tech',glyph:'wrench',nodes:[
-    {id:'retriever-bounty',name:'Salvage License',label:'+300 CR if the Retriever survives a win',effects:{wreckBonus:300}},
+    {id:'retriever-bounty',name:'Salvage License',label:'+300 CR when the Retriever survives a win with enemy salvage',effects:{wreckBonus:300}},
     {id:'retriever-route',name:'Clear a Route',label:'+1 movement tile',effects:{move:1}},
     {id:'retriever-rolling',name:'Rolling Repair',label:'Recovery Rig adds 1 tile of movement range',effects:{recoveryMove:true}},
     {id:'retriever-patch',name:'Hot Swap',label:'Recovery Rig restores up to 50 HP',effects:{recoveryHP:50}},
-    {id:'retriever-lift',name:'Heavy Lift',label:'Recover a second wreck if present and the Retriever survives the win',effects:{wreckExtra:1}},
+    {id:'retriever-lift',name:'Heavy Lift',label:'Recover a second hull when the Retriever survives the win',effects:{wreckExtra:1}},
     {id:'retriever-second',name:'Second Chance',label:'Use Recovery Rig twice per battle',effects:{recoveryTwice:true}}
    ]}
   ]
@@ -376,7 +376,7 @@ const bastionRig=unit=>FRAMES[unit.frame]?.rig==='bastion';
 const PART_LABEL={body:'BODY',pilot:'PILOT',right:'WEAPON ARM',left:'LEFT ARM',legs:'LEGS'};
 const HELLBREAKER=FRAMES.length;
 FRAMES.push({...FRAMES[3],name:'HELLBREAKER',model:'HV–09X',role:'HOSTILE BREACH',cost:400000,
- native:'hellbreaker',melee:'breach-gauntlet',salvageOnly:true,brief:'Enemy breach chassis. Recover a wreck on No quiet frontier and rebuild it in the Workshop.'});
+ native:'hellbreaker',melee:'breach-gauntlet',salvageOnly:true,brief:'Enemy breach chassis. Recover the hull after a pilot kill on No quiet frontier and rebuild it in the Workshop.'});
 const PILOT_HP=[70,55,80];
 const CREW_HP=[...PILOT_HP,60,72,67,61,76];
 const CITADEL_FRAME=FRAMES.push({...FRAMES[BASTION_FRAME],name:'CITADEL',model:'CTD–04',weapon:'missile',rig:null,enemyOnly:true,salvageOnly:true,fixedWeapons:true})-1;
@@ -1163,15 +1163,18 @@ function canPrimeAP(u,id){
  return Boolean(u?.alive&&!u.kind&&!u.distressAlly&&u.team==='ally'&&!u.apSkill&&
   !(u.apSkillsUsed??[]).includes(id)&&comRecord(pilotId(u.pilot)).installed.includes(id));
 }
+function primeAPSkill(u,id){
+ if(!Object.hasOwn(AP_SKILLS,id)||!battle||battle.phase!=='player'||battle.busy||u!==current()||!canPrimeAP(u,id))return false;
+ u.apSkill=id;(u.apSkillsUsed??=[]).push(id);
+ return true;
+}
 function openAPSkills(u){
  if(!u?.alive||battle.busy||battle.phase!=='player')return;
  const ids=apSkillIds.filter(id=>canPrimeAP(u,id));
  if(!ids.length)return;
  modal('AP SKILLS','<div class="seat-choices">'+ids.map(id=>`<button type="button" data-prime-ap="${id}"><b>${COM_SKILLS[id].name}</b><small>${COM_SKILLS[id].text}</small></button>`).join('')+'</div>',[{text:'CANCEL',fn:closeModal}]);
  for(const button of document.querySelectorAll('[data-prime-ap]'))button.onclick=()=>{
-  const id=button.dataset.primeAp;
-  if(!canPrimeAP(u,id)||u!==current()||battle.busy)return;
-  u.apSkill=id;(u.apSkillsUsed??=[]).push(id);
+  if(!primeAPSkill(u,button.dataset.primeAp))return;
   closeModal();renderBattle();persist();
  };
 }
@@ -2220,7 +2223,7 @@ function chassisAssignments(i,training){
    ${view==='storage'&&hangarLevel('fabrication')&&hull.condition<patchLimit()?`<button data-patch-storage="${index}">FIELD PATCH · ${patchLimit()}%</button>`:''}
   </article>`;
  }).join('');
- const empty={storage:'Storage is empty. Buy or rebuild a hull, or swap in a stored machine.',market:'Every catalogued hull is already owned.',salvage:'Clear a sortie to recover an enemy mech body.'};
+ const empty={storage:'Storage is empty. Buy or rebuild a hull, or swap in a stored machine.',market:'Every catalogued hull is already owned.',salvage:'Win a sortie after forcing an enemy mech to surrender or killing its pilot with the hull intact.'};
  return `<section class="chassis-assignment" aria-label="Chassis comparison"><div class="stat-heading"><span class="eyebrow">COMPARE WITH ${pilotProfile(i).call}</span>${infoTip('chassis comparison','Stats use the selected pilot’s training. Movement range is in tiles and part HP is maximum. Weapons, paint and condition stay with a swapped hull.'+(view==='salvage'?' Rebuild puts a stock hull into Storage at '+rebuildIntegrity()+'% integrity.':'')+(view==='market'?' Purchases go to Storage.':''))}</div>
   <p class="bay-rules">${AP_RECOVERY} AP recovery per round · Brace ${braceCost(training)} AP</p>
   ${choices?`<div class="bay-grid">${choices}</div>`:`<p class="bay-empty">${empty[view]}</p>`}
@@ -4672,39 +4675,41 @@ function finish(win){
  const b=battle,c=b.contract,promotions=[],interception=b.interception;
  const comProgress=settleComPractice();
  const retriever=win?b.units.find(u=>u.pilot===RETRIEVER&&u.alive):null;
- const surrendered=win?b.units.filter(u=>u.surrendered&&u.team==='enemy'):[];
+ const recoverable=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive&&u.hp.body>0):[];
+ const surrendered=recoverable.filter(u=>u.surrendered);
  const gear=surrendered.flatMap(u=>portableItems(u));
  const intact=surrendered.filter(u=>playerHull(u.frame));
  for(const u of intact){
   const captured=save.captured??={};
   captured[u.frame]=(captured[u.frame]??0)+1;
  }
- if(win&&!b.legacy&&!benchWar){
+ const newHull=frame=>!hullOwned(frame)&&!save.salvage?.[frame];
+ const recovered=recoverable.filter(u=>!u.surrendered&&u.hp.pilot===0&&salvageableHull(u.frame)&&
+  (b.mechComputers||!FRAMES[u.frame].enemyOnly))
+  .sort((a,z)=>Number(newHull(z.frame))-Number(newHull(a.frame))||
+   Number(Boolean(FRAMES[z.frame].salvageOnly))-Number(Boolean(FRAMES[a.frame].salvageOnly))||
+   z.hp.body/z.max.body-a.hp.body/a.max.body)
+  .slice(0,1+(retriever?.training?.wreckExtra??0));
+ for(const wreck of recovered){const bodies=save.salvage??={};bodies[wreck.frame]=(bodies[wreck.frame]??0)+1}
+ const hasRecovery=Boolean(recovered.length||intact.length);
+ if(hasRecovery&&!b.legacy&&!benchWar){
   const roll=equipmentRoll([save.world?.seed??0,b.terrainSeed??0,save.day,c.id].join('/'));
   const stock=(portStock(b.offer?.port??interception?.port??contractPort(c))?.weapons??[]).filter(id=>id!=='salt-mg'||save.rep>=weapon(id).rep);
   if(stock.length&&roll%5<2)gear.push(stock[Math.floor(roll/5)%stock.length]);
  }
  save.owned.push(...gear);
- const newHull=frame=>!hullOwned(frame)&&!save.salvage?.[frame];
- const recovered=win?b.units.filter(u=>u.team==='enemy'&&!u.kind&&!u.alive&&!u.surrendered&&salvageableHull(u.frame)&&
-  (b.mechComputers||!FRAMES[u.frame].enemyOnly))
-  .sort((a,z)=>Number(newHull(z.frame))-Number(newHull(a.frame))||
-   Number(Boolean(FRAMES[z.frame].salvageOnly))-Number(Boolean(FRAMES[a.frame].salvageOnly))||
-   z.hp.body/z.max.body-a.hp.body/a.max.body)
-  .slice(0,1+(retriever?.training?.wreckExtra??0)):[];
- for(const wreck of recovered){const bodies=save.salvage??={};bodies[wreck.frame]=(bodies[wreck.frame]??0)+1}
  const seats=b.operation?.recommended??b.slots.filter(slot=>slot<AUX_SLOT).length;
  const lean=b.operation&&win?leanXP(seats,b.slots.filter(slot=>slot<AUX_SLOT).length+b.operation.extra.length):0;
  const cachePay=win&&b.operation?.cache?700:0;
  const reward=win&&!interception?worldContractPay(c,seats,b.offer):0;
  const premium=win&&!interception?reward-worldContractPay(c,seats,b.offer,0):0;
- const salvage=win&&!interception&&!c.fixedPay?450+c.difficulty*200+(b.legacy?0:180*b.units.filter(u=>u.kind).length):0;
+ const salvage=hasRecovery&&!interception&&!c.fixedPay?450+c.difficulty*200:0;
  const offeredBonus=win&&!benchWar?regionalReward(b.offer,b.offer?.acceptedDay):null;
  const bonus=offeredBonus?.available?offeredBonus:null;
  if(bonus?.gear)save.owned.push(bonus.gear);
  const campaignWin=win&&b.offer?worldRules.campaignResult(save.strategy,b.offer.port,save.day,c===CONTRACTS[SALT_WORKS_CONTRACT]):null;
  if(campaignWin)save.strategy=campaignWin.campaign;
- const recoveryBonus=interception?0:retriever?.training?.wreckBonus??0,pay=reward+salvage+recoveryBonus+cachePay+(bonus?.credits??0)+(campaignWin?.credits??0);
+ const recoveryBonus=hasRecovery&&!interception?(retriever?.training?.wreckBonus??0):0,pay=reward+salvage+recoveryBonus+cachePay+(bonus?.credits??0)+(campaignWin?.credits??0);
  save.credits+=pay;save.rep+=win?c.difficulty*10:0;if(win&&!interception)save.wins++;
  const costs=benchWar||interception?null:settleSortieCosts(b.offer?.port??contractPort(c));
  if(interception){
@@ -4751,8 +4756,8 @@ function finish(win){
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
  if(online)buttons.push({text:'TRAIN DECK',fn:()=>{closeModal();navigateHangarRoute('ship')}});
  if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();navigateHangarRoute('facilities')}});
- modal(interception?(win?'PATROL CLEARED.':'HALYARD FELL BACK.'):win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${c.distress?rescued+' of 3 allied units rescued.'+(repairGain?' Field crew restored '+repairGain+'% hull condition.':'')+(scoutedName?' Local intelligence received for '+scoutedName+'.':''):win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'The field is yours. Your pilots return with experience and recovered enemy components.':interception?'Halyard returned to '+portName(interception.from)+'. Combat damage persists.':'Your pilots have been recovered. Combat damage persists.'}</p>
-  ${interception?stat('ENCOUNTER PAYOUT',money(0)):stat('CONTRACT PAYMENT',money(reward))}${campaignWin?stat('CAMPAIGN',campaignWin.name+(campaignWin.credits?' · '+money(campaignWin.credits):'')):''}${lean?stat('LEAN LANCE','+'+lean+' XP PER DEPLOYED PILOT'):''}${cachePay?stat('LOADING-YARD SALVAGE',money(cachePay)):''}${bonus?stat('REGIONAL BONUS',bonus.label):''}${c.fixedPay||interception?'':stat('SCRAP BONUS',money(salvage))}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${intact.length?stat('INTACT CAPTURES',intact.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
+ modal(interception?(win?'PATROL CLEARED.':'HALYARD FELL BACK.'):win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${c.distress?rescued+' of 3 allied units rescued.'+(repairGain?' Field crew restored '+repairGain+'% hull condition.':'')+(scoutedName?' Local intelligence received for '+scoutedName+'.':''):win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'Contract complete. Your pilots earned experience.':interception?'Halyard returned to '+portName(interception.from)+'. Combat damage persists.':'Your pilots have been recovered. Combat damage persists.'}</p>
+  ${interception?stat('ENCOUNTER PAYOUT',money(0)):stat('CONTRACT PAYMENT',money(reward))}${campaignWin?stat('CAMPAIGN',campaignWin.name+(campaignWin.credits?' · '+money(campaignWin.credits):'')):''}${lean?stat('LEAN LANCE','+'+lean+' XP PER DEPLOYED PILOT'):''}${cachePay?stat('LOADING-YARD SALVAGE',money(cachePay)):''}${bonus?stat('REGIONAL BONUS',bonus.label):''}${salvage?stat('SCRAP BONUS',money(salvage)):''}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${intact.length?stat('INTACT CAPTURES',intact.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
   ${costs?stat('CREW WAGES',money(costs.wages))+stat('TRAIN UPKEEP',money(costs.ship))+stat('HULL UPKEEP',money(costs.hulls))+
    (costs.arrearsPaid?stat('ARREARS PAID',money(costs.arrearsPaid)):'')+(save.overworld.arrears?stat('OPERATING ARREARS',money(save.overworld.arrears)):'')+
    stat('NET CREDITS',money(pay-costs.paid-costs.arrearsPaid)):''}

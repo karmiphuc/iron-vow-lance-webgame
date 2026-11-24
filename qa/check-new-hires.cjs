@@ -104,9 +104,9 @@ function recruit(kind,path=null,slot=0){
  const safe=simulate({storage:new Map([[key,JSON.stringify(broken)]])});
  assert.equal(safe.run('battle'),null);
  assert.equal(safe.run('pilotClass(0)'),7,'corrupt checkpoint never wipes the career');
- v('for(const t of battle.units.filter(u=>u.team==="enemy")){t.hp.body=0;t.alive=false}finish(true)');
+ v('for(const t of battle.units.filter(u=>u.team==="enemy")){t.hp.pilot=0;t.alive=false}finish(true)');
  assert.equal(v('Object.values(save.salvage).reduce((a,b)=>a+b,0)'),2);
- assert.equal(v('save.history.at(-1).pay'),3850,'scaled contract pay, standard scrap and 300 CR recovery bonus');
+ assert.equal(v('save.history.at(-1).pay'),3670,'scaled contract pay, eligible scrap and 300 CR recovery bonus');
  assert.match(twice.node('#modal').innerHTML,/RECOVERY BONUS/);
  console.log('PASS: all eight pilot identities, six level-10 paths, Sapper charges/refund, Signal round effects and pending reload, Retriever solo repair/two uses/salvage, corrupt checkpoint recovery.');
 })().catch(e=>{console.error(e);process.exitCode=1});

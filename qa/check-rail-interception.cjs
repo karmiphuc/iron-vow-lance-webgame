@@ -26,7 +26,7 @@ assert.equal(onArrival.run(`JSON.parse(localStorage.getItem('iron-vow-career')).
 const resumed=simulate({storage:campaign.storage});
 assert.equal(resumed.run(`battle?.interception.id`),'occupation:air:5');
 resumed.run(`const creditsBefore=save.credits, winsBefore=save.wins, xpBefore=save.units[0].xp;
- for(const unit of battle.units.filter(unit=>unit.team==='enemy')){unit.alive=false;unit.hp.body=0;}
+ for(const unit of battle.units.filter(unit=>unit.team==='enemy')){unit.alive=false;if(unit.kind)unit.hp.body=0;else unit.hp.pilot=0;}
  finish(true);`);
 assert.equal(resumed.run(`save.credits===creditsBefore&&save.history.at(-1).pay===0&&save.wins===winsBefore`),true);
 assert.equal(resumed.run(`save.units[0].xp>xpBefore`),true);
