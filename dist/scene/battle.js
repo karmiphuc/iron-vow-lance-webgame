@@ -257,6 +257,74 @@ function terrainDetails(){
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(ticks,3));
  const grid=new T.LineSegments(geo,new T.LineBasicMaterial({color:0xc1c9ba,transparent:true,opacity:.085,depthWrite:false}));grid.name='tactical-grid-corners';board.add(grid);
 }
+// Low-profile painted markings stay below silhouettes in the tactical camera.
+// Raised works sit on existing cover footprints so their collision is legible.
+function distressLandmarks(key){
+ const plan=root.IRON_VOW_DISTRESS_MAPS?.[key];
+ if(!plan)return;
+ const pieces=new Map(),marker=0x85e0c7,steel=0x536063,timber=0x8a735e,signal=0xe7a84b;
+ const block=(x,z,y,w,h,d,color,roll=0)=>{
+  const pos=world(x,z);
+  pos.y+=y;
+  const q=new T.Quaternion().setFromAxisAngle(V3(0,0,1),roll);
+  if(!pieces.has(color))pieces.set(color,[]);
+  pieces.get(color).push(new T.Matrix4().compose(pos,q,V3(w,h,d)));
+ };
+ for(const [x,z] of plan.goal){
+  // Corner brackets mark each individual cell that can receive a survivor.
+  for(const dx of [-1,1])for(const dz of [-1,1]){
+   block(x+dx*.32,z+dz*.41,.12,1.45,.12,.22,marker);
+   block(x+dx*.41,z+dz*.32,.12,.22,.12,1.45,marker);
+  }
+ }
+ if(key==='crossing'){
+  for(let z=8;z<=14;z++){
+   for(const x of [7.79,8.21])block(x,z,.09,.15,.14,TILE,steel);
+   for(const offset of [-.35,0,.35])block(8,z+offset,.055,4.5,.09,.36,timber);
+  }
+  // Abutments and guard posts mark the edges of the viaduct.
+  for(const x of [7.52,9.48])for(let z=10;z<=12;z++){
+   block(x,z,.55,.19,.26,TILE,steel);
+   block(x,z,.37,.32,.74,.32,signal);
+  }
+ }else if(key==='lift'){
+  for(const x of [7,10]){
+   if(!battle.cover.has(x+',12'))continue;
+   for(const dz of [-.23,.23]){
+    block(x,12+dz,3.3,.55,6.6,.55,signal);
+    block(x,12+dz,5.5,.59,.6,.59,steel);
+   }
+   block(x,12,6.6,1.6,.48,4.1,steel);
+  }
+  // Overhead bridge crane across the bay. Slender steel leaves sightlines
+  // open and its two supports occupy the transformer cells.
+  block(8.5,12,7.1,TILE*3+.9,.65,1.5,signal);
+  block(8.7,12,6.62,2.4,.5,1.9,steel);
+  for(const x of [8,9])for(const z of [12,13]){
+   block(x,z,.05,3.2,.08,.26,steel);
+  }
+ }else{
+  for(const [x,z] of [[5,13],[12,9]]){
+   if(!battle.cover.has(x+','+z))continue;
+   block(x,z,3.55,4.6,.48,2.9,steel);
+   for(const dx of [-.24,.24])block(x+dx,z,4.1,.28,1.1,2.8,signal);
+   block(x,z,4.55,3.8,.4,2.4,timber);
+  }
+  for(const [x,z] of [[4,8],[6,13],[13,7],[6,17]]){
+   for(const offset of [-.22,.22])block(x+offset,z,.1,.22,.12,2.1,signal);
+  }
+ }
+ const group=new T.Group(),geo=new T.BoxGeometry(1,1,1);
+ group.name='distress-'+key+'-infrastructure';
+ for(const [color,matrices] of pieces){
+  const mat=new T.MeshStandardMaterial({color:kit.C(color),metalness:.26,roughness:.75});
+  if(color===marker){mat.emissive=kit.C(color);mat.emissiveIntensity=.35;}
+  const mesh=new T.InstancedMesh(geo,mat,matrices.length);
+  matrices.forEach((matrix,i)=>mesh.setMatrixAt(i,matrix));
+  mesh.frustumCulled=false;mesh.receiveShadow=true;group.add(mesh);
+ }
+ board.add(group);
+}
 function build(){
  root.IronVowFoundry.retainPreview();
  clear();init();battleRef=battle;terrainRef=battle.field.cells;kit=root.IronVowSceneKit(renderer);kit.setSize(battle.size.width,battle.size.depth,TILE);
@@ -300,6 +368,7 @@ function build(){
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(overlayPositions,3));geometry.setAttribute('color',new T.Float32BufferAttribute(overlayColors,3));geometry.setIndex([]);
  overlays=new T.Mesh(geometry,new T.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.20,depthWrite:false,polygonOffset:true,polygonOffsetFactor:0,polygonOffsetUnits:-1}));overlays.userData.indices=tileIndices;overlays.renderOrder=2;scene.add(overlays);
  rockCuts(rockMap,soil,road);terrainDetails();
+ if(battle.contract.distress)distressLandmarks(battle.contract.distress);
  const edgeMaterial=kit.MAT.hazard;
  for(const [x,z,w,d] of [[0,-battle.size.depth*TILE/2,battle.size.width*TILE,.3],[0,battle.size.depth*TILE/2,battle.size.width*TILE,.3],[-battle.size.width*TILE/2,0,.3,battle.size.depth*TILE],[battle.size.width*TILE/2,0,.3,battle.size.depth*TILE]]){
   const mesh=new T.Mesh(new T.BoxGeometry(w,.16,d),edgeMaterial);mesh.position.set(x,-.08,z);mesh.receiveShadow=true;board.add(mesh);
@@ -580,7 +649,7 @@ function render(t,dt){
  const duel=!reducedMotion&&activeCinematic?[activeCinematic.actor,activeCinematic.target]:null;
  for(const u of battle.units){
   const object=models.get(u.id)?.object;if(!object)continue;
-  const hide=Boolean(duel&&!duel.includes(u));
+  const hide=u.extracted||Boolean(duel&&!duel.includes(u));
   if(hide&&object.visible){object.visible=false;object.userData.duelHidden=true;}
   else if(!hide&&object.userData.duelHidden){object.visible=true;object.userData.duelHidden=false;}
  }
