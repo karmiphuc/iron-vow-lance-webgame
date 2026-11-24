@@ -3,7 +3,7 @@
 'use strict';
 const T=root.THREE,V3=root.IronVowFoundryRig.V3;
 root.IronVowRigV2.register(16,{
- id:'reaver',assetPath:'rig-bench/rig-v2/reaver.glb',factoryLivery:true,
+ id:'reaver',assetPath:'rig-bench/rig-v2/reaver.glb',factoryLivery:true,scale:.84,
  setup({bone,driver,marker,bounds,rig}){
   const cannons={},actuators=[];
   for(const side of ['L','R']){

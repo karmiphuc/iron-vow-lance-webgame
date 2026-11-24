@@ -63,5 +63,8 @@ function setup({bone,find,marker,bounds,rig,workshopMounts}){
   dispose
  };
 }
-for(const [frame,id] of [[1,'kestrel'],[2,'basilisk']])root.IronVowRigV2.register(frame,{id,assetPath:`rig-bench/rig-v2/${id}.glb`,factoryLivery:true,dimensions:{walkDrop:.55,stride:.6},setup});
+for(const [frame,id,scale] of [[1,'kestrel',1],[2,'basilisk',.95]]){
+ root.IronVowRigV2.register(frame,{id,assetPath:`rig-bench/rig-v2/${id}.glb`,factoryLivery:true,scale,
+  dimensions:{walkDrop:.55,stride:.6},setup});
+}
 })(window);

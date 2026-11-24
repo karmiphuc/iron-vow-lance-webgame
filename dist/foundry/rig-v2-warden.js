@@ -8,7 +8,7 @@ const family={
 };
 root.IronVowRigV2.register(0,{
  id:'warden',assetPath:'rig-bench/rig-v2/warden.glb',canonical:true,authoredPaint:true,
- accentInheritsSecondary:true,scale:1.415,previewSpan:1.3,equipmentScale:.62,
+ accentInheritsSecondary:true,scale:1.13,equipmentScale:.62,
  setup({bone,rig}){
   for(const arm of Object.values(rig.arms))for(const joint of [arm.sh,arm.el,arm.wr])joint.rotation.set(0,0,0);
   for(const leg of rig.legs)leg.cap=bone('kneecap.'+leg.side);

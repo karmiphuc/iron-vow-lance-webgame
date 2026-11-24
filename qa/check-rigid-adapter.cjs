@@ -144,12 +144,12 @@ async function main(){
   assert.ok(hand.expandByScalar(.05).containsPoint(world(m.rig.arms.L.so)),`Warden guard ${style} hand lets go of its weapon`);
  }
  {
-  const m=make('free');m.aim.point.set(0,4*1.415,20);let worst=0,gripOff=0;
+  const m=make('free');m.aim.point.set(0,4*m.scale,20);let worst=0,gripOff=0;
   step(m,20);
   step(m,80,{ready:true},()=>{m.aim.until=t+.05;worst=Math.max(worst,clipping(m));});
   const grip=onRifle(m),error=grip.axis.angleTo(m.aim.point.clone().sub(grip.muzzle).normalize());
   const [lead,trail]=m.rig.legs.map(leg=>world(leg.an));
-  assert.ok(lead.z-trail.z>.9,`Warden's left foot leads by only ${(lead.z-trail.z).toFixed(2)} m when firing`);
+  assert.ok((lead.z-trail.z)/m.scale>.64,`Warden's left foot leads by only ${(lead.z-trail.z).toFixed(2)} m when firing`);
   assert.ok(grip.off<.03&&grip.along>.3,`Warden's left hand is ${grip.off.toFixed(2)} m off the rifle at ${grip.along.toFixed(2)}`);
   assert.ok(error<.026,`Warden's shouldered rifle misses its aim by ${(error*57.3).toFixed(1)} degrees`);
   m.recoil=.7;step(m,20,{ready:true},()=>{m.aim.until=t+.05;worst=Math.max(worst,clipping(m));gripOff=Math.max(gripOff,onRifle(m).off);});
@@ -167,16 +167,15 @@ async function main(){
    return {tip:world(m.blade.tip||m.blade.muzzle||m.blade.mount),shoulder:world(m.rig.arms.L.sh),head:world(m.rig.neck)};};
   const wind=at(R.MEL.wind),hit=at(R.MEL.hit);m.melee=null;
   if(family!=='thrust')assert.ok(wind.tip.y>wind.head.y,`Warden ${family} raises the ${weapon} above its head`);
-  assert.ok(hit.tip.z>hit.shoulder.z+1.2,`Warden ${family} reaches forward with the ${weapon} at contact`);
-  if(family==='maul')assert.ok(hit.tip.y<hit.shoulder.y-1,'Warden maul drives the head down in front');
+  assert.ok((hit.tip.z-hit.shoulder.z)/m.scale>.85,`Warden ${family} reaches forward with the ${weapon} at contact`);
+  if(family==='maul')assert.ok((hit.shoulder.y-hit.tip.y)/m.scale>.71,'Warden maul drives the head down in front');
  }
 
- // 5. Field framing: the renderer's tall Warden frame (1.3 x span 11.2, elevation .46, ground mapped to .84) keeps
- //    every guard and every maul swing inside the surface.
+ // 5. The shared portrait camera keeps every guard and maul swing inside the surface.
  {
-  const tall=1.3,span=11.2*tall,camera=new T.OrthographicCamera(-span/2,span/2,span/2,-span/2,.1,100);
+  const span=R.worldSpan,camera=new T.OrthographicCamera(-span/2,span/2,span/2,-span/2,.1,100);
   camera.position.set(0,Math.sin(.46)*25+3.55,Math.cos(.46)*25);camera.lookAt(0,3.55,0);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
-  const offset=(.84-(1-tall)/2)/tall-(.5-V3().project(camera).y*.5);
+  const offset=R.ground-(.5-V3().project(camera).y*.5);
   const highest=m=>{m.cont.updateMatrixWorld(true);let top=Infinity;
    m.cont.traverse(o=>{if(!o.isMesh||!o.visible)return;const p=o.geometry.attributes.position;
     for(let i=0;i<p.count;i+=3){const v=V3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld).project(camera);top=Math.min(top,.5-v.y*.5+offset);}});
