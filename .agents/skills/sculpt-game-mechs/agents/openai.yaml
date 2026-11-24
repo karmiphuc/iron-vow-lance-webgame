@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mech Sculpting for Games"
+  short_description: "Match mech proportions, armor details, and grounded poses"
+  default_prompt: "Use $sculpt-game-mechs to build or revise this mech. Compare the joints, armor edges, and stance against the reference and show the leading mismatch at game size and in close-up."

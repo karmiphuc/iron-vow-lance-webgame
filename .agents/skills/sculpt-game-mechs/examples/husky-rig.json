@@ -1,0 +1,34 @@
+{
+  "baseline": "Husky.blend, frame 1; historical regression baseline only; SHA-256 a017246bab6d73dab773119c196ce205e6b0b596e7e8dec9e37939c14a47ccbc",
+  "scene": "Scene",
+  "frame": 1,
+  "objects": {
+    "shoulder": "Shoulder_{side}",
+    "elbow": "Elbow_{side}",
+    "wrist": "Wrist_{side}",
+    "hip": "Hip_{side}",
+    "knee": "Knee_{side}",
+    "ankle": "Ankle_{side}",
+    "pelvis": "Pelvis",
+    "forearm_shell": "Elbow_{side} assembly",
+    "pelvis_shell": "Pelvis assembly"
+  },
+  "targets": {
+    "L": {
+      "forearm_over_upper_arm": [1.167426, 0.01],
+      "thigh_over_shin": [1.020979, 0.01],
+      "pelvis_above_ankle_over_leg": [0.934256, 0.01],
+      "hip_to_ankle_z_over_leg": [0.934256, 0.01],
+      "elbow_to_shell_low_z_over_forearm": [0.943739, 0.01],
+      "pelvis_to_shell_low_z_over_leg": [0.418685, 0.01]
+    },
+    "R": {
+      "forearm_over_upper_arm": [1.167426, 0.01],
+      "thigh_over_shin": [1.020979, 0.01],
+      "pelvis_above_ankle_over_leg": [0.934256, 0.01],
+      "hip_to_ankle_z_over_leg": [0.934256, 0.01],
+      "elbow_to_shell_low_z_over_forearm": [0.943739, 0.01],
+      "pelvis_to_shell_low_z_over_leg": [0.418685, 0.01]
+    }
+  }
+}
