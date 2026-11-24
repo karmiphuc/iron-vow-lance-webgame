@@ -447,7 +447,7 @@
         const next = rectangle(candidate);
         if (![...blocked, ...placed].some(other => intersects(next, other))) { rect = next; break; }
       }
-      // A full viewport scan handles dense zoomed/panned views without hiding controls.
+      // Try the full viewport before deferring a label to the rail directory.
       if (!rect) {
         const free = [];
         for (let top = 7; top + height <= frame.height - 7; top += 12) for (let left = 7; left + width <= frame.width - 7; left += 12) {
@@ -455,15 +455,17 @@
           if (![...blocked, ...placed].some(other => intersects(next, other))) free.push(next);
         }
         free.sort((a, b) => Math.hypot(a.left - preferred.left, a.top - preferred.top) - Math.hypot(b.left - preferred.left, b.top - preferred.top));
-        rect = free[0] || rectangle(preferred);
+        rect = free[0];
       }
+      const show = visible && !!rect;
+      rect ??= rectangle(preferred);
       const overlaps = placed.filter(other => intersects(rect, other)).map(other => other.id);
       const blockedCount = blocked.filter(other => intersects(rect, other)).length;
       const displacement = Math.hypot(rect.left - preferred.left, rect.top - preferred.top);
-      result[id] = { x: anchor.x, y: anchor.y, visible, rect, displacement, overlaps, blockedCount };
-      if (visible) placed.push({ ...rect, id });
+      result[id] = { x: anchor.x, y: anchor.y, visible:show, rect, displacement, overlaps, blockedCount };
+      if (show) placed.push({ ...rect, id });
       if (button) {
-        button.style.transform = 'none'; button.style.left = rect.left + 'px'; button.style.top = rect.top + 'px'; button.style.visibility = visible ? 'visible' : 'hidden';
+        button.style.transform = 'none'; button.style.left = rect.left + 'px'; button.style.top = rect.top + 'px'; button.style.visibility = show ? 'visible' : 'hidden';
         let leader = host.querySelector('[data-chart-port-leader="' + id + '"]');
         if (!leader && host.ownerDocument) {
           leader = host.ownerDocument.createElement('span'); leader.dataset.chartPortLeader = id; leader.setAttribute('aria-hidden', 'true');
@@ -471,7 +473,7 @@
         }
         if (leader) {
           const x = clamp(anchor.x, rect.left, rect.right), y = clamp(anchor.y, rect.top, rect.bottom);
-          Object.assign(leader.style, { display: visible && displacement > 8 ? 'block' : 'none', left: anchor.x + 'px', top: anchor.y + 'px', width: Math.hypot(x - anchor.x, y - anchor.y) + 'px', transform: 'rotate(' + Math.atan2(y - anchor.y, x - anchor.x) + 'rad)' });
+          Object.assign(leader.style, { display: show && displacement > 8 ? 'block' : 'none', left: anchor.x + 'px', top: anchor.y + 'px', width: Math.hypot(x - anchor.x, y - anchor.y) + 'px', transform: 'rotate(' + Math.atan2(y - anchor.y, x - anchor.x) + 'rad)' });
         }
       }
     }

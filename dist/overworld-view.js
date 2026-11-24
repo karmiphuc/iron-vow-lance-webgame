@@ -42,7 +42,7 @@ window.IronVowOverworldView = (() => {
         <span>${escapeHtml(route.label)}</span><b>${route.days}d <small>${credits(route.total)}</small></b>
       </button>`).join('');
     const markers = data.ports.map(port => `
-      <button type="button" class="chart-port${port.id === data.current ? ' is-current' : ''}" data-overworld-port="${port.id}"
+      <button type="button" class="chart-port${port.region ? ' chart-outer-port' : ''}${port.id === data.current ? ' is-current' : ''}" data-overworld-port="${port.id}"
         aria-label="${escapeHtml(port.name)}${port.id === data.current ? ', current railhead' : ''}" aria-pressed="${port.id === data.selected}"${port.id === data.current ? ' aria-current="location"' : ''}>
         <span class="chart-port-mark" aria-hidden="true"></span><b>${escapeHtml(port.name)}</b>
       </button>`).join('');

@@ -143,3 +143,8 @@ body[data-view="overworld"] #ui{overflow:hidden;background:transparent}
 .chart-port-card .rail-directory-list button{min-width:0;width:100%;white-space:normal;padding:4px 7px;font-size:.75rem}
 .rail-directory-list small{display:block;color:#bbc6c0}
 .rail-directory-list [aria-current]{border-color:#e5b66d}
+
+@media(max-width:520px){
+ .chart-outer-port:not([aria-current]):not([aria-pressed="true"]){width:44px;justify-content:center}
+ .chart-outer-port:not([aria-current]):not([aria-pressed="true"]) b{display:none}
+}
