@@ -63,7 +63,7 @@ module.exports=async function checkShip({context,page,mobile,origin,tap}){
  assert.equal(await page.evaluate(()=>selected),3);
  const snapshot=await page.evaluate(async()=>{await pendingCareerWrite;return JSON.parse(localStorage.getItem('iron-vow-career')).sortie});
  assert.equal(snapshot.version,9);
- assert.equal(snapshot.units[3].ap,9);
+ assert.equal(snapshot.units[3].ap,15);
  await page.reload({waitUntil:'domcontentloaded'});
  await page.locator('[data-unit="3"].active').waitFor();
  assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(captureSortie()))),snapshot);

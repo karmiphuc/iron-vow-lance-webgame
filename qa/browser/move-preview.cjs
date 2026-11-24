@@ -29,7 +29,7 @@ module.exports=async function checkMovePreview({page,mobile,origin,tap}){
  }
  assert.equal(await preview.locator('.move-contact').count(),3,'only contacts within range appear');
  const projectedHit=await preview.locator('[data-shot="high"] .move-hit').innerText();
- assert.equal(projectedHit,'92%','the high-ground body shot is capped by the target’s 8% dodge');
+ assert.match(projectedHit,/^92%(?: · \d+% CRIT)?$/,'the high-ground body shot is capped by the target’s 8% dodge');
  assert.equal(await preview.locator('[data-shot="clear"] .move-hit').innerText(),'76%','the clear three-tile rifle shot includes range falloff and Aero’s 15% dodge');
  assert.equal(await preview.locator('[data-shot="blocked"] .move-hit').innerText(),'—');
  assert.equal(await page.locator(mobile?'#target-toggle small':'.shot-readout').isVisible(),false,'the current-position shot readout yields to the preview');
@@ -41,7 +41,7 @@ module.exports=async function checkMovePreview({page,mobile,origin,tap}){
  await preview.locator('[data-shot="arc"]').waitFor();
  assert.ok((await preview.locator('[data-shot="arc"]').innerText()).includes(fixture.names[2]));
  assert.match(await preview.locator('[data-shot="arc"] .move-hit').innerText(),/^\d+%$/);
- await page.evaluate(()=>Object.assign(current(),{weapon:'rifle',ap:1,moveLeft:0}));
+ await page.evaluate(()=>Object.assign(current(),{weapon:'rifle',ap:2}));
  await page.waitForFunction(()=>document.querySelector('#move-preview').textContent.includes('NO SHOT'));
  await page.evaluate(()=>Object.assign(current(),{ap:movePreviewQA.ap,moveLeft:movePreviewQA.move}));
 
@@ -58,7 +58,7 @@ module.exports=async function checkMovePreview({page,mobile,origin,tap}){
  assert.deepEqual(await page.evaluate(()=>[current().x,current().z,current().ap]),[8,10,fixture.ap]);
  await click();
  await page.waitForFunction(()=>!battle.busy&&current().x===7&&current().z===10);
- assert.equal(await page.evaluate(()=>current().ap),fixture.ap);
+ assert.equal(await page.evaluate(()=>current().ap),fixture.ap-2);
  await preview.waitFor({state:'hidden'});
- assert.ok((await page.locator('.shot-readout').textContent()).includes(projectedHit),'the actual firing readout matches the move preview');
+ assert.ok((await page.locator('.shot-readout').textContent()).includes(projectedHit.split(' · ')[0]),'the actual firing readout matches the move preview');
 };

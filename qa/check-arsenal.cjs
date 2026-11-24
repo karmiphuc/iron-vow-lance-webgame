@@ -63,7 +63,7 @@ const simulate=require('./sim-harness.cjs');
  assert.equal(run("JSON.parse(localStorage.getItem('iron-vow-career')).sortie.action"),'strike');
  for(const id of ['breaker','cleaver','piledriver','hailstorm','rampart']){
   assert.ok(await run(`(async()=>{
-   const u=current(),target=battle.units[3],w=weapon('${id}');u.ap=8;
+   const u=current(),target=battle.units[3],w=weapon('${id}');u.ap=8;u.attackAPSpent=0;
    const effectStart=effects.length,total=()=>Object.values(target.hp).reduce((sum,hp)=>sum+hp,0),before=total();
    await shoot(u,target,'body',w);
    return u.ap===8-w.ap&&total()<before&&

@@ -1,3 +1,4 @@
+const assertLegacySortie=require('./legacy-sortie-check.cjs');
 const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const {join}=require('node:path');
@@ -32,7 +33,7 @@ for(const [file,id,frame] of [['v56-corridor.json','enemy1',6],['reaver-corridor
  const raw=readFileSync(join(__dirname,'fixtures',file),'utf8');
  const {run:resume}=simulate({...options,storage:new Map([['iron-vow-career',raw]])});
  assert.equal(resume(`battle.units.find(u=>u.id==="${id}").frame`),frame);
- assert.deepEqual(JSON.parse(resume('JSON.stringify(captureSortie())')),JSON.parse(raw).sortie);
+ assertLegacySortie(assert,JSON.parse(resume('JSON.stringify(captureSortie())')),JSON.parse(raw).sortie);
  if(frame===16)assert.equal(resume(`unitWeapon(battle.units.find(u=>u.id==="${id}")).rounds`),16);
 }
 console.log('PASS Reaver Medium+ hostile rosters, acquisition exclusions, victory salvage and old/new checkpoint restore');
@@ -81,15 +82,15 @@ console.log('PASS Reaver Medium+ hostile rosters, acquisition exclusions, victor
  await run("shoot(reaver,target,'body')");
  assert.ok(run('reaver.ap===8&&target.hp.body===fullHealth.body'));
 
- run('reaver.hp.left=reaver.max.left;reaver.ap=0');
+ run('reaver.hp.left=reaver.max.left;reaver.ap=counterCost(reaver,target,reaverGun)');
  await run("engage(target,reaver,'body',unitWeapon(target))");
  assert.ok(run('reaver.reacted&&reaver.ap===0&&fullHealth.body-target.hp.body===14'));
  await run("engage(target,reaver,'body',unitWeapon(target))");
- assert.equal(run('fullHealth.body-target.hp.body'),14,'No second counter in the same round');
+ assert.equal(run('fullHealth.body-target.hp.body'),14,'No second counter after spending the last AP');
 
  run(`Object.assign(reaver.hp,reaver.max);reaver.ap=8;target.hp={...fullHealth};
   reaver.order={discount:1,power:.2,shots:1};const totalOrderDamage=volleyDamage(hitPlan())`);
  await run("shoot(reaver,target,'body')");
  assert.ok(run('reaver.ap===6&&reaver.order===undefined&&fullHealth.body-target.hp.body===totalOrderDamage&&totalOrderDamage===34'));
- console.log('PASS Reaver 16/8 projectiles, 8 paired beats, armor/brace/shield/dodge and buffs, 3 AP burst, 0 AP one-per-round counter, and zero-arm lockout');
+ console.log('PASS Reaver 16/8 projectiles, 8 paired beats, armor/brace/shield/dodge and buffs, 3 AP burst, paid counter, and zero-arm lockout');
 })().catch(error=>{console.error(error);process.exitCode=1});

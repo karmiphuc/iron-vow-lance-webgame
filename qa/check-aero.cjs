@@ -54,10 +54,10 @@ const ids=['cleaver','breaker','piledriver','blade'];
  assert.equal(play('assignChassis(0,AERO_FRAME,true)'),true);
  play('createBattle(0,false,false,[0]);let aero=current(),attacker=battle.units.find(u=>u.team==="enemy");battle.cover.clear();battle.cover.add("2,16")');
  assert.equal(play('aero.melee'),'blade');
- assert.equal(play('freeMovement(aero)'),7);
+ assert.equal(play('movementLimit(aero)'),7);
  assert.equal(play('jumpjetLanding(aero,2,16)||jumpjetLanding(aero,7,16)||jumpjetLanding(aero,1,16)'),false);
  assert.equal(await play('useJumpjet(aero,4,16)'),true);
- assert.equal(play('aero.x===4&&aero.z===16&&aero.ap===6&&freeMovement(aero)===7&&aero.jumpjetUsed'),true);
+ assert.equal(play('aero.x===4&&aero.z===16&&aero.ap===11&&movementLimit(aero)===4&&aero.jumpjetUsed'),true);
  assert.equal(await play('useJumpjet(aero,5,16)'),false);
 
  const jetSave=require('./fixtures/aero-jumpjet.json');
@@ -72,14 +72,14 @@ const ids=['cleaver','breaker','piledriver','blade'];
  const initialHP=play('aero.hp.body');
  roll=.86;
  for(const id of ['rifle','missile','breaker']){
-  await play(`attacker.ap=8;shoot(attacker,aero,"body",weapon("${id}"))`);
+  await play(`attacker.ap=8;attacker.attackAPSpent=0;shoot(attacker,aero,"body",weapon("${id}"))`);
   assert.equal(play('aero.hp.body'),initialHP,id+' dodge');
   assert.ok(play('battle.log.at(-1).includes("dodged")'));
  }
- await play('shoot(attacker,aero,"body",weapon("rifle"),true)');
+ await play('attacker.ap=8;shoot(attacker,aero,"body",weapon("rifle"),true)');
  assert.equal(play('aero.hp.body'),initialHP,'counter dodge');
  roll=.5;
- await play('attacker.ap=8;shoot(attacker,aero,"body",weapon("rifle"))');
+ await play('attacker.ap=8;attacker.attackAPSpent=0;shoot(attacker,aero,"body",weapon("rifle"))');
  assert.ok(play('aero.hp.body')<initialHP,'normal hit still lands outside dodge band');
  console.log('PASS Aero purchase, saved Jumpjet, ranged/melee/counter dodge and all four Relay attacks');
 })().catch(error=>{console.error(error);process.exitCode=1});

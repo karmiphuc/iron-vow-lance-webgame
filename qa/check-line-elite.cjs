@@ -13,12 +13,12 @@ const simulate=require('./sim-harness.cjs');
   run(`createBattle(${i})`);
   assert.equal(run('battle.units.filter(u=>u.team==="enemy"&&u.frame===LINE_ELITE_FRAME).length'),i===2?1:0);
  }
- run('battle=null;deploy(2,false,[0]);closeModal()');
+ run('battle=null;deploy(2,false,[0]);closeModal();captureRandom=()=>1');
  const frame=run('LINE_ELITE_FRAME');
  const foe=run('battle.units[1].frame');
  assert.equal(foe,frame);
  await run('endTurn()');
- assert.equal(run('battle.log.some(line=>line.startsWith("LINE INFANTRY ELITE 1 → WARDEN"))'),false,
+ assert.equal(run('battle.units.some(u=>u.frame===LINE_ELITE_FRAME&&u.attackAPSpent>0)'),false,
   'an unprovoked sentry stays at its post beyond its detection range');
  run(`{
   const enemy=battle.units[1],target=current();
@@ -26,7 +26,7 @@ const simulate=require('./sim-harness.cjs');
   battle.cover.clear();
  }`);
  await run('endTurn()');
- assert.ok(run('battle.log.some(line=>line.startsWith("LINE INFANTRY ELITE 1 → WARDEN"))'));
+ assert.ok(run('battle.units.some(u=>u.frame===LINE_ELITE_FRAME&&u.attackAPSpent>0)'));
  const resumed=simulate({...options,storage:new Map(sim.storage)});
  assert.equal(resumed.run('battle.units[1].frame'),frame);
  assert.equal(resumed.run('JSON.stringify(captureSortie())'),run('JSON.stringify(captureSortie())'));

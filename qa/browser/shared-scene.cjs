@@ -78,7 +78,7 @@ module.exports=async function sharedScene({page,context,mobile,origin,tap}){
  assert.ok(await page.evaluate(({x,z})=>Math.hypot(fieldCamera.x-x,fieldCamera.z-z)>.01,start),'Pointer drag pans through world-space rays');
  await tap('#map-center');
  const move=await page.evaluate(()=>{
-  const u=current(),free=freeMovement(u),moves=__ironVow.legalMoves(u.id).filter(m=>m.cost>free);
+  const u=current(),moves=[...movementPlans(u).values()].filter(m=>m.elevationAP);
   return moves.map(m=>({...m,p:IronVowScene.project(m.x,terrainHeight(m.x,m.z),m.z)})).find(m=>m.p.x>180&&m.p.x<innerWidth-280&&m.p.y>230&&m.p.y<innerHeight-180&&IronVowScene.pick(m.p.x,m.p.y)?.team!=='enemy');
  });
  if(move&&!mobile){await page.mouse.move(move.p.x,move.p.y);await page.waitForFunction(()=>IronVowScene.overlayInfo().path.length>0);const info=await page.evaluate(()=>IronVowScene.overlayInfo());assert.ok(info.triangles>0&&info.path.some(p=>p.color===0xcc9b49),'Reach and paid-move path render actual amber geometry');assert.equal(info.selected,true);}

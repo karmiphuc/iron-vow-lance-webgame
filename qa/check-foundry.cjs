@@ -194,7 +194,7 @@ async function exerciseRigAdapter(){
  older.run('createBattle(3,false,true);persist()');
  const career=JSON.parse(older.storage.get(savedKey));
  career.sortie.version=3;
- delete career.sortie.stockHostiles;
+ delete career.sortie.stockHostiles;delete career.sortie.apRules;
  career.sortie.units.forEach(u=>delete u.hp.pilot);
  const migrated=simulate({storage:new Map([[savedKey,JSON.stringify(career)]])});
  assert.equal(migrated.run('battle.units[3].frame'),0);

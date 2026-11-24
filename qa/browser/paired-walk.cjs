@@ -90,7 +90,7 @@ module.exports=async function checkPairedWalk({page,mobile,origin}){
   const balanced=Math.abs(lands.filter(side=>side>0).length-lands.filter(side=>side<0).length)<=1;
   assert.ok(balanced&&lands.every((side,i)=>i<2||side!==lands[i-1]||side!==lands[i-2]),name+' alternates feet in walking order: '+JSON.stringify(lands));
   assert.ok(result.seam,name+' keeps its speed through the straight tile seam');
-  assert.deepEqual([result.ap,result.move,result.walks,result.motion],[fixture.ap,fixture.move-2,2,null]);
+  assert.deepEqual([result.ap,result.move,result.walks,result.motion],[fixture.ap-2,fixture.move-2,2,null]);
   assert.ok(result.bones.length>1,name+' updates live leg bones during its move');
   const first=result.bones[0],maxBoneMotion=Math.max(...result.bones.flatMap(pose=>pose.map((point,index)=>
    Math.hypot(...point.map((value,axis)=>value-first[index][axis])))));

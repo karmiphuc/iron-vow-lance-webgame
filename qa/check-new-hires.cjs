@@ -33,7 +33,7 @@ function recruit(kind,path=null,slot=0){
 
  const sapper=recruit(5,0),b=sapper.run;
  b('deploy(0,false,[0]);closeModal();let a=current(),t=battle.units[1],legs=t.max.legs;t.x=1;t.z=13;t.hp.legs=t.max.legs=250;let plain=partDamage(a,t,"legs",unitWeapon(a));skill()');
- assert.equal(b('a.ap'),7);
+ assert.equal(b('a.ap'),13);
  assert.equal(b('a.breach'),2);
  assert.ok(b('partDamage(a,t,"legs",unitWeapon(a))>plain'));
  assert.equal(b('partDamage(a,t,"legs",unitWeapon(a),true)'),b('plain'));
@@ -50,17 +50,17 @@ function recruit(kind,path=null,slot=0){
  await charged.run('shoot(current(),battle.units[1],"body")');
  assert.equal(charged.run('current().breach'),undefined,'the final charge is spent by the next ranged shot whatever part is passed');
  const mobile=recruit(5,1),m=mobile.run;
- m('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1];t.hp.legs=1;let free=freeMovement(a);skill()');
- assert.equal(m('a.brace&&freeMovement(a)===free'),true);
+ m('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1];t.hp.legs=1;let free=movementLimit(a);skill()');
+ assert.equal(m('a.brace&&movementLimit(a)===free+1'),true);
  // Charged rounds draw to-hit then a location among the limbs; script every round onto the legs.
  m('Math.random=(()=>{let i=0;const draws=[0,.99];return()=>draws[i++%2]})()');
  await m('engage(a,t,"body",unitWeapon(a))');
- assert.equal(m('a.ap'),7,'a lethal limb shot refunds only the attack cost');
- assert.equal(m('freeMovement(a)===free&&t.hp.legs===0&&a.breach===undefined'),true);
+ assert.equal(m('a.ap'),13,'a lethal limb shot refunds only the attack cost');
+ assert.equal(m('movementLimit(a)===free+1&&t.hp.legs===0&&a.breach===undefined'),true);
 
  const jammer=recruit(6,0),j=jammer.run;
  j('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1];t.x=1;t.z=12;let before=hitChance(t,a,"body");useSupportSkill(a,t)');
- assert.equal(j('a.ap'),7);
+ assert.equal(j('a.ap'),13);
  assert.equal(j('reactionStatus(t)'), 'JAMMED');
  assert.equal(j('reactionWeapon(t,a)'),null);
  assert.ok(j('hitChance(t,a,"body")<before'));
@@ -70,12 +70,12 @@ function recruit(kind,path=null,slot=0){
  await j('endTurn()');
  for(let i=0;i<20&&pending.run('battle?.busy');i++)await pending.flush();
  assert.equal(pending.run('battle.turn'),2);
- assert.equal(j('t.ap'),1,'4 AP at turn start leaves room for only one rifle shot');
+ assert.equal(j('t.ap'),3,'Blackout reduces the solo patrol to 6 AP before its rifle volley');
  assert.equal(j('t.blackout'),undefined);
  assert.equal(pending.run('JSON.stringify(captureSortie())'),j('JSON.stringify(captureSortie())'));
  const screen=recruit(6,1),s=screen.run;
- s('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1],free=freeMovement(a);t.x=1;t.z=10;useSupportSkill(a,t)');
- assert.ok(s('a.brace&&a.ap===8&&freeMovement(a)===free&&t.blackout.hold'));
+ s('createBattle(0,false,false,[0]);let a=current(),t=battle.units[1],free=movementLimit(a);t.x=1;t.z=10;useSupportSkill(a,t)');
+ assert.ok(s('a.brace&&a.ap===14&&movementLimit(a)===free+1&&t.blackout.hold'));
  const position=s('[t.x,t.z].join()');
  await s('endTurn()');
  assert.equal(s('[t.x,t.z].join()'),position,'the target cannot move into range');
@@ -86,7 +86,7 @@ function recruit(kind,path=null,slot=0){
  assert.equal(p('useSupportSkill(a,t)'),false);
  p('t.x=2;t.z=18');
  assert.equal(p('useSupportSkill(a,t)'),true);
- assert.equal(p('a.ap'),6);
+ assert.equal(p('a.ap'),12);
  assert.ok(p('t.brace&&canUseWeapon(t,unitWeapon(t))&&t.hp.legs===0&&!mobile(t)&&["right","left"].every(k=>t.hp[k]===Math.max(60,Math.ceil(t.max[k]*.75)))'));
  assert.equal(p('useSupportSkill(a,t)'),false);
  const salvage=recruit(7,1),w=salvage.run;

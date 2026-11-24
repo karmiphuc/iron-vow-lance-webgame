@@ -545,7 +545,7 @@ function prepareUnit(u,t){
 }
 function updateOverlays(){
  const selectedUnit=current(),ready=battle.phase==='player'&&!battle.busy;
- const reach=selectedUnit&&ready&&action==='move'?paths(selectedUnit):null,jump=selectedUnit&&ready&&action==='jumpjet';
+ const reach=selectedUnit&&ready&&action==='move'?movementPlans(selectedUnit):null,jump=selectedUnit&&ready&&action==='jumpjet';
  const w=selectedUnit&&ready&&action!=='move'&&action!=='tactical'&&!jump?selectedWeapon(selectedUnit):null;
  const plan=ready?currentTacticalPlan():null;
  const footprint=plan&&new Set(plan.tiles.map(tile=>tile.x+','+tile.z));
@@ -553,7 +553,8 @@ function updateOverlays(){
  const colors=overlays.geometry.attributes.color,indices=[];
  for(let z=0;z<battle.size.depth;z++)for(let x=0;x<battle.size.width;x++){
   const key=x+','+z,index=z*battle.size.width+x;let color;
-  if(reach?.get(key)>0)color=reach.get(key)>freeMovement(selectedUnit)?0xcc9b49:0x77b4c5;
+  const move=reach?.get(key);
+  if(move?.tiles)color=move.elevationAP?0xcc9b49:0x77b4c5;
   if(jump&&jumpjetLanding(selectedUnit,x,z))color=0x619fcb;
   if(w&&!battle.cover.has(key)&&distance(selectedUnit,{x,z})>0&&distance(selectedUnit,{x,z})<=weaponRange(w,selectedUnit.training)&&!attackObstruction(selectedUnit,{x,z},w))color=0xc48469;
   if(ready&&hover?.x===x&&hover?.z===z)color=0xe7be6e;
@@ -562,11 +563,12 @@ function updateOverlays(){
  }
  colors.needsUpdate=true;overlays.geometry.setIndex(indices);overlays.material.opacity=plan?.32:.20;
  for(const [ring,u] of [[selection,selectedUnit],[targetRing,battle.units.find(u=>u.alive&&u.id===lockedTarget)]]){ring.visible=Boolean(u);if(u)ring.position.copy(unitRoot(u)).add(V3(0,.04,0));}
- const spot=moveTap??hover,path=selectedUnit&&reach?.get(spot?.x+','+spot?.z)>0?route(selectedUnit,spot.x,spot.z):[];
+ const spot=moveTap??hover,move=spot&&reach?.get(spot.x+','+spot.z);
+ const path=move?.tiles?route(selectedUnit,spot.x,spot.z,move):[];
  let previous=selectedUnit;
  pathGroup.children.forEach((mesh,i)=>{const tile=path[i];mesh.visible=Boolean(tile);if(!tile)return;
   mesh.position.copy(world(tile.x,tile.z)).add(V3(0,.05,0));mesh.rotation.y=-Math.atan2(tile.z-previous.z,tile.x-previous.x);
-  mesh.material.color.setHex(i+1>freeMovement(selectedUnit)?0xcc9b49:0xbfe4ee);previous=tile;
+  mesh.material.color.setHex(elevationCost(selectedUnit,previous.x,previous.z,tile.x,tile.z)?0xcc9b49:0xbfe4ee);previous=tile;
  });
 }
 function render(t,dt){

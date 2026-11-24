@@ -1,3 +1,4 @@
+const assertLegacySortie=require('./legacy-sortie-check.cjs');
 const assert=require('node:assert/strict');
 const simulate=require('./sim-harness.cjs');
 const fixture=require('./fixtures/mech-mastery.json');
@@ -71,7 +72,7 @@ const fixture=require('./fixtures/mech-mastery.json');
  })()`));
 
  const resumed=simulate({reducedMotion:true,storage:new Map([['iron-vow-career',JSON.stringify(fixture)]])});
- assert.equal(resumed.run('JSON.stringify(captureSortie())'),JSON.stringify(fixture.sortie));
+ assertLegacySortie(assert,JSON.parse(resumed.run('JSON.stringify(captureSortie())')),fixture.sortie);
  assert.ok(resumed.run('current().jumpjetUsed&&hasMechSkill(current(),AERO_FRAME)&&hasMechSkill(current(),1)&&hasMechSkill(current(),0)'));
  assert.ok(resumed.run('current().mechState.moved===1'));
  console.log('PASS mech kill credit, skill learning, two-slot mastery, pilot transfers and portable Jumpjet checkpoint');

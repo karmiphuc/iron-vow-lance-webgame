@@ -28,7 +28,7 @@ function checkTraining(){
 async function checkCounters(){
  const sim=simulate({random:()=>0,reducedMotion:true}),run=sim.run;
  run(`createBattle(0);const ally=current(),foe=battle.units[3],gunship=battle.units.find(u=>u.kind==='helicopter');
-  ally.x=6;ally.z=6;foe.x=7;foe.z=6;gunship.x=7;gunship.z=6;ally.ap=0;ally.melee=null`);
+  ally.x=6;ally.z=6;foe.x=7;foe.z=6;gunship.x=7;gunship.z=6;ally.ap=14;ally.melee=null`);
  for(const missile of ['missile','locust']){
   run(`ally.weapon='${missile}';ally.brace=true;ally.training={range:2,braceCounterRange:3}`);
   assert.equal(run('counterRange(unitWeapon(ally),ally.training,true)'),0);
@@ -53,22 +53,23 @@ async function checkCounters(){
   run(`battle=null;createBattle(0);selected=0;
    var attacker=${side==='ally'?'battle.units[3]':'current()'},defender=${side==='ally'?'current()':'battle.units[3]'};
    attacker.x=6;attacker.z=6;defender.x=7;defender.z=6;attacker.weapon='rifle';
-   defender.weapon='missile';defender.melee=null;defender.ap=0;defender.level=10;
+   defender.weapon='missile';defender.melee=null;defender.ap=8;defender.level=10;
    var hpBefore=attacker.hp.body`);
   await run("engage(attacker,defender,'body',unitWeapon(attacker))");
   assert.ok(run('hpBefore-attacker.hp.body>=5&&hpBefore-attacker.hp.body<=10'),side+' real punch damage');
-  assert.equal(run('defender.ap'),0);
+  assert.equal(run('defender.ap'),4);
   assert.equal(run('defender.reacted'),true);
   assert.equal(run('Boolean(attacker.reacted)'),false,'no chain counters');
   assert.match(run('battle.log.join()'),/counters with a free hand/);
   run('persist()');
   const restored=simulate({storage:new Map(sim.storage)});
-  assert.equal(restored.run(`reactionStatus(battle.units[${side==='ally'?0:3}])`),'USED');
+  assert.equal(restored.run(`reactionStatus(battle.units[${side==='ally'?0:3}])`),'READY');
   run('hpBefore=attacker.hp.body');
   await run("engage(attacker,defender,'body',unitWeapon(attacker))");
-  assert.equal(run('attacker.hp.body'),run('hpBefore'),'one free-hand counter per round');
+  assert.ok(run('attacker.hp.body<hpBefore&&defender.ap===0'),'second counter spends the last 4 AP');
+  assert.equal(run('reactionWeapon(defender,attacker)'),null);
  }
- console.log('PASS Vesper and Locust missile lockout, 5-10 damage AP-free punches on both sides, range, arms, priorities and reload');
+ console.log('PASS Vesper and Locust missile lockout, 5-10 damage paid punches on both sides, range, arms, priorities and reload');
 }
 
 (async()=>{checkTraining();await checkCounters()})().catch(error=>{console.error(error);process.exitCode=1});

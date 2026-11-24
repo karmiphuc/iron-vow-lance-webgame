@@ -46,7 +46,7 @@ async function checkFistBalance(){
   const prepare=frame=>{
    battle=null;Object.assign(save.units[0],stockHull(frame),{frame});createBattle(1,false,true,[0]);enableMechComputers();
    const actor=current(),target=battle.units.find(u=>u.team==='enemy'&&!u.kind);
-   actor.x=2;actor.z=target.z=4;target.x=3;target.armor=5;target.brace=false;target.reacted=true;
+   actor.x=2;actor.z=target.z=4;target.x=3;target.armor=5;target.brace=false;target.noCounter=true;
    return [actor,target];
   };
   let [actor,target]=prepare(VYZOV_FRAME),hp=target.hp.body;

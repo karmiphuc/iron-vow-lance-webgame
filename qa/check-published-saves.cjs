@@ -1,3 +1,4 @@
+const assertLegacySortie=require('./legacy-sortie-check.cjs');
 const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const {join}=require('node:path');
@@ -20,7 +21,7 @@ for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v5
   assert.deepEqual(actual,career,file+' career, roster, hull and offer data');
   const {version,...checkpoint}=JSON.parse(sim.run('JSON.stringify(captureSortie())'));
   const {version:previousVersion,...previous}=expected;
-  assert.deepEqual(checkpoint,previous,file+' battlefield state including active skill effects');
+  assertLegacySortie(assert,checkpoint,previous,file+' battlefield state including active skill effects');
   assert.ok(version>=previousVersion,file+' checkpoint version');
  }
  check();
