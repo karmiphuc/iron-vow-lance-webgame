@@ -85,38 +85,38 @@ function hindLeg(m,leg,toe,run,spring,phase,lock){
   .multiply(m.cont.getWorldQuaternion(new T.Quaternion())).multiply(rotation);
  orient(m,leg.an,new T.Euler(phase*.26*run+.20*spring,leg.toe,0,'YXZ'));
 }
-function foreLeg(m,input,arm,state,run,spring,lock,dt,reset){
- const base=m.cont.position,yaw=m.yaw;
- const stance=home(m,arm,input);
- const wider=arm.sign*.22*lock,forward=.70*lock;
- stance.x+=wider*Math.cos(yaw)+forward*Math.sin(yaw);
- stance.z+=forward*Math.cos(yaw)-wider*Math.sin(yaw);
- stance.y=(input.groundAt?.(stance.x,stance.z)??input.ground??base.y)+ankleHeight*scale;
- const toe=arm.contact;
- // At rest and during fire the knuckles carry the front of the hull. On
- // departure the elbows lead and the long splints fold aft alongside the pod.
- if(reset||run>.38||toe.distanceTo(stance)>scale*1.65){
-  toe.copy(stance);arm.step=null;
- }else if(!input.moving){
-  // Replant a single knuckle at a time when the brace widens or the hull
-  // turns. The other pad holds its world point until this contact lands.
-  const threshold=arm.side==='R'?.19:.28;
-  if(!arm.step&&toe.distanceTo(stance)>threshold&&!state.forelegs.some(other=>other!==arm&&other.step))
-   arm.step={p:0,from:toe.clone(),to:stance.clone()};
-  if(arm.step){
-   const step=arm.step;step.p=clamp(step.p+dt/.17);
-   toe.copy(step.from).lerp(step.to,smooth(step.p));toe.y+=.15*Math.sin(Math.PI*step.p);
-   if(step.p===1)arm.step=null;
-  }
- }
- arm.fold=approach(arm.fold,input.moving&&!input.reducedMotion?1:0,
-  input.moving?(arm.side==='L'?16:11):(arm.side==='L'?13:18),dt);
+// Keep the broad guard ahead of the cockpit. Its wrist claw is the single
+// forward ground contact; the opposite hand can stay on the Quill's grip.
+function poseArm(m,arm,target,spring){
  const folded=m.cont.localToWorld(V(arm.restX*.87,2.50+.25*spring,-1.22));
- const target=toe.clone().lerp(folded,Math.max(arm.fold,spring*.88));
- // The arm opposite the leading foot touches down first on braking.
+ target.lerp(folded,Math.max(arm.fold,spring*.88));
  target.y+=Math.sin(Math.PI*arm.fold)*.42*scale;
- arm.bendPole.set(arm.sign*.57,arm.fold*.76,.55+arm.fold);
+ arm.bendPole.set(arm.sign*(1.15-.58*arm.fold),-.27+arm.fold*1.03,-.90+2.45*arm.fold);
  R.solveWorldLeg(m,arm,target,m.yaw+arm.sign*.16);
+}
+function shieldArm(m,input,state,spring,lock,dt,reset){
+ const arm=state.forelegs[1],brace=ease(lock,.09,.79);
+ const stance=m.cont.localToWorld(V(-.40,0,2.12));
+ stance.y=(input.groundAt?.(stance.x,stance.z)??input.ground??0)+ankleHeight*scale;
+ // Acquire the patch as the claw descends, then leave it fixed through recoil.
+ // If the chassis turns to a new lane, lift and set the claw again.
+ if(reset||brace<.96||input.moving){arm.contact.copy(stance);arm.step=null;}
+ else if(!arm.step&&arm.contact.distanceTo(stance)>.62)
+  arm.step={p:0,from:arm.contact.clone(),to:stance};
+ if(arm.step){
+  arm.step.p=clamp(arm.step.p+dt/.20);
+  arm.contact.copy(arm.step.from).lerp(arm.step.to,smooth(arm.step.p));
+  arm.contact.y+=.20*scale*Math.sin(Math.PI*arm.step.p);
+  if(arm.step.p===1)arm.step=null;
+ }
+ const claw=arm.contact.clone();
+ claw.y+=.94*scale*(1-brace);
+ poseArm(m,arm,claw,spring);
+ orient(m,state.buckler,new T.Euler(.055+.89*arm.fold,-.06-.29*arm.fold,-.035+.16*arm.fold,'YXZ'));
+}
+function rifleHand(m){
+ const state=m.nightjar;
+ poseArm(m,state.forelegs[0],state.grip.getWorldPosition(V()),state.spring);
 }
 function animate(m,input,dt,t){
  const state=m.nightjar,rig=m.rig,{slide,mast,breech}=state;
@@ -165,10 +165,19 @@ function animate(m,input,dt,t){
   toe.y+=spring*(i===0?.83:.53)*scale;
   hindLeg(m,leg,toe,run,spring,state.swing?.i===i?Math.sin(2*Math.PI*state.swing.p):0,lock);
  }
- for(const arm of state.forelegs)foreLeg(m,input,arm,state,run,spring,lock,dt,reset);
- const attitude=new T.Euler(.28*(1-lock)-.03*lock+-.20*run+.26*down,0,-.04*(1-lock),'YXZ');
- orient(m,breech,attitude);
- orient(m,state.buckler,new T.Euler(.13+run*.81,-.45+.22*lock,-.12+.22*run,'YXZ'));
+ state.spring=spring;
+ for(const arm of state.forelegs){
+  arm.fold=approach(arm.fold,input.moving&&!input.reducedMotion?1:0,
+   input.moving?(arm.side==='L'?16:11):(arm.side==='L'?13:18),dt);
+ }
+ shieldArm(m,input,state,spring,lock,dt,reset);
+ // Travel retracts the carriage to the left cheek. At rest the hand catches
+ // the grip inboard, under the sight. The trunnion tracks the target above it.
+ breech.position.set(.65+.55*run-.08*lock,.50+.12*run,1.74-1.43*run+.08*lock);
+ orient(m,breech,new T.Euler(.10*(1-lock)-.018*lock-.045*run+.26*down,0,-.025*(1-lock),'YXZ'));
+ const link=state.link,local=breech.position.clone().sub(link.position);
+ link.quaternion.setFromUnitVectors(V(0,0,1),local.clone().normalize());
+ link.scale.z=local.length();
  slide.position.z=-.23*Math.max(kick,Math.min(1,m.recoil));
  m.recoil*=Math.exp(-20*dt);
  const pulse=input.reducedMotion||!alive?0:Math.max(spring,run*Math.max(0,1-(input.moveAge??0)/.40)*.75);
@@ -194,7 +203,7 @@ function build(unit,source){
    bendPole:V(sign*.57,0,.55),restX:sign*1.46,restZ:.94+sign*.12,contact:V(),fold:0});
  }
  const materials=new Map(),parts=Object.fromEntries(R.parts.map(key=>[key,[]]));
- const owners=new Map([[neck,'pilot'],[arms.L.sh,'left'],[arms.R.sh,'right'],...legs.map(leg=>[leg.rocker,'legs'])]);
+ const owners=new Map([[neck,'pilot'],[node('Breech'),'left'],[node('GunLink'),'left'],[arms.L.sh,'left'],[arms.R.sh,'right'],...legs.map(leg=>[leg.rocker,'legs'])]);
  source.traverse(mesh=>{
   if(!mesh.isMesh)return;
   let parent=mesh.parent;while(parent&&!owners.has(parent))parent=parent.parent;
@@ -212,12 +221,12 @@ function build(unit,source){
  const breech=node('Breech'),slide=node('Slide'),muzzle=node('Muzzle'),buckler=node('Buckler');
  const rifle={id:'quill-lance',mount:breech,carrier:arms.L.sh,recoil:slide,muzzle,subsystem:'left',aimPivot:()=>breech};
  const guard={mount:buckler,face:node('ShieldFace'),grip:arms.R.wr};
- m.nightjar={forelegs,aim:0,run:0,next:0,swing:null,dodgeAt:-100,dodgeSign:1,breech,slide,buckler,jets:[node('VernierL'),node('VernierR')],mast:node('Mast')};
+ m.nightjar={forelegs,aim:0,run:0,next:0,swing:null,dodgeAt:-100,dodgeSign:1,breech,slide,buckler,link:node('GunLink'),grip:node('GunGrip'),spring:0,jets:[node('VernierL'),node('VernierR')],mast:node('Mast')};
  m.nightjar.plumes=m.nightjar.jets.map((jet,i)=>exhaust(jet,i===0?1:-1));
  m.nativeV2={source,worldScale:scale,animate,nativeShield:true,targetingBlend:()=>m.nightjar.aim,
   pose(entry){entry.primary=rifle;entry.shield=guard;return true;},
   dodge(time,incoming){m.nightjar.dodgeAt=time;m.nightjar.dodgeSign=V(Math.cos(m.yaw),0,-Math.sin(m.yaw)).dot(incoming)>0?-1:1;},
-  sync(){m.cont.updateMatrixWorld(true);},
+  sync(){rifleHand(m);m.cont.updateMatrixWorld(true);},
   bounds(name){const part=name==='neck'?neck:legs.find(leg=>name==='ankle.'+leg.side)?.an;return part?new T.Box3().setFromObject(part):new T.Box3();},
   dispose(){for(const plume of m.nightjar.plumes)for(const mesh of plume.children){mesh.geometry.dispose();mesh.material.dispose();}}
  };

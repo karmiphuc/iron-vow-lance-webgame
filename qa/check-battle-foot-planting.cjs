@@ -70,21 +70,38 @@ async function main(){
   }
   if(!phases.walk.contacts)failures.push(`${u.name} / ${terrain}: walking produced zero footfalls`);
  }
- // Nightjar uses the front pair as planted knuckles, then carries both under
- // the shell while the four-link hind limbs run. Verify the shipped geometry.
+ // Read the shipped joints, so a correct IK target alone cannot pass the gate.
  const sniper=units.find(u=>u.name==='NIGHTJAR');
  S.clearCombat();
  let distance=0,widest=0,plantError=0,foldHeight=0;
- function sample(moving,aim=0){
+ function sample(moving,aim=0,floor=()=>0){
   time+=1/60;
   if(moving)distance+=8/60;
   sniper.motion=moving?{playbackRate:1,start:0}:null;
   return S.draw(sniper,time,{aim,recoil:0,brace:aim,impact:0,strikeProgress:0,primeProgress:0,phase:0,
-   world:{x:0,y:0,z:distance,face:0,heading:0,groundAt:()=>0,speed:moving?8:0,aim:R.V3(0,3,distance+15)}},
+   world:{x:0,y:floor(0,distance),z:distance,face:0,heading:0,groundAt:floor,speed:moving?8:0,aim:R.V3(0,3,distance+15)}},
    scope,sniper.foundry,'rig-v2').m;
  }
  const initial=sample(false),standingHeight=initial.rig.pelvis.position.y;
- for(const arm of initial.nightjar.forelegs)assert.ok(arm.an.getWorldPosition(R.V3()).distanceTo(arm.contact)<.03,'front claw arrives on its pad');
+ function local(m,node){return m.cont.worldToLocal(node.getWorldPosition(R.V3()));}
+ function checkGuardAndGrip(m){
+  const state=m.nightjar,face=local(m,state.buckler.getObjectByName('ShieldFace')),spine=local(m,m.rig.spine);
+  const optic=local(m,m.rig.neck),gun=local(m,state.breech);
+  assert.ok(face.z>optic.z+.42&&Math.abs(face.x-spine.x)<.52,'shield leads the hull and covers its center');
+  const shieldPoint=m.cont.localToWorld(R.V3(spine.x,spine.y+.32,face.z+2));
+  const ray=new THREE.Raycaster(shieldPoint,R.V3(0,0,-1).applyQuaternion(m.cont.getWorldQuaternion(new THREE.Quaternion())));
+  assert.ok(ray.intersectObject(state.buckler,true).length,'a frontal ray to the torso strikes shield geometry');
+  const muzzle=m.wpn.muzzle.getWorldPosition(R.V3()),direction=m.wpn.muzzle.getWorldDirection(R.V3()).negate();
+  // Include the receiver width on the shield side, not only the center of the bore.
+  for(const offset of [0,-.23*m.scale]){
+   const origin=muzzle.clone().add(R.V3(offset,0,0).applyQuaternion(m.cont.getWorldQuaternion(new THREE.Quaternion())));
+   assert.equal(new THREE.Raycaster(origin,direction,0,4*m.scale).intersectObject(state.buckler,true).length,0,'receiver clears the shield notch');
+  }
+  assert.ok(Math.abs(gun.x)<.78&&gun.z>optic.z+.25,'Quill drawn forward into the sight line');
+  assert.ok(m.rig.arms.L.wr.getWorldPosition(R.V3()).distanceTo(state.grip.getWorldPosition(R.V3()))<.04,'left hand seats on the actual gun grip');
+ }
+ checkGuardAndGrip(initial);
+ assert.ok(local(initial,initial.rig.arms.R.wr).y>.65,'forward claw is raised in standing guard');
  for(let frame=0;frame<240;frame++){
   const m=sample(true),toes=m.rig.legs.map(l=>l.an.getWorldPosition(R.V3()));
   for(const [i,foot] of m.legs.entries())if(!foot.swing)plantError=Math.max(plantError,toes[i].distanceTo(foot.foot));
@@ -95,7 +112,19 @@ async function main(){
  let braced;
  for(let frame=0;frame<160;frame++)braced=sample(false,1);
  assert.ok(braced.rig.pelvis.position.y<standingHeight-.55,'chassis settles between its contacts');
- for(const arm of braced.nightjar.forelegs)assert.ok(arm.an.getWorldPosition(R.V3()).distanceTo(arm.contact)<.03,'four-point firing support');
+ checkGuardAndGrip(braced);
+ const shieldClaw=braced.rig.arms.R.wr,plant=shieldClaw.getWorldPosition(R.V3());
+ assert.ok(plant.distanceTo(braced.nightjar.forelegs[1].contact)<.025,'shield claw carries the front of the tripod');
+ assert.ok(local(braced,braced.rig.arms.L.wr).y>.85,'gun hand stays clear of the ground during the shot');
+ for(const [i,leg] of braced.rig.legs.entries())assert.ok(leg.an.getWorldPosition(R.V3()).distanceTo(braced.legs[i].foot)<.025,'each rear tripod claw stays planted');
+ const muzzle=braced.wpn.muzzle,ray=muzzle.getWorldDirection(R.V3());
+ const toTarget=R.V3(0,3,distance+15).sub(muzzle.getWorldPosition(R.V3())).normalize();
+ assert.ok(ray.dot(toTarget)>.995&&Math.abs(ray.y)<.20,'muzzle is on the distant target with a shallow barrel angle');
+ S.clearCombat();
+ const bank=(x,z)=>.18*x+.12*(z-distance);
+ for(let frame=0;frame<140;frame++)braced=sample(false,1,bank);
+ const pad=braced.rig.arms.R.wr.getWorldPosition(R.V3());
+ assert.ok(Math.abs(pad.y-bank(pad.x,pad.z)-braced.dims.ankleH*braced.scale)<.035,'third claw lands on sloped ground');
  for(const u of units)for(const downReason of ['body','pilot']){
   S.clearCombat();
   const draw=(face,deathAge,reducedMotion=false)=>{
