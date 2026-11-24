@@ -291,6 +291,7 @@ function draw(u,t,pose,scope,model,custom){
  m.recoil=world?Math.max(m.recoil,Math.abs(pose.recoil)*.58):Math.abs(pose.recoil)*.58;
  if(melee){
   if(!m.melee||m.melee.action!==u.attack)m.melee={action:u.attack,age:meleeAge,prev:null};
+  m.melee.breaker=pose.strikeKind==='breaker';
   m.melee.age=meleeAge;m.melee.side=v2?.meleeSide?.(pose.strikeKind)||(u.meleeHand==='right'?'R':'L');m.melee.thrust=window.IronVowWeaponFX?window.IronVowWeaponFX.get(pose.strikeKind).style==='thrust':pose.strikeKind==='pike';
  }else m.melee=null;
  v2?.beforeAnimate?.(m,pose.strikeKind||u.melee);

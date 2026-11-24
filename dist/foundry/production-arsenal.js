@@ -108,27 +108,37 @@ function meleeBasis(forward,right,rotation){
 }
 function poseMelee(weapon,side,heading,progress,target){
  if(!weapon?.meleeStyle||!weapon.tip||!weapon.mount.visible)return;
- const {mount,grip,tip,meleeStyle}=weapon;
+ const {mount,grip,tip,base,meleeStyle}=weapon;
+ const breaker=weapon.id==='breaker'&&Boolean(base);
  if(!weapon.gripBasis){
   const localPoint=node=>mount.worldToLocal(node.getWorldPosition(new T.Vector3()));
-  const shaft=localPoint(tip).sub(localPoint(grip??mount)).normalize();
-  const right=new T.Vector3(0,1,0).cross(shaft).normalize();
+  const pivot=localPoint(grip??mount);
+  const shaft=localPoint(tip).sub(pivot).normalize();
+  // The Breaker's impact shoe is offset from its haft. Use the actual head
+  // and haft plane to keep the teeth on the leading face of the drop.
+  const up=breaker?localPoint(base).sub(pivot):new T.Vector3(0,1,0);
+  const right=up.cross(shaft).normalize();
   weapon.gripBasis=meleeBasis(shaft,right,new T.Quaternion()).invert();
  }
  const sign=side==='L'?1:-1,ram=meleeStyle==='thrust',maul=meleeStyle==='maul';
  const sine=Math.sin(heading),cosine=Math.cos(heading);
  const right=new T.Vector3(cosine,0,-sine);
  const facing=new T.Vector3(sine,0,cosine);
- const carry=new T.Vector3(0,ram?.14:.69,0).addScaledVector(right,sign*.22)
-  .addScaledVector(facing,ram?.96:.69).normalize();
- const wind=new T.Vector3(0,ram?.24:.93,0).addScaledVector(right,sign*(ram?.32:maul?.24:.62))
-  .addScaledVector(facing,ram?.88:maul?-.34:.12).normalize();
+ const carry=new T.Vector3(0,breaker?.82:ram?.14:.69,0).addScaledVector(right,sign*.22)
+  .addScaledVector(facing,breaker?.52:ram?.96:.69).normalize();
+ const wind=new T.Vector3(0,breaker?.79:ram?.24:.93,0).addScaledVector(right,sign*(ram?.32:maul?.24:.62))
+  .addScaledVector(facing,ram?.88:breaker?-.53:maul?-.34:.12).normalize();
  if(progress>0){
   const contact=target?target.clone().sub(mount.getWorldPosition(new T.Vector3())):facing.clone();
   if(contact.lengthSq()<1e-6)contact.copy(facing);
   contact.normalize();
   const blend=(from,to)=>{const q=Math.min(1,Math.max(0,(progress-from)/(to-from)));return q*q*(3-2*q);};
-  if(progress<=.52)carry.lerp(wind,blend(0,.52));
+  if(breaker&&progress>.7){
+   // Let the head finish the downswing before the wrist lifts back to guard.
+   const follow=contact.clone().addScaledVector(new T.Vector3(0,1,0),-.46).addScaledVector(right,sign*.10).normalize();
+   if(progress<=.81)carry.copy(contact).lerp(follow,blend(.70,.81));
+   else carry.lerp(follow,1-blend(.81,1));
+  }else if(progress<=.52)carry.lerp(wind,blend(0,.52));
   else if(progress<=.81)carry.copy(wind).lerp(contact,blend(.52,.70));
   else carry.lerp(contact,1-blend(.81,1));
  }

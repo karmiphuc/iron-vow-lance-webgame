@@ -43,7 +43,7 @@ root.IronVowRigV2.register(10,{
     const right=u.alive&&u.hp.right>0,left=u.alive&&u.hp.left>0,shoulderOnline=right&&u.hp.body>0;
     const rightMelee=u.meleeHand==='right',melee=!u.shield||rightMelee?u.melee:null;
     const shoulderId=u.shoulder??(['missile','cerberus'].includes(u.weapon)?u.weapon:null);
-    const nativeRifle=u.weapon==='rifle',nativeMissile=['missile','vesper-shoulder'].includes(shoulderId),nativeBlade=!rightMelee&&blades.get(melee);
+    const nativeRifle=u.weapon==='rifle',nativeMissile=['missile','vesper-shoulder'].includes(shoulderId),nativeBlade=!rightMelee&&melee!=='breaker'&&blades.get(melee);
     rifleModel.visible=rifleMount.visible=right&&nativeRifle;
     rifleMount.position.copy(rifleRest).addScaledVector(rifleAxis,-Math.abs(pose.recoil||0)*.22);
     launcher.visible=rack.visible=shoulderOnline&&nativeMissile;

@@ -105,6 +105,13 @@ const _a=V3(),_b=V3(),_c=V3();
 const MEL={wind:.38,hit:.46,strike:.5,hold:.72,end:1.1};
 const thrustWindup={sx:-.66,sz:-.08,el:-1.35,wr:.36,yaw:-.16,lean:-.08};
 const thrustContact={sx:-1.12,sz:.12,el:-.33,wr:-.10,yaw:.13,lean:.13};
+// Measured Warden overhead drop keys, adapted from
+// tools/authoring/warden/bench-strikes.json (breaker, lines 2–75).
+const breakerDrop={
+ wind:{sx:-2.86,sz:-.26,el:-.82,wr:.60,yaw:-.18,lean:-.18},
+ hit:{sx:-1.08,sz:.05,el:-.21,wr:1.12,yaw:.16,lean:.28},
+ offArm:-.45
+};
 function meleeKeys(a,thrust,style){if(a<0||a>MEL.end)return null;
   const P0={sx:-.28,sz:-.07,el:-.62,wr:0,yaw:0,lean:0};
   // A chassis may author its own swing (dims.melee); thrust weapons keep the shared pike keys.
@@ -513,10 +520,10 @@ function animateMech(m,I,dt,t){
   // Solve contact once, after the right arm has blended both carry poses.
   const gripWeight=guard?.support?lerp(sup,1,guardWeight):sup;
   if(canSupport&&gripWeight>.01)supportGrip(m,aL,gripWeight);
-  if(m.melee&&!dead){const K=meleeKeys(m.melee.age,m.melee.thrust,D.melee);
+  if(m.melee&&!dead){const style=m.melee.breaker?breakerDrop:D.melee,K=meleeKeys(m.melee.age,m.melee.thrust,style);
     if(K){const wv=K.w*(1-guardWeight),right=m.melee.side==='R',active=right?aR:aL,other=right?aL:aR,sign=right?1:-1;
       active.sh.rotation.x=lerp(active.sh.rotation.x,K.sx,wv);active.sh.rotation.z=lerp(active.sh.rotation.z,sign*K.sz,wv);active.el.rotation.x=lerp(active.el.rotation.x,K.el,wv);active.wr.rotation.x=lerp(0,K.wr,wv);
-      r.spine.rotation.y+=sign*K.yaw*wv;r.spine.rotation.x+=K.lean*wv;other.sh.rotation.x=lerp(other.sh.rotation.x,D.melee?.offArm??-.7,wv*.5);}
+      r.spine.rotation.y+=sign*K.yaw*wv;r.spine.rotation.x+=K.lean*wv;other.sh.rotation.x=lerp(other.sh.rotation.x,style?.offArm??-.7,wv*.5);}
     else m.melee=null;}
   if(m.shield)m.shield.visible=!I.shieldDead;
   for(const a of [aL,aR]){a.paul.rotation.x=a.sh.rotation.x*.28;a.paul.rotation.z=a.sh.rotation.z*.4;}

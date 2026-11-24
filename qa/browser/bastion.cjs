@@ -14,7 +14,7 @@ module.exports=async function bastionSharedRig({page,mobile,origin,tap}){
   const entry=IronVowFoundry.preview({frame:10,weapon:'rifle',melee},2),m=entry.m,p=node=>node.getWorldPosition(new THREE.Vector3());
   const source=m.nativeV2.source,node=name=>source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
   const pistons=JSON.parse(node('root').userData.pistons);
-  const left=entry.secondary.model.isMesh||melee==='blade'?m.rig.arms.L.so:node('weapon.'+melee);
+  const left=entry.secondary.model.isMesh||['blade','breaker'].includes(melee)?m.rig.arms.L.so:node('weapon.'+melee);
   return {left:p(entry.secondary.mount).distanceTo(p(left)),right:p(entry.primary.mount).distanceTo(p(m.rig.arms.R.so)),
     tip:Boolean(entry.secondary.tip),width:entry.surface.width,pistons:pistons.filter(pair=>pair.every(node)).length};
  }));

@@ -19,6 +19,7 @@ module.exports=async function checkMeleeGrip({page,origin}){
    const facing=V(Math.sin(heading),0,Math.cos(heading)),out=V(Math.cos(heading),0,-Math.sin(heading)).multiplyScalar(right?-1:1);
    const aim=facing.clone().multiplyScalar(7).setY(3);
    const label=[frame,side,melee,heading].join('/');
+   const drop={};
    function check(progress,expected){
     now+=1/60;
     const pose=animationPose(unit,now);
@@ -33,13 +34,30 @@ module.exports=async function checkMeleeGrip({page,origin}){
     if(grip.distanceTo(pos(socket))>.01)failures.push(label+' grip moved off the hand');
     if(gear.mount.visible!==expected)failures.push(label+' weapon visibility does not follow arm health');
     if(!expected)return;
-    if(progress===null&&(shaft.y<.06||shaft.dot(out)<.12||shaft.dot(facing)<.58))failures.push(label+' unsafe carry '+shaft.toArray());
+    if(progress===null&&(shaft.y<.06||shaft.dot(out)<.12||shaft.dot(facing)<(melee==='breaker'?.47:.58)))failures.push(label+' unsafe carry '+shaft.toArray());
     if(progress===.7&&shaft.dot(aim.clone().sub(grip).normalize())<.985)failures.push(label+' misses contact direction '+shaft.toArray());
+    if(melee==='breaker'){
+     // The head's impact shoe must lead an overhead drop with the same model in either hand.
+     if(!gear.base||gear.model.name!=='breaker'){
+      failures.push(label+' does not have the production hammer and its haft marker');
+      return;
+     }
+     const haft=pos(gear.base).sub(grip).normalize();
+     const shoe=shaft.clone().addScaledVector(haft,-shaft.dot(haft)).normalize();
+     drop[progress]={head:pos(gear.tip),shaft,shoe};
+    }
     if(right&&!entry.shield?.mount.visible)failures.push(label+' lost its left-hand shield');
    }
    check(null,true);
    check(.52,true);
    check(.7,true);
+   check(.81,true);
+   if(melee==='breaker'&&drop[.52]&&drop[.7]&&drop[.81]){
+    const wind=drop[.52],impact=drop[.7],follow=drop[.81];
+    if(wind.shaft.dot(facing)>-.35||wind.head.y<impact.head.y+.40||
+       impact.shoe.y>-.55||follow.shaft.y>impact.shaft.y-.14)
+     failures.push(label+' hammer does not lead with its impact shoe through the drop');
+   }
    check(.91,true);
    check(null,true);
    unit.hp[right?'right':'left']=0;

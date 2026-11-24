@@ -38,7 +38,7 @@ root.IronVowRigV2.register(19,{
     const right=unit.alive&&unit.hp.right>0,left=unit.alive&&unit.hp.left>0;
     const rightMelee=unit.meleeHand==='right',melee=unit.shield&&!rightMelee?null:unit.melee;
     const rackId=unit.shoulder??(['missile','cerberus'].includes(unit.weapon)?unit.weapon:null);
-    const nativeRifle=unit.weapon==='rifle',nativeBlade=!rightMelee&&blades.get(melee);
+    const nativeRifle=unit.weapon==='rifle',nativeBlade=!rightMelee&&melee!=='breaker'&&blades.get(melee);
     const handId=nativeRifle||unit.weapon===rackId?null:unit.weapon;
     rifleMount.visible=rifleModel.visible=right&&nativeRifle;
     for(const weapon of blades.values())weapon.mount.visible=weapon.model.visible=left&&weapon===nativeBlade;
@@ -52,7 +52,11 @@ root.IronVowRigV2.register(19,{
      if(arsenal.isExpansion(otherRifle.id))arsenal.animate(otherRifle,pose);
      else otherRifle.recoil.position.z=-Math.abs(pose.recoil)*.22;
     }
-    if(otherBlade){otherBlade.mount.visible=rightMelee?right:left;arsenal.animate(otherBlade,pose);}
+    if(otherBlade){
+     if(melee==='breaker')otherBlade.model.scale.setScalar(.72);
+     otherBlade.mount.visible=rightMelee?right:left;
+     arsenal.animate(otherBlade,pose);
+    }
     entry.shoulderWeapon=rack;
     entry.primary=(nativeRifle?rifle:otherRifle)??rack;
     entry.secondary=nativeBlade||otherBlade;
