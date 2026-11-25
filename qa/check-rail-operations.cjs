@@ -42,7 +42,7 @@ assert.equal(battleSim.run(`(()=>{
  const offer=availableOffers('picket')[0];
  createBattle(offer.templateIndex,false,false,[0],false);
  battle.offer=acceptedOffer(offer);
- const baseline=worldContractPay(battle.contract,1,battle.offer)+(battle.contract.fixedPay?0:450+battle.contract.difficulty*200+180*battle.units.filter(unit=>unit.kind).length);
+ const baseline=worldContractPay(battle.contract,1,battle.offer);
  finish(true);
  return save.history.at(-1).pay-baseline;
 })()`),650,'First timely Karst contract pays the supply bonus');
