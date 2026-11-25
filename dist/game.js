@@ -1086,7 +1086,7 @@ function gainAP(u,amount){
 }
 function resistsStatus(u,effect='status'){
  const chance=statusResistance(u);
- if(!chance||(battle.hostileAP?comRandom():ruleRandom())>=chance)return false;
+ if(!chance||ruleRandom()>=chance)return false;
  addLog(u.name+' resisted '+effect+' with Def-C.');
  return true;
 }
