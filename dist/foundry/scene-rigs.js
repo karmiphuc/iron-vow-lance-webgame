@@ -402,6 +402,7 @@ function draw(u,t,pose,scope,model,custom){
  if(v2&&u.upgrade&&!m.build.kits&&(pose.preview||pose.stage))VC.fitReinforcement(m,u.upgrade);
  if(pose.stage==='bench'&&pose.clip)v2?.scrub?.(pose.clip,pose.clipTime);
  m.cont.updateMatrixWorld(true);
+ v2?.groundShadow?.(m,world,pose.stage);
  if(pose.stage)return entry;
  if(!world){
   setCamera(.46);

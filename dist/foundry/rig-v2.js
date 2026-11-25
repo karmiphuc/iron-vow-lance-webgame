@@ -28,7 +28,7 @@ function load(units,scope='battle'){
   if(cached)return cached.request;
   const asset={status:'loading'};
   cache.set(assetPath,asset);
-  asset.request=loader.loadAsync(root.IRON_VOW_INLINE_ASSETS?.[assetPath]||assetPath).then(({scene,parser,animations})=>{
+  asset.request=loader.loadAsync(root.IRON_VOW_INLINE_ASSETS?.[assetPath.split('?')[0]]||assetPath).then(({scene,parser,animations})=>{
    if(cache.get(assetPath)!==asset){releaseStock(scene);return false;}
    // The vendored renderer samples all color maps through the primary attribute.
    scene.traverse(mesh=>{
@@ -317,7 +317,7 @@ function build(unit,scope='battle'){
  });
  mech.nativeV2={
   source,sync:animate?()=>source.updateWorldMatrix(true,true):sync,animate,bounds,clips:asset.animations,scrub:scrubber?.sample,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
-  jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
+  jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,groundShadow:equipment.groundShadow,
   anchors:equipment.anchors,nativeShield:equipment.nativeShield,meleeSide:equipment.meleeSide,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){
    scrubber?.dispose();equipment.dispose?.();

@@ -6,11 +6,14 @@ The Blender scene and review GLB retain their full-detail geometry.
 
 from hashlib import sha256
 import json
+from math import cos, pi, sin, sqrt
 from pathlib import Path
 import struct
 from tempfile import TemporaryDirectory
 
 import bpy
+from mathutils.bvhtree import BVHTree
+from mathutils.kdtree import KDTree
 
 
 OUTPUT = Path(__file__).resolve().parents[1] / 'dist/rig-bench/rig-v2/raven.glb'
@@ -31,6 +34,10 @@ def triangles(mesh):
 def add_inlay_mask(original, mesh):
     name = original.name.partition('.')[0]
     inlay = mesh.attributes.new('_RAVEN_INLAY', 'FLOAT_VECTOR', 'POINT')
+    edge = mesh.attributes.new('_RAVEN_EDGE', 'FLOAT', 'POINT')
+    if name in ('Crown turned perimeter', 'Greave assembled edge rail', 'Upper armor rebate'):
+        for point in edge.data:
+            point.value = .42 if name == 'Upper armor rebate' else .80
     if name == 'Raised six-sided cheek plate':
         # The six-sided pressing has eight 24-vertex rings and a center.
         # Tint the outer lip, where the flat and rolled perimeter rings meet.
@@ -44,9 +51,12 @@ def add_inlay_mask(original, mesh):
     accents = {
         'Stepped cheek service cut': (1, 1, 0),
         'Deck spline slot bed': (1, 0, 1),
-        'Blade lateral wear strip': (0, 0, 1),
     }
-    if original.name in ('Greave assembled edge rail', 'Greave assembled edge rail.002'):
+    if name == 'Blade lateral wear strip':
+        left = original['rig_attachment'] == 'Shield.L'
+        for vertex in mesh.vertices:
+            inlay.data[vertex.index].vector = (vertex.co.z < 4.05, left or vertex.co.z > 3.55, 1)
+    elif original.name in ('Greave assembled edge rail', 'Greave assembled edge rail.002'):
         for point in inlay.data:
             point.vector = (0, 1, 0)
     elif name in accents:
@@ -107,6 +117,68 @@ def build_meshes(scene, runtime, rig):
     return meshes
 
 
+def bake_trim_spill(meshes):
+    radius = .095
+    for obj in meshes:
+        vertices = obj.data.vertices
+        mask = obj.data.attributes['_RAVEN_INLAY'].data
+        core = [tuple(point.vector) for point in mask]
+        groups = [vertex.groups[0].group for vertex in vertices]
+        for channel in range(3):
+            lights = {}
+            for i, value in enumerate(core):
+                if value[channel] > .9:
+                    lights.setdefault(groups[i], []).append(i)
+            neighbors = {}
+            for group, points in lights.items():
+                tree = KDTree(len(points))
+                for i in points:
+                    tree.insert(vertices[i].co, i)
+                tree.balance()
+                neighbors[group] = tree
+            # Keep the spill on the same articulated piece as its emitter.
+            for vertex, group, value in zip(vertices, groups, core):
+                if group not in neighbors or value[channel] > .9:
+                    continue
+                distance = neighbors[group].find(vertex.co)[2]
+                if distance < radius:
+                    point = mask[vertex.index].vector
+                    point[channel] = max(point[channel], .45 * (1 - distance / radius))
+
+
+def bake_contact_occlusion(meshes):
+    vertices, faces = [], []
+    for obj in meshes:
+        mesh = obj.data
+        start = len(vertices)
+        vertices.extend(vertex.co.copy() for vertex in mesh.vertices)
+        mesh.calc_loop_triangles()
+        faces.extend(tuple(start + index for index in face.vertices) for face in mesh.loop_triangles)
+    bvh = BVHTree.FromPolygons(vertices, faces, all_triangles=True)
+    radius = .55
+    rays = []
+    for i in range(12):
+        spread = sqrt((i + .5) / 12)
+        azimuth = i * pi * (3 - sqrt(5))
+        rays.append((spread * cos(azimuth), spread * sin(azimuth), sqrt(1 - spread * spread)))
+    # Trace only the short-range cavities between panels and fittings. Shadow maps
+    # own the long-range and changing shadows during animation.
+    for obj in meshes:
+        mask = obj.data.attributes.new('_RAVEN_AO', 'FLOAT', 'POINT')
+        for vertex in obj.data.vertices:
+            normal = vertex.normal.normalized()
+            tangent = normal.orthogonal().normalized()
+            bitangent = normal.cross(tangent)
+            start = vertex.co + normal * .025
+            blocked = 0
+            for x, y, z in rays:
+                direction = tangent * x + bitangent * y + normal * z
+                distance = bvh.ray_cast(start, direction, radius)[3]
+                if distance is not None:
+                    blocked += 1 - distance / radius
+            mask.data[vertex.index].value = 1 - blocked / len(rays)
+
+
 def dimensions(rig):
     point = lambda name: rig.data.bones[name].head_local
     hip, knee, ankle = (point(name) for name in ('Hip.L', 'Knee.L', 'Foot.L'))
@@ -148,6 +220,8 @@ def export():
     total = sum(triangles(obj.data) for obj in meshes)
     if total > 60_000:
         raise ValueError(f'Raven exceeds the 60,000 triangle budget: {total:,}')
+    bake_trim_spill(meshes)
+    bake_contact_occlusion(meshes)
 
     for i, name in enumerate(MATERIALS, 1):
         next(material for material in bpy.data.materials if material.name.startswith(f'{i:02d} |')).name = name
