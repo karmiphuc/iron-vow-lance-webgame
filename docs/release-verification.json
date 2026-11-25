@@ -79,21 +79,22 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 145,
+    "siteVersion": 148,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "9497464aaa1217470f0f2279ab2fad4389005fd4",
-    "githubCommit": "9c9ac7909c3b3a80bac0f4010392a0e93e108a33",
-    "distTree": "2897678dc1aaf8e5ad63d7b4d2e037c613f364d5",
-    "verifiedAt": "2026-11-24T16:21:26.106Z",
-    "localReleaseSourceSha256": "c99d0dd78e0e6ae3786b7158c227a43d17ecbae9a41ccbafd0daa17df582f8be",
-    "simulationSuites": 91,
+    "sourceCommit": "d4c398575921cee473e06505784a84f203f6dba0",
+    "githubCommit": "c55eb4784382d4ffea8a2c19cbe0c005baaceecc",
+    "distTree": "a497ad4c459ff7b70db9753996225ada1dcec3da",
+    "verifiedAt": "2026-11-25T04:57:10.454Z",
+    "localReleaseSourceSha256": "840ef54793aaadd473981e24ec2ced44f7bd9b42a1df9e9dfc319593eb8f010d",
+    "simulationSuites": 93,
     "localBrowser": {
-      "desktop": 2,
-      "touch": 2,
+      "desktop": 3,
+      "touch": 3,
       "result": "passed",
       "scenarios": [
-        "checkDistress",
-        "checkTerrain"
+        "checkCombatDuel",
+        "checkComSkills",
+        "checkMeleeGrip"
       ]
     },
     "liveFilesCompared": 173,
@@ -102,20 +103,57 @@
       "touch": 1,
       "result": "passed",
       "scenarios": [
-        "checkDistress"
+        "Leg Smash install, reload, combat preview, part loss and AP"
       ],
-      "transport": "Production responses through the configured Node HTTPS proxy."
+      "transport": "Production responses via the configured Node HTTPS proxy."
     },
     "environment": {
       "browser": "Chromium headless shell",
-      "touch": "iPad-sized emulation",
+      "touch": "iPad-sized emulation for the live smoke",
       "nativeIPad": "unverified"
     },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_74c22a673348819192d62262f83cafeb",
-    "deploymentId": "appgdep_6b05b927678081918e5a731c8d51f4b7",
-    "featurePullRequest": 95
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_f8e518bdf908819186076542eb04539f",
+    "deploymentId": "appgdep_6b06696729248191aeab3a4c9652a289",
+    "featurePullRequest": 98
   },
   "publishedReleaseHistory": [
+    {
+      "siteVersion": 145,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "9497464aaa1217470f0f2279ab2fad4389005fd4",
+      "githubCommit": "9c9ac7909c3b3a80bac0f4010392a0e93e108a33",
+      "distTree": "2897678dc1aaf8e5ad63d7b4d2e037c613f364d5",
+      "verifiedAt": "2026-11-24T16:21:26.106Z",
+      "localReleaseSourceSha256": "c99d0dd78e0e6ae3786b7158c227a43d17ecbae9a41ccbafd0daa17df582f8be",
+      "simulationSuites": 91,
+      "localBrowser": {
+        "desktop": 2,
+        "touch": 2,
+        "result": "passed",
+        "scenarios": [
+          "checkDistress",
+          "checkTerrain"
+        ]
+      },
+      "liveFilesCompared": 173,
+      "liveBrowser": {
+        "desktop": 1,
+        "touch": 1,
+        "result": "passed",
+        "scenarios": [
+          "checkDistress"
+        ],
+        "transport": "Production responses through the configured Node HTTPS proxy."
+      },
+      "environment": {
+        "browser": "Chromium headless shell",
+        "touch": "iPad-sized emulation",
+        "nativeIPad": "unverified"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_74c22a673348819192d62262f83cafeb",
+      "deploymentId": "appgdep_6b05b927678081918e5a731c8d51f4b7",
+      "featurePullRequest": 95
+    },
     {
       "siteVersion": 144,
       "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
