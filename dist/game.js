@@ -1060,7 +1060,8 @@ const VEHICLES={
  helicopter:{name:'KITE GUNSHIP',hp:43,armor:1,move:6,step:.15,xp:25,altitude:.82,wreckAt:.48,muzzle:[.28168,.75768],center:[.45,.584],gun:{id:'rifle',name:'Chin autocannon',damage:19,range:5,ap:4}}
 };
 const NEW_BOARD={width:18,depth:20};
-const {BASE_AP,AP_RECOVERY,ATTACK_AP_LIMIT,soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP}=window.IRON_VOW_SIM;
+const {BASE_AP,AP_RECOVERY,ATTACK_AP_LIMIT,STATUS_REBOOT_AP,CONFUSION_AP,isStunned,confusionAP,statusOptions,statusChance,inflictPilotStatus,rebootPilot,expirePilotStatuses,
+ soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP}=window.IRON_VOW_SIM;
 const BRACE_AP=2,SHARED_AP_RULES=1,SOLO_PICKET_AP=10;
 const theaterLayouts=window.IRON_VOW_THEATERS;
 const dimensions=()=>battle?.size||NEW_BOARD;
@@ -1079,7 +1080,7 @@ const chassisMobility=(frame,legacy=false,training)=>frame.move+(legacy?0:1)+(tr
 const chassisMoveAP=frame=>frame?.moveAP??1;
 const moveAP=u=>chassisMoveAP(u.kind?VEHICLES[u.kind]:FRAMES[u.frame]);
 const mobility=u=>u.kind?VEHICLES[u.kind].move:chassisMobility(FRAMES[u.frame],battle.legacy,u.training);
-const mobile=u=>!hoverElevation(u)&&(u.kind||u.hp.legs>0);
+const mobile=u=>!isStunned(u)&&!hoverElevation(u)&&(u.kind||u.hp.legs>0);
 const movementLimit=u=>u?.alive&&mobile(u)?u.moveLeft??mobility(u):0;
 const spent=u=>Boolean(u?.alive&&u.ap===0);
 function grantMove(u){
@@ -1195,10 +1196,16 @@ function startBattleCom(seed){
  battle.com={week:readinessWeek(save.day),rng:seed>>>0,practice:{},assists:{},bulkhead:{}};
  setupBattleCom();
 }
+function statusRandom(){
+ const com=battle.com;
+ const seed=com.statusRng??((com.rng^0x53484f43)>>>0);
+ com.statusRng=(Math.imul(seed,1664525)+1013904223)>>>0;
+ return com.statusRng/4294967296;
+}
 function validBattleCom(com,turn){
  const natural=(n,max)=>Number.isInteger(n)&&n>=0&&n<=max;
  const unitId=id=>/^(ally|enemy)\d{1,2}$/.test(id);
- return com&&natural(com.week,readinessWeek(save.day))&&com.week>=1&&natural(com.rng,0xffffffff)&&
+ return com&&natural(com.week,readinessWeek(save.day))&&com.week>=1&&natural(com.rng,0xffffffff)&&(com.statusRng===undefined||natural(com.statusRng,0xffffffff))&&
   validRecord(com.assists,([id,n])=>unitId(id)&&natural(n,turn))&&
   validRecord(com.bulkhead,([id,used])=>unitId(id)&&used===true)&&
   validRecord(com.practice,([pilot,skills])=>pilotKind(pilot)>=0&&validRecord(skills,([id,v])=>
@@ -1635,7 +1642,7 @@ function captureSortie(enemyPending=false){
   ...(battle.relayLead?{relayLead:battle.relayLead}:{}),
   ...(battle.terrainSeed!==null?{terrainSeed:battle.terrainSeed}:{}),
   ...(battle.mechComputers?{mechComputers:true}:{}),
-  units:battle.units.map(u=>({...(u.distressOrder?{distressOrder:u.distressOrder}:{}),...(u.extracted?{extracted:true}:{}),surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,moveBonus:u.moveBonus??0,attackAPSpent:u.attackAPSpent??0,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,licenseUsed:u.licenseUsed||undefined,jumpjetUsed:u.jumpjetUsed||undefined,hoverUsed:u.hoverUsed||undefined,hoverActive:u.hoverActive||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
+  units:battle.units.map(u=>({pilotStatus:u.pilotStatus,stunImmuneThrough:u.stunImmuneThrough,...(u.distressOrder?{distressOrder:u.distressOrder}:{}),...(u.extracted?{extracted:true}:{}),surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,moveBonus:u.moveBonus??0,attackAPSpent:u.attackAPSpent??0,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,licenseUsed:u.licenseUsed||undefined,jumpjetUsed:u.jumpjetUsed||undefined,hoverUsed:u.hoverUsed||undefined,hoverActive:u.hoverActive||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
 }
 function dispatchSizes(){
  if(save.dispatch?.day!==save.day){
@@ -1815,6 +1822,13 @@ function restoreSortie(){
    const keptLaunchAP=u.team==='ally'&&(saved.turn===1||state?.hp?.body===0||state?.hp?.pilot===0);
    const maxAP=roundAP(u.training)+(u.pilot===0?overdriveAP(u.training):0)+(keptLaunchAP?launchAP:0);
    valid=!!state&&integer(state.x,0,battle.size.width-1)&&integer(state.z,0,battle.size.depth-1)&&(state.face===undefined||state.face===1||state.face===-1)&&!battle.cover.has(state.x+','+state.z)&&integer(state.ap,0,maxAP)&&typeof state.brace==='boolean'&&typeof state.skill==='boolean'&&typeof state.boost==='boolean'&&state.hp&&targetParts(u).every(p=>p==='pilot'&&saved.version<4&&state.hp.pilot===undefined||integer(state.hp[p],0,u.max[p]));
+   if(valid&&(state.pilotStatus!==undefined||state.stunImmuneThrough!==undefined)){
+    const status=state.pilotStatus,immunity=state.stunImmuneThrough;
+    valid=!!saved.com&&!u.kind&&(status===undefined||status&&['confused','stunned'].includes(status.kind)&&
+     integer(status.expires,saved.turn,saved.turn+1))&&(immunity===undefined||integer(immunity,saved.turn,saved.turn+1))&&
+     !(status?.kind==='stunned'&&immunity!==undefined);
+    if(valid){u.pilotStatus=status;u.stunImmuneThrough=immunity;}
+   }
    if(valid&&saved.version>=5){
     valid=typeof state.reacted==='boolean'&&Number.isFinite(state.heading)&&Math.abs(state.heading)<=Math.PI;
     if(sharedAP)valid=valid&&integer(state.attackAPSpent,0,ATTACK_AP_LIMIT)&&integer(state.moveBonus,0,battle.units.length*2)&&
@@ -1907,7 +1921,7 @@ function selectedWeapon(u,mode=action,target=null){
  }
  return unitWeapon(u);
 }
-const paidAttackAP=(u,w)=>w.tactical?w.ap:Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0));
+const paidAttackAP=(u,w)=>(w.tactical?w.ap:Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0)))+confusionAP(u);
 function pairedLauncher(u,w){return w.id==='locust'||u.frame===2&&w.id==='missile';}
 function salvoWeapon(u,w){
  if(w.id===REAVER_AUTOCANNON.id)return reaverGunCount(u)===1?REAVER_SINGLE_CANNON:REAVER_AUTOCANNON;
@@ -3720,7 +3734,7 @@ function jumpjetDestination(u,target){
 const {hitOdds,shotsPerAttack,roundWeight}=window.IRON_VOW_SIM;
 const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,FREE_HAND_COUNTER});
 let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>comRandom(),chargedLimbShot});
-const legalComWeapon=(a,t,w)=>Boolean(a?.alive&&t?.alive&&!a.blackout&&workingWeapon(a,w)&&
+const legalComWeapon=(a,t,w)=>Boolean(a?.alive&&t?.alive&&!isStunned(a)&&!a.blackout&&workingWeapon(a,w)&&
  distance(a,t)<=combatRange(a,t,w)&&!attackObstruction(a,t,w));
 const directComWeapon=w=>Boolean(w&&!w.melee&&!w.tactical&&!launchesMissiles(w)&&w!==REAVER_AUTOCANNON);
 const burstComWeapon=w=>Boolean(directComWeapon(w)&&w.burst&&!w.scatter);
@@ -3861,8 +3875,9 @@ function attackPreview(a,t,w){
  const routines=comOdds(comAttackOptions(a,t,w).filter(c=>installedCom(a).includes(c.id)));
  const com=routines.map(({id,rate,strike})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'%'+(strike?.parts?' ('+strike.parts.map(part=>HEALTH_LABEL[part]).join(' + ')+')':'')).join(' / ');
  const support=comOdds(comSupportOptions(a,t)).map(({id,rate,aim})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'% ('+Math.round(aim*.65)+'% hit)').join(' / ');
+ const statuses=battle.com?statusOptions(t,w,battle.turn).map(kind=>Math.round(statusChance(t,kind)*100)+'% '+(kind==='stunned'?'STUN ON ≥20% BODY DAMAGE':'CONFUSE ON COCKPIT OR TWO LIMBS ≥10% EACH')):[];
  const odds=hit+'%'+(w.scatter?' SHELL':multi?'/ROUND':' HIT');
- return (com?com+' · ':'')+odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG')+(support?' · Enemy '+support:'');
+ return (com?com+' · ':'')+odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG')+(support?' · Enemy '+support:'')+(statuses.length?' · '+statuses.join(' / '):'');
 }
 function barrageTarget(u){
  const lock=u.mechState?.lock;
@@ -3964,6 +3979,10 @@ function openDistressRadio(unit=null){
 async function runDistressAllies(){
  for(const u of battle.units.filter(t=>t.distressAlly&&t.alive)){
   if(!u.alive)continue;
+  if(isStunned(u)){
+   if(!rebootPilot(u,battle))continue;
+   addLog(u.name+' rebooted for '+STATUS_REBOOT_AP+' AP.');
+  }
   const dest=distressDestination(u);
   if(dest.x!==u.x||dest.z!==u.z)await moveUnit(u,dest.x,dest.z);
   if(checkEnd())return true;
@@ -3978,6 +3997,10 @@ async function runDistressAllies(){
  }
  return false;
 }
+function pilotStatusText(u){
+ if(isStunned(u))return 'STUNNED · REBOOT '+STATUS_REBOOT_AP+' AP';
+ return confusionAP(u)?'CONFUSED · +'+CONFUSION_AP+' ATTACK AP':'';
+}
 function renderBattle(){
   moveTap=null;
   if(battle.contract.distress)battle.radioIntents=battle.busy?[]:battle.units
@@ -3989,10 +4012,12 @@ function renderBattle(){
    targetReaction==='READY'?'NO REPLY FROM HERE':targetReaction;
   const targetShield=activeShield(target);
   const targetCom=target&&battle.com?installedCom(target).map(id=>COM_SKILLS[id].name).join(' / '):'';
-  const targetStatus=[hoverElevation(target)?'HOVERING · +2 ELEVATION':'',targetCom?'COM '+targetCom:'',target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
+  const targetStatus=[hoverElevation(target)?'HOVERING · +2 ELEVATION':'',targetCom?'COM '+targetCom:'',target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',pilotStatusText(target),target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
   battlefieldReady=window.IronVowScene?.ready!==false;
   battlefieldLoadFailed=Boolean(window.IronVowScene?.loadFailed);
-  const ready=battle.phase==='player'&&!battle.busy&&battlefieldReady,canMove=Boolean(u&&paths(u).size>1),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
+  const actionable=battle.phase==='player'&&!battle.busy&&battlefieldReady;
+  const rebootButton=isStunned(u)?`<button id="reboot-pilot" type="button" ${actionable&&u.pilotStatus.expires===battle.turn&&u.ap>=STATUS_REBOOT_AP?'':'disabled'}>REBOOT · ${STATUS_REBOOT_AP} AP</button>`:'';
+  const ready=actionable&&!isStunned(u),canMove=Boolean(u&&paths(u).size>1),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
   const obstruction=u&&target?attackObstruction(u,target,chosen):'';
   const inRange=Boolean(u&&target&&distance(u,target)<=combatRange(u,target,chosen));
   const elevationAim=inRange?highGroundAim(u,target,chosen):0;
@@ -4037,7 +4062,7 @@ function renderBattle(){
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
   <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':battle.radioPick?'MARK ALLIED DESTINATION · TAP RADIO TO CANCEL':action==='jumpjet'?'PICK LANDING':action==='move'?(u?movementLimit(u)+' TILES LEFT · '+moveAP(u)+' AP / TILE · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}${hoverElevation(u)?' · HOVERING · MOVE LOCKED':''}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   ${tacticalPreviewMarkup(u)}
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally'&&!t.distressAlly).map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+movementLimit(t)+' MOVE<br>'+attackAPLeft(t)+' / '+ATTACK_AP_LIMIT+' ATTACK AP<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${hoverButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally'&&!t.distressAlly).map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${pilotStatusText(t)?'<strong>'+pilotStatusText(t)+'</strong><br>':''}${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+movementLimit(t)+' MOVE<br>'+attackAPLeft(t)+' / '+ATTACK_AP_LIMIT+' ATTACK AP<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons">${rebootButton}<button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${hoverButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
   const reserveButton=$('#call-sortie-reserve');
   if(reserveButton)reserveButton.onclick=callReserve;
@@ -4048,6 +4073,11 @@ function renderBattle(){
   document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>{if(!battle.busy)selectUnit(+b.dataset.unit)});
   $('#move').onclick=()=>{if(canMove){action='move';renderBattle();persist()}};$('#fire').onclick=()=>{action='fire';renderBattle();persist()};$('#strike').onclick=()=>{if(canStrike){action='strike';renderBattle();persist()}};$('#skill').onclick=skill;
   if(licenseButton)$('#field-license').onclick=chooseLicenseTarget;
+  if(rebootButton)$('#reboot-pilot').onclick=()=>{
+   if(battle.busy||u!==current()||!rebootPilot(u,battle))return;
+   addLog(u.name+' rebooted for '+STATUS_REBOOT_AP+' AP.');
+   renderBattle();persist();
+  };
   if(tacticalButton)$('#tactical').onclick=()=>{
    if(!canTactical(u))return;
    if(action==='tactical')cancelTactical();
@@ -4069,7 +4099,7 @@ function renderBattle(){
   };
   if(jetButton)$('#jumpjet').onclick=()=>{if(canJumpjet(u)){action=action==='jumpjet'?'move':'jumpjet';targetPanelOpen=false;hover=null;renderBattle()}};
   if(missile)$('#missile').onclick=()=>{if(canMissile){action='missile';renderBattle();persist()}};
-  $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
+  $('#brace').onclick=()=>{if(u&&!isStunned(u)&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
   $('#end').onclick=endTurn;$('#manual').onclick=()=>guide();$('#target-toggle').onclick=()=>{targetPanelOpen=!targetPanelOpen;renderBattle();if(targetPanelOpen)$('#close-target').focus()};$('#close-target').onclick=()=>{targetPanelOpen=false;renderBattle();$('#target-toggle').focus()};
   if(benchWar){
    $('#run-war').onclick=()=>{
@@ -4134,7 +4164,7 @@ function supportTargets(u){
   (kind===RETRIEVER?recoveryParts(target,t).length>0:target!==u));
 }
 function useSupportSkill(u,target){
- if(!battle||battle.busy||!u||u!==current()||!targetedSkill(u.pilot)||u.skill||u.ap<skillCost(u.pilot,u.training)||!supportTargets(u).includes(target))return false;
+ if(!battle||battle.busy||!u||u!==current()||isStunned(u)||!targetedSkill(u.pilot)||u.skill||u.ap<skillCost(u.pilot,u.training)||!supportTargets(u).includes(target))return false;
  const t=u.training,kind=u.pilot;
  u.ap-=skillCost(kind,t);
  if(kind===3){
@@ -4181,7 +4211,7 @@ function licenseTargets(u,id){
 }
 function useFieldLicense(u,target){
  const id=u&&fieldLicense(u.pilot);
- if(!id||!battle||battle.busy||battle.phase!=='player'||current()!==u||u.level<3||u.licenseUsed||u.ap<2||!licenseTargets(u,id).includes(target))return false;
+ if(!id||!battle||battle.busy||battle.phase!=='player'||current()!==u||isStunned(u)||u.level<3||u.licenseUsed||u.ap<2||!licenseTargets(u,id).includes(target))return false;
  u.ap-=2;u.licenseUsed=true;
  if(id==='guard')braceUnit(target);
  else if(id==='paint')target.painted={shots:1,aim:.20,power:0};
@@ -4205,7 +4235,7 @@ function chooseLicenseTarget(){
  document.querySelectorAll('[data-license-target]').forEach(button=>button.onclick=()=>useFieldLicense(u,targets[Number(button.dataset.licenseTarget)]));
 }
 function skill(){
- const u=current();if(!u||u.skill||battle.busy||spent(u)||u.ap<skillCost(u.pilot,u.training))return;
+ const u=current();if(!u||u.skill||battle.busy||isStunned(u)||spent(u)||u.ap<skillCost(u.pilot,u.training))return;
  if(targetedSkill(u.pilot)){chooseSupportTarget(u);return}
  if(u.pilot===SAPPER&&u.hp.right<=0){toast('Repair the weapon arm to prime Breach Charge.');return}
  const limbs=u.pilot===2?repairableLimbs(u):[];
@@ -4293,6 +4323,7 @@ async function moveUnit(u,x,z){
 async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null,exchange=null){
  const reaverBattery=w.id===REAVER_AUTOCANNON.id;
  if((reaverBattery||launcherId(w.id))&&!workingWeapon(a,w))return;
+ if(isStunned(a))return;
  w=salvoWeapon(a,w);
  if(bonus)w={...w,comBonus:true};
  window.IronVowScene?.aimAt(a,t,part);
@@ -4396,7 +4427,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null
   const plant=Math.max(0,Math.min(flight,(profile.raise+profile.travel)*(.59/.70)-profile.raise));
   timeline.splice(1,0,{at:plant,plant:true});
  }
- const disabled=[];
+ const disabled=[],statusDamage={};
  let d=0,lost=0,last=0;
  const hitX=(t.x-t.z)-(a.x-a.z),hitY=((t.x+t.z)-(a.x+a.z))*.5,hitLength=Math.hypot(hitX,hitY)||1;
  for(const event of timeline){
@@ -4428,6 +4459,7 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null
   const broken=applyImpact(t,event);
   if(!sequence?.skipped)window.IronVowScene?.combat?.landed(a,t,w,event,guard);
   d+=event.amount;lost+=event.damage;
+  statusDamage[event.part]=(statusDamage[event.part]??0)+event.damage;
   if(broken)disabled.push(event.part);
   t.hitTime=clock;t.hitPart=event.part;t.hitParts=[event.part];t.hitDamage=event.damage;
   t.hitVector={x:hitX/hitLength,y:hitY/hitLength};
@@ -4482,6 +4514,15 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null
    keepBoost=Boolean(a.boost&&a.training?.deadeyeCascade);
   }
    if(charged)jammed=true;
+ }
+ if(battle.com&&t.alive&&!bonus&&hit){
+  const status=inflictPilotStatus(battle,t,w,statusDamage,statusRandom);
+  if(status?.applied){
+   const label=status.kind.toUpperCase();
+   addLog(t.name+' · '+label+'.');
+   if(sequence)sequence.result+=' · '+label;
+   effects.push({type:'text',x:t.x,z:t.z,t:1,text:label});
+  }else if(status?.resisted)addLog(t.name+' resisted '+(status.kind==='stunned'?'Stun':'Confusion')+' with Def-C.');
  }
  recordHit(a,t,w,hit,impacts,charged,reaction);
  const hitstop=w.melee?.085:0;
@@ -4645,12 +4686,14 @@ async function endTurn(){
  }
  if(action==='jumpjet')action='move';
  const saving=persist(true);
+ expirePilotStatuses(battle,'player');
  targetPanelOpen=false;battle.busy=true;battle.phase='enemy';
  await saving;
  if(careerStale)return;
  if(battle.contract.distress){
   battle.phase='relief';delete battle.radioPick;renderBattle();
   if(await runDistressAllies())return;
+  expirePilotStatuses(battle,'relief');
   battle.phase='enemy';
  }
  if(await runEnemyTurn())return;
@@ -5715,7 +5758,7 @@ canvas.addEventListener('pointerup',async e=>{
  // A reachable ground tile takes precedence over an ally's silhouette overhanging it.
  const walk=u&&action==='move'?paths(u).get(tile.x+','+tile.z):0;
  if(picked?.team==='ally'&&!walk){if(picked.distressAlly)openDistressRadio(picked);else selectUnit(picked.index);return}
- if(!u||spent(u))return;
+ if(!u||spent(u)||isStunned(u))return;
  const p=picked?.team==='enemy'?picked:tile;
  hover={x:p.x,z:p.z};
  if(picked?.team==='enemy')lockedTarget=picked.id;

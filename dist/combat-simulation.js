@@ -8,10 +8,48 @@
  // Chance per attack that strikes the body that one of its body rounds hits the cockpit instead. Training adds pilotHit*PILOT_HIT_TRAINING.
  const PILOT_HIT_BASE=.03,PILOT_HIT_TRAINING=.2,PILOT_HIT_MIN=.01,PILOT_HIT_MAX=.05;
  const HIT_CAP=.99;
+ const STATUS_REBOOT_AP=3,CONFUSION_AP=2;
+ const STATUS_CHANCE=Object.freeze({confused:.20,stunned:.10});
+ const HEAVY_IMPACT=new Set(['breaker','piledriver','anchor-hammer','breach-gauntlet','aegis-bash']);
+ const isStunned=u=>u?.pilotStatus?.kind==='stunned';
+ const confusionAP=u=>u?.pilotStatus?.kind==='confused'?CONFUSION_AP:0;
+ const statusPhase=u=>u.distressAlly?'relief':u.team==='enemy'?'enemy':'player';
+ const statusChance=(u,kind)=>STATUS_CHANCE[kind]*(1-Math.min(1,Math.max(0,(u.apAllocation?.body??0)*.10)));
+ function statusOptions(u,w,turn){
+  if(!u?.alive||u.kind||u.pilotStatus||!w)return [];
+  const canStun=HEAVY_IMPACT.has(w.id)&&(u.stunImmuneThrough??0)<turn;
+  return canStun?['stunned','confused']:['confused'];
+ }
+ function inflictPilotStatus(battle,u,w,damage,random){
+  const options=statusOptions(u,w,battle.turn);
+  const kind=options.find(key=>key==='stunned'?damage.body>=Math.ceil(u.max.body*.20):
+   damage.pilot>0||BREACH_LIMBS.filter(part=>damage[part]>=Math.ceil(u.max[part]*.10)).length>=2);
+  if(!kind)return null;
+  const roll=random();
+  if(roll>=statusChance(u,kind))return {kind,applied:false,resisted:roll<STATUS_CHANCE[kind]};
+  u.pilotStatus={kind,expires:battle.turn+Number(battle.phase===statusPhase(u))};
+  return {kind,applied:true};
+ }
+ function recoverStun(u,turn){
+  delete u.pilotStatus;
+  u.stunImmuneThrough=turn+1;
+ }
+ function rebootPilot(u,battle){
+  if(!u?.alive||!isStunned(u)||u.pilotStatus.expires!==battle.turn||statusPhase(u)!==battle.phase||u.ap<STATUS_REBOOT_AP)return false;
+  u.ap-=STATUS_REBOOT_AP;
+  recoverStun(u,battle.turn);
+  return true;
+ }
+ function expirePilotStatuses(battle,phase){
+  for(const u of battle.units){
+   if(statusPhase(u)!==phase||!u.pilotStatus||u.pilotStatus.expires>battle.turn)continue;
+   if(isStunned(u))recoverStun(u,battle.turn);else delete u.pilotStatus;
+  }
+ }
  const BASE_AP=14,AP_RECOVERY=12,ATTACK_AP_LIMIT=8;
  const soloPicket=battle=>battle.contract?.id==='picket'&&(battle.operation?.recommended??battle.slots?.length)===1;
  const attackAPLeft=u=>Math.max(0,ATTACK_AP_LIMIT-(u.attackAPSpent??0));
- const canSpendAttack=(u,cost)=>u.ap>=cost&&attackAPLeft(u)>=cost;
+ const canSpendAttack=(u,cost)=>!isStunned(u)&&u.ap>=cost&&attackAPLeft(u)>=cost;
  function spendOffensiveAP(u,cost){
   if(!canSpendAttack(u,cost))return false;
   u.ap-=cost;
@@ -233,11 +271,12 @@ function planVolley(a,t,aimed,w,reaction){
  function createReactionRules({equippedShield,counterRange,combatCounterRange=(u,t,w)=>counterRange(w,u.training,u.brace),unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon=(u,w)=>w&&u.hp[w.melee?'left':'right']>0,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER,weaponAP}){
 const counterCost=(u,t,w)=>{
  const range=distance(u,t);
- return Math.max(1,weaponAP(w,u.training))+(range<=2?3:range<=4?2:1);
+ return Math.max(1,weaponAP(w,u.training))+(range<=2?3:range<=4?2:1)+confusionAP(u);
 };
 const freeHand=u=>u.hp.left>0&&!equippedShield(u)&&!(meleeWeapon(u)&&u.meleeHand!=='right');
 function reactionStatus(u){
  if(!u?.alive||u.kind||u.noCounter)return 'UNAVAILABLE';
+ if(isStunned(u))return 'STUNNED';
  if(u.blackout)return 'JAMMED';
  const melee=meleeWeapon(u),primary=unitWeapon(u);
  const reach=u.frame===BULWARK_FRAME?1:u.frame===ASHIGARU_FRAME?2:counterRange(primary,u.training,u.brace);
@@ -249,10 +288,10 @@ function reactionStatus(u){
  }
  if(u.frame!==BULWARK_FRAME&&u.frame!==ASHIGARU_FRAME&&freeHand(u))costs.push(4);
  if(!costs.length)return 'UNAVAILABLE';
- return u.ap>=Math.min(...costs)?'READY':'LOW AP';
+ return u.ap>=Math.min(...costs)+confusionAP(u)?'READY':'LOW AP';
 }
 function reactionWeapon(defender,attacker){
- if(!defender?.alive||defender.kind||defender.noCounter||defender.blackout||!attacker?.alive)return null;
+ if(!defender?.alive||defender.kind||defender.noCounter||isStunned(defender)||defender.blackout||!attacker?.alive)return null;
  const affordable=w=>w&&defender.ap>=counterCost(defender,attacker,w);
  if(defender.frame===ASHIGARU_FRAME)return distance(defender,attacker)<=2?scoutWeapon(defender,attacker,affordable):null;
  const range=distance(defender,attacker),close=range===1&&freeHand(defender)&&!attackObstruction(defender,attacker,FREE_HAND_COUNTER);
@@ -419,6 +458,10 @@ function reactionWeapon(defender,attacker){
    renderBattle();
    for(const enemy of enemies){
     if(!enemy.alive)continue;
+    if(isStunned(enemy)){
+     if(!isArmed(enemy)||!rebootPilot(enemy,battle))continue;
+     addLog(enemy.name+' rebooted for '+STATUS_REBOOT_AP+' AP.');
+    }
     let allies=opponents();
     if(!allies.length)break;
     if(trySurrender(enemy,allies)){if(checkEnd())return true;continue;}
@@ -529,6 +572,7 @@ function reactionWeapon(defender,attacker){
    if(u.mechSkills)mechState(u).moved=(u.mechState.moved??0)+tiles;
   }
   function spendAttack(a,t,w,part,reaction){
+   if(isStunned(a))return null;
    const charged=chargedLimbShot(a,w,part,reaction);
    if(reaction){
     const paid=counterCost(a,t,w);
@@ -580,8 +624,9 @@ function reactionWeapon(defender,attacker){
   }
   function completeRound(){
    const battle=getBattle();
+   expirePilotStatuses(battle,'enemy');
    battle.turn++;battle.phase='player';battle.busy=false;
-   battle.units.forEach(u=>{u.reacted=false;delete u.order;delete u.blackout;if(u.team==='ally'&&u.alive){u.ap=recoverAP(u,roundAP(u.training));u.brace=false;resetMovement(u)}});
+   battle.units.forEach(u=>{if(u.stunImmuneThrough<battle.turn)delete u.stunImmuneThrough;u.reacted=false;delete u.order;delete u.blackout;if(u.team==='ally'&&u.alive){u.ap=recoverAP(u,roundAP(u.training));u.brace=false;resetMovement(u)}});
   }
   return {barrageRestriction,engage,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound};
  }
@@ -657,5 +702,5 @@ function reactionWeapon(defender,attacker){
   }
   return {newBattle,step,run,runBattle,eventLog:()=>events.slice(),get state(){return report();},get running(){return working;}};
  }
- root.IRON_VOW_SIM=Object.freeze({BASE_AP,AP_RECOVERY,ATTACK_AP_LIMIT,soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP,recoverAP,hitOdds,shotsPerAttack,roundWeight,HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
+ root.IRON_VOW_SIM=Object.freeze({BASE_AP,AP_RECOVERY,ATTACK_AP_LIMIT,STATUS_REBOOT_AP,CONFUSION_AP,isStunned,confusionAP,statusOptions,statusChance,inflictPilotStatus,rebootPilot,expirePilotStatuses,soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP,recoverAP,hitOdds,shotsPerAttack,roundWeight,HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
 })(typeof window==='undefined'?globalThis:window);

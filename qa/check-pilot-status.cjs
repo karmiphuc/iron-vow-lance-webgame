@@ -1,0 +1,64 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+const fixture=require('./fixtures/pilot-status-sortie.json');
+const seed=(lo,hi)=>Array.from({length:3000},(_,i)=>i).find(i=>{
+ const r=((Math.imul(i,1664525)+1013904223)>>>0)/4294967296;
+ return r>=lo&&r<hi;
+});
+const success=seed(0,.08),resisted=seed(.08,.1);
+const json=(sim,code)=>JSON.parse(sim.run('JSON.stringify('+code+')'));
+
+(async()=>{
+ const play=simulate({reducedMotion:true,random:()=>0});
+ const {run}=play;
+ run(`deploy(2);closeModal();battle.field={};battle.cover.clear();
+  const a=current(),t=battle.units.find(u=>u.team==='enemy'&&!u.kind);
+  t.x=a.x+1;t.z=a.z;t.hp.body=t.max.body=200;a.melee='breaker';
+  const maul=weapon('breaker'),rifle=weapon('rifle');
+  let impacts=[{part:'body',amount:39}];
+  planVolley=()=>({rounds:impacts.map(({part})=>({part,hit:true})),impacts,landed:impacts.length,dodged:false,guard:false});`);
+ run(`battle.com.statusRng=${success}`);
+ await run('shoot(a,t,"body",maul)');
+ assert.equal(run('t.pilotStatus'),undefined,'39 damage is below the body threshold');
+ assert.equal(run('battle.com.statusRng'),success,'a non-qualifying hit spends no status roll');
+ run('a.attackAPSpent=0;a.ap=14;impacts=[{part:"body",amount:40}]');
+ run(`t.apAllocation={body:2};battle.com.statusRng=${resisted}`);
+ await run('shoot(a,t,"body",maul)');
+ assert.equal(run('t.pilotStatus'),undefined,'Def-C resistance reduces the 10% chance to 8%');
+ assert.match(run('battle.log.at(-1)'),/resisted Stun with Def-C/);
+ run(`a.attackAPSpent=0;a.ap=14;t.apAllocation=undefined;battle.com.statusRng=${success};`);
+ const foeAP=run('t.ap');
+ await run('engage(a,t,"body",maul)');
+ assert.deepEqual(json(play,'t.pilotStatus'),{kind:'stunned',expires:1});
+ assert.equal(run('t.ap'),foeAP,'the triggering attack stops the return counter');
+ assert.equal(run('reactionStatus(t)'),'STUNNED');
+ assert.equal(run('canUseWeapon(t,rifle)||movementLimit(t)>0||rebootPilot(t,battle)'),false);
+ assert.equal(run('statusOptions(t,maul,battle.turn).length'),0);
+ run('battle.phase="enemy";');
+ assert.equal(run('rebootPilot(t,battle)'),true);
+ assert.equal(run('t.ap'),foeAP-3);
+ assert.equal(run('statusOptions(t,maul,battle.turn+1).includes("stunned")'),false);
+ assert.equal(run('statusOptions(t,maul,battle.turn+2).includes("stunned")'),true);
+
+ run(`battle.phase="player";a.attackAPSpent=0;a.ap=14;battle.com.statusRng=${success};
+  impacts=[{part:"left",amount:Math.ceil(t.max.left*.1)},{part:"legs",amount:Math.ceil(t.max.legs*.1)}];`);
+ const base=run('weaponAP(unitWeapon(t),t.training)'),counter=run('counterCost(t,a,unitWeapon(t))');
+ await run('shoot(a,t,"body",rifle)');
+ assert.deepEqual(json(play,'t.pilotStatus'),{kind:'confused',expires:1});
+ assert.equal(run('paidAttackAP(t,unitWeapon(t))'),base+2);
+ assert.equal(run('counterCost(t,a,unitWeapon(t))'),counter+2);
+ assert.ok(run('movementLimit(t)>0'));
+ assert.equal(run('battle.com.statusRng'),(Math.imul(success,1664525)+1013904223)>>>0,'a multi-hit attack rolls once');
+ run('expirePilotStatuses(battle,"enemy");');
+ assert.equal(run('t.pilotStatus'),undefined);
+
+ const reload=simulate({storage:new Map([['iron-vow-career',JSON.stringify(fixture)]])});
+ assert.deepEqual(json(reload,'captureSortie()'),fixture.sortie);
+ reload.run('renderBattle()');
+ assert.match(reload.node('#ui').innerHTML,/STUNNED · REBOOT 3 AP/);
+ reload.run('current().ap=2');
+ assert.equal(reload.run('rebootPilot(current(),battle)'),false);
+ reload.run('expirePilotStatuses(battle,"player")');
+ assert.equal(reload.run('current().pilotStatus'),undefined,'skipping reboot recovers at phase end for free');
+ console.log('PASS hit-driven Confusion and Stun, Def-C, AP, immediate interrupts, immunity and save reload');
+})().catch(error=>{console.error(error);process.exitCode=1;});
