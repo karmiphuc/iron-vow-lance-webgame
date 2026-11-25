@@ -24,6 +24,15 @@ module.exports=async function checkOverworldPortEvents({page,mobile,origin,tap})
  const weaponPrice=await page.evaluate(()=>portServicesData('picket').items.find(item=>item.id==='sidewinder').price);
  const beforeBuy=await page.evaluate(()=>save.credits);
  const buySidewinder='[data-port-buy-weapon="sidewinder"]';
+ const sidewinderRow=page.locator('li').filter({has:page.locator(buySidewinder)});
+ assert.equal(await sidewinderRow.getAttribute('data-stock-state'),'available');
+ const availableBackground=await sidewinderRow.evaluate(el=>getComputedStyle(el).backgroundColor);
+ await page.evaluate(()=>{save.credits=0;render()});
+ assert.equal(await sidewinderRow.getAttribute('data-stock-state'),'unavailable');
+ assert.equal(await page.locator(buySidewinder).isDisabled(),true);
+ assert.match(await sidewinderRow.innerText(),/Insufficient credits/);
+ assert.notEqual(await sidewinderRow.evaluate(el=>getComputedStyle(el).backgroundColor),availableBackground);
+ await page.evaluate(credits=>{save.credits=credits;render()},beforeBuy);
  assert.equal(await page.evaluate(()=>save.owned.filter(id=>id==='sidewinder').length),0);
  for(const count of [1,2]){
   assert.equal(await page.locator(buySidewinder).isEnabled(),true,'the market offers another physical copy');

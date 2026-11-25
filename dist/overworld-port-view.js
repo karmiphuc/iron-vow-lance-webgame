@@ -39,9 +39,10 @@ window.IronVowPortView = (() => {
             const disabled = item.owned || item.disabled || !data.local;
             const reason = item.owned ? '' : !data.local ? 'Moor here' : item.reason || '';
             const reasonId = `port-stock-${kind}-${index}-reason`;
-            return `<li>
+            const state = item.owned ? 'owned' : disabled ? 'unavailable' : 'available';
+            return `<li data-stock-state="${state}">
               <div class="port-services-item"><b>${escapeHtml(item.name)}</b><span>${credits(item.price)}${item.copies?' · '+item.copies+' owned':''}</span>${reason ? `<small id="${reasonId}">${escapeHtml(reason)}</small>` : ''}</div>
-              <button type="button" data-port-buy-${kind === 'frame' ? 'frame' : 'weapon'}="${escapeHtml(item.id)}" ${disabled ? 'disabled' : ''} ${reason ? `aria-describedby="${reasonId}"` : ''} aria-label="${escapeHtml(item.owned ? `${item.name} owned` : `Buy ${item.name}`)}">${item.owned ? 'Owned' : item.disabled && data.local ? 'Unavailable' : 'Buy'}</button>
+              <button type="button" data-port-buy-${kind === 'frame' ? 'frame' : 'weapon'}="${escapeHtml(item.id)}" ${disabled ? 'disabled' : ''} ${reason ? `aria-describedby="${reasonId}"` : ''} aria-label="${escapeHtml(item.owned ? `${item.name} owned` : disabled ? `${item.name} unavailable` : `Buy ${item.name}`)}">${item.owned ? 'Owned' : disabled ? 'Unavailable' : 'Buy'}</button>
             </li>`;
           }).join('')}
         </ul></section>`;

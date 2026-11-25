@@ -65,6 +65,18 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
  await tap('[data-equip="sidewinder"]');
  assert.equal(await page.evaluate(()=>save.units[0].weapon),'sidewinder');
  assert.equal(await page.locator('[data-refit-choice="sidewinder"]').getAttribute('aria-pressed'),'true','Equipping keeps the chosen refit visible');
+ const equippedRow=page.locator('[data-refit-choice="sidewinder"]');
+ const unavailableRow=page.locator('[data-refit-choice][data-equipment-state="unavailable"]').first();
+ assert.equal(await equippedRow.getAttribute('data-equipment-state'),'equipped');
+ assert.match(await equippedRow.innerText(),/Equipped/);
+ assert.notEqual(await unavailableRow.evaluate(el=>getComputedStyle(el).backgroundColor),
+  await equippedRow.evaluate(el=>getComputedStyle(el).backgroundColor));
+ await tap(`[data-refit-choice="${await unavailableRow.getAttribute('data-refit-choice')}"]`);
+ assert.equal(await equippedRow.getAttribute('aria-pressed'),'false','Inspection moves without changing the fitted state');
+ assert.equal(await equippedRow.getAttribute('data-equipment-state'),'equipped');
+ assert.equal(await unavailableRow.getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('.refit-detail .armory-card:visible [data-equip]').isDisabled(),true);
+ assert.ok(await page.locator('.workshop-page').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Inventory fits the tablet viewport');
  await page.locator('.workshop-page').evaluate(el=>el.scrollTop=0);
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed,null,{timeout:60000});
  await capture(`workshop-${viewport.width}x${viewport.height}.webp`);

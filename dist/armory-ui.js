@@ -16,11 +16,12 @@
    }).filter(Boolean));
    if(!records.length)continue;
    armory.dataset.refitEnhanced='true';
-   const key=armory.querySelector('[data-armory-class][aria-pressed="true"]')?.dataset.armoryClass??'factory-kits';
+   const category=armory.querySelector('[data-armory-class][aria-pressed="true"]')?.dataset.armoryClass??'factory-kits';
+   const key=workshop.querySelector('.lance-tabs [aria-pressed="true"]')?.dataset.select+'|'+category;
    const equipped=records.find(r=>r.action.getAttribute('aria-pressed')==='true');
    const initial=records.find(r=>r.id===selected.get(key))??equipped??records[0];
    const browser=document.createElement('div');browser.className='refit-browser';
-   const choices=document.createElement('div');choices.className='refit-choices';choices.setAttribute('aria-label','Choose equipment to inspect');
+   const choices=document.createElement('div');choices.className='refit-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label','Choose equipment to inspect');
    const detail=document.createElement('div');detail.className='refit-detail';
    const comparison=document.createElement('p');comparison.className='refit-comparison';comparison.setAttribute('aria-live','polite');
    detail.append(comparison);browser.append(choices,detail);grids[0].before(browser);
@@ -31,10 +32,11 @@
      entry.host.hidden=entry!==record;
      buttons[index].setAttribute('aria-pressed',String(entry===record));
     });
-    const base=records.find(r=>r.action.getAttribute('aria-pressed')==='true');
+    const slot=record.card.dataset.refitSlot;
+    const base=records.find(r=>r.card.dataset.refitSlot===slot&&r.action.getAttribute('aria-pressed')==='true');
     const deltas=[];
-    const mounted=armory.querySelectorAll('.armory-mounted>div')[key==='melee'?1:0];
-    const mountedStats=key!=='shields'&&mounted?.querySelector('small')?.textContent.match(/^(\d+)(?: MAX)? DMG · (\d+ tiles|Adjacent) · (\d+) AP$/);
+    const mounted=armory.querySelector(`[data-mount-slot="${slot}"][data-mounted]`);
+    const mountedStats=mounted?.querySelector('small')?.textContent.match(/^(\d+)(?: MAX)? DMG · (\d+ tiles|Adjacent) · (\d+) AP$/);
     if(base!==record&&(base||mountedStats)){
      const old=base?[...base.card.querySelectorAll('dl>div')]:[];
      [...record.card.querySelectorAll('dl>div')].forEach((stat,index)=>{
@@ -48,15 +50,18 @@
      });
     }
     const baseName=base?.card.querySelector('h3').textContent??(mountedStats?mounted.querySelector('b').textContent:null);
-    comparison.textContent=base===record?'Currently equipped':baseName?`Compared with ${baseName}${deltas.length?' · '+deltas.join(' · '):''}`:'Select a refit; price and availability below.';
-    if(focus)buttons[records.indexOf(record)].focus({preventScroll:true});
+    comparison.textContent=base===record?'Currently equipped':baseName?`Compared with ${baseName}${deltas.length?' · '+deltas.join(' · '):''}`:'';
+    comparison.hidden=!comparison.textContent;
+    if(focus)buttons[records.indexOf(record)].focus();
    };
    for(const [index,record] of records.entries()){
     const button=document.createElement('button');button.type='button';button.dataset.refitChoice=record.id;
     const name=document.createElement('strong');name.textContent=record.card.querySelector('h3').textContent;
-    const status=document.createElement('small');status.textContent=record.action.textContent.trim();
-    button.append(name,status);button.setAttribute('aria-controls',`refit-${key}-${index}`);
-    record.host.id=`refit-${key}-${index}`;record.host.classList.add('refit-option');
+    const state=record.action.dataset.equipmentState;
+    button.dataset.equipmentState=record.card.dataset.equipmentState=state;
+    const status=document.createElement('small');status.textContent=record.action.dataset.equipmentStatus;
+    button.append(name,status);button.setAttribute('aria-controls',`refit-${category}-${index}`);
+    record.host.id=`refit-${category}-${index}`;record.host.classList.add('refit-option');
     button.onclick=()=>show(record);
     button.onkeydown=event=>{
      const offset=event.key==='ArrowDown'||event.key==='ArrowRight'?1:event.key==='ArrowUp'||event.key==='ArrowLeft'?-1:0;
@@ -68,6 +73,8 @@
    // Empty grids have no controls after their original nodes move into the detail pane.
    grids.forEach(grid=>grid.remove());
    show(initial);
+   const inspected=buttons[records.indexOf(initial)];
+   choices.scrollTop=Math.max(0,inspected.offsetTop+inspected.offsetHeight-choices.clientHeight);
   }
  }
  window.IronVowArmoryUI={enhance};

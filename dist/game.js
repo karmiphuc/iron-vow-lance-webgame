@@ -2012,8 +2012,10 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
 const armorySlot=w=>launcherId(w.id)?'shoulder':w.melee?'melee':'weapon';
 const slotItem=(u,w)=>armorySlot(w)==='shoulder'?u.shoulder??(launcherId(u.weapon)?u.weapon:null):u[armorySlot(w)];
 function fitButton(w,equipped,offer){
- const text=equipped?'EQUIPPED':offer.free?'EQUIP · '+offer.free+' FREE':offer.reason||'BUY & EQUIP · '+money(offer.price);
- return `<button type="button" data-equip="${w.id}" aria-pressed="${equipped}" ${equipped||!offer.free&&offer.reason?'disabled':''}>${text}</button>`;
+ const state=equipped?'equipped':offer.blocked?'unavailable':offer.free?'in-stock':offer.reason?'unavailable':'for-sale';
+ const status={equipped:'Equipped',unavailable:offer.blocked||offer.reason,'in-stock':offer.free+' spare','for-sale':money(offer.price)}[state];
+ const text=equipped?'EQUIPPED':offer.blocked|| (offer.free?'EQUIP · '+offer.free+' FREE':offer.reason||'BUY & EQUIP · '+money(offer.price));
+ return `<button type="button" data-equip="${w.id}" data-equipment-state="${state}" data-equipment-status="${status}" aria-pressed="${equipped}" ${equipped||state==='unavailable'?'disabled':''}>${text}</button>`;
 }
 const armoryReach=(w,training)=>w.melee?'Adjacent':weaponRange(w,training)+' tiles';
 function equipmentPicture(kind,id){
@@ -2022,11 +2024,12 @@ function equipmentPicture(kind,id){
 }
 function armoryCard(u,w,training){
  const equipped=itemId(slotItem(u,w))===itemId(w.id),offer=equipmentOffer(w.id);
+ if(!equipped&&w.melee&&u.shield&&breachLoadout(pilotFrame(selected)))offer.blocked='Unequip the left-hand shield first';
  const rightOption=w.melee&&openHands(pilotFrame(selected))&&!u.shield&&u.meleeHand!=='right';
  const disabled=Boolean(!equipped&&!offer.free&&offer.reason);
  const special=w.shoulder||launchesMissiles(w)?'CANNOT COUNTER':w.pierce?`${Math.round(w.pierce*100)}% ARMOR PIERCE`:w.aim?`${w.aim>0?'+':''}${Math.round(w.aim*100)} AIM`:'';
  const trait=[burstLabel(w),special].filter(Boolean).join(' · ');
- return `<article class="armory-card${equipped?' active':''}" data-weapon-card="${w.id}" tabindex="-1">
+ return `<article class="armory-card${equipped?' active':''}" data-weapon-card="${w.id}" data-refit-slot="${armorySlot(w)}" tabindex="-1">
    <div class="armory-card-head"><span class="eyebrow">${w.type}</span>${infoTip(w.name,w.desc)}</div>
    <h3>${w.name}</h3>
    ${equipmentPicture('weapon',w.id)}
@@ -2038,14 +2041,15 @@ function armoryCard(u,w,training){
   </article>`;
 }
 function shieldCard(u,shield){
- const equipped=u.shield===shield.id;
- return `<article class="armory-card${equipped?' active':''}" data-shield-card="${shield.id}" tabindex="-1">
+ const equipped=u.shield===shield.id,offer=equipmentOffer(shield.id);
+ if(!equipped&&u.melee&&breachLoadout(pilotFrame(selected)))offer.blocked='Unequip the left-hand cleaver first';
+ return `<article class="armory-card${equipped?' active':''}" data-shield-card="${shield.id}" data-refit-slot="shield" tabindex="-1">
   <div class="armory-card-head"><span class="eyebrow">${shield.type}</span>${infoTip(shield.name,shield.desc+' '+SHIELD_HELP)}</div>
   <h3>${shield.name}</h3>
   ${equipmentPicture('shield',shield.id)}
   <dl><div><dt>BLOCK</dt><dd>Always</dd></div><div><dt>ARM DMG</dt><dd>−${shieldPercent(shield)}</dd></div><div><dt>AP</dt><dd>0</dd></div></dl>
   <div class="armory-card-foot"><span class="armory-trait">LEFT HAND</span>
-   ${fitButton(shield,equipped,equipmentOffer(shield.id))}
+   ${fitButton(shield,equipped,offer)}
    ${equipped?'<button class="remove-melee" id="remove-shield" type="button">UNEQUIP</button>':''}
   </div>
  </article>`;
@@ -2060,7 +2064,7 @@ function workshopArmory(u,training){
  const cards=armoryOptions[armoryGroup].filter(w=>FRAMES[pilotFrame(selected)].native!=='cicada'||!launcherId(w.id)).map(w=>guarding?shieldCard(u,w):armoryCard(u,w,training)).join('');
  return `<section class="workshop-armory" aria-label="Company armory">
   <div class="armory-title"><div><span class="eyebrow">COMPANY ARMORY</span><h2>Weapons</h2></div><span class="tag">${owned} ITEMS</span></div>
-  <div class="armory-mounted" aria-label="Equipped loadout">${mounted.map((w,index)=>`<div><span class="eyebrow">${index===2?'SHOULDER / MISSILES':index?'LEFT HAND / '+(shield?'SHIELD':'MELEE'):u.meleeHand==='right'?'RIGHT HAND / MELEE':'RIGHT HAND / FIRE'}</span>
+  <div class="armory-mounted" aria-label="Equipped loadout">${mounted.map((w,index)=>`<div data-mount-slot="${index===2?'shoulder':w===shield&&shield?'shield':w?.melee?'melee':'weapon'}" ${w?'data-mounted':''}><span class="eyebrow">${index===2?'SHOULDER / MISSILES':index?'LEFT HAND / '+(shield?'SHIELD':'MELEE'):u.meleeHand==='right'?'RIGHT HAND / MELEE':'RIGHT HAND / FIRE'}</span>
    <b>${w?w.name:'Free hand'}</b><small>${w&&w===shield?'Auto-block · −'+shieldPercent(w)+' arm damage':w?volleyBudget(w,w.damage)+(w.burst?' MAX DMG · ':' DMG · ')+armoryReach(w,training)+' · '+weaponAP(w,training)+' AP':'5–10 DMG · Adjacent counter'}</small>
    ${w&&w.id===u.melee&&!w.builtIn?'<button class="remove-melee" id="remove-melee" type="button">UNEQUIP</button>':index===2&&!w.builtIn?'<button class="remove-melee" id="remove-shoulder" type="button">UNEQUIP</button>':!index&&w&&!w.melee?'<button class="remove-melee" id="remove-primary" type="button">UNEQUIP</button>':''}</div>`).join('')}</div>
   <div class="armory-class-tabs" aria-label="Weapon classes">${Object.entries(ARMORY_CLASSES).map(([key,label])=>`<button type="button" data-armory-class="${key}" aria-pressed="${armoryGroup===key}">

@@ -25,17 +25,41 @@
 .workshop-page .workshop-wide-detail>.computer-open{margin:0 16px 16px;min-height:44px}
 .workshop-page .armory-card-foot button,.workshop-page .armory-mounted .remove-melee,.workshop-page .workshop-disclosure button{min-height:44px}
 .workshop-page .workshop-armory>.armory-grid:not(.armory-kits,.armory-shields){grid-template-columns:repeat(2,minmax(0,1fr))}
-.workshop-page .refit-browser{display:grid;grid-template-columns:minmax(140px,.8fr) minmax(0,1.2fr);gap:10px;align-items:start}
-.workshop-page .refit-choices{display:grid;gap:6px}
-.workshop-page .refit-choices button{min-height:52px;padding:9px 10px;text-align:left;display:grid;gap:4px;align-content:center}
-.workshop-page .refit-choices strong{font-size:12px;line-height:1.3}
-.workshop-page .refit-choices small{font-size:9px;color:var(--muted);line-height:1.4}
-.workshop-page .refit-choices button[aria-pressed="true"]{border-color:var(--accent);background:#382d20;color:var(--accent)}
+/* The gold rail marks the fitted item. The outline follows inspection. */
+.workshop-page .refit-browser{display:grid;grid-template-columns:minmax(0,.87fr) minmax(0,1.13fr);gap:12px;align-items:start}
+.workshop-page .refit-choices{position:relative;display:grid;gap:6px;max-height:clamp(16rem,52vh,29rem);overflow:auto;overscroll-behavior-y:contain;scrollbar-color:#5e7077 #152127;touch-action:pan-y;padding:2px 4px 2px 2px}
+.workshop-page .refit-choices button{min-height:56px;width:100%;padding:9px 10px;text-align:left;display:grid;gap:4px;align-content:center;letter-spacing:normal;text-transform:none;white-space:normal;overflow-wrap:anywhere;touch-action:manipulation;background:#1d2a31}
+.workshop-page .refit-choices strong{font-size:.875rem;line-height:1.24}
+.workshop-page .refit-choices small{font-size:.75rem;color:#b9cad0;line-height:1.3}
+.workshop-page .refit-choices [data-equipment-state="in-stock"] small{color:#9fdbcd}
+.workshop-page .refit-choices [data-equipment-state="unavailable"]{background:#151f25;color:#b0bcc1;border-color:#3b4a51}
+.workshop-page .refit-choices [data-equipment-state="equipped"],.workshop-page .refit-detail .armory-card[data-equipment-state="equipped"]{background:#322b22;border-color:#7e6749;box-shadow:inset 3px 0 #e5b66d}
+.workshop-page .refit-choices [data-equipment-state="equipped"] small{color:#f2ce92;font-weight:700}
+.workshop-page .refit-choices button[aria-pressed="true"]{outline:1px solid #a9d1de;outline-offset:-2px}
+.workshop-page .refit-choices button:focus-visible{outline:2px solid #d5eff7;outline-offset:-3px}
 .workshop-page .refit-detail{min-width:0;position:sticky;top:8px}
 .workshop-page .refit-option[hidden]{display:none}
-.workshop-page .refit-detail .armory-card{min-height:310px}
-.workshop-page .refit-detail .weapon-card-art{height:120px}
-.workshop-page .refit-comparison{font-size:10px;line-height:1.6;color:var(--blue);margin:0 0 8px}
+.workshop-page .refit-detail .armory-card{padding:12px;gap:5px}
+.workshop-page .refit-detail .armory-card h3{min-height:0;overflow-wrap:anywhere;font-size:clamp(1.125rem,2.5vw,1.5rem)}
+.workshop-page .refit-detail .weapon-card-art{height:clamp(76px,15vw,124px)}
+.workshop-page .refit-detail .armory-card[data-equipment-state="unavailable"]{background:#18232a}
+.workshop-page .refit-detail [data-equipment-state="unavailable"] .weapon-card-art{filter:saturate(.35) brightness(.8)}
+.workshop-page .refit-detail .armory-card-foot button{white-space:normal;font-size:.75rem;line-height:1.3}
+.workshop-page .refit-detail .armory-card-foot button+button{margin-top:5px}
+.workshop-page .refit-detail [data-equipment-state="in-stock"][data-equip]{background:#203a36;border-color:#548d81;color:#c7eee3}
+.workshop-page .refit-detail [data-equipment-state="for-sale"][data-equip]{background:#332b21;border-color:#96764b;color:#f2ce92}
+.workshop-page .refit-comparison{font-size:.75rem;line-height:1.4;color:var(--blue);margin:0 0 8px}
+.workshop-page .armory-mounted [data-mounted]{border-left:2px solid #b48b55}
+.workshop-page .armory-mounted small{font-size:.75rem;line-height:1.3}
+@media(761px <= width <= 960px){
+ .workshop-page .workshop-refit{grid-template-columns:minmax(230px,.65fr) minmax(0,1.35fr);gap:14px}
+ .workshop-page .workshop-chassis{padding:12px}
+}
+@media(max-width:480px){
+ .workshop-page .refit-browser{gap:6px}
+ .workshop-page .refit-choices button,.workshop-page .refit-detail .armory-card{padding:8px}
+ .workshop-page .refit-detail .armory-card dd{overflow-wrap:anywhere}
+}
 .workshop-page .workshop-meta .workshop-wide-detail{margin:0;border-width:1px 0 0;background:none}
 .workshop-page .workshop-meta .workshop-wide-detail>summary{padding-left:8px}
 .workshop-page .workshop-meta .bay-grid{grid-template-columns:minmax(0,1fr)}
