@@ -36,8 +36,9 @@ module.exports = async function checkCicadaV2({ page, origin }) {
     const launches = [];
     const combat = IronVowScene.combat, launch = combat.launch;
     combat.launch = function (...args) {
+      const before = this.history.at(-1)?.sequence ?? 0;
       launch.apply(this, args);
-      const event = this.history.at(-1);
+      const event = this.history.findLast(item => item.sequence > before && item.type === 'launch');
       if (event?.weapon !== 'locust' || event.actor !== actor.id) return;
       const name = event.socket.endsWith('2') ? 'muzzle.locust.R' : 'muzzle.locust.L';
       launches.push({
