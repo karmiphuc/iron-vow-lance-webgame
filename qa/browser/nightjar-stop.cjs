@@ -6,12 +6,20 @@ module.exports=async function checkNightjarStop({page,origin}){
  // Observe the exported links in the same scene passed to the renderer.
  await page.evaluate(()=>{
   const renderer=IronVowRenderer.get(),original=renderer.render.bind(renderer),v=new THREE.Vector3();
+  const foundry=IronVowFoundry,inspect=foundry.inspect;
+  let motion;
+  foundry.inspect=(...args)=>{
+   const entry=inspect(...args);
+   if(args[0].id==='bench-main')motion=entry?.m.nightjar;
+   return entry;
+  };
   const samples=window.stopSamples=[];
   renderer.render=(scene,camera)=>{
    original(scene,camera);
    const keel=scene.getObjectByName('Keel');
-   if(keel&&scene.getObjectByName('GunGrip'))samples.push({
+   if(keel&&motion&&scene.getObjectByName('GunGrip'))samples.push({
     walk:document.querySelector('#bench-walk').getAttribute('aria-pressed')==='true',
+    settled:!motion.brake&&!motion.swing&&motion.run<.001,
     forward:keel.position.z,height:keel.position.y,
     toes:['AnkleL','AnkleR'].map(name=>scene.getObjectByName(name).getWorldPosition(v).y)
    });
@@ -19,7 +27,11 @@ module.exports=async function checkNightjarStop({page,origin}){
  });
  await page.waitForFunction(()=>stopSamples.filter(p=>p.walk).length>=32);
  await page.locator('#bench-walk').click();
- await page.waitForFunction(()=>stopSamples.filter(p=>!p.walk).length>=50);
+ // A fast renderer can submit fifty frames before the catch steps and rebound finish.
+ await page.waitForFunction(()=>{
+  const stops=stopSamples.filter(p=>!p.walk);
+  return stops.length>=50&&stops.at(-1).settled;
+ });
  const samples=await page.evaluate(()=>stopSamples.filter(p=>!p.walk));
  const rest=samples.at(-1),contacts=[];
  for(let leg=0;leg<2;leg++){
