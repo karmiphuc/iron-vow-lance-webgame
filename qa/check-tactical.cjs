@@ -22,8 +22,8 @@ const create=require('./sim-harness.cjs');
  assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,mech,tank,helicopter');
  assert.equal(restored.run("CONTRACTS[1].id"),'relay');
  assert.equal(restored.run("CONTRACTS[1].deployment.length"),5);
- assert.equal(restored.run("const reserve=save.credits;finish(true);save.credits-reserve"),1610,'payout less the company’s operating costs');
- assert.equal(restored.run('save.history.at(-1).pay'),2000);
+ assert.equal(restored.run("const reserve=save.credits;finish(true);save.credits-reserve"),3960,'payout less the company’s operating costs');
+ assert.equal(restored.run('save.history.at(-1).pay'),4350);
 
  for(const [oldIndex,id] of ['relay','corridor','frontier'].entries()){
   for(const oldVersion of [1,2]){
@@ -155,5 +155,5 @@ const create=require('./sim-harness.cjs');
   await attack;
   assert.equal(firing.run('actor.attack'),null);
  }
- console.log('PASS: opening and original contract rosters, exact 2,000-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, priming for allied and enemy mechs, attack skip and reduced motion.');
+ console.log('PASS: opening and original contract rosters, exact 4,350-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, priming for allied and enemy mechs, attack skip and reduced motion.');
 })().catch(e=>{console.error(e);process.exitCode=1});

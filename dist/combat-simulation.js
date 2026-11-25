@@ -26,13 +26,16 @@
  const statusResistance=u=>(u.apAllocation?.body??0)*STATUS_RESIST_PER_AP;
  const defCReduction=(u,w)=>u.apAllocation?.type===defenceType(w)?u.apAllocation.body*AP_ALLOCATION.body:0;
  const apRoundStart=(u,cap)=>Math.min(cap,u.ap+AP_RECOVERY);
- function allocateAIAP(cap,level,threats,essential=false){
+ function allocateAIAP(cap,level,threats,essential=false,role=null){
   const types=Object.keys(DEF_C_TYPES);
-  const counts=Object.fromEntries(types.map(type=>[type,threats.filter(w=>defenceType(w)===type).length]));
+  const counts=Object.fromEntries(types.map(type=>[type,threats.filter(weapons=>[weapons].flat().some(w=>defenceType(w)===type)).length]));
   const type=types.reduce((best,candidate)=>counts[candidate]>counts[best]?candidate:best);
   const emergency=essential&&counts[type]>=2?Math.min(1,Math.max(0,cap-BASE_AP)):0;
   const body=Math.min(level,counts[type],Math.max(emergency,cap-AI_AP_RESERVE));
-  return body?{type,body,arms:0,legs:0}:undefined;
+  const discretionary=Math.min(level,Math.max(0,cap-AI_AP_RESERVE-body));
+  const arms=['high','hold','anchor'].includes(role)?discretionary:0;
+  const legs=['mobile','push','escort'].includes(role)?discretionary:0;
+  return body||arms||legs?{type,body,arms,legs}:undefined;
  }
  const soloPicket=battle=>battle.contract?.id==='picket'&&(battle.operation?.recommended??battle.slots?.length)===1;
  const attackAPLeft=u=>Math.max(0,ATTACK_AP_LIMIT-(u.attackAPSpent??0));
@@ -222,16 +225,17 @@ function planVolley(a,t,aimed,w,reaction){
  const limbs=charged?BREACH_LIMBS.filter(part=>live.includes(part)):[];
  const frame=(charged?limbs:live.filter(part=>part!=='pilot')).map(part=>[part,HIT_LOCATION[part]??0]).filter(([,weight])=>weight>0);
  const table=!frame.length?[['body',1]]:frame;
- const pilotChance=!charged&&live.includes('pilot')?pilotHitChance(a.training):0;
- const count=shotsPerAttack(w);
+ const strike=w.comMelee,parts=strike?.parts;
+ const pilotChance=!charged&&!parts&&live.includes('pilot')?pilotHitChance(a.training):0;
+ const count=parts?.length??shotsPerAttack(w);
  const shell=w.scatter?ruleRandom():null;
  const rounds=[],hits=new Map();
  let evades=0,landed=0;
  for(let i=0;i<count;i++){
   const roll=shell??ruleRandom(),dodged=dodge>0&&roll>=1-dodge,hit=!dodged&&roll<odds.hit;
-  let part=table[0][0];
+  let part=parts?.[i]??table[0][0];
   if(shield&&hit)part=shield.hand??'left';
-  else if(hit&&table.length>1)part=pickWeighted(table,ruleRandom());
+  else if(!parts&&hit&&table.length>1)part=pickWeighted(table,ruleRandom());
   // Ordinary rounds use the upper end of their hit interval for crits.
   // Pellets share a shell hit roll, so their crit checks roll separately.
   const critical=hit&&odds.crit>0&&(w.scatter?ruleRandom():roll/odds.hit)>=1-odds.crit;
@@ -248,8 +252,9 @@ function planVolley(a,t,aimed,w,reaction){
  // for the rounds that landed on it. A part that was struck always takes at least 1.
  const impacts=[];
  for(const part of hits.keys()){
-  const weight=rounds.reduce((sum,r)=>r.hit&&r.part===part?sum+roundWeight(r,count):sum,0);
-  const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*weight/(w.comBaseRounds??count)));
+  const weight=rounds.reduce((sum,r)=>r.hit&&r.part===part?sum+roundWeight(r,parts?1:count):sum,0);
+  const damagePerHit=attackBudget(a,t,part,w,reaction)*weight*(strike?.scale??1)/(w.comBaseRounds??(parts?1:count));
+  const amount=strike?.smash&&part===parts[0]?t.hp[part]:Math.max(1,Math.round(damagePerHit));
   if(amount>0)impacts.push({part,amount:Math.min(amount,w.maxImpact??Infinity)});
  }
  return {rounds,impacts,landed,dodged:evades===count,guard:Boolean(shield&&landed)};
@@ -601,9 +606,9 @@ function reactionWeapon(defender,attacker){
   }
   function recordHit(a,t,w,hit,impacts,charged,reaction){
    if(hit){
-    if(!w.melee&&highGroundAim(a,t,w)>0&&hasMechSkill(a,1)&&!resistsStatus(t))mechState(t).spot={source:a.id,team:a.team};
-    if(!reaction&&launchesMissiles(w)&&hasMechSkill(a,2)&&!resistsStatus(t))mechState(t).basilisk=true;
-    if(!w.melee&&!launchesMissiles(w)&&impacts.some(impact=>impact.part==='right')&&hasMechSkill(a,REAVER_FRAME)&&!resistsStatus(t))mechState(t).disrupted=true;
+    if(!w.melee&&highGroundAim(a,t,w)>0&&hasMechSkill(a,1)&&!resistsStatus(t,'Spot'))mechState(t).spot={source:a.id,team:a.team};
+    if(!reaction&&launchesMissiles(w)&&hasMechSkill(a,2)&&!resistsStatus(t,'Counter Screen'))mechState(t).basilisk=true;
+    if(!w.melee&&!launchesMissiles(w)&&impacts.some(impact=>impact.part==='right')&&hasMechSkill(a,REAVER_FRAME)&&!resistsStatus(t,'Disruption'))mechState(t).disrupted=true;
     if(w.melee&&hasMechSkill(a,HELLBREAKER))t.brace=false;
    }
    if(charged&&--a.breach===0)delete a.breach;
