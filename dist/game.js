@@ -42,6 +42,8 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'salt-mg',name:'Salt Works MG-12',type:'CASELESS MACHINE GUN',burst:12,damage:66,range:6,ap:5,weight:27,price:14500,rep:180,motion:'hailstorm',
   desc:'A twelve-round caseless burst from the long Salt Works carriage. Vanta supplies veteran companies at 180 reputation.'},
  {id:'vesper-shoulder',rounds:2,name:'Vesper Shoulder Pod',type:'GUIDED MISSILE POD',damage:45,range:7,ap:4,price:2400,shoulder:true,desc:'Launch guided missiles across cover from a compatible right-shoulder mount.'},
+ {id:'cataphract-cannon',name:'Mantlet Cannon',type:'FIXED ARTILLERY',damage:48,range:5,ap:4,builtIn:true,hand:'body',motion:'rampart',desc:'One shoulder-mounted shell. Both hands remain free.'},
+ {id:'four-sword',name:'Four-Sword Volley',type:'FIXED ARTILLERY',rounds:4,damage:148,range:6,ap:6,builtIn:true,hand:'body',tactical:'four-sword',motion:'rampart',desc:'Take a knee and fire all four barrels at one visible hostile. Requires working legs. Once per battle.'},
  {id:'giza-salvo',name:'Double Cannon',type:'SHOULDER CANNONS',burst:2,damage:92,range:6,ap:3,weight:0,price:0,builtIn:true,tactical:'double-cannon',motion:'rampart',desc:'Once per battle, fire both shoulder cannons at one hostile.'},
  {id:'vyzov-cross',name:'Cross Mortar',type:'AREA MORTAR',damage:54,range:7,ap:3,weight:0,price:0,builtIn:true,tactical:'cross-mortar',motion:'rampart',desc:'Once per battle, shell one tile and its orthogonal neighbors. Friendly fire applies.'},
 ];
@@ -428,6 +430,10 @@ const SAKER_FRAME=FRAMES.push({name:'SAKER',model:'SK–38',role:'ROOFTOP MARKSM
  hp:136,arm:72,leg:94,move:4,jumpjet:true,jumpjetRange:3,jumpjetEachTurn:true,jumpjetLift:2.15,armor:4,dodge:.13,weapon:'merlin-38',native:'saker',
  enemyOnly:true,captureOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
  brief:'An armored biped that crosses open ground at a lope and drops low to sight along its right wrist. Its left hand stays free to catch the firing load.'})-1;
+const CATAPHRACT_FRAME=FRAMES.push({name:'CATAPHRACT',model:'CT–47',role:'HEAVY ARTILLERY',weightClass:'heavy',color:'#6e7556',
+ hp:216,arm:110,leg:128,move:3,moveAP:2,armor:9,weapon:'cataphract-cannon',native:'cataphract',
+ enemyOnly:true,captureOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
+ brief:'Two twin cannon mounts leave both hands free. Four-Sword Volley costs 6 AP and reaches six tiles once per battle. Break its legs to deny the kneeling shot.'})-1;
 // Name, player-facing effect, preferred distance, and positioning priority.
 const MECH_SIGNATURES={
  0:['Steady Aim','Open from a planted position. Your first direct shot before moving gains +6 aim.',4,'hold'],
@@ -455,6 +461,7 @@ const MECH_SIGNATURES={
  [SALTJACK_FRAME]:['Sustained Burst','Keep steady pressure at midrange. Bursts fired from four or more tiles gain +6 aim.',5,'hold'],
  [SALT_WORKS_GARRISON_FRAME]:['Yard Defense','Cover the yard from behind obstacles. Direct shots from cover gain +8 aim.',5,'screen'],
  [HUSKY_FRAME]:['Running Snap','Move before firing. Direct shots from within three tiles gain +8 aim after moving.',3,'mobile'],
+ [CATAPHRACT_FRAME]:['Ground Anchor','While braced with working legs, absorb an additional 15 percentage points of ranged damage.',5,'anchor'],
  [GIZA_FRAME]:['Range Table','Hold position. Direct shots from five or more tiles gain +6 aim before moving.',5,'hold'],
  [SAKER_FRAME]:['High Perch','Non-melee attacks gain +1 range when your elevation is higher than the target’s.',8,'mobile'],
  [NIGHTJAR_FRAME]:['Rangefinder','Keep seven tiles of separation. After firing, gain 1 tile of movement range to reach cover or preferred range. The right buckler reduces intercepted damage by 20%.',7,'mobile'],
@@ -563,6 +570,10 @@ CONTRACTS.push({id:'parapet',port:'ridge',field:0,seats:1,hostiles:[SAKER_FRAME]
  name:'Parapet',place:'RIDGE STATION · ROOF LINE',tag:'MARKSMAN INTERCEPT',pay:4700,difficulty:2,
  desc:'A Saker has taken the relay approach. Break its right arm to silence the Merlin before crossing the open lane.',
  deployment:[[8,11]]});
+CONTRACTS.push({id:'iron-redoubt',port:'black',field:2,seats:3,hostiles:[CATAPHRACT_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME],
+ name:'Iron Redoubt',place:'BLACK BASIN · WEST BATTERY',tag:'SIEGE BATTERY',objectivePay:3000,difficulty:3,
+ desc:'A CATAPHRACT holds the quarry with two escorts. Its four-barrel volley reaches six tiles for 6 AP, once per battle. Approach behind cover or disable its legs before it kneels.',
+ deployment:[[12,6],[8,11],[15,12]]});
 function validInterception(career){
  const event=career.interception;
  if(event===undefined)return true;
@@ -1105,7 +1116,7 @@ const weaponRange=(w,training)=>w.range+(w.melee?0:(training?.range??0));
 const launchesMissiles=w=>w?.id==='missile'||ATTACK_PROFILES[w?.id]?.effect==='missile';
 const mechState=u=>u.mechState??={};
 const highPerchRange=(u,t,w)=>Number(Boolean(t&&!w.melee&&hasMechSkill(u,SAKER_FRAME)&&fireLevel(u)>fireLevel(t)));
-const combatRange=(u,t,w)=>weaponRange(w,u.training)+highPerchRange(u,t,w)+(hasMechSkill(u,4)&&launchesMissiles(w)&&t?.painted?1:0);
+const combatRange=(u,t,w)=>w.tactical==='four-sword'?w.range:weaponRange(w,u.training)+highPerchRange(u,t,w)+(hasMechSkill(u,4)&&launchesMissiles(w)&&t?.painted?1:0);
 const counterRange=(w,training,braced=false)=>launchesMissiles(w)?0:weaponRange(w,training)+(training?.counterRange??0)+(braced?(training?.braceCounterRange??0):0);
 const combatCounterRange=(u,t,w)=>counterRange(w,u.training,u.brace)+(launchesMissiles(w)?0:highPerchRange(u,t,w));
 const braceCost=training=>BRACE_AP-(training?.braceAP??0);
@@ -1921,7 +1932,7 @@ function selectedWeapon(u,mode=action,target=null){
  }
  return unitWeapon(u);
 }
-const paidAttackAP=(u,w)=>(w.tactical?w.ap:Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0)))+confusionAP(u);
+const paidAttackAP=(u,w)=>w.tactical==='four-sword'?w.ap:(w.tactical?w.ap:Math.max(1,weaponAP(w,u.training)-(u.order?.discount??0)))+confusionAP(u);
 function pairedLauncher(u,w){return w.id==='locust'||u.frame===2&&w.id==='missile';}
 function salvoWeapon(u,w){
  if(w.id===REAVER_AUTOCANNON.id)return reaverGunCount(u)===1?REAVER_SINGLE_CANNON:REAVER_AUTOCANNON;
@@ -3577,6 +3588,7 @@ const {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLev
 });
 let tacticalAim=null;
 const TACTICAL_SPECS={
+ [CATAPHRACT_FRAME]:{id:'four-sword',weapon:'four-sword',name:'FOUR-SWORD VOLLEY'},
  [GIZA_FRAME]:{id:'double-cannon',weapon:'giza-salvo',name:'DOUBLE CANNON'},
  [VYZOV_FRAME]:{id:'cross-mortar',weapon:'vyzov-cross',name:'CROSS MORTAR'}
 };
@@ -3588,7 +3600,7 @@ function tacticalWeapon(u){
 function canTactical(u){
  const w=tacticalWeapon(u);
  return Boolean(u?.alive&&w&&!u.tacticalUsed&&u.hp.body>0&&canSpendAttack(u,paidAttackAP(u,w))&&
-  (w.tactical!=='double-cannon'||u.hp.left>0&&u.hp.right>0));
+  (w.tactical!=='four-sword'||u.hp.legs>0)&&(w.tactical!=='double-cannon'||u.hp.left>0&&u.hp.right>0));
 }
 function mortarCross(x,z){
  return [[x,z],[x,z-1],[x-1,z],[x+1,z],[x,z+1]].filter(([tx,tz])=>onBoard(tx,tz)).map(([tx,tz])=>({x:tx,z:tz}));
@@ -3596,7 +3608,7 @@ function mortarCross(x,z){
 function tacticalPlan(u,aim){
  if(!aim||!canTactical(u))return null;
  const w=tacticalWeapon(u);
- if(w.tactical==='double-cannon'){
+ if(w.tactical!=='cross-mortar'){
   const target=battle.units.find(t=>t.id===aim.target&&t.alive&&t.team!==u.team);
   return target&&distance(u,target)<=combatRange(u,target,w)&&!attackObstruction(u,target,w)?
    {w,target,tiles:[{x:target.x,z:target.z}],affected:[target],friendly:[]}:null;
@@ -3614,8 +3626,8 @@ function currentTacticalPlan(){
 async function executeTactical(u,plan){
  u.tacticalUsed=true;
  const {w}=plan;
- if(w.tactical==='double-cannon'){
-  addLog(u.name+' commits both shoulder cannons.');
+ if(w.tactical!=='cross-mortar'){
+  addLog(u.name+(w.tactical==='four-sword'?' takes a knee for Four-Sword Volley.':' commits both shoulder cannons.'));
   await engage(u,plan.target,'body',w);
   return;
  }
@@ -3654,7 +3666,7 @@ function tacticalPreviewMarkup(u){
  const spec=tacticalSpec(u);
  if(!spec||action!=='tactical')return '';
  const plan=currentTacticalPlan();
- const instruction=spec.id==='double-cannon'?'Select a hostile for both shoulder cannons.':'Select a tile to preview the cross.';
+ const instruction=spec.id==='four-sword'?'Select one hostile within six tiles for all four barrels.':spec.id!=='cross-mortar'?'Select a hostile for both shoulder cannons.':'Select a tile to preview the cross.';
  const details=plan?.target
   ?plan.target.name+' · '+attackPreview(u,plan.target,plan.w)
   :plan?.center?plan.tiles.length+' tiles · '+plan.affected.length+' unit'+(plan.affected.length===1?'':'s')+' in blast':instruction;
@@ -3679,7 +3691,7 @@ async function commitTactical(){
 async function enemyTactical(u,opponents){
  if(!canTactical(u)||u.blackout?.hold)return false;
  const spec=tacticalSpec(u);
- const positions=spec.id==='double-cannon'?opponents.map(target=>({target:target.id})):
+ const positions=spec.id!=='cross-mortar'?opponents.map(target=>({target:target.id})):
   opponents.flatMap(target=>mortarCross(target.x,target.z));
  const plans=positions.map(aim=>tacticalPlan(u,aim)).filter(plan=>plan&&plan.affected.length&&!plan.friendly.length);
  const best=plans.sort((a,b)=>b.affected.length-a.affected.length)[0];
@@ -3732,7 +3744,7 @@ function jumpjetDestination(u,target){
  return best;
 }
 const {hitOdds,shotsPerAttack,roundWeight}=window.IRON_VOW_SIM;
-const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,FREE_HAND_COUNTER});
+const {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget}=window.IRON_VOW_SIM.createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits:()=>battle?.units,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,CATAPHRACT_FRAME,FREE_HAND_COUNTER});
 let planVolley=window.IRON_VOW_SIM.createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom:()=>comRandom(),chargedLimbShot});
 const legalComWeapon=(a,t,w)=>Boolean(a?.alive&&t?.alive&&!isStunned(a)&&!a.blackout&&workingWeapon(a,w)&&
  distance(a,t)<=combatRange(a,t,w)&&!attackObstruction(a,t,w));
@@ -4362,22 +4374,23 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null
  const turning=turnToward(a,t.x-a.x,t.z-a.z,sequence);if(turning)await turning;
  const shoulder=launcherId(w.id)&&w.id!=='locust',clip=w.melee?'strike':'fire';
  const plantedCleaver=breachLoadout(a.frame)&&w.id==='cleaver';
- const native=!w.tactical&&!lionStrike&&!shoulder&&!a.kind&&FRAMES[a.frame].native?NATIVE_ATTACK_TIMING[clip]:null;
+ const mantlet=w.id==='cataphract-cannon';
+ const native=!mantlet&&!w.tactical&&!lionStrike&&!shoulder&&!a.kind&&FRAMES[a.frame].native?NATIVE_ATTACK_TIMING[clip]:null;
  const plantedBastion=a.brace&&bastionRig(a);
  const plantedWarden=a.brace&&a.hp.legs>0&&a.frame===0&&a.team==='ally';
  const braceTimeLeft=Math.max(0,WARDEN_BRACE_DURATION-(clock-(a.braceTime??-100)));
  // Under the attack camera the step-up and the raised-gun hold get a readable beat (CINEMATIC_PACE); field and reaction fire keep theirs.
  const paced=Boolean(sequence&&!sequence.skipped&&!reaction&&!reducedMotion);
- const basePrime=!w.tactical&&!lionStrike&&!aeroStrike&&!w.scout&&!power&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
+ const basePrime=!mantlet&&!w.tactical&&!lionStrike&&!aeroStrike&&!w.scout&&!power&&!plantedCleaver&&!a.kind&&a.hp.legs>0&&!reducedMotion?
   (plantedWarden?braceTimeLeft:plantedBastion?Math.max(0,1.22-(clock-(a.braceTime??-100))):reaction?.40:ATTACK_STEP.duration):0;
  const primeDuration=basePrime*(paced?CINEMATIC_PACE.step:1);
  const cameraWindup=!lionStrike&&!aeroStrike&&!w.scout&&!power&&sequence&&!reaction;
  const aimHold=paced&&!native&&cameraWindup?CINEMATIC_PACE.aimHold:0;
- const windup=reducedMotion?.06:w.tactical==='double-cannon'?1.1:native?native.cue*native.duration:profile.raise+(cameraWindup?(basePrime?.12:.51):0)+aimHold;
+ const windup=reducedMotion?.06:w.tactical==='four-sword'||mantlet?profile.raise:w.tactical==='double-cannon'?1.1:native?native.cue*native.duration:profile.raise+(cameraWindup?(basePrime?.12:.51):0)+aimHold;
  const raise=primeDuration+windup;
  a.attack={kind:w.id,tactical:w.tactical,start:clock,fireAt:null,releaseAt:null,primeDuration,windup,native:native?{...native,clip}:null,
   ...(power?{stage:'pullback'}:{})};
- if(w.tactical==='double-cannon')window.IronVowScene?.nativeAbility?.(a,w.id,clock,t);
+ if(w.tactical==='double-cannon'||w.tactical==='four-sword')window.IronVowScene?.nativeAbility?.(a,w.id,clock,t);
  if(primeDuration&&!sequence?.skipped)sound('braceLift',braceMass,{pan:shotPan(),rate:braceRate});
  if(primeDuration){
   await waitAttack(primeDuration*1000,sequence);
@@ -4950,6 +4963,7 @@ MECH_MOTION[AERO_FRAME]={...MECH_MOTION[LINE_INFANTRY_FRAME],step:.43,mass:.89};
 MECH_MOTION[CAIRN_FRAME]={...MECH_MOTION[0]};
 MECH_MOTION[SHOGUN_FRAME]={...MECH_MOTION[3],mass:1.66};
 MECH_MOTION[HUSKY_FRAME]={step:.48,mass:.98,playbackRate:1};
+MECH_MOTION[CATAPHRACT_FRAME]={step:.72,mass:1.72,playbackRate:1};
 MECH_MOTION[GIZA_FRAME]={step:.63,mass:1.54,playbackRate:1};
 MECH_MOTION[VYZOV_FRAME]={step:.51,mass:1.21,playbackRate:1};
 MECH_MOTION[SAKER_FRAME]={step:.38,mass:1.12,playbackRate:1.55};
@@ -4975,6 +4989,8 @@ const ATTACK_PROFILES={
  cleaver:{raise:.21,beats:[0],travel:.16,recover:.30,melee:true},
  blade:{raise:.38,beats:[0],travel:.08,recover:.55,melee:true,effect:'cleaver'},
  piledriver:{raise:.32,beats:[0],travel:.18,recover:.39,melee:true},
+ 'four-sword':{raise:2.72,beats:[0,.04,.45,.49],travel:.16,recover:3.07,effect:'rampart'},
+ 'cataphract-cannon':{raise:.80,beats:[0],travel:.15,recover:.66,effect:'rampart'},
  'giza-salvo':{raise:1.10,beats:[0,.35],interval:.35,travel:.14,recover:.48,effect:'rampart',alternate:true},
  'vyzov-cross':{raise:.45,beats:[0],travel:.80,recover:.48,effect:'rampart'},
  morrow:{raise:.784,beats:[0,.298667],travel:.14,recover:.48,effect:'rampart',alternate:true},
@@ -5782,7 +5798,7 @@ canvas.addEventListener('pointerup',async e=>{
   renderBattle();persist();toast(ally.name+' · '+distressIntent(ally));return;
  }
  if(action==='tactical'){
-  const aim=tacticalSpec(u)?.id==='double-cannon'?{target:picked?.id}:picked?{x:picked.x,z:picked.z}:tile;
+  const aim=tacticalSpec(u)?.id!=='cross-mortar'?{target:picked?.id}:picked?{x:picked.x,z:picked.z}:tile;
   tacticalAim=tacticalPlan(u,aim)?{...aim,actor:u.id}:null;
   renderBattle();
   if(!tacticalAim)toast('Choose a valid target in range.');

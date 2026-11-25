@@ -1,0 +1,44 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+
+async function check(){
+ const game=simulate({seed:42,reducedMotion:true});
+ const {run}=game;
+ assert.equal(run("availableOffers('black',16).some(o=>CONTRACTS[o.templateIndex].id==='iron-redoubt')"),false);
+ run("save.day=17;save.overworld={port:'black',arrears:0};save.world=worldRules.createWorld(42,17);persist()");
+ const offer=run("availableOffers('black').find(o=>CONTRACTS[o.templateIndex].id==='iron-redoubt').id");
+ game.node('#aux-pilot').options=[];game.node('#use-aux').checked=false;
+ run('prepareWorldOffer('+JSON.stringify(offer)+')');game.node('#modal-1').onclick();
+ run("const cat=battle.units.find(u=>u.frame===CATAPHRACT_FRAME),target=current(),salvo=tacticalWeapon(cat);");
+ assert.ok(run("cat.team==='enemy'&&battle.contract.id==='iron-redoubt'&&unitWeapon(cat).id==='cataphract-cannon'"));
+ assert.equal(run("validHull({...stockHull(cat.frame),shoulder:'missile'},cat.frame,['missile'])"),false);
+ run("Object.assign(cat,{x:2,z:8,vx:2,vz:8});Object.assign(target,{x:8,z:8,vx:8,vz:8,reacted:true});battle.cover.clear();battle.field={};");
+ assert.ok(run("tacticalPlan(cat,{target:target.id})&&salvo.rounds===4&&paidAttackAP(cat,salvo)===6"));
+ assert.ok(run("target.x=9;!tacticalPlan(cat,{target:target.id})"));
+ assert.ok(run("target.x=8;cat.ap=5;!canTactical(cat)"));
+ assert.ok(run("cat.ap=6;cat.hp.legs=0;!canTactical(cat)"));
+ run("cat.hp.legs=cat.max.legs;const shots=[],contacts=[];window.IronVowScene={aimAt(){},project(p){return p},attachmentPoint(){return {x:0,y:0}},projectWorld(p){return p},combat:{launch(a,t,w,index){shots.push(index)},landed(a,t,w,event){contacts.push(event)}}};ruleRandom=()=>.01;target.armor=0;target.shield=null;const originalBody=target.max.body;target.max.body=target.hp.body=500;const before=target.hp.body;");
+ await run("enemyTactical(cat,[target])");
+ assert.equal(run("shots.join(',')"),'0,1,2,3');assert.equal(run('contacts.length'),4);
+ assert.ok(run("cat.ap===0&&cat.attackAPSpent===6&&cat.tacticalUsed&&target.hp.body<before"));
+ const hpLost=run('before-target.hp.body');
+ run('target.max.body=target.hp.body=originalBody;completeRound();persist()');
+ assert.ok(run('!canTactical(cat)'));
+ const restored=simulate({storage:new Map(game.storage)});
+ assert.ok(restored.run("battle?.units.some(u=>u.frame===CATAPHRACT_FRAME&&u.tacticalUsed)"));
+ run("cat.brace=true;const rifle=weapon('rifle'),blade=weapon('blade');const anchored=damage(target,cat,rifle);const melee=damage(target,cat,blade);cat.hp.legs=0;");
+ assert.ok(run("anchored<damage(target,cat,rifle)&&melee===damage(target,cat,blade)"));
+ run("createBattle(CONTRACTS.findIndex(c=>c.id==='iron-redoubt'),false,false);enableMechComputers();");
+ assert.ok(run("canTactical(battle.units.find(u=>u.frame===CATAPHRACT_FRAME))"));
+ const captured=restored.run;
+ captured("const redoubt=battle.units.find(u=>u.frame===CATAPHRACT_FRAME);redoubt.hp.pilot=4;captureRandom=()=>0");
+ assert.ok(captured("trySurrender(redoubt,[current()])"));
+ captured("finish(true)");
+ assert.ok(captured("acquireHull(CATAPHRACT_FRAME,true)&&assignChassis(0,CATAPHRACT_FRAME,true)&&validSave(save)"));
+ captured("createBattle(0,false,false,[0]);enableMechComputers();for(let i=0;i<MECH_LEARN_KILLS;i++)recordMechKill(current(),battle.units.find(u=>u.team==='enemy'));battle=null");
+ assert.ok(captured("equipMechSkill(0,1,0,CATAPHRACT_FRAME)&&validSave(save)"));
+ captured("assignChassis(0,1,true);createBattle(0,false,false,[0]);enableMechComputers()");
+ assert.ok(captured("hasMechSkill(current(),CATAPHRACT_FRAME)&&!tacticalSpec(current())"));
+ console.log('PASS Iron Redoubt day gate, deployment, fixed mounts, six-tile targeting, four launches and impacts ('+hpLost+' combined HP), six AP, disabled legs, reload, reset and Ground Anchor.');
+}
+check().catch(e=>{console.error(e);process.exitCode=1});

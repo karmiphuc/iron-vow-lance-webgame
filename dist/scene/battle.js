@@ -705,10 +705,10 @@ root.IronVowScene={mechYaw:u=>models.get(u.id)?.entry?.m.yaw,isLive,render,proje
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
  mortarPresentation(unit,at=clock){if(models.get(unit.id)?.entry?.m?.mortar)mortarCues.set(unit.id,{at,fired:false});},
  nativeAbility(unit,name,at=clock,target){
-  const duration=name==='giza-salvo'?3.12:name==='vyzov-cross'?1.4:0;
+  const duration=name==='four-sword'?6.43:name==='giza-salvo'?3.12:name==='vyzov-cross'?1.4:0;
   if(!duration)return false;
   nativeCues.set(unit.id,{name,at,duration});
-  if(name==='giza-salvo'&&target?.hp)aimTargets.set(unit.id,{target,part:'body'});
+  if((name==='four-sword'||name==='giza-salvo')&&target?.hp)aimTargets.set(unit.id,{target,part:'body'});
   return true;
  },
  crossMortar(unit,tiles,flight){return combat?.crossMortar(unit,tiles,flight)??false;},

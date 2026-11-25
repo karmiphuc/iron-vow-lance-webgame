@@ -35,15 +35,17 @@ root.IronVowCombat={create(scene,api){
   api.sync(actor);api.sync(target);
   const mounted=api.models.get(actor.id)?.entry;
   const giza=w.id==='giza-salvo'||actor.attack?.tactical==='double-cannon';
-  const ability=giza?mounted?.m.nativeV2?.abilityWeapon:null;
+  const battery=mounted?.m.nativeV2?.artillery;
+  const tube=w.id==='four-sword'?battery?.[index]:w.id==='cataphract-cannon'?battery?.[0]:null;
+  const ability=tube||(giza?mounted?.m.nativeV2?.abilityWeapon:null);
   const profile=profileFor(actor,w),kind=profile.archetype;
   if(kind==='blade')return;
-  const socket=ability?'shoulderMuzzle'+(index%2?'2':''):profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):
+  const socket=tube?'batteryMuzzle'+(index+1):ability?'shoulderMuzzle'+(index%2?'2':''):profile.socket?(profile.socket+(index%2&&profile.launchers>1?'2':'')):
    mounted?.primary?.alternate&&index%2?'muzzle2':shotMuzzle(actor,w.id,index);
   const selected=contacts.filter(c=>c.index===index||w.scatter&&index===0),contact=selected[0]||contacts[0];
   const part=guard?'shield':contact?.part||'body',to=point(target,part);
   if(contact&&!contact.hit)to.add(V3(.6,0,.4));
-  const native=mounted?.m.nativeV2,shoulder=socket.startsWith('shoulderMuzzle'),alternate=socket.endsWith('2');
+  const native=mounted?.m.nativeV2,shoulder=socket.startsWith('shoulderMuzzle'),alternate=!tube&&socket.endsWith('2');
   const weapon=ability||(shoulder?mounted?.shoulderWeapon??mounted?.primary:mounted?.primary);
   if(weapon){
    const indexed=weapon.muzzles?.[index%weapon.muzzles.length];

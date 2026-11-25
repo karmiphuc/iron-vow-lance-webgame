@@ -138,7 +138,7 @@
   }
   return {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim,fireLevel};
  }
- function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,FREE_HAND_COUNTER}){
+ function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,CATAPHRACT_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
 const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee);
 // Part whose accuracy a shot uses: charged shots keep the old limb accuracy, every other shot uses the body.
@@ -199,7 +199,8 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const armor=t.hp.left===0?damagedArmor(t.armor):t.armor;
  const pierce=Math.max(w.pierce??0,w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0,charged?training?.breachPierce??.50:0);
  const bracePiercing=!w.melee&&!launchesMissiles(w)?(Math.max(hasMechSkill(a,SHOGUN_FRAME)?.20:0,hasMechSkill(a,3)?(distance(a,t)<=4?.25:.15):0)):0;
- const brace=t.brace?Math.max(0,braceReduction(t.training)-bracePiercing):0;
+ const anchor=!w.melee&&t.hp.legs>0&&hasMechSkill(t,CATAPHRACT_FRAME)?.15:0;
+ const brace=t.brace?Math.max(0,braceReduction(t.training)+anchor-bracePiercing):0;
  const amount=Math.max(5,Math.round((power-armor*(1-pierce))*(1-brace)*(1-shieldProtection(t))));
  return w===FREE_HAND_COUNTER?Math.min(amount,10):amount;
 }
