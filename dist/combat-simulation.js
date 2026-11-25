@@ -194,16 +194,17 @@ function planVolley(a,t,aimed,w,reaction){
  const limbs=charged?BREACH_LIMBS.filter(part=>live.includes(part)):[];
  const frame=(charged?limbs:live.filter(part=>part!=='pilot')).map(part=>[part,HIT_LOCATION[part]??0]).filter(([,weight])=>weight>0);
  const table=!frame.length?[['body',1]]:frame;
- const pilotChance=!charged&&live.includes('pilot')?pilotHitChance(a.training):0;
- const count=shotsPerAttack(w);
+ const strike=w.comMelee,parts=strike?.parts;
+ const pilotChance=!charged&&!parts&&live.includes('pilot')?pilotHitChance(a.training):0;
+ const count=parts?.length??shotsPerAttack(w);
  const shell=w.scatter?ruleRandom():null;
  const rounds=[],hits=new Map();
  let evades=0,landed=0;
  for(let i=0;i<count;i++){
   const roll=shell??ruleRandom(),dodged=dodge>0&&roll>=1-dodge,hit=!dodged&&roll<odds.hit;
-  let part=table[0][0];
+  let part=parts?.[i]??table[0][0];
   if(shield&&hit)part=shield.hand??'left';
-  else if(hit&&table.length>1)part=pickWeighted(table,ruleRandom());
+  else if(!parts&&hit&&table.length>1)part=pickWeighted(table,ruleRandom());
   // Ordinary rounds use the upper end of their hit interval for crits.
   // Pellets share a shell hit roll, so their crit checks roll separately.
   const critical=hit&&odds.crit>0&&(w.scatter?ruleRandom():roll/odds.hit)>=1-odds.crit;
@@ -220,8 +221,9 @@ function planVolley(a,t,aimed,w,reaction){
  // for the rounds that landed on it. A part that was struck always takes at least 1.
  const impacts=[];
  for(const part of hits.keys()){
-  const weight=rounds.reduce((sum,r)=>r.hit&&r.part===part?sum+roundWeight(r,count):sum,0);
-  const amount=Math.max(1,Math.round(attackBudget(a,t,part,w,reaction)*weight/(w.comBaseRounds??count)));
+  const weight=rounds.reduce((sum,r)=>r.hit&&r.part===part?sum+roundWeight(r,parts?1:count):sum,0);
+  const damagePerHit=attackBudget(a,t,part,w,reaction)*weight*(strike?.scale??1)/(w.comBaseRounds??(parts?1:count));
+  const amount=strike?.smash&&part===parts[0]?t.hp[part]:Math.max(1,Math.round(damagePerHit));
   if(amount>0)impacts.push({part,amount:Math.min(amount,w.maxImpact??Infinity)});
  }
  return {rounds,impacts,landed,dodged:evades===count,guard:Boolean(shield&&landed)};
