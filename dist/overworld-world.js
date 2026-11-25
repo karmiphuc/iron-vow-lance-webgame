@@ -157,6 +157,7 @@ window.IronVowWorld=(()=>{
    offer(seed,'ridge',postedDay,3,5),offer(seed,'corridor',postedDay,4,6),offer(seed,'frontier',postedDay,3,7),
    offer(seed,'ridge',postedDay,4,14),offer(seed,'brine',postedDay,3,10),
    offer(seed,'brine',postedDay,4,11),offer(seed,'mercy',postedDay,3,12),offer(seed,'black',postedDay,3,13));
+  if(postedDay>=17)result.push(offer(seed,'black',postedDay,4,15));
   return result;
  }
  function validWorld(w){

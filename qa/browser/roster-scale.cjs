@@ -10,7 +10,6 @@ module.exports=async function checkRosterScale({page,mobile,origin}){
   const max={body:100,pilot:100,right:100,left:100,legs:100};
   const roster=FRAMES.map((frame,id)=>({id:'scale-'+id,index:id,frame:id,name:frame.name,...stockHull(id),
    team:frame.enemyOnly?'enemy':'ally',pilot:0,hp:{...max},max,alive:true,heading:-Math.PI/4}));
-  roster.push({...roster[0],id:'scale-lion',name:'LION',lionTrial:true,melee:'cleaver'});
 
   // Three's ordinary object bounds use bind-pose boxes for these skinned meshes.
   // Use visible posed vertices, counting native and fitted standard equipment once.
@@ -91,7 +90,6 @@ module.exports=async function checkRosterScale({page,mobile,origin}){
    const batch=roster.slice(offset,offset+4);
    for(const [cell,unit] of batch.entries())Object.assign(unit,{index:cell,x:2+cell*2,z:10,vx:2+cell*2,vz:10});
    battle.units=batch;
-   battle.lionTrial=false;
    scene.clear();
    scene.render(clock,.016);
    const loaded=await Promise.all(['battle','workshop','bench'].map(scope=>rigs.load(batch,scope)));
@@ -109,9 +107,9 @@ module.exports=async function checkRosterScale({page,mobile,origin}){
     const preview=foundry.preview(unit,model,undefined,0,'bench');
     if(!field?.armed||!stage?.armed||!preview?.armed)throw Error('Incomplete production view for '+unit.name+
      ' '+[field,stage,preview].map(entry=>entry?String(entry.armed):'missing').join('/'));
-    result.push({name:unit.name,frame:unit.lionTrial?'lion':unit.frame,authored:field.m.live??null,
+    result.push({name:unit.name,frame:unit.frame,authored:field.m.live??null,
      field:measure(field.m),stage:measure(stage.m),preview:measure(preview.m),
-     ...(unit.frame===0&&!unit.lionTrial?{framing:portraitFraming(preview)}:{})});
+     ...(unit.frame===0?{framing:portraitFraming(preview)}:{})});
     if(context)captureFrame(stage.m,result.at(-1));
     foundry.releaseStageRig('workshop',unit.id);
    }
@@ -128,7 +126,7 @@ module.exports=async function checkRosterScale({page,mobile,origin}){
   assert.ok(sheet?.startsWith('data:image/webp;base64,'));
   fs.writeFileSync(path.resolve(process.env.IRON_VOW_ROSTER_SHEET),Buffer.from(sheet.split(',')[1],'base64'));
  }
- assert.ok(report.frames.length>=28,'The full frame registry and the Lion trial were measured');
+ assert.ok(report.frames.length>=28,'The full frame registry was measured');
  for(const {name,field,stage,preview} of report.frames){
   assert.equal(field.scale,stage.scale,name+' uses the same physical size in combat and the Workshop');
   for(const [view,size] of Object.entries({field,stage})){

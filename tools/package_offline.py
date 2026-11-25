@@ -36,7 +36,6 @@ for asset in (
     "rig-bench/rig-v2/li-01.glb",
     "rig-bench/rig-v2/li-02.glb",
     "rig-bench/rig-v2/reaver.glb",
-    "rig-bench/rig-v2/lion.glb",
     "rig-bench/rig-v2/kestrel.glb",
     "rig-bench/rig-v2/basilisk.glb",
     "rig-bench/rig-v2/vanguard.glb",

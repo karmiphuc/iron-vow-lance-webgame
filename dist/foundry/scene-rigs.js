@@ -210,7 +210,7 @@ const longGuns=new Set(['rail','obelisk','watchman','rampart','falcon']);
 const cuttingWeapons=new Set(['blade','cleaver','hatchet']);
 const shieldPoses={'bulwark-shield':'buckler','citadel-shield':'tower'};
 function combatReadyPose(u,{m,primary,secondary,shield,shoulderWeapon}){
- if(!primary?.muzzle||u.lionTrial)return;
+ if(!primary?.muzzle)return;
  const {spine,arms}=m.rig;
  if(u.frame===2)return primary===shoulderWeapon||primary.carrier===spine?'pod':undefined;
  if(primary.mount.parent!==arms.R.so)return;
@@ -242,8 +242,8 @@ function draw(u,t,pose,scope,model,custom){
   // Keep authored size and the roster adjustment consistent across views.
   const rosterScale=u.frame===8?.92:1; // Aegis uses the legacy Foundry kit.
   const previewScale=m.scale*rosterScale,worldScale=(m.nativeV2?.worldScale??.9*m.scale)*rosterScale;
-  // foundry/walk-tuning.js: approved step length, foot track, toe-out and footfall mass for this hull (the Lion trial rig keeps its own)
-  window.IronVowWalk?.apply(m,u.lionTrial?null:u.frame,typeof MECH_MOTION!=='undefined'?MECH_MOTION[u.frame]?.mass:undefined);
+  // foundry/walk-tuning.js: approved step length, foot track, toe-out and footfall mass for this hull
+  window.IronVowWalk?.apply(m,u.frame,typeof MECH_MOTION!=='undefined'?MECH_MOTION[u.frame]?.mass:undefined);
   if(window.IronVowCairn?.applies(u.frame))window.IronVowCairn.fit(m,u,window.IronVowFieldPaint.finish(u));
   const coat=window.IronVowFieldPaint.create(u);
   if(coat)coat(m.body,m.build.ownedMaterials??=[]);
@@ -447,7 +447,7 @@ function previewHealth(unit){
 }
 function previewKey(u,scope,angle){
  const {hp,max}=previewHealth(u);
- return JSON.stringify([scope,u.frame,u.team||'ally',Boolean(u.lionTrial),u.paintFinish,u.paint,u.trim,u.weapon,u.melee,u.meleeHand,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
+ return JSON.stringify([scope,u.frame,u.team||'ally',u.paintFinish,u.paint,u.trim,u.weapon,u.melee,u.meleeHand,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
 }
 function preview(u,model,custom,angle=0,scope='preview'){
  if(rigV2?.applies(u))custom='rig-v2';

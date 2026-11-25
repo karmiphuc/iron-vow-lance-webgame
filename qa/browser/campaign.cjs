@@ -96,7 +96,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  assert.equal(await page.locator('.wiki-paths li').count(),144);
  for(const i of [5,6,7]){
   await tap('.wiki-pilot:nth-of-type('+(i+1)+') summary');
-  assert.equal(await page.locator('.wiki-pilot').nth(i).locator('li:visible').count(),12);
+  assert.equal(await page.locator('.wiki-pilot').nth(i).locator('.wiki-paths li:visible').count(),18);
  }
  await fit();
  await ensureContractOffer(page,0);
@@ -109,7 +109,7 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
  await selectContract(page,{template:0});await tap('[data-deploy="0"]');await tap('#modal-1');await tap('#modal-0');
  assert.deepEqual(await page.evaluate(()=>battle.slots),[0,1,2]);
  await page.evaluate(()=>{
-  ruleRandom=()=>0;
+  comRandom=()=>.01;ruleRandom=()=>0;
   const foe=battle.units[3],retriever=battle.units[2];
   foe.x=foe.vx=2;foe.z=foe.vz=14;
   retriever.hp.right=retriever.hp.legs=0;
@@ -162,9 +162,9 @@ module.exports=async function checkCampaign({context,page,mobile,origin,tap}){
   lockedTarget=foe.id;renderBattle();
  });
  if(!await page.locator('#target-panel').isVisible())await tap('#target-toggle');
- assert.match(await page.locator('.reaction-status').innerText(),/COUNTER READY \/ FREE HAND/);
+ assert.match(await page.locator('.reaction-status').innerText(),/COUNTER FREE HAND \/ 4 AP/);
  const [damage,reacted]=await page.evaluate(async()=>{
-  ruleRandom=()=>0;
+  comRandom=()=>.01;ruleRandom=()=>0;
   const actor=current(),foe=battle.units[3],before=actor.hp.body;
   await engage(actor,foe,'body',unitWeapon(actor));
   return [before-actor.hp.body,foe.reacted];

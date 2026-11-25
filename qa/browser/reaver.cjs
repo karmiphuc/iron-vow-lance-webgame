@@ -12,7 +12,7 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
  await tap('[data-bay="market"]');
  assert.equal(await page.getByRole('heading',{name:'REAVER',exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(()=>{Math.random=()=>0;save.overworld={port:'corridor',arrears:0};save.dispatch={day:save.day,sizes:[1,1,3,3]}});
+ await page.evaluate(()=>{comRandom=()=>.01;Math.random=()=>0;save.overworld={port:'corridor',arrears:0};save.dispatch={day:save.day,sizes:[1,1,3,3]}});
  await ensureContractOffer(page,2);
  await navigate(page,'contracts',tap,mobile);
  await selectContract(page,{template:2});await tap('[data-deploy="2"]');
@@ -102,13 +102,13 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
   foe.hp.right=right?foe.max.right:0;foe.hp.left=left?foe.max.left:0;
   IronVowScene.render(clock,.016);
   renderBattle();
-  const ready={...foe,ap:roundAP(foe.training)};
+  const ready={...foe,ap:roundAP(foe.training),attackAPSpent:0};
   return {visible:['R','L'].map(side=>source.getObjectByName('RECOIL_CARRIAGE_'+side).visible),
    plates:['right','left'].map(part=>entry.m.build.parts[part].filter(item=>item.detach&&item.m.visible).length),
    armed:isArmed(foe),shoots:canUseWeapon(ready,unitWeapon(ready)),status:document.querySelector('#target-panel .combat-status').textContent};
  },{right,left});
  async function fire(turn,sides){
-  const before=await page.evaluate(()=>window.reaverFixture.ally.hp.body);
+  const [before,roundStartAP]=await page.evaluate(()=>[reaverFixture.ally.hp.body,Math.min(enemyAPCapacity(battle,reaverFixture.foe),reaverFixture.foe.ap+AP_RECOVERY)]);
   await tap('#end');
   await page.waitForFunction(turn=>battle?.turn===turn+1&&!battle.busy,turn,{timeout:60000});
   const {shots,impacts,after}=await page.evaluate(()=>{
@@ -128,7 +128,7 @@ module.exports=async function checkReaver({page,mobile,origin,tap,out}){
     assert.equal(name,'muzzle.'+sides[i%sides.length]);
     assert.equal(event.weapon,'reaver-autocannon');
     assert.equal(event.index,i);
-    assert.equal(ap,5-3*offset/perBurst,'Each burst costs 3 AP once');
+    assert.equal(ap,roundStartAP-3*(1+offset/perBurst),'Each burst costs 3 AP once');
     assert.ok(event.mounted&&event.aimError<8*Math.PI/180&&error<8*Math.PI/180&&bounds<.1,JSON.stringify({event,name,error,bounds}));
     assert.ok(vectorDistance(event.origin,point)<1e-5,'The shot starts at the exported muzzle');
     if(i>=sides.length)assert.ok(event.time>volley[i-sides.length].event.time,'Consecutive beats launch on different frames');

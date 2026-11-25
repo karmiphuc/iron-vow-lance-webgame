@@ -7,6 +7,7 @@ const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(x,b));
 const ease=x=>{const q=clamp(x);return q*q*(3-2*q);};
 const range=(x,a,b)=>ease((x-a)/(b-a));
 const configs=[
+ {frame:29,id:'cataphract',scale:.91,stride:.94,sway:.08,lift:.22,drop:.055,period:1.8},
  {frame:24,id:'husky',stride:.95,sway:.15,lift:.34,drop:.09,period:1.44},
  {frame:25,id:'giza',scale:.90,stride:.89,sway:.17,lift:.31,drop:.12,period:1.44},
  {frame:26,id:'vyzov',scale:.93,stride:1.08,sway:.085,lift:.32,drop:.055,period:1.4}
@@ -87,7 +88,7 @@ function reaction(m,I,t){
 function animate(m,I,dt,time){
  const state=m.campaignRig,{motions,chassis}=state;
  const fall=motions.get('Fall');
- if(!I.alive&&I.down!=='pilot'){
+ if(fall&&!I.alive&&I.down!=='pilot'){
   if(!state.fall){
    const origin=new Map(fall.tracks.map(({node})=>[node,{position:node.position.clone(),quaternion:node.quaternion.clone()}]));
    state.fall={origin,yaw:m.init?m.yaw:I.face,settled:false};
@@ -162,6 +163,56 @@ function gizaCannons(source){
  }};
 }
 
+// The shoulder carriages, skirt and knee contact are baked together in the approved rig.
+function fitCataphract(m,node,motions){
+ const ready=motions.get('Ready'),volley=motions.get('Heavy volley'),walk=motions.get('Advance');
+ const mountTracks=volley.tracks.filter(track=>/^(Twin_mount_|Barrel_)/.test(track.node.name));
+ const skirts=walk.tracks.filter(track=>track.node.name.startsWith('Apron_')&&track.property==='quaternion');
+ const tubes=['L','R'].flatMap(side=>[-1,1].map(column=>{
+  const mount=node('Twin mount '+side),muzzle=node('Muzzle '+side+column);
+  return {id:'cataphract-cannon',mount,carrier:mount.parent,muzzle,subsystem:'body',aimPivot:()=>mount,aimLimit:()=>0,
+   bounds:()=>new T.Box3().setFromObject(mount)};
+ }));
+ const v2=m.nativeV2;
+ v2.artillery=tubes;
+ v2.pose=(entry,u)=>{entry.primary=tubes[0];return u.alive&&u.hp.body>0;};
+ v2.animate=(mech,input,dt,time)=>{
+  const attack=input.attack,full=attack?.kind==='four-sword',single=attack?.kind==='cataphract-cannon';
+  setClip(ready,input.reducedMotion?0:time%ready.duration);
+  R.animateMech(mech,{...input,armed:false,aimFromArm:false},dt,time);
+  if(!input.alive)return;
+  if(full||single){
+   const age=time-attack.start,after=Number.isFinite(attack.fireAt)?Math.max(0,time-attack.fireAt):null;
+   let sample;
+   if(after===null)sample=2.72*clamp(age/Math.max(.001,attack.windup));
+   else if(full)sample=2.72+after;
+   else sample=after<.16?2.72+after:4.32+(after-.16)*3.25;
+   if(input.reducedMotion)sample=after===null?2.43:full&&after>.4?3.19:2.75;
+   sample=clamp(sample,0,volley.duration);
+   if(input.legsDead){
+    for(const track of mountTracks)track.node[track.property].fromArray(track.curve.evaluate(sample));
+   }else{
+    setClip(volley,sample);
+    // Keep the baked contacts on the local terrain plane as the firing stance settles.
+    if(input.groundAt){
+     const {x,z}=mech.cont.position,dx=(input.groundAt(x+.5,z)-input.groundAt(x-.5,z)),
+      dz=(input.groundAt(x,z+.5)-input.groundAt(x,z-.5));
+     const normal=V(-dx,1,-dz).normalize();
+     mech.cont.quaternion.premultiply(Q().identity().slerp(Q().setFromUnitVectors(V(0,1,0),normal),range(sample,0,.75)*(1-range(sample,5.7,6.43))));
+    }
+   }
+   mech.cont.updateMatrixWorld(true);
+   const aim=range(sample,1.5,2.45)*(1-range(sample,4.23,5.7));
+   for(const tube of [tubes[0],tubes[2]])root.IronVowFoundry.aimMounted(mech,{muzzle:tube.muzzle},mech.aim.point,aim,tube.mount);
+  }else{
+   reaction(mech,{...input,armed:false,aimFromArm:false},time);
+   const phase=((mech.gait.phase%1)+1)%1;
+   for(const track of skirts)track.node.quaternion.fromArray(track.curve.evaluate(phase*1.8));
+  }
+  mech.cont.updateMatrixWorld(true);
+ };
+}
+
 function build(config,unit,source,clips){
  source.updateMatrixWorld(true);
  const node=name=>{
@@ -234,6 +285,7 @@ function build(config,unit,source,clips){
   },
   dispose(){}
  };
+ if(config.id==='cataphract')fitCataphract(mech,node,motions);
  return mech;
 }
 for(const config of configs)root.IronVowRigV2.register(config.frame,{id:config.id,

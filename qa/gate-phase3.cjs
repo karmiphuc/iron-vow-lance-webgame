@@ -13,7 +13,6 @@ const checkCicadaV2 = require('./browser/cicada-v2.cjs');
 const checkReaver = require('./browser/reaver.cjs');
 const checkVanguard = require('./browser/vanguard.cjs');
 const checkAero = require('./browser/aero.cjs');
-const checkLionTrial = require('./browser/lion-trial.cjs');
 const checkStockV2 = require('./browser/stock-v2.cjs');
 const checkAshigaruV2 = require('./browser/ashigaru-v2.cjs');
 const checkHellbreakerV2 = require('./browser/hellbreaker-v2.cjs');
@@ -91,9 +90,6 @@ async function main() {
   const scoutEquipped=scoutHull+Math.max(scoutWeapons.carbine,scoutWeapons.scatter)+scoutWeapons.knife;
   if(scoutEquipped>60000)throw Error('Ashigaru equipped exceeds 60k triangles');
   const ashigaru={triangles:scout.total,hull:scoutHull,weapons:scoutWeapons,equipped:scoutEquipped};
-  const lionFile = readGLB(path.join(assets, 'lion.glb'));
-  const lion = validate(lionFile);
-  if (!lion.ok) throw Error(lion.errors.join(', '));
   const bulwark = validate(readGLB(path.join(assets, 'bulwark.glb')));
   if (!bulwark.ok) throw Error(bulwark.errors.join(', '));
   const hellbreaker = validate(readGLB(path.join(assets, 'hellbreaker.glb')));
@@ -164,7 +160,6 @@ async function main() {
     capture(checkBastionV2),
     capture(checkBulwark),
     capture(checkBehemothBudget),
-    capture(checkLionTrial),
     capture(checkLineInfantry),
     capture(checkLineElite),
     capture(checkInfantryCarry),
@@ -174,10 +169,9 @@ async function main() {
     capture(checkWardenRigBench),
   ]);
   const summary = { status: 'pass', seed: 4242, gatecrasher, liveGatecrasher, cicada, infantry, reaver, vanguard, warden, aero, kestrel, basilisk, bastion, ashigaru,
-    lion: { triangles: lion.total, clips: lionFile.animations.map(clip => clip.name) },
     kits, hellbreaker: { triangles: hellbreaker.total }, bulwark: { triangles: bulwark.total }, shogun, vehicles, live };
   fs.writeFileSync(path.join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
-  console.log('PASS Phase 3 checkpoint: authored sortie rigs, Lion trial, tank and gunship');
+  console.log('PASS Phase 3 checkpoint: authored sortie rigs, tank and gunship');
 }
 
 main().catch(error => {

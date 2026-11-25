@@ -262,12 +262,6 @@ function summarize(report, { count, startIndex, liveFrames, workshopWeapons, com
       phase3MissingSnapshots,
       notLive: (report.frameCatalog || []).filter(frame => !frame.live).map(({ frame, name }) => ({ frame, name })),
     },
-    lionTrial: report.lionTrial || {
-      finalReady: Boolean(report.phase3FinalReady),
-      requiredForPhase3: true,
-      includedInSeededFrames: false,
-      checker: ['qa/check-lion-trial.cjs', 'qa/browser/lion-trial.cjs'],
-    },
     faultControls: (report.faultProbes || []).map(probe => probe.type),
     failures: failures.slice(0, 100),
     failureCount: failures.length,

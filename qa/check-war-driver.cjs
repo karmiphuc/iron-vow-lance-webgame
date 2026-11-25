@@ -16,11 +16,11 @@ const runWar=require('./war-driver.cjs');
  assert.equal(round.turn,2);
  const total=hp=>Object.values(hp).reduce((sum,value)=>sum+value,0);
  assert.equal(round.units.find(u=>u.id==='enemy0').z,10,'distant infantry keeps its post on the opening turn');
- const second=await runWar({seed:42,maxTurns:2});
- assert.ok(second.units.filter(u=>u.team==='ally').some(u=>total(u.hp)<total(u.max)),
+ const third=await runWar({seed:42,maxTurns:3});
+ assert.ok(third.units.filter(u=>u.team==='ally').some(u=>total(u.hp)<total(u.max)),
   'the enemy engages once the player moves into detection range');
- assert.ok(second.events.filter(e=>e.action==='endTurn').at(-1).log.some(line=>line.startsWith('LINE INFANTRY 1 →')));
- assert.ok(second.units.some(u=>u.kind==='tank'&&!u.alive),'production vehicle can be defeated');
+ assert.ok(third.events.filter(e=>e.action==='endTurn').at(-1).log.some(line=>line.startsWith('LINE INFANTRY 1 →')));
+ assert.ok(third.units.some(u=>u.kind==='tank'&&!u.alive),'production vehicle can be defeated');
  const citadel=await runWar({seed:31718,contract:0,maxTurns:1,frames:[12,15,16],
   loadouts:[{weapon:'missile',condition:100,upgrade:0},{weapon:'hailstorm',melee:'piledriver',condition:100,upgrade:0},
    {weapon:'rifle',condition:100,upgrade:0}]});

@@ -83,12 +83,10 @@ function browserPath(){
   report.liveFrames=report.frameCatalog.filter(frame=>frame.live);
   report.phase3ExpectedFrames=report.frameCatalog.filter(frame=>frame.phase3Expected).map(({frame,name})=>({frame,name}));
   report.weaponCatalog=catalogs.weaponCatalog;
-  report.lionTrial={finalReady:phase3FinalReady,requiredForPhase3:true,includedInSeededFrames:false,checker:['qa/check-lion-trial.cjs','qa/browser/lion-trial.cjs']};
   assert.ok(report.liveFrames.length,'The runtime reports at least one live chassis');
   if(fullFinalCampaign){
    const missingRigFrames=report.phase3ExpectedFrames.filter(expected=>!report.liveFrames.some(frame=>frame.frame===expected.frame));
    assert.deepEqual(missingRigFrames,[],'The final 30-seed campaign requires every FRAMES chassis except Citadel to use a live runtime rig');
-   if(phase3FinalReady){const lionOutput=execFileSync(process.execPath,[path.join(__dirname,'check-lion-trial.cjs')],{cwd:root,encoding:'utf8'}).trim();report.lionTrial.status='passed';report.lionTrial.output=lionOutput;}
   }
   const warmupFrames=report.liveFrames.filter(frame=>frame.playerHull).map(frame=>frame.frame);
   for(let index=0;index<warmupFrames.length;index+=3){
@@ -344,7 +342,7 @@ function browserPath(){
   const coverage=campaign.coverage(report.battles,report.liveFrames,combatGate?report.weaponCatalog.workshop:[],combatGate?report.weaponCatalog.shields:[]);
   report.chassisCoverage=coverage.chassis;
   const expectedPhase3Frames=report.phase3ExpectedFrames.map(frame=>frame.frame).sort((a,b)=>a-b),observedSnapshots=[...new Set(report.battles.flatMap(battle=>battle.frames))].sort((a,b)=>a-b),observedModels=[...new Set(report.battles.flatMap(battle=>battle.actualModels.filter(model=>model.live&&model.hasEntry&&model.armed&&model.object).map(model=>model.frame)))].sort((a,b)=>a-b);
-  report.phase3Coverage={expected:report.phase3ExpectedFrames,live:report.liveFrames.map(({frame,name})=>({frame,name})),observedSnapshots,observedModels,missingLive:report.phase3ExpectedFrames.filter(expected=>!report.liveFrames.some(frame=>frame.frame===expected.frame)).map(({frame})=>frame),missingSnapshots:expectedPhase3Frames.filter(frame=>!observedSnapshots.includes(frame)),missingModels:expectedPhase3Frames.filter(frame=>!observedModels.includes(frame)),lionTrial:report.lionTrial};
+  report.phase3Coverage={expected:report.phase3ExpectedFrames,live:report.liveFrames.map(({frame,name})=>({frame,name})),observedSnapshots,observedModels,missingLive:report.phase3ExpectedFrames.filter(expected=>!report.liveFrames.some(frame=>frame.frame===expected.frame)).map(({frame})=>frame),missingSnapshots:expectedPhase3Frames.filter(frame=>!observedSnapshots.includes(frame)),missingModels:expectedPhase3Frames.filter(frame=>!observedModels.includes(frame))};
   if(startIndex===0&&count*3>=report.liveFrames.filter(frame=>frame.playerHull).length){
    const missingPlayerChassis=coverage.chassis.missing.filter(frame=>report.liveFrames.some(live=>live.frame===frame&&live.playerHull));
    assert.deepEqual(missingPlayerChassis,[],'Every runtime-live player-eligible chassis appears in the campaign');

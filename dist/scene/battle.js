@@ -17,7 +17,7 @@ const cameraTarget=V3(),cameraPosition=V3();
 function isLive(u){
  if(u.kind)return false;
  if(rigV2.applies(u))return Boolean(battleRef?.units.includes(u))||u.frame===0||u.frame===10;
- return !u.lionTrial&&(LIVE.has(u.frame)||root.IronVowCairn?.applies(u.frame)===true);
+ return (LIVE.has(u.frame)||root.IronVowCairn?.applies(u.frame)===true);
 }
 function world(x,z,y){
  const size=battle.size;
@@ -50,9 +50,6 @@ function surfaceHeight(x,z,renderedGround=false){
 function unitRoot(u){
  const point=world(u.vx??u.x,u.vz??u.z);
  point.y+=displayedHoverLevel(u)*RISE;
- // The fixed practice target sits near its tile's edge so the authored Lion
- // strike reaches the target while the feet follow the original floor contacts.
- if(battle.lionTrial&&!u.lionTrial)point.add(V3(battle.units[0].melee==='cleaver'?-3.12:-3.55,0,-.92));
  return point;
 }
 function groundAt(x,z,includeRock=true){
@@ -591,7 +588,7 @@ function prepareUnit(u,t){
   const targetRoot=goal?unitRoot(goal.target):p.clone();
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
-  const face=!u.alive?(u.deathYaw??heading):guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
+  const face=!u.alive?(u.deathYaw??heading):guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
   const hoverBlend=displayedHoverLevel(u)/HOVER_LEVELS;
  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,
   hovering:Boolean(u.alive&&(u.hoverActive||hoverBlend)),hoverBlend,hoverRising:Boolean(u.hoverActive),hoverAge:clock-(u.hoverChangedAt??-100),targeting:Boolean(readyContact||acquiredShot),lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
@@ -705,10 +702,10 @@ root.IronVowScene={mechYaw:u=>models.get(u.id)?.entry?.m.yaw,isLive,render,proje
  aimAt(actor,victim,part){aimTargets.set(actor.id,{target:victim,part});},
  mortarPresentation(unit,at=clock){if(models.get(unit.id)?.entry?.m?.mortar)mortarCues.set(unit.id,{at,fired:false});},
  nativeAbility(unit,name,at=clock,target){
-  const duration=name==='giza-salvo'?3.12:name==='vyzov-cross'?1.4:0;
+  const duration=name==='four-sword'?6.43:name==='giza-salvo'?3.12:name==='vyzov-cross'?1.4:0;
   if(!duration)return false;
   nativeCues.set(unit.id,{name,at,duration});
-  if(name==='giza-salvo'&&target?.hp)aimTargets.set(unit.id,{target,part:'body'});
+  if((name==='four-sword'||name==='giza-salvo')&&target?.hp)aimTargets.set(unit.id,{target,part:'body'});
   return true;
  },
  crossMortar(unit,tiles,flight){return combat?.crossMortar(unit,tiles,flight)??false;},

@@ -6,7 +6,7 @@
 const T=root.THREE,R=root.IronVowFoundryRig,VC=root.VowChassis;
 const V3=R.V3,Q=()=>new T.Quaternion();
 const profiles=new Map(),assets={battle:new Map(),preview:new Map(),portrait:new Map(),hangar:new Map(),workshop:new Map(),bench:new Map()};
-const profileKey=u=>u.lionTrial?'lion':u.frame;
+const profileKey=u=>u.frame;
 const applies=u=>!u.kind&&profiles.has(profileKey(u));
 const assetKey=u=>profiles.get(profileKey(u))?.assetPath;
 

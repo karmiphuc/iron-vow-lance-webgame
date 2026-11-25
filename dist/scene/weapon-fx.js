@@ -533,6 +533,8 @@ const profiles={
   },
   "source": "counter"
  },
+ "four-sword":{"archetype":"shotgun","beats":[0,.04,.45,.49],"asset":null,"barrels":4,"pellets":1,"source":"body skill"},
+ "cataphract-cannon":{"archetype":"shotgun","beats":[0],"asset":null,"pellets":1,"source":"built-in"},
  "giza-salvo": {
   "archetype": "shotgun",
   "beats": [0,.35],

@@ -8,7 +8,7 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
  await page.goto(new URL('?view=workshop',origin).href,{waitUntil:'domcontentloaded'});
  await tap('[data-bay="market"]');assert.equal(await page.getByRole('heading',{name:'GRAVEMAW',exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(()=>{Math.random=()=>0;save.overworld={port:'corridor',arrears:0};save.dispatch={day:save.day,sizes:[1,1,3,3]}});
+ await page.evaluate(()=>{comRandom=()=>.01;Math.random=()=>0;save.overworld={port:'corridor',arrears:0};save.dispatch={day:save.day,sizes:[1,1,3,3]}});
  await ensureContractOffer(page,2);
  await navigate(page,'contracts',tap,mobile);await selectContract(page,{template:2});await tap('[data-deploy="2"]');await tap('#modal-1');await tap('#modal-0');
  await page.waitForFunction(()=>{const u=battle?.units.find(x=>x.frame===VANGUARD_FRAME),e=u&&IronVowScene.models.get(u.id)?.entry;return Boolean(IronVowScene.ready&&u&&IronVowScene.isLive(u)&&e?.m.nativeV2&&e.primary?.muzzles?.length===6)},null,{timeout:60000});
@@ -29,7 +29,7 @@ module.exports=async function checkVanguard({page,mobile,origin,tap}){
   if(!move)throw Error('Missing one-tile Vanguard step');const samples=[];let moving=true;
   const sampled=new Promise(resolve=>{function sample(){if(!moving){resolve();return}if(u.motion)samples.push(m.rig.legs.map((leg,i)=>{const p=world(obj('ankle.'+leg.side)),state=m.legs[i];return {p:p.toArray(),binding:p.distanceTo(world(leg.an)),goal:p.distanceTo(state.foot),floor:IronVowScene.groundAt(p.x,p.z)+m.dims.ankleH*m.scale,swing:state.swing,settle:Boolean(state.settle),plant:state.planted.toArray()}}));requestAnimationFrame(sample)}requestAnimationFrame(sample)});
   try{await moveUnit(u,move.x,move.z)}finally{moving=false}await sampled;
-  const fixture=[...paths(u)].find(([key,n])=>n===4&&!battle.cover.has(key)&&!occupied(...key.split(',').map(Number)));
+  const fixture=[...paths({...u,moveLeft:mobility(u),ap:roundAP(u.training)})].find(([key,n])=>n===4&&!battle.cover.has(key)&&!occupied(...key.split(',').map(Number)));
   if(!fixture)throw Error('Missing four-tile pursuit');const [x,z]=fixture[0].split(',').map(Number);Object.assign(ally,{x,z,vx:x,vz:z});ally.max.body=ally.hp.body=500;ally.max.pilot=ally.hp.pilot=500;
   window.vanguardFixture={u,entry};return {name:u.name,states,base,stroke,muzzles,authoredMuzzles,samples};
  });

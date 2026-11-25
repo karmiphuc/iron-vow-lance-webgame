@@ -55,7 +55,6 @@ const checkMeleeGrip=require('./browser/melee-grip.cjs');
 const checkAshigaruV2=require('./browser/ashigaru-v2.cjs');
 const checkBulwark=require('./browser/bulwark-v2.cjs');
 const checkBehemothBudget=require('./browser/behemoth-budget.cjs');
-const checkLionTrial=require('./browser/lion-trial.cjs');
 const checkShields=require('./browser/shields.cjs');
 const checkEquipmentHardpoints=require('./browser/equipment-hardpoints.cjs');
 const checkTerrain=require('./browser/terrain.cjs');
@@ -73,6 +72,8 @@ const checkRegionalFrames=require('./browser/regional-frames.cjs');
 const checkSaltWorks=require('./browser/salt-works.cjs');
 const checkSaltjackMotion=require('./browser/saltjack-motion.cjs');
 const checkTacticalSpecials=require('./browser/tactical-specials.cjs');
+const checkRetiredTrial=require('./browser/retired-trial.cjs');
+const checkCataphractVolley=require('./browser/cataphract-volley.cjs');
 const checkCampaignNativeRigs=require('./browser/campaign-native-rigs.cjs');
 const checkWarMode=require('./browser/war-mode.cjs');
 const checkCicadaV2=require('./browser/cicada-v2.cjs');
@@ -113,7 +114,7 @@ function browserPath(){
  ].find(existsSync);
 }
 
-async function checkBrowser(origin,scenarios=[checkContractPay,checkDistress,checkLimbLoss,checkFieldArt,checkNavigation,checkCombatReadability,checkCombatDuel,checkDuelTerrain,checkDecisionUI,sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkLionTrial,checkPairedWalk,checkMechComputer,checkComSkills,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkEquipmentHardpoints,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkRosterScale,checkGizaReview,checkHuskyReview,checkStockV2,checkMechLoadoutPoses,checkMeleeGrip,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkStartingLance,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkOverworld,checkOverworldLiving,checkDirectorate,checkOverworldPortEvents,checkHangar,checkHangarLive,checkWorkshopTurntable,checkWorkshopPaint,checkWorkshopPortraits,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkWarMode,checkRigWorkbench,checkRegionalFrames,checkSaltWorks,checkSaltjackMotion,checkTacticalSpecials,checkCampaignNativeRigs,checkVariableLance,checkPilotClasses,checkNightjarStop]){
+async function checkBrowser(origin,scenarios=[checkContractPay,checkDistress,checkLimbLoss,checkFieldArt,checkNavigation,checkCombatReadability,checkCombatDuel,checkDuelTerrain,checkDecisionUI,sharedScene,livePaint,vehicleLoading,checkLivePortraits,checkPairedWalk,checkMechComputer,checkComSkills,checkMovePreview,checkRidgeCombat,checkTerrain,checkVehicles,checkGatecrasherV2,checkCicadaV2,checkHellbreakerV2,checkShogunV2,checkShields,checkEquipmentHardpoints,checkLineInfantry,checkLineElite,checkInfantryCarry,checkVanguard,checkReaver,checkAero,checkAeroReview,checkRosterScale,checkGizaReview,checkHuskyReview,checkStockV2,checkMechLoadoutPoses,checkMeleeGrip,checkAshigaruV2,checkBulwark,checkBehemothBudget,checkArmory,checkCampaign,checkStartingLance,checkWardenRigBench,checkBulwarkBench,checkScoutBench,checkShip,checkOverworld,checkOverworldLiving,checkDirectorate,checkOverworldPortEvents,checkHangar,checkHangarLive,checkWorkshopTurntable,checkWorkshopPaint,checkWorkshopPortraits,checkCareerTabs,checkDutyRoster,checkBastionGrips,checkWarMode,checkRigWorkbench,checkRegionalFrames,checkSaltWorks,checkSaltjackMotion,checkTacticalSpecials,checkCampaignNativeRigs,checkRetiredTrial,checkCataphractVolley,checkVariableLance,checkPilotClasses,checkNightjarStop]){
  if(process.env.IRON_VOW_QA_SCENARIOS){const names=process.env.IRON_VOW_QA_SCENARIOS.split(',');scenarios=scenarios.filter(s=>names.includes(s.name));assert.equal(scenarios.length,names.length,'Every requested browser scenario exists');}
  const attempts=Number(process.env.IRON_VOW_QA_ATTEMPTS||3);assert.ok(Number.isInteger(attempts)&&attempts>=1&&attempts<=3);
  const cpuFlows=new Set(['checkContractPay','checkDistress','checkPilotClasses','checkCombatDuel','checkPairedWalk','checkMechComputer','checkComSkills','checkMovePreview','checkRidgeCombat','checkTerrain','checkLineInfantry','checkLineElite','checkInfantryCarry','checkVanguard','checkReaver','checkAero','checkArmory','checkCampaign','checkShip','checkHangar','checkCareerTabs','checkDutyRoster','checkVariableLance']);

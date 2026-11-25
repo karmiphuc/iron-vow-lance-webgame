@@ -160,7 +160,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   select('bench-clip-source',[['current','Live rig'],...(frame.archive?[['archive','Authored archive']]:[])],'current');
   $('bench-walk').setAttribute('aria-pressed','false');$('bench-aim').setAttribute('aria-pressed','false');
   for(const id of parts)applyPart(id,100);
-  unit={id:'bench-main',index:0,frame:next.frame,rig:next.rig,lionTrial:next.lionTrial,team,...next.stock};
+  unit={id:'bench-main',index:0,frame:next.frame,rig:next.rig,team,...next.stock};
   modules=frame.mix?{core:frame.model,arms:frame.model,legs:frame.model}:undefined;
   group='all';$('bench-group').value='all';setClip('');clipList='';
   reset(true);refreshLoadout();
@@ -320,7 +320,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
    entry=foundry.inspect(source,frame.model,time,modelPose(source,0,advance,true));
    entries=entry?[entry]:[];
    if(entry&&!clip&&frame.authored&&lowerFrame!==frame){
-    const lower=modelUnit({id:'bench-lower',index:0,frame:lowerFrame.frame,lionTrial:lowerFrame.lionTrial,...lowerFrame.stock},0,advance,true);
+    const lower=modelUnit({id:'bench-lower',index:0,frame:lowerFrame.frame,...lowerFrame.stock},0,advance,true);
     lowerEntry=foundry.inspect(lower,lowerFrame.model,time,modelPose(lower,0,advance,true));
     if(lowerEntry){alignUpper(entry,lowerEntry);entries.push(lowerEntry);}
    }
