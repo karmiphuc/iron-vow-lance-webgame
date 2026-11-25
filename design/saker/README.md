@@ -8,7 +8,7 @@ In the local Rig Bench, open `?bench=rig&frame=28` to inspect Saker. In a career
 
 Saker is a medium chassis with five tiles of standard free movement. Its Jumpjet costs 2 AP and refreshes each turn. It can cross units and cover to land on a clear tile within three tiles, including at a different elevation.
 
-Hover costs 2 AP and lasts until the unit’s next turn. Once per battle, Saker can gain two elevation levels for combat and immunity to melee while locked in place. Twin rear jets flare on takeoff, run at lower thrust while the legs hang, and cut as the feet take the load again. The barrel hangs muzzle-down between attacks and raises independently of the ground kneel.
+Hover costs 2 AP and lasts until the unit’s next turn. Once per battle, Saker can gain two elevation levels for combat and immunity to melee while locked in place. Saker crouches before its twin rear jets flare. The free left hand catches the landing. With that arm unavailable, the front thrusters brake the descent and a deeper two-leg crouch absorbs the impact. The barrel hangs muzzle-down between attacks and raises independently of the ground kneel.
 
 ## Combat checks
 

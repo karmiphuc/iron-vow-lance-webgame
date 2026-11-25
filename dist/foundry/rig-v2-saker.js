@@ -230,7 +230,7 @@ function moveRearLeg(m,input,stance,phase){
  if(!m.legs[0].swing)m.legs[0].planted.copy(worldAnkle);
  return {ankle:worldAnkle,pitch,knee};
 }
-function buildExhaust(nozzles){
+function buildExhaust(nozzles,brakes){
  const geometry=new T.CylinderGeometry(.015,.106,1,12,1,true);
  geometry.translate(0,.5,0);
  const material=new T.ShaderMaterial({
@@ -244,11 +244,11 @@ function buildExhaust(nozzles){
     gl_FragColor=vec4(color,fade*.81);
    }`
  });
- const plumes=nozzles.map(nozzle=>{
+ const makePlume=nozzle=>{
   const plume=new T.Mesh(geometry,material);
   plume.visible=false;nozzle.add(plume);return plume;
- });
- return {plumes,dispose(){geometry.dispose();material.dispose();}};
+ };
+ return {plumes:nozzles.map(makePlume),brakes:brakes.map(makePlume),dispose(){geometry.dispose();material.dispose();}};
 }
 function animate(m,input,dt,t){
  const s=m.saker,{rig,cont}=m,alive=input.alive,old=cont.position.clone();
@@ -257,13 +257,30 @@ function animate(m,input,dt,t){
  const hover=alive?clamp(input.hoverBlend??0):0;
  const float=ramp(hover,.04,.90), drift=input.reducedMotion?0:float;
  const tuck=airborne?Math.sin(Math.PI*clamp(input.airborneProgress??0)):0;
- const thrust=input.reducedMotion?0:hover;
- const launch=thrust&&input.hoverRising?1-ramp(hover,.12,.70):0;
- if(s.lifted&&!input.hovering&&!airborne)s.touchdown=t;
- const settle=input.reducedMotion?0:Math.sin(Math.PI*clamp((t-(s.touchdown??-100))/.27));
+ const ageOfHover=input.hoverAge??100;
+ const activeMotion=alive&&!input.reducedMotion;
+ const preload=activeMotion&&input.hoverRising?ramp(ageOfHover,0,.13)*(1-ramp(ageOfHover,.155,.31)):0;
+ const ignition=activeMotion&&input.hoverRising?ramp(ageOfHover,.105,.19)*(1-ramp(ageOfHover,.24,.55)):0;
+ if(s.hovering&&!input.hovering){
+  s.touchdown=t;
+  s.landingHand=null;
+ }
+ s.hovering=input.hovering;
+ const handFree=!input.leftDead&&m.offhand==='free';
+ const elapsed=t-(s.touchdown??-100);
+ const touchdown=activeMotion&&!input.moving&&!input.legsDead?ramp(elapsed,0,.12)*(1-ramp(elapsed,.27,.68)):0;
+ const handCatch=handFree?touchdown:0;
+ if(!handFree)s.landingHand=null;
+ const brake=activeMotion&&!handFree&&!input.hoverRising?
+  (input.hovering?ramp(ageOfHover,.28,.47):1-ramp(elapsed,.04,.30)):0;
+ const thrust=activeMotion?Math.max(tuck,ignition,Math.sqrt(hover)):0;
  for(const [i,plume] of s.exhaust.plumes.entries()){
-  plume.visible=alive&&(thrust>.012||tuck>.08)&&!input.reducedMotion;
-  plume.scale.set(1,((.87+.12*Math.sin(t*44+i*2))+launch*.76)*Math.max(tuck,Math.sqrt(thrust)),1);
+  plume.visible=thrust>.08;
+  plume.scale.set(2,2*(.87+.12*Math.sin(t*44+i*2)+ignition*.94)*thrust,2);
+ }
+ for(const [i,plume] of s.exhaust.brakes.entries()){
+  plume.visible=brake>.04;
+  plume.scale.set(1.7,brake*(1.34+.12*Math.sin(t*34+i*2)),1.7);
  }
  const lifted=airborne||input.hovering,landed=s.lifted&&!lifted;
  s.lifted=lifted;
@@ -280,7 +297,7 @@ function animate(m,input,dt,t){
  const ready=alive&&input.armed?Math.max(input.brace||0,input.attacking?(Number.isFinite(input.attack?.fireAt)?hold:1):0,shotHold,(input.readyRelease||0)*hold,input.targeting?.86:0):0;
  // Limit travel through the stance even if gameplay requests full aim in a
  // single tick. Acceleration is continuous when a request reverses partway.
- const target=input.moving||lifted?0:clamp(ready);
+ const target=input.moving||lifted||touchdown?0:clamp(ready);
  const velocity=T.MathUtils.clamp((target-s.phase)*10,-.73,.77);
  s.phaseSpeed=follow(s.phaseSpeed,velocity,18,dt);
  s.phase=clamp(s.phase+s.phaseSpeed*dt);
@@ -308,9 +325,9 @@ function animate(m,input,dt,t){
  const catchLoad=alive?ramp(dodge,.0,.1)-ramp(dodge,.10,.24)+ramp(dodge,.47,.56)-ramp(dodge,.56,.80):0;
  const down=alive?0:ramp(input.deathAge,0,.92);
  const hit=input.reducedMotion?0:Math.exp(-Math.max(0,t-(input.hitTime??-100))*10);
- const h=2.24-1.00*lock-.18*launch-.20*settle+.046*drift*Math.sin(t*4.2)-.22*run-.045*plant*run-.030*kick-.24*catchLoad-.64*down-(input.legsDead?.35:0);
- rig.pelvis.position.set(.065*support+.13*lock+s.evadeSign*.36*lift,h,.22*run+.19*lock);
- rig.pelvis.rotation.set(.085*run*(1-lock)+.06*float,0,-.027*support+.40*down+.025*drift*Math.sin(t*3.1));
+ const h=2.24-1.00*lock-.49*preload-touchdown*(handFree?.76:1.00)+.046*drift*Math.sin(t*4.2)-.22*run-.045*plant*run-.030*kick-.24*catchLoad-.64*down-(input.legsDead?.35:0);
+ rig.pelvis.position.set(.065*support+.13*lock+s.evadeSign*.36*lift+.15*handCatch,h,.22*run+.19*lock+.12*touchdown);
+ rig.pelvis.rotation.set(.085*run*(1-lock)+.06*float+.10*touchdown,0,-.027*support-.10*handCatch+.40*down+.025*drift*Math.sin(t*3.1));
  rig.pelvis.position.y=R.supportHeight(m,input,h)+lift*.48;
  const contact=s.stance?.[0],enter=ramp(s.phase,0,transfer);
  const deployed=ramp(s.phase,transfer,1)*(1-lift)*(alive&&!input.legsDead?1:0);
@@ -323,8 +340,8 @@ function animate(m,input,dt,t){
  // wrist, arm and shoulder carriage while the kneeling base bears the load.
  rig.spine.position.set(0,.22+.16*lock,-.13*rise);
  rig.neck.position.set(0,.81+.16*lock,.84+.06*lock);
- rig.spine.rotation.set((.15+.33*run+.012*Math.sin(t*2.7))*(1-lock)-.027*rise+.16*hit+.58*down,
-   .060*stride-.035*rise,-.034*support+.23*hit+.48*down,'YXZ');
+ rig.spine.rotation.set((.15+.33*run+.012*Math.sin(t*2.7))*(1-lock)-.027*rise+.16*hit+.58*down+.46*handCatch+.22*(touchdown-handCatch)+.14*preload,
+   .060*stride-.035*rise,-.034*support+.23*hit+.48*down-.31*handCatch,'YXZ');
  rig.neck.rotation.set((-.16-.19*run)*(1-lock)+.027*rise,(1-lock)*.16*Math.sin(t*.8)+.035*rise,0);
  rig.legs.forEach((leg,i)=>{
   const shoe=m.legs[i].foot.clone();
@@ -397,6 +414,14 @@ function animate(m,input,dt,t){
  leftSwing.lerp(V(1.33,1.36,.07+.09*drift*Math.sin(t*3.2)),float);
  const low=V(1.12,handRest,1.51);
  const hand=cont.localToWorld(leftSwing.lerp(low,ramp(lock,.12,.97)));
+ if(handCatch){
+  if(!s.landingHand){
+   const patch=cont.localToWorld(V(1.26,0,1.05));
+   patch.y=(input.groundAt?.(patch.x,patch.z)??input.ground??0)+handRest*scale;
+   s.landingHand=patch;
+  }
+  hand.lerp(s.landingHand,ramp(handCatch,0,.72));
+ }
  const floor=input.groundAt?.(hand.x,hand.z)??input.ground??0;
  if(lock>.95){hand.y=floor+handRest*scale;}
  hand.y+=.40*lift;
@@ -429,7 +454,8 @@ function build(unit,source){
  const breech=get('Breech'),slide=get('Slide'),muzzle=get('Muzzle');
  const gun={id:'merlin-38',mount:breech,carrier:arms.R.wr,recoil:slide,muzzle,subsystem:'right',aimPivot:()=>breech,aimLimit:()=>m.saker.gunLower};
  const {L,R:right}=arms;
- const jetNozzles=['JetNozzleL','JetNozzleR'].map(get).filter(Boolean),exhaust=buildExhaust(jetNozzles);
+ const jetNozzles=['JetNozzleL','JetNozzleR'].map(get).filter(Boolean);
+ const brakes=['BrakeNozzleL','BrakeNozzleR'].map(get).filter(Boolean),exhaust=buildExhaust(jetNozzles,brakes);
  m.saker={breech,slide,exhaust,airAim:0,aim:0,gunLower:0,phase:0,phaseSpeed:0,stance:null,run:0,contactAge:1,next:1,swing:null,kneeRest:get('KneeRestL'),soleHull:get('AnkleL').userData.soleHull,dodgeAt:-100,evadeSign:1,
   mantles:{L:get('MantleL'),R:get('MantleR')},recoilPitch:0,
   rightLinks:{hip:right.sh,kn:right.el,an:right.wr,restX:-1,legA:right.el.position.length(),legB:right.wr.position.length(),bendPole:V(-.86,.58,.52)},

@@ -264,7 +264,7 @@ async function main(){
  const hoverPose=(hoverBlend,aim=0,reducedMotion=false)=>{
   time+=1/60;
   return S.draw(saker,time,{aim,brace:aim,reducedMotion,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
-   world:{x:0,y:5.6*hoverBlend,z:0,hovering:hoverBlend>0,hoverBlend,hoverRising:true,face:0,heading:0,speed:0,aim:target.clone().add(R.V3(0,5.6*hoverBlend,0)),groundAt}},scope,saker.foundry,'rig-v2').m;
+   world:{x:0,y:5.6*hoverBlend,z:0,hovering:hoverBlend>0,hoverBlend,hoverRising:hoverBlend>0,face:0,heading:0,speed:0,aim:target.clone().add(R.V3(0,5.6*hoverBlend,0)),groundAt}},scope,saker.foundry,'rig-v2').m;
  };
  const flying=hoverPose(1);
  assert.ok(!flying.saker.stance&&flying.wpn.muzzle.getWorldDirection(R.V3()).y<-.35,'hover carry has a lowered barrel and does not enter the kneel');
@@ -283,6 +283,28 @@ async function main(){
  assert.ok(flying.saker.exhaust.plumes.every(plume=>!plume.visible),'reduced motion suppresses the pulsing exhaust');
  for(let i=0;i<60;i++)hoverPose(0);
  assert.ok(flying.saker.exhaust.plumes.every(plume=>!plume.visible)&&left().y/flying.scale<.19,'landing returns the ankle to board height and cuts the jets');
+ // After descent, the free wrist takes a fixed patch while the legs give.
+ const catchDepths=[];
+ for(const offhand of ['free','damaged','busy']){
+  saker.hp.left=offhand==='damaged'?0:saker.max.left;
+  saker.melee=offhand==='busy'?'cleaver':null;
+  S.clearCombat();
+  const landing=hoverPose(1);
+  assert.ok(landing.saker.exhaust.plumes.every(p=>p.scale.x===2&&p.scale.y>1.4&&p.scale.z===2),
+   'sustained exhaust doubles in width and length');
+  for(let frame=0;frame<12;frame++)hoverPose(0);
+  catchDepths.push(landing.rig.pelvis.position.y);
+  if(offhand==='free'){
+   const wrist=landing.rig.arms.L.wr.getWorldPosition(R.V3());
+   assert.ok(wrist.distanceTo(landing.saker.landingHand)<.04,'left wrist plants on its fixed touchdown patch');
+   assert.ok(landing.saker.exhaust.brakes.every(p=>!p.visible));
+  }else{
+   assert.ok(!landing.saker.landingHand&&landing.saker.exhaust.brakes.length===2&&landing.saker.exhaust.brakes.every(p=>p.visible),
+    'unavailable hand triggers front braking jets without a wrist plant');
+  }
+ }
+ assert.ok(catchDepths[1]<catchDepths[0]-.15&&catchDepths[2]<catchDepths[0]-.15,'two-leg landings compress more deeply');
+ saker.hp.left=saker.max.left;saker.melee=null;
  // A move order may arrive while the rear instep is still fully extended.
  S.clearCombat();
  let ankleRotation;

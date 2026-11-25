@@ -525,7 +525,7 @@ function prepareUnit(u,t){
   const face=!u.alive?(u.deathYaw??heading):guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
   const hoverBlend=displayedHoverLevel(u)/HOVER_LEVELS;
  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,
-  hovering:Boolean(u.alive&&(u.hoverActive||hoverBlend)),hoverBlend,hoverRising:Boolean(u.hoverActive),targeting:Boolean(readyContact||acquiredShot),lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
+  hovering:Boolean(u.alive&&(u.hoverActive||hoverBlend)),hoverBlend,hoverRising:Boolean(u.hoverActive),hoverAge:clock-(u.hoverChangedAt??-100),targeting:Boolean(readyContact||acquiredShot),lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
   const custom=rigV2.applies(u)?'rig-v2':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;

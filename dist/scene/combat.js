@@ -189,7 +189,11 @@ root.IronVowCombat={create(scene,api){
    const lifting=u.alive&&displayedHoverLevel(u)>.16;
    if(!reducedMotion&&lifting!==Boolean(state.lifting)){
     const dust=api.world(u.x,u.z);
-    fx.dustwave(dust,low()?4:8,lifting?2.7:1.9,1.05,0xb8ad99,.28,.95,.24);
+    fx.dustwave(dust,low()?7:15,lifting?4.2:3.7,1.4,0xb8ad99,.38,1.45,.32);
+    if(!lifting&&u.alive){
+     fx.smoke(dust,low()?2:4,2.1,0xa79a85,.42,.27,1.1,.35);
+     sound('step',.95);
+    }
    }
    state.lifting=lifting;
    if(u.alive&&(u.motion?.jumpjet||u.hoverActive)&&!reducedMotion&&t>=state.jet){
@@ -198,7 +202,7 @@ root.IronVowCombat={create(scene,api){
     if(nozzles?.length)for(const nozzle of nozzles){
      const origin=nozzle.getWorldPosition(V3());
      const direction=V3(0,1,0).applyQuaternion(nozzle.getWorldQuaternion(new T.Quaternion()));
-     fx.fire(origin,u.hoverActive?1.45:1.2,.18,direction.multiplyScalar(u.hoverActive?8:5));
+     fx.fire(origin,m?.saker?(u.hoverActive?2.9:2.4):1.2,.18,direction.multiplyScalar(u.hoverActive?8:5));
      fx.smoke(origin,1,1.2,0x9faaa9,.35,-.4,.7,.18);
     }else if(!u.hoverActive){
      const p=point(u,'legs');fx.fire(p,1.8,.2,V3(0,-5,0));fx.smoke(p,low()?1:2,2,0x9faaa9,.45,-.4,.8,.2);

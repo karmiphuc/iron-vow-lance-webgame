@@ -345,7 +345,7 @@ function draw(u,t,pose,scope,model,custom){
  const input={pos,ground:world?.y,groundAt:world?.groundAt,face,heading:world?.heading??face,moving:Boolean(step),speed:(world?.speed??2.6)/playbackRate,stepLen:world?1.7:paired?.90:1.55,cycle:paired?pose.cycle:undefined,brace:pose.brace,
   alive:u.alive||u.surrendered,down:u.downReason,deathAge:pose.reducedMotion&&!u.alive?2:pose.deathAge,pilotRatio:u.hp.pilot/u.max.pilot,
   bodyRatio:u.hp.body/u.max.body,onStep:world?.onStep,armDead:u.hp.right<=0,leftDead:u.hp.left<=0,legsDead:u.hp.legs<=0,noPlant:world?world.noPlant||world.airborne:!step,
-  hovering:world?.hovering,hoverBlend:world?.hoverBlend,hoverRising:world?.hoverRising,airborne:world?.airborne,airborneProgress:world?.airborne&&u.motion?(t-u.motion.start)/u.motion.duration:0,moveAge:step&&u.motion?t-u.motion.start:0,targeting:world?.targeting,attacking:Boolean(u.attack),
+  hovering:world?.hovering,hoverBlend:world?.hoverBlend,hoverRising:world?.hoverRising,hoverAge:world?.hoverAge,airborne:world?.airborne,airborneProgress:world?.airborne&&u.motion?(t-u.motion.start)/u.motion.duration:0,moveAge:step&&u.motion?t-u.motion.start:0,targeting:world?.targeting,attacking:Boolean(u.attack),
   artillery,mortarAge,aimFromArm,ready:prime>0||aim>.01,readyPose,readyRelease:Math.max(aim??0,prime??0),
   readyMeleeMountPitch:entry.secondary?.gripPitch??0,reducedMotion:pose.reducedMotion,
   armed:Boolean(fittedGun&&u.hp[fittedGun.subsystem||'right']>0),attack:u.attack,hitTime:u.hitTime,ability:pose.nativeAbility};

@@ -466,12 +466,13 @@ const AERO_MELEE=['cleaver','breaker','piledriver','blade'];
 const JUMPJET_RANGE=5,JUMPJET_AP=2,HOVER_AP=2,HOVER_LEVELS=2;
 const HOVER_HELP='Rise two elevation levels until your next turn. Immune to melee. Movement and Jumpjet are locked. Once per battle.';
 const hoverElevation=u=>u?.hoverActive?HOVER_LEVELS:0;
-const HOVER_TRANSITION=.54;
+const HOVER_TRANSITION=.65;
 function displayedHoverLevel(u){
  if(!u.alive)return 0;
  if(reducedMotion||u.hoverChangedAt===undefined)return hoverElevation(u);
  const progress=clamp01((clock-u.hoverChangedAt)/HOVER_TRANSITION);
- const easing=progress*progress*(3-2*progress);
+ const travel=u.hoverActive?clamp01((progress-.25)/.75):progress;
+ const easing=travel*travel*(3-2*travel);
  return HOVER_LEVELS*(u.hoverActive?easing:1-easing);
 }
 const jumpjetRange=frame=>frame?.jumpjetRange??JUMPJET_RANGE;
