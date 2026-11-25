@@ -124,16 +124,19 @@ const simulate=require('./sim-harness.cjs');
  // The attack camera rushed the brace, step-up and priming.
  assert.deepEqual(JSON.parse(run("JSON.stringify(CINEMATIC_PACE)")),{step:1.6,aimHold:.45});
 
- // The attack camera shows the featured unit's live health. Damage numbers
- // and part breaks continue to draw at their impact points.
+ // Both panels stay assigned to their combatant throughout the exchange and return fire.
  run("globalThis.duelist=battle.units.find(u=>u.team==='enemy'&&!u.kind);window.IronVowScene.projectWorld=()=>({x:320,y:200});window.IronVowScene.partPoint=()=>({clone(){return {x:1,y:2,z:3}}})");
- run("globalThis.fills=[];globalThis.words=[];ctx.fillRect=(...a)=>fills.push(a);ctx.fillText=(text)=>words.push(String(text));");
+ run("globalThis.fills=[];globalThis.words=[];globalThis.panels=[];ctx.fillRect=(...a)=>fills.push(a);ctx.fillText=(text)=>words.push(String(text));const drawPanel=drawDuelPanel;drawDuelPanel=(shot,u,x,y,w,h,mirror)=>{panels.push({id:u.id,x,y,mirror});drawPanel(shot,u,x,y,w,h,mirror)};");
  run("activeCinematic={actor:current(),target:duelist,w:unitWeapon(current()),phase:'fire',part:'body'};duelNumbers.length=0;duelBanner=null;drawAttackCamera()");
- assert.ok(run("fills.length===3&&words.includes(current().name)"),'Release shows the shooter’s health');
- run("duelist.hp.left=duelist.max.left/2;activeCinematic.cameraBeat='hit';activeCinematic.part='left';fills.length=0;words.length=0;drawAttackCamera()");
- assert.ok(run("words.includes(duelist.name)&&words.includes('L ARM '+duelist.hp.left+'/'+duelist.max.left)&&fills[4][2]===fills[3][2]/2"),'Impact shows current hull and half-health subsystem meters');
- run("duelist.hp.left=0;fills.length=0;drawAttackCamera()");
- assert.equal(run("fills[4][2]"),0,'A destroyed subsystem has an empty meter');
+ assert.ok(run("panels.length===2&&panels[0].id===current().id&&panels[0].x<panels[1].x&&!panels[0].mirror&&panels[1].mirror"),'Persistent ally-left and enemy-right panels on desktop');
+ for(const part of ['Body','L arm','R arm','Legs','Pilot'])assert.equal(run(`words.filter(w=>w===${JSON.stringify(part)}).length`),2);
+ assert.ok(run("words.includes(current().name+' · AP '+current().ap)&&words.includes(duelist.name+' · AP '+duelist.ap)"),'Both combatants show their AP');
+ run("duelist.hp.left=duelist.max.left/2;frameDt=1;activeCinematic.cameraBeat='hit';fills.length=0;drawAttackCamera()");
+ assert.equal(run("activeCinematic.duelMeters.get(duelist).left"),run("duelist.max.left/2"));
+ run("duelist.hp.left=0;drawAttackCamera()");
+ assert.equal(run("activeCinematic.duelMeters.get(duelist).left"),0,'Destroyed subsystem drains to zero');
+ run("activeCinematic.target=current();activeCinematic.actor=duelist;W=390;H=844;panels.length=0;drawAttackCamera()");
+ assert.ok(run("panels.length===2&&panels[0].id===current().id&&panels[1].id===duelist.id&&panels[0].y<panels[1].y&&panels[0].x===panels[1].x"),'Portrait screens stack the same panels during return fire');
  const hitPoint="{clone(){return {x:1,y:2,z:3}}}";
  run(`window.IronVowDuelHit(duelist,${hitPoint},{damage:7,before:20,after:13,part:'left'},false);window.IronVowDuelHit(duelist,${hitPoint},{damage:13,before:13,after:0,part:'left'},false)`);
  assert.deepEqual(JSON.parse(run('JSON.stringify(duelNumbers.map(n=>n.text))')),['7','13','L ARM'],'Each landed round pops its damage; a destroyed part names itself');

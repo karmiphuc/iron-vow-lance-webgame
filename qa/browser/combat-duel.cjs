@@ -53,6 +53,19 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
  // attacker through brace and release, the defender on the hit; a lane-side flight shot only for rounds long in the air. The ally
  // keeps the left of the screen through return fire.
  await page.evaluate(()=>{
+  const drawHealth=drawDuelHealth,drawPanel=drawDuelPanel;
+  drawDuelPanel=(shot,unit,x,y,w,h,mirror)=>{
+   window.duelPanels.push({id:unit.id,x,y,w,h,mirror});
+   drawPanel(shot,unit,x,y,w,h,mirror);
+  };
+  drawDuelHealth=shot=>{
+   window.duelPanels=[];
+   drawHealth(shot);
+   if(shot.cameraBeat&&window.duelWatch){
+    const key=(shot.actor.id===duelWatch.actor?'':'counter-')+shot.cameraBeat;
+    (duelWatch.panels??={})[key]=window.duelPanels;
+   }
+  };
   const render=IronVowScene.render;
   IronVowScene.render=function(t,dt){
    const result=render.call(this,t,dt),shot=activeCinematic,watch=window.duelWatch;
@@ -99,6 +112,14 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
   assert.ok(own.depth<frame.fogNear,label+': the subject is clear of the fog');
   assert.ok(!other.onScreen||other.height<own.height*.7,label+': no second hull competes for the frame '+JSON.stringify(other));
  };
+ const assertPanels=async (beat,ally,enemy)=>{
+  const panels=await page.evaluate(beat=>duelWatch.panels?.[beat],beat);
+  assert.ok(panels?.length===2,beat+': both sides have a health panel');
+  assert.deepEqual(panels.map(panel=>panel.id),[ally,enemy],beat+': both sides retain their panel');
+  assert.deepEqual(panels.map(panel=>panel.mirror),[false,true]);
+  assert.ok(mobile?panels[0].y+panels[0].h<panels[1].y:panels[0].x+panels[0].w<panels[1].x,
+   beat+': both panels fit without overlapping');
+ };
  const skip=async()=>{
   await page.evaluate(()=>document.querySelector('#skip-shot').click());
   await advanceUntil(()=>!__ironVow.pending&&!activeCinematic,'Skip did not return to the tactical board');
@@ -117,6 +138,7 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
  assertCinematic(missile.flight,'Missile flight');
  assert.ok(missile.flight.boxes[defender].front&&missile.flight.boxes[defender].edge<1&&missile.flight.boxes[defender].height>=.25,'The flight shot holds the defender ahead: '+JSON.stringify(missile.flight.boxes[defender]));
  assertSingle(missile.hit,defender,'Missile hit');
+ for(const beat of ['brace','release','flight','hit'])await assertPanels(beat,attacker,defender);
  assert.ok(Math.abs(missile.hit.boxes[defender].center[0])<.5,'The hit frames the defender near centre');
  if(out){await page.clock.runFor(120);await page.screenshot({path:join(out,mobile?'missile-hit-touch.png':'missile-hit-desktop.png')});}
  await skip();
@@ -135,6 +157,7 @@ module.exports=async function checkCombatDuel({page,origin,mobile,out}){
  assertSingle(exchange.hit,enemy,'Rail hit');
  assertSingle(exchange['counter-release'],enemy,'Counter release');
  assertSingle(exchange['counter-hit'],ally,'Counter hit');
+ for(const beat of ['hit','counter-release','counter-hit'])await assertPanels(beat,ally,enemy);
  assert.ok(Math.sign(exchange.release.roll)===-Math.sign(exchange['counter-release'].roll),'Each side leans toward its own line of fire');
  if(out)await page.screenshot({path:join(out,mobile?'counter-touch.png':'counter-desktop.png')});
  await skip();
