@@ -104,7 +104,7 @@ module.exports=async function checkCampaignNativeRigs({page,origin,tap}){
 
   const after=await page.evaluate(async id=>{
    const actor=current(),foe=battle.units.find(u=>u.frame===id&&u.team==='enemy'),vertex=()=>new THREE.Vector3();
-   foe.reacted=true;foe.hp.body=foe.max.body=2500;actor.ap=8;
+   foe.noCounter=true;foe.hp.body=foe.max.body=2500;actor.ap=8;
    const entry=u=>IronVowScene.models.get(u.id).entry;
    let lane;
    for(let z=2;z<battle.size.depth-2&&!lane;z++)for(let x=2;x<battle.size.width-5&&!lane;x++){

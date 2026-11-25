@@ -33,14 +33,14 @@ function doctrine(i,path){
 
  const vanguard=doctrine(0,0),r=vanguard.run;
  r('skill();persist()');
- assert.equal(r('pilot.ap'),12);
+ assert.equal(r('pilot.ap'),18);
  assert.equal(r('pilot.brace'),true);
- assert.equal(r('freeMovement(pilot)'),6);
+ assert.equal(r('movementLimit(pilot)'),7);
  assert.equal(r('braceCost(pilot.training)'),1);
  const restored=simulate({storage:new Map(vanguard.storage)});
- assert.equal(restored.run('current().ap'),12);
+ assert.equal(restored.run('current().ap'),18);
  assert.equal(restored.run('current().brace'),true);
- assert.equal(restored.run('freeMovement(current())'),6);
+ assert.equal(restored.run('movementLimit(current())'),7);
  assert.equal(restored.run('current().skill'),true);
 
  const breacher=doctrine(0,1),b=breacher.run;
@@ -63,7 +63,7 @@ function doctrine(i,path){
  assert.ok(m("hitChance(pilot,hostile,'pilot')>unbraced"));
  m('hostile.z=10;hostile.hp.body=1;skill()');
  await m("shoot(pilot,hostile,'body',unitWeapon(pilot))");
- assert.equal(m('pilot.ap'),8);
+ assert.equal(m('pilot.ap'),14);
  assert.equal(m('pilot.boost'),false);
 
  const saboteur=doctrine(1,1),s=saboteur.run;

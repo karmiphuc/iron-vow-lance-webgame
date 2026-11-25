@@ -31,12 +31,12 @@ const createSimulation=require('./sim-harness.cjs');
  for(const [group,ids] of Object.entries(groups))for(const id of ids){
   assert.equal(run(`armoryClass(weapon('${id}'))`),group,id);
   assert.ok(await run(`(async()=>{
-   const w=weapon('${id}');attacker.ap=ROUND_AP;
+   const w=weapon('${id}');attacker.ap=BASE_AP;attacker.attackAPSpent=0;
    const health=()=>w.scatter?Object.values(foe.hp).reduce((sum,hp)=>sum+hp,0):foe.hp.body;
    const hp=health();
    if(w.melee)attacker.melee=w.id;else attacker.weapon=w.id;
    effects=[];await shoot(attacker,foe,'body',w);
-   return ATTACK_PROFILES[w.id].melee===w.melee&&attacker.ap===ROUND_AP-w.ap
+   return ATTACK_PROFILES[w.id].melee===w.melee&&attacker.ap===BASE_AP-w.ap
     &&hp-health()===Math.round(damage(attacker,foe,w)*(w.burst?1.15:1))&&effects.some(e=>e.type==='shot'&&e.kind===w.id);
   })()`),id+' uses its own damage, AP, profile and impact');
  }

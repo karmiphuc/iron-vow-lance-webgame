@@ -120,7 +120,7 @@ async function main(){
   widest=Math.max(widest,Math.abs(toes[0].z-toes[1].z));
   foldHeight=Math.max(foldHeight,Math.min(...m.nightjar.forelegs.map(arm=>arm.an.getWorldPosition(R.V3()).y)));
  }
- assert.ok(widest>3.4&&foldHeight>2.5&&plantError<.025,'split stride, both forelimbs tucked and planted hind claw: '+[widest,foldHeight,plantError]);
+ assert.ok(widest>2.53*initial.scale&&foldHeight>1.86*initial.scale&&plantError<.025,'split stride, both forelimbs tucked and planted hind claw: '+[widest,foldHeight,plantError]);
  impacts.length=0;
  const stopTime=time;
  let braced,forward=-Infinity,minY=Infinity,quietZ;

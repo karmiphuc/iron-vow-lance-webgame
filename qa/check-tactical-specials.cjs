@@ -24,7 +24,7 @@ async function main(){
  assert.equal(sim.run('tacticalPlan(vyzov,{x:-1,z:4})'),null);
  assert.equal(sim.run('tacticalPlan(vyzov,{x:1.5,z:4})'),null);
  assert.equal(sim.run("giza.hp.left=0;canTactical(giza)"),false);
- sim.run('giza.hp.left=giza.max.left;hostiles[0].reacted=true;var gizaAp=giza.ap,foeHp=hostiles[0].hp.body');
+ sim.run('giza.hp.left=giza.max.left;hostiles[0].noCounter=true;var gizaAp=giza.ap,foeHp=hostiles[0].hp.body');
  await sim.run('executeTactical(giza,tacticalPlan(giza,{target:hostiles[0].id}))');
  assert.deepEqual(state('launches'),[['ally0','enemy0','giza-salvo',0],['ally0','enemy0','giza-salvo',1]]);
  assert.equal(sim.run('landings.length'),2,'two separately resolved impacts');

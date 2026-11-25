@@ -119,7 +119,7 @@ module.exports=async function checkAero({page,mobile,origin,tap,out}){
    }
    return fire.call(this,origin,size,life,velocity,...rest);
   };
-  return {ap:aero.ap,move:freeMovement(aero)};
+  return {ap:aero.ap,move:movementLimit(aero)};
  });
  await tap('#jumpjet');
  const landing=await page.evaluate(()=>{
@@ -137,9 +137,9 @@ module.exports=async function checkAero({page,mobile,origin,tap,out}){
  await page.waitForFunction(()=>!battle.busy&&current().jumpjetUsed&&current().x===4);
  const jump=await page.evaluate(()=>{
   const aero=current();
-  return {samples:window.aeroThrustSamples,ap:aero.ap,move:freeMovement(aero),tile:[aero.x,aero.z]};
+  return {samples:window.aeroThrustSamples,ap:aero.ap,move:movementLimit(aero),tile:[aero.x,aero.z]};
  });
- assert.ok(jump.ap===jumpStart.ap-2&&jump.move===jumpStart.move);
+ assert.ok(jump.ap===jumpStart.ap-3&&jump.move===jumpStart.move-3);
  assert.deepEqual(jump.tile,[4,16]);
  assert.ok(jump.samples.some(sample=>sample.elevation>.5)&&jump.samples.every(sample=>sample.index>=0&&sample.axis>.99));
  assert.deepEqual([...new Set(jump.samples.map(sample=>sample.index))].sort(),[0,1]);
@@ -187,7 +187,7 @@ module.exports=async function checkAero({page,mobile,origin,tap,out}){
   foe.hp.body=foe.max.body=10000;Math.random=()=>0;
   const tested={};
   for(const id of ['rifle','rail']){
-   unit.weapon=id;unit.ap=8;foe.reacted=true;
+   unit.weapon=id;unit.ap=8;foe.noCounter=true;
    IronVowScene.render(clock,.02);
    const initial=IronVowScene.combat.history.at(-1)?.sequence??0;
    await __ironVow.attack(unit.id,foe.id,'body','fire');

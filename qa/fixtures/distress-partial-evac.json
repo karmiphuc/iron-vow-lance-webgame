@@ -1,0 +1,383 @@
+{
+ "version": 1,
+ "day": 1,
+ "credits": 4500,
+ "rep": 0,
+ "wins": 0,
+ "kills": 0,
+ "itemInventory": true,
+ "owned": [
+  "rifle",
+  "rifle",
+  "missile"
+ ],
+ "units": [
+  {
+   "weapon": "rifle",
+   "condition": 100,
+   "upgrade": 0,
+   "level": 1,
+   "xp": 0
+  },
+  {
+   "weapon": "rifle",
+   "condition": 100,
+   "upgrade": 0,
+   "level": 1,
+   "xp": 0
+  },
+  {
+   "weapon": "missile",
+   "condition": 100,
+   "upgrade": 0,
+   "level": 1,
+   "xp": 0
+  }
+ ],
+ "history": [],
+ "readinessStart": 1,
+ "overworld": {
+  "port": "brine",
+  "arrears": 0
+ },
+ "world": {
+  "version": 1,
+  "seed": 72,
+  "day": 1,
+  "consumed": [
+   "offer:brine:1:4"
+  ],
+  "scouted": [],
+  "pendingEvents": [],
+  "resolvedEvents": [],
+  "standings": {}
+ },
+ "sortie": {
+  "version": 7,
+  "apRules": 1,
+  "contract": "distress-crossing",
+  "legacy": false,
+  "stockHostiles": false,
+  "slots": [
+   0,
+   1,
+   2
+  ],
+  "turn": 1,
+  "selected": 0,
+  "action": "move",
+  "part": "body",
+  "enemyPending": false,
+  "com": {
+   "week": 1,
+   "rng": 1133750023,
+   "practice": {},
+   "assists": {},
+   "bulkhead": {}
+  },
+  "offer": {
+   "id": "offer:brine:1:4",
+   "templateIndex": 11,
+   "port": "brine",
+   "postedDay": 1,
+   "expiryDay": 4,
+   "payPercent": 97,
+   "acceptedDay": 1
+  },
+  "hardVanguard": true,
+  "terrainSeed": 1133750023,
+  "mechComputers": true,
+  "units": [
+   {
+    "x": 1,
+    "z": 16,
+    "face": 1,
+    "heading": 2.356194490192345,
+    "moveLeft": 5,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 160,
+     "pilot": 70,
+     "right": 92,
+     "left": 92,
+     "legs": 110
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 2,
+    "z": 18,
+    "face": 1,
+    "heading": 0.7853981633974483,
+    "moveLeft": 6,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 126,
+     "pilot": 55,
+     "right": 78,
+     "left": 78,
+     "legs": 100
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 0,
+    "z": 18,
+    "face": 1,
+    "heading": 0.7853981633974483,
+    "moveLeft": 4,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 180,
+     "pilot": 80,
+     "right": 100,
+     "left": 100,
+     "legs": 90
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "extracted": true,
+    "x": 7,
+    "z": 17,
+    "face": 1,
+    "heading": 0.7853981633974483,
+    "moveLeft": 5,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 160,
+     "right": 92,
+     "left": 92,
+     "legs": 110,
+     "pilot": 48
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "distressOrder": {
+     "kind": "follow",
+     "slot": 0
+    },
+    "x": 10,
+    "z": 4,
+    "face": 1,
+    "heading": 0.7853981633974483,
+    "moveLeft": 6,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 126,
+     "right": 78,
+     "left": 78,
+     "legs": 100,
+     "pilot": 48
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "distressOrder": {
+     "kind": "hold"
+    },
+    "x": 5,
+    "z": 9,
+    "face": 1,
+    "heading": 0.7853981633974483,
+    "moveLeft": 2,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 180,
+     "right": 100,
+     "left": 100,
+     "legs": 41,
+     "pilot": 48
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 3,
+    "z": 7,
+    "face": 1,
+    "heading": 0.7853981633974483,
+    "moveLeft": 5,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 180,
+     "pilot": 70,
+     "right": 94,
+     "left": 94,
+     "legs": 105
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 12,
+    "z": 9,
+    "face": 1,
+    "heading": 2.356194490192345,
+    "moveLeft": 6,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 164,
+     "pilot": 55,
+     "right": 82,
+     "left": 82,
+     "legs": 122
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 13,
+    "z": 4,
+    "face": -1,
+    "heading": -2.356194490192345,
+    "moveLeft": 5,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 180,
+     "pilot": 80,
+     "right": 94,
+     "left": 94,
+     "legs": 105
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 11,
+    "z": 15,
+    "face": -1,
+    "heading": -2.356194490192345,
+    "moveLeft": 7,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 107,
+     "pilot": 70,
+     "right": 45,
+     "left": 45,
+     "legs": 72
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 12,
+    "z": 17,
+    "face": -1,
+    "heading": -2.356194490192345,
+    "moveLeft": 5,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 189,
+     "pilot": 55,
+     "right": 94,
+     "left": 94,
+     "legs": 112
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 6,
+    "z": 9,
+    "face": -1,
+    "heading": -2.356194490192345,
+    "moveLeft": 4,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 72
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 10,
+    "z": 13,
+    "face": 1,
+    "heading": 2.356194490192345,
+    "moveLeft": 4,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 72
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   },
+   {
+    "x": 14,
+    "z": 12,
+    "face": 1,
+    "heading": 2.356194490192345,
+    "moveLeft": 6,
+    "moveBonus": 0,
+    "attackAPSpent": 0,
+    "reacted": false,
+    "hp": {
+     "body": 51
+    },
+    "ap": 14,
+    "brace": false,
+    "skill": false,
+    "boost": false
+   }
+  ]
+ }
+}

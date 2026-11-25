@@ -1,3 +1,4 @@
+const assertLegacySortie=require('./legacy-sortie-check.cjs');
 const assert=require('node:assert/strict');
 const fixture=require('./fixtures/terrain-sortie.json');
 const simulate=require('./sim-harness.cjs');
@@ -32,7 +33,7 @@ for(const {id,valid,unique} of checks){
 }
 const saved=JSON.stringify(fixture);
 const resumed=simulate({storage:new Map([[key,saved]]),reducedMotion:true});
-assert.equal(resumed.run('JSON.stringify(captureSortie())'),JSON.stringify(fixture.sortie));
+assertLegacySortie(assert,JSON.parse(resumed.run('JSON.stringify(captureSortie())')),fixture.sortie);
 assert.ok(resumed.run('terrainHeight(current().x,current().z)>0'),'fixture resumes on a raised tile');
 const terrain=resumed.run('JSON.stringify(battle.field.cells)');
 resumed.run('persist()');

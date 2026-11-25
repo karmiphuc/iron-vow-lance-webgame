@@ -23,13 +23,17 @@
 .port-services-standing{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px 12px;margin:0;padding:10px 16px;border-top:1px solid #81989030;color:#a9bab2;font-size:10px;flex:none}
 .port-services-stock h3{font:500 16px Barlow,sans-serif;color:#b9c9c0;margin:0 0 4px;letter-spacing:.4px}
 .port-services-stock+.port-services-stock{margin-top:20px}
-.port-services-stock ul{list-style:none;margin:0;padding:0}
-.port-services-stock li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #81989030}
+.port-services-stock ul{display:grid;gap:6px;list-style:none;margin:0;padding:0}
+.port-services-stock li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;min-height:64px;border:1px solid #81989049;border-left:3px solid #78a89b;background:#203136}
+.port-services-stock li[data-stock-state="unavailable"]{background:#182428;border-color:#81989030;border-left-color:#596b71;color:#bbc5c0}
+.port-services-stock li[data-stock-state="owned"]{background:#302a21;border-color:#826a4b;border-left-color:#e5b66d}
+.port-services-stock [data-stock-state="owned"] button{color:#f2ce92}
+.port-services-stock [data-stock-state="available"] button{background:#27443e;border-color:#689a8c;color:#d9f1e8}
 .port-services-item{min-width:0;display:grid;gap:5px}
 .port-services-item b{font:500 17px Barlow,sans-serif;overflow-wrap:anywhere}
-.port-services-item span{font-size:11px;color:#d6c69f;font-variant-numeric:tabular-nums}
-.port-services-item small{font-size:10px;color:#a9bab2;line-height:1.4}
-.port-services-stock button{flex:none;min-width:84px;font-size:11px}
+.port-services-item span{font-size:.8125rem;color:#d6c69f;font-variant-numeric:tabular-nums}
+.port-services-item small{font-size:.75rem;color:#a9bab2;line-height:1.4}
+.port-services-stock button{flex:none;min-width:84px;padding-inline:8px;font-size:.75rem}
 .port-services-empty{font-size:12px;color:#b8c6bd;margin:4px 0}
 @media(max-width:1000px){.port-services{right:18px;width:min(390px,calc(100% - 36px))}}
 @media(max-width:760px){.port-services{top:156px;left:13px;right:13px;width:auto;max-height:min(55vh,calc(100% - 370px))}.port-services-header{padding:7px 9px 4px 13px}.port-services-header h2{font-size:21px}.port-services-tabs{padding:0 13px}.port-services-body{padding:12px 13px}.port-services-quote{margin:14px 0}.port-services-standing{padding:9px 13px}}

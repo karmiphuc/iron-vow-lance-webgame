@@ -25,7 +25,7 @@ const playerTurn=`(async()=>{
    if(ally.index<2&&!ally.skill)skill();
    await engage(ally,available[0],'body',w);if(checkEnd())return;
   }
-  if(battle&&ally.alive&&ally.ap>=2&&!ally.brace){startAction(ally);ally.ap-=2;ally.brace=true}
+  if(battle&&ally.alive&&ally.ap>=2&&!ally.brace){ally.ap-=2;ally.brace=true}
  }
  if(battle)await endTurn();
 })()`;

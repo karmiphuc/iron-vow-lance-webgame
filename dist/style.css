@@ -569,3 +569,10 @@ body[data-view="workshop"] #world-scene{z-index:3}
 .actionbuttons #saker-hover[data-hovering]{opacity:1;color:var(--blue);border-color:var(--blue)}
 .modal:has(.hover-confirm){background:#0b12177a;backdrop-filter:none;justify-items:end}
 @media(max-width:760px){.modal:has(.hover-confirm){align-items:end;justify-items:center}}
+.com-choice { min-height:44px; }
+.readiness-note {
+  margin:0;
+  padding:.5rem 1rem;
+  color:var(--muted,#a9b0aa);
+  font-size:.875rem;
+}

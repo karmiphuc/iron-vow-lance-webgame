@@ -9,7 +9,7 @@ const assert=require('node:assert/strict'),create=require('./sim-harness.cjs');
  assert.equal(sim.run('current().motion'),undefined);
  sim.run(`clock=${scheduled[0].ms/1000}`);scheduled[0].fn();await sim.flush();
  const travel=.623/3;
- assert.ok(Math.abs(scheduled[1].ms-travel*1000)<1e-9,'A live Warden tile plays its two-step timeline at triple speed');assert.equal(sim.run('current().ap'),8);
+ assert.ok(Math.abs(scheduled[1].ms-travel*1000)<1e-9,'A live Warden tile plays its two-step timeline at triple speed');assert.equal(sim.run('current().ap'),13);
  assert.equal(sim.run('current().heading'),sim.run('headingTo(0,-1)'));
  sim.run(`advanceUnitAnimation(current(),clock+${travel/2},1/60)`);assert.ok(Math.abs(sim.run('current().vz')-7.5)<1e-8);assert.equal(sim.run('current().motion.fromZ'),8);
  sim.run(`clock+=${travel}`);scheduled[1].fn();await movement;assert.equal(sim.run('current().motion'),null);assert.equal(sim.run('current().vz'),7);assert.equal(sim.run('current().walkCount'),1);assert.equal(sim.run("effects.filter(e=>e.type==='step').length"),2);

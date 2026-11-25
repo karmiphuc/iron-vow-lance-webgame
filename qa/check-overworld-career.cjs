@@ -9,7 +9,7 @@ const load=record=>simulate({storage:new Map([[key,JSON.stringify(record)]]),ran
 const saved=sim=>JSON.parse(sim.storage.get(key));
 const snapshot=sim=>JSON.parse(sim.run('JSON.stringify(save)'));
 const roundTrip=sim=>load(saved(sim));
-const withoutWorld=record=>{const {world,itemInventory,...legacyFields}=record;legacyFields.owned=[...new Set(legacyFields.owned)];return legacyFields};
+const withoutWorld=record=>{const {world,itemInventory,readinessStart,...legacyFields}=record;legacyFields.owned=[...new Set(legacyFields.owned)];return legacyFields};
 const quote=(sim,path)=>JSON.parse(sim.run(`JSON.stringify(window.IronVowOverworld.itineraryQuote(${JSON.stringify(path)},window.IronVowOverworld.operatingRates(save),save.credits,save.overworld?.arrears??0))`));
 const travel=(sim,destination,from,cost,path)=>sim.run(`travelTo(${JSON.stringify(destination)},${JSON.stringify(from)},${cost===undefined?'undefined':cost},${JSON.stringify(path)})`);
 
@@ -121,9 +121,9 @@ assert.equal(recovery.run('save.overworld.arrears'),290);
 assert.equal(recovery.run('save.overworld.lastExpense.paid'),100);
 const recovering=roundTrip(recovery);
 recovering.run('createBattle(0,false,false,[0]);finish(true);closeModal()');
-assert.equal(recovering.run('save.history.at(-1).pay'),1300,'after-action pay stays gross');
+assert.equal(recovering.run('save.history.at(-1).pay'),2000,'after-action pay stays gross');
 assert.equal(recovering.run('save.overworld.lastExpense.arrearsPaid'),290);
 assert.equal(recovering.run('save.overworld.arrears'),0);
-assert.equal(recovering.run('save.credits'),620);
-assert.equal(roundTrip(recovering).run('save.credits'),620,'reopening does not charge a second day');
+assert.equal(recovering.run('save.credits'),1320);
+assert.equal(roundTrip(recovering).run('save.credits'),1320,'reopening does not charge a second day');
 console.log('PASS overworld itineraries, transit rest, additive career restore, daily costs and arrears recovery');

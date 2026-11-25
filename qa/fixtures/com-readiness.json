@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "day": 22,
+  "credits": 4500,
+  "rep": 0,
+  "wins": 0,
+  "kills": 0,
+  "itemInventory": true,
+  "owned": [
+    "rifle",
+    "rifle",
+    "missile"
+  ],
+  "units": [
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "rifle",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    },
+    {
+      "weapon": "missile",
+      "condition": 100,
+      "upgrade": 0,
+      "level": 1,
+      "xp": 0
+    }
+  ],
+  "history": [],
+  "readinessStart": 1,
+  "comPilots": {
+    "rook": {
+      "progress": {
+        "rof": 6,
+        "covering": 6
+      },
+      "installed": [
+        "rof",
+        "covering"
+      ],
+      "partner": "ghost"
+    }
+  },
+  "sortie": {
+    "version": 7,
+    "apRules": 1,
+    "contract": "relay",
+    "legacy": false,
+    "stockHostiles": false,
+    "slots": [
+      0,
+      1
+    ],
+    "turn": 1,
+    "selected": 0,
+    "action": "move",
+    "part": "body",
+    "enemyPending": false,
+    "com": {
+      "week": 4,
+      "rng": 0,
+      "practice": {},
+      "assists": {},
+      "bulkhead": {}
+    },
+    "aeroMelee": "breaker",
+    "relayLead": 1,
+    "terrainSeed": 0,
+    "mechComputers": true,
+    "units": [
+      {
+        "x": 1,
+        "z": 16,
+        "face": 1,
+        "heading": 0.7853981633974483,
+        "moveLeft": 5,
+        "moveBonus": 0,
+        "attackAPSpent": 0,
+        "reacted": false,
+        "hp": {
+          "body": 160,
+          "pilot": 70,
+          "right": 92,
+          "left": 92,
+          "legs": 110
+        },
+        "ap": 14,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 2,
+        "z": 18,
+        "face": 1,
+        "heading": 2.356194490192345,
+        "moveLeft": 6,
+        "moveBonus": 0,
+        "attackAPSpent": 0,
+        "reacted": false,
+        "hp": {
+          "body": 126,
+          "pilot": 55,
+          "right": 78,
+          "left": 78,
+          "legs": 100
+        },
+        "ap": 14,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 6,
+        "z": 10,
+        "face": -1,
+        "heading": -0.7853981633974483,
+        "moveLeft": 6,
+        "moveBonus": 0,
+        "attackAPSpent": 0,
+        "reacted": false,
+        "hp": {
+          "body": 137,
+          "pilot": 70,
+          "right": 85,
+          "left": 85,
+          "legs": 109
+        },
+        "ap": 14,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 13,
+        "z": 6,
+        "face": -1,
+        "heading": -2.356194490192345,
+        "moveLeft": 7,
+        "moveBonus": 0,
+        "attackAPSpent": 0,
+        "reacted": false,
+        "hp": {
+          "body": 146,
+          "pilot": 55,
+          "right": 92,
+          "left": 92,
+          "legs": 118
+        },
+        "ap": 14,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 4,
+        "z": 13,
+        "face": -1,
+        "heading": -2.356194490192345,
+        "moveLeft": 4,
+        "moveBonus": 0,
+        "attackAPSpent": 0,
+        "reacted": false,
+        "hp": {
+          "body": 70
+        },
+        "ap": 14,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      },
+      {
+        "x": 16,
+        "z": 2,
+        "face": 1,
+        "heading": 0.7853981633974483,
+        "moveLeft": 4,
+        "moveBonus": 0,
+        "attackAPSpent": 0,
+        "reacted": false,
+        "hp": {
+          "body": 70
+        },
+        "ap": 14,
+        "brace": false,
+        "skill": false,
+        "boost": false
+      }
+    ]
+  }
+}

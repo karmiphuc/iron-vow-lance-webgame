@@ -1,3 +1,4 @@
+const assertLegacySortie=require('./legacy-sortie-check.cjs');
 const assert=require('node:assert/strict');
 const {readFileSync}=require('node:fs');
 const {join}=require('node:path');
@@ -16,11 +17,13 @@ for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v5
   const {sortie,...actual}=JSON.parse(sim.run('JSON.stringify(save)'));
   assert.equal(actual.itemInventory,true,file+' migrated to physical copies');
   assert.equal(sim.run('validSave(save)'),true,file+' has a consistent allocation');
+  assert.equal(actual.readinessStart,career.day,file+' starts weekly scaling from migration day');
+  delete actual.readinessStart;
   delete actual.itemInventory;actual.owned=[...new Set(actual.owned)].filter(id=>career.owned.includes(id));
   assert.deepEqual(actual,career,file+' career, roster, hull and offer data');
   const {version,...checkpoint}=JSON.parse(sim.run('JSON.stringify(captureSortie())'));
   const {version:previousVersion,...previous}=expected;
-  assert.deepEqual(checkpoint,previous,file+' battlefield state including active skill effects');
+  assertLegacySortie(assert,checkpoint,previous,file+' battlefield state including active skill effects');
   assert.ok(version>=previousVersion,file+' checkpoint version');
  }
  check();
@@ -37,6 +40,7 @@ for(const file of ['v31-corridor.json','v32-picket.json','v35-frontier.json','v5
 {
  const raw=readFileSync(join(__dirname,'fixtures','world-pending-transit.json'),'utf8');
  const expected=JSON.parse(raw);
+ expected.readinessStart=expected.day;
  expected.itemInventory=true;expected.owned.push('rifle');
  const resumed=simulate({storage:new Map([[key,raw]]),random:()=>0,reducedMotion:true});
  const imported=simulate({random:()=>0,reducedMotion:true});

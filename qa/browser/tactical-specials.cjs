@@ -15,7 +15,7 @@ module.exports=async function checkTacticalSpecials({page,origin,mobile,tap}){
   battle.cover.clear();battle.field.cover={};
   const [giza,vyzov,friend,cannonTarget,mortarTarget,bystander]=battle.units;
   for(const [u,x,z] of [[giza,2,5],[vyzov,4,5],[friend,5,4],[cannonTarget,2,2],[mortarTarget,4,3],[bystander,5,3]]){
-   Object.assign(u,{x,z,vx:x,vz:z,reacted:true});
+   Object.assign(u,{x,z,vx:x,vz:z,noCounter:true});
   }
   mortarTarget.hp.body=1;
   ruleRandom=()=>.005;

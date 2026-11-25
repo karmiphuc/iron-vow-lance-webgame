@@ -42,7 +42,7 @@ module.exports=async function checkAshigaruV2({page,origin}){
   const fixture=await page.evaluate(range=>{
    const u=battle.units.find(x=>x.frame===ASHIGARU_FRAME),a=current(),e=IronVowScene.models.get(u.id).entry,source=e.m.nativeV2.source;
    for(const other of battle.units)if(other!==u&&other!==a){other.alive=false;other.hp.body=0}
-   battle.cover.clear();Object.assign(u,{x:8,z:15-range,vx:8,vz:15-range,reacted:true});Object.assign(a,{x:8,z:15,vx:8,vz:15,reacted:true});
+   battle.cover.clear();Object.assign(u,{x:8,z:15-range,vx:8,vz:15-range,noCounter:true});Object.assign(a,{x:8,z:15,vx:8,vz:15,noCounter:true});
    for(const p of ['body','pilot','legs'])a.hp[p]=a.max[p]=10000;ruleRandom=()=>0;
    const node=n=>source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(n));
    const shown=()=>['carbine','scatter'].filter(n=>node('module.'+n).visible);

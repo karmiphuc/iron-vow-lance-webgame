@@ -17,7 +17,7 @@ for(let seed=0;seed<40;seed++)for(let day=1;day<=81;day+=4){
  const state=W.createWorld(seed,day),all=W.PORTS.flatMap(port=>{
   const local=W.offersAt(state,port.id);
   const featured=local.filter(offer=>offer.templateIndex>=4);
-  assert.deepEqual(featured.map(o=>o.templateIndex),({ridge:[5,11],corridor:[4,6],frontier:[7],brine:[10]})[port.id]??[]);
+  assert.deepEqual(featured.map(o=>o.templateIndex),({ridge:[5,14],corridor:[4,6],frontier:[7],brine:[10,11],mercy:[12],black:[13]})[port.id]??[]);
   assert(local.length-featured.length<=3);
   assert.equal(new Set(local.map(o=>o.templateIndex)).size,local.length);
   return local;

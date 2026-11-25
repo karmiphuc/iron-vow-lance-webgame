@@ -22,15 +22,15 @@ const create=require('./sim-harness.cjs');
  assert.equal(restored.run("battle.units.slice(3).map(u=>u.kind||'mech').join()"),'mech,mech,tank,helicopter');
  assert.equal(restored.run("CONTRACTS[1].id"),'relay');
  assert.equal(restored.run("CONTRACTS[1].deployment.length"),5);
- assert.equal(restored.run("const reserve=save.credits;finish(true);save.credits-reserve"),1610,'payout less the company’s operating costs');
- assert.equal(restored.run('save.history.at(-1).pay'),2000);
+ assert.equal(restored.run("const reserve=save.credits;finish(true);save.credits-reserve"),3960,'payout less the company’s operating costs');
+ assert.equal(restored.run('save.history.at(-1).pay'),4350);
 
  for(const [oldIndex,id] of ['relay','corridor','frontier'].entries()){
   for(const oldVersion of [1,2]){
    const original=create();
    original.run(`createBattle(${oldIndex+1},${oldVersion===1},true);battle.units.forEach(u=>u.heading=defaultHeading(u));persist()`);
    const career=JSON.parse(original.storage.get('iron-vow-career'));
-   career.sortie.version=oldVersion;
+   career.sortie.version=oldVersion;delete career.sortie.apRules;
    career.sortie.contract=oldIndex;
    delete career.sortie.legacy;
    career.sortie.units.forEach(u=>delete u.hp.pilot);
@@ -70,7 +70,7 @@ const create=require('./sim-harness.cjs');
  live.run("createBattle(0);selected=0;battle.busy=true;current().weapon='rail';globalThis.vehicle=battle.units.find(u=>u.kind==='tank');current().heading=headingTo(vehicle.x-current().x,vehicle.z-current().z)");
  const kill=live.run("shoot(current(),vehicle,'right')");
  assert.equal(live.run("activeCinematic.phase"),'aim');
- assert.equal(live.run('current().ap'),3);
+ assert.equal(live.run('current().ap'),9);
  assert.equal(live.run('vehicle.hp.body'),64);
  // Attack-camera pacing (CINEMATIC_PACE): the 0.6 s step-up runs 1.6x and the raised-gun hold adds 0.45 s.
  assert.equal([...timers.values()][0].ms,960);
@@ -90,7 +90,7 @@ const create=require('./sim-harness.cjs');
  assert.equal(live.run('vehicle.hp.body'),0);
  assert.equal(live.run('save.kills'),1);
  assert.equal(live.run('save.units[0].xp'),20);
- assert.equal(live.run('current().ap'),3);
+ assert.equal(live.run('current().ap'),9);
  assert.equal(live.run("effects.filter(e=>e.type==='boom'||e.type==='shot').length"),0,'skipping resolves damage without leftover shots');
 
  const exchanges=create({random:()=>0});
@@ -109,8 +109,8 @@ const create=require('./sim-harness.cjs');
  assert.ok(exchanges.run("moments.some(m=>m.actor===ally.id&&m.prime==='step')"),'initial attack plants inside split screen');
  assert.ok(exchanges.run("moments.some(m=>m.actor===foe.id&&m.reaction&&m.phase==='fire')"),'return shot is shown');
  assert.equal(exchanges.run('activeCinematic'),null);
- assert.equal(exchanges.run('ally.ap'),5);
- assert.equal(exchanges.run('foe.ap'),8);
+ assert.equal(exchanges.run('ally.ap'),11);
+ assert.equal(exchanges.run('foe.ap'),4);
 
  const hostile=create({random:()=>0});
  hostile.run(`createBattle(0,false,false,[0,1]);battle.busy=true;battle.phase='enemy';
@@ -155,5 +155,5 @@ const create=require('./sim-harness.cjs');
   await attack;
   assert.equal(firing.run('actor.attack'),null);
  }
- console.log('PASS: opening and original contract rosters, exact 2,000-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, priming for allied and enemy mechs, attack skip and reduced motion.');
+ console.log('PASS: opening and original contract rosters, exact 4,350-credit payout, v1/v2/v3 checkpoint restore, grounded wreck after reload, one detonation, vehicle XP and air traversal, priming for allied and enemy mechs, attack skip and reduced motion.');
 })().catch(e=>{console.error(e);process.exitCode=1});

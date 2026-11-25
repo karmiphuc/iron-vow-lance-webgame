@@ -19,9 +19,9 @@ const resolve=(run,win=true)=>run(`for(const u of battle.units)if(u.team==='enem
  assert.equal(run('save.ship.project.wins'),1);
  run('createBattle(0,false,false,[0])');
  resolve(run);
- assert.equal(run('save.history.at(-1).pay'),1300,'new upgrade activates after the payout');
+ assert.equal(run('save.history.at(-1).pay'),2000,'new upgrade activates after the payout');
  assert.equal(run('shipLevel("office")'),1);
- assert.equal(run('contractPay(CONTRACTS[0],1)'),1495);
+ assert.equal(run('contractPay(CONTRACTS[0],1)'),2300);
  run('save.credits=20000');
  assert.equal(run('queueShipUpgrade("office")'),false,'rank 2 needs reputation');
  run('save.rep=30;save.credits=0');
@@ -33,7 +33,7 @@ const resolve=(run,win=true)=>run(`for(const u of battle.units)if(u.team==='enem
  assert.equal(run('shipLevel("office")'),1);
  run('createBattle(0,false,false,[0])');resolve(run);
  assert.equal(run('shipLevel("office")'),2);
- assert.equal(run('contractPay(CONTRACTS[0],1)'),1625);
+ assert.equal(run('contractPay(CONTRACTS[0],1)'),2500);
  for(const ship of [{levels:{drop:3}},{levels:{unknown:1}},{levels:{drop:2},project:{facility:'drop',wins:1}},{levels:{},project:{facility:'crew',wins:2}}]){
   assert.equal(run('validSave({...save,ship:'+JSON.stringify(ship)+'})'),false);
  }
@@ -87,11 +87,11 @@ const resolve=(run,win=true)=>run(`for(const u of battle.units)if(u.team==='enem
  fly('createBattle(0,false,false,[0,1,2],true,seat);selected=0;let ghost=battle.units[1];ghost.hp.body=0;ghost.alive=false;ghost.downReason="body"');
  await fly('endTurn()');
  assert.equal(fly('battle.turn'),2);
- assert.equal(fly('ghost.ap'),9);
+ assert.equal(fly('ghost.ap'),15);
  assert.deepEqual(JSON.parse(resume(aux).run('JSON.stringify(captureSortie())')),career(aux).sortie,'dead pilot retains launch AP in later checkpoints');
  fly('createBattle(0,false,false,[0],true,seat);selected=3;const beforeHull=battle.units[1].hp.body;battle.units[1].hp.body=0;const baseXP=save.units[0].xp');
  resolve(fly);
- assert.equal(fly('save.history.at(-1).pay'),1495);
+ assert.equal(fly('save.history.at(-1).pay'),2300);
  assert.equal(fly('save.reservePilots.scout.xp'),70);
  assert.ok(fly('save.reserve[6].condition<85'));
  assert.equal(fly('save.units[0].xp-baseXP'),70);

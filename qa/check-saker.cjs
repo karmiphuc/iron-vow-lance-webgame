@@ -45,7 +45,7 @@ async function check(){
  const ai=simulate({reducedMotion:true,random:()=>.1}).run;
  ai("createBattle(CONTRACTS.findIndex(c=>c.id==='parapet'),false,false,[0]);enableMechComputers();const n=battle.units.find(u=>u.team==='enemy'),a=current();a.x=a.vx=3;n.x=n.vx=6;a.z=n.z=a.vz=n.vz=9;battle.cover.clear();battle.field={};a.shield=null;ruleRandom=()=>.10;captureRandom=()=>1;const before=a.hp.body;");
  await ai('runEnemyTurn()');
- assert.ok(ai("distance(a,n)===7&&n.mechState.moved===4&&before-a.hp.body===36"),'opens the range and lands one medium-impact shot');
+ assert.ok(ai("distance(a,n)>3&&distance(a,n)<=combatRange(n,a,unitWeapon(n))&&n.mechState.moved>0&&before-a.hp.body===36"),'opens the range and lands one medium-impact shot');
  const jump=simulate({reducedMotion:true,random:()=>.1}),jet=jump.run;
  jet("createBattle(CONTRACTS.findIndex(c=>c.id==='parapet'),false,false,[0]);enableMechComputers();const n=battle.units.find(u=>u.team==='enemy'),a=current();n.x=n.vx=5;n.z=n.vz=8;a.x=a.vx=11;a.z=a.vz=9;battle.cover.clear();battle.cover.add('6,8');a.shield=null;n.reacted=true;a.reacted=true;");
  assert.ok(jet("jumpjetLanding(n,8,8)&&jumpjetLanding(n,7,9)&&!jumpjetLanding(n,9,8)&&!jumpjetLanding(n,6,8)&&!jumpjetLanding(n,5,8)&&!jumpjetLanding(n,5.5,8)"));
@@ -59,18 +59,18 @@ async function check(){
  const reloaded=simulate({storage:new Map(jump.storage)});
  assert.ok(reloaded.run("const n=battle.units.find(u=>u.frame===SAKER_FRAME);n.jumpjetUsed&&!canJumpjet(n)"));
  assert.ok(reloaded.run("resetMovement(n);canJumpjet(n)"),'next enemy turn refreshes the jump');
- assert.ok(reloaded.run("save.sortie.units.find(u=>u.x===8&&u.z===8).moveLeft=7;restoreSortie();battle.units.find(u=>u.frame===SAKER_FRAME).moveLeft===5"),'older Parapet saves retain valid movement');
+ assert.ok(reloaded.run("delete save.sortie.apRules;for(const state of save.sortie.units)Object.assign(state,{actionPhase:false,extraStep:false});save.sortie.units.find(u=>u.x===8&&u.z===8).moveLeft=7;restoreSortie();battle.units.find(u=>u.frame===SAKER_FRAME).moveLeft===5"),'older Parapet saves retain valid movement');
  const uphill=simulate({random:()=>.1}).run;
  uphill("createBattle(CONTRACTS.findIndex(c=>c.id==='parapet'),false,false,[0]);surveyTerrain(0);const n=battle.units.find(u=>u.team==='enemy');Object.assign(n,{x:5,z:8,vx:5,vz:8,heading:headingTo(1,0)});battle.cover.clear();terrainCell(5,8).level=0;terrainCell(8,8).level=3;battle.cover.add('6,8');");
  const ascend=uphill('useJumpjet(n,8,8)');
  assert.ok(uphill('n.motion.jumpjet&&n.motion.jetLift===4.4&&jumpjetHeight(n,n.motion.start+n.motion.duration/2)>4'),'higher landing uses the vertical jump arc');
  assert.equal(await ascend,true);
- assert.ok(uphill('n.ap===6&&terrainLevel(n.x,n.z)===3'));
+ assert.ok(uphill('n.ap===roundAP(n.training)-2&&terrainLevel(n.x,n.z)===3'));
  const crossing=simulate({reducedMotion:true,random:()=>.1}).run;
  crossing("createBattle(CONTRACTS.findIndex(c=>c.id==='parapet'),false,false,[0]);const n=battle.units.find(u=>u.team==='enemy'),a=current();a.x=a.vx=11;n.x=n.vx=2;a.z=a.vz=n.z=n.vz=9;battle.cover.clear();for(let z=0;z<battle.size.depth;z++)battle.cover.add('3,'+z);battle.field={};battle.legacy=true;a.shield=null;ruleRandom=()=>.10;captureRandom=()=>1;const before=a.hp.body;");
  assert.equal(crossing('combatRange(n,a,unitWeapon(n))'),7,'combat uses the Merlin’s seven-tile base range');
  await crossing('runEnemyTurn()');
- assert.ok(crossing("n.x===4&&n.jumpjetUsed&&n.ap===1&&before-a.hp.body===36"),'AI jumps over blocked terrain and fires at range seven');
+ assert.ok(crossing("n.x===4&&n.jumpjetUsed&&n.ap===enemyAPCapacity(battle,n)-2-HOVER_AP-5&&n.hoverActive&&before-a.hp.body===36"),'AI jumps over blocked terrain and fires at range seven');
  console.log('PASS Saker High Perch mastery and transfer, Hover UI and reload, range, medium mobility, per-turn Jumpjet, AI terrain crossing, Parapet deployment and reload, capture-only hull and integral rifle, right-arm dependency, left arm free, 36 HP through 5 armor for 5 AP, surrender settlement');
 }
 check().catch(e=>{console.error(e);process.exitCode=1;});

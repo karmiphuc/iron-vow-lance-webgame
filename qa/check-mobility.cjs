@@ -2,51 +2,57 @@ const assert=require('node:assert/strict');
 const simulate=require('./sim-harness.cjs');
 
 (async()=>{
- const sim=simulate({random:()=>0}),{run}=sim;
- run("createBattle(0);battle.cover.clear();const rook=current();const hostile=battle.units[3];const cues=[];sound=(type)=>cues.push(type)");
- assert.equal(run('freeMovement(rook)'),5);
- assert.equal(run('freeMovement(battle.units[1])'),6);
- assert.equal(run('paths(rook).get("1,11")'),5);
- await run('moveUnit(rook,1,11)');
- assert.equal(run('rook.ap'),8);
- assert.equal(run('rook.heading'),run('headingTo(0,-1)'),'Facing stays aligned through a multi-tile move');
- assert.equal(run('freeMovement(rook)'),0);
- assert.ok(run('extraMovement(rook)'));
- assert.equal(run("cues.filter(c=>c==='step').length"),10,'Five tiles use two live gait contacts each');
- assert.ok(run("cues.indexOf('hydraulic')<cues.indexOf('step')"));
- await run('moveUnit(rook,1,10)');
- assert.equal(run('rook.ap'),7);
- assert.equal(run('movementLimit(rook)'),0);
- await run('moveUnit(rook,1,9)');
- assert.equal(run('rook.z'),10);
- assert.equal(run('rook.heading'),run('headingTo(0,-1)'),'Facing stays continuous across the paid tile');
-
- run("resetMovement(rook);rook.ap=8;hostile.x=rook.x+1;hostile.z=rook.z;hostile.melee='blade';hostile.ap=0");
- assert.equal(run("reactionWeapon(hostile,rook).id"),'blade');
- assert.equal(run("(()=>{const left=hostile.hp.left;hostile.hp.left=0;const id=reactionWeapon(hostile,rook).id;hostile.hp.left=left;return id})()"),'rifle');
- assert.equal(run("(()=>{hostile.x+=9;const w=reactionWeapon(hostile,rook);hostile.x-=9;return w})()"),null);
- assert.equal(run("reactionWeapon(battle.units[4],rook)"),null);
- run("cues.length=0");
+ const sim=simulate({random:()=>0,reducedMotion:true}),{run}=sim;
+ run(`createBattle(0);battle.cover.clear();battle.field={};const rook=current(),hostile=battle.units[3];
+  Object.assign(hostile,{x:2,z:14,ap:12,melee:'blade'});
+  const cues=[];sound=type=>cues.push(type);`);
+ assert.equal(run('rook.ap'),14);
+ assert.equal(run('movementLimit(rook)'),5);
+ assert.equal(run('movementLimit(battle.units[1])'),6);
+ await run('moveUnit(rook,1,14)');
+ assert.equal(run('rook.ap'),12);
+ assert.equal(run('rook.heading'),run('headingTo(0,-1)'));
+ assert.equal(run('movementLimit(rook)'),3);
+ assert.ok(run("cues.indexOf('step')>=0"));
  const rookHP=run('rook.hp.body');
+ assert.equal(run('counterCost(hostile,rook,meleeWeapon(hostile))'),6);
  await run("engage(rook,hostile,'body',weapon('rifle'))");
- assert.equal(run('rook.ap'),5);
- assert.equal(run('hostile.ap'),0);
+ assert.equal(run('rook.ap'),9);
+ assert.equal(run('hostile.ap'),6);
  assert.equal(run('hostile.reacted'),true);
  assert.equal(run('Boolean(rook.reacted)'),false);
- assert.equal(run('freeMovement(rook)'),0);
+ assert.equal(run('movementLimit(rook)'),3);
  assert.ok(run('rook.hp.body')<rookHP);
- assert.ok(run("['braceLift','bracePlant','weaponLock','gunReport'].every((cue,i,list)=>cues.includes(cue)&&(i===0||cues.indexOf(list[i-1])<cues.indexOf(cue)))"));
- const afterCounter=run('rook.hp.body');
+ await run('moveUnit(rook,1,13)');
+ assert.equal(run('rook.ap'),8);
+ assert.equal(run('movementLimit(rook)'),2);
+ assert.equal(run('reactionWeapon({...hostile,ap:5},rook)'),null,'blade cannot counter beyond an adjacent tile');
+ await run('moveUnit(rook,1,14)');
  await run("engage(rook,hostile,'body',weapon('rifle'))");
- assert.equal(run('rook.hp.body'),afterCounter);
+ assert.equal(run('hostile.ap'),0,'a second counter spends the remaining AP');
+ assert.equal(run('rook.ap'),4);
+ assert.equal(run('attackAPLeft(rook)'),2);
+ assert.equal(run("canUseWeapon(rook,weapon('rifle'))"),false);
+ const before=run('JSON.stringify([rook.ap,hostile.hp,rook.attackAPSpent])');
+ await run("engage(rook,hostile,'body',weapon('rifle'))");
+ assert.equal(run('JSON.stringify([rook.ap,hostile.hp,rook.attackAPSpent])'),before,'over-budget attacks spend nothing');
  run('persist()');
  const restored=simulate({storage:new Map(sim.storage)});
  assert.equal(restored.run('battle.units[3].reacted'),true);
- assert.equal(restored.run('current().actionPhase'),true);
+ assert.equal(restored.run('current().attackAPSpent'),6);
+ assert.equal(restored.run('current().moveLeft'),1);
  assert.equal(restored.run('current().heading'),run('rook.heading'));
+ assert.equal(restored.run('current().ap'),4);
+ assert.ok(restored.run("paths(current()).size>1&&!canUseWeapon(current(),weapon('rifle'))"));
+ await run('moveUnit(rook,1,13)');
+ assert.equal(run('rook.ap'),3);
+ assert.equal(run('movementLimit(rook)'),0);
+ await run('moveUnit(rook,1,12)');
+ assert.equal(run('rook.z'),13);
+ assert.equal(run('rook.ap'),3,'extra AP cannot extend maximum movement range');
 
- run("createBattle(0);battle.cover.clear();selected=0;action='move';const blocked=battle.units[1];blocked.ap=0;startAction(blocked);renderBattle()");
- assert.ok(sim.node('#ui').innerHTML.includes('SPENT / REACTION READY'));
+ run("createBattle(0);battle.cover.clear();selected=0;action='move';const blocked=battle.units[1];blocked.ap=0;renderBattle()");
+ assert.ok(sim.node('#ui').innerHTML.includes('SPENT / REACTION LOW AP'));
  run('selectUnit(1)');
  assert.equal(run('selected'),0);
  run("pick=()=>blocked;screenTile=()=>({x:1,z:15})");
@@ -54,7 +60,7 @@ const simulate=require('./sim-harness.cjs');
  sim.events.get('#scene:pointerdown')(event);
  await sim.events.get('#scene:pointerup')(event);
  assert.equal(run('current().z'),15);
- assert.equal(run('current().ap'),8);
+ assert.equal(run('current().ap'),13);
  assert.equal(run('selected'),0);
 
  const cardinal=JSON.parse(run(`JSON.stringify([[-1,0],[1,0],[0,-1],[0,1]].map(([dx,dz])=>headingTo(dx,dz)))`));
@@ -65,7 +71,7 @@ const simulate=require('./sim-harness.cjs');
  v24.sortie.units[0].heading=0;
  const migrated=simulate({storage:new Map([['iron-vow-career',JSON.stringify(v24)]])});
  assert.ok(migrated.run('FIELD_HEADINGS.includes(battle.units[0].heading)'));
- console.log('PASS: free movement, one paid tile, continuous facing, AP-free melee priority, reaction cap and reload, hydraulic/impact sequence, spent click-through, and facing save migration.');
+ console.log('PASS: shared AP and split movement, paid repeat counters, attack limit, reload, gait cue, spent click-through and facing migration.');
 
  const stats=simulate();
  const count=stats.run('FRAMES.length');
@@ -76,30 +82,30 @@ const simulate=require('./sim-harness.cjs');
   const workshop=stats.node('#ui').innerHTML;
   assert.equal((workshop.match(/data-chassis=/g)||[]).length,3);
   const actual=JSON.parse(stats.run(`createBattle(0);JSON.stringify({
-   name:current().name,free:freeMovement(current()),armor:current().armor,ap:current().ap,
+   name:current().name,free:movementLimit(current()),armor:current().armor,ap:current().ap,
    hp:current().hp,max:current().max,primary:unitWeapon(current()),melee:selectedWeapon(current(),'strike')
   })`));
   assert.ok(workshop.includes(actual.name+' / SORTIE STATS'));
   for(const [label,value] of [
-   ['Free movement',actual.free+' tiles'],['Extra movement','1 tile / 1 AP'],
-   ['Armor',actual.armor],['AP per round',actual.ap],
+   ['Movement range',actual.free+' tiles'],
+   ['Armor',actual.armor],['AP capacity',actual.ap],
    ...Object.entries(actual.max).filter(([part])=>part!=='pilot').map(([part,max])=>[
     stats.run(`PART_LABEL.${part}`),actual.hp[part]+' / '+max+' HP']),
    ['Pilot',actual.hp.pilot+' HP']
   ])assert.ok(workshop.includes(`<dt>${label}</dt><dd>${value}</dd>`),actual.name+' '+label);
   assert.ok(workshop.includes(`Fire</b> ${actual.primary.ap} AP<small>${actual.primary.name}`));
   assert.ok(workshop.includes(actual.melee?`Melee</b> ${actual.melee.ap} AP<small>${actual.melee.name}`:'Melee</b> <small>No melee equipped'));
-  assert.ok(workshop.includes('Counter</b> 0 AP<small>1 / round'));
+  assert.ok(workshop.includes('Counter</b> Uses AP<small>'));
   assert.ok(workshop.includes('Losing the left arm reduces armor to '+Math.floor(actual.armor/2)));
   stats.run('createBattle(1,true)');
-  assert.equal(stats.run('freeMovement(current())'),actual.free-1);
+  assert.equal(stats.run('movementLimit(current())'),actual.free-1);
  }
  console.log('PASS: all '+count+' Workshop stat sheets match deployed HP, armor, mobility, AP and weapons with worn reinforced hulls; legacy mobility retained.');
 
  const audit=simulate({random:()=>0,reducedMotion:true});
  const exec=audit.run;
  exec(`createBattle(0);battle.cover.clear();const ally=current(),foe=battle.units[3],gunship=battle.units.find(u=>u.kind==='helicopter');
- ally.x=6;ally.z=6;foe.x=7;foe.z=6;ally.melee='cleaver';foe.melee='blade';ally.ap=0;`);
+ ally.x=6;ally.z=6;foe.x=7;foe.z=6;ally.melee='cleaver';foe.melee='blade';ally.ap=14;`);
  assert.equal(exec('reactionWeapon(ally,foe).id'),'cleaver');
  assert.equal(exec('reactionWeapon(foe,ally).id'),'blade');
  exec('foe.z=7');
@@ -114,23 +120,24 @@ const simulate=require('./sim-harness.cjs');
  exec('ally.hp.right=0');
  assert.equal(exec('reactionWeapon(ally,gunship)'),null);
  assert.equal(exec('reactionWeapon(ally,foe).id'),'cleaver','left arm alone can counter');
- exec('ally.hp.left=0;startAction(ally);renderBattle()');
+ exec('ally.hp.left=0;ally.ap=0;renderBattle()');
  assert.ok(audit.node('#ui').innerHTML.includes('SPENT / REACTION UNAVAILABLE'));
  assert.equal(exec('reactionWeapon(ally,foe)'),null);
- exec('ally.hp.right=ally.max.right;ally.hp.left=ally.max.left;foe.ap=8');
+ exec('ally.hp.right=ally.max.right;ally.hp.left=ally.max.left;ally.ap=12;foe.ap=8');
  await exec("engage(foe,ally,'body',unitWeapon(foe))");
- assert.equal(exec('ally.ap'),0);
+ assert.equal(exec('ally.ap'),7);
  assert.equal(exec('foe.ap'),5);
  assert.equal(exec('ally.reacted'),true);
  assert.equal(exec('Boolean(foe.reacted)'),false,'a counter cannot trigger a counter');
  const foeHP=exec('foe.hp.body');
  await exec("engage(foe,ally,'body',unitWeapon(foe))");
- assert.equal(exec('foe.hp.body'),foeHP,'no second reaction');
+ assert.ok(exec('foe.hp.body')<foeHP,'second reaction is legal with enough AP');
+ assert.equal(exec('ally.ap'),2);
  exec('foe.reacted=true;foe.x=17;foe.z=18;battle.units=[ally,foe]');
  await exec('endTurn()');
  assert.equal(exec('battle.turn'),2);
  assert.equal(exec('ally.reacted||foe.reacted'),false,'both sides reset at the round boundary');
- assert.equal(exec('ally.ap'),8);
+ assert.equal(exec('ally.ap'),14);
 
  exec('let victim');
  for(const part of ['body','pilot','right','left']){

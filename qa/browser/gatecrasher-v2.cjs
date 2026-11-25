@@ -71,7 +71,7 @@ async function observeLaunches(page,fixture,mode,weapon){
  },fixture);
  const results=await page.evaluate(async({actor,target,mode,weapon})=>{
   const unit=battle.units.find(u=>u.id===actor);
-  unit.ap=80;
+  unit.ap=80;unit.attackAPSpent=0;
   const start=IronVowScene.combat.history.length;
   await __ironVow.attack(actor,target,'body',mode);
   return IronVowScene.combat.__gatecrasherObservations.filter(item=>item.event.sequence>start&&item.event.weapon===weapon);
@@ -91,8 +91,8 @@ async function observeLaunches(page,fixture,mode,weapon){
 async function moveWithGait(page,actor){
  const result=await page.evaluate(async actorId=>{
   const unit=battle.units.find(u=>u.id===actorId),move=__ironVow.legalMoves(actorId)
-   .filter(item=>item.cost>0&&item.cost<=freeMovement(unit)).sort((a,b)=>a.cost-b.cost)[0];
-  if(!move)throw Error('Gatecrasher must have a legal free tile move');
+   .filter(item=>item.cost>0&&item.cost<=movementLimit(unit)).sort((a,b)=>a.cost-b.cost)[0];
+  if(!move)throw Error('Gatecrasher must have a legal tile move');
   const samples=[];
   const settled=new Promise(resolve=>{
    const sample=()=>{
@@ -256,7 +256,7 @@ module.exports=async function checkGatecrasherV2({page,origin,mobile,out,frame=3
     const e=IronVowScene.models.get(actor).entry,p=e.secondary.tip.getWorldPosition(new THREE.Vector3()),n=e.m.nativeV2.source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Cleaver Tip.L'));
     hits.push({damage:args[3].damage,tipError:p.distanceTo(n.getWorldPosition(new THREE.Vector3())),bounds:e.secondary.bounds().distanceToPoint(p)});
    }return result;};
-   const u=battle.units.find(u=>u.id===actor);u.ap=80;ruleRandom=()=>0;
+   const u=battle.units.find(u=>u.id===actor);u.ap=80;u.attackAPSpent=0;ruleRandom=()=>0;
    try{await __ironVow.attack(actor,target,'body','strike')}finally{combat.landed=old;}
    return hits;
   },cleaver);

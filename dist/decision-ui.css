@@ -100,3 +100,6 @@ body[data-view="combat"] .tactical-hint{display:none}
 
 body[data-view="combat"] .battle-links #call-sortie-reserve{min-height:44px}
 .map-pin.operation-marker{background:#f5d796;color:#132027;border:1px solid #2a3438}
+
+body[data-view="combat"] .battle-top .distress-readout{font-size:13px;line-height:1.35;color:#c8e7db}
+body[data-view="combat"] #distress-radio{min-height:44px}
