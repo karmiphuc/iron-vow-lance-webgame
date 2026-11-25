@@ -309,8 +309,14 @@ function build(unit,scope='battle'){
   equipment.afterSync?.();
   source.updateMatrixWorld(true);
  }
+ const animate=equipment.afterAnimate&&(function(mech,input,dt,time){
+  const sample=equipment.prepare?.(mech,input,dt,time);
+  R.animateMech(mech,sample?.input??input,dt,time);
+  sync();
+  equipment.afterAnimate(mech,input,dt,time,sample);
+ });
  mech.nativeV2={
-  source,sync,bounds,clips:asset.animations,scrub:scrubber?.sample,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
+  source,sync:animate?()=>source.updateWorldMatrix(true,true):sync,animate,bounds,clips:asset.animations,scrub:scrubber?.sample,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
   jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,
   anchors:equipment.anchors,nativeShield:equipment.nativeShield,meleeSide:equipment.meleeSide,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){

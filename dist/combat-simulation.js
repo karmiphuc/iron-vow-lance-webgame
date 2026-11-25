@@ -138,7 +138,7 @@
   }
   return {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim,fireLevel};
  }
- function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,CATAPHRACT_FRAME,FREE_HAND_COUNTER}){
+ function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,CATAPHRACT_FRAME,RAVEN_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
 const chargedLimbShot=(a,w,part,reaction)=>Boolean(a.breach&&!reaction&&!w.melee);
 // Part whose accuracy a shot uses: charged shots keep the old limb accuracy, every other shot uses the body.
@@ -206,8 +206,12 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
 }
 function partDamage(a,t,part,w,reaction=false){
  const amount=damage(a,t,w,part,reaction);
+ if(RAVEN_FRAME!=null&&t.frame===RAVEN_FRAME&&(part==='left'||part==='right'))return Math.round(amount*.75);
  const shield=activeShield(t);
- if(shield)return Math.max(5,Math.round(amount*(1-shield.reduction)*(t.brace&&hasMechSkill(t,8)&&!t.mechState?.aegisUsed?.8:1)));
+ if(shield){
+  const reduction=RAVEN_FRAME!=null&&hasMechSkill(t,RAVEN_FRAME)?Math.max(.25,shield.reduction):shield.reduction;
+  return Math.max(5,Math.round(amount*(1-reduction)*(t.brace&&hasMechSkill(t,8)&&!t.mechState?.aegisUsed?.8:1)));
+ }
  return part==='pilot'?Math.max(3,Math.round(amount*.5)):amount;
 }
 function attackBudget(a,t,part,w,reaction=false){
@@ -216,7 +220,7 @@ function attackBudget(a,t,part,w,reaction=false){
 }
  return {chargedLimbShot,shotPart,mechAim,hitChance,shieldProtection,damage,partDamage,attackBudget};
  }
- function createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom,chargedLimbShot=()=>false}){
+ function createVolleyPlanner({hitChance,dodgeChance,activeShield,targetParts,attackBudget,ruleRandom,chargedLimbShot=()=>false,ravenGuardArm=()=>null}){
 // Weighted pick from [[part,weight]] using one draw. Callers pass only live parts, so the weights renormalise.
 function pickWeighted(entries,roll){
  const total=entries.reduce((sum,[,weight])=>sum+weight,0);
@@ -255,6 +259,16 @@ function planVolley(a,t,aimed,w,reaction){
  if(pilotChance>0&&hits.get('body')&&ruleRandom()>=1-pilotChance){
   const r=rounds.find(r=>r.hit&&r.part==='body');r.part='pilot';
   hits.set('body',hits.get('body')-1);if(!hits.get('body'))hits.delete('body');hits.set('pilot',1);
+ }
+ if(!shield&&ravenGuardArm(a,t)){
+  let intercepted=0;
+  for(const round of rounds){
+   if(!round.hit||(round.part!=='body'&&round.part!=='legs'))continue;
+   const original=round.part;
+   round.part=ravenGuardArm(a,t,intercepted++);round.intercepted=true;
+   hits.set(original,hits.get(original)-1);if(!hits.get(original))hits.delete(original);
+   hits.set(round.part,(hits.get(round.part)??0)+1);
+  }
  }
  // Each part is charged its own bonuses (limb training on limbs, halving on the cockpit)
  // for the rounds that landed on it. A part that was struck always takes at least 1.

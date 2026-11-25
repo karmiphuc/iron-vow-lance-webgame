@@ -90,7 +90,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   select('bench-primary',guns,unit.weapon);
   select('bench-melee',[['','Empty'],...melee],unit.melee??'');
   if(frame.fixedShield){
-   select('bench-shield',[[frame.fixedShield.id,frame.fixedShield.name+' · right hand']],frame.fixedShield.id);
+   select('bench-shield',[[frame.fixedShield.id,frame.fixedShield.name+' · '+frame.fixedShield.mount]],frame.fixedShield.id);
   }else select('bench-shield',[['','Empty'],...shields.filter(()=>frame.shield).map(s=>[s.id,s.name])],unit.shield??'');
   $('bench-shield').disabled=Boolean(frame.fixedShield);
   select('bench-shoulder',[['','Empty'],...arsenalIds(weapons.filter(w=>w.shoulder&&frame.pod))],unit.shoulder??'');
