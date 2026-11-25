@@ -32,7 +32,7 @@ const simulate=require('./sim-harness.cjs');
  run(`selected=0;createBattle(0,false,false,[0]);const target=current(),foe=battle.units[1];
   const shootAt=(part,id='rifle',reaction=false)=>{foe.ap=BASE_AP;foe.attackAPSpent=0;return shoot(foe,target,part,weapon(id),reaction)};
   const hp=()=>JSON.stringify(target.hp);target.ap=0;
-  delete target.melee;delete target.meleeHand;const original={...target.hp}`);
+  delete target.melee;delete target.meleeHand;foe.training=undefined;const original={...target.hp}`);
  const left=run('target.hp.left'),initial=run('hp()');
  roll=.999;
  await run(`shootAt('pilot')`);

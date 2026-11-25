@@ -1,0 +1,67 @@
+const assert=require('node:assert/strict');
+const simulate=require('./sim-harness.cjs');
+
+(async()=>{
+ let roll=.95;
+ const sim=simulate({reducedMotion:true,random:()=>roll});
+ const {run}=sim;
+ const json=source=>JSON.parse(run('JSON.stringify('+source+')'));
+ run(`save.units[0].apAllocation={type:'impact',body:1,arms:0,legs:0};
+  deploy(2);closeModal();
+  const rook=current(),guard=battle.units.find(u=>u.frame===LINE_ELITE_FRAME);
+  const reaver=battle.units.find(u=>u.frame===REAVER_FRAME);
+  const allocations=()=>battle.units.filter(u=>u.team==='enemy').map(u=>[u.id,apCapacity(u),u.apAllocation]);
+ `);
+ assert.deepEqual(json('[guard.ap,guard.apBase,apCapacity(guard),guard.apAllocation]'),
+  [14,19,18,{type:'penetration',body:1,arms:0,legs:0}]);
+ assert.ok(run('battle.units.filter(u=>u.kind).every(u=>u.apAllocation===undefined)'));
+ run('lockedTarget=guard.id;renderBattle()');
+ assert.match(sim.node('#ui').innerHTML,/14\/18 AP · Anti-P 1 AP · 10% Status Resist/);
+ assert.ok(run(`damage(rook,guard,weapon('rifle'))<damage(rook,{...guard,apAllocation:undefined},weapon('rifle'))`));
+ assert.equal(run(`damage(rook,guard,weapon('missile'))`),run(`damage(rook,{...guard,apAllocation:undefined},weapon('missile'))`));
+ const checkpoint=json('allocations()');
+ const published=simulate({storage:new Map([['iron-vow-career',JSON.stringify(require('./fixtures/hostile-ap-sortie.json'))]])});
+ assert.equal(published.run('battle.hostileAP&&apCapacity(battle.units.find(u=>u.frame===LINE_ELITE_FRAME))===18'),true);
+ const restored=simulate({storage:new Map(sim.storage)});
+ assert.deepEqual(JSON.parse(restored.run('JSON.stringify(battle.units.filter(u=>u.team==="enemy").map(u=>[u.id,apCapacity(u),u.apAllocation]))')),checkpoint);
+ run(`battle.cover.clear();battle.field={};reaver.x=rook.x;reaver.z=rook.z-1;
+  const gun=unitWeapon(reaver);
+  planVolley=()=>({rounds:[{part:'right',hit:true}],impacts:[{part:'right',amount:1}],landed:1,dodged:false,guard:false});
+ `);
+ roll=.05;
+ await run('shoot(reaver,rook,"body",gun)');
+ assert.equal(run('rook.mechState?.disrupted'),undefined);
+ assert.match(run('battle.log.at(-1)'),/resisted Disruption with Def-C/);
+ roll=.95;
+ await run('shoot(reaver,rook,"body",gun)');
+ assert.equal(run('rook.mechState.disrupted'),true);
+ run('renderBattle()');
+ assert.match(sim.node('#ui').innerHTML,/DISRUPTED/);
+ assert.ok(run('hitChance(rook,reaver,"body",unitWeapon(rook))<hitChance({...rook,mechState:{}},reaver,"body",unitWeapon(rook))'));
+ run('persist()');
+ const resumedStatus=simulate({storage:new Map(sim.storage)});
+ assert.equal(resumedStatus.run('current().mechState.disrupted'),true);
+ await run('shoot(rook,reaver,"body",unitWeapon(rook))');
+ assert.equal(run('rook.mechState.disrupted'),undefined,'the next direct shot consumes Disruption');
+
+ const before=run('guard.ap');
+ roll=.05;
+ assert.equal(run('applyBlackout(guard,{aim:.2,ap:2,hold:false})'),false);
+ assert.equal(run('guard.ap'),before);
+ roll=.95;
+ assert.equal(run('applyBlackout(guard,{aim:.2,ap:2,hold:false})'),true);
+ assert.equal(run('guard.ap'),before-2);
+ assert.equal(run('reactionStatus(guard)'),'JAMMED');
+ run('completeRound()');
+ assert.equal(run('guard.blackout'),undefined);
+ assert.equal(run('guard.ap'),18);
+
+ const later=simulate({reducedMotion:true});
+ later.run('save.readinessStart=1;save.day=43;deploy(2);closeModal()');
+ assert.ok(later.run('battle.units.some(u=>u.team==="enemy"&&!u.kind&&(u.apAllocation?.arms||u.apAllocation?.legs))'));
+ assert.ok(later.run('battle.units.filter(u=>u.team==="enemy"&&u.apAllocation).every(u=>apCapacity(u)>=18)'));
+ const fresh=simulate();
+ fresh.run('deploy(0,false,[0]);closeModal()');
+ assert.ok(fresh.run('battle.units.filter(u=>u.team==="enemy"&&!u.kind).every(u=>u.ap===14&&!u.apAllocation)'));
+ console.log('PASS deployed hostile allocations, recruit and veteran budgets, realized damage and status resistance, and checkpoint replay');
+})().catch(error=>{console.error(error);process.exitCode=1;});

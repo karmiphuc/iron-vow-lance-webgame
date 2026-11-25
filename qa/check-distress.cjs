@@ -82,7 +82,7 @@ function publishedCheckpoint() {
  const career = require('./fixtures/distress-partial-evac.json');
  const storage = new Map([['iron-vow-career',JSON.stringify(career)]]);
  const sim = simulate({storage, reducedMotion:true});
- assert.deepEqual(snapshot(sim),career.sortie,'published partial evacuation resumes exactly');
+ assert.deepEqual(snapshot(sim),{...career.sortie,apRules:2},'published partial evacuation migrates the AP rules');
  sim.run('renderBattle()');
  sim.node('#withdraw').onclick();
  assert.match(sim.node('#modal').innerHTML,/WITHDRAW WITH 1 RESCUED/);

@@ -8,17 +8,48 @@
  // Chance per attack that strikes the body that one of its body rounds hits the cockpit instead. Training adds pilotHit*PILOT_HIT_TRAINING.
  const PILOT_HIT_BASE=.03,PILOT_HIT_TRAINING=.2,PILOT_HIT_MIN=.01,PILOT_HIT_MAX=.05;
  const HIT_CAP=.99;
- const BASE_AP=14,AP_RECOVERY=12,ATTACK_AP_LIMIT=8;
+ const BASE_AP=14,MAX_AP=30,AP_RECOVERY=12,ATTACK_AP_LIMIT=8;
+ const AP_SKILLS=Object.freeze({ap30:30,ap60:60,ap0:100});
+ const AP_ALLOCATION=Object.freeze({body:.05,arms:.03,legs:.02});
+ const DEF_C_TYPES=Object.freeze({impact:'Anti-I',penetration:'Anti-P',flame:'Anti-F'});
+ const STATUS_RESIST_PER_AP=.10;
+ const AI_AP_RESERVE=18;
+ const permanentAP=(level=1,mastered=false,training)=>Math.min(MAX_AP,BASE_AP+Math.floor(level/2)+2*Number(mastered)+(training?.roundAP??0));
+ const assignedAP=a=>(a?.body??0)+(a?.arms??0)+(a?.legs??0);
+ const usableAP=(u,launch=0)=>Math.max(0,Math.min(MAX_AP,(u.apBase??BASE_AP)+(u.limbAP??0)+launch)-assignedAP(u.apAllocation));
+ const actionAP=(u,base)=>base===0?0:u.apSkill==='ap0'?0:Math.max(1,Math.floor(base*(100-(AP_SKILLS[u.apSkill]??0))/100));
+ function defenceType(w){
+  if(w.melee)return 'impact';
+  if(w.anti==='flame'||w.scatter!==true&&(w.tactical||w.guided||/missile|rocket|grenade/i.test(w.type??'')))return 'flame';
+  return 'penetration';
+ }
+ const statusResistance=u=>(u.apAllocation?.body??0)*STATUS_RESIST_PER_AP;
+ const defCReduction=(u,w)=>u.apAllocation?.type===defenceType(w)?u.apAllocation.body*AP_ALLOCATION.body:0;
+ const apRoundStart=(u,cap)=>Math.min(cap,u.ap+AP_RECOVERY);
+ function allocateAIAP(cap,level,threats,essential=false,role=null){
+  const types=Object.keys(DEF_C_TYPES);
+  const counts=Object.fromEntries(types.map(type=>[type,threats.filter(weapons=>[weapons].flat().some(w=>defenceType(w)===type)).length]));
+  const type=types.reduce((best,candidate)=>counts[candidate]>counts[best]?candidate:best);
+  const emergency=essential&&counts[type]>=2?Math.min(1,Math.max(0,cap-BASE_AP)):0;
+  const body=Math.min(level,counts[type],Math.max(emergency,cap-AI_AP_RESERVE));
+  const discretionary=Math.min(level,Math.max(0,cap-AI_AP_RESERVE-body));
+  const arms=['high','hold','anchor'].includes(role)?discretionary:0;
+  const legs=['mobile','push','escort'].includes(role)?discretionary:0;
+  return body||arms||legs?{type,body,arms,legs}:undefined;
+ }
  const soloPicket=battle=>battle.contract?.id==='picket'&&(battle.operation?.recommended??battle.slots?.length)===1;
  const attackAPLeft=u=>Math.max(0,ATTACK_AP_LIMIT-(u.attackAPSpent??0));
  const canSpendAttack=(u,cost)=>u.ap>=cost&&attackAPLeft(u)>=cost;
- function spendOffensiveAP(u,cost){
-  if(!canSpendAttack(u,cost))return false;
+ function spendActionAP(u,cost,base=cost){
   u.ap-=cost;
+  if(base>0&&u.apSkill)delete u.apSkill;
+ }
+ function spendOffensiveAP(u,cost,base=cost){
+  if(!canSpendAttack(u,cost))return false;
+  spendActionAP(u,cost,base);
   u.attackAPSpent=(u.attackAPSpent??0)+cost;
   return true;
  }
- const recoverAP=(u,cap,penalty=0)=>Math.min(Math.max(0,cap-penalty),u.ap+AP_RECOVERY);
  const shotsPerAttack=w=>w.burst||w.rounds||1;
  const hitOdds=(accuracy,dodge=0)=>({
   hit:Math.min(HIT_CAP,1-dodge,accuracy),
@@ -35,7 +66,7 @@
   const elevationCost=(u,x,z,a,b)=>u.kind==='helicopter'?0:Number(terrainLevel(x,z)!==terrainLevel(a,b));
   function movementPlans(u,flight=false){
    const {cover}=getBattle(),limit=movementLimit(u),apPerTile=moveAP(u);
-   const origin={x:u.x,z:u.z,tiles:0,ap:0,elevationAP:0};
+   const origin={x:u.x,z:u.z,tiles:0,ap:0,baseAP:0,elevationAP:0};
    const start=u.x+','+u.z,best=new Map([[start,origin]]);
    let frontier=new Map([[start,origin]]);
    const priorElevation=new Map([[start,0]]);
@@ -47,16 +78,16 @@
      const key=x+','+z;
      if(!onBoard(x,z)||occupied(x,z)||(u.kind!=='helicopter'&&cover.has(key)))continue;
      const elevationAP=plan.elevationAP+elevationCost(u,plan.x,plan.z,x,z);
-     const ap=tiles*apPerTile+elevationAP;
+     const baseAP=tiles*apPerTile+elevationAP,ap=actionAP(u,baseAP);
      if(ap>(u.ap??Infinity)||elevationAP>=(priorElevation.get(key)??Infinity))continue;
      const incumbent=next.get(key);
-     if(incumbent&&(ap>incumbent.ap||ap===incumbent.ap&&
+     if(incumbent&&(baseAP>incumbent.baseAP||baseAP===incumbent.baseAP&&
        reverseStepOrder(plan,x,z)>=reverseStepOrder(incumbent.previous,x,z)))continue;
-     next.set(key,{x,z,tiles,elevationAP,ap,previous:plan});
+     next.set(key,{x,z,tiles,elevationAP,ap,baseAP,previous:plan});
     }
     for(const [key,plan] of next){
      priorElevation.set(key,plan.elevationAP);
-     if(plan.ap<(best.get(key)?.ap??Infinity))best.set(key,plan);
+     if(plan.baseAP<(best.get(key)?.baseAP??Infinity))best.set(key,plan);
     }
     frontier=next;
    }
@@ -133,7 +164,7 @@ function hitChance(a,t,part,w=weapon(a.weapon),reaction=false){
   (w.falloff?Math.max(0,range-w.falloff.start)*w.falloff.step:0);
  const support=(a.team==='ally'?(t.painted?.aim??0):0)+(reaction?0:a.order?.aim??0);
  const breachAim=(chargedLimbShot(a,w,part,reaction)?training?.breachAim??0:0)+mechAim(a,t,w,reaction);
- const accuracy=Math.max(part==='pilot'?.32:.5,.96-(part==='body'?0:part==='pilot'?.27:.13)-(a.max.pilot&&a.hp.pilot<a.max.pilot*.5?.10:0)-cover-falloff+.015*(a.level-1)+aim+(w.aim??0)+cockpit+support+breachAim+highGroundAim(a,t,w)-(a.blackout?.aim??0));
+ const accuracy=Math.max(part==='pilot'?.32:.5,.96-(part==='body'?0:part==='pilot'?.27:.13)-(a.max.pilot&&a.hp.pilot<a.max.pilot*.5?.10:0)-cover-falloff+.015*(a.level-1)+aim+(w.aim??0)+cockpit+support+breachAim+(a.hp.right>0||a.hp.left>0?(a.apAllocation?.arms??0)*AP_ALLOCATION.arms:0)+highGroundAim(a,t,w)-(a.blackout?.aim??0));
  return accuracy*(1-dodgeChance(t));
 }
 function shieldProtection(target){
@@ -162,7 +193,7 @@ function damage(a,t,w=weapon(a.weapon),part='body',reaction=false){
  const pierce=Math.max(w.pierce??0,w.melee?(training?.meleePierce??0):0,limb?(training?.limbPierce??0):0,charged?training?.breachPierce??.50:0);
  const bracePiercing=!w.melee&&!launchesMissiles(w)?(Math.max(hasMechSkill(a,SHOGUN_FRAME)?.20:0,hasMechSkill(a,3)?(distance(a,t)<=4?.25:.15):0)):0;
  const brace=t.brace?Math.max(0,braceReduction(t.training)-bracePiercing):0;
- const amount=Math.max(5,Math.round((power-armor*(1-pierce))*(1-brace)*(1-shieldProtection(t))));
+ const amount=Math.max(5,Math.round((power-armor*(1-pierce))*(1-brace)*(1-shieldProtection(t))*(1-defCReduction(t,w))));
  return w===FREE_HAND_COUNTER?Math.min(amount,10):amount;
 }
 function partDamage(a,t,part,w,reaction=false){
@@ -231,10 +262,8 @@ function planVolley(a,t,aimed,w,reaction){
  return planVolley;
  }
  function createReactionRules({equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon=(u,w)=>w&&u.hp[w.melee?'left':'right']>0,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER,weaponAP}){
-const counterCost=(u,t,w)=>{
- const range=distance(u,t);
- return Math.max(1,weaponAP(w,u.training))+(range<=2?3:range<=4?2:1);
-};
+const counterBaseAP=(u,w)=>weaponAP(w,u.training)+1;
+const counterCost=(u,t,w)=>actionAP(u,counterBaseAP(u,w));
 const freeHand=u=>u.hp.left>0&&!equippedShield(u)&&!(meleeWeapon(u)&&u.meleeHand!=='right');
 function reactionStatus(u){
  if(!u?.alive||u.kind||u.noCounter)return 'UNAVAILABLE';
@@ -242,12 +271,9 @@ function reactionStatus(u){
  const melee=meleeWeapon(u),primary=unitWeapon(u);
  const reach=u.frame===BULWARK_FRAME?1:u.frame===ASHIGARU_FRAME?2:counterRange(primary,u.training,u.brace);
  const costs=[];
- if(workingWeapon(u,melee))costs.push(Math.max(1,weaponAP(melee,u.training))+3);
- if(workingWeapon(u,primary)&&reach>0){
-  const range=primary.melee?1:reach;
-  costs.push(Math.max(1,weaponAP(primary,u.training))+(range<=2?3:range<=4?2:1));
- }
- if(u.frame!==BULWARK_FRAME&&u.frame!==ASHIGARU_FRAME&&freeHand(u))costs.push(4);
+ if(workingWeapon(u,melee))costs.push(counterCost(u,null,melee));
+ if(workingWeapon(u,primary)&&reach>0)costs.push(counterCost(u,null,primary));
+ if(u.frame!==BULWARK_FRAME&&u.frame!==ASHIGARU_FRAME&&freeHand(u))costs.push(counterCost(u,null,FREE_HAND_COUNTER));
  if(!costs.length)return 'UNAVAILABLE';
  return u.ap>=Math.min(...costs)?'READY':'LOW AP';
 }
@@ -266,10 +292,10 @@ function reactionWeapon(defender,attacker){
  if(workingWeapon(defender,ranged)&&affordable(ranged)&&reach&&range<=(ranged.melee?1:reach)&&!attackObstruction(defender,attacker,ranged))return ranged;
  return close&&affordable(FREE_HAND_COUNTER)?FREE_HAND_COUNTER:null;
 }
- return {reactionStatus,reactionWeapon,counterCost};
+ return {reactionStatus,reactionWeapon,counterCost,counterBaseAP};
  }
  function createEnemyTurn({
-  getBattle,enemyAPCapacity,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
+  getBattle,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
   attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementPlans,movementLimit,canJumpjet,jumpjetDestination,
   useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,
   trySurrender=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
@@ -304,11 +330,15 @@ function reactionWeapon(defender,attacker){
    const counter=reactionWeapon(t,u);
    const response=counter?forecast(t,u,counter,true).damage:0;
    const bodyRisk=u.hp?.body>0&&response>=u.hp.body*.65?.55:.27;
-   const count=u.kind?1:Math.max(1,Math.floor(Math.min(u.ap,attackAPLeft(u))/Math.max(1,paid(u,w))));
+   const count=u.kind||u.frame===ASHIGARU_FRAME?1:Math.max(1,Math.floor(Math.min(u.ap,attackAPLeft(u))/Math.max(1,paid(u,w))));
    const marking=launchesMissiles(w)&&hasMechSkill(u,CITADEL_FRAME)&&barrageTarget(u)!==t;
    const closeStrike=w.melee&&doctrine(u)?.[1]==='push'?10:0;
+   const crossing=getBattle();
+   const escortTarget=t.distressAlly&&crossing.contract?.distress==='crossing'&&crossing.turn>=3;
+   const pressured=escortTarget&&crossing.units.some(ally=>ally.alive&&ally.team===t.team&&!ally.distressAlly&&distance(ally,u)<=7);
+   const escortThreat=escortTarget?(pressured?-24:24):0;
    const preference=u.frame===BULWARK_FRAME&&w.melee&&((getBattle().turn%2===1)===(w===unitWeapon(u)))?5:0;
-   return (damage*(marking?.64:1)+4+(threat?5:0)+13*finish+preference+closeStrike)*(1+.55*(count-1))-response*bodyRisk;
+   return (damage*(marking?.64:1)+4+(threat?5:0)+13*finish+preference+closeStrike+escortThreat)*(1+.55*(count-1))-response*bodyRisk;
   }
   function bestAttack(u,opponents,primary){
    let best=null;
@@ -350,7 +380,7 @@ function reactionWeapon(defender,attacker){
    function consider(x,z,cost,ap,jet=false){
     if(u.ap<ap)return;
     const moved=jet?distance(u,{x,z}):cost;
-    const next={...u,x,z,ap:u.ap-ap,mechState:{...u.mechState,moved:(u.mechState?.moved??0)+moved}};
+    const next={...u,x,z,ap:u.ap-ap,apSkill:undefined,mechState:{...u.mechState,moved:(u.mechState?.moved??0)+moved}};
     const result=positionValue(next,opponents,friends,role);
     if(currentShot){
      const pressured=opponents.some(t=>distance(u,t)<=2);
@@ -363,7 +393,7 @@ function reactionWeapon(defender,attacker){
     // Ground assault units commit to the front line instead of running past it for a softer target.
     const bypass=style==='push'&&target?Math.max(0,distance(u,target)-front)*12:0;
     const originRange=target?distance(u,target):0,range=target?distance(next,target):0;
-    const overextend=scout&&originRange>3?Math.max(0,3-range)*25:0;
+    const overextend=scout&&originRange>=2?Math.max(0,Math.min(3,originRange)-range)*55:0;
     const leaveKnife=scout&&originRange===1&&range>1&&armed.some(w=>w.melee)?14:0;
     const value=result.value-cost*.75-ap*2-overextend-leaveKnife-bypass;
     if(value>best.value)best={...result,value,x,z,cost,jet};
@@ -412,7 +442,7 @@ function reactionWeapon(defender,attacker){
    // The solo introductory contract needs room for a first pilot to learn movement and cover.
    const soloPatrol=soloPicket(battle);
    const opponents=()=>battle.units.filter(u=>u.team==='ally'&&u.alive);
-   for(const u of enemies){u.ap=recoverAP(u,enemyAPCapacity(battle,u),u.blackout?.ap??0);u.brace=false;resetMovement(u);}
+   for(const u of enemies){u.brace=false;resetMovement(u);}
    renderBattle();
    for(const enemy of enemies){
     if(!enemy.alive)continue;
@@ -442,13 +472,20 @@ function reactionWeapon(defender,attacker){
     }
     let choice=bestAttack(enemy,allies);
     if(!soloPatrol)braceIfUseful(enemy,allies,choice);
+    let attacks=0;
     while(enemy.alive&&choice){
      const before=attackAPLeft(enemy);
      await engage(enemy,choice.target,'body',choice.weapon);renderBattle();
      if(checkEnd())return true;
-     if(enemy.kind||soloPatrol||attackAPLeft(enemy)>=before)break;
+     attacks++;
+     if(enemy.kind||soloPatrol||[ASHIGARU_FRAME,BULWARK_FRAME].includes(enemy.frame)||attackAPLeft(enemy)>=before)break;
      allies=opponents();
      choice=bestAttack(enemy,allies);
+     if(attacks>=2&&choice?.weapon.melee)break;
+     if(!choice||forecast(enemy,choice.target,choice.weapon).damage>=choice.target.hp.body)continue;
+     const after={...enemy,ap:enemy.ap-paid(enemy,choice.weapon)};
+     const threats=allies.filter(t=>weapons(t).some(w=>inReach(t,enemy,w)));
+     if(!choice.target.distressAlly&&threats.some(t=>reactionWeapon(enemy,t))&&!threats.some(t=>reactionWeapon(after,t)))break;
     }
     if(!enemy.alive)continue;
     if(!enemy.blackout?.hold&&allies.length&&(enemy.mechState?.valkyrieUsed||role[1]==='mobile'&&enemy.attackAPSpent>0&&weapons(enemy).some(w=>!w.melee))){
@@ -467,7 +504,7 @@ function reactionWeapon(defender,attacker){
   getBattle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
   attackObstruction,mechState,paidAttackAP,addLog,toast,
   beginAttackCamera,closeAttackCamera,shoot,comSupport=()=>{},BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
-  counterCost,grantMove,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
+  counterCost,counterBaseAP,attackBaseAP,grantMove,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,apCapacity,resetMovement,highGroundAim,apPractice=()=>{},resistsStatus=()=>false
  }){
   function barrageRestriction(attacker,defender,w){
    if(!launchesMissiles(w)||!hasMechSkill(attacker,CITADEL_FRAME))return null;
@@ -487,7 +524,8 @@ function reactionWeapon(defender,attacker){
      defender=marked;part=marked.hp[part]>0?part:'body';delete state.lock;
     }else{
      state.lock={x:defender.x,z:defender.z,turn:getBattle().turn};
-     spendOffensiveAP(attacker,paidAttackAP(attacker,w));
+     spendOffensiveAP(attacker,paidAttackAP(attacker,w),attackBaseAP(attacker,w));
+     apPractice(attacker);
      addLog(attacker.name+' marks tile '+defender.x+', '+defender.z+' for a missile barrage next round.');return;
     }
    }
@@ -520,7 +558,8 @@ function reactionWeapon(defender,attacker){
    }
   }
   function spendMovement(u,tiles,ap){
-   u.ap-=ap;
+   spendActionAP(u,ap,tiles);
+   apPractice(u);
    u.moveLeft-=tiles;
    if(u.mechSkills)mechState(u).moved=(u.mechState.moved??0)+tiles;
   }
@@ -529,12 +568,14 @@ function reactionWeapon(defender,attacker){
    if(reaction){
     const paid=counterCost(a,t,w);
     if(a.ap<paid)return null;
-    a.ap-=paid;
+    spendActionAP(a,paid,counterBaseAP(a,w));
+    apPractice(a);
     return {paid,charged};
    }
    const paid=paidAttackAP(a,w);
    // Refunds replenish shared AP only. Offensive spending stays counted until the next turn.
-   if(!spendOffensiveAP(a,paid))return null;
+   if(!spendOffensiveAP(a,paid,attackBaseAP(a,w)))return null;
+   apPractice(a);
    if(a.order?.keepMove){grantMove(a);a.order.keepMove=false}
    return {paid,charged};
   }
@@ -565,9 +606,9 @@ function reactionWeapon(defender,attacker){
   }
   function recordHit(a,t,w,hit,impacts,charged,reaction){
    if(hit){
-    if(!w.melee&&highGroundAim(a,t,w)>0&&hasMechSkill(a,1))mechState(t).spot={source:a.id,team:a.team};
-    if(!reaction&&launchesMissiles(w)&&hasMechSkill(a,2))mechState(t).basilisk=true;
-    if(!w.melee&&!launchesMissiles(w)&&impacts.some(impact=>impact.part==='right')&&hasMechSkill(a,REAVER_FRAME))mechState(t).disrupted=true;
+    if(!w.melee&&highGroundAim(a,t,w)>0&&hasMechSkill(a,1)&&!resistsStatus(t,'Spot'))mechState(t).spot={source:a.id,team:a.team};
+    if(!reaction&&launchesMissiles(w)&&hasMechSkill(a,2)&&!resistsStatus(t,'Counter Screen'))mechState(t).basilisk=true;
+    if(!w.melee&&!launchesMissiles(w)&&impacts.some(impact=>impact.part==='right')&&hasMechSkill(a,REAVER_FRAME)&&!resistsStatus(t,'Disruption'))mechState(t).disrupted=true;
     if(w.melee&&hasMechSkill(a,HELLBREAKER))t.brace=false;
    }
    if(charged&&--a.breach===0)delete a.breach;
@@ -577,7 +618,13 @@ function reactionWeapon(defender,attacker){
   function completeRound(){
    const battle=getBattle();
    battle.turn++;battle.phase='player';battle.busy=false;
-   battle.units.forEach(u=>{u.reacted=false;delete u.order;delete u.blackout;if(u.team==='ally'&&u.alive){u.ap=recoverAP(u,roundAP(u.training));u.brace=false;resetMovement(u)}});
+   for(const u of battle.units){
+    u.reacted=false;
+    delete u.order;delete u.blackout;
+    if(!u.alive){u.ap=Math.min(u.ap,apCapacity(u));continue;}
+    u.ap=apRoundStart(u,apCapacity(u));
+    if(u.team==='ally'){u.brace=false;resetMovement(u);}
+   }
   }
   return {barrageRestriction,engage,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound};
  }
@@ -653,5 +700,5 @@ function reactionWeapon(defender,attacker){
   }
   return {newBattle,step,run,runBattle,eventLog:()=>events.slice(),get state(){return report();},get running(){return working;}};
  }
- root.IRON_VOW_SIM=Object.freeze({BASE_AP,AP_RECOVERY,ATTACK_AP_LIMIT,soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP,recoverAP,hitOdds,shotsPerAttack,roundWeight,HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
+ root.IRON_VOW_SIM=Object.freeze({BASE_AP,MAX_AP,AP_RECOVERY,ATTACK_AP_LIMIT,AP_SKILLS,AP_ALLOCATION,DEF_C_TYPES,STATUS_RESIST_PER_AP,AI_AP_RESERVE,permanentAP,assignedAP,usableAP,actionAP,allocateAIAP,statusResistance,defCReduction,soloPicket,attackAPLeft,canSpendAttack,spendOffensiveAP,spendActionAP,hitOdds,shotsPerAttack,roundWeight,HIT_LOCATION,PILOT_HIT_BASE,PILOT_HIT_MIN,PILOT_HIT_MAX,pilotHitChance,createTerrainRules,createCombatRules,createVolleyPlanner,createReactionRules,createEnemyTurn,createCombatTransactions,createWarDriver});
 })(typeof window==='undefined'?globalThis:window);

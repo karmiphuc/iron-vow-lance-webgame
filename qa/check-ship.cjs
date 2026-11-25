@@ -78,7 +78,7 @@ const resolve=(run,win=true)=>run(`for(const u of battle.units)if(u.team==='enem
   assert.equal(fly('battle.cover.has("3,18")'),false);
   assert.equal(fly('current().paint'), '#193857');
   assert.equal(fly('current().level'),3);
-  assert.equal(fly('current().ap-roundAP(current().training)'),1);
+  assert.equal(fly('current().ap-BASE_AP'),1);
   assert.deepEqual(JSON.parse(resume(aux).run('JSON.stringify(captureSortie())')),checkpoint);
  }
  const damaged=career(aux);
@@ -87,8 +87,8 @@ const resolve=(run,win=true)=>run(`for(const u of battle.units)if(u.team==='enem
  fly('createBattle(0,false,false,[0,1,2],true,seat);selected=0;let ghost=battle.units[1];ghost.hp.body=0;ghost.alive=false;ghost.downReason="body"');
  await fly('endTurn()');
  assert.equal(fly('battle.turn'),2);
- assert.equal(fly('ghost.ap'),15);
- assert.deepEqual(JSON.parse(resume(aux).run('JSON.stringify(captureSortie())')),career(aux).sortie,'dead pilot retains launch AP in later checkpoints');
+ assert.equal(fly('ghost.ap'),14);
+ assert.deepEqual(JSON.parse(resume(aux).run('JSON.stringify(captureSortie())')),career(aux).sortie,'expired launch capacity is clamped for disabled units too');
  fly('createBattle(0,false,false,[0],true,seat);selected=3;const beforeHull=battle.units[1].hp.body;battle.units[1].hp.body=0;const baseXP=save.units[0].xp');
  resolve(fly);
  assert.equal(fly('save.history.at(-1).pay'),2300);

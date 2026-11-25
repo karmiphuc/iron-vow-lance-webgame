@@ -42,16 +42,16 @@ function train(sim,i,ids){
  const workshop=lance.node('#ui').innerHTML;
  assert.match(workshop,/<dt>Movement range<\/dt><dd>7 tiles<\/dd>/);
  assert.match(workshop,/<dt>Armor<\/dt><dd>4<\/dd>/);
- assert.match(workshop,/\+4 AP this turn/);
+ assert.match(workshop,/Restore up to 4 AP within your usable capacity/);
  assert.equal(lance.run('learnedTraining(1).includes("rangefinder")'),true);
  lance.run('createBattle(0);persist()');
  const ready=simulate({storage:new Map(lance.storage)});
  assert.equal(ready.run('movementLimit(current())'),7,'trained move allowance resumes');
  assert.equal(ready.run('battle.units[2].max.body'),200);
- assert.equal(ready.run('battle.units[2].ap'),15);
- lance.run('skill();persist()');
+ assert.equal(ready.run('battle.units[2].ap'),14);
+ lance.run('current().ap=12;skill();persist()');
  const used=simulate({storage:new Map(lance.storage)});
- assert.equal(used.run('current().ap'),18,'Redline AP accepted by checkpoint');
+ assert.equal(used.run('current().ap'),16,'Redline AP accepted by checkpoint');
  assert.equal(used.run('current().skill'),true);
  assert.equal(used.run('movementLimit(current())'),7);
  assert.equal(used.run('learnedTraining(0).length'),5);
@@ -102,7 +102,7 @@ function train(sim,i,ids){
  assert.equal(alternate.run('a.reacted'),true);
  alternate.run("foe.x=17;foe.z=1;battle.units=battle.units.slice(0,4);a.ap=2");
  await alternate.run('endTurn()');
- assert.equal(alternate.run('a.ap'),14,'Recover 12 AP up to the trained cap of 15');
+ assert.equal(alternate.run('a.ap'),14,'Recover 12 AP up to the pilot’s trained cap');
  assert.equal(alternate.run('a.reacted'),false);
  console.log('PASS: discounted strikes, Deadeye capstone, actual boosted counter and recurring AP.');
 

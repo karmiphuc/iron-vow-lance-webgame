@@ -101,6 +101,6 @@ function doctrine(i,path){
  assert.equal(g('shieldProtection(ally)'),0);
  await g("engage(hostile,pilot,'body',unitWeapon(hostile))");
  assert.equal(g('pilot.brace'),true,'Counterguard Braces after a real counter');
- assert.equal(g('pilot.ap'),9);
+ assert.equal(g('pilot.ap'),10);
  console.log('PASS: Engineer repairs all limbs and has one Failsafe; Sentinel extends counters and shields adjacent allies.');
 })().catch(error=>{console.error(error);process.exitCode=1});

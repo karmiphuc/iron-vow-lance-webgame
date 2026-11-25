@@ -71,11 +71,11 @@ const backup=sim=>JSON.parse(sim.storage.get(careerKey));
  assert.equal(play('s.order.shots'),1);
  assert.equal(play('e.painted.aim'),.20);
  await play('shoot(s,e,"pilot",unitWeapon(s),true)');
- assert.equal(play('s.ap'),8);
+ assert.equal(play('s.ap'),9);
  assert.equal(play('s.order.shots'),1,'reaction does not spend an order');
  assert.equal(play('e.painted'),undefined,'reaction attempt consumes a paint charge');
  await play('shoot(s,e,"pilot",unitWeapon(s))');
- assert.equal(play('s.ap'),6);
+ assert.equal(play('s.ap'),7);
  assert.equal(play('s.order'),undefined);
  console.log('PASS: skill range, costs, checkpoint restore, paid discounts, misses and reactions.');
 

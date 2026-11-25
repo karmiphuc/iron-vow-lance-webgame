@@ -24,7 +24,7 @@ const coverage=sim.run(`(()=>{
     throw Error('Expected one legal level-one skill per pilot');
    if(pilotFrame(slot,career)!==slot||unit.condition!==100||unit.level!==1)throw Error('Starter hull or level changed');
    const loadout={...unit,frame:slot},gun=unitWeapon(loadout),pod=shoulderWeapon(loadout);
-   if(gun.range<3||gun.ap>roundAP(effectsForTraining(kind,[perk])))throw Error('Starter primary must be usable');
+   if(gun.range<3||gun.ap>permanentAP(1,false,effectsForTraining(kind,[perk])))throw Error('Starter primary must be usable');
    if(slot===2&&Math.max(gun.range,pod?.range??0)<7)throw Error('Missing long-range support');
    for(const [field,value] of Object.entries({pilot:pilotId,kit:JSON.stringify([weapon,melee,shield,shoulder]),livery:paint,training:perk}))
     variants[slot][field].add(value);

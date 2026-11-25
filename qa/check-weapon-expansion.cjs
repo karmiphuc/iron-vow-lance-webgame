@@ -21,12 +21,12 @@ const createSimulation=require('./sim-harness.cjs');
   assert.equal(result,'true/rifle/3/3/false','Previously integrated guns convert once to stock inventory');
  }
  const legacy=[
-  ['rifle',36,5,3,0],['shotgun',60,3,3,1500],['missile',45,7,4,2400],
+  ['rifle',36,5,3,0],['shotgun',60,3,2,1500],['missile',45,7,4,2400],
   ['rail',70,8,5,3600],['hailstorm',49,5,4,2200],['rampart',61,6,5,2900],
-  ['breaker',66,1,4,1600],['cleaver',40,1,2,1200],['piledriver',59,1,3,2100],['blade',64,1,3,2200]
+  ['breaker',66,1,2,1600],['cleaver',40,1,1,1200],['piledriver',59,1,2,2100],['blade',64,1,2,2200]
  ];
  const signature=run("JSON.stringify(WEAPONS.filter(w=>!w.motion&&!w.builtIn&&!w.shoulder).map(w=>[w.id,w.damage,w.range,w.ap,w.price]))");
- assert.deepEqual(JSON.parse(signature),legacy,'the new armory preserves all ten original weapon stat lines');
+ assert.deepEqual(JSON.parse(signature),legacy,'original weapons keep their damage, reach and price with the new AP costs');
  run('createBattle(0,false,false,[0]);const attacker=current(),foe=battle.units.find(u=>u.team==="enemy"&&!u.kind);foe.hp.body=foe.max.body=1000');
  for(const [group,ids] of Object.entries(groups))for(const id of ids){
   assert.equal(run(`armoryClass(weapon('${id}'))`),group,id);

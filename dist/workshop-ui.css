@@ -57,3 +57,31 @@
  .workshop-page .workshop-selected h2{font-size:30px}
  .workshop-page .armory-jump{min-height:44px}
 }
+
+.ap-allocation-open,
+[data-ap-storage],
+.ap-allocation-form select {
+ min-height: 44px;
+}
+
+.ap-allocation-form {
+ display: grid;
+ gap: .65rem;
+}
+
+.ap-allocation-form label {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: .65rem;
+}
+
+.ap-allocation-form select {
+ max-width: 58%;
+ padding: .4rem;
+ color: inherit;
+ background: #172529;
+ border: 1px solid #5f7073;
+ border-radius: 4px;
+ font: inherit;
+}

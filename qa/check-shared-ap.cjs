@@ -5,7 +5,7 @@ const career=require('./fixtures/shared-ap-sortie.json');
 (async()=>{
  const sim=simulate({storage:new Map([['iron-vow-career',JSON.stringify(career)]]),reducedMotion:true,random:()=>0});
  const {run}=sim;
- assert.deepEqual(JSON.parse(run('JSON.stringify(captureSortie())')),career.sortie);
+ assert.deepEqual(JSON.parse(run('JSON.stringify(captureSortie())')),{...career.sortie,apRules:2});
  assert.equal(run('current().ap'),9);
  assert.equal(run('current().attackAPSpent'),3);
  assert.equal(run('current().moveLeft'),3);
