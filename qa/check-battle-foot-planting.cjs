@@ -37,6 +37,7 @@ async function main(){
   function tick(name,n,{moving=false,firing=false,brace=0,face=0}={}){
    const result=phases[name]={contacts:0,lifts:0};
    let min=Infinity,max=-Infinity;
+   const lowByFoot=[],highByFoot=[];
    for(let ix=0;ix<n;ix++){
     if(moving)z+=2.6/60;
     u.motion=moving?{playbackRate:1}:null;
@@ -51,11 +52,21 @@ async function main(){
      const airborne=Boolean(state.swing||state.settle||state.poseLift);
      if(airborne&&!last[i])result.lifts++;
      last[i]=airborne;
-     const delta=p.y-floor(p.x,p.z)-m.dims.ankleH*m.scale;
+     let delta=p.y-floor(p.x,p.z)-m.dims.ankleH*m.scale;
+     if(m.saker&&i===0){
+      // The rear toes rotate back in a kneel. Measure ground clearance
+      // at the sole, since the ankle hinge rises over the instep.
+      const hull=m.saker.soleHull;delta=Infinity;
+      for(let j=0;j<hull.length;j+=2){
+       const point=l.an.localToWorld(R.V3(0,hull[j],hull[j+1]));
+       delta=Math.min(delta,point.y-floor(point.x,point.z));
+      }
+     }
      min=Math.min(min,delta);max=Math.max(max,delta);
+     lowByFoot[i]=Math.min(lowByFoot[i]??Infinity,delta);highByFoot[i]=Math.max(highByFoot[i]??-Infinity,delta);
     }
    }
-   result.ankleHeightRange=max-min;
+   result.ankleHeightRange=u.name==='SAKER'?Math.max(...lowByFoot.map((low,i)=>highByFoot[i]-low)):max-min;
   }
   tick('opening',90);tick('idle',360);
   tick('aiming',90,{firing:true});tick('fire',240,{firing:true});
@@ -138,6 +149,204 @@ async function main(){
  for(let frame=0;frame<140;frame++)braced=sample(false,1,bank);
  const pad=braced.rig.arms.R.wr.getWorldPosition(R.V3());
  assert.ok(Math.abs(pad.y-bank(pad.x,pad.z)-braced.dims.ankleH*braced.scale)<.035,'third claw lands on sloped ground');
+ // Check the Saker's actual rear shin and foot against the board in its kneel.
+ S.clearCombat();
+ const saker=units.find(u=>u.name==='SAKER');
+ const target=R.V3(0,2,20);
+ const groundAt=()=>0;
+ let marksman;
+ for(let i=0;i<160;i++){
+  time+=1/60;
+  const aim=i<24?0:1;
+  marksman=S.draw(saker,time,{aim,brace:aim,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:0,z:0,face:0,heading:0,speed:0,aim:target,groundAt}},scope,saker.foundry,'rig-v2').m;
+  for(const leg of marksman.rig.legs){
+   assert.ok(leg.kn.getWorldPosition(R.V3()).y>(leg.side==='L'?.37:.49)*marksman.scale,'knee hinge clears the roof during brace entry');
+  }
+ }
+ const leftHand=marksman.rig.arms.L.wr.getWorldPosition(R.V3());
+ assert.ok(Math.abs(leftHand.y/marksman.scale-.5226)<.025,'left hand reaches the bracing patch');
+ assert.equal(marksman.wpn.subsystem,'right');
+ assert.equal(marksman.wpn.mount.parent,marksman.rig.arms.R.wr);
+ const muzzleInReceiver=marksman.wpn.mount.worldToLocal(marksman.wpn.muzzle.getWorldPosition(R.V3()));
+ assert.ok(Math.abs(muzzleInReceiver.z-2.91*1.20)<.001,'muzzle socket follows the lengthened barrel');
+ const sight=target.clone().sub(marksman.wpn.muzzle.getWorldPosition(R.V3())).normalize();
+ assert.ok(marksman.wpn.muzzle.getWorldDirection(R.V3()).dot(sight)>.995,'wrist rifle tracks target from kneel');
+ const hinge=marksman.rig.legs[1].kn.getWorldPosition(R.V3());
+ const receiver=marksman.wpn.mount.getWorldPosition(R.V3());
+ const heightOverKnee=(receiver.y-hinge.y)/marksman.scale;
+ assert.ok(heightOverKnee>.05&&heightOverKnee<.25,'receiver stays just above the loaded knee: '+heightOverKnee);
+ const rear=marksman.rig.legs[0],kneepad=marksman.saker.kneeRest;
+ const contact=()=>kneepad.localToWorld(R.V3(0,0,.438));
+ const rearContact=contact(),ankleRest=rear.an.getWorldPosition(R.V3());
+ assert.ok(Math.abs(rearContact.y)<.004,'left kneepad bears on the ground');
+ const shin=ankleRest.clone().sub(rear.kn.getWorldPosition(R.V3())).normalize();
+ assert.ok(shin.z<-.97&&Math.abs(shin.y)<.22,'left shin extends back along the ground');
+ assert.ok(rear.an.getWorldDirection(R.V3()).z<-.89,'toes extend behind the ankle');
+ const support=leftHand.clone(),firedAt=time;
+ saker.attack={fireAt:firedAt};
+ let peak=0;
+ for(let frame=0;frame<45;frame++){
+  time+=1/60;
+  S.draw(saker,time,{aim:1,brace:1,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:0,z:0,face:0,heading:0,speed:0,aim:target,groundAt}},scope,saker.foundry,'rig-v2');
+  const vertical=R.V3(0,1,0).applyQuaternion(marksman.rig.spine.getWorldQuaternion(new T.Quaternion()));
+  assert.ok(vertical.y>.995&&marksman.rig.neck.getWorldDirection(R.V3()).z>.995,'torso upright and visor downrange throughout recoil');
+  assert.ok(contact().distanceTo(rearContact)<.004&&rear.an.getWorldPosition(R.V3()).distanceTo(ankleRest)<.004,'left knee and extended instep hold through recoil');
+  const ray=marksman.wpn.muzzle.getWorldDirection(R.V3());
+  const line=target.clone().sub(marksman.wpn.mount.getWorldPosition(R.V3())).normalize();
+  const elevation=Math.asin(ray.y)-Math.asin(line.y);
+  peak=Math.max(peak,elevation);
+  assert.ok(marksman.rig.arms.L.wr.getWorldPosition(R.V3()).distanceTo(support)<.015,'firing impulse keeps the free hand planted');
+  if(frame===44)assert.ok(Math.abs(elevation)<.025,'barrel settles back on target');
+ }
+ assert.ok(peak>.52&&peak<.78,'battle aiming retains the authored recoil: '+peak);
+ saker.attack=null;S.clearCombat();
+ // Exercise the travel between the contact poses. Endpoint-only checks miss
+ // the old left-knee flip and repeated placement steps in both directions.
+ for(const hz of [30,60]){
+  const contacts=[];
+  const drawStance=level=>{
+   time+=1/hz;
+   return S.draw(saker,time,{aim:level,brace:level,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+    world:{x:0,y:0,z:0,face:0,heading:0,speed:0,aim:target,groundAt,onStep:(_,p,i)=>contacts.push(i)}},scope,saker.foundry,'rig-v2').m;
+  };
+  S.clearCombat();
+  const standing=drawStance(0);
+  const position=node=>standing.cont.worldToLocal(node.getWorldPosition(R.V3()));
+  const leg=standing.rig.legs[0],gathered=position(leg.an),standingKnee=position(leg.kn);
+  const pad=()=>standing.saker.kneeRest.localToWorld(R.V3(0,0,.438));
+  const barrelHeight=()=>standing.wpn.muzzle.getWorldDirection(R.V3()).y;
+  let kneePlant,heelAtContact;
+  for(const level of [1,0]){
+   contacts.length=0;
+   let hip=position(standing.rig.pelvis),knee=position(leg.kn),velocity=R.V3();
+   for(let j=0;j<2.2*hz;j++){
+    drawStance(level);
+    const nextHip=position(standing.rig.pelvis),nextKnee=position(leg.kn);
+    const speed=nextKnee.clone().sub(knee).multiplyScalar(hz);
+    if(level){
+     const groundContact=pad(),heel=position(leg.an);
+     if(!kneePlant){
+      assert.ok(Math.abs(nextKnee.z-standingKnee.z)<.34,'left knee drops beneath the body');
+      assert.ok(barrelHeight()>.82,'barrel stays raised until the pad lands, including during battle targeting');
+      if(groundContact.y<.003){kneePlant=groundContact;heelAtContact=heel;}
+     }else{
+      assert.ok(groundContact.distanceTo(kneePlant)<.009,'planted kneepad stays fixed while the foot unfolds');
+     }
+    }
+    assert.ok((nextHip.y-hip.y)*(level?-1:1)>-.001,'continuous weight transfer without a pelvis rebound');
+    assert.ok((nextKnee.y-knee.y)*(level?-1:1)>-.001,'rear knee approaches and leaves the ground once');
+    assert.ok(speed.distanceTo(velocity)*hz<65,'bounded rear-knee acceleration through the full arc');
+    hip=nextHip;knee=nextKnee;velocity=speed;
+   }
+   assert.deepEqual(contacts,level?[1,0]:[0,1],'each foot takes its load once, in reverse order on the rise');
+   if(level){
+    const heel=position(leg.an);
+    assert.ok(kneePlant&&heelAtContact.z-heel.z>.32&&heelAtContact.y-heel.y>.85,'rear heel unfolds behind the knee after touchdown');
+    assert.ok(Math.abs(barrelHeight())<.2,'barrel lowers onto its firing line after touchdown');
+   }
+  }
+  assert.ok(position(leg.an).distanceTo(gathered)<.003,'rear ankle returns to its original standing contact');
+  let last=position(leg.kn);
+  for(const [level,duration] of [[1,.78],[0,.28],[1,.30],[0,2]]){
+   for(let j=0;j<duration*hz;j++){
+    drawStance(level);
+    const next=position(leg.kn);
+    assert.ok(next.distanceTo(last)*hz<5,'interrupted kneel reverses without a position snap');
+    last=next;
+   }
+  }
+  assert.ok(position(leg.an).distanceTo(gathered)<.003,'interrupted transition also recovers its standing contact');
+ }
+ // Hover has a free-hanging pose and its own aim path, independent of the kneeling gun setup.
+ S.clearCombat();
+ const hoverPose=(hoverBlend,aim=0,reducedMotion=false)=>{
+  time+=1/60;
+  return S.draw(saker,time,{aim,brace:aim,reducedMotion,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:5.6*hoverBlend,z:0,hovering:hoverBlend>0,hoverBlend,hoverRising:hoverBlend>0,face:0,heading:0,speed:0,aim:target.clone().add(R.V3(0,5.6*hoverBlend,0)),groundAt}},scope,saker.foundry,'rig-v2').m;
+ };
+ const flying=hoverPose(1);
+ assert.ok(!flying.saker.stance&&flying.wpn.muzzle.getWorldDirection(R.V3()).y<-.35,'hover carry has a lowered barrel and does not enter the kneel');
+ assert.equal(flying.nativeV2.jetNozzles.length,2);
+ for(const nozzle of flying.nativeV2.jetNozzles){
+  const local=flying.cont.worldToLocal(nozzle.getWorldPosition(R.V3()));
+  const direction=R.V3(0,1,0).applyQuaternion(nozzle.getWorldQuaternion(new T.Quaternion()));
+  assert.ok(local.z<-.85&&direction.y<-.65&&direction.z<-.30,'the outlet vents rearward and down from the hull');
+ }
+ const left=()=>flying.rig.legs[0].an.getWorldPosition(R.V3());
+ const before=left();
+ for(let i=0;i<30;i++)hoverPose(1,1);
+ assert.ok(before.distanceTo(left())>.06,'suspended leg drifts while the wrist moves into aim');
+ assert.ok(flying.wpn.muzzle.getWorldDirection(R.V3()).y>-.23&&flying.saker.exhaust.plumes.every(plume=>plume.visible),'hover aim clears low carry while the thrusters stay lit');
+ hoverPose(1,0,true);
+ assert.ok(flying.saker.exhaust.plumes.every(plume=>!plume.visible),'reduced motion suppresses the pulsing exhaust');
+ for(let i=0;i<60;i++)hoverPose(0);
+ assert.ok(flying.saker.exhaust.plumes.every(plume=>!plume.visible)&&left().y/flying.scale<.19,'landing returns the ankle to board height and cuts the jets');
+ // After descent, the free wrist takes a fixed patch while the legs give.
+ const catchDepths=[];
+ for(const offhand of ['free','damaged','busy']){
+  saker.hp.left=offhand==='damaged'?0:saker.max.left;
+  saker.melee=offhand==='busy'?'cleaver':null;
+  S.clearCombat();
+  const landing=hoverPose(1);
+  assert.ok(landing.saker.exhaust.plumes.every(p=>p.scale.x===2&&p.scale.y>1.4&&p.scale.z===2),
+   'sustained exhaust doubles in width and length');
+  for(let frame=0;frame<12;frame++)hoverPose(0);
+  catchDepths.push(landing.rig.pelvis.position.y);
+  if(offhand==='free'){
+   const wrist=landing.rig.arms.L.wr.getWorldPosition(R.V3());
+   assert.ok(wrist.distanceTo(landing.saker.landingHand)<.04,'left wrist plants on its fixed touchdown patch');
+   assert.ok(landing.saker.exhaust.brakes.every(p=>!p.visible));
+  }else{
+   assert.ok(!landing.saker.landingHand&&landing.saker.exhaust.brakes.length===2&&landing.saker.exhaust.brakes.every(p=>p.visible),
+    'unavailable hand triggers front braking jets without a wrist plant');
+  }
+ }
+ assert.ok(catchDepths[1]<catchDepths[0]-.15&&catchDepths[2]<catchDepths[0]-.15,'two-leg landings compress more deeply');
+ saker.hp.left=saker.max.left;saker.melee=null;
+ // A move order may arrive while the rear instep is still fully extended.
+ S.clearCombat();
+ let ankleRotation;
+ for(let i=0;i<185;i++){
+  const walking=i>=145,brace=i>=15&&!walking?1:0;
+  saker.motion=walking?{playbackRate:1}:null;time+=1/60;
+  const {m}=S.draw(saker,time,{aim:brace,brace,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:0,z:Math.max(0,i-145)*4/60,face:0,heading:0,speed:walking?4:0,aim:target,groundAt}},scope,saker.foundry,'rig-v2');
+  const ankle=m.rig.legs[0].an,rotation=ankle.getWorldQuaternion(new T.Quaternion());
+  if(walking){
+   assert.ok(ankleRotation.angleTo(rotation)<.23,'immediate move unrolls rear foot continuously');
+   for(let j=0;j<m.saker.soleHull.length;j+=2){
+    const {y}=ankle.localToWorld(R.V3(0,m.saker.soleHull[j],m.saker.soleHull[j+1]));
+    assert.ok(y>-.004,'unrolling instep stays above terrain');
+   }
+  }
+  ankleRotation=rotation;
+ }
+ S.clearCombat();
+ let doubleSupport=0,hipLow=Infinity,hipHigh=-Infinity,heelRise=0,footSpan=0;
+ const landings=[];
+ for(let i=0;i<180;i++){
+  time+=1/60;saker.motion={playbackRate:1};
+  const {m}=S.draw(saker,time,{aim:0,brace:0,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:0,z:i*5/60,face:0,heading:0,speed:5,aim:target,groundAt,onStep:(_,p,leg)=>landings.push(leg)}},scope,saker.foundry,'rig-v2');
+  if(i<40)continue;
+  const feet=m.rig.legs.map(leg=>leg.an.getWorldPosition(R.V3()));
+  footSpan=Math.max(footSpan,Math.abs(feet[1].z-feet[0].z)/m.scale);
+  const soles=m.rig.legs.map(leg=>{
+   const toe=leg.an.localToWorld(R.V3(0,-m.dims.ankleH,.70));
+   const heel=leg.an.localToWorld(R.V3(0,-m.dims.ankleH,-.41));
+   if(toe.y/m.scale<.015)heelRise=Math.max(heelRise,(heel.y-toe.y)/m.scale);
+   return Math.min(toe.y,heel.y)/m.scale;
+  });
+  assert.ok(Math.min(...soles)<.018&&Math.max(...soles)<.31,'a low passing foot clears the planted shoe');
+  if(Math.max(...soles)<.018)doubleSupport++;
+  hipLow=Math.min(hipLow,m.rig.pelvis.position.y);hipHigh=Math.max(hipHigh,m.rig.pelvis.position.y);
+ }
+ assert.ok(heelRise>.23&&footSpan>1.65,'long stride and visible toe-off: '+[heelRise,footSpan]);
+ assert.ok(doubleSupport>5&&(hipHigh-hipLow)/footSpan<.15,'double support and chassis travel relative to stride: '+[doubleSupport,hipHigh-hipLow,footSpan]);
+ assert.ok(landings.length>=5&&landings.every((leg,i)=>!i||leg!==landings[i-1]),'alternate heel strikes at travel speed');
+ saker.motion=null;
  for(const u of units)for(const downReason of ['body','pilot']){
   S.clearCombat();
   const draw=(face,deathAge,reducedMotion=false)=>{

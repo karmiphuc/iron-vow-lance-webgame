@@ -566,6 +566,9 @@ body[data-view="workshop"] #world-scene{z-index:3}
  .ship-seat img{width:48px;height:48px}
 }
 
+.actionbuttons #saker-hover[data-hovering]{opacity:1;color:var(--blue);border-color:var(--blue)}
+.modal:has(.hover-confirm){background:#0b12177a;backdrop-filter:none;justify-items:end}
+@media(max-width:760px){.modal:has(.hover-confirm){align-items:end;justify-items:center}}
 .com-choice { min-height:44px; }
 .readiness-note {
   margin:0;

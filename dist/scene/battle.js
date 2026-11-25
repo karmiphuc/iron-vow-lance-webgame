@@ -49,6 +49,7 @@ function surfaceHeight(x,z,renderedGround=false){
 }
 function unitRoot(u){
  const point=world(u.vx??u.x,u.vz??u.z);
+ point.y+=displayedHoverLevel(u)*RISE;
  // The fixed practice target sits near its tile's edge so the authored Lion
  // strike reaches the target while the feet follow the original floor contacts.
  if(battle.lionTrial&&!u.lionTrial)point.add(V3(battle.units[0].melee==='cleaver'?-3.12:-3.55,0,-.92));
@@ -457,6 +458,9 @@ function updateCamera(t,dt){
  const fx=portrait&&!mobile?Math.max(1.5,Math.min(fieldCamera.x,size.width-2.5)):fieldCamera.x;
  const fz=portrait&&!mobile?Math.max(1.5,Math.min(fieldCamera.z,size.depth-2.5)):fieldCamera.z;
  const target=fieldCamera.overview?world((size.width-1)/2,(size.depth-1)/2):world(fx,fz);
+ const selectedUnit=current();
+ if(!fieldCamera.overview&&selectedUnit&&Math.hypot(fx-selectedUnit.x,fz-selectedUnit.z)<1.5)
+  target.y+=displayedHoverLevel(selectedUnit)*RISE*.7;
  const distance=fieldCamera.overview?fit:fit*overviewZoom/Math.max(overviewZoom,viewZoom)*(portrait&&!mobile?.66:.88),az=mobile?0:Math.PI/4,el=mobile?.8:.66;
  const position=target.clone().add(V3(Math.sin(az)*Math.cos(el),Math.sin(el),Math.cos(az)*Math.cos(el)).multiplyScalar(distance));
  const shot=activeCinematic;
@@ -588,7 +592,9 @@ function prepareUnit(u,t){
   const footprint=entry=>{const D=entry?.m.dims,scale=entry?.m.scale||.9;return D?(D.quad?Math.hypot(D.hipX+D.reach*.707,D.hipZ+D.reach*.707)+.55:D.restX+.75)*scale:2;};
   const lungeLimit=goal?Math.min(2.6,Math.max(0,p.clone().sub(targetRoot).setY(0).length()-(footprint(record?.entry)+footprint(models.get(goal.target.id)?.entry))*.8-.2)):0;
   const face=!u.alive?(u.deathYaw??heading):guardPoint?Math.atan2(guardPoint.x-p.x,guardPoint.z-p.z):goal&&!u.lionTrial?Math.atan2(aim.x-p.x,aim.z-p.z):heading;
-  pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,targeting:Boolean(readyContact||acquiredShot),lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
+  const hoverBlend=displayedHoverLevel(u)/HOVER_LEVELS;
+ pose.heading=heading;pose.reducedMotion=reducedMotion;pose.world={...p,targetRoot,airborne,
+  hovering:Boolean(u.alive&&(u.hoverActive||hoverBlend)),hoverBlend,hoverRising:Boolean(u.hoverActive),hoverAge:clock-(u.hoverChangedAt??-100),targeting:Boolean(readyContact||acquiredShot),lungeLimit:reducedMotion?0:lungeLimit,onStep:(...args)=>combat?.step(u,...args),face,heading,aim,groundAt,speed};
   const custom=rigV2.applies(u)?'rig-v2':undefined;
   const entry=root.IronVowFoundry.draw(u,hitstopTime(u,t),pose,battle,foundryModel(u.frame),custom);
   if(!entry)return;
