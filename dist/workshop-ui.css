@@ -51,6 +51,10 @@
 .workshop-page .refit-comparison{font-size:.75rem;line-height:1.4;color:var(--blue);margin:0 0 8px}
 .workshop-page .armory-mounted [data-mounted]{border-left:2px solid #b48b55}
 .workshop-page .armory-mounted small{font-size:.75rem;line-height:1.3}
+.workshop-page .bay-card[data-chassis-state="assigned"]{background:#322b22;border-color:#7e6749;box-shadow:inset 3px 0 #e5b66d}
+.workshop-page .bay-card[data-chassis-state="unavailable"]{background:#18232a;border-color:#3b4a51}
+.workshop-page .bay-card[data-chassis-state="unavailable"]>img{filter:saturate(.45) brightness(.8)}
+.workshop-page .bay-purchase-reason{color:#bcc9cc;font-size:.75rem;line-height:1.4}
 @media(761px <= width <= 960px){
  .workshop-page .workshop-refit{grid-template-columns:minmax(230px,.65fr) minmax(0,1.35fr);gap:14px}
  .workshop-page .workshop-chassis{padding:12px}

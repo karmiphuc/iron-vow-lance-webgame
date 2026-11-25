@@ -77,6 +77,14 @@ module.exports=async function checkDecisionUI({page,origin,out,viewport,mobile,t
  assert.equal(await unavailableRow.getAttribute('aria-pressed'),'true');
  assert.equal(await page.locator('.refit-detail .armory-card:visible [data-equip]').isDisabled(),true);
  assert.ok(await page.locator('.workshop-page').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Inventory fits the tablet viewport');
+ const credits=await page.evaluate(()=>save.credits);
+ await page.evaluate(()=>{save.credits=0});
+ await tap('[data-bay="market"]');
+ const blockedHull=page.locator('.bay-card[data-chassis-state="unavailable"]').first();
+ assert.equal(await blockedHull.locator('[data-buy-hull]').isDisabled(),true);
+ assert.match(await blockedHull.innerText(),/Insufficient credits/);
+ await page.evaluate(credits=>{save.credits=credits},credits);
+ await tap('[data-bay="assigned"]');
  await page.locator('.workshop-page').evaluate(el=>el.scrollTop=0);
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.armed,null,{timeout:60000});
  await capture(`workshop-${viewport.width}x${viewport.height}.webp`);
