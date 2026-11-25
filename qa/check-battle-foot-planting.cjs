@@ -17,7 +17,6 @@ for(const file of files){
 const T=THREE,V=IronVowRigV2,R=IronVowFoundryRig,S=IronVowFoundry;
 const {run}=require(path.join(root,'qa/sim-harness.cjs'))();
 const units=run(`FRAMES.map(({name,foundry},frame)=>({name,frame,foundry,...stockHull(frame)}))`);
-units.push({name:'LION',frame:0,lionTrial:true,weapon:'rifle',melee:'cleaver'});
 const hp={body:100,pilot:100,left:100,right:100,legs:100};
 for(const [i,u] of units.entries())Object.assign(u,{id:'audit-'+i,team:'ally',alive:true,max:hp,hp,upgrade:0});
 T.GLTFLoader.prototype.loadAsync=function(file){

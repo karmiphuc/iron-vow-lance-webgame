@@ -17,7 +17,7 @@ const mapping={
 };
 const rigV2Mapping={
  WARDEN:'warden',GATECRASHER:'gatecrasher-r2-reference',CICADA:'cicada-reference','LINE INFANTRY':'li-01',
- 'LINE INFANTRY ELITE':'li-02',GRAVEMAW:'vanguard',REAVER:'reaver',AERO:'aero',LION:'lion',
+ 'LINE INFANTRY ELITE':'li-02',GRAVEMAW:'vanguard',REAVER:'reaver',AERO:'aero',
  KESTREL:'kestrel',BASILISK:'basilisk',HELLBREAKER:'hellbreaker',SHOGUN:'shogun',ASHIGARU:'ashigaru',BASTION:'bastion','BULWARK-AEGIS':'bulwark',
 };
 const rigV2File=name=>rigV2Mapping[name]&&'rig-bench/rig-v2/'+rigV2Mapping[name]+'.glb';
@@ -61,7 +61,7 @@ function inventory(){
  return {baseline:'f264567f01d0501b11f40e1ffdc15a314f47993d',
   frames:frames.map(f=>({...f,rig_v2:currentRig(f.name),glbs:[currentRig(f.name),...(mapping[f.name]??[])].filter(Boolean),
    source:currentRig(f.name)?'rig-v2 GLB':'procedural kit'})),
-  glbs,optional_chassis:[{name:'LION',in_frames:false,rig_v2:currentRig('LION'),glbs:[currentRig('LION')].filter(Boolean),source:'Lion-Clay/Extended-Follow-Through/Lion-Rigged.blend'}],
+  glbs,
   note:'GLB presence does not establish rig contract v2. Counts inspect file JSON, not live renderer.info. Unique mesh triangles exclude node instancing.'};
 }
 if(require.main===module){

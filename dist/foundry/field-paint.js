@@ -19,7 +19,7 @@ const palettes={
  aero:['#54665c','#414f48','#303e3b','#929580','#48544e','#546166'],
  cairn:['#899aa2','#707f86','#586962','#aab7b6','#41505a','#a39b76'],
  kestrel:sand,gatecrasher:iron,cicada:olive,behemoth:sand,aegis:olive,bastion:blue,hellbreaker:iron,citadel:blue,
- infantry:olive,elite:blue,gravemaw:olive,reaver:iron,bulwark:olive,ashigaru:olive,shogun:blue,lion:sand
+ infantry:olive,elite:blue,gravemaw:olive,reaver:iron,bulwark:olive,ashigaru:olive,shogun:blue
 };
 const blocks=[
  [[-50,12],[65,12],[65,32],[104,32],[104,67],[54,67],[54,84],[-50,84]],
@@ -51,7 +51,7 @@ function mix(left,right,amount){
  return '#'+[16,8,0].map(shift=>Math.round(((a>>shift)&255)*(1-amount)+((b>>shift)&255)*amount).toString(16).padStart(2,'0')).join('');
 }
 function palette(unit,finish){
- const frame=unit.lionTrial?'lion':frames[unit.frame];
+ const frame=frames[unit.frame];
  const [base,patch,dark,light,secondary,accent]=finish==='worn'&&frame==='warden'?
   ['#7a755d','#686754','#575849','#9f967b','#424848','#908c77']:
   palettes[frame]||palettes.warden;
