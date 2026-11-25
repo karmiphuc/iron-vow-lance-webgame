@@ -40,19 +40,23 @@ const darkSplinters=[
  [[3,83],[51,45],[76,45],[47,67],[35,67],[16,83]],
  [[152,148],[183,116],[197,116],[178,140],[165,141],[158,148]]
 ];
+const ravenFrame=30;
+const ravenCoat={paint_primary:'#161b23',paint_secondary:'#20252d',paint_accent:'#272b31',frame:'#242930',steel:'#343940'};
+const ravenVariants=3;
 const repeats={block:'.58',splinter:'.49',survey:'.52',worn:'.63'};
 const textures=new Map();
 const programs=new WeakMap();
 const valid=finish=>typeof finish==='string'&&Object.hasOwn(finishes,finish);
 const hasColor=unit=>Boolean(unit.paint||unit.trim?.s||unit.trim?.a);
-const finish=unit=>valid(unit.paintFinish)?unit.paintFinish:hasColor(unit)?'solid':'block';
+const finish=unit=>valid(unit.paintFinish)?unit.paintFinish:hasColor(unit)?'solid':unit.frame===ravenFrame?'factory':'block';
+const validRavenVariant=variant=>Number.isInteger(variant)&&variant>=0&&variant<ravenVariants;
 
 function mix(left,right,amount){
  const a=parseInt(left.slice(1),16),b=parseInt(right.slice(1),16);
  return '#'+[16,8,0].map(shift=>Math.round(((a>>shift)&255)*(1-amount)+((b>>shift)&255)*amount).toString(16).padStart(2,'0')).join('');
 }
 function palette(unit,finish){
- const frame=unit.frame===30?'raven':frames[unit.frame];
+ const frame=unit.frame===ravenFrame?'raven':frames[unit.frame];
  const [base,patch,dark,light,secondary,accent]=finish==='worn'&&frame==='warden'?
   ['#7a755d','#686754','#575849','#9f967b','#424848','#908c77']:
   palettes[frame]||palettes.warden;
@@ -205,10 +209,35 @@ function scorch(base,damaged,scorchMap,fade){
  bind(damaged,scorchMap,fade);
  return true;
 }
+function coatRaven(original,variant){
+ const material=original.clone(),channel='xyz'[variant];
+ material.userData.fieldFinish='midnight';
+ material.userData.paintVariant=variant;
+ material.color.set(ravenCoat[original.name]).convertSRGBToLinear();
+ if(original.userData.paint){material.metalness=.22;material.roughness=.69;}
+ const crimson=new root.THREE.Color('#761e35').convertSRGBToLinear();
+ const varying='varying float ravenInlay;\n';
+ function bind(target,scorchMap,fade=1){
+  if(scorchMap)target.map=scorchMap;
+  target.onBeforeCompile=(shader,renderer)=>{
+   original.onBeforeCompile.call(target,shader,renderer);
+   shader.uniforms.ravenCrimson={value:crimson.clone().multiplyScalar(fade)};
+   shader.vertexShader='attribute vec3 _raven_inlay;\n'+varying+shader.vertexShader.replace('#include <begin_vertex>',
+    `#include <begin_vertex>\nravenInlay=_raven_inlay.${channel};`);
+   shader.fragmentShader='uniform vec3 ravenCrimson;\n'+varying+shader.fragmentShader.replace('#include <color_fragment>',
+    '#include <color_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,ravenCrimson,smoothstep(.68,.90,ravenInlay));');
+  };
+  target.customProgramCacheKey=()=>original.customProgramCacheKey()+'|raven-inlay|'+variant;
+ }
+ bind(material);
+ programs.set(material,bind);
+ return material;
+}
 function create(unit){
- const selected=finish(unit);
- if(!Object.hasOwn(repeats,selected))return null;
- const colors=palette(unit,selected),covered=new WeakSet();
+ const selected=finish(unit),midnight=unit.frame===ravenFrame&&selected==='factory';
+ if(!midnight&&!Object.hasOwn(repeats,selected))return null;
+ const variant=midnight&&validRavenVariant(unit.paintVariant)?unit.paintVariant:0;
+ const colors=midnight?null:palette(unit,selected),covered=new WeakSet();
  return (object,owned)=>{
   if(!object||covered.has(object))return;
   covered.add(object);
@@ -217,9 +246,9 @@ function create(unit){
    const original=mesh.isMesh&&mesh.material;
    if(!original||original.userData?.fieldFinish)return;
    const role=channel(original);
-   if(!role)return;
+   if(midnight?!Object.hasOwn(ravenCoat,original.name):!role)return;
    if(!materials.has(original)){
-    const material=coat(original,colors,selected,role);
+    const material=midnight?coatRaven(original,variant):coat(original,colors,selected,role);
     materials.set(original,material);
     owned.push(material);
    }
@@ -227,5 +256,5 @@ function create(unit){
   });
  };
 }
-root.IronVowFieldPaint={finishes,valid,finish,create,scorch};
+root.IronVowFieldPaint={finishes,valid,finish,create,scorch,validRavenVariant,ravenVariants};
 })(window);

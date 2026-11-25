@@ -161,6 +161,7 @@ function mount({frames,weapons,shields,attackProfile,weaponRigPose,sound,initial
   $('bench-walk').setAttribute('aria-pressed','false');$('bench-aim').setAttribute('aria-pressed','false');
   for(const id of parts)applyPart(id,100);
   unit={id:'bench-main',index:0,frame:next.frame,rig:next.rig,team,...next.stock};
+  $('bench-finish').value=paintFinish??root.IronVowFieldPaint.finish(unit);
   modules=frame.mix?{core:frame.model,arms:frame.model,legs:frame.model}:undefined;
   group='all';$('bench-group').value='all';setClip('');clipList='';
   reset(true);refreshLoadout();

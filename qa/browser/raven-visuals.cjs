@@ -7,10 +7,24 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
  await page.addInitScript(()=>localStorage.setItem('iron-vow-attack-camera','off'));
  await page.goto(new URL('/',origin).href,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.__ironVow&&window.IronVowRigV2);
- await page.evaluate(()=>__ironVow.start({seed:42,contract:0,frames:[RAVEN_FRAME],loadouts:[stockHull(RAVEN_FRAME)]}));
+ await page.evaluate(()=>__ironVow.start({seed:42,contract:0,frames:[RAVEN_FRAME],loadouts:[{...stockHull(RAVEN_FRAME),paintVariant:2}]}));
  await page.waitForFunction(()=>{
   const unit=current();return IronVowScene.ready&&unit&&IronVowScene.models.get(unit.id)?.entry?.m.live==='raven';
  },null,{timeout:60000});
+ assert.ok(await page.evaluate(()=>IronVowScene.models.get(current().id).entry.m.build.ownedMaterials.some(material=>
+  material.userData.fieldFinish==='midnight'&&material.userData.paintVariant===2)),'Battle coat uses the assigned Raven variant');
+ assert.deepEqual(await page.evaluate(()=>{
+  const counts=[0,0,0],source=IronVowScene.models.get(current().id).entry.m.nativeV2.source;
+  source.traverse(mesh=>{
+   const inlays=mesh.geometry?.getAttribute('_raven_inlay');
+   for(let i=0;i<(inlays?.count??0);i++){
+    if(inlays.getX(i)>.9)counts[0]++;
+    if(inlays.getY(i)>.9)counts[1]++;
+    if(inlays.getZ(i)>.9)counts[2]++;
+   }
+  });
+  return counts.map(count=>count>0);
+ }),[true,true,true],'All three seam patterns are baked into the skinned armor');
  const walk=await page.evaluate(async()=>{
   const unit=current(),entry=IronVowScene.models.get(unit.id).entry,{m}=entry;
   const source=m.nativeV2.source;
@@ -132,8 +146,13 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
   'The clamp contact follows the authored claw: '+JSON.stringify(weapons.clamp));
 
  await page.evaluate(()=>{battle=null;page='hangar';hangarDeck='mechs';selected=0;render();});
- await page.waitForFunction(()=>IronVowHangarRuntime.scene?.records.some(({unit,rig})=>unit?.frame===RAVEN_FRAME&&
-  rig.object.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('ShieldFace.L'))),null,{timeout:60000});
+ await page.waitForFunction(()=>IronVowHangarRuntime.scene?.records.some(({unit,rig})=>{
+  if(unit?.frame!==RAVEN_FRAME)return false;
+  const plate=rig.object.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('ShieldFace.L'));
+  let painted=false;
+  rig.object.traverse(mesh=>{if(mesh.material?.userData.fieldFinish==='midnight'&&mesh.material.userData.paintVariant===2)painted=true;});
+  return plate&&painted;
+ }),null,{timeout:60000});
  await tap('.command-deck [data-page="workshop"]');
  await page.locator('#paint-preview').scrollIntoViewIfNeeded();
  await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.m.live==='raven',null,{timeout:60000});
@@ -142,13 +161,24 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
   return [...new Set(m.build.ownedMaterials.map(material=>material.userData.paintChannel))].sort();
  });
  assert.ok(['p','s','a'].every(channel=>paint.includes(channel)),'Workshop Raven exposes three paint channels');
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.m.build.ownedMaterials.some(material=>
+  material.userData.fieldFinish==='midnight'&&material.userData.paintVariant===2));
+ await tap('[data-workshop-detail="paint"] > summary');
+ assert.equal(await page.locator('[data-paint-finish="factory"]').getAttribute('aria-pressed'),'true');
+ await tap('[data-paint-finish="splinter"]');
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.m.build.ownedMaterials.some(material=>material.userData.fieldFinish==='splinter'));
+ await tap('[data-paint-finish="factory"]');
+ await page.waitForFunction(()=>IronVowWorkshop.snapshot()?.entry?.m.build.ownedMaterials.some(material=>
+  material.userData.fieldFinish==='midnight'&&material.userData.paintVariant===2));
 
- await page.goto(new URL('?bench=rig&frame=30',origin).href,{waitUntil:'domcontentloaded'});
+ const benchLink=await page.locator('[data-workshop-detail="trials"] .rig-bench-link').getAttribute('href');
+ assert.equal(new URL(benchLink,origin).searchParams.get('paintVariant'),'2');
+ await page.goto(new URL(benchLink,origin).href,{waitUntil:'domcontentloaded'});
  await page.waitForFunction(()=>window.__bench?.state.loaded&&window.__bench.state.frame===30,null,{timeout:60000});
  assert.deepEqual((await page.evaluate(()=>__bench.state.clips.map(c=>c.name))).sort(),['BraceEnter','BraceExit','BraceHold','Fire','Idle','Walk']);
  await page.evaluate(()=>__bench.setClip('BraceHold'));
  await page.waitForFunction(()=>window.__bench?.state.clip==='BraceHold');
  if(!mobile&&process.env.IRON_VOW_RAVEN_PROOF_DIR)await page.screenshot({path:join(process.env.IRON_VOW_RAVEN_PROOF_DIR,'raven-guard-rig-bench.png')});
- console.log('PASS Raven native movement, shoulder guard and attachments, arm loss, wrist fire, clamp contact, Mech Bay, Workshop paint, and rig bench clips');
+ console.log('PASS Raven movement, shoulder guard, arm loss, weapons, matching battle/Mech Bay/Workshop inlays, manual finish, and Rig Bench clips');
  return {planted,guardSamples:guard.samples.length};
 };

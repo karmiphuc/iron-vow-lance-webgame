@@ -13,8 +13,8 @@ function fromCareer(career,{catalog,aux,model=()=>undefined}={}){
   if(assigned.has(frame))throw Error('Duplicate hangar frame: '+frame);
   assigned.add(frame);
   const modelId=model(frame),canRender=Boolean(catalog.supports(frame,modelId));if(!canRender)unsupported.add(frame);
-  const {weapon,melee,shoulder,shield,paintFinish,paint,trim,upgrade}=hull;
-  return {id,frame,...(modelId!=null?{model:modelId}:{}),weapon,melee,shoulder,shield,paintFinish,paint,trim:trim==null?trim:{...trim},condition:hull.condition/100,upgrade,canRender};
+  const {weapon,melee,shoulder,shield,paintFinish,paint,trim,paintVariant,upgrade}=hull;
+  return {id,frame,...(modelId!=null?{model:modelId}:{}),weapon,melee,shoulder,shield,paintFinish,paint,trim:trim==null?trim:{...trim},paintVariant,condition:hull.condition/100,upgrade,canRender};
  }
  const active=career.units.map((hull,slot)=>entry(hull,hull?.frame??slot,'seat:'+slot));
  if(aux!=null){

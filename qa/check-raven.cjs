@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict');
 const simulate=require('./sim-harness.cjs');
+const midnightCareer=require('./fixtures/raven-midnight-career.json');
 
 const game=simulate({seed:31,reducedMotion:true}),{run}=game;
 assert.equal(run("RAVEN_FRAME===30&&portStock('iron').frames.includes(RAVEN_FRAME)"),true);
@@ -9,6 +10,27 @@ assert.equal(run("save.units[0].weapon==='raven-gauntlet'&&save.units[0].melee==
 run('persist()');
 const restored=simulate({storage:game.storage});
 assert.equal(restored.run('pilotFrame(0)===RAVEN_FRAME&&validSave(save)'),true);
+
+for(const [random,variant] of [[0,0],[.5,1],[.9,2]]){
+ const {run}=simulate({random:()=>random,reducedMotion:true});
+ run('save.credits=400000');
+ assert.ok(run('acquireHull(RAVEN_FRAME)'));
+ assert.equal(run('save.reserve[RAVEN_FRAME].paintVariant'),variant);
+ assert.ok(run('assignChassis(0,RAVEN_FRAME)&&assignChassis(0,0)&&assignChassis(0,RAVEN_FRAME)'));
+ assert.equal(run('save.units[0].paintVariant'),variant);
+ assert.ok(run('validSave(save)'));
+}
+const midnight=simulate({storage:new Map([['iron-vow-career',JSON.stringify(midnightCareer)]])});
+assert.ok(midnight.run('pilotFrame(0)===RAVEN_FRAME&&save.units[0].paintVariant===2'));
+assert.equal(midnight.run('fieldPaint.finish(save.units[0])'),'factory');
+assert.equal(midnight.run("fieldPaint.finish({...save.units[0],paint:'#247f63'})"),'solid');
+assert.equal(midnight.run("fieldPaint.finish({...save.units[0],paintFinish:'splinter'})"),'splinter');
+assert.ok(midnight.run('validHull({...save.units[0],paintVariant:undefined},RAVEN_FRAME,save.owned)'));
+assert.ok(!midnight.run('validHull({...save.units[0],paintVariant:3},RAVEN_FRAME,save.owned)'));
+midnight.run('createBattle(0);persist()');
+const midnightReload=simulate({storage:midnight.storage});
+assert.equal(midnightReload.run('current().paintVariant'),2);
+
 run("createBattle(0);const t=battle.units.find(u=>u.frame===RAVEN_FRAME),a=battle.units.find(u=>u.team==='enemy'),w=weapon('rifle');Object.assign(t,{x:3,z:3,heading:FIELD_HEADINGS[0]});Object.assign(a,{x:4,z:3});");
 for(const brace of [false,true]){
  run('t.brace='+brace);

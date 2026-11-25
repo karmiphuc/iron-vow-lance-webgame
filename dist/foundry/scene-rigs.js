@@ -447,7 +447,7 @@ function previewHealth(unit){
 }
 function previewKey(u,scope,angle){
  const {hp,max}=previewHealth(u);
- return JSON.stringify([scope,u.frame,u.team||'ally',u.paintFinish,u.paint,u.trim,u.weapon,u.melee,u.meleeHand,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
+ return JSON.stringify([scope,u.frame,u.team||'ally',u.paintFinish,u.paint,u.trim,u.paintVariant,u.weapon,u.melee,u.meleeHand,u.shoulder,u.shield,u.upgrade,hp,max,angle]);
 }
 function preview(u,model,custom,angle=0,scope='preview'){
  if(rigV2?.applies(u))custom='rig-v2';
