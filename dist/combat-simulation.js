@@ -16,7 +16,7 @@
  const roundWeight=(round,count)=>round.critical?(count>1?2:1.5):1;
  const BREACH_LIMBS=Object.freeze(['right','left','legs']);
  const pilotHitChance=training=>Math.min(PILOT_HIT_MAX,Math.max(PILOT_HIT_MIN,PILOT_HIT_BASE+(training?.pilotHit??0)*PILOT_HIT_TRAINING));
- function createTerrainRules({getBattle,onBoard,movementLimit,freeMovement=movementLimit,extraMoveAP=1,terrainCell,helicopterHeight,canReachTarget,launchesMissiles}){
+ function createTerrainRules({getBattle,onBoard,movementLimit,freeMovement=movementLimit,extraMoveAP=1,terrainCell,helicopterHeight,canReachTarget,launchesMissiles,hoverElevation=()=>0}){
   function occupied(x,z){return getBattle().units.some(u=>u.alive&&u.x===x&&u.z===z)}
   const neighborTiles=(x,z)=>[[x+1,z],[x-1,z],[x,z+1],[x,z-1]];
   const reverseStepOrder=(p,x,z)=>p.x>x?0:p.x<x?1:p.z>z?2:3;
@@ -61,7 +61,7 @@
   function distance(a,b){return Math.abs(a.x-b.x)+Math.abs(a.z-b.z)}
   function inCover(t){return t.kind!=='helicopter'&&neighborTiles(t.x,t.z).some(([x,z])=>getBattle().cover.has(x+','+z))}
   const HIGH_GROUND_AIM=.20;
-  const fireLevel=u=>terrainLevel(u.x,u.z)+(u.kind==='helicopter'?helicopterHeight():0);
+  const fireLevel=u=>terrainLevel(u.x,u.z)+(u.kind==='helicopter'?helicopterHeight():hoverElevation(u));
   function ridgeBlocks(a,t){
    if(!getBattle()?.field.cells||a.x===t.x&&a.z===t.z)return false;
    const dx=t.x-a.x,dz=t.z-a.z,nx=Math.abs(dx),nz=Math.abs(dz),sx=Math.sign(dx),sz=Math.sign(dz);
@@ -85,9 +85,9 @@
   }
   function highGroundAim(a,t,w){
    if(a.kind||t.kind==='helicopter'||w.melee||launchesMissiles(w))return 0;
-   return HIGH_GROUND_AIM*Math.min(3,Math.max(0,terrainLevel(a.x,a.z)-terrainLevel(t.x,t.z)));
+   return HIGH_GROUND_AIM*Math.min(3,Math.max(0,fireLevel(a)-fireLevel(t)));
   }
-  return {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim};
+  return {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim,fireLevel};
  }
  function createCombatRules({weapon,armoryClass,inCover,distance,limbPart,hasMechSkill,launchesMissiles,highGroundAim,dodgeChance,battleUnits,deadeyePower,damagedArmor,braceReduction,activeShield,volleyBudget,ASHIGARU_FRAME,VANGUARD_FRAME,SHOGUN_FRAME,CAIRN_FRAME,LINE_INFANTRY_FRAME,LINE_ELITE_FRAME,SALTJACK_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,GIZA_FRAME,VYZOV_FRAME,FREE_HAND_COUNTER}){
 // A primed Breach Charge turns the next ranged shot into a charged shot whatever part is passed.
@@ -216,7 +216,7 @@ function planVolley(a,t,aimed,w,reaction){
 }
  return planVolley;
  }
- function createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon=(u,w)=>w&&u.hp[w.melee?'left':'right']>0,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER}){
+ function createReactionRules({isArmed,equippedShield,counterRange,combatCounterRange=(u,t,w)=>counterRange(w,u.training,u.brace),unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon=(u,w)=>w&&u.hp[w.melee?'left':'right']>0,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER}){
 function reactionStatus(u){
  if(!u?.alive||u.kind)return 'UNAVAILABLE';
  if(u.blackout)return 'JAMMED';
@@ -233,8 +233,8 @@ function reactionWeapon(defender,attacker){
   return range===1&&!attackObstruction(defender,attacker,cut)?(defender.hp.left>0?bash:defender.hp.right>0?cut:null):null;
  }
  const melee=meleeWeapon(defender);
- if(range===1&&(defender.melee||defender.meleeHand==='right')&&workingWeapon(defender,melee)&&!attackObstruction(defender,attacker,melee))return melee;
- const ranged=unitWeapon(defender),reach=counterRange(ranged,defender.training,defender.brace);
+ if(range===1&&(defender.melee||defender.meleeHand==='right')&&workingWeapon(defender,melee)&&!attackObstruction(defender,attacker,melee)&&!attackObstruction(defender,attacker,melee))return melee;
+ const ranged=unitWeapon(defender),reach=combatCounterRange(defender,attacker,ranged);
  if(workingWeapon(defender,ranged)&&reach&&range<=reach&&!attackObstruction(defender,attacker,ranged))return ranged;
  return close?FREE_HAND_COUNTER:null;
 }
@@ -244,7 +244,7 @@ function reactionWeapon(defender,attacker){
   getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
   attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementPlans,movementLimit,canJumpjet,jumpjetDestination,
   useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,tacticalJumpLandings=()=>null,shoulderWeapon=()=>null,workingWeapon=()=>true,
-  trySurrender=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
+  trySurrender=()=>false,tryHover=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
   doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,freeMovement=movementLimit,extraMoveAP=1,jumpjetAP=2,
   braceCost=()=>2,braceUnit=u=>{u.brace=true},startAction=()=>{},barrageTarget=()=>null,
   inCover=()=>false,highGroundAim=()=>0,reactionWeapon=()=>null,
@@ -408,6 +408,7 @@ function reactionWeapon(defender,attacker){
      if(position.jet)await useJumpjet(enemy,position.x,position.z);
      else if(position.cost)await moveUnit(enemy,position.x,position.z,position.cost);
     }
+    if(tryHover(enemy,allies))renderBattle();
     if(tryTactical&&await tryTactical(enemy,allies)){
      renderBattle();
      if(checkEnd())return true;
@@ -440,7 +441,7 @@ function reactionWeapon(defender,attacker){
  function createCombatTransactions({
   getBattle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
   attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
-  beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
+  beginAttackCamera,closeAttackCamera,shoot,BASTION_FRAME,unitWeapon,counterRange,combatCounterRange=(u,t,w)=>counterRange(w,u.training,u.brace),reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
   freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
  }){
   function barrageRestriction(attacker,defender,w){
@@ -473,7 +474,7 @@ function reactionWeapon(defender,attacker){
      for(const guardian of getBattle().units){
       if(!attacker.alive)break;
       if(guardian===defender||guardian.team!==defender.team||!hasMechSkill(guardian,BASTION_FRAME)||distance(guardian,defender)!==1)continue;
-      const ranged=unitWeapon(guardian),reach=counterRange(ranged,guardian.training,guardian.brace);
+      const ranged=unitWeapon(guardian),reach=combatCounterRange(guardian,attacker,ranged);
       if(reactionStatus(guardian)!=='READY'||guardian.hp.right<=0||ranged.melee||!reach||distance(guardian,attacker)>reach||attackObstruction(guardian,attacker,ranged))continue;
       guardian.reacted=true;addLog(guardian.name+' covers its adjacent ally.');
       await shoot(guardian,attacker,'body',ranged,true,sequence);

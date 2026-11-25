@@ -34,7 +34,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'vyzov-knuckle',name:'Pile Knuckle',type:'POWERED FIST',damage:20,range:1,ap:3,builtIn:true,melee:true,hand:'right',motion:'breaker',desc:'An adjacent strike for 20 base damage before armor.'},
  {id:'aegis-cleave',name:'Charged Arc Cleaver',type:'REACTOR CLEAVE',damage:38,range:1,ap:5,builtIn:true,melee:true,hand:'right'},
  {id:'aegis-bash',name:'Charged Shield Bash',type:'HYDRAULIC IMPACT',damage:40,range:1,ap:5,builtIn:true,melee:true},
- {id:'merlin-38',name:'Merlin 38',type:'INTEGRAL PRECISION RIFLE',damage:39,range:8,ap:5,aim:.08,builtIn:true,hand:'right',motion:'rifle',desc:'A medium-impact barrel on the Saker’s right wrist cradle.'},
+ {id:'merlin-38',name:'Merlin 38',type:'INTEGRAL PRECISION RIFLE',damage:39,range:7,ap:5,aim:.08,builtIn:true,hand:'right',motion:'rifle',desc:'A medium-impact barrel on the Saker’s right wrist cradle.'},
  {id:'quill-lance',name:'Quill S-7',type:'INTEGRAL MARKSMAN RIFLE',damage:32,range:8,ap:4,aim:.06,builtIn:true,hand:'left',motion:'rifle',desc:'A single low-impulse round from the Nightjar’s left shoulder cradle.'},
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
  {id:'flechette-scattergun',name:'Flechette scattergun',type:'SCOUT SCATTERGUN',burst:12,scatter:true,damage:31,range:2,ap:5,builtIn:true,effect:'shotgun',scout:'scatter'},
@@ -386,7 +386,8 @@ const LINE_INFANTRY_FRAME=FRAMES.push({name:'LINE INFANTRY',model:'LI-01',role:'
 const LINE_ELITE_FRAME=FRAMES.push({name:'LINE INFANTRY ELITE',model:'LI-02',role:'ELITE',color:'#526e86',
  hp:185,arm:104,leg:112,move:3,armor:8,weapon:'rifle',foundry:7,enemyOnly:true,captureOnly:true,fixedWeapons:true})-1;
 const INFANTRY_PRIMARIES=['rifle','trident','shotgun'];
-const isLineInfantry=u=>u.team==='enemy'&&(u.frame===LINE_INFANTRY_FRAME||u.frame===LINE_ELITE_FRAME);
+const isLineInfantryFrame=frame=>frame===LINE_INFANTRY_FRAME||frame===LINE_ELITE_FRAME;
+const isLineInfantry=u=>u.team==='enemy'&&isLineInfantryFrame(u.frame);
 const VANGUARD_FRAME=FRAMES.push({name:'GRAVEMAW',model:'MECH-01',role:'CLOSE ASSAULT',color:'#386047',
  hp:165,arm:88,leg:103,move:3,armor:6,cost:230000,weapon:'hailstorm',melee:'piledriver',foundry:8,enemyOnly:true,salvageOnly:true,fixedWeapons:true,fixedLivery:true})-1;
 const REAVER_FRAME=FRAMES.push({name:'REAVER',model:'RV-04',role:'MEDIUM+',color:'#a1242c',
@@ -425,7 +426,7 @@ const NIGHTJAR_FRAME=FRAMES.push({name:'NIGHTJAR',model:'NJ–07',role:'MOBILE S
  brief:'Two short braking steps settle it onto a firing tripod. Its left hand guides the integral Quill. A right-hand buckler intercepts incoming hits until the arm breaks.'})-1;
 const SAKER_FRAME=FRAMES.push({name:'SAKER',model:'SK–38',role:'ROOFTOP MARKSMAN',weightClass:'medium',color:'#928675',
  hp:136,arm:72,leg:94,move:4,jumpjet:true,jumpjetRange:3,jumpjetEachTurn:true,jumpjetLift:2.15,armor:4,dodge:.13,weapon:'merlin-38',native:'saker',
- enemyOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
+ enemyOnly:true,captureOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
  brief:'An armored biped that crosses open ground at a lope and drops low to sight along its right wrist. Its left hand stays free to catch the firing load.'})-1;
 // Name, player-facing effect, preferred distance, and positioning priority.
 const MECH_SIGNATURES={
@@ -455,14 +456,22 @@ const MECH_SIGNATURES={
  [SALT_WORKS_GARRISON_FRAME]:['Yard Defense','Cover the yard from behind obstacles. Direct shots from cover gain +8 aim.',5,'screen'],
  [HUSKY_FRAME]:['Running Snap','Move before firing. Direct shots from within three tiles gain +8 aim after moving.',3,'mobile'],
  [GIZA_FRAME]:['Range Table','Hold position. Direct shots from five or more tiles gain +6 aim before moving.',5,'hold'],
- [SAKER_FRAME]:['Overwatch','Keeps eight tiles of separation. Jumps to a clear tile up to three tiles away for 2 AP once per turn.',8,'mobile'],
+ [SAKER_FRAME]:['High Perch','Non-melee attacks gain +1 range when your elevation is higher than the target’s.',8,'mobile'],
  [NIGHTJAR_FRAME]:['Rangefinder','Keep seven tiles of separation. After firing, take a free step toward cover or preferred range. The right buckler reduces intercepted damage by 20%.',7,'mobile'],
  [VYZOV_FRAME]:['Guard Breaker','Melee attacks deal +15% damage against braced targets.',1,'push']
 };
 const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
 function hasMechSkill(u,frame){return Boolean(u?.mechSkills&&(u.frame===frame||u.mechSkills.includes(frame)))}
 const AERO_MELEE=['cleaver','breaker','piledriver','blade'];
-const JUMPJET_RANGE=5,JUMPJET_AP=2;
+const JUMPJET_RANGE=5,JUMPJET_AP=2,HOVER_AP=2,HOVER_LEVELS=2;
+const HOVER_HELP='Rise two elevation levels until your next turn. Immune to melee. Movement and Jumpjet are locked. Once per battle.';
+const hoverElevation=u=>u?.hoverActive?HOVER_LEVELS:0;
+function displayedHoverLevel(u){
+ if(reducedMotion||u.hoverChangedAt===undefined)return hoverElevation(u);
+ const progress=clamp01((clock-u.hoverChangedAt)/.36);
+ const easing=progress*progress*(3-2*progress);
+ return HOVER_LEVELS*(u.hoverActive?easing:1-easing);
+}
 const jumpjetRange=frame=>frame?.jumpjetRange??JUMPJET_RANGE;
 const jumpjetCadence=frame=>frame?.jumpjetEachTurn?'once per turn':'once per sortie';
 const jumpjetHelp=frame=>'Jump over cover and units to a clear tile within '+jumpjetRange(frame)+' tiles for '+JUMPJET_AP+' AP, '+jumpjetCadence(frame)+'. Requires working legs.';
@@ -1017,7 +1026,7 @@ const ROUND_AP=8,EXTRA_MOVE_AP=1,BRACE_AP=2;
 const theaterLayouts=window.IRON_VOW_THEATERS;
 const dimensions=()=>battle?.size||NEW_BOARD;
 function onBoard(x,z){const {width,depth}=dimensions();return x>=0&&x<width&&z>=0&&z<depth}
-function canReachTarget(w,target){return !(w.melee&&target.kind==='helicopter')}
+function canReachTarget(w,target){return !(w.melee&&(target.kind==='helicopter'||hoverElevation(target)))}
 const asset=path=>window.IRON_VOW_INLINE_ASSETS?.[path]||path;
 const targetParts=u=>u?.kind?['body']:['body','pilot','right','left','legs'];
 // Existing Reaver hulls still store 'rifle' as their fixed weapon token.
@@ -1029,13 +1038,13 @@ const unitWeapon=u=>u.kind?VEHICLES[u.kind].gun:u.frame===REAVER_FRAME?REAVER_AU
 const isArmed=u=>u.kind||[unitWeapon(u),shoulderWeapon(u),meleeWeapon(u)].some(w=>workingWeapon(u,w));
 const chassisMobility=(frame,legacy=false,training)=>frame.move+(legacy?0:1)+(training?.move??0);
 const mobility=u=>u.kind?VEHICLES[u.kind].move:chassisMobility(FRAMES[u.frame],battle.legacy,u.training);
-const mobile=u=>u.kind||u.hp.legs>0;
+const mobile=u=>!hoverElevation(u)&&(u.kind||u.hp.legs>0);
 const freeMovement=u=>u&&u.alive&&mobile(u)?u.mechState?.valkyrieStep?1:!u.actionPhase?(u.moveLeft??mobility(u)):0:0;
 const extraMovement=u=>Boolean(u?.alive&&mobile(u)&&u.ap>=EXTRA_MOVE_AP&&!u.extraStep);
 const movementLimit=u=>freeMovement(u)+Number(extraMovement(u));
 const spent=u=>Boolean(u?.alive&&u.ap===0&&(!movementLimit(u)||
  paths(u).size<=1));
-function resetMovement(u){if(FRAMES[u.frame]?.jumpjetEachTurn)u.jumpjetUsed=false;u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key]}
+function resetMovement(u){if(u.hoverActive)u.hoverChangedAt=clock;u.hoverActive=false;if(FRAMES[u.frame]?.jumpjetEachTurn)u.jumpjetUsed=false;u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key]}
 function startAction(u){u.moveLeft=0;u.actionPhase=true}
 const chassisParts=(frame,hull,training)=>({body:frame.hp+hull.upgrade*25+(training?.body??0),right:frame.arm,left:frame.arm,legs:frame.leg});
 const chassisArmor=(frame,hull,training)=>frame.armor+hull.upgrade*2+(training?.armor??0);
@@ -1046,8 +1055,10 @@ const weaponAP=(w,training)=>w.ap-(w.melee?(training?.strikeAP??0):0);
 const weaponRange=(w,training)=>w.range+(w.melee?0:(training?.range??0));
 const launchesMissiles=w=>w?.id==='missile'||ATTACK_PROFILES[w?.id]?.effect==='missile';
 const mechState=u=>u.mechState??={};
-const combatRange=(u,t,w)=>weaponRange(w,u.training)+(hasMechSkill(u,4)&&launchesMissiles(w)&&t?.painted?1:0);
+const highPerchRange=(u,t,w)=>Number(Boolean(t&&!w.melee&&hasMechSkill(u,SAKER_FRAME)&&fireLevel(u)>fireLevel(t)));
+const combatRange=(u,t,w)=>weaponRange(w,u.training)+highPerchRange(u,t,w)+(hasMechSkill(u,4)&&launchesMissiles(w)&&t?.painted?1:0);
 const counterRange=(w,training,braced=false)=>launchesMissiles(w)?0:weaponRange(w,training)+(training?.counterRange??0)+(braced?(training?.braceCounterRange??0):0);
+const combatCounterRange=(u,t,w)=>counterRange(w,u.training,u.brace)+(launchesMissiles(w)?0:highPerchRange(u,t,w));
 const braceCost=training=>BRACE_AP-(training?.braceAP??0);
 const braceReduction=training=>.5+(training?.brace??0);
 const overdriveAP=training=>2+(training?.overdrive??0);
@@ -1399,7 +1410,7 @@ function captureSortie(enemyPending=false){
   ...(battle.relayLead?{relayLead:battle.relayLead}:{}),
   ...(battle.terrainSeed!==null?{terrainSeed:battle.terrainSeed}:{}),
   ...(battle.mechComputers?{mechComputers:true}:{}),
-  units:battle.units.map(u=>({surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,licenseUsed:u.licenseUsed||undefined,jumpjetUsed:u.jumpjetUsed||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
+  units:battle.units.map(u=>({surrendered:u.surrendered||undefined,infantryWeapon:isLineInfantry(u)&&u.weapon!=='rifle'&&INFANTRY_PRIMARIES.includes(u.weapon)?u.weapon:undefined,x:u.x,z:u.z,face:u.face??(u.team==='enemy'?1:-1),heading:u.heading??defaultHeading(u),deathYaw:u.deathYaw,moveLeft:u.moveLeft,actionPhase:u.actionPhase,extraStep:u.extraStep,reacted:!!u.reacted,hp:{...u.hp},ap:u.ap,brace:u.brace,skill:u.skill,boost:u.boost,painted:u.painted,order:u.order,breach:u.breach,blackout:u.blackout,recoveryUsed:u.recoveryUsed,licenseUsed:u.licenseUsed||undefined,jumpjetUsed:u.jumpjetUsed||undefined,hoverUsed:u.hoverUsed||undefined,hoverActive:u.hoverActive||undefined,tacticalUsed:u.tacticalUsed||undefined,mechState:u.mechState&&Object.keys(u.mechState).length?u.mechState:undefined}))};
 }
 function dispatchSizes(){
  if(save.dispatch?.day!==save.day){
@@ -1583,6 +1594,7 @@ function restoreSortie(){
     valid=isLineInfantry(u)&&INFANTRY_PRIMARIES.includes(state.infantryWeapon);
     if(valid)u.weapon=state.infantryWeapon;
    }
+   if(valid&&(state.hoverUsed!==undefined||state.hoverActive!==undefined))valid=u.frame===SAKER_FRAME&&state.hoverUsed===true&&(state.hoverActive===undefined||state.hoverActive===true);
    if(valid&&state.jumpjetUsed!==undefined)valid=saved.version>=7&&(FRAMES[u.frame]?.jumpjet===true||hasMechSkill(u,AERO_FRAME))&&state.jumpjetUsed===true;
    if(valid&&state.tacticalUsed!==undefined)valid=state.tacticalUsed===true&&Boolean(tacticalSpec(u));
    if(valid&&state.mechState!==undefined){
@@ -1591,7 +1603,7 @@ function restoreSortie(){
    }
    if(valid&&state.surrendered!==undefined)valid=state.surrendered===true&&u.team==='enemy'&&!u.kind&&state.hp.body>0&&state.hp.pilot>0;
    if(!valid)break;const key=state.x+','+state.z,alive=!state.surrendered&&state.hp.body>0&&(u.kind||(state.hp.pilot??1)>0);if(alive&&occupiedTiles.has(key)){valid=false;break}if(alive)occupiedTiles.add(key);
-   u.jumpjetUsed=state.jumpjetUsed===true;u.tacticalUsed=state.tacticalUsed===true;
+   u.jumpjetUsed=state.jumpjetUsed===true;u.hoverUsed=state.hoverUsed===true;u.hoverActive=state.hoverActive===true;u.tacticalUsed=state.tacticalUsed===true;
    u.face=state.face??(u.team==='enemy'?1:-1);u.x=u.vx=state.x;u.z=u.vz=state.z;u.hp=Object.fromEntries(targetParts(u).map(part=>[part,state.hp[part]??u.max[part]]));u.ap=state.ap;u.brace=state.brace;u.skill=state.skill;u.boost=state.boost;u.alive=alive;u.surrendered=state.surrendered;u.downReason=alive?null:state.surrendered?'surrender':u.hp.body>0?'pilot':'body';
    if(!alive&&!u.kind&&Number.isFinite(state.deathYaw)&&Math.abs(state.deathYaw)<=Math.PI)u.deathYaw=state.deathYaw;
    if(saved.version>=5){u.heading=FIELD_HEADINGS[headingIndex(state.heading)];u.face=Math.sign(Math.sin(u.heading));u.moveLeft=Math.min(state.moveLeft,mobility(u));u.actionPhase=state.actionPhase;u.extraStep=state.extraStep;u.reacted=state.reacted}
@@ -1849,7 +1861,7 @@ function equipWeapon(id,hand){
 function fixedMeleeOption(frame){return FRAMES[frame].fixedWeapons&&equipmentItem(FRAMES[frame].melee)?FRAMES[frame].melee:null;}
 function fixedPrimaryOptions(frame){
  if(FRAMES[frame].primaryOptions)return FRAMES[frame].primaryOptions;
- if(FRAMES[frame].captureOnly)return INFANTRY_PRIMARIES;
+ if(isLineInfantryFrame(frame))return INFANTRY_PRIMARIES;
  return FRAMES[frame].fixedWeapons&&frame!==REAVER_FRAME&&equipmentItem(FRAMES[frame].weapon)?[FRAMES[frame].weapon]:[];
 }
 const hullSlot=frame=>LANCE_SLOTS.findIndex(i=>pilotFrame(i)===frame);
@@ -3258,9 +3270,9 @@ function startLionTrial(id){
  focusBattleCamera(lion,true);
  render();
 }
-const {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim}=window.IRON_VOW_SIM.createTerrainRules({
+const {occupied,neighborTiles,paths,route,movementPlans,elevationCost,terrainLevel,distance,inCover,ridgeBlocks,attackObstruction,highGroundAim,fireLevel}=window.IRON_VOW_SIM.createTerrainRules({
  getBattle:()=>battle,onBoard,movementLimit,freeMovement,extraMoveAP:EXTRA_MOVE_AP,terrainCell,helicopterHeight:()=>VEHICLES.helicopter.altitude/TERRAIN_RISE,
- canReachTarget,launchesMissiles
+ canReachTarget,launchesMissiles,hoverElevation
 });
 let tacticalAim=null;
 const TACTICAL_SPECS={
@@ -3375,8 +3387,29 @@ async function enemyTactical(u,opponents){
  await executeTactical(u,best);
  return true;
 }
+function canHover(u){
+ return Boolean(u?.alive&&u.frame===SAKER_FRAME&&mobile(u)&&!u.hoverUsed&&u.ap>=HOVER_AP&&!u.blackout?.hold);
+}
+function activateHover(u){
+ if(!canHover(u))return false;
+ u.ap-=HOVER_AP;
+ u.hoverUsed=u.hoverActive=true;
+ u.hoverChangedAt=clock;
+ startAction(u);
+ addLog(u.name+' is hovering at +'+HOVER_LEVELS+' elevation.');
+ sound('hydraulic',.95);
+ return true;
+}
+function enemyHover(u,opponents){
+ if(!canHover(u))return false;
+ const w=unitWeapon(u),raised={...u,hoverActive:true};
+ if(!workingWeapon(u,w)||u.ap-HOVER_AP<paidAttackAP(u,w))return false;
+ return opponents.some(t=>distance(raised,t)<=combatRange(raised,t,w)&&!attackObstruction(raised,t,w)&&
+  (distance(u,t)>combatRange(u,t,w)||attackObstruction(u,t,w)||highGroundAim(raised,t,w)-highGroundAim(u,t,w)>=.2||
+   [unitWeapon(t),meleeWeapon(t)].some(attack=>attack?.melee&&workingWeapon(t,attack)&&distance(t,u)===1)))&&activateHover(u);
+}
 function canJumpjet(u){
- return Boolean(u?.alive&&(FRAMES[u.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME))&&u.hp.legs>0&&u.ap>=JUMPJET_AP&&!u.jumpjetUsed);
+ return Boolean(u?.alive&&(FRAMES[u.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME))&&mobile(u)&&u.ap>=JUMPJET_AP&&!u.jumpjetUsed);
 }
 function jumpjetLanding(u,x,z){
  return canJumpjet(u)&&Number.isInteger(x)&&Number.isInteger(z)&&onBoard(x,z)&&distance(u,{x,z})<=jumpjetRange(FRAMES[u.frame])&&
@@ -3469,7 +3502,7 @@ function renderBattle(){
   const counterStatus=counter?'READY / '+(counter===FREE_HAND_COUNTER?'FREE HAND':counter.melee?'MELEE':'RANGED'):
    targetReaction==='READY'?'OUT OF REACH':targetReaction;
   const targetShield=activeShield(target);
-  const targetStatus=[target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
+  const targetStatus=[hoverElevation(target)?'HOVERING · +2 ELEVATION':'',target?.frame===REAVER_FRAME?FRAMES[REAVER_FRAME].role+' · '+reaverGunStatus(target):'',targetShield?'SHIELD':'',target?.blackout?'JAMMED':'',target?.painted?'PAINTED ×'+target.painted.shots:''].filter(Boolean).join(' · ');
   battlefieldReady=window.IronVowScene?.ready!==false;
   battlefieldLoadFailed=Boolean(window.IronVowScene?.loadFailed);
   const ready=battle.phase==='player'&&!battle.busy&&battlefieldReady,canMove=Boolean(u&&paths(u).size>1),canFire=canUseWeapon(u,selectedWeapon(u,'fire')),canStrike=canUseWeapon(u,selectedWeapon(u,'strike')),chosen=selectedWeapon(u,action,target)||selectedWeapon(u,'fire',target);
@@ -3481,7 +3514,8 @@ function renderBattle(){
    [elevationAim?'HIGH GROUND +'+Math.round(elevationAim*100)+' AIM':'',launchesMissiles(chosen)&&ridgeBlocks(u,target)?'ARC OVER RIDGE':'',inCover(target)&&!chosen.melee&&!launchesMissiles(chosen)?'COVER':''].filter(Boolean).join(' · ')||'IN RANGE');
   const barrage=u&&target?barrageStatus(u,target,chosen):'';
   const shotPreview=inRange&&!obstruction&&!gunsOffline?(barrage||attackPreview(u,target,chosen)+(targetShield?' → '+shieldArmLabel(target):'')):'';
-  const fireHint=gunsOffline?chosen.name+' · '+shotStatus:chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(chosen.id===REAVER_AUTOCANNON.id?' · '+reaverGunStatus(u):'')+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH';
+  const perched=u&&target&&chosen&&highPerchRange(u,target,chosen);
+  const fireHint=gunsOffline?chosen.name+' · '+shotStatus:chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(perched?' · HIGH PERCH +1 RANGE':'')+(chosen.id===REAVER_AUTOCANNON.id?' · '+reaverGunStatus(u):'')+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH';
   const contacts=battle.units.filter(t=>t.team==='enemy'&&t.alive).length;
   const missile=shoulderWeapon(u),canMissile=canUseWeapon(u,missile);
   const id=u&&u.level>=3?fieldLicense(u.pilot):null;
@@ -3492,6 +3526,7 @@ function renderBattle(){
   const lionLoadout=battle.lionTrial?`<div class="lion-trial-loadout" role="group" aria-label="Lion trial weapon">
    ${LION_TRIAL_WEAPONS.map(id=>`<button type="button" data-lion-weapon="${id}" aria-pressed="${u?.melee===id}" ${battle.busy?'disabled':''}>${weapon(id).name}</button>`).join('')}
   </div>`:'';
+  const hoverButton=u?.frame===SAKER_FRAME?`<button id="saker-hover" type="button" ${u.hoverActive?'data-hovering':''} title="${HOVER_HELP}" ${ready&&canHover(u)?'':'disabled'}>${icon('lightning')}<span>${u.hoverActive?'HOVERING':'HOVER'} <small>· ${u.hoverActive?'+2 HEIGHT':u.hoverUsed?'USED':HOVER_AP+' AP'}</small></span></button>`:'';
   const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${jumpjetHelp(FRAMES[u.frame])}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+' AP'}</span></span></button>`:'';
   const staged=(!battle.operation?.called&&battle.operation?.extra.find(seat=>seat.staged))||null;
   const reserveControl=staged?`<button class="icon" id="call-sortie-reserve" ${ready&&battle.turn>=RESERVE_ENTRY_ROUND?'':'disabled'}>CALL ${CREW[pilotKind(staged.pilotId)].call}${battle.turn<RESERVE_ENTRY_ROUND?' · ROUND 2':''}</button>`:'';
@@ -3513,9 +3548,9 @@ function renderBattle(){
    ${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${counterStatus}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
-  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':'')+' · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
+  <div class="hint${action==='tactical'?' tactical-hint':''}"><span id="field-hint">${battlefieldLoadFailed?'BATTLEFIELD MODEL FAILED TO LOAD':!window.IronVowScene?.ready?'LOADING BATTLEFIELD':battle.busy?'RESOLVING':action==='jumpjet'?'PICK LANDING':action==='move'?(u?freeMovement(u)+' FREE MOVE'+(extraMovement(u)?' · +1 TILE / '+EXTRA_MOVE_AP+' AP':'')+' · LEVEL CHANGE +1 AP':'SELECT MECH'):fireHint}${hoverElevation(u)?' · HOVERING · MOVE LOCKED':''}</span><div id="move-preview" class="move-preview" role="status" hidden></div></div>
   ${tacticalPreviewMarkup(u)}
-  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
+  <div class="battle-bottom"><div class="unitbuttons">${battle.units.filter(t=>t.team==='ally').map(t=>`<button data-unit="${t.index}" class="${t.index===selected?'active':''} ${spent(t)?'spent':''}" ${!t.alive||spent(t)||battle.busy?'disabled':''}>${pilotMark(t.pilot,'pilot-thumb')}<span><b>${t.name}</b><small>${t.alive?(spent(t)?'SPENT / ':t.ap+' AP / '+freeMovement(t)+' MOVE<br>')+'REACTION '+reactionStatus(t)+(equippedShield(t)?'<br><strong class="shield-status">SHIELD '+(activeShield(t)?t.hp.left+'/'+t.max.left+' ARM HP':'ARM LOST')+'</strong>':'')+(t.order||t.breach?'<br><strong class="unit-status">'+[t.order?'ORDERED':'',t.breach?'CHARGE ×'+t.breach:''].filter(Boolean).join(' / ')+'</strong>':''):t.downReason==='pilot'?'PILOT DOWN':'DISABLED'}</small></span></button>`).join('')}</div><div class="actionbuttons"><button id="move" class="${action==='move'?'active':''}" ${!u||!ready||!canMove?'disabled':''}>${icon('arrows-out-cardinal')}<span>MOVE <span class="key-hint">M</span></span></button>${jetButton}${hoverButton}${tacticalButton}${licenseButton}<button id="fire" class="${action==='fire'?'active':''}" ${!u||!ready||!canFire?'disabled':''}>${icon('crosshair')}<span>${u?.frame===VYZOV_FRAME?'PUNCH':'FIRE'} <span class="key-hint">F</span></span></button><button id="strike" class="${action==='strike'?'active':''}" ${!ready||!canStrike?'disabled':''}>${icon('crosshair')}<span>STRIKE <span class="key-hint">X</span></span></button>${missile?`<button id="missile" class="${action==='missile'?'active':''}" ${!ready||!canMissile?'disabled':''} title="${missile.name} · ${pairedLauncher(u,missile)?'Each pod needs its matching arm':'Requires the right arm'}">${icon('crosshair')}<span>MISSILE</span></button>`:''}<button id="skill" aria-label="${u?CREW[u.pilot].skill:'Pilot skill'}" title="${u?skillDescription(u.pilot,u.training):''}" ${!u||spent(u)||u.skill||!ready||u.ap<skillCost(u.pilot,u.training)||(targetedSkill(u.pilot)&&!supportTargets(u).length)||(u.pilot===SAPPER&&u.hp.right<=0)||(u.pilot===2&&u.hp.body===u.max.body&&!repairableLimbs(u).length)?'disabled':''}>${icon('lightning')}<span>${u?['OVERDRIVE','DEADEYE','REPAIR','PAINT','RELAY','CHARGE','BLACKOUT','RECOVER'][u.pilot]:'SKILL'} <span class="key-hint">Q</span></span></button><button id="brace" title="Brace: ${braceCost(u?.training)} AP, blocks ${Math.round(braceReduction(u?.training)*100)}% damage" ${!u||u.ap<braceCost(u.training)||u.brace||!ready?'disabled':''}>${icon('shield-chevron')}<span>BRACE <span class="key-hint">/ ${braceCost(u?.training)} AP</span></span></button><button id="end" class="primary" ${battle.busy||window.IronVowScene?.ready===false?'disabled':''}>END TURN</button></div></div>`;
   window.IronVowMenus?.combatLayout($('#ui'));
   const reserveButton=$('#call-sortie-reserve');
   if(reserveButton)reserveButton.onclick=callReserve;
@@ -3533,6 +3568,16 @@ function renderBattle(){
   const cancel=$('#tactical-cancel'),confirm=$('#tactical-confirm');
   if(cancel)cancel.onclick=()=>{cancelTactical();renderBattle();$('#tactical')?.focus();};
   if(confirm)confirm.onclick=()=>void commitTactical();
+  if(hoverButton)$('#saker-hover').onclick=()=>{
+   if(!ready||!canHover(u))return;
+   modal(u.name+' · HOVER',`<p class="hover-confirm">${HOVER_HELP}</p><p>${u.ap} AP → ${u.ap-HOVER_AP} AP</p>`,[
+    {text:'CANCEL',fn:closeModal},
+    {text:'HOVER · '+HOVER_AP+' AP',fn:()=>{
+     if(battle.busy||battle.phase!=='player'||current()!==u||!activateHover(u))return;
+     closeModal();action='fire';targetPanelOpen=false;renderBattle();$('#fire')?.focus();persist();
+    }}
+   ]);
+  };
   if(jetButton)$('#jumpjet').onclick=()=>{if(canJumpjet(u)){action=action==='jumpjet'?'move':'jumpjet';targetPanelOpen=false;hover=null;renderBattle()}};
   if(missile)$('#missile').onclick=()=>{if(canMissile){action='missile';renderBattle();persist()}};
   $('#brace').onclick=()=>{if(u&&u.ap>=braceCost(u.training)&&!u.brace&&!battle.busy){startAction(u);u.ap-=braceCost(u.training);braceUnit(u);addLog(u.name+' braced for incoming fire.');focusNextReady();renderBattle();persist()}};
@@ -3963,12 +4008,12 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence){
   if(ownsCamera&&sequence)closeAttackCamera(sequence);
  }
 }
-const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({isArmed,equippedShield,counterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
+const {reactionStatus,reactionWeapon}=window.IRON_VOW_SIM.createReactionRules({isArmed,equippedShield,counterRange,combatCounterRange,unitWeapon,distance,scoutWeapon,attackObstruction,meleeWeapon,workingWeapon,BULWARK_FRAME,ASHIGARU_FRAME,FREE_HAND_COUNTER});
 const {barrageRestriction,engage:resolveExchange,spendMovement,spendAttack,recordVolley,applyImpact,recordHit,completeRound}=window.IRON_VOW_SIM.createCombatTransactions({
  getBattle:()=>battle,launchesMissiles,hasMechSkill,CITADEL_FRAME,barrageTarget,distance,combatRange,
  attackObstruction,mechState,paidAttackAP,startAction,addLog,toast,
  beginAttackCamera:(...args)=>beginAttackCamera(...args),closeAttackCamera,shoot,
- BASTION_FRAME,unitWeapon,counterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
+ BASTION_FRAME,unitWeapon,counterRange,combatCounterRange,reactionStatus,reactionWeapon,FREE_HAND_COUNTER,braceUnit,
  freeMovement,EXTRA_MOVE_AP,chargedLimbShot,REAVER_FRAME,HELLBREAKER,VANGUARD_FRAME,roundAP,resetMovement,highGroundAim
 });
 function awardCombatKill(actor,target){
@@ -4028,7 +4073,7 @@ function checkEnd(){if(!battle)return true;if(!depotOperation()&&!battle.units.s
 const enemyDoctrine=u=>u.kind==='helicopter'?[5,'mobile']:u.kind==='tank'?[4,'hold']:MECH_SIGNATURES[u.frame]?.slice(2);
 const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
- unitWeapon,combatRange,launchesMissiles,movementLimit,isArmed:u=>isArmed(u)||canTactical(u),shoulderWeapon,workingWeapon,trySurrender,tryTactical:enemyTactical,tacticalRange:u=>canTactical(u)?tacticalWeapon(u).range:0,
+ unitWeapon,combatRange,launchesMissiles,movementLimit,isArmed:u=>isArmed(u)||canTactical(u),shoulderWeapon,workingWeapon,trySurrender,tryHover:enemyHover,tryTactical:enemyTactical,tacticalRange:u=>canTactical(u)?tacticalWeapon(u).range:0,
  resetMovement,renderBattle:()=>renderBattle(),distance,meleeWeapon,scoutWeapon,canUseWeapon,attackObstruction,
  hasMechSkill,paths,movementPlans,canJumpjet,jumpjetDestination,
  tacticalJumpLandings:u=>FRAMES[u.frame]?.jumpjetEachTurn?jumpjetLandings(u):null,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
@@ -4897,7 +4942,7 @@ function battlefield(t){
  const u=current(),reachable=u&&battle.phase==='player'&&!battle.busy&&action==='move'?movementPlans(u):null;
  const moveTile=reachable&&!targetPanelOpen&&$('#modal').hidden?(moveTap??hover):null,plan=moveTile&&reachable.get(moveTile.x+','+moveTile.z);
  const preview=plan?.tiles?previewMoveShots(u,moveTile,plan):null;showMovePreview(preview?moveTile:null,preview);
- for(const unit of battle.units)if(unit.alive)drawUnitReadout(unit,(unit.kind?1.2:2.35)+jumpjetHeight(unit,t));
+ for(const unit of battle.units)if(unit.alive)drawUnitReadout(unit,(unit.kind?1.2:2.35)+jumpjetHeight(unit,t)+displayedHoverLevel(unit)*TERRAIN_RISE);
  if(reachable)for(const [key,move] of reachable)if(move.tiles){const [x,z]=key.split(',').map(Number);if(inCover({x,z}))drawCoverMarker(x,z);}
  if(plan?.tiles){const p=project(moveTile.x,.15,moveTile.z);ctx.fillStyle='#0b141ddd';ctx.fillRect(p.x-28,p.y-26,56,18);ctx.fillStyle='#bfe4ee';ctx.font='600 11px Inter,Arial,sans-serif';ctx.textAlign='center';ctx.fillText(plan.ap?plan.ap+' AP':'FREE',p.x,p.y-13);}
  drawEffects(t);

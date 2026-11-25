@@ -88,7 +88,7 @@ function contacts(m,input,dt,travel,reset){
  if(reset||input.reducedMotion){
   s.swing=null;s.stance=null;s.handoff=null;
   m.legs.forEach((foot,i)=>{foot.planted.copy(homes[i]);foot.foot.copy(homes[i]);foot.swing=false;});
-  if(!walking&&input.alive&&!input.legsDead&&s.phase>0){
+  if(!walking&&!input.hovering&&input.alive&&!input.legsDead&&s.phase>0){
    s.stance=m.rig.legs.map(leg=>({standing:sole(m,input,leg,0,0),kneeling:sole(m,input,leg,0,1),progress:0}));
    stanceContacts(m,input,s.phase,0);
   }
@@ -233,13 +233,13 @@ function moveRearLeg(m,input,stance,phase){
 function animate(m,input,dt,t){
  const s=m.saker,{rig,cont}=m,alive=input.alive,old=cont.position.clone();
  const airborne=Boolean(input.airborne);
- if(airborne){const floor=input.ground;input={...input,groundAt:()=>floor};}
- const tuck=airborne?Math.sin(Math.PI*clamp(input.airborneProgress??0)):0;
- const landed=s.airborne&&!airborne;
- s.airborne=airborne;
+ if(airborne||input.hovering){const floor=input.ground;input={...input,groundAt:()=>floor};}
+ const tuck=input.hovering?.38:airborne?Math.sin(Math.PI*clamp(input.airborneProgress??0)):0;
+ const lifted=airborne||input.hovering,landed=s.lifted&&!lifted;
+ s.lifted=lifted;
  cont.position.set(input.pos.x,input.ground??0,input.pos.z);
  const travel=old.setY(0).distanceTo(cont.position.clone().setY(0));
- const reset=!m.init||travel>5||airborne||landed,heading=input.moving?input.heading:input.face;
+ const reset=!m.init||travel>5||lifted||landed,heading=input.moving?input.heading:input.face;
  const turn=Math.atan2(Math.sin(heading-m.yaw),Math.cos(heading-m.yaw));
  if(reset)m.yaw=heading;else if(alive)m.yaw+=turn*(1-Math.exp(-dt*12));cont.rotation.set(0,m.yaw,0);
  if(!input.moving||s.handoff)cont.updateWorldMatrix(true,false);

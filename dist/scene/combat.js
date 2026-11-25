@@ -186,14 +186,19 @@ root.IronVowCombat={create(scene,api){
    }
    const age=t-(u.deathTime??t),wreck=!u.alive&&u.downReason!=='pilot'&&age<14,damaged=u.alive&&u.hp.body/u.max.body<.24;
    if((wreck||damaged)&&t>=state.smoke){state.smoke=t+(low()?.25:.12);const p=point(u,'body');fx.smoke(p,1,wreck?3.2:1.8,wreck?0x4b4743:0x817a70,.4,wreck?1.4:.9,2.4,.25);if(wreck&&age<5)fx.fire(p,1.5,.65,null,.9);}
-   if(u.motion?.jumpjet&&!reducedMotion&&t>=state.jet){
-    state.jet=t+.045;
+   if(u.alive&&(u.motion?.jumpjet||u.hoverActive)&&!reducedMotion&&t>=state.jet){
+    state.jet=t+(u.hoverActive?.085:.045);
     const nozzles=m?.nativeV2?.jetNozzles;
     if(nozzles)for(const nozzle of nozzles){
      const origin=nozzle.getWorldPosition(V3());
      const direction=V3(0,1,0).applyQuaternion(nozzle.getWorldQuaternion(new T.Quaternion()));
      fx.fire(origin,1.2,.18,direction.multiplyScalar(5));
      fx.smoke(origin,1,1.2,0x9faaa9,.35,-.4,.7,.18);
+    }else if(u.hoverActive&&m){
+     for(const leg of m.rig.legs){
+      const foot=leg.an.getWorldPosition(V3());
+      fx.fire(foot,.7,.16,V3(0,-4,0));
+     }
     }else{
      const p=point(u,'legs');fx.fire(p,1.8,.2,V3(0,-5,0));fx.smoke(p,low()?1:2,2,0x9faaa9,.45,-.4,.8,.2);
     }
