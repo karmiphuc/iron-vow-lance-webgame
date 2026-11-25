@@ -79,42 +79,40 @@
     "report": "design/phase7/summary.json"
   },
   "latestPublishedRelease": {
-    "siteVersion": 152,
+    "siteVersion": 155,
     "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
-    "sourceCommit": "84cfc0a69baede376d756ea0aa9413dba983a8ac",
-    "githubCommit": "e95f7fcaa66c736bd4bc848908cc8560902bd1fc",
-    "distTree": "c4878b4e0f995d0d2cec5adb45c3c96d8867f86b",
-    "verifiedAt": "2026-11-25T09:11:47.528Z",
-    "localReleaseSourceSha256": "e0b8788fdea4d84d1a143a5022475a9fa5acf15c2f1b2f8faa531270e33ad6fe",
-    "simulationSuites": 95,
+    "sourceCommit": "9a0fc2dd377e18d57b65da45f17832f1aab1cf27",
+    "githubCommit": "b79ee6cf83f4a1da05c8b332affca4badd36a401",
+    "distTree": "2d41a544bf98d641b9a2f850bfae92449796b21c",
+    "localReleaseSourceSha256": "9e78e1f7cbc696d0ebf4d2f8c693f0c6c9d4e25dc1371c55fdde62a47160d952",
+    "simulationSuites": 96,
     "localBrowser": {
-      "desktop": 3,
-      "touch": 3,
+      "desktop": 74,
+      "touch": 74,
       "result": "passed",
-      "scenarios": [
-        "checkNavigation",
-        "checkCombatReadability",
-        "checkComSkills"
-      ]
+      "method": "Across two release-gate runs on the same runtime tree. The second run completed Nightjar and Raven after the Nightjar test was corrected to sample the settled pose."
     },
-    "liveFilesCompared": 175,
+    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_fd67036f0ae881919b3fe26d39dc4909",
+    "deploymentId": "appgdep_6b07152a391c8191940a00f515cb9812",
+    "featurePullRequests": [
+      108,
+      109,
+      110,
+      111
+    ],
+    "qaPullRequest": 112,
+    "verifiedAt": "2026-11-25T17:18:04.625872+00:00",
+    "liveFilesCompared": 176,
     "liveBrowser": {
-      "desktop": 1,
-      "touch": 1,
-      "result": "passed",
-      "scenarios": [
-        "Stun lockout, 3 AP reboot and reload"
-      ],
-      "transport": "Production responses fetched via the configured Node HTTPS proxy and exercised in Chromium."
+      "desktop": 74,
+      "touch": 74,
+      "result": "passed"
     },
     "environment": {
-      "browser": "Chromium headless shell",
-      "touch": "iPad-sized emulation for the status smoke",
+      "browser": "Chromium",
+      "touch": "Emulated iPhone 13",
       "nativeIPad": "unverified"
-    },
-    "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_78edcd173d6c819196a1ddb0201a60f6",
-    "deploymentId": "appgdep_6b06a599ee7c819194877746e568f340",
-    "featurePullRequest": 103
+    }
   },
   "publishedReleaseHistory": [
     {
@@ -702,6 +700,44 @@
       "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_45d47fc372848191a2c8ae2b1ade832f",
       "deploymentId": "appgdep_6b0594c807b88191bacb96baf1c77dbd",
       "evidence": "design/nightjar/README.md"
+    },
+    {
+      "siteVersion": 152,
+      "siteUrl": "https://iron-vow-mercenary-command.karmi-nguyen.chatgpt.site",
+      "sourceCommit": "84cfc0a69baede376d756ea0aa9413dba983a8ac",
+      "githubCommit": "e95f7fcaa66c736bd4bc848908cc8560902bd1fc",
+      "distTree": "c4878b4e0f995d0d2cec5adb45c3c96d8867f86b",
+      "verifiedAt": "2026-11-25T09:11:47.528Z",
+      "localReleaseSourceSha256": "e0b8788fdea4d84d1a143a5022475a9fa5acf15c2f1b2f8faa531270e33ad6fe",
+      "simulationSuites": 95,
+      "localBrowser": {
+        "desktop": 3,
+        "touch": 3,
+        "result": "passed",
+        "scenarios": [
+          "checkNavigation",
+          "checkCombatReadability",
+          "checkComSkills"
+        ]
+      },
+      "liveFilesCompared": 175,
+      "liveBrowser": {
+        "desktop": 1,
+        "touch": 1,
+        "result": "passed",
+        "scenarios": [
+          "Stun lockout, 3 AP reboot and reload"
+        ],
+        "transport": "Production responses fetched via the configured Node HTTPS proxy and exercised in Chromium."
+      },
+      "environment": {
+        "browser": "Chromium headless shell",
+        "touch": "iPad-sized emulation for the status smoke",
+        "nativeIPad": "unverified"
+      },
+      "savedVersionId": "appgprj_6aeeef176ee08191afe74f9556b02484~appgver_78edcd173d6c819196a1ddb0201a60f6",
+      "deploymentId": "appgdep_6b06a599ee7c819194877746e568f340",
+      "featurePullRequest": 103
     }
   ]
 }
