@@ -3875,9 +3875,14 @@ function attackPreview(a,t,w){
  const routines=comOdds(comAttackOptions(a,t,w).filter(c=>installedCom(a).includes(c.id)));
  const com=routines.map(({id,rate,strike})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'%'+(strike?.parts?' ('+strike.parts.map(part=>HEALTH_LABEL[part]).join(' + ')+')':'')).join(' / ');
  const support=comOdds(comSupportOptions(a,t)).map(({id,rate,aim})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'% ('+Math.round(aim*.65)+'% hit)').join(' / ');
- const statuses=battle.com?statusOptions(t,w,battle.turn).map(kind=>Math.round(statusChance(t,kind)*100)+'% '+(kind==='stunned'?'STUN ON ≥20% BODY DAMAGE':'CONFUSE ON COCKPIT OR TWO LIMBS ≥10% EACH')):[];
  const odds=hit+'%'+(w.scatter?' SHELL':multi?'/ROUND':' HIT');
- return (com?com+' · ':'')+odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG')+(support?' · Enemy '+support:'')+(statuses.length?' · '+statuses.join(' / '):'');
+ return (com?com+' · ':'')+odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG')+(support?' · Enemy '+support:'');
+}
+function pilotStatusForecast(target,w){
+ if(!battle.com)return '';
+ return statusOptions(target,w,battle.turn).map(kind=>
+  Math.round(statusChance(target,kind)*100)+'% '+(kind==='stunned'?'Stun if body damage reaches 20%':'Confusion on cockpit damage or 10% damage to each of two limbs')
+ ).join(' · ');
 }
 function barrageTarget(u){
  const lock=u.mechState?.lock;
@@ -4026,6 +4031,7 @@ function renderBattle(){
    [elevationAim?'HIGH GROUND +'+Math.round(elevationAim*100)+' AIM':'',launchesMissiles(chosen)&&ridgeBlocks(u,target)?'ARC OVER RIDGE':'',inCover(target)&&!chosen.melee&&!launchesMissiles(chosen)?'COVER':''].filter(Boolean).join(' · ')||'IN RANGE');
   const barrage=u&&target?barrageStatus(u,target,chosen):'';
   const shotPreview=inRange&&!obstruction&&!gunsOffline?(barrage||attackPreview(u,target,chosen)+(targetShield?' → '+shieldArmLabel(target):'')):'';
+  const statusForecast=shotPreview&&!barrage?pilotStatusForecast(target,chosen):'';
   const perched=u&&target&&chosen&&highPerchRange(u,target,chosen);
   const fireHint=gunsOffline?chosen.name+' · '+shotStatus:chosen?chosen.name+' · '+paidAttackAP(u,chosen)+' AP'+(perched?' · HIGH PERCH +1 RANGE':'')+(chosen.id===REAVER_AUTOCANNON.id?' · '+reaverGunStatus(u):'')+(chargedLimbShot(u,chosen,'body',false)?' · CHARGED':''):'SELECT MECH';
   const contacts=battle.units.filter(t=>t.team==='enemy'&&t.alive).length;
@@ -4056,7 +4062,7 @@ function renderBattle(){
     <button class="icon close-target" id="close-target" aria-label="Close target details">${icon('x')}</button>
    </div>
    ${targetHealthMarkup(target)}
-   ${u&&target?`<div class="shot-readout"><b>${shotPreview||shotStatus}</b>${shotPreview&&shotStatus!=='IN RANGE'?`<small>${shotStatus}</small>`:''}</div>`:''}
+   ${u&&target?`<div class="shot-readout"><b>${shotPreview||shotStatus}</b>${shotPreview&&shotStatus!=='IN RANGE'?`<small>${shotStatus}</small>`:''}${statusForecast?`<small>${statusForecast}</small>`:''}</div>`:''}
    ${target&&!target.kind?`<div class="reaction-row"><span class="note reaction-status">${icon('arrow-u-up-left')} COUNTER ${counterStatus}</span>${infoTip('target counterattack',COUNTER_HELP)}</div>`:''}
   </aside>
   <div class="log">${battle.log.slice(-2).map(l=>'<div class="log-line">'+l+'</div>').join('')}</div>
