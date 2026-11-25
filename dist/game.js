@@ -469,66 +469,66 @@ const dailyRelayLead=()=>RELAY_LEADS[(save.day-1)%RELAY_LEADS.length];
 const foundryModel=frame=>FRAMES[frame]?.foundry;
 const pilotFrame=(i,career=save)=>career.units[i].frame??i;
 const CONTRACTS=[
- {id:'picket',field:0,name:'Picket sweep',place:'KARST BASIN · OUTER PERIMETER',tag:'PATROL INTERCEPT',pay:2000,fixedPay:true,difficulty:1,desc:'Break a light security patrol. Posted patrols face line infantry, an Ashigaru scout, armor and air support.',
+ {id:'picket',field:0,name:'Picket sweep',place:'KARST BASIN · OUTER PERIMETER',tag:'PATROL INTERCEPT',noScrap:true,difficulty:1,desc:'Break a light security patrol. Posted patrols face line infantry, an Ashigaru scout, armor and air support.',
   deployment:[[6,10],['tank',4,13],['tank',7,14],['helicopter',9,15]]},
- {id:'relay',field:0,name:'Ashes of the relay',place:'KARST BASIN · SECTOR 07',tag:'RECOVERY OPERATION',pay:3200,difficulty:1,desc:'Clear the relay station and recover its navigation core. Expect Aero with a rotating melee loadout.',legacyMechs:3,
+ {id:'relay',field:0,name:'Ashes of the relay',place:'KARST BASIN · SECTOR 07',tag:'RECOVERY OPERATION',objectivePay:250,difficulty:1,desc:'Clear the relay station and recover its navigation core. Expect Aero with a rotating melee loadout.',legacyMechs:3,
   deployment:[[6,10],[13,6],[16,3],['tank',4,13],['helicopter',10,16]]},
- {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',pay:4600,difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect Line Infantry Elite, a heavy escort, and a Reaver.',legacyMechs:4,
+ {id:'corridor',field:1,name:'The iron corridor',place:'VANTA INDUSTRIAL · SECTOR 12',tag:'INTERDICTION',difficulty:2,desc:'Intercept an armored patrol before it reaches the refinery. Expect Line Infantry Elite, a heavy escort, and a Reaver.',legacyMechs:4,
   deployment:[[7,11],[14,6],[15,15],[4,4],['tank',4,14],['helicopter',11,17],['tank',9,8]]},
- {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',pay:6800,difficulty:3,desc:'Take the command yard under a veteran lance. A Kite gunship arrives on round four, and the loading yard holds optional salvage.',legacyMechs:5,
+ {id:'frontier',field:2,name:'No quiet frontier',place:'HALCYON OUTSKIRTS · SECTOR 19',tag:'HIGH-RISK CONTRACT',objectivePay:600,difficulty:3,desc:'Take the command yard under a veteran lance. A Kite gunship arrives on round four, and the loading yard holds optional salvage.',legacyMechs:5,
   deployment:[[7,12],[12,6],[15,15],[4,4],[14,2],['tank',4,14],['helicopter',10,16],['tank',12,10],['helicopter',9,3]]}
 ];
 // Salt Works has a fixed seat count and leaves the saved dispatch rolls in place.
 const dispatchContractCount=CONTRACTS.length;
 const SALT_WORKS_CONTRACT=CONTRACTS.push({
  id:'salt-works',port:'corridor',field:1,seats:1,hostiles:[SALT_WORKS_GARRISON_FRAME],
- name:'Salt Works',place:'VANTA INDUSTRIAL · SALT WORKS',tag:'GARRISON INTERCEPT',pay:4200,difficulty:1,
+ name:'Salt Works',place:'VANTA INDUSTRIAL · SALT WORKS',tag:'GARRISON INTERCEPT',objectivePay:250,difficulty:1,
  desc:'Send one mech into the refinery yard to intercept a Salt Works Garrison rifle chassis.',
  deployment:[[4,13]]
 })-1;
 // These regional contracts use fixed deployments. Their indices are persisted on accepted offers.
 CONTRACTS.push(
  {id:'whiteout-patrol',port:'ridge',field:0,seats:1,hostiles:[HUSKY_FRAME],
-  name:'Whiteout Patrol',place:'RIDGE MAST · NORTH CUT',tag:'SCOUT INTERCEPT',pay:3900,difficulty:1,
+  name:'Whiteout Patrol',place:'RIDGE MAST · NORTH CUT',tag:'SCOUT INTERCEPT',objectivePay:100,difficulty:1,
   desc:'Intercept a lone Husky on the north cut. Keep the trail scout outside scattergun range.',
   deployment:[[7,10]]},
  {id:'kiln-nine',port:'corridor',field:1,seats:2,hostiles:[GIZA_FRAME,SALT_WORKS_GARRISON_FRAME],
-  name:'Kiln Nine',place:'VANTA SHIPYARDS · KILN NINE',tag:'SIEGE BATTERY',pay:6600,difficulty:2,
+  name:'Kiln Nine',place:'VANTA SHIPYARDS · KILN NINE',tag:'SIEGE BATTERY',objectivePay:850,difficulty:2,
   desc:'Dislodge a Giza and its Garrison escort. Break sightlines before the twin shoulder guns acquire one of your mechs.',
   deployment:[[12,7],[7,11]]},
  {id:'broken-grid',port:'frontier',field:2,seats:2,hostiles:[VYZOV_FRAME,HUSKY_FRAME],
-  name:'Broken Grid',place:'HALCYON OUTPOST · RUNOFF BASIN',tag:'RAIDER HUNT',pay:8200,difficulty:3,
+  name:'Broken Grid',place:'HALCYON OUTPOST · RUNOFF BASIN',tag:'RAIDER HUNT',objectivePay:1150,difficulty:3,
   desc:'A Vyzov mortar raider and its Husky spotter hold the basin. Spread your lance to deny the mortar a clustered target.',
   deployment:[[12,6],[7,12],['tank',4,14]]}
 );
 const INTERCEPTS={
- armor:CONTRACTS.push({id:'rail-armor',name:'Rail interception · Armored patrol',field:0,difficulty:1,pay:0,
+ armor:CONTRACTS.push({id:'rail-armor',name:'Rail interception · Armored patrol',field:0,difficulty:1,unpaid:true,
   hostiles:[0,HUSKY_FRAME],deployment:[[7,10],[12,8],['tank',4,13]]})-1,
- air:CONTRACTS.push({id:'rail-air',name:'Rail interception · Air patrol',field:1,difficulty:1,pay:0,
+ air:CONTRACTS.push({id:'rail-air',name:'Rail interception · Air patrol',field:1,difficulty:1,unpaid:true,
   hostiles:[1,HUSKY_FRAME],deployment:[[7,11],[14,6],['helicopter',10,16]]})-1
 };
 // Append after the two interception slots already persisted by live careers.
 CONTRACTS.push({id:'blind-crossing',port:'brine',field:1,seats:1,hostiles:[NIGHTJAR_FRAME],
-  name:'Blind Crossing',place:'BRINE CAUSEWAY · SPILLWAY',tag:'SNIPER INTERCEPT',pay:4100,difficulty:1,
+  name:'Blind Crossing',place:'BRINE CAUSEWAY · SPILLWAY',tag:'SNIPER INTERCEPT',objectivePay:350,difficulty:1,
   desc:'Cross the spillway under a Nightjar’s rifle. Its right-hand buckler can absorb a hit. Use the cargo stacks to close the gap.',
   deployment:[[8,11]]});
 // Append-only: accepted world offers store template indices.
 CONTRACTS.push(
  {id:'distress-crossing',distress:'crossing',port:'brine',field:0,seats:3,
   hostiles:[CAIRN_FRAME,HUSKY_FRAME,CAIRN_FRAME,ASHIGARU_FRAME,SALTJACK_FRAME],
-  name:'Broken Crossing',place:'BRINE CAUSEWAY · RAIL BRIDGE',tag:'ALLIED DISTRESS CALL',pay:7600,difficulty:2,
+  name:'Broken Crossing',place:'BRINE CAUSEWAY · RAIL BRIDGE',tag:'ALLIED DISTRESS CALL',objectivePay:1600,difficulty:2,
   desc:'A damaged friendly lance is cut off beyond the rail bridge. Two Javelins overlook the direct crossing. The service road offers a longer, sheltered approach.',
   objective:'Extract one allied unit at the marked exit. Withdraw with the fee or stay to bring the others home.',
   deployment:[[3,7],[12,9],[13,4],[11,15],[12,17],['tank',6,9],['tank',10,13],['helicopter',14,12]]},
  {id:'distress-lift',distress:'lift',port:'mercy',field:1,seats:3,
   hostiles:[CAIRN_FRAME,SALT_WORKS_GARRISON_FRAME,HUSKY_FRAME,SALTJACK_FRAME],
-  name:'Four More Minutes',place:'MERCY YARD · FREIGHT LIFT',tag:'ALLIED DISTRESS CALL',pay:7200,difficulty:2,
+  name:'Four More Minutes',place:'MERCY YARD · FREIGHT LIFT',tag:'ALLIED DISTRESS CALL',objectivePay:1600,difficulty:2,
   desc:'Sable holds the loading bay. Tern and Flint hold the freight platforms above it. Radio each gunner to board before the lift makes its single pickup.',
   objective:'Keep at least one allied unit on the marked lift when round four ends. Every ally aboard counts.',
   deployment:[[1,3],[9,2],[15,4],[16,10],['tank',3,4],['tank',13,3],['helicopter',16,1]]},
  {id:'distress-quarry',distress:'quarry',port:'black',field:2,seats:3,
   hostiles:[CAIRN_FRAME,SALTJACK_FRAME,HUSKY_FRAME,ASHIGARU_FRAME,CAIRN_FRAME],
-  name:'Hammer and Anvil',place:'BLACK BASIN · TERRACED QUARRY',tag:'ALLIED DISTRESS CALL',pay:8300,difficulty:2,
+  name:'Hammer and Anvil',place:'BLACK BASIN · TERRACED QUARRY',tag:'ALLIED DISTRESS CALL',objectivePay:2000,difficulty:2,
   desc:'A friendly lance holds the quarry floor. Your lance arrives behind an armored screen while a Kite watches the rim.',
   objective:'Defeat or force the surrender of every hostile. At least one allied unit must survive the final exchange.',
   deployment:[[7,3],[12,6],[15,10],[12,14],[5,6],['tank',5,15],['tank',9,16],['helicopter',15,4]]}
@@ -584,7 +584,7 @@ function campaignContractNote(offer){
  const reports=worldRules.campaignReports(save.strategy,save.day);
  const counter=reports.find(front=>['exposed','active'].includes(front.status)&&front.ports.includes(offer.port));
  const final=offer.port==='corridor'&&offer.templateIndex===SALT_WORKS_CONTRACT&&!save.strategy.victory&&reports.every(front=>front.status==='secured');
- const support=!CONTRACTS[offer.templateIndex]?.distress&&worldRules.campaignSupport(save.strategy,offer.port,save.day);
+ const support=contractReinforcement(CONTRACTS[offer.templateIndex],offer);
  if(!counter&&!final&&!support)return '';
  return `<p class="note">${counter?'Campaign counter · '+counter.name+'. ':''}${final?'Final objective · 5,000 CR for securing the Directorate depot. ':''}${support?'Reinforcement expected · '+VEHICLES[support].name+'.':''}</p>`;
 }
@@ -672,8 +672,12 @@ function regionalRewardMarkup(offer,day=save.day){
  const pressure=save.world&&worldRules.railPressure(save.world,save.history).next;
  return `<p class="note">${reward.available?reward.label+' · deploy by Day '+reward.until:reward.claimed?'Regional bonus already claimed':'Regional bonus expired'}${regionalLaunchAP(offer)?' · +'+regionalLaunchAP(offer)+' AP on round one':''}${pressure?.port===offer.port?' · Win to prevent '+pressure.name.toLowerCase():''}</p>`;
 }
+function contractReinforcement(contract,offer){
+ return offer&&!contract.distress?worldRules.campaignSupport(save.strategy,offer.port,offer.acceptedDay??save.day):null;
+}
 function worldContractPay(contract,count,offer,tier=shipLevel('office')){
- return Math.round(contractPay(contract,count,tier)*(offer?.payPercent??100)/100);
+ const fee=contractPay(contract,count,tier,contractReinforcement(contract,offer));
+ return Math.round(fee*(offer?.payPercent??100)/100);
 }
 function scoutWorldOffer(id){
  if(battle||careerStale||save.credits<90)return false;
@@ -709,14 +713,16 @@ function bindWorldContracts(){
 function pooledContractsPage(){
  if(save.transit)return `<div class="page"><div class="pagehead"><div><div class="eyebrow">HALYARD / DISPATCH</div><h1>TRANSIT REPORT</h1></div></div><p>Review the transit report before accepting another contract.</p><button class="primary" data-page="overworld">REVIEW TRANSIT</button></div>`;
  const port=contractPortSelection??companyPort(),local=port===companyPort(),offers=availableOffers(port),sizes=dispatchSizes();
+ const dailyCost=overworld.operatingRates(save).total;
  return `<div class="page"><div class="pagehead"><div><div class="eyebrow">${portName(port)} / DISPATCH</div><h1>CONTRACT BOARD</h1></div><button data-page="overworld">CHART TABLE ${icon('arrow-right')}</button></div>
   <div class="grid contract-grid">${offers.map(offer=>{
    const contract=CONTRACTS[offer.templateIndex],size=operationRecommendation(contract,offer)||contract.seats||sizes[offer.templateIndex],contacts=sortieSpawns(contract,Math.min(3,size)).filter(spawn=>spawn.length===2).length;
+   const fee=worldContractPay(contract,size,offer);
    const revealed=offer.scouted||campaignIntel(port)||local&&hangarLevel('recon')>0;
    const intel=contract.distress?contract.deployment.length+' HOSTILES':revealed||contract.hostiles?contacts+' MECH'+(contacts===1?'':'S'):Math.min(contacts,offer.intel.minMechs)+'–'+Math.max(contacts,offer.intel.maxMechs)+' MECHS';
    return `<article class="card offer-card"><div class="eyebrow">${contract.tag} · ${local?'LOCAL':'REMOTE'}</div><h2>${contract.name}</h2><p>${contract.desc}</p>${distressTerms(contract)}
-    <div class="offer-terms">${stat('PAYMENT',money(worldContractPay(contract,size,offer)))}${stat('EXPIRES','DAY '+offer.expiryDay)}${stat('LANCE',contract.distress?'3 PLAYER + 3 ALLIED':size+' MECH'+(size===1?'':'S')+(operationRecommendation(contract,offer)?' RECOMMENDED · '+operationCapacity()+' MAX':shipLevel('drop')===2?' + AUX OPTION':''))}${stat('CONTACTS',intel+(contract.difficulty>=2&&!revealed&&!contract.distress?' · HEAVY LIKELY':''))}</div>
-    <p class="note">${readinessNote()}</p>${regionalRewardMarkup(offer)}${campaignContractNote(offer)}${revealed||contract.distress?`<div class="offer-intel">${contractIntel(offer.templateIndex,Math.min(3,size),{reveal:offer.scouted||campaignIntel(port),local,variable:Boolean(operationRecommendation(contract,offer))})}</div>`:contract.hostiles?'':`<button type="button" data-scout-offer="${offer.id}" ${save.credits<90?'disabled':''}>SCOUT · 90 CR</button>`}
+    <div class="offer-terms">${stat('CONTRACT PAYMENT',money(fee))}${stat('EXPIRES','DAY '+offer.expiryDay)}${stat('LANCE',contract.distress?'3 PLAYER + 3 ALLIED':size+' MECH'+(size===1?'':'S')+(operationRecommendation(contract,offer)?' RECOMMENDED · '+operationCapacity()+' MAX':shipLevel('drop')===2?' + AUX OPTION':''))}${stat('CONTACTS',intel+(contract.difficulty>=2&&!revealed&&!contract.distress?' · HEAVY LIKELY':''))}</div>
+    ${contractNetEstimate(fee,dailyCost)}<p class="note">${readinessNote()}</p>${regionalRewardMarkup(offer)}${campaignContractNote(offer)}${revealed||contract.distress?`<div class="offer-intel">${contractIntel(offer.templateIndex,Math.min(3,size),{reveal:offer.scouted||campaignIntel(port),local,variable:Boolean(operationRecommendation(contract,offer))})}</div>`:contract.hostiles?'':`<button type="button" data-scout-offer="${offer.id}" ${save.credits<90?'disabled':''}>SCOUT · 90 CR</button>`}
     <button class="primary full" data-deploy="${offer.templateIndex}" data-world-offer="${offer.id}">${local?'PREPARE SORTIE':'PLOT COURSE'} ${icon('arrow-right')}</button>
     ${offer.templateIndex===SALT_WORKS_CONTRACT?'<a class="rig-bench-link" href="?bench=war&amp;trial=salt-works">PLAY SALT WORKS TRIAL</a>':''}</article>`;
   }).join('')||'<div class="offer-empty"><h2>No open offers</h2><p>Check another railhead or hold for the next dispatch.</p><button data-page="overworld">OPEN CHART</button></div>'}</div></div>`;
@@ -1636,7 +1642,20 @@ function contractIntel(i,count,{reveal=false,local=true,variable=false}={}){
  return `<details class="contract-intel"><summary>HOSTILE MANIFEST</summary><ul>${hostiles.map(name=>'<li>'+name+'</li>').join('')}</ul></details>
   ${!variable&&!contract.seats&&local&&level===2?`<button class="rescan-contract" data-rescan="${i}" ${scanUsed||save.credits<HANGAR_SERVICE_COST?'disabled':''}>${scanUsed?'SURVEY USED TODAY':'RESURVEY · '+money(HANGAR_SERVICE_COST)}</button>`:''}`;
 }
-const contractPay=(contract,count,tier=shipLevel('office'))=>Math.round(contract.pay*[0,.65,.85,1][Math.min(3,count)]*[1,1.15,1.25][tier]);
+const CONTRACT_CONTACT_PAY={mech:650,tank:300,helicopter:400};
+function contractPay(contract,count,tier=shipLevel('office'),reinforcement=null){
+ if(contract.unpaid)return 0;
+ const seats=contract.seats??count;
+ const contacts=sortieSpawns(contract,Math.min(3,seats));
+ const contactPay=contacts.reduce((sum,spawn)=>sum+CONTRACT_CONTACT_PAY[spawn.length===2?'mech':spawn[0]],0);
+ // Price the posted Frontier wave up front, even if the yard is secured before it arrives.
+ const wavePay=contract.id==='frontier'&&seats>3?CONTRACT_CONTACT_PAY.helicopter:0;
+ const fee=850+500*seats+contactPay+wavePay+(CONTRACT_CONTACT_PAY[reinforcement]??0)+400*(contract.difficulty-1)+(contract.objectivePay??0);
+ return Math.round(fee*[1,1.15,1.25][tier]);
+}
+function contractNetEstimate(fee,cost=overworld.operatingRates(save).total){
+ return '<p class="note">After daily costs · '+money(fee-cost)+'</p>';
+}
 const validSlots=slots=>Array.isArray(slots)&&slots.length>=1&&slots.length<=3&&new Set(slots).size===slots.length&&slots.every(i=>LANCE_SLOTS.includes(i));
 function validAux(aux){
  return !!aux&&shipLevel('drop')===2&&pilotKind(aux.pilotId)>=0&&Object.hasOwn(save.reservePilots??{},aux.pilotId)&&
@@ -2538,7 +2557,7 @@ function pilotCard(kind,u,training,assignment,control,points){
  </div></article>`;
 }
 function paymentRange(contract){
- const low=contractPay(contract,1),high=contractPay(contract,3);
+ const low=contractPay(contract,contract.seats??1),high=contractPay(contract,contract.seats??3);
  return low===high?money(low):low.toLocaleString()+'–'+money(high);
 }
 function showOverworld(destination=companyPort(),routeKey=null){
@@ -3355,6 +3374,7 @@ function prepareSortie(i,offer=null){
  if(companyPort()!==port){showOverworld(port);return;}
  const recommended=operationRecommendation(contract,offer);
  const size=recommended?Math.min(3,recommended):contract.seats??dispatchSizes()[i],minimum=recommended?operationMinimum(recommended):size;
+ const fee=worldContractPay(contract,recommended||size,offer);
  const ready=LANCE_SLOTS.filter(slot=>save.units[slot].condition>=30),chosen=new Set(ready.slice(0,size));
  const readExtra=()=>[...document.querySelectorAll('[data-operation-extra]')].flatMap(row=>{
   const mode=row.querySelector('[data-extra-mode]').value;
@@ -3371,6 +3391,7 @@ function prepareSortie(i,offer=null){
    return `<div class="sortie-seat"><button type="button" data-sortie-seat="${slot}" aria-pressed="${chosen.has(slot)}" ${!canFly?'disabled':''}><b>${frame}${active.length?'':' · '+pilot.call}</b><small>${save.units[slot].condition}% INTEGRITY${canFly?'':' · REPAIR NEEDED'}${!active.length&&woundDays(draft.get(slot))?' · '+woundLabel(draft.get(slot)):''}</small></button>
     ${active.length&&canFly?`<label class="sortie-crew">Pilot<select data-sortie-pilot="${slot}" aria-label="Pilot for ${frame}">${options}</select></label>`:''}</div>`;
   }).join('')}</div>
+  ${stat('CONTRACT PAYMENT',money(fee))}${contractNetEstimate(fee)}
   <p class="note">${readinessNote()}</p>${regionalRewardMarkup(offer)}${campaignContractNote(offer)}${recommended?operationChoices():!contract.distress&&ready.length>=size?auxiliaryChoices():''}${recommended&&contract.id==='frontier'?'<p class="note">Capture the command yard at 8,10 by round 6. Gunship arrives round 4. Optional salvage at 9,13.</p>':''}
   <p class="note" id="sortie-count" aria-live="polite"></p>`,
   [{text:'CANCEL',fn:closeModal},...(ready.length<minimum?[{text:'OPEN WORKSHOP',fn:()=>openRepair(LANCE_SLOTS.find(slot=>!ready.includes(slot)))}]:[
@@ -3459,7 +3480,7 @@ function deploy(i,legacy=false,slots=LANCE_SLOTS,aux=null,crew=null,offer=null,e
  if(regionalLaunchAP(offer))addLog('Regional support: lance starts with +'+regionalLaunchAP(offer)+' AP.');
  if(offer){
   save.world=nextWorld;battle.offer=offer;
-  const support=worldRules.campaignSupport(save.strategy,offer.port,offer.acceptedDay);
+  const support=contractReinforcement(contract,offer);
   if(support&&addCampaignSupport(support))addLog('Directorate reinforcement: '+VEHICLES[support].name+'.');
  }
  if(!legacy){
@@ -4611,7 +4632,7 @@ function finish(win){
  const cachePay=win&&b.operation?.cache?700:0;
  const reward=win&&!interception?worldContractPay(c,seats,b.offer):0;
  const premium=win&&!interception?reward-worldContractPay(c,seats,b.offer,0):0;
- const salvage=hasRecovery&&!interception&&!c.fixedPay?450+c.difficulty*200:0;
+ const salvage=hasRecovery&&!interception&&!c.noScrap?450+c.difficulty*200:0;
  const offeredBonus=win&&!benchWar?regionalReward(b.offer,b.offer?.acceptedDay):null;
  const bonus=offeredBonus?.available?offeredBonus:null;
  if(bonus?.gear)save.owned.push(bonus.gear);
@@ -4664,7 +4685,7 @@ function finish(win){
  if(points)buttons.push({text:'TRAIN PILOTS · '+points+' PT',fn:()=>{closeModal();page='pilots';render()}});
  if(online)buttons.push({text:'TRAIN DECK',fn:()=>{closeModal();navigateHangarRoute('ship')}});
  if(baseOnline)buttons.push({text:'HANGAR',fn:()=>{closeModal();navigateHangarRoute('facilities')}});
- modal(interception?(win?'PATROL CLEARED.':'HALYARD FELL BACK.'):win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${c.distress?rescued+' of 3 allied units rescued.'+(repairGain?' Field crew restored '+repairGain+'% hull condition.':'')+(scoutedName?' Local intelligence received for '+scoutedName+'.':''):win?c.fixedPay?'Patrol cleared. Your pilots return with hard-earned experience.':'Contract complete. Your pilots earned experience.':interception?'Halyard returned to '+portName(interception.from)+'. Combat damage persists.':'Your pilots have been recovered. Combat damage persists.'}</p>
+ modal(interception?(win?'PATROL CLEARED.':'HALYARD FELL BACK.'):win?'CONTRACT FULFILLED.':'LANCE EXTRACTED.',`<p>${c.distress?rescued+' of 3 allied units rescued.'+(repairGain?' Field crew restored '+repairGain+'% hull condition.':'')+(scoutedName?' Local intelligence received for '+scoutedName+'.':''):win?c.noScrap?'Patrol cleared. Your pilots return with hard-earned experience.':'Contract complete. Your pilots earned experience.':interception?'Halyard returned to '+portName(interception.from)+'. Combat damage persists.':'Your pilots have been recovered. Combat damage persists.'}</p>
   ${interception?stat('ENCOUNTER PAYOUT',money(0)):stat('CONTRACT PAYMENT',money(reward))}${campaignWin?stat('CAMPAIGN',campaignWin.name+(campaignWin.credits?' · '+money(campaignWin.credits):'')):''}${lean?stat('LEAN LANCE','+'+lean+' XP PER DEPLOYED PILOT'):''}${cachePay?stat('LOADING-YARD SALVAGE',money(cachePay)):''}${bonus?stat('REGIONAL BONUS',bonus.label):''}${salvage?stat('SCRAP BONUS',money(salvage)):''}${recoveryBonus?stat('RECOVERY BONUS',money(recoveryBonus)):''}${recovered.length?stat('RECOVERED '+(recovered.length===1?'BODY':'BODIES'),recovered.map(wreck=>FRAMES[wreck.frame].name).join(' · ')):''}${intact.length?stat('INTACT CAPTURES',intact.map(u=>FRAMES[u.frame].name).join(' · ')):''}${gear.length?stat('EQUIPMENT RECOVERED',gear.map(id=>equipmentItem(id).name).join(' · ')):''}${stat('REPUTATION',win?'+'+c.difficulty*10:'UNCHANGED')}
   ${costs?stat('CREW WAGES',money(costs.wages))+stat('TRAIN UPKEEP',money(costs.ship))+stat('HULL UPKEEP',money(costs.hulls))+
    (costs.arrearsPaid?stat('ARREARS PAID',money(costs.arrearsPaid)):'')+(save.overworld.arrears?stat('OPERATING ARREARS',money(save.overworld.arrears)):'')+
