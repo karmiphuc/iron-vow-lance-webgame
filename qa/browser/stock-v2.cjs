@@ -56,7 +56,7 @@ module.exports=async function checkStockV2({page,origin}){
  for(const p of colors)assert.ok(p.channels.every(Boolean)&&p.opaque>1000,JSON.stringify(p));
  const fires=await page.evaluate(async()=>{
   const units=[1,2].map(frame=>battle.units.find(u=>u.team==='ally'&&u.frame===frame)),target=battle.units.find(u=>u.team==='enemy'&&!u.kind);
-  if(!target)throw Error('Stock combat fixture needs an enemy mech');battle.cover.clear();Math.random=()=>0;ruleRandom=()=>0;
+  if(!target)throw Error('Stock combat fixture needs an enemy mech');battle.cover.clear();Math.random=()=>0;comRandom=()=>.01;ruleRandom=()=>0;
   Object.assign(target,{x:7,z:13,vx:7,vz:13});target.hp.right=target.hp.left=0;
   for(const p of ['body','pilot','legs'])target.max[p]=target.hp[p]=10000;
   const result=[];
@@ -72,9 +72,10 @@ module.exports=async function checkStockV2({page,origin}){
  const missile=await page.evaluate(async()=>{
   const basilisk=battle.units.find(u=>u.team==='ally'&&u.frame===2),kestrel=battle.units.find(u=>u.team==='ally'&&u.frame===1),target=battle.units.find(u=>u.team==='enemy'&&!u.kind);
   const entry=IronVowScene.models.get(basilisk.id).entry,source=entry.m.nativeV2.source,node=n=>source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(n));
+  resetMovement(basilisk);
   Object.assign(basilisk,{x:7,z:11,vx:7,vz:11,weapon:stockHull(2).weapon,melee:null,shield:null,ap:20});
   Object.assign(target,{x:7,z:13,vx:7,vz:13});for(const p of ['body','pilot','legs'])target.hp[p]=target.max[p]=10000;
-  battle.cover.clear();ruleRandom=()=>0;IronVowScene.render(clock,.016);
+  battle.cover.clear();comRandom=()=>.01;ruleRandom=()=>0;IronVowScene.render(clock,.016);
   const before=target.hp.body,originalRight=basilisk.hp.right,defaultWeapon=entry.primary.id;
   const visibleBody=node('spine.geometry').visible,combat=IronVowScene.combat;
   basilisk.hp.right=0;IronVowScene.render(clock,.016);
@@ -83,9 +84,9 @@ module.exports=async function checkStockV2({page,origin}){
   const survivingRocket=combat.history.filter(e=>e.actor===basilisk.id&&e.type==='launch'&&e.weapon==='missile');
   const leftMuzzle=entry.shoulderWeapon.muzzle;
   const survivingMuzzle=leftMuzzle.name;
-  basilisk.hp.right=originalRight;target.hp.body=before;IronVowScene.render(clock,.016);
+  resetMovement(basilisk);basilisk.hp.right=originalRight;target.hp.body=before;IronVowScene.render(clock,.016);
   const launch=combat.launch,observed=[];
-  combat.launch=function(...args){const result=launch.apply(this,args),event=this.history.at(-1);if(event?.type==='launch'&&event.actor===basilisk.id&&event.weapon==='missile'){
+  combat.launch=function(...args){const before=this.history.at(-1)?.sequence??0,result=launch.apply(this,args),event=this.history.findLast(item=>item.sequence>before&&item.type==='launch');if(event?.actor===basilisk.id&&event.weapon==='missile'){
    const name=event.index%2?'pod.L':'pod.R';observed.push({event,name,pod:node(name).getWorldPosition(new THREE.Vector3()).toArray()});
   }return result;};
   await shoot(basilisk,target,'body',weapon('missile'),false,null);combat.launch=launch;

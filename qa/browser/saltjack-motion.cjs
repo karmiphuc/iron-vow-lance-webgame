@@ -102,7 +102,7 @@ module.exports=async function checkSaltjackMotion({page,origin,mobile,tap}){
   });
   const steady=rig(hero),brace=steady.rig.pelvis.position.y;
   const starts=IronVowScene.combat.history.length;
-  const oldRandom=ruleRandom;ruleRandom=()=>.005;
+  const oldRandom=comRandom;comRandom=()=>.005;
   let monitoring=true,carriage=steady.nativeV2.source.getObjectByName('Carriage');
   const kicks=[],hits=[],arms=[];
   const monitor=new Promise(resolve=>{
@@ -118,7 +118,7 @@ module.exports=async function checkSaltjackMotion({page,origin,mobile,tap}){
    }
    requestAnimationFrame(frame);
   });
-  try{await shoot(hero,enemy,'body');}finally{ruleRandom=oldRandom;monitoring=false;}
+  try{await shoot(hero,enemy,'body');}finally{comRandom=oldRandom;monitoring=false;}
   await monitor;
 
   const log=IronVowScene.combat.history.slice(starts);
@@ -304,14 +304,14 @@ async function checkCombatReady(page,mobile,tap){
  assert.ok(braced.aim>.995&&braced.roll>.90,`Bracing keeps the rifle upright and on target: ${JSON.stringify(braced)}`);
  const enemyAttack=await page.evaluate(async()=>{
   const [hero,enemy]=battle.units;
-  const random=ruleRandom,visualRandom=Math.random;
-  ruleRandom=()=>.005;Math.random=()=>.99;
+  const random=comRandom,visualRandom=Math.random;
+  comRandom=()=>.005;Math.random=()=>.99;
   const start=IronVowScene.combat.history.length;
   try{
    await shoot(enemy,hero,'body');
    for(let elapsed=0;elapsed<.65;elapsed+=Math.min(.042,frameDt))await new Promise(requestAnimationFrame);
   }
-  finally{ruleRandom=random;Math.random=visualRandom;}
+  finally{comRandom=random;Math.random=visualRandom;}
   const shots=IronVowScene.combat.history.slice(start).filter(event=>event.type==='launch'&&event.actor===enemy.id);
   const entry=IronVowScene.models.get(enemy.id).entry;
   return {error:Math.max(...shots.map(event=>event.aimError)),shots:shots.length,

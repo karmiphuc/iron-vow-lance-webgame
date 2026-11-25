@@ -87,13 +87,11 @@ module.exports=async function checkHangar({context,page,mobile,origin,tap}){
  await ensureContractOffer(page,0);
  await nav('contracts');
  await tap('.contract-grid article:first-child .contract-intel summary');
- assert.equal(await page.locator('.contract-grid article:first-child .contract-intel li').count(),1);
- await tap('[data-rescan="0"]');
- assert.ok([2,3].includes(await page.evaluate(()=>save.dispatch.sizes[0])));
- assert.ok(await page.locator('[data-rescan="0"]').isDisabled(),'Only one local scan is available per company day');
- assert.equal(await page.locator('[data-rescan="1"]').count(),0,'Remote contracts cannot charge for a local survey');
+ const contactCount=await page.evaluate(()=>sortieSpawns(CONTRACTS[0],3).length);
+ assert.equal(await page.locator('.contract-grid article:first-child .contract-intel li').count(),contactCount);
+ assert.equal(await page.locator('[data-rescan="0"]').count(),0,'A fixed-threat operation cannot be rerolled');
  assert.ok(await page.locator('[data-world-offer]').count()>0,'Local board displays available offers');
  await selectContract(page,{template:0});await tap('[data-deploy="0"]');
  assert.ok(await fit('.modalbox'));
- assert.equal(await page.locator('[data-sortie-seat][aria-pressed="true"]').count(),await page.evaluate(()=>save.dispatch.sizes[0]));
+ assert.equal(await page.locator('[data-sortie-seat][aria-pressed="true"]').count(),3);
 };

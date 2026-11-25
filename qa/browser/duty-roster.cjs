@@ -59,9 +59,12 @@ module.exports=async function checkDutyRoster({page,mobile,origin,tap}){
  await page.locator('[data-sortie-pilot="0"]').selectOption('scout');
  await page.locator('[data-sortie-pilot="1"]').selectOption('signal');
  assert.equal(await page.locator('[data-sortie-pilot="1"] option[value="scout"]').evaluate(option=>option.disabled),true);
- assert.equal(await page.locator('#aux-pilot option[value="scout"]').evaluate(option=>option.disabled),true);
- await page.locator('#aux-pilot').selectOption('marshal');
- await tap('#use-aux');
+ const reserve=page.locator('[data-operation-extra]').first();
+ await reserve.locator('[data-extra-pilot]').selectOption('scout');
+ await reserve.locator('[data-extra-mode]').selectOption('launch');
+ assert.ok(await page.locator('#modal-1').isDisabled(),'A pilot cannot fill a main and reserve seat simultaneously');
+ await reserve.locator('[data-extra-pilot]').selectOption('marshal');
+ assert.ok(await page.locator('#modal-1').isEnabled());
  assert.ok(await page.locator('.modalbox').evaluate(e=>e.scrollWidth<=e.clientWidth+1),mobile?'mobile assignment fits':'desktop assignment fits');
  await tap('#modal-1');
  assert.equal(await page.locator('.unitbuttons button').count(),4);

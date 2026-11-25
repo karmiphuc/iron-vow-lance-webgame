@@ -12,7 +12,7 @@ module.exports=async function checkBulwark({page,origin,tap,mobile}){
  await navigate(page,'contracts',tap,mobile);await selectContract(page,{template:3});await tap('[data-deploy="3"]');await tap('#modal-1');await tap('#modal-0');
  await page.waitForFunction(()=>{const u=battle?.units.find(x=>x.frame===BULWARK_FRAME),e=u&&IronVowScene.models.get(u.id)?.entry;return Boolean(IronVowScene.ready&&u&&IronVowScene.isLive(u)&&e?.m.nativeV2&&e.shield)},null,{timeout:15000});
  const info=await page.evaluate(async()=>{
-  ruleRandom=()=>0;
+  comRandom=()=>.01;ruleRandom=()=>0;
   const u=battle.units.find(x=>x.frame===BULWARK_FRAME),ally=current(),entry=IronVowScene.models.get(u.id).entry,m=entry.m,src=m.nativeV2.source;
   for(const other of battle.units)if(other!==u&&other!==ally){other.alive=false;other.hp.body=0}
   const obj=name=>src.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name)),world=o=>o.getWorldPosition(new THREE.Vector3());

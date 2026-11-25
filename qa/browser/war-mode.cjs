@@ -59,8 +59,8 @@ module.exports=async function checkWarMode({page,origin,mobile,out}){
   throw Error(await page.evaluate(()=>JSON.stringify({turn:__bench.state?.turn,events:__bench.eventLog().length,running:__bench.running})));
  }
  const parity=[];
- // Scattered hits finish Picket in round three; keep corridor bounded at two rounds.
- for(const options of [{seed:42,contract:0,maxTurns:3},{seed:42,contract:2,maxTurns:2}]){
+ // Scattered hits finish Picket in round four; keep corridor bounded at two rounds.
+ for(const options of [{seed:42,contract:0,maxTurns:4},{seed:42,contract:2,maxTurns:2}]){
   const expected=await runWar(options);
   const button=options.contract===0;
   await page.evaluate(options=>__bench.newBattle(options),options);

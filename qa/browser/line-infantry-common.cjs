@@ -17,7 +17,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  await tap('[data-bay="market"]');
  assert.equal(await page.getByRole('heading',{name,exact:true}).count(),0);
  await page.emulateMedia({reducedMotion:'no-preference'});
- await page.evaluate(contract=>{ruleRandom=()=>0;save.overworld={port:CONTRACTS[contract].id,arrears:0};},contract);
+ await page.evaluate(contract=>{comRandom=()=>.01;ruleRandom=()=>0;save.overworld={port:CONTRACTS[contract].id,arrears:0};},contract);
  await ensureContractOffer(page,contract);
  await navigate(page,'contracts',tap,mobile);
  await selectContract(page,{template:contract});await tap(`[data-deploy="${contract}"]`);
@@ -86,8 +86,9 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  assert.ok(fit.fieldColors.every(coverage=>coverage>.2),'The visible Block camo uses both enemy livery colors: '+JSON.stringify(fit.fieldColors));
  assert.ok(fit.paintedWithTextures&&fit.bareWeapon&&fit.chassisMaterials>=6&&fit.productionRifle,JSON.stringify(fit));
 
- if(contract===2)await page.evaluate(frame=>{
+ await page.evaluate(frame=>{
   const unit=battle.units.find(unit=>unit.frame===frame),target=current();
+  for(const other of battle.units)if(other!==unit&&other!==target){other.alive=false;other.hp.body=0;}
   const free=(x,z)=>!battle.units.some(other=>other.alive&&other!==unit&&other!==target&&other.x===x&&other.z===z);
   // Corridor's current AI can hold behind its ridge. Give this mount test a legal firing lane.
   for(let z=1;z<battle.size.depth-1;z++)for(let x=1;x<battle.size.width-3;x++){
@@ -111,7 +112,7 @@ async function checkInfantry({page,mobile,origin,tap},{contract,frame,name,turns
  const attack=await page.evaluate(frame=>{
   const unit=battle.units.find(unit=>unit.frame===frame),entry=IronVowScene.models.get(unit.id).entry;
   const damaged=targetParts(current()).some(part=>current().hp[part]<current().max[part]);
-  const log=battle.log.some(line=>line.startsWith(`${unit.name} → WARDEN`));
+  const log=IronVowScene.combat.history.some(event=>event.type==='impact'&&event.actor===unit.id&&event.target===current().id&&event.damage>0);
   unit.hp.right=0;
   IronVowScene.render(clock,.016);
   const plates=entry.m.build.parts.right.filter(part=>part.detach);
