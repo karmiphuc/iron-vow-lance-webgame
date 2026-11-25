@@ -1112,20 +1112,27 @@ const COM_SKILLS=Object.freeze({
  shield:{name:'Shield Brace',rate:10,slots:1,frames:[0,BASTION_FRAME],text:'A functional shield reduces damage from the incoming volley by 30%.'},
  chaff:{name:'Chaff',rate:8,slots:1,frames:[2,CITADEL_FRAME],text:'Missile-support chassis halve the first landed missile hit.'},
  bulkhead:{name:'Emergency Bulkhead',rate:5,slots:2,frames:[3,BASTION_FRAME],text:'Once per sortie, a lethal arm or leg hit leaves the part at 1 HP.'},
+ armSmash:{name:'Arm Smash',rate:6,slots:2,frames:[3,BASTION_FRAME],text:'A landed strike destroys an arm already at 45% integrity or below. An active shield takes priority.'},
+ legSmash:{name:'Leg Smash',rate:5,slots:2,frames:[VYZOV_FRAME,VANGUARD_FRAME],text:'A landed strike destroys legs at 45% integrity or below. Requires exposed legs.'},
+ meleeExpert:{name:'Melee Expert I',rate:10,slots:1,frames:[0,6],text:'A landed melee attack deals 30% more damage.'},
+ meleeExpert2:{name:'Melee Expert II',rate:6,slots:2,frames:[6,SHOGUN_FRAME],text:'A landed melee attack deals 55% more damage. Equip one Melee Expert rank.'},
+ sweep:{name:'Sweeping Strike',rate:7,slots:2,frames:[6,BULWARK_FRAME],text:'Strike the body and weakest live limb at 55% damage each. Each strike rolls to hit. Requires an exposed mech.'},
+ guardBreak:{name:'Guard Break',rate:9,slots:1,frames:[0,VYZOV_FRAME],text:'A landed strike breaks the target’s Brace before its counter.'},
  riposte:{name:'Riposte',rate:10,slots:1,frames:[6,VYZOV_FRAME],text:'A paid melee counter gets a free second strike.'},
  covering:{name:'Covering',rate:10,slots:1,frames:[0,BASTION_FRAME],text:'An attack on an ally within two tiles can trigger a free shot at 65% accuracy.'},
  overwatch:{name:'Overwatch',rate:5,slots:2,frames:[1,NIGHTJAR_FRAME],text:'An attack on an ally can trigger a free shot at 65% accuracy from any legal firing position.'},
  squad:{name:'Firing Squad',rate:8,slots:2,frames:[1,GIZA_FRAME],text:'On a direct shot, a linked partner with a different angle can fire for 0 AP.'},
  gang:{name:'Melee Gang',rate:10,slots:2,frames:[6,VYZOV_FRAME],text:'On a melee attack, a linked partner adjacent on a different side can strike for 0 AP.'},
 });
-const COM_LESSONS=6,COM_SORTIE_CREDITS=3;
+const COM_LESSONS=6,COM_SORTIE_CREDITS=3,COM_SMASH_THRESHOLD=.45;
+const COM_MELEE=['armSmash','legSmash','meleeExpert','meleeExpert2','sweep','guardBreak','gang','riposte'];
 const comIds=Object.keys(COM_SKILLS);
 const comPilot=u=>u?.team==='ally'&&!u.distressAlly&&!u.kind?pilotId(u.pilot):null;
 const comRecord=(id,career=save)=>career.comPilots?.[id]??{progress:{},installed:[]};
 const comKnown=(record,id)=>(record.progress[id]??0)>=COM_LESSONS;
 const validComLoadout=(ids,record)=>Array.isArray(ids)&&ids.length<=3&&new Set(ids).size===ids.length&&
  ids.every(id=>Object.hasOwn(COM_SKILLS,id)&&comKnown(record,id))&&
- ids.reduce((total,id)=>total+COM_SKILLS[id].slots,0)<=3&&!(ids.includes('rof')&&ids.includes('rof2'));
+ ids.reduce((total,id)=>total+COM_SKILLS[id].slots,0)<=3&&!(ids.includes('rof')&&ids.includes('rof2'))&&!(ids.includes('meleeExpert')&&ids.includes('meleeExpert2'));
 function validCareerCom(career){
  if(career.readinessStart!==undefined&&(!Number.isSafeInteger(career.readinessStart)||career.readinessStart<1||career.readinessStart>career.day))return false;
  return career.comPilots===undefined||validRecord(career.comPilots,([pilot,record])=>pilotKind(pilot)>=0&&record&&
@@ -1229,7 +1236,7 @@ function comRequirement(id,hull){
  if((id==='covering'||id==='overwatch'||id==='squad')&&!directComWeapon(w))return 'Requires a direct-fire gun.';
  if(id==='chaff'&&!COM_SKILLS.chaff.frames.includes(hull.frame))return 'Requires integrated countermeasures.';
  if(id==='shield'&&!equippedShield(hull))return 'Requires a shield.';
- if((id==='gang'||id==='riposte')&&!w.melee&&!meleeWeapon(hull))return 'Requires a melee weapon.';
+ if(COM_MELEE.includes(id)&&!w.melee&&!meleeWeapon(hull))return 'Requires a melee weapon.';
  if(id==='combo'&&!meleeWeapon(hull))return 'Requires a second hand weapon.';
  return '';
 }
@@ -3634,10 +3641,30 @@ const legalComWeapon=(a,t,w)=>Boolean(a?.alive&&t?.alive&&!a.blackout&&workingWe
 const directComWeapon=w=>Boolean(w&&!w.melee&&!w.tactical&&!launchesMissiles(w)&&w!==REAVER_AUTOCANNON);
 const burstComWeapon=w=>Boolean(directComWeapon(w)&&w.burst&&!w.scatter);
 const comBearing=(a,t)=>Math.abs(a.x-t.x)>=Math.abs(a.z-t.z)?Math.sign(a.x-t.x)*1:Math.sign(a.z-t.z)*2;
+function meleeComOptions(a,t,w){
+ const options=[
+  {id:'meleeExpert',a,w,strike:{scale:1.3}},
+  {id:'meleeExpert2',a,w,strike:{scale:1.55}},
+ ];
+ if(t.brace)options.push({id:'guardBreak',a,w,strike:{unbrace:true}});
+ if(t.kind)return options;
+ const exposed=part=>t.hp[part]>0;
+ const integrity=part=>t.hp[part]/t.max[part];
+ const weakened=part=>exposed(part)&&integrity(part)<=COM_SMASH_THRESHOLD;
+ const shield=activeShield(t);
+ const arm=(shield?[shieldHand(t)]:['right','left']).filter(weakened)
+  .sort((a,b)=>integrity(a)-integrity(b))[0];
+ if(arm)options.push({id:'armSmash',a,w,strike:{parts:[arm],smash:true}});
+ if(shield)return options;
+ if(weakened('legs'))options.push({id:'legSmash',a,w,strike:{parts:['legs'],smash:true}});
+ const limb=['right','left','legs'].filter(exposed).sort((a,b)=>integrity(a)-integrity(b))[0];
+ if(limb)options.push({id:'sweep',a,w,strike:{parts:['body',limb],scale:.55}});
+ return options;
+}
 function comAttackOptions(a,t,w,reaction=false,chain=false){
  if(!battle.com||a.kind||a.blackout||!legalComWeapon(a,t,w)||w.tactical)return [];
  if(reaction)return w.melee&&w!==FREE_HAND_COUNTER?[{id:'riposte',a,w}]:[];
- const options=[];
+ const options=w.melee&&w!==FREE_HAND_COUNTER?meleeComOptions(a,t,w):[];
  if(burstComWeapon(w))options.push({id:'rof',a,w},{id:'rof2',a,w});
  if(a.brace&&directComWeapon(w)&&/cannon/i.test(w.type)&&!w.burst)options.push({id:'shell',a,w});
  const other=[unitWeapon(a),meleeWeapon(a)].find(weapon=>weapon&&weapon.id!==w.id&&
@@ -3659,7 +3686,8 @@ function comAttackRoll(a,t,w,reaction=false,chain=false){
  if(!chain)comPractice(a,options);
  return drawCom(options.filter(c=>installedCom(a).includes(c.id)),chain?.5:1);
 }
-function comBoostWeapon(w,id){
+function comBoostWeapon(w,id,strike){
+ if(strike)return {...w,comMelee:strike};
  const factor=id==='rof'?1.5:id==='rof2'?2:1;
  return factor===1?w:{...w,burst:Math.floor(w.burst*factor),comBaseRounds:w.burst};
 }
@@ -3671,7 +3699,7 @@ async function shootCom(c,t,sequence,accuracy=1,exchange=null){
  if(!c||!legalComWeapon(c.a,t,c.w))return;
  announceCom(c.a,c.id);
  if(c.id==='squad'||c.id==='gang')battle.com.assists[c.a.id]=battle.turn;
- await shoot(c.a,t,'body',comBoostWeapon(c.w,c.id),true,sequence,{accuracy},exchange);
+ await shoot(c.a,t,'body',comBoostWeapon(c.w,c.id,c.strike),true,sequence,{accuracy},exchange);
 }
 function comSupportOptions(attacker,defender,practice=false){
  if(!battle.com||!attacker.alive)return [];
@@ -3747,7 +3775,7 @@ function attackPreview(a,t,w){
  const {hit,crit}=displayedAttackOdds(a,t,w),multi=shotsPerAttack(w)>1;
  const damage=attackBudget(a,t,shotPart(a,w,false),w);
  const routines=comOdds(comAttackOptions(a,t,w).filter(c=>installedCom(a).includes(c.id)));
- const com=routines.map(({id,rate})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'%').join(' / ');
+ const com=routines.map(({id,rate,strike})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'%'+(strike?.parts?' ('+strike.parts.map(part=>HEALTH_LABEL[part]).join(' + ')+')':'')).join(' / ');
  const support=comOdds(comSupportOptions(a,t)).map(({id,rate,aim})=>COM_SKILLS[id].name+' '+Number(rate.toFixed(1))+'% ('+Math.round(aim*.65)+'% hit)').join(' / ');
  const odds=hit+'%'+(w.scatter?' SHELL':multi?'/ROUND':' HIT');
  return (com?com+' · ':'')+odds+(crit?' · '+crit+'% CRIT'+(multi?'/ROUND':''):'')+' · '+damage+(w.scatter?' SPREAD':crit?' BASE DMG':' DMG')+(support?' · Enemy '+support:'');
@@ -4178,7 +4206,8 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null
   Object.assign(sequence,{actor:a,target:t,w,part,reaction,phase:'aim',result:'',resultAt:null,fireAt:null,contacts:null,contact:null});
   if(reaction)$('#shot-status').textContent=a.name+(w.melee?' prepares a return strike.':' prepares to return fire.');
  }
- const normalProfile=attackProfile(a,w.id);
+ const attackTiming=attackProfile(a,w.id);
+ const normalProfile=w.comMelee?.parts?.length===2?{...attackTiming,beats:[0,.2]}:attackTiming;
  const fullProfile=w.comBaseRounds?{...normalProfile,beats:Array.from({length:w.burst},(_,i)=>i*(normalProfile.beats[1]??.105))}:normalProfile,profile=w.salvoScale&&launcherId(w.id)?{...fullProfile,beats:fullProfile.beats.slice(0,w.rounds)}:fullProfile;
  const paired=reaverBattery&&w.rounds===REAVER_AUTOCANNON.rounds;
  const power=profile.power,effectKind=profile.effect||w.id,rockets=effectKind==='missile';
@@ -4334,9 +4363,10 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null
   const volleyText=landed+'/'+rounds.length+(w.scatter?' PELLETS':' HITS')+' / −'+lost+' HP';
   if(sequence)sequence.result=(broken?'SHIELD ARM LOST':guard?'BLOCKED · −'+d+' '+shieldArmLabel(t):failsafe?'FAILSAFE':t.hp.body<=0?'TARGET DOWN':t.hp.pilot===0?'PILOT DOWN':disabled.length?'SYSTEM DISABLED':rounds.length>1?volleyText:'−'+d+' '+label)+critLabel;
   effects.push({type:'text',x:t.x,z:t.z,t:1,text:(broken?'SHIELD ARM LOST':guard?'BLOCK · −'+d:rounds.length>1?volleyText:'−'+d+' '+label)+critLabel});
-  const report=(w.burst||reaverBattery)&&!guard?impacts.map(({part,amount})=>(t.kind?'HULL':PART_LABEL[part])+' −'+amount).join(' · '):label+' −'+d;
+  const report=(w.burst||reaverBattery||w.comMelee?.parts?.length===2)&&!guard?impacts.map(({part,amount})=>(t.kind?'HULL':PART_LABEL[part])+' −'+amount).join(' · '):label+' −'+d;
   addLog(a.name+(w.scout?' · '+w.name:'')+' → '+t.name+' / '+report+critLabel);
   if(failsafe)addLog(t.name+' triggered Failsafe.');
+  if(w.comMelee?.unbrace&&t.brace){t.brace=false;addLog(t.name+' lost Brace.')}
   if(!reaction&&w.melee&&a.training?.strikeBrace)braceUnit(a);
   if(t.hp.body<=0||t.hp.pilot===0){
    beginDestruction(t,t.hp.body>0?'pilot':'body',sequence);addLog(t.name+(t.downReason==='pilot'?': pilot down.': ' neutralized.'));
@@ -4384,9 +4414,9 @@ async function shoot(a,t,part,w=unitWeapon(a),reaction=false,sequence,bonus=null
 }
 async function shootExchange(a,t,part,w,reaction,sequence,exchange){
  const proc=comAttackRoll(a,t,w,reaction);
- const boost=proc?.id==='rof'||proc?.id==='rof2';
+ const boost=Boolean(proc?.strike||proc?.id==='rof'||proc?.id==='rof2');
  if(boost)announceCom(a,proc.id);
- const jammed=await shoot(a,t,part,boost?comBoostWeapon(w,proc.id):w,reaction,sequence,null,exchange);
+ const jammed=await shoot(a,t,part,boost?comBoostWeapon(w,proc.id,proc.strike):w,reaction,sequence,null,exchange);
  if(!proc)return jammed;
  if(!boost)await shootCom(proc,t,sequence,1,exchange);
  if(!reaction&&t.alive&&a.alive){
