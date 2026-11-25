@@ -153,7 +153,8 @@ module.exports=async function checkAero({page,mobile,origin,tap,out}){
   const {entry}=IronVowScene.models.get(aero.id),m=entry.m;
   battle.cover.clear();Object.assign(foe,{x:aero.x,z:aero.z-2,vx:aero.x,vz:aero.z-2});
   for(const unit of battle.units)if(unit!==aero&&unit!==foe){unit.alive=false;unit.hp.body=0;}
-  Math.random=()=>.95;
+  // The active sortie uses the persisted COM stream for hit and dodge rolls.
+  comRandom=()=>.95;
   const samples=[];window.aeroDodgeSamples=samples;
   const monitor=()=>{
    if(battle?.turn!==1)return;
@@ -184,7 +185,7 @@ module.exports=async function checkAero({page,mobile,origin,tap,out}){
  const ranged=await page.evaluate(async()=>{
   const unit=current(),foe=battle.units.find(unit=>unit.team==='enemy'&&unit.alive);
   const entry=IronVowScene.models.get(unit.id).entry;
-  foe.hp.body=foe.max.body=10000;Math.random=()=>0;
+  foe.hp.body=foe.max.body=10000;comRandom=()=>0;
   const tested={};
   for(const id of ['rifle','rail']){
    unit.weapon=id;unit.ap=8;foe.noCounter=true;
