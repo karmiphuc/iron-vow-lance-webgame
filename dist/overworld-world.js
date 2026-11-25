@@ -247,7 +247,7 @@ window.IronVowWorld=(()=>{
   haven:{faction:'Haven Salvors',frames:[2,4,9],weapons:['missile','hailstorm','ember','hatchet']},
   cinder:{faction:'Cinder Freight Guild',frames:[1,2],weapons:['sidewinder','hailstorm','rampart']},
   glass:{faction:'Glasswatch Signals',frames:[1,5],weapons:['watchman','rail','tonfa']},
-  iron:{faction:'Iron Pass Garrison',frames:[3,8],weapons:['falcon','pike','breaker']},
+  iron:{faction:'Iron Pass Garrison',frames:[3,8,30],weapons:['falcon','pike','breaker']},
   brine:{faction:'Causeway Haulers',frames:[2,7],weapons:['shotgun','missile','cleaver']},
   mercy:{faction:'Mercy Engineering',frames:[0,8],weapons:['trident','blade','piledriver']},
   black:{faction:'Basin Prospectors',frames:[6,7],weapons:['cerberus','obelisk','anchor-hammer']}

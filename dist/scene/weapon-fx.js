@@ -569,6 +569,8 @@ const profiles={
   "source": "body skill"
  }
 };
+profiles['raven-gauntlet']={archetype:'rifle',beats:Array.from({length:8},(_,i)=>i*.105),asset:null,source:'built-in'};
+profiles['raven-clamp']={...profiles['pulse-bash']};
 root.IronVowWeaponFX={profiles,
  get(id){const profile=profiles[id];if(!profile)throw Error('Missing 3D weapon profile: '+id);return profile;},
  assertCatalog(weapons){for(const weapon of weapons)if(!profiles[weapon.id])throw Error('Unmapped weapon '+weapon.id);}
