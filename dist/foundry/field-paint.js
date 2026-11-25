@@ -41,7 +41,7 @@ const darkSplinters=[
  [[152,148],[183,116],[197,116],[178,140],[165,141],[158,148]]
 ];
 const ravenFrame=30;
-const ravenCoat={paint_primary:'#161b23',paint_secondary:'#20252d',paint_accent:'#272b31',frame:'#242930',steel:'#343940'};
+const ravenCoat={paint_primary:'#363d47',paint_secondary:'#3e4650',paint_accent:'#404852',frame:'#414852',steel:'#4a5159'};
 const ravenVariants=3;
 const repeats={block:'.58',splinter:'.49',survey:'.52',worn:'.63'};
 const textures=new Map();
@@ -209,25 +209,47 @@ function scorch(base,damaged,scorchMap,fade){
  bind(damaged,scorchMap,fade);
  return true;
 }
-function coatRaven(original,variant){
- const material=original.clone(),channel='xyz'[variant];
+function coatRaven(original,variant,geometry){
+ const material=original.clone(),channel='xyz'[variant],steel=original.name==='steel';
+ const ambient=geometry.hasAttribute('_raven_ao'),edge=geometry.hasAttribute('_raven_edge');
  material.userData.fieldFinish='midnight';
  material.userData.paintVariant=variant;
  material.color.set(ravenCoat[original.name]).convertSRGBToLinear();
- if(original.userData.paint){material.metalness=.22;material.roughness=.69;}
- const crimson=new root.THREE.Color('#761e35').convertSRGBToLinear();
- const varying='varying float ravenInlay;\n';
+ material.metalness=steel?.48:.08;
+ material.roughness=steel?.78:.92;
+ material.envMapIntensity=steel?.23:.17;
+ const crimson=new root.THREE.Color('#ff174b').convertSRGBToLinear();
+ const indigo=new root.THREE.Color('#7d8cdb').convertSRGBToLinear();
+ const varying='varying float ravenInlay;\n'+(ambient?'varying float ravenAmbient;\n':'')+(edge?'varying float ravenEdge;\n':'');
+ const shade=ambient?`float openArmor=smoothstep(.35,.96,ravenAmbient);
+    reflectedLight.indirectDiffuse*=mix(.39,1.,openArmor);
+    reflectedLight.directDiffuse*=mix(.87,1.,openArmor);`:'';
  function bind(target,scorchMap,fade=1){
   if(scorchMap)target.map=scorchMap;
   target.onBeforeCompile=(shader,renderer)=>{
    original.onBeforeCompile.call(target,shader,renderer);
    shader.uniforms.ravenCrimson={value:crimson.clone().multiplyScalar(fade)};
-   shader.vertexShader='attribute vec3 _raven_inlay;\n'+varying+shader.vertexShader.replace('#include <begin_vertex>',
-    `#include <begin_vertex>\nravenInlay=_raven_inlay.${channel};`);
-   shader.fragmentShader='uniform vec3 ravenCrimson;\n'+varying+shader.fragmentShader.replace('#include <color_fragment>',
-    '#include <color_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,ravenCrimson,smoothstep(.68,.90,ravenInlay));');
+   shader.uniforms.ravenIndigo={value:indigo.clone().multiplyScalar(fade)};
+   shader.vertexShader='attribute vec3 _raven_inlay;\n'+(ambient?'attribute float _raven_ao;\n':'')+
+    (edge?'attribute float _raven_edge;\n':'')+varying+shader.vertexShader.replace('#include <begin_vertex>',
+    `#include <begin_vertex>\nravenInlay=_raven_inlay.${channel};${ambient?' ravenAmbient=_raven_ao;':''}${edge?' ravenEdge=_raven_edge;':''}`);
+   shader.fragmentShader='uniform vec3 ravenCrimson; uniform vec3 ravenIndigo;\n'+varying+shader.fragmentShader
+    .replace('#include <color_fragment>',`#include <color_fragment>
+     float inlayCore=smoothstep(.62,.90,ravenInlay);
+     float inlaySpill=smoothstep(.025,.47,ravenInlay)*(1.-inlayCore);
+     float indigoTrim=${edge?'smoothstep(.24,.85,ravenEdge)*(1.-inlayCore)':'0.'};
+     float scarletPower=${edge?'mix(.68,.37,smoothstep(.5,.78,ravenEdge))':'.68'};
+     diffuseColor.rgb=mix(diffuseColor.rgb,ravenCrimson*.21,inlayCore);`)
+    .replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+     float bevelGlance=1.-abs(dot(normal,normalize(vViewPosition)));
+     float indigoCatch=smoothstep(.28,.86,bevelGlance);
+     totalEmissiveRadiance+=ravenCrimson*(scarletPower*inlayCore+.10*inlaySpill);
+     totalEmissiveRadiance+=ravenIndigo*indigoTrim*mix(.008,.084,indigoCatch*indigoCatch);`)
+    .replace('#include <aomap_fragment>',`#include <aomap_fragment>\n${shade}
+     reflectedLight.directSpecular*=${steel?'.35':'.23'};
+     reflectedLight.indirectSpecular*=${steel?'.29':'.24'};`);
   };
-  target.customProgramCacheKey=()=>original.customProgramCacheKey()+'|raven-inlay|'+variant;
+  target.customProgramCacheKey=()=>original.customProgramCacheKey()+'|raven-trim|'+variant+'|'+ambient+'|'+edge+'|'+steel;
  }
  bind(material);
  programs.set(material,bind);
@@ -248,7 +270,7 @@ function create(unit){
    const role=channel(original);
    if(midnight?!Object.hasOwn(ravenCoat,original.name):!role)return;
    if(!materials.has(original)){
-    const material=midnight?coatRaven(original,variant):coat(original,colors,selected,role);
+    const material=midnight?coatRaven(original,variant,mesh.geometry):coat(original,colors,selected,role);
     materials.set(original,material);
     owned.push(material);
    }

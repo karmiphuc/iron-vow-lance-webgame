@@ -6,6 +6,60 @@ const clamp=T.MathUtils.clamp;
 const smooth=x=>{const f=clamp(x,0,1);return f*f*(3-2*f);};
 const fireCue=.37;
 
+function makeContactShadow(ankles){
+ const geometry=new T.BufferGeometry(),grid=5,perStamp=grid*grid,total=perStamp*3;
+ const positions=new Float32Array(total*3),uv=new Float32Array(total*2),strengths=new Float32Array(total),indices=[];
+ for(let stamp=0;stamp<3;stamp++)for(let row=0;row<grid;row++)for(let col=0;col<grid;col++){
+  const i=stamp*perStamp+row*grid+col;
+  uv[i*2]=col/(grid-1);uv[i*2+1]=row/(grid-1);
+  if(row<grid-1&&col<grid-1)indices.push(i,i+grid,i+1,i+1,i+grid,i+grid+1);
+ }
+ geometry.setAttribute('position',new T.BufferAttribute(positions,3).setUsage(T.DynamicDrawUsage));
+ geometry.setAttribute('uv',new T.BufferAttribute(uv,2));
+ geometry.setAttribute('contactStrength',new T.BufferAttribute(strengths,1).setUsage(T.DynamicDrawUsage));
+ geometry.setIndex(indices);
+ // A decal must not extend the chassis bounds used by the battlefield picker.
+ geometry.boundingBox=new T.Box3();
+ const material=new T.MeshBasicMaterial({color:0x05060a,transparent:true,depthWrite:false,
+  polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+ material.onBeforeCompile=shader=>{
+  const vary='varying vec2 contactUV; varying float contactOpacity;\n';
+  shader.vertexShader='attribute float contactStrength;\n'+vary+shader.vertexShader.replace('#include <begin_vertex>',
+   '#include <begin_vertex>\ncontactUV=uv;contactOpacity=contactStrength;');
+  shader.fragmentShader=vary+shader.fragmentShader.replace('#include <color_fragment>',
+   '#include <color_fragment>\ndiffuseColor.a*=contactOpacity*(1.-smoothstep(.10,1.,length(contactUV*2.-1.)));');
+ };
+ const mesh=new T.Mesh(geometry,material);
+ mesh.name='Raven foot contact';mesh.frustumCulled=false;mesh.raycast=()=>{};
+ const inverse=new T.Matrix4(),rootAt=V(),center=V(),point=V();
+ return {
+  update(m,world,stage,alive){
+   const cont=m.cont,k=m.scale,angle=m.yaw;
+   if(mesh.parent!==cont)cont.add(mesh);
+   rootAt.setFromMatrixPosition(cont.matrixWorld);inverse.copy(cont.matrixWorld).invert();
+   const groundAt=stage?()=>rootAt.y:world.groundAt;
+   for(let stamp=0;stamp<3;stamp++){
+    const foot=stamp<2;
+    if(foot)ankles[stamp].getWorldPosition(center);else center.copy(rootAt);
+    const turn=angle+(foot?(stamp===0?.3:-.3):0),s=Math.sin(turn),c=Math.cos(turn);
+    if(foot){center.x+=s*.28*k;center.z+=c*.28*k;}
+    const level=groundAt(center.x,center.z);
+    const lift=center.y-level-(foot?m.dims.ankleH*k:0);
+    const offset=foot?.025:.015;
+    const opacity=foot?(alive?.58*clamp(1-lift/(.58*k),0,1):0):.35*clamp(1-lift/(1.7*k),.25,1);
+    for(let n=0;n<perStamp;n++){
+     const i=stamp*perStamp+n,x=(uv[i*2]*2-1)*(foot?.96:2.9)*k,z=(uv[i*2+1]*2-1)*(foot?1.22:1.8)*k;
+     const px=center.x+c*x+s*z,pz=center.z-s*x+c*z,py=groundAt(px,pz);
+     point.set(px,py+offset,pz).applyMatrix4(inverse).toArray(positions,i*3);
+     strengths[i]=opacity*clamp(1-Math.abs(py-level)/(.75*k),0,1);
+    }
+   }
+   geometry.attributes.position.needsUpdate=geometry.attributes.contactStrength.needsUpdate=true;
+  },
+  dispose(){mesh.parent?.remove(mesh);geometry.dispose();material.dispose();}
+ };
+}
+
 function setup({bone,animations,rig}){
  const both=base=>['L','R'].map(side=>bone(base+'.'+side));
  const shoulders=both('Shoulder'),shields=both('Shield'),upper=both('shoulder');
@@ -38,7 +92,7 @@ function setup({bone,animations,rig}){
  });
  const pelvisTrack=clip=>clip.tracks.get(pelvis.name+'.position');
  const bindPelvis=pelvis.position.clone();
- let guard,guardSince,unit,strikeProgress;
+ let guard,guardSince,unit,strikeProgress,contactShadow;
 
  function rotation(joint,clip,time,out){
   const track=clip.tracks.get(joint.name+'.quaternion');
@@ -97,6 +151,12 @@ function setup({bone,animations,rig}){
 
  return {prepare,afterAnimate,anchors,nativeShield:true,
   meleeSide:()=> 'L',strikeContact:id=>id===secondary.id?clampTip:null,
+  groundShadow(m,world,stage){
+   if(!world||!stage&&!world.groundAt)return;
+   contactShadow??=makeContactShadow(both('ankle'));
+   contactShadow.update(m,world,stage,unit.alive);
+  },
+  dispose(){contactShadow?.dispose();},
   pose(entry,actor,pose){
    unit=actor;strikeProgress=pose.strikeKind===secondary.id?pose.strikeProgress:0;
    anchors.left=actor.brace?faces[0]:elbows[0];
@@ -144,6 +204,6 @@ function makeLeg(bone,side){
  }};
 }
 
-root.IronVowRigV2.register(30,{id:'raven',assetPath:'rig-bench/rig-v2/raven.glb',factoryLivery:true,
+root.IronVowRigV2.register(30,{id:'raven',assetPath:'rig-bench/rig-v2/raven.glb?rev=raven-matte',factoryLivery:true,
  scale:.94,dimensions:{walkDrop:.085,stride:.68,duty:.57},setup});
 })(window);

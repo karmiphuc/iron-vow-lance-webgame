@@ -3,7 +3,7 @@
 import argparse
 import json
 import sys
-from math import cos, radians, sin
+from math import cos, degrees, radians, sin
 from pathlib import Path
 
 import bpy
@@ -12,15 +12,30 @@ from mathutils.bvhtree import BVHTree
 
 
 HERE = Path(__file__).resolve().parent
-SOURCE = HERE.parent / "Raven-Clay-R3" / "Raven.blend"
+SOURCE = next((folder / "Raven-Clay-R3" / "Raven.blend" for folder in HERE.parents
+               if (folder / "Raven-Clay-R3" / "Raven.blend").is_file()), None)
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(HERE))
-from raven_motion import CLIPS, FPS, SIDES, STRIDE, bake_actions, rest_leg, sample
+from raven_motion import CLIPS, FPS, HIP_RISE, SIDES, STRIDE, bake_actions, r3_leg, rest_leg, sample
 
 
 MATERIALS = ("paint_primary", "paint_secondary", "frame", "recess", "steel", "paint_accent", "visor")
 PARTS = ("body", "pilot", "left", "right", "legs")
 GROUND = .03  # R3 toe cleats: center z=.075, height=.09.
+TORSO_TOP = 5.57954  # Top of the R3 wraparound collar, below the optical hood.
+TORSO_SHAPE = Matrix.Diagonal((.88, 1, .85, 1))
+TORSO_SHAPE.translation.z = TORSO_TOP * .15
+REAR_KNEE_LINKAGE = ("Rear knee ", "Knee carriage sliding pin", "Knee eye flange")
+
+
+def arm_shift(side):
+    mount = Vector((side * 1.78, .075, 4.89))
+    return TORSO_SHAPE @ mount - mount
+
+
+def shield_shift(side):
+    # The hinged wings follow the inboard trunnions while retaining the crown line.
+    return Vector((-side * 1.20 * .12, 0, 0))
 
 
 def make_rig():
@@ -46,29 +61,32 @@ def make_rig():
         bone(name, head, Vector(head) + Vector(direction).normalized() * .25, parent, False)
 
     bone("Root", (0, 0, GROUND), (0, 0, .55), deform=False)
-    bone("Pelvis", (0, .11, 3.30), (0, .11, 3.63), "Root")
-    bone("Torso", (0, .08, 3.63), (0, .08, 5.02), "Pelvis")
+    torso_base = TORSO_SHAPE @ Vector((0, .08, 3.63))
+    bone("Pelvis", (0, .11, 3.30 + HIP_RISE), (0, .11, torso_base.z), "Root")
+    bone("Torso", torso_base, TORSO_SHAPE @ Vector((0, .08, 5.02)), "Pelvis")
     bone("Optics", (0, .155, 5.29), (0, -.24, 5.36), "Torso")
     for label, side in SIDES.items():
         hip, knee, ankle = rest_leg(side)
-        shoulder = (side * 1.20, .06, 5.02)
-        gimbal = (side * 2.10, .066, 5.62)
-        arm = (side * 1.78, .075, 4.89)
+        wing = shield_shift(side)
+        shoulder = Vector((side * 1.20, .06, 5.02)) + wing
+        gimbal = Vector((side * 2.10, .066, 5.62)) + wing
+        shift = arm_shift(side)
+        arm = Vector((side * 1.78, .075, 4.89)) + shift
         elbow = Vector((side * 2.16, -.022, 3.97))
         bend = Matrix.Translation(elbow) @ Matrix.Rotation(-.22, 4, "X") @ Matrix.Translation(-elbow)
         wrist = bend @ Vector((side * 2.58, -.28, 2.50))
         hand_axis = (wrist - elbow).normalized()
-        bone(f"Shoulder.{label}", shoulder, (side * 1.88, .06, 5.06), "Torso")
-        bone(f"Shield.{label}", gimbal, (side * 2.10, .405, 5.62), f"Shoulder.{label}")
-        socket(f"ShieldFace.{label}", (side * 2.79, -.52, 5.40), (0, -1, 0), f"Shield.{label}")
-        bone(f"Arm.{label}", arm, elbow, "Torso")
-        bone(f"Elbow.{label}", elbow, wrist, f"Arm.{label}")
-        bone(f"Hand.{label}", wrist, wrist + hand_axis * .38, f"Elbow.{label}")
-        socket(f"Grip.{label}", bend @ Vector((side * 2.47, -.34, 2.22)), hand_axis, f"Hand.{label}")
+        bone(f"Shoulder.{label}", shoulder, Vector((side * 1.88, .06, 5.06)) + wing, "Torso")
+        bone(f"Shield.{label}", gimbal, Vector((side * 2.10, .405, 5.62)) + wing, f"Shoulder.{label}")
+        socket(f"ShieldFace.{label}", Vector((side * 2.79, -.52, 5.40)) + wing, (0, -1, 0), f"Shield.{label}")
+        bone(f"Arm.{label}", arm, elbow + shift, "Torso")
+        bone(f"Elbow.{label}", elbow + shift, wrist + shift, f"Arm.{label}")
+        bone(f"Hand.{label}", wrist + shift, wrist + shift + hand_axis * .38, f"Elbow.{label}")
+        socket(f"Grip.{label}", bend @ Vector((side * 2.47, -.34, 2.22)) + shift, hand_axis, f"Hand.{label}")
         if label == "R":
-            socket("Muzzle.R", bend @ Vector((-2.48, -.32, 2.04)), hand_axis, "Hand.R")
+            socket("Muzzle.R", bend @ Vector((-2.48, -.32, 2.04)) + shift, hand_axis, "Hand.R")
         else:
-            socket("ClampTip.L", bend @ Vector((2.65, -.42, 1.24)), (0, 0, -1), "Hand.L")
+            socket("ClampTip.L", bend @ Vector((2.65, -.42, 1.24)) + shift, (0, 0, -1), "Hand.L")
         bone(f"Hip.{label}", hip, knee, "Pelvis")
         bone(f"Knee.{label}", knee, ankle, f"Hip.{label}")
         bone(f"Patella.{label}", knee, knee + Vector((0, -.42, 0)), f"Hip.{label}")
@@ -117,6 +135,9 @@ def source_bindings():
                       (ankle, len(objects), "Foot"))
             for start, end, owner in groups:
                 assignments.update((obj, (f"{owner}.{label}", "legs")) for obj in objects[start:end])
+            for obj in objects[upper:lower]:
+                if obj.name.startswith(REAR_KNEE_LINKAGE):
+                    assignments[obj] = (f"Knee.{label}", "legs")
             for digit in (1, 2):
                 start = index(objects, f"Articulated talon {digit}")
                 for offset in (0, 4, 5, 6, 7):
@@ -136,19 +157,65 @@ def source_bindings():
     return assignments
 
 
+def fit_link(start, end, posed_start, posed_end):
+    source = end - start
+    target = posed_end - posed_start
+    # Stretch along the load axis so fitted plates, rods, and fasteners share their mounts.
+    axis = source.normalized()
+    extension = target.length / source.length - 1
+    stretch = Matrix.Identity(4)
+    for row in range(3):
+        for column in range(3):
+            stretch[row][column] += extension * axis[row] * axis[column]
+    rotate = source.rotation_difference(target).to_matrix().to_4x4()
+    return Matrix.Translation(posed_start) @ rotate @ stretch @ Matrix.Translation(-start)
+
+
+def shape_transforms():
+    shapes = {"Torso": TORSO_SHAPE, "Pelvis": Matrix.Translation((0, 0, HIP_RISE))}
+    for label, side in SIDES.items():
+        old_hip, old_knee, ankle = r3_leg(side)
+        hip, knee, _ = rest_leg(side)
+        shapes.update({f"{owner}.{label}": Matrix.Translation(arm_shift(side))
+                       for owner in ("Arm", "Elbow", "Hand")})
+        shapes.update({f"{owner}.{label}": Matrix.Translation(shield_shift(side))
+                       for owner in ("Shoulder", "Shield")})
+        shapes[f"Hip.{label}"] = fit_link(old_hip, old_knee, hip, knee)
+        shapes[f"Knee.{label}"] = fit_link(old_knee, ankle, knee, ankle)
+        old_shin, shin = ankle - old_knee, ankle - knee
+        old_thigh, thigh = old_knee - old_hip, knee - hip
+        tilt = old_thigh.rotation_difference(thigh).slerp(old_shin.rotation_difference(shin), .5)
+        shapes[f"Patella.{label}"] = (Matrix.Translation(knee) @ tilt.to_matrix().to_4x4()
+                                      @ Matrix.Translation(-old_knee))
+    return shapes
+
+
 def connect_parts(rig, assignments):
+    shapes = shape_transforms()
+    linkages = {}
+    for label, side in SIDES.items():
+        _, old_knee, _ = r3_leg(side)
+        # Seat the rear toggle on the top of the calf as one rigid moving assembly.
+        seat = Matrix.Diagonal((1, .74, 1, 1))
+        seat[2][1] = -.07
+        linkages[f"Knee.{label}"] = (shapes[f"Knee.{label}"] @ Matrix.Translation(old_knee)
+                                     @ seat @ Matrix.Translation(-old_knee))
     for obj, (owner, part) in assignments.items():
-        transform = obj.matrix_world.copy()
+        shape = linkages[owner] if obj.name.startswith(REAR_KNEE_LINKAGE) else shapes.get(owner, Matrix.Identity(4))
+        transform = shape @ obj.matrix_world
         obj.parent = rig
         obj.parent_type = "BONE"
         obj.parent_bone = owner
-        obj.matrix_world = transform
+        bone = rig.data.bones[owner]
+        # Keep the affine fit in the binding so bevels and the editable source meshes survive.
+        parent = rig.matrix_world @ bone.matrix_local @ Matrix.Translation((0, bone.length, 0))
+        obj.matrix_parent_inverse = parent.inverted() @ transform @ obj.matrix_basis.inverted()
         obj["rig_attachment"] = owner
         obj["part"] = part
     bpy.context.view_layer.update()
 
 
-def export_live(rig, assignments):
+def export_live(rig, assignments, output):
     scene = bpy.context.scene
     depsgraph = bpy.context.evaluated_depsgraph_get()
     bpy.ops.object.select_all(action="DESELECT")
@@ -188,19 +255,58 @@ def export_live(rig, assignments):
     for mesh in meshes:
         mesh.select_set(True)
     bpy.context.view_layer.update()
-    bpy.ops.export_scene.gltf(filepath=str(HERE / "Raven-Rig.glb"), use_selection=True,
+    bpy.ops.export_scene.gltf(filepath=str(output), use_selection=True,
                               export_extras=True, export_texcoords=False, export_animations=True,
                               export_anim_slide_to_zero=True, export_animation_mode="ACTIONS",
                               export_optimize_animation_keep_anim_armature=False)
 
 
-def verify_pose(rig, assignments):
+def measured_shape(assignments):
+    graph = bpy.context.evaluated_depsgraph_get()
+    groups = {key: [] for key in ("torso", "head", "subject")}
+    for obj, (owner, _) in assignments.items():
+        evaluated = obj.evaluated_get(graph)
+        points = [evaluated.matrix_world @ vertex.co for vertex in evaluated.data.vertices]
+        groups["subject"].extend(points)
+        if owner == "Torso":
+            groups["torso"].extend(points)
+        if owner == "Optics":
+            groups["head"].extend(points)
+    torso, head, subject = (groups[name] for name in ("torso", "head", "subject"))
+    return {"torso_width": max(point.x for point in torso) - min(point.x for point in torso),
+            "torso_height": max(point.z for point in torso) - min(point.z for point in torso),
+            "head_z": max(point.z for point in head), "crown_z": max(point.z for point in subject),
+            "floor_z": min(point.z for point in subject)}
+
+
+def leg_dimensions(points):
+    hip, knee, ankle = points
+    upper, lower = knee - hip, ankle - knee
+    pitch = degrees(Vector((upper.y, upper.z)).angle(Vector((lower.y, lower.z))))
+    return {"hip_to_ankle": (ankle - hip).length, "loaded_height": hip.z - ankle.z,
+            "link_length": upper.length + lower.length, "bend": degrees(upper.angle(lower)),
+            "sagittal_bend": pitch, "ankle_xyz": list(ankle)}
+
+
+def verify_pose(rig, assignments, baseline):
     bones = rig.pose.bones
     points = lambda names: {name: bones[name].head.copy() for name in names}
     feet = [f"Foot.{label}" for label in SIDES]
     shields = [f"ShieldFace.{label}" for label in SIDES]
     sample(rig, "Idle", 0)
     idle = points(feet + shields)
+    revised = measured_shape(assignments)
+    for name, ratio in (("torso_width", .88), ("torso_height", .85),
+                        ("head_z", 1), ("crown_z", 1), ("floor_z", 1)):
+        assert abs(revised[name] - baseline[name] * ratio) < .00001, (name, baseline, revised)
+    legs = {}
+    for label, side in SIDES.items():
+        old = leg_dimensions(r3_leg(side))
+        new = leg_dimensions(tuple(bones[f"{name}.{label}"].head for name in ("Hip", "Knee", "Foot")))
+        assert new["hip_to_ankle"] > old["hip_to_ankle"] and new["link_length"] > old["link_length"], (old, new)
+        assert 10 < new["sagittal_bend"] < 25 < old["sagittal_bend"], (old, new)
+        assert (Vector(old["ankle_xyz"]) - Vector(new["ankle_xyz"])).length < .00001, (old, new)
+        legs[label] = {"R3": old, "standing": new}
     body_parts = {part: sum(group == part for _, group in assignments.values()) for part in PARTS}
     max_foot_drift = 0
     for clip in ("Idle", "BraceEnter", "BraceHold", "BraceExit", "Fire"):
@@ -211,6 +317,10 @@ def verify_pose(rig, assignments):
     sample(rig, "BraceHold", 0)
     brace = points(shields)
     assert all(brace[name].y < idle[name].y - .6 for name in shields), (idle, brace)
+    for label in SIDES:
+        legs[label]["brace"] = leg_dimensions(tuple(bones[f"{name}.{label}"].head
+                                                   for name in ("Hip", "Knee", "Foot")))
+        assert legs[label]["brace"]["sagittal_bend"] > legs[label]["standing"]["sagittal_bend"] + 20
     sample(rig, "Walk", 0)
     start = points(feet)
     sample(rig, "Walk", 1)
@@ -227,6 +337,7 @@ def verify_pose(rig, assignments):
     assert max_stance_drift < .0001, max_stance_drift
     sample(rig, "Idle", 0)
     return {"bound_source_objects": body_parts, "bones": len(bones),
+            "mesh_dimensions": {"R3": baseline, "revised": revised}, "leg_dimensions": legs,
             "planted_foot_max_error": max_foot_drift, "walk_stance_max_error": max_stance_drift,
             "shield_face_idle_xyz": {name: list(idle[name]) for name in shields},
             "shield_face_brace_xyz": {name: list(brace[name]) for name in shields},
@@ -268,7 +379,24 @@ def verify_brace_clearance(rig, assignments):
     return {"samples": len(levels), "part_pairs_per_sample": len(pairs), "overlapping_pairs": 0}
 
 
-def renders(rig):
+def verify_rear_knee_mounts(assignments):
+    graph = bpy.context.evaluated_depsgraph_get()
+    for label in SIDES:
+        owner = f"Knee.{label}"
+        parts = {obj.name.partition(".")[0]: obj for obj, (bone, _) in assignments.items() if bone == owner}
+
+        def surface(name):
+            evaluated = parts[name].evaluated_get(graph)
+            return BVHTree.FromPolygons([evaluated.matrix_world @ vertex.co for vertex in evaluated.data.vertices],
+                                        [tuple(poly.vertices) for poly in evaluated.data.polygons])
+
+        calf = surface("Rearward deep calf casting")
+        for name in ("Rear knee lower hinge", "Rear knee hinge guide"):
+            assert calf.overlap(surface(name)), (label, name)
+    return {"seated_surfaces_per_side": 2, "owner": "calf"}
+
+
+def renders(rig, proof):
     scene = bpy.context.scene
     cam = scene.camera
     cam.data.type = "ORTHO"
@@ -280,14 +408,13 @@ def renders(rig):
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "JPEG"
     scene.render.image_settings.quality = 93
-    proof = HERE / "Proof"
-    proof.mkdir(exist_ok=True)
-    views = {"angle": (9, -17, 7.4), "front": (0, -20, 3.95), "side": (19, 0, 5.6)}
+    proof.mkdir(parents=True, exist_ok=True)
+    views = {"angle": (9, -17, 7.4), "front": (0, -20, 3.12), "side": (19, 0, 3.12)}
     for clip, level, side, name in (
         ("Idle", 0, "angle", "01-idle"), ("BraceHold", 0, "angle", "02-brace"),
         ("Idle", 0, "front", "03-idle-front"), ("BraceHold", 0, "front", "04-brace-front"),
         ("BraceHold", 0, "side", "05-brace-side"), ("Walk", .20, "side", "06-walk"),
-        ("Fire", .37, "angle", "07-fire"),
+        ("Fire", .37, "angle", "07-fire"), ("Idle", 0, "side", "08-idle-side"),
     ):
         sample(rig, clip, level)
         cam.location = views[side]
@@ -299,37 +426,48 @@ def renders(rig):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=SOURCE, help="Approved Raven-Clay-R3 blend")
+    parser.add_argument("--output-dir", type=Path, default=HERE, help="Directory for the packed rig and full-detail GLB")
+    parser.add_argument("--proof-dir", type=Path, help="Directory for review renders")
     parser.add_argument("--render", action="store_true", help="Also render the Blender review views")
     tools = parser.add_mutually_exclusive_group()
     tools.add_argument("--render-only", action="store_true", help="Render the existing saved rig")
     tools.add_argument("--export-only", action="store_true", help="Export the existing rig without the R3 master")
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
+    output = args.output_dir.resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    path = output / "Raven-Rig.blend"
+    proof = (args.proof_dir or output / "Proof").resolve()
     if args.render_only or args.export_only:
-        bpy.ops.wm.open_mainfile(filepath=str(HERE / "Raven-Rig.blend"))
+        bpy.ops.wm.open_mainfile(filepath=str(path))
         rig = bpy.data.objects["Raven Rig"]
         if args.render_only:
-            renders(rig)
+            renders(rig, proof)
         else:
             sample(rig, "Idle", 0)
             bindings = {obj: (obj["rig_attachment"], obj["part"])
                         for collection in bpy.context.scene.collection.children for obj in collection.objects
                         if obj.parent == rig and obj.get("rig_attachment")}
-            export_live(rig, bindings)
+            export_live(rig, bindings, output / "Raven-Rig.glb")
         return
+    if args.source is None:
+        parser.error("Pass --source with the path to the approved Raven-Clay-R3 blend")
     bpy.ops.wm.open_mainfile(filepath=str(args.source.resolve()))
     bindings = source_bindings()
+    baseline = measured_shape(bindings)
     rig = make_rig()
     connect_parts(rig, bindings)
     bake_actions(rig)
-    checks = verify_pose(rig, bindings)
+    checks = verify_pose(rig, bindings, baseline)
+    checks["rear_knee_mounts"] = verify_rear_knee_mounts(bindings)
     checks["brace_clearance"] = verify_brace_clearance(rig, bindings)
-    (HERE / "rig-checks.json").write_text(json.dumps(checks, indent=2) + "\n", encoding="utf-8")
+    (output / "rig-checks.json").write_text(json.dumps(checks, indent=2) + "\n", encoding="utf-8")
     bpy.context.preferences.filepaths.save_version = 0
-    bpy.ops.wm.save_as_mainfile(filepath=str(HERE / "Raven-Rig.blend"))
+    bpy.ops.file.pack_all()
+    bpy.ops.wm.save_as_mainfile(filepath=str(path))
     if args.render:
-        renders(rig)
+        renders(rig, proof)
         sample(rig, "Idle", 0)
-    export_live(rig, bindings)
+    export_live(rig, bindings, output / "Raven-Rig.glb")
 
 
 if __name__ == "__main__":

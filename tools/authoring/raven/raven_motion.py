@@ -12,14 +12,24 @@ FPS = 30
 CLIPS = {"Idle": 60, "Walk": 36, "BraceEnter": 21, "BraceHold": 30,
          "BraceExit": 21, "Fire": 24}
 STRIDE = 0.82
+HIP_RISE = .31
 
 
-def rest_leg(side):
+def r3_leg(side):
     return tuple(Vector(point) for point in (
         (side * .76, .11, 3.30),
         (side * 1.26, -.49, 2.20),
         (side * 1.435, .17 - side * .035, .68),
     ))
+
+
+def rest_leg(side):
+    hip, _, ankle = r3_leg(side)
+    hip.z += HIP_RISE
+    knee = hip.lerp(ankle, .43)
+    # A small forward offset keeps the loaded linkage off its extension stop.
+    knee.y -= .25
+    return hip, knee, ankle
 
 
 def ease(value):
@@ -109,7 +119,7 @@ def pose_brace(rig, tuck, swing, fold, hold=0.0):
         rotate(bones[f"Arm.{label}"], rotation((0, 1, 0), side * 18 * ramp(tuck, .62, 1))
                @ rotation((1, 0, 0), rear * pullback))
         rotate(bones[f"Elbow.{label}"], rotation((1, 0, 0), -elbow * close))
-        rotate(bones[f"Shoulder.{label}"], rotation((0, 0, 1), side * -90 * swing)
+        rotate(bones[f"Shoulder.{label}"], rotation((0, 0, 1), side * -84 * swing)
                @ rotation((1, 0, side * .0658), -19 * swing))
         rotate(bones[f"Shield.{label}"], rotation((0, 1, 0), side * 6 * fold))
 

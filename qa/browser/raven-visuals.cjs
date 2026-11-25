@@ -12,32 +12,58 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
   const unit=current();return IronVowScene.ready&&unit&&IronVowScene.models.get(unit.id)?.entry?.m.live==='raven';
  },null,{timeout:60000});
  assert.ok(await page.evaluate(()=>IronVowScene.models.get(current().id).entry.m.build.ownedMaterials.some(material=>
-  material.userData.fieldFinish==='midnight'&&material.userData.paintVariant===2)),'Battle coat uses the assigned Raven variant');
+  material.name==='paint_primary'&&material.userData.fieldFinish==='midnight'&&material.userData.paintVariant===2&&
+  material.roughness>=.9&&material.envMapIntensity<.2&&material.customProgramCacheKey().includes('raven-trim'))),
+ 'Battle coat uses the assigned matte Raven variant with luminous trim');
  assert.deepEqual(await page.evaluate(()=>{
   const counts=[0,0,0],source=IronVowScene.models.get(current().id).entry.m.nativeV2.source;
+  let cavities=0,open=0,spill=0,trim=0;
   source.traverse(mesh=>{
    const inlays=mesh.geometry?.getAttribute('_raven_inlay');
+   const ambient=mesh.geometry?.getAttribute('_raven_ao');
+   const edges=mesh.geometry?.getAttribute('_raven_edge');
    for(let i=0;i<(inlays?.count??0);i++){
     if(inlays.getX(i)>.9)counts[0]++;
     if(inlays.getY(i)>.9)counts[1]++;
     if(inlays.getZ(i)>.9)counts[2]++;
+    if(inlays.getZ(i)>.05&&inlays.getZ(i)<.45)spill++;
    }
+   for(let i=0;i<(ambient?.count??0);i++){
+    const visibility=ambient.getX(i);
+    if(visibility<.65)cavities++;
+    if(visibility>.95)open++;
+   }
+   for(let i=0;i<(edges?.count??0);i++)if(edges.getX(i)>.5)trim++;
   });
-  return counts.map(count=>count>0);
- }),[true,true,true],'All three seam patterns are baked into the skinned armor');
+  return [...counts.map(count=>count>0),cavities>0,open>0,spill>0,trim>0];
+ }),[true,true,true,true,true,true,true],'The three inlays, local spill, indigo bevels and contact occlusion are baked into the skinned armor');
+ assert.ok(await page.evaluate(()=>{
+  const {m}=IronVowScene.models.get(current().id).entry,shadow=m.cont.getObjectByName('Raven foot contact');
+  const {position,contactStrength}=shadow.geometry.attributes;
+  return [12,37].every(i=>{
+   const point=shadow.localToWorld(new THREE.Vector3().fromBufferAttribute(position,i));
+   return contactStrength.getX(i)>.25&&Math.abs(point.y-IronVowScene.groundAt(point.x,point.z)-.025)<.002;
+  })&&shadow.geometry.boundingBox.isEmpty()&&!shadow.castShadow;
+ }),'Both Raven feet shade the terrain at their sole contacts without expanding hit bounds');
  const walk=await page.evaluate(async()=>{
   const unit=current(),entry=IronVowScene.models.get(unit.id).entry,{m}=entry;
   const source=m.nativeV2.source;
   const find=name=>source.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(name));
   const position=name=>find(name).getWorldPosition(new THREE.Vector3());
   const local=name=>m.cont.worldToLocal(position(name)).toArray();
+  const kneeFlex=side=>{
+   const [hip,knee,ankle]=['hip','knee','ankle'].map(joint=>m.cont.worldToLocal(position(`${joint}.${side}`)));
+   const thigh=knee.clone().sub(hip).setX(0),shin=ankle.sub(knee).setX(0);
+   return THREE.MathUtils.radToDeg(thigh.angleTo(shin));
+  };
   const feet=()=>m.rig.legs.map(({side},i)=>{
    const foot=position('ankle.'+side),state=m.legs[i];
    return {at:foot.toArray(),plant:state.planted.toArray(),goal:foot.distanceTo(state.foot),
-    swing:state.swing||Boolean(state.settle)};
+    swing:state.swing||Boolean(state.settle),flex:kneeFlex(side)};
   });
   const shields=()=>['L','R'].map(side=>local('ShieldFace.'+side));
-  window.ravenVisualFixture={unit,entry,feet,shields,position,find};
+  const neutral={flex:['L','R'].map(kneeFlex),spread:local('ankle.L')[0]-local('ankle.R')[0]};
+  window.ravenVisualFixture={unit,entry,feet,shields,position,find,kneeFlex,neutral};
   const tile=__ironVow.legalMoves(unit.id).find(({x,z,cost})=>cost===FRAMES[RAVEN_FRAME].moveAP&&terrainCell(x,z).level===terrainCell(unit.x,unit.z).level);
   if(!tile)throw Error('Raven fixture needs one same-level move');
   const samples=[];let done=false;
@@ -51,12 +77,16 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
   });
   try{await __ironVow.move(unit.id,tile.x,tile.z);}finally{done=true;}
   await monitor;
-  return samples;
+  return {samples,neutral};
  });
- assert.ok(walk.some(sample=>sample.some(foot=>foot.swing)),'Raven picks up a foot on a legal move');
+ assert.ok(walk.neutral.flex.every(angle=>angle>=9&&angle<=30),
+  `Raven's live neutral knees are nearly straight with travel in reserve: ${walk.neutral.flex}`);
+ assert.ok(Math.abs(walk.neutral.spread-2.87)<.025,'Raven preserves its standing foot spread');
+ assert.ok(walk.samples.some(sample=>sample.some((foot,i)=>foot.swing&&foot.flex>walk.neutral.flex[i]+12)),
+  'Raven flexes a knee to lift a foot on a legal move');
  let planted=0;
- for(const [i,feet] of walk.entries())for(const [j,foot] of feet.entries()){
-  const prev=walk[i-1]?.[j];
+ for(const [i,feet] of walk.samples.entries())for(const [j,foot] of feet.entries()){
+  const prev=walk.samples[i-1]?.[j];
   if(!prev||foot.swing||prev.swing||distance(foot.plant,prev.plant)>1e-5)continue;
   assert.ok(foot.goal<.06&&distance(foot.at,prev.at)<.05,JSON.stringify(foot));planted++;
  }
@@ -77,12 +107,15 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
  await page.waitForFunction(()=>ravenVisualFixture.shields().every((position,i)=>Math.abs(position[0])<Math.abs(ravenVisualFixture.ready[i][0])-1),null,{timeout:15000});
  await page.waitForFunction(()=>clock-ravenVisualFixture.unit.braceTime>1);
  const guard=await page.evaluate(()=>{
-  const {ready,shields,samples,entry,position,unit}=ravenVisualFixture;
+  const {ready,shields,samples,entry,position,unit,kneeFlex,feet}=ravenVisualFixture;
   const attached=['left','right'].map((part,i)=>entry.m.nativeV2.anchors[part]
    .getWorldPosition(new THREE.Vector3()).distanceTo(position('ShieldFace.'+(i?'R':'L'))));
-  return {ready,held:shields(),samples,attached,loadout:[entry.primary?.id,entry.secondary?.id],brace:unit.brace};
+  return {ready,held:shields(),samples,attached,loadout:[entry.primary?.id,entry.secondary?.id],brace:unit.brace,
+   flex:['L','R'].map(kneeFlex),footErrors:feet().map(foot=>foot.goal)};
  });
  assert.equal(guard.brace,true);
+ assert.ok(guard.flex.every((angle,i)=>angle>walk.neutral.flex[i]+20)&&guard.footErrors.every(error=>error<.06),
+  `Raven gains brace knee flex over planted feet: ${JSON.stringify({neutral:walk.neutral.flex,brace:guard.flex,errors:guard.footErrors})}`);
  assert.deepEqual(guard.loadout,['raven-gauntlet','raven-clamp']);
  assert.ok(guard.attached.every(error=>error<1e-5),'Guard impact anchors follow both moving shields');
  assert.ok(guard.held.every((position,i)=>position[2]-guard.ready[i][2]>.25),'Both shields swing ahead of their parked pose');
@@ -151,7 +184,7 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
   const plate=rig.object.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('ShieldFace.L'));
   let painted=false;
   rig.object.traverse(mesh=>{if(mesh.material?.userData.fieldFinish==='midnight'&&mesh.material.userData.paintVariant===2)painted=true;});
-  return plate&&painted;
+  return plate&&painted&&rig.object.getObjectByName('Raven foot contact');
  }),null,{timeout:60000});
  await tap('.command-deck [data-page="workshop"]');
  await page.locator('#paint-preview').scrollIntoViewIfNeeded();
@@ -179,6 +212,6 @@ module.exports=async function checkRavenVisuals({page,origin,tap,mobile}){
  await page.evaluate(()=>__bench.setClip('BraceHold'));
  await page.waitForFunction(()=>window.__bench?.state.clip==='BraceHold');
  if(!mobile&&process.env.IRON_VOW_RAVEN_PROOF_DIR)await page.screenshot({path:join(process.env.IRON_VOW_RAVEN_PROOF_DIR,'raven-guard-rig-bench.png')});
- console.log('PASS Raven movement, shoulder guard, arm loss, weapons, matching battle/Mech Bay/Workshop inlays, manual finish, and Rig Bench clips');
- return {planted,guardSamples:guard.samples.length};
+ console.log('PASS Raven movement, shoulder guard, arm loss, weapons, matte armor, grounded shadows, matching inlays, manual finish, and Rig Bench clips');
+ return {planted,guardSamples:guard.samples.length,neutralKneeFlex:walk.neutral.flex,braceKneeFlex:guard.flex};
 };
