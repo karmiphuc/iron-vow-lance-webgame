@@ -43,6 +43,11 @@ module.exports=async function checkNavigation({page,origin,out,viewport,mobile,t
  await tap('[data-page="inn"]');assert.equal(await page.evaluate(()=>page),'inn');await parent('company');
  await nav('career');assert.equal(await page.evaluate(()=>page),'career');await parent('company');
  await nav('bridge');
- const ports=page.locator('[data-overworld-port]');if(await ports.count()>1){await ports.nth(1).click();await page.locator('#chart-viewport').focus();await page.keyboard.press('ArrowRight');await page.keyboard.press('+');const before=await page.evaluate(()=>JSON.stringify({overworldSelection,overworldRouteKey,pose:(({zoom,tilt,yaw,panX,panZ})=>({zoom,tilt,yaw,panX,panZ}))(IronVowChart.snapshot())}));await tap('#field-journal');await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>page),'overworld');assert.equal(await page.evaluate(()=>JSON.stringify({overworldSelection,overworldRouteKey,pose:(({zoom,tilt,yaw,panX,panZ})=>({zoom,tilt,yaw,panX,panZ}))(IronVowChart.snapshot())})),before);assert.equal(await page.evaluate(()=>document.activeElement.id),'field-journal');}
+ await tap('.rail-directory summary');
+ const alternate=page.locator('[data-rail-directory]:not([aria-current="true"])').first();
+ const destination=await alternate.getAttribute('data-rail-directory');
+ await alternate.click();
+ assert.equal(await page.evaluate(()=>overworldSelection),destination);
+ await page.locator('#chart-viewport').focus();await page.keyboard.press('ArrowRight');await page.keyboard.press('+');const before=await page.evaluate(()=>JSON.stringify({overworldSelection,overworldRouteKey,pose:(({zoom,tilt,yaw,panX,panZ})=>({zoom,tilt,yaw,panX,panZ}))(IronVowChart.snapshot())}));await tap('#field-journal');await page.keyboard.press('Escape');assert.equal(await page.evaluate(()=>page),'overworld');assert.equal(await page.evaluate(()=>JSON.stringify({overworldSelection,overworldRouteKey,pose:(({zoom,tilt,yaw,panX,panZ})=>({zoom,tilt,yaw,panX,panZ}))(IronVowChart.snapshot())})),before);assert.equal(await page.evaluate(()=>document.activeElement.id),'field-journal');
  assert.equal(await page.evaluate(async()=>{await pendingCareerWrite;return JSON.stringify(save)}),careerBefore,'Navigation and Journal do not alter the career');
 };
