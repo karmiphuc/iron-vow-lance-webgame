@@ -205,5 +205,6 @@ function makeLeg(bone,side){
 }
 
 root.IronVowRigV2.register(30,{id:'raven',assetPath:'rig-bench/rig-v2/raven.glb?rev=raven-matte',factoryLivery:true,
- scale:.94,dimensions:{walkDrop:.085,stride:.68,duty:.57},setup});
+ // The posed wing span fits the field tile at world scale and the tighter portrait crop at preview scale.
+ scale:.78,worldScale:.832,dimensions:{walkDrop:.085,stride:.68,duty:.57},setup});
 })(window);

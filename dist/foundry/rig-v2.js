@@ -317,7 +317,7 @@ function build(unit,scope='battle'){
  });
  mech.nativeV2={
   source,sync:animate?()=>source.updateWorldMatrix(true,true):sync,animate,bounds,clips:asset.animations,scrub:scrubber?.sample,pose:equipment.pose,beforeAnimate:equipment.beforeAnimate,shieldSocket:equipment.shieldSocket,shieldScale:profile.shieldScale,
-  jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,groundShadow:equipment.groundShadow,
+  jetNozzles:equipment.jetNozzles,dodge:equipment.dodge,groundShadow:equipment.groundShadow,worldScale:profile.worldScale,
   anchors:equipment.anchors,nativeShield:equipment.nativeShield,meleeSide:equipment.meleeSide,authoredStrike:equipment.authoredStrike,strikeContact:equipment.strikeContact,
   dispose(){
    scrubber?.dispose();equipment.dispose?.();
