@@ -1159,6 +1159,11 @@ function stockHull(i){
  const frame=FRAMES[i];
  return{weapon:frame.weapon||(i===2?'missile':'rifle'),melee:frame.melee,condition:100,upgrade:0};
 }
+function acquiredHull(frame){
+ const hull=stockHull(frame);
+ if(frame===RAVEN_FRAME)hull.paintVariant=Math.floor(Math.random()*fieldPaint.ravenVariants);
+ return hull;
+}
 const COM_SKILLS=Object.freeze({
  rof:{name:'ROF Up I',rate:10,slots:1,frames:[4,0],text:'Compatible automatic guns fire 50% more rounds in one volley.'},
  rof2:{name:'ROF Up II',rate:5,slots:2,frames:[4,SALTJACK_FRAME],text:'Compatible automatic guns fire twice as many rounds in one volley.'},
@@ -2180,7 +2185,7 @@ function acquireHull(frame,salvaged=false,localPort=null){
  if(localPort!==null&&(salvaged||!canUsePort(localPort)||!portStock(localPort)?.frames.includes(frame)))return false;
  const price=intact?0:salvaged?rebuildPrice(frame):localPort===null?FRAMES[frame].cost:portStockPrice(FRAMES[frame].cost,localPort);
  if(save.credits<price)return false;
- const hull={...stockHull(frame),condition:salvaged&&!intact?rebuildIntegrity():100};
+ const hull={...acquiredHull(frame),condition:salvaged&&!intact?rebuildIntegrity():100};
  // Captured hulls keep their integrated systems. Portable gear was awarded separately.
  if(intact){
   if(openHands(frame))keepShoulder(hull);
@@ -2254,8 +2259,8 @@ function assignChassis(i,frame,allowSwap=false){
  const cost=purchase?FRAMES[frame].cost:0;
  if(save.credits<cost)return false;
  const reserve=save.reserve??={};
- const hull=({weapon,melee,meleeHand,shoulder,shield,paintFinish,paint,trim,condition,upgrade})=>({weapon,melee,meleeHand,shoulder,shield,paintFinish,paint,trim,condition,upgrade});
- const next=other>=0?hull(save.units[other]):reserve[frame]||stockHull(frame);
+ const hull=({weapon,melee,meleeHand,shoulder,shield,paintFinish,paint,trim,paintVariant,condition,upgrade})=>({weapon,melee,meleeHand,shoulder,shield,paintFinish,paint,trim,paintVariant,condition,upgrade});
+ const next=other>=0?hull(save.units[other]):reserve[frame]||acquiredHull(frame);
  if(other>=0){
    save.units[other]={...save.units[other],...hull(u),frame:previous};
  }else{
@@ -2284,8 +2289,8 @@ function builtInLoadout(u,training,frame){
  <div class="armory-grid armory-shields" aria-label="Shields">${SHIELDS.map(shield=>shieldCard(u,shield)).join('')}</div>`;
 }
 function workshopPaint(u){
- const fixed=FRAMES[pilotFrame(selected)].fixedLivery;
- const finish=fieldPaint.finish(u);
+ const frame=pilotFrame(selected),fixed=FRAMES[frame].fixedLivery;
+ const finish=fieldPaint.finish({...u,frame});
  const finishes=Object.entries(fieldPaint.finishes).filter(([key])=>!fixed||key!=='solid').map(([key,label])=>
   `<button type="button" class="paint-swatch livery-swatch" data-paint-finish="${key}" ${key==='factory'&&!fixed?'data-livery="0"':''} aria-pressed="${finish===key}">${label}</button>`).join('');
  const finishControls=`<fieldset class="livery-presets"><legend>Finish</legend><div class="paint-swatches paint-finishes">${finishes}</div></fieldset>`;
@@ -3050,7 +3055,7 @@ function render(){
   <div class="repairs"><button data-patch="${selected}" ${u.condition>=patchLimit()?'disabled':''}>FIELD PATCH · FREE</button><button data-repair="${selected}" ${u.condition===100?'disabled':''}>REPAIR · ${money(repairCost(selected))}</button>${infoTip('chassis maintenance','A free field patch restores a damaged hull to '+patchLimit()+'% integrity. Repair restores it to 100%.')}</div>
   ${u.condition<30?'<div class="repair-warning">Repair to 30% integrity to deploy.</div>':''}
   <details class="workshop-disclosure" data-workshop-detail="paint" ${bindWorkshop.disclosures?.paint?'open':''}><summary>Paint</summary>${workshopPaint(u)}</details>
-  <details class="workshop-disclosure" data-workshop-detail="trials" ${bindWorkshop.disclosures?.trials?'open':''}><summary>Reinforcement & trials</summary><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button><p class="note">+25 BODY HP · +2 ARMOR PER MK</p>${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}<a class="rig-bench-link" href="?bench=rig&amp;frame=${frame}">OPEN RIG BENCH</a></details>
+  <details class="workshop-disclosure" data-workshop-detail="trials" ${bindWorkshop.disclosures?.trials?'open':''}><summary>Reinforcement & trials</summary><button data-upgrade="${selected}" ${u.upgrade>=3?'disabled':''}>${u.upgrade>=3?'MAX REINFORCEMENT':'REINFORCE · '+money(1800+u.upgrade*1200)}</button><p class="note">+25 BODY HP · +2 ARMOR PER MK</p>${frame===BASTION_FRAME?'<div class="reference-tabs" aria-label="Bastion loadout motion tests"><button type="button" id="bastion-test-rifle">TEST FIRE</button><button type="button" id="bastion-test-melee">TEST STRIKE</button></div>':''}<a class="rig-bench-link" href="?bench=rig&amp;frame=${frame}${u.paintVariant===undefined?'':'&amp;paintVariant='+u.paintVariant}">OPEN RIG BENCH</a></details>
   </div></section>
   ${!openHands(frame)?`<section class="workshop-armory"><div class="eyebrow">LOADOUT / ${p.call}</div><h2 class="loadout-title">${f.primaryOptions?'PRIMARY MOUNT.':'FACTORY ARMAMENT.'}</h2><div class="inline-help"><small>${f.primaryOptions?'COMPATIBLE WEAPONS':'INTEGRATED WEAPONS'}</small>${infoTip(f.name,f.brief||'This chassis keeps its factory weapons.')}</div>${builtInLoadout(u,training,frame)}</section>`:workshopArmory(u,training)}
   </div>
@@ -3188,6 +3193,7 @@ function validHull(u,frame,owned=[]){
   f.native||f.fixedWeapons?u.weapon===f.weapon||fixedPrimaryOptions(frame).length>0&&(u.weapon===null||fixedPrimaryOptions(frame).includes(u.weapon)):RANGED.some(w=>w.id===u.weapon);
  return shieldValid&&slotValid&&meleeValid&&handValid&&rangedValid&&
   (u.paintFinish===undefined||fieldPaint.valid(u.paintFinish))&&(u.paint==null||validPaint(u.paint))&&
+  (u.paintVariant===undefined||frame===RAVEN_FRAME&&fieldPaint.validRavenVariant(u.paintVariant))&&
   (u.trim==null||!!u.trim&&typeof u.trim==='object'&&['s','a'].every(k=>u.trim[k]==null||validPaint(u.trim[k])))&&Number.isFinite(u.condition)&&u.condition>=0&&u.condition<=100&&
   Number.isInteger(u.upgrade)&&u.upgrade>=0&&u.upgrade<=3;
 }
@@ -3412,7 +3418,7 @@ function makeUnit(i,team,x,z){
  const [paint,secondary]=f.fixedLivery?[null]:ally?[u.paint??null]:frame===REAVER_FRAME||frame===BULWARK_FRAME?[null]:hostileLivery(frame,i);
  const melee=!ally&&frame===AERO_FRAME?battle.aeroMelee:u.melee??null;
  return{id:team+i,index:i,team,pilot,x,z,vx:x,vz:z,frame,name:ally?f.name:(ENEMY_NAMES[frame]??f.name)+' '+(i+1),weapon:u.weapon,melee,meleeHand:u.meleeHand,shoulder:u.shoulder,shield:u.shield,
-  paintFinish:ally?u.paintFinish:'block',paint,trim:ally&&!f.fixedLivery?u.trim:secondary?{s:secondary}:null,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
+  paintFinish:ally?u.paintFinish:'block',paint,trim:ally&&!f.fixedLivery?u.trim:secondary?{s:secondary}:null,paintVariant:u.paintVariant,upgrade:u.upgrade,level:crew.level,training,armor:chassisArmor(f,u,training),max,hp,ap:roundAP(training),brace:false,skill:false,boost:false,alive:true};
 }
 const sortiePilot=u=>u.index>=AUX_SLOT?save.reservePilots[auxiliaryFor(u.index).pilotId]:save.units[u.index];
 const sortieHull=u=>u.index>=AUX_SLOT?save.reserve[u.frame]:save.units[u.index];
@@ -5187,7 +5193,8 @@ function bindWorkshop(){
  const swatches=[...document.querySelectorAll('[data-paint-channel]')];
  const pickers=[...document.querySelectorAll('[data-custom-channel]')];
  const showPaint=()=>{
-  for(const button of finishes)button.setAttribute('aria-pressed',String(fieldPaint.finish(u)===button.dataset.paintFinish));
+  const finish=fieldPaint.finish({...u,frame:pilotFrame(selected)});
+  for(const button of finishes)button.setAttribute('aria-pressed',String(finish===button.dataset.paintFinish));
   for(const button of presets)button.setAttribute('aria-pressed',String(activeLivery(u,PAINT_PRESETS[button.dataset.livery])));
   for(const button of swatches)button.setAttribute('aria-pressed',String(paintChannel(u,button.dataset.paintChannel)===button.dataset.paintColor));
   for(const picker of pickers){
@@ -6077,18 +6084,19 @@ if(benchWar){
 
 if(benchRig){
  const prototypeArchives={3:'gatecrasher',4:'cicada',[HELLBREAKER]:'hellbreaker',[BULWARK_FRAME]:'bulwark',[ASHIGARU_FRAME]:'scout',[SHOGUN_FRAME]:'shogun'};
+ const request=new URLSearchParams(window.location.search);
+ const paintVariant=Number(request.get('paintVariant'));
  const frames=FRAMES.map((frame,id)=>({
   id,frame:id,name:frame.name,model:frame.foundry,rig:frame.rig,
   mix:frame.foundry!=null&&frame.rig!=='cairn'&&!window.IronVowRigV2.applies({frame:id}),
   authored:window.IronVowRigV2.applies({frame:id}),quad:id===REAVER_FRAME,
-  stock:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
+  stock:id===RAVEN_FRAME&&fieldPaint.validRavenVariant(paintVariant)?{...stockHull(id),paintVariant}:stockHull(id),fixed:Boolean(frame.native||frame.fixedWeapons||id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME),
   primaries:id===LINE_INFANTRY_FRAME||id===LINE_ELITE_FRAME?INFANTRY_PRIMARIES:
    id===ASHIGARU_FRAME?['needle-carbine','flechette-scattergun']:frame.primaryOptions,
   melees:breachLoadout(id)?['cleaver']:undefined,
   fixedShield:id===NIGHTJAR_FRAME?{...NIGHTJAR_BUCKLER,mount:'right hand'}:id===RAVEN_FRAME?{id:'raven-wings',name:'Wing shields',mount:'both shoulders'}:undefined,shield:canFitShield(id),pod:breachLoadout(id),
   archive:id===0?'rig-bench/warden-painted.glb':prototypeArchives[id]?'rig-bench/prototypes/'+prototypeArchives[id]+'.glb':null
  }));
- const request=new URLSearchParams(window.location.search);
  window.IronVowBench.mount({frames,weapons:WEAPONS,shields:SHIELDS,attackProfile,weaponRigPose,sound,
   initialFrame:request.get('frame'),initialArchive:request.get('source')==='archive'});
 }

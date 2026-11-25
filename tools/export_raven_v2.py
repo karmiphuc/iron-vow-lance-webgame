@@ -28,6 +28,32 @@ def triangles(mesh):
     return len(mesh.loop_triangles)
 
 
+def add_inlay_mask(original, mesh):
+    name = original.name.partition('.')[0]
+    inlay = mesh.attributes.new('_RAVEN_INLAY', 'FLOAT_VECTOR', 'POINT')
+    if name == 'Raised six-sided cheek plate':
+        # The six-sided pressing has eight 24-vertex rings and a center.
+        # Tint the outer lip, where the flat and rolled perimeter rings meet.
+        if len(mesh.vertices) != 193:
+            raise ValueError(f'Unexpected Raven cheek topology for {original.name}')
+        left = original['rig_attachment'] == 'Shield.L'
+        for index in range(24, 48):
+            corner = index % 24
+            inlay.data[index].vector = (1, not left, corner in (0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20))
+        return
+    accents = {
+        'Stepped cheek service cut': (1, 1, 0),
+        'Deck spline slot bed': (1, 0, 1),
+        'Blade lateral wear strip': (0, 0, 1),
+    }
+    if original.name in ('Greave assembled edge rail', 'Greave assembled edge rail.002'):
+        for point in inlay.data:
+            point.vector = (0, 1, 0)
+    elif name in accents:
+        for point in inlay.data:
+            point.vector = accents[name]
+
+
 def build_meshes(scene, runtime, rig):
     source = [obj for obj in scene.objects if obj.parent == rig and obj.get('rig_attachment')]
     if not source:
@@ -43,6 +69,7 @@ def build_meshes(scene, runtime, rig):
     for original in source:
         mesh = bpy.data.meshes.new_from_object(original.evaluated_get(depsgraph), depsgraph=depsgraph)
         mesh.transform(original.matrix_world)
+        add_inlay_mask(original, mesh)
         obj = bpy.data.objects.new('Raven runtime / ' + original.name, mesh)
         runtime.collection.objects.link(obj)
         groups[original['part']].append(obj)
@@ -135,7 +162,7 @@ def export():
     with TemporaryDirectory(prefix='raven-v2-') as directory:
         intermediate = Path(directory) / 'raven.glb'
         result = bpy.ops.export_scene.gltf(filepath=str(intermediate), export_format='GLB', use_selection=True, use_active_scene=True,
-            export_extras=True, export_texcoords=False, export_animations=True,
+            export_extras=True, export_texcoords=False, export_attributes=True, export_animations=True,
             export_anim_slide_to_zero=True, export_animation_mode='ACTIONS', export_meshopt_compression_enable=True,
             export_optimize_animation_keep_anim_armature=False)
         if result != {'FINISHED'}:

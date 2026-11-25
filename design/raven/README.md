@@ -6,6 +6,10 @@ Both arms take 25% less damage after ordinary armor and Brace reduction, rounded
 
 ![The arms tuck and both shoulder shields pivot forward during Brace](brace.webp)
 
+Factory paint assigns each purchased Raven one of three arrangements of dark-crimson seam inlays on midnight-black armor. The arrangement stays with the hull through storage, reassignment and reload. Workshop paint can override it, and Factory restores the hull's original inlays.
+
+![Three Raven midnight factory finishes in the game renderer](midnight-inlays.webp)
+
 Open `tools/authoring/raven/Raven-Rig.blend` to edit the six actions. The shield bones articulate independently from the upper arms. Rebuild the compressed battle asset from the repository root with Blender.
 
 ```sh
