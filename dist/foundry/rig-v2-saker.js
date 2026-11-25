@@ -232,9 +232,14 @@ function moveRearLeg(m,input,stance,phase){
 }
 function animate(m,input,dt,t){
  const s=m.saker,{rig,cont}=m,alive=input.alive,old=cont.position.clone();
+ const airborne=Boolean(input.airborne);
+ if(airborne){const floor=input.ground;input={...input,groundAt:()=>floor};}
+ const tuck=airborne?Math.sin(Math.PI*clamp(input.airborneProgress??0)):0;
+ const landed=s.airborne&&!airborne;
+ s.airborne=airborne;
  cont.position.set(input.pos.x,input.ground??0,input.pos.z);
  const travel=old.setY(0).distanceTo(cont.position.clone().setY(0));
- const reset=!m.init||travel>5,heading=input.moving?input.heading:input.face;
+ const reset=!m.init||travel>5||airborne||landed,heading=input.moving?input.heading:input.face;
  const turn=Math.atan2(Math.sin(heading-m.yaw),Math.cos(heading-m.yaw));
  if(reset)m.yaw=heading;else if(alive)m.yaw+=turn*(1-Math.exp(-dt*12));cont.rotation.set(0,m.yaw,0);
  if(!input.moving||s.handoff)cont.updateWorldMatrix(true,false);
@@ -245,11 +250,11 @@ function animate(m,input,dt,t){
  const ready=alive&&input.armed?Math.max(input.brace||0,input.attacking?(Number.isFinite(input.attack?.fireAt)?hold:1):0,shotHold,(input.readyRelease||0)*hold,input.targeting?.86:0):0;
  // Limit travel through the stance even if gameplay requests full aim in a
  // single tick. Acceleration is continuous when a request reverses partway.
- const target=input.moving?0:clamp(ready);
+ const target=input.moving||airborne?0:clamp(ready);
  const velocity=T.MathUtils.clamp((target-s.phase)*10,-.73,.77);
  s.phaseSpeed=follow(s.phaseSpeed,velocity,18,dt);
  s.phase=clamp(s.phase+s.phaseSpeed*dt);
- if(input.reducedMotion||Math.abs(target-s.phase)<.0005&&Math.abs(s.phaseSpeed)<.015){
+ if(input.reducedMotion||airborne||Math.abs(target-s.phase)<.0005&&Math.abs(s.phaseSpeed)<.015){
   s.phase=target;s.phaseSpeed=0;
  }
  s.aim=smooth(s.phase);
@@ -289,7 +294,9 @@ function animate(m,input,dt,t){
    .060*stride-.035*rise,-.034*support+.23*hit+.48*down,'YXZ');
  rig.neck.rotation.set((-.16-.19*run)*(1-lock)+.027*rise,(1-lock)*.16*Math.sin(t*.8)+.035*rise,0);
  rig.legs.forEach((leg,i)=>{
-  const shoe=m.legs[i].foot.clone();shoe.y+=lift*(i===0?.90:.52);
+  const shoe=m.legs[i].foot.clone();
+  shoe.y+=tuck*scale*(i===0?.30:.48);
+  shoe.y+=lift*(i===0?.90:.52);
   shoe.z+=Math.cos(m.yaw)*lift*(i===0?-.56:.40);shoe.x+=Math.sin(m.yaw)*lift*(i===0?-.56:.40);
   const swinging=s.swing?.i===i;
   const passing=swinging?(s.swing.walking?.14:.07)*Math.sin(2*Math.PI*ramp(p,.09,.89)):0;

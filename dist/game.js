@@ -34,7 +34,7 @@ const WEAPONS=[{id:'rifle',name:'Kestrel AR-8',type:'ASSAULT RIFLE',burst:8,dama
  {id:'vyzov-knuckle',name:'Pile Knuckle',type:'POWERED FIST',damage:20,range:1,ap:3,builtIn:true,melee:true,hand:'right',motion:'breaker',desc:'An adjacent strike for 20 base damage before armor.'},
  {id:'aegis-cleave',name:'Charged Arc Cleaver',type:'REACTOR CLEAVE',damage:38,range:1,ap:5,builtIn:true,melee:true,hand:'right'},
  {id:'aegis-bash',name:'Charged Shield Bash',type:'HYDRAULIC IMPACT',damage:40,range:1,ap:5,builtIn:true,melee:true},
- {id:'merlin-38',name:'Merlin 38',type:'INTEGRAL PRECISION RIFLE',damage:39,range:9,ap:5,aim:.08,builtIn:true,hand:'right',motion:'rifle',desc:'A medium-impact barrel on the Saker’s right wrist cradle.'},
+ {id:'merlin-38',name:'Merlin 38',type:'INTEGRAL PRECISION RIFLE',damage:39,range:8,ap:5,aim:.08,builtIn:true,hand:'right',motion:'rifle',desc:'A medium-impact barrel on the Saker’s right wrist cradle.'},
  {id:'quill-lance',name:'Quill S-7',type:'INTEGRAL MARKSMAN RIFLE',damage:32,range:8,ap:4,aim:.06,builtIn:true,hand:'left',motion:'rifle',desc:'A single low-impulse round from the Nightjar’s left shoulder cradle.'},
  {id:'needle-carbine',name:'Needle carbine',type:'SCOUT CARBINE',burst:8,damage:23,range:5,ap:5,builtIn:true,effect:'rifle',scout:'carbine'},
  {id:'flechette-scattergun',name:'Flechette scattergun',type:'SCOUT SCATTERGUN',burst:12,scatter:true,damage:31,range:2,ap:5,builtIn:true,effect:'shotgun',scout:'scatter'},
@@ -423,8 +423,8 @@ const NIGHTJAR_FRAME=FRAMES.push({name:'NIGHTJAR',model:'NJ–07',role:'MOBILE S
  hp:108,arm:56,leg:87,move:6,armor:2,dodge:.15,weapon:'quill-lance',native:'nightjar',
  enemyOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
  brief:'Two short braking steps settle it onto a firing tripod. Its left hand guides the integral Quill. A right-hand buckler intercepts incoming hits until the arm breaks.'})-1;
-const SAKER_FRAME=FRAMES.push({name:'SAKER',model:'SK–38',role:'ROOFTOP MARKSMAN',color:'#928675',
- hp:136,arm:72,leg:94,move:6,armor:4,dodge:.13,weapon:'merlin-38',native:'saker',
+const SAKER_FRAME=FRAMES.push({name:'SAKER',model:'SK–38',role:'ROOFTOP MARKSMAN',weightClass:'medium',color:'#928675',
+ hp:136,arm:72,leg:94,move:4,jumpjet:true,jumpjetRange:3,jumpjetEachTurn:true,jumpjetLift:2.15,armor:4,dodge:.13,weapon:'merlin-38',native:'saker',
  enemyOnly:true,noSalvage:true,fixedWeapons:true,fixedLivery:true,
  brief:'An armored biped that crosses open ground at a lope and drops low to sight along its right wrist. Its left hand stays free to catch the firing load.'})-1;
 // Name, player-facing effect, preferred distance, and positioning priority.
@@ -455,7 +455,7 @@ const MECH_SIGNATURES={
  [SALT_WORKS_GARRISON_FRAME]:['Yard Defense','Cover the yard from behind obstacles. Direct shots from cover gain +8 aim.',5,'screen'],
  [HUSKY_FRAME]:['Running Snap','Move before firing. Direct shots from within three tiles gain +8 aim after moving.',3,'mobile'],
  [GIZA_FRAME]:['Range Table','Hold position. Direct shots from five or more tiles gain +6 aim before moving.',5,'hold'],
- [SAKER_FRAME]:['Overwatch','Keeps eight tiles of separation and settles low to fire its integral right-hand rifle.',8,'mobile'],
+ [SAKER_FRAME]:['Overwatch','Keeps eight tiles of separation. Jumps to a clear tile up to three tiles away for 2 AP once per turn.',8,'mobile'],
  [NIGHTJAR_FRAME]:['Rangefinder','Keep seven tiles of separation. After firing, take a free step toward cover or preferred range. The right buckler reduces intercepted damage by 20%.',7,'mobile'],
  [VYZOV_FRAME]:['Guard Breaker','Melee attacks deal +15% damage against braced targets.',1,'push']
 };
@@ -463,7 +463,9 @@ const MECH_LEARN_KILLS=5,MECH_MASTERY_KILLS=25;
 function hasMechSkill(u,frame){return Boolean(u?.mechSkills&&(u.frame===frame||u.mechSkills.includes(frame)))}
 const AERO_MELEE=['cleaver','breaker','piledriver','blade'];
 const JUMPJET_RANGE=5,JUMPJET_AP=2;
-const JUMPJET_HELP='Leap over cover and units to a clear tile within '+JUMPJET_RANGE+' tiles. Costs '+JUMPJET_AP+' AP. Once per sortie. Requires working legs.';
+const jumpjetRange=frame=>frame?.jumpjetRange??JUMPJET_RANGE;
+const jumpjetCadence=frame=>frame?.jumpjetEachTurn?'once per turn':'once per sortie';
+const jumpjetHelp=frame=>'Jump over cover and units to a clear tile within '+jumpjetRange(frame)+' tiles for '+JUMPJET_AP+' AP, '+jumpjetCadence(frame)+'. Requires working legs.';
 const dailyAeroMelee=()=>AERO_MELEE[(save.day-1)%AERO_MELEE.length];
 const chassisEvade=frame=>frame.dodge??.08;
 const dodgeChance=u=>u&&!u.kind&&FRAMES[u.frame]?chassisEvade(FRAMES[u.frame]):0;
@@ -1033,7 +1035,7 @@ const extraMovement=u=>Boolean(u?.alive&&mobile(u)&&u.ap>=EXTRA_MOVE_AP&&!u.extr
 const movementLimit=u=>freeMovement(u)+Number(extraMovement(u));
 const spent=u=>Boolean(u?.alive&&u.ap===0&&(!movementLimit(u)||
  paths(u).size<=1));
-function resetMovement(u){u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key]}
+function resetMovement(u){if(FRAMES[u.frame]?.jumpjetEachTurn)u.jumpjetUsed=false;u.moveLeft=mobility(u);u.actionPhase=false;u.extraStep=false;if(u.mechState)for(const key of ['moved','fired','valkyrieUsed','valkyrieStep','behemothUsed','aegisUsed','chargeUsed'])delete u.mechState[key]}
 function startAction(u){u.moveLeft=0;u.actionPhase=true}
 const chassisParts=(frame,hull,training)=>({body:frame.hp+hull.upgrade*25+(training?.body??0),right:frame.arm,left:frame.arm,legs:frame.leg});
 const chassisArmor=(frame,hull,training)=>frame.armor+hull.upgrade*2+(training?.armor??0);
@@ -1558,7 +1560,8 @@ function restoreSortie(){
    const keptLaunchAP=u.team==='ally'&&(saved.turn===1||state?.hp?.body===0||state?.hp?.pilot===0);
    const maxAP=roundAP(u.training)+(u.pilot===0?overdriveAP(u.training):0)+(keptLaunchAP?launchAP:0);
    valid=!!state&&integer(state.x,0,battle.size.width-1)&&integer(state.z,0,battle.size.depth-1)&&(state.face===undefined||state.face===1||state.face===-1)&&!battle.cover.has(state.x+','+state.z)&&integer(state.ap,0,maxAP)&&typeof state.brace==='boolean'&&typeof state.skill==='boolean'&&typeof state.boost==='boolean'&&state.hp&&targetParts(u).every(p=>p==='pilot'&&saved.version<4&&state.hp.pilot===undefined||integer(state.hp[p],0,u.max[p]));
-   if(valid&&saved.version>=5)valid=integer(state.moveLeft,0,mobility(u))&&typeof state.actionPhase==='boolean'&&typeof state.extraStep==='boolean'&&(!state.actionPhase||state.moveLeft===0)&&(!state.extraStep||state.actionPhase)&&typeof state.reacted==='boolean'&&Number.isFinite(state.heading)&&Math.abs(state.heading)<=Math.PI;
+   // Older Parapet saves can carry two more unspent movement tiles.
+   if(valid&&saved.version>=5)valid=integer(state.moveLeft,0,mobility(u)+(u.frame===SAKER_FRAME?2:0))&&typeof state.actionPhase==='boolean'&&typeof state.extraStep==='boolean'&&(!state.actionPhase||state.moveLeft===0)&&(!state.extraStep||state.actionPhase)&&typeof state.reacted==='boolean'&&Number.isFinite(state.heading)&&Math.abs(state.heading)<=Math.PI;
    if(valid&&saved.version>=6){
     const {painted,order}=state;
     valid=(painted===undefined||u.team==='enemy'&&painted&&integer(painted.shots,1,3)&&[.20,.30].includes(painted.aim)&&[0,.20].includes(painted.power))&&
@@ -1591,7 +1594,7 @@ function restoreSortie(){
    u.jumpjetUsed=state.jumpjetUsed===true;u.tacticalUsed=state.tacticalUsed===true;
    u.face=state.face??(u.team==='enemy'?1:-1);u.x=u.vx=state.x;u.z=u.vz=state.z;u.hp=Object.fromEntries(targetParts(u).map(part=>[part,state.hp[part]??u.max[part]]));u.ap=state.ap;u.brace=state.brace;u.skill=state.skill;u.boost=state.boost;u.alive=alive;u.surrendered=state.surrendered;u.downReason=alive?null:state.surrendered?'surrender':u.hp.body>0?'pilot':'body';
    if(!alive&&!u.kind&&Number.isFinite(state.deathYaw)&&Math.abs(state.deathYaw)<=Math.PI)u.deathYaw=state.deathYaw;
-   if(saved.version>=5){u.heading=FIELD_HEADINGS[headingIndex(state.heading)];u.face=Math.sign(Math.sin(u.heading));u.moveLeft=state.moveLeft;u.actionPhase=state.actionPhase;u.extraStep=state.extraStep;u.reacted=state.reacted}
+   if(saved.version>=5){u.heading=FIELD_HEADINGS[headingIndex(state.heading)];u.face=Math.sign(Math.sin(u.heading));u.moveLeft=Math.min(state.moveLeft,mobility(u));u.actionPhase=state.actionPhase;u.extraStep=state.extraStep;u.reacted=state.reacted}
    else{u.heading=defaultHeading(u);if(u.ap<8||u.brace){startAction(u);u.extraStep=true}}
   }
   valid=valid&&battle.units.some(u=>u.team==='ally'&&u.alive)&&(depotOperation()||battle.units.some(u=>u.team==='enemy'&&u.alive));
@@ -1734,7 +1737,7 @@ function workshopStats(i,frame,hull,training=trainingEffects(i)){
   ['Free movement',chassisMobility(frame,false,training)+' tiles',MOVE_HELP],
   ['Extra movement','1 tile / '+EXTRA_MOVE_AP+' AP','One extra tile per round with working legs. It uses the last of your free movement.'],
   ...(frame.dodge?[['Dodge',Math.round(frame.dodge*100)+'%','Chance to evade an incoming round or shell.']]:[]),
-  ...(frame.jumpjet?[['Jumpjet',JUMPJET_RANGE+' tiles / '+JUMPJET_AP+' AP',JUMPJET_HELP]]:[]),
+  ...(frame.jumpjet?[['Jumpjet',jumpjetRange(frame)+' tiles / '+JUMPJET_AP+' AP',jumpjetHelp(frame)]]:[]),
   ['Armor',armor,'Losing the left arm reduces armor to '+damagedArmor(armor)+'.'],
   ['AP per round',roundAP(training)],
   ...Object.entries(parts).map(([part,max])=>[PART_LABEL[part],deploymentHP(max,hull.condition)+' / '+max+' HP']),
@@ -1907,7 +1910,7 @@ function chassisAssignments(i,training){
    <small>${primary.name} · ${weaponRange(primary,training)} tiles</small>
    <small>${shield?shield.name+' · −'+shieldPercent(shield)+' arm damage':melee?melee.name+' · '+weaponAP(melee,training)+' AP':'No melee'}</small>
    <small>Counter · ${counterSummary(primary,melee,training,shield)} · 0 AP</small>
-   ${frame.jumpjet?'<small>Jumpjet · '+JUMPJET_RANGE+' tiles / '+JUMPJET_AP+' AP · once per sortie</small>':''}
+   ${frame.jumpjet?'<small>Jumpjet · '+jumpjetRange(frame)+' tiles / '+JUMPJET_AP+' AP · '+jumpjetCadence(frame)+'</small>':''}
    ${frame.dodge?'<small>Dodge · '+Math.round(frame.dodge*100)+'% per incoming round or shell</small>':''}
    ${frame.marketPort?`<p>${frame.brief}</p>`:''}
    <div class="bay-actions">${salvaged?`<button data-rebuild="${index}" ${hullOwned(index)||!intact&&save.credits<rebuildPrice(index)?'disabled':''}>${hullOwned(index)?'HULL OWNED':intact?'RECOVER INTACT':'REBUILD · '+money(rebuildPrice(index))}</button><button data-recycle="${index}">RECYCLE · +${money(scrapPrice(index))}</button>`:view==='market'&&frame.marketPort?`<button data-frame-port="${frame.marketPort}">VIEW ${portName(frame.marketPort).toUpperCase()}</button>`:view==='market'?`<button data-buy-hull="${index}" ${save.credits<frame.cost?'disabled':''}>BUY · ${money(frame.cost)}</button>`:`<button data-chassis="${index}" aria-pressed="${index===assigned}" ${index===assigned?'disabled':''}>${index===assigned?'SELECTED':slot>=0?'SWAP WITH '+pilotProfile(slot).call:'ASSIGN TO '+pilotProfile(i).call}</button>`}</div>
@@ -3376,18 +3379,22 @@ function canJumpjet(u){
  return Boolean(u?.alive&&(FRAMES[u.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME))&&u.hp.legs>0&&u.ap>=JUMPJET_AP&&!u.jumpjetUsed);
 }
 function jumpjetLanding(u,x,z){
- return canJumpjet(u)&&onBoard(x,z)&&distance(u,{x,z})<=JUMPJET_RANGE&&
+ return canJumpjet(u)&&Number.isInteger(x)&&Number.isInteger(z)&&onBoard(x,z)&&distance(u,{x,z})<=jumpjetRange(FRAMES[u.frame])&&
   !battle.cover.has(x+','+z)&&!occupied(x,z);
 }
+function* jumpjetLandings(u){
+ if(!canJumpjet(u))return;
+ const range=jumpjetRange(FRAMES[u.frame]);
+ for(let x=u.x-range;x<=u.x+range;x++)
+  for(let z=u.z-range;z<=u.z+range;z++)
+   if(jumpjetLanding(u,x,z))yield {x,z};
+}
 function jumpjetDestination(u,target){
- if(!canJumpjet(u))return null;
  let best=null,closest=distance(u,target);
- for(let x=u.x-JUMPJET_RANGE;x<=u.x+JUMPJET_RANGE;x++){
-  for(let z=u.z-JUMPJET_RANGE;z<=u.z+JUMPJET_RANGE;z++){
-   const d=distance(target,{x,z});
-   if(d>=closest||!jumpjetLanding(u,x,z))continue;
-   best={x,z,d};closest=d;
-  }
+ for(const landing of jumpjetLandings(u)){
+  const d=distance(target,landing);
+  if(d>=closest)continue;
+  best={...landing,d};closest=d;
  }
  return best;
 }
@@ -3485,7 +3492,7 @@ function renderBattle(){
   const lionLoadout=battle.lionTrial?`<div class="lion-trial-loadout" role="group" aria-label="Lion trial weapon">
    ${LION_TRIAL_WEAPONS.map(id=>`<button type="button" data-lion-weapon="${id}" aria-pressed="${u?.melee===id}" ${battle.busy?'disabled':''}>${weapon(id).name}</button>`).join('')}
   </div>`:'';
-  const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${JUMPJET_HELP}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+' AP'}</span></span></button>`:'';
+  const jetButton=FRAMES[u?.frame]?.jumpjet||hasMechSkill(u,AERO_FRAME)?`<button id="jumpjet" class="${action==='jumpjet'?'active':''}" aria-pressed="${action==='jumpjet'}" aria-label="${u.jumpjetUsed?'Jumpjet used':'Jumpjet'}" title="${jumpjetHelp(FRAMES[u.frame])}" ${ready&&canJumpjet(u)?'':'disabled'}>${icon('lightning')}<span>JUMPJET <span class="key-hint">${u.jumpjetUsed?'USED':JUMPJET_AP+' AP'}</span></span></button>`:'';
   const staged=(!battle.operation?.called&&battle.operation?.extra.find(seat=>seat.staged))||null;
   const reserveControl=staged?`<button class="icon" id="call-sortie-reserve" ${ready&&battle.turn>=RESERVE_ENTRY_ROUND?'':'disabled'}>CALL ${CREW[pilotKind(staged.pilotId)].call}${battle.turn<RESERVE_ENTRY_ROUND?' · ROUND 2':''}</button>`:'';
   const warControls=benchWar?`<button type="button" class="icon" id="run-war" ${battle.busy||window.__bench.running?'disabled':''}>RUN WAR</button><button type="button" class="icon" id="war-report">REPORT</button><a class="icon" href="?bench=rig">RIG BENCH</a>`:'';
@@ -3686,7 +3693,7 @@ async function useJumpjet(u,x,z){
  if(turning)await turning;
  const duration=reducedMotion?.12:.70;
  u.x=x;u.z=z;
- u.motion={fromX,fromZ,toX:x,toZ:z,start:clock,duration,jumpjet:true,jetLift:1.35+.75*Math.abs(terrainLevel(x,z)-terrainLevel(fromX,fromZ)),gaitBase:0,stepIndex:0,totalSteps:1};
+ u.motion={fromX,fromZ,toX:x,toZ:z,start:clock,duration,jumpjet:true,jetLift:(FRAMES[u.frame]?.jumpjetLift??1.35)+.75*Math.abs(terrainLevel(x,z)-terrainLevel(fromX,fromZ)),gaitBase:0,stepIndex:0,totalSteps:1};
  sound('hydraulic',.95);
  await delay(duration*1000);
  u.vx=x;u.vz=z;u.motion=null;u.landTime=clock;
@@ -4023,7 +4030,8 @@ const {runEnemyTurn}=window.IRON_VOW_SIM.createEnemyTurn({
  getBattle:()=>battle,ROUND_AP,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
  unitWeapon,combatRange,launchesMissiles,movementLimit,isArmed:u=>isArmed(u)||canTactical(u),shoulderWeapon,workingWeapon,trySurrender,tryTactical:enemyTactical,tacticalRange:u=>canTactical(u)?tacticalWeapon(u).range:0,
  resetMovement,renderBattle:()=>renderBattle(),distance,meleeWeapon,scoutWeapon,canUseWeapon,attackObstruction,
- hasMechSkill,paths,movementPlans,canJumpjet,jumpjetDestination,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
+ hasMechSkill,paths,movementPlans,canJumpjet,jumpjetDestination,
+ tacticalJumpLandings:u=>FRAMES[u.frame]?.jumpjetEachTurn?jumpjetLandings(u):null,useJumpjet,moveUnit,engage:(...args)=>engage(...args),checkEnd,addLog,
  doctrine:enemyDoctrine,paidAttackAP,freeMovement,extraMoveAP:EXTRA_MOVE_AP,jumpjetAP:JUMPJET_AP,
  braceCost,braceUnit,startAction,barrageTarget,inCover,highGroundAim,reactionWeapon,
  forecast:(u,t,w,reaction=false)=>{

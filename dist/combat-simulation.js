@@ -243,7 +243,7 @@ function reactionWeapon(defender,attacker){
  function createEnemyTurn({
   getBattle,ROUND_AP,resetMovement,renderBattle,unitWeapon,distance,meleeWeapon,scoutWeapon,canUseWeapon,
   attackObstruction,combatRange,launchesMissiles,hasMechSkill,paths,movementPlans,movementLimit,canJumpjet,jumpjetDestination,
-  useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,shoulderWeapon=()=>null,workingWeapon=()=>true,
+  useJumpjet,moveUnit,engage,checkEnd,isArmed,addLog,tacticalJumpLandings=()=>null,shoulderWeapon=()=>null,workingWeapon=()=>true,
   trySurrender=()=>false,tryTactical,tacticalRange=()=>0,VANGUARD_FRAME,BULWARK_FRAME,ASHIGARU_FRAME,AERO_FRAME,CITADEL_FRAME,
   doctrine=()=>null,paidAttackAP=(_,w)=>w.ap,freeMovement=movementLimit,extraMoveAP=1,jumpjetAP=2,
   braceCost=()=>2,braceUnit=u=>{u.brace=true},startAction=()=>{},barrageTarget=()=>null,
@@ -347,7 +347,10 @@ function reactionWeapon(defender,attacker){
     const [x,z]=key.split(',').map(Number);
     consider(x,z,cost,cost>freeMovement(u)?extraMoveAP:0);
    }
-   if((!best.shot||role[1]==='push'&&!best.shot.weapon.melee)&&canJumpjet(u))for(const t of opponents){
+   const landings=tacticalJumpLandings(u);
+   if(landings){
+    for(const {x,z} of landings)consider(x,z,1,jumpjetAP,true);
+   }else if((!best.shot||role[1]==='push'&&!best.shot.weapon.melee)&&canJumpjet(u))for(const t of opponents){
     const landing=jumpjetDestination(u,t);
     if(landing)consider(landing.x,landing.z,1,jumpjetAP,true);
    }
