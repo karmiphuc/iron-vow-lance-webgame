@@ -259,6 +259,30 @@ async function main(){
   }
   assert.ok(position(leg.an).distanceTo(gathered)<.003,'interrupted transition also recovers its standing contact');
  }
+ // Hover has a free-hanging pose and its own aim path, independent of the kneeling gun setup.
+ S.clearCombat();
+ const hoverPose=(hoverBlend,aim=0,reducedMotion=false)=>{
+  time+=1/60;
+  return S.draw(saker,time,{aim,brace:aim,reducedMotion,recoil:0,impact:0,strikeProgress:0,primeProgress:0,phase:0,
+   world:{x:0,y:5.6*hoverBlend,z:0,hovering:hoverBlend>0,hoverBlend,hoverRising:true,face:0,heading:0,speed:0,aim:target.clone().add(R.V3(0,5.6*hoverBlend,0)),groundAt}},scope,saker.foundry,'rig-v2').m;
+ };
+ const flying=hoverPose(1);
+ assert.ok(!flying.saker.stance&&flying.wpn.muzzle.getWorldDirection(R.V3()).y<-.35,'hover carry has a lowered barrel and does not enter the kneel');
+ assert.equal(flying.nativeV2.jetNozzles.length,2);
+ for(const nozzle of flying.nativeV2.jetNozzles){
+  const local=flying.cont.worldToLocal(nozzle.getWorldPosition(R.V3()));
+  const direction=R.V3(0,1,0).applyQuaternion(nozzle.getWorldQuaternion(new T.Quaternion()));
+  assert.ok(local.z<-.85&&direction.y<-.65&&direction.z<-.30,'the outlet vents rearward and down from the hull');
+ }
+ const left=()=>flying.rig.legs[0].an.getWorldPosition(R.V3());
+ const before=left();
+ for(let i=0;i<30;i++)hoverPose(1,1);
+ assert.ok(before.distanceTo(left())>.06,'suspended leg drifts while the wrist moves into aim');
+ assert.ok(flying.wpn.muzzle.getWorldDirection(R.V3()).y>-.23&&flying.saker.exhaust.plumes.every(plume=>plume.visible),'hover aim clears low carry while the thrusters stay lit');
+ hoverPose(1,0,true);
+ assert.ok(flying.saker.exhaust.plumes.every(plume=>!plume.visible),'reduced motion suppresses the pulsing exhaust');
+ for(let i=0;i<60;i++)hoverPose(0);
+ assert.ok(flying.saker.exhaust.plumes.every(plume=>!plume.visible)&&left().y/flying.scale<.19,'landing returns the ankle to board height and cuts the jets');
  // A move order may arrive while the rear instep is still fully extended.
  S.clearCombat();
  let ankleRotation;

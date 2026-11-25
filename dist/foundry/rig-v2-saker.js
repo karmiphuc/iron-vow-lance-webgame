@@ -230,11 +230,41 @@ function moveRearLeg(m,input,stance,phase){
  if(!m.legs[0].swing)m.legs[0].planted.copy(worldAnkle);
  return {ankle:worldAnkle,pitch,knee};
 }
+function buildExhaust(nozzles){
+ const geometry=new T.CylinderGeometry(.015,.106,1,12,1,true);
+ geometry.translate(0,.5,0);
+ const material=new T.ShaderMaterial({
+  transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,
+  vertexShader:`varying vec2 jetUV;
+   void main(){jetUV=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`varying vec2 jetUV;
+   void main(){
+    float fade=pow(1.0-jetUV.y,1.45);
+    vec3 color=mix(vec3(0.13,0.44,1.0),vec3(0.78,0.96,1.0),fade);
+    gl_FragColor=vec4(color,fade*.81);
+   }`
+ });
+ const plumes=nozzles.map(nozzle=>{
+  const plume=new T.Mesh(geometry,material);
+  plume.visible=false;nozzle.add(plume);return plume;
+ });
+ return {plumes,dispose(){geometry.dispose();material.dispose();}};
+}
 function animate(m,input,dt,t){
  const s=m.saker,{rig,cont}=m,alive=input.alive,old=cont.position.clone();
  const airborne=Boolean(input.airborne);
  if(airborne||input.hovering){const floor=input.ground;input={...input,groundAt:()=>floor};}
- const tuck=input.hovering?.38:airborne?Math.sin(Math.PI*clamp(input.airborneProgress??0)):0;
+ const hover=alive?clamp(input.hoverBlend??0):0;
+ const float=ramp(hover,.04,.90), drift=input.reducedMotion?0:float;
+ const tuck=airborne?Math.sin(Math.PI*clamp(input.airborneProgress??0)):0;
+ const thrust=input.reducedMotion?0:hover;
+ const launch=thrust&&input.hoverRising?1-ramp(hover,.12,.70):0;
+ if(s.lifted&&!input.hovering&&!airborne)s.touchdown=t;
+ const settle=input.reducedMotion?0:Math.sin(Math.PI*clamp((t-(s.touchdown??-100))/.27));
+ for(const [i,plume] of s.exhaust.plumes.entries()){
+  plume.visible=alive&&(thrust>.012||tuck>.08)&&!input.reducedMotion;
+  plume.scale.set(1,((.87+.12*Math.sin(t*44+i*2))+launch*.76)*Math.max(tuck,Math.sqrt(thrust)),1);
+ }
  const lifted=airborne||input.hovering,landed=s.lifted&&!lifted;
  s.lifted=lifted;
  cont.position.set(input.pos.x,input.ground??0,input.pos.z);
@@ -250,7 +280,7 @@ function animate(m,input,dt,t){
  const ready=alive&&input.armed?Math.max(input.brace||0,input.attacking?(Number.isFinite(input.attack?.fireAt)?hold:1):0,shotHold,(input.readyRelease||0)*hold,input.targeting?.86:0):0;
  // Limit travel through the stance even if gameplay requests full aim in a
  // single tick. Acceleration is continuous when a request reverses partway.
- const target=input.moving||airborne?0:clamp(ready);
+ const target=input.moving||lifted?0:clamp(ready);
  const velocity=T.MathUtils.clamp((target-s.phase)*10,-.73,.77);
  s.phaseSpeed=follow(s.phaseSpeed,velocity,18,dt);
  s.phase=clamp(s.phase+s.phaseSpeed*dt);
@@ -258,7 +288,10 @@ function animate(m,input,dt,t){
   s.phase=target;s.phaseSpeed=0;
  }
  s.aim=smooth(s.phase);
- s.gunLower=ramp(s.phase,releaseFoot,1);
+ const airAim=alive&&input.armed?Math.max(input.attacking?(Number.isFinite(input.attack?.fireAt)?hold:1):0,input.targeting?.92:0,(input.readyRelease||0)*hold,shotHold):0;
+ s.airAim=input.reducedMotion?airAim:follow(s.airAim,airAim,12,dt);
+ const airborneAim=lifted?ramp(s.airAim,.07,.94):0;
+ s.gunLower=ramp(s.phase,releaseFoot,1)*(1-float)+airborneAim*float;
  s.run=follow(s.run,input.moving&&alive&&!input.reducedMotion?1:0,10,dt);
  s.contactAge+=dt;contacts(m,input,dt,travel,reset);m.init=true;
  const lock=s.aim,run=s.run,p=s.swing?.p??0;
@@ -275,9 +308,9 @@ function animate(m,input,dt,t){
  const catchLoad=alive?ramp(dodge,.0,.1)-ramp(dodge,.10,.24)+ramp(dodge,.47,.56)-ramp(dodge,.56,.80):0;
  const down=alive?0:ramp(input.deathAge,0,.92);
  const hit=input.reducedMotion?0:Math.exp(-Math.max(0,t-(input.hitTime??-100))*10);
- const h=2.24-1.00*lock-.22*run-.045*plant*run-.030*kick-.24*catchLoad-.64*down-(input.legsDead?.35:0);
+ const h=2.24-1.00*lock-.18*launch-.20*settle+.046*drift*Math.sin(t*4.2)-.22*run-.045*plant*run-.030*kick-.24*catchLoad-.64*down-(input.legsDead?.35:0);
  rig.pelvis.position.set(.065*support+.13*lock+s.evadeSign*.36*lift,h,.22*run+.19*lock);
- rig.pelvis.rotation.set(.085*run*(1-lock),0,-.027*support+.40*down);
+ rig.pelvis.rotation.set(.085*run*(1-lock)+.06*float,0,-.027*support+.40*down+.025*drift*Math.sin(t*3.1));
  rig.pelvis.position.y=R.supportHeight(m,input,h)+lift*.48;
  const contact=s.stance?.[0],enter=ramp(s.phase,0,transfer);
  const deployed=ramp(s.phase,transfer,1)*(1-lift)*(alive&&!input.legsDead?1:0);
@@ -305,6 +338,7 @@ function animate(m,input,dt,t){
   const relativeZ=(i===0?back:front).z-rig.pelvis.position.z;
   const roll=.36*ramp(-relativeZ,.13,.71)*run;
   let pitch=roll+passing;
+  const phase=t*3.2+i*2.15;
   const toe=.70,heel=.41;
   const pivot=pitch>=0?toe:-heel;
   const rise=pivot*Math.sin(pitch)-ankle*(1-Math.cos(pitch));
@@ -312,6 +346,12 @@ function animate(m,input,dt,t){
   shoe.y+=rise*scale;
   shoe.x+=Math.sin(m.yaw+leg.toe)*advance*scale;
   shoe.z+=Math.cos(m.yaw+leg.toe)*advance*scale;
+  if(float){
+   const hanging=V(leg.restX*.86,.11+(i===0?.23:.48)+.11*drift*Math.sin(phase),i===0?-.46:.18);
+   hanging.z+=.14*drift*Math.cos(phase);
+   shoe.lerp(cont.localToWorld(hanging),float);
+   pitch+=(.60+.088*drift*Math.sin(phase+.5)-pitch)*float;
+  }
   if(i===0&&rest){shoe.copy(rest.ankle);pitch=rest.pitch;}
   if(i===0&&rest){
    const hip=cont.worldToLocal(leg.hip.getWorldPosition(V()));
@@ -344,14 +384,17 @@ function animate(m,input,dt,t){
  // carry it up together, maintaining the firing line over the crouched leg.
  const knee=cont.worldToLocal(rig.legs[1].kn.getWorldPosition(V()));
  const carry=V(-1.44,1.49+.10*stride,.29-.25*stride+1.41*ramp(s.phase,transfer,kneeTouch));
- const readyHand=V(-1.34,knee.y+.14+.19*rise,3.27-.42*rise);
+ carry.lerp(V(-1.47,1.39,.69),float);
+ const readyHand=V(-1.34,knee.y+.14+.19*rise,3.27-.42*rise).lerp(V(-1.39,1.78+.19*rise,1.60-.32*rise),float);
  const grip=cont.localToWorld(carry.lerp(readyHand,s.gunLower));
  R.solveWorldLeg(m,s.rightLinks,grip,m.yaw,0);
- const pitch=-1.08+.08*stride+1.08*s.gunLower+.27*down;
+ const carryPitch=-1.08+.08*stride+1.58*float;
+ const pitch=carryPitch*(1-s.gunLower)+.27*down;
  const q=cont.getWorldQuaternion(new T.Quaternion()).multiply(new T.Quaternion().setFromEuler(new T.Euler(pitch,-.085*(1-s.gunLower),-.05*(1-s.gunLower),'YXZ')));
  s.breech.quaternion.copy(s.breech.parent.getWorldQuaternion(new T.Quaternion()).invert().multiply(q));
  s.slide.position.z=-.45*kick;
  const leftSwing=V(1.18+.03*run,1.50+.10*stride-.55*down,.28+stride*.80);
+ leftSwing.lerp(V(1.33,1.36,.07+.09*drift*Math.sin(t*3.2)),float);
  const low=V(1.12,handRest,1.51);
  const hand=cont.localToWorld(leftSwing.lerp(low,ramp(lock,.12,.97)));
  const floor=input.groundAt?.(hand.x,hand.z)??input.ground??0;
@@ -386,14 +429,15 @@ function build(unit,source){
  const breech=get('Breech'),slide=get('Slide'),muzzle=get('Muzzle');
  const gun={id:'merlin-38',mount:breech,carrier:arms.R.wr,recoil:slide,muzzle,subsystem:'right',aimPivot:()=>breech,aimLimit:()=>m.saker.gunLower};
  const {L,R:right}=arms;
- m.saker={breech,slide,aim:0,gunLower:0,phase:0,phaseSpeed:0,stance:null,run:0,contactAge:1,next:1,swing:null,kneeRest:get('KneeRestL'),soleHull:get('AnkleL').userData.soleHull,dodgeAt:-100,evadeSign:1,
+ const jetNozzles=['JetNozzleL','JetNozzleR'].map(get).filter(Boolean),exhaust=buildExhaust(jetNozzles);
+ m.saker={breech,slide,exhaust,airAim:0,aim:0,gunLower:0,phase:0,phaseSpeed:0,stance:null,run:0,contactAge:1,next:1,swing:null,kneeRest:get('KneeRestL'),soleHull:get('AnkleL').userData.soleHull,dodgeAt:-100,evadeSign:1,
   mantles:{L:get('MantleL'),R:get('MantleR')},recoilPitch:0,
   rightLinks:{hip:right.sh,kn:right.el,an:right.wr,restX:-1,legA:right.el.position.length(),legB:right.wr.position.length(),bendPole:V(-.86,.58,.52)},
   leftLinks:{hip:L.sh,kn:L.el,an:L.wr,restX:1,legA:L.el.position.length(),legB:L.wr.position.length(),bendPole:V(.58,0,-1)}};
- m.nativeV2={source,worldScale:scale,animate,targetingBlend:()=>m.saker.aim,
+ m.nativeV2={source,worldScale:scale,animate,jetNozzles,targetingBlend:()=>m.saker.aim,
   pose(entry){entry.primary=gun;return true;},sync(){breech.rotateX(-m.saker.recoilPitch);m.cont.updateMatrixWorld(true);},
   dodge(time,incoming){m.saker.dodgeAt=time;m.saker.evadeSign=V(Math.cos(m.yaw),0,-Math.sin(m.yaw)).dot(incoming)>0?-1:1;},
-  bounds(name){const node=name==='neck'?neck:legs.find(l=>name==='ankle.'+l.side)?.an;return node?new T.Box3().setFromObject(node):new T.Box3();},dispose(){}};
+  bounds(name){const node=name==='neck'?neck:legs.find(l=>name==='ankle.'+l.side)?.an;return node?new T.Box3().setFromObject(node):new T.Box3();},dispose:exhaust.dispose};
  return m;
 }
 root.IronVowRigV2.register(28,{id:'saker',assetPath:'rig-bench/rig-v2/saker.glb',build});
